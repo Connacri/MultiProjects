@@ -256,7 +256,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
           //   },
           // ),
 
-          WinMobile(),
+          // WinMobile(),
           IconButton(
             icon: Icon(Icons.search),
             onPressed: () async {

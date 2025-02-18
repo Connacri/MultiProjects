@@ -335,7 +335,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                   resizeToAvoidBottomInset: true,
                   appBar: AppBar(
                     actions: [
-                      WinMobile(),
+                      // WinMobile(),
                       buildButton_Edit(context, produitProvider, _isFinded),
                       SizedBox(width: 50)
                     ],
@@ -354,7 +354,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                     resizeToAvoidBottomInset: false,
                     appBar: AppBar(
                       actions: [
-                        WinMobile(),
+                        // WinMobile(),
                         buildButton_Edit(context, produitProvider, _isFinded),
                         SizedBox(width: 50)
                       ],
@@ -379,7 +379,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                     resizeToAvoidBottomInset: false,
                     appBar: AppBar(
                       actions: [
-                        WinMobile(),
+                        // WinMobile(),
                         buildButton_Edit(context, produitProvider, _isFinded),
                         SizedBox(width: 50)
                       ],

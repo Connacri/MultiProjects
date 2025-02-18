@@ -392,9 +392,9 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                   title: Text('POS'),
                   actions: [
                     ConnectionStatusIndicator(),
-                    Platform.isAndroid || Platform.isIOS
-                        ? SizedBox.shrink()
-                        : WinMobile(),
+                    // Platform.isAndroid || Platform.isIOS
+                    //     ? SizedBox.shrink()
+                    //     : WinMobile(),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Switch(
@@ -1255,7 +1255,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 title: Text('POS Desktop'),
                 actions: [
                   ConnectionStatusIndicator(),
-                  WinMobile(),
+                  // WinMobile(),
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Switch(

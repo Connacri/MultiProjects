@@ -21,8 +21,6 @@ import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
-
-import 'package:window_manager/window_manager.dart';
 import 'firebase_options.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'dart:io';
@@ -87,26 +85,26 @@ Future<void> main() async {
   // initializeApp();
 
 // Vérifier que la plateforme est desktop avant d'initialiser window_manager
-  if (!Platform.isAndroid && !Platform.isIOS) {
-    // Initialiser window_manager uniquement pour les plateformes desktop
-    await windowManager.ensureInitialized();
-
-    // Désactiver le redimensionnement
-    WindowOptions windowOptions = const WindowOptions(
-      size: Size(1920, 1080), // Taille initiale (mode desktop)
-      center: true,
-      backgroundColor: Colors.transparent,
-      titleBarStyle: TitleBarStyle.normal,
-      // fullScreen: true,
-      // skipTaskbar: false,
-    );
-
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager
-          .setResizable(false); // Désactiver redimensionnement manuel
-      await windowManager.show();
-    });
-  }
+//   if (!Platform.isAndroid && !Platform.isIOS) {
+//     // Initialiser window_manager uniquement pour les plateformes desktop
+//     await windowManager.ensureInitialized();
+//
+//     // Désactiver le redimensionnement
+//     WindowOptions windowOptions = const WindowOptions(
+//       size: Size(1920, 1080), // Taille initiale (mode desktop)
+//       center: true,
+//       backgroundColor: Colors.transparent,
+//       titleBarStyle: TitleBarStyle.normal,
+//       // fullScreen: true,
+//       // skipTaskbar: false,
+//     );
+//
+//     windowManager.waitUntilReadyToShow(windowOptions, () async {
+//       await windowManager
+//           .setResizable(false); // Désactiver redimensionnement manuel
+//       await windowManager.show();
+//     });
+//   }
   // TikTokOpenApiFactory.init(new TikTokOpenConfig("VOTRE_CLIENT_KEY"));
   // if (Platform.isWindows) {
   //   WindowsVideoPlayer

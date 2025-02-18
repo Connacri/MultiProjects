@@ -44,7 +44,7 @@ class FacturationPageUI extends StatelessWidget {
           ],
         ),
         actions: [
-          WinMobile(),
+          // WinMobile(),
         ],
       ),
       body: LayoutBuilder(
