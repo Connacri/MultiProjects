@@ -1253,12 +1253,26 @@ class _FactureListState extends State<FactureList> {
               ),
               // Expanded(flex: 4, child: YouTubeVideoApp()),
               Expanded(
-                  child: ElevatedButton(
-                      onPressed: () =>
-                          Navigator.of(context).push(MaterialPageRoute(
-                            builder: (ctx) => CarouselForm(),
-                          )),
-                      child: Text('Ajouter Carousel'))),
+                  child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                        onPressed: () =>
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (ctx) => CarouselForm(),
+                            )),
+                        child: Text('Ajouter Carousel')),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                        '${factureProvider.totalfactures.length} Factures'),
+                  )
+                ],
+              )),
+
               Expanded(
                 flex: 8,
                 child: ListView.builder(

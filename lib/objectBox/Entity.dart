@@ -51,7 +51,7 @@ class User {
 class Produit {
   int id;
   @Unique(onConflict: ConflictStrategy.replace)
-  //@Index() // Indexation du QR pour une recherche rapide
+  @Index() // Indexation du QR pour une recherche rapide
   String? qr; // Stocker les QR codes comme une chaîne avec des séparateurs
   String? image;
   @Index()
@@ -92,36 +92,42 @@ class Produit {
     required this.derniereModification,
     this.isSynced = false,
     DateTime? syncedAt,
-  }) : syncedAt = syncedAt ??
-            DateTime.now(); // // Getters pour calculer les valeurs dynamiques
-  // double get prixAchat => approvisionnements.isNotEmpty
-  //     ? approvisionnements.map((a) => a.prixAchat).reduce((a, b) => a + b) /
-  //         approvisionnements.length
-  //     : 0;
+  }) : syncedAt = syncedAt ?? DateTime.now();
+
+// // Getter pour récupérer les QR codes sous forme de liste
+//   List<String> get qrCodeList {
+//     return qr != null && qr!.isNotEmpty ? qr!.split(',') : [];
+//   }
+//
+//   // Setter pour mettre à jour les QR codes
+//   set qrCodeList(List<String> codes) {
+//     qr = codes.join(',');
+//   }
+//
+//   void addQrCode(String code) {
+//     List<String> codes = qrCodeList;
+//     codes.add(code);
+//     qrCodeList = codes; // Met à jour la chaîne JSON avec la nouvelle liste
+//   }
 // Getter pour récupérer les QR codes sous forme de liste
-  List<String> get qrCodeList {
-    return qr != null && qr!.isNotEmpty ? qr!.split(',') : [];
-  }
+  List<String> get qrCodeList => qr?.split(',') ?? [];
 
-  // Setter pour mettre à jour les QR codes
+// Setter pour mettre à jour les QR codes
   set qrCodeList(List<String> codes) {
-    qr = codes.join(',');
+    if (codes.isEmpty) {
+      qr = null;
+    } else {
+      qr = codes.join(',');
+    }
   }
 
-  // // Getter pour récupérer la liste des QR codes sous forme de liste
-  // List<String> get qrCodeList {
-  //   return qr != null && qr!.isNotEmpty ? List<String>.from(json.decode(qr!)) : [];
-  // }
-  //
-  // // Setter pour mettre à jour les QR codes dans le format JSON
-  // set qrCodeList(List<String> codes) {
-  //   qr = json.encode(codes);
-  // }
-  // Méthode pour ajouter un QR code à la liste existante
+// Méthode pour ajouter un QR code à la liste existante
   void addQrCode(String code) {
-    List<String> codes = qrCodeList;
-    codes.add(code);
-    qrCodeList = codes; // Met à jour la chaîne JSON avec la nouvelle liste
+    final codes = List<String>.from(qrCodeList); // Copie de la liste actuelle
+    if (!codes.contains(code)) {
+      codes.add(code);
+      qrCodeList = codes; // Mettre à jour la chaîne avec la nouvelle liste
+    }
   }
 
   double get stock =>

@@ -44,6 +44,7 @@ class FacturationProvider with ChangeNotifier {
     _objectBox.init().then((_) {
       //_chargerFactures();
       chargerFactures();
+      _chargerFacturesTotal();
       //chargerFacturesPaginees();
     });
   }
@@ -73,7 +74,7 @@ class FacturationProvider with ChangeNotifier {
 
   bool get hasMoreFactures => _hasMoreFactures;
 
-  Future<void> chargerFactures({bool reset = true}) async {
+  Future<void> chargerFactures2({bool reset = true}) async {
     if (_isLoadingListFacture || !_hasMoreFactures) {
       print(
           "🚫 Appel ignoré : _isLoadingListFacture = $_isLoadingListFacture, _hasMoreFactures = $_hasMoreFactures");
@@ -133,8 +134,17 @@ class FacturationProvider with ChangeNotifier {
     }
   }
 
+  List<Document> _totalfactures = [];
+
+  List<Document> get totalfactures => _totalfactures;
+
+  void _chargerFacturesTotal() {
+    _totalfactures = _objectBox.factureBox.getAll().reversed.toList();
+    notifyListeners();
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////
-  Future<void> chargerFacturesPaginees2() async {
+  Future<void> chargerFactures() async {
     if (_isLoadingListFacture || !_hasMoreFactures) return;
 
     _isLoadingListFacture = true;
