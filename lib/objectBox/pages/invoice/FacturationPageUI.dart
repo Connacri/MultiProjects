@@ -1,19 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:marqueer/marqueer.dart';
 import 'package:calendar_timeline/calendar_timeline.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:kenzy/objectBox/Entity.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_barcodes/barcodes.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../MyProviders.dart';
 import '../../Utils/mobile_scanner/barcode_scanner_window.dart';
 import '../../Utils/winMobile.dart';
@@ -37,7 +39,7 @@ class FacturationPageUI extends StatelessWidget {
             ),
             Spacer(),
             Text(
-              '${DateFormat('EEE dd MMM yyyy - HH:mm', 'fr').format(DateTime.now()).capitalize()}',
+              '${intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr').format(DateTime.now()).capitalize()}',
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 15),
             ),
@@ -126,6 +128,14 @@ class _FactureDetailState extends State<FactureDetail> {
   String _barcodeBuffer = '';
   final TextEditingController _barcodeBufferController =
       TextEditingController();
+  late Stream<List<MarqueeData>> _marqueeDataStream;
+  final MarqueerController _controller = MarqueerController();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeMarqueeData();
+  }
 
   @override
   void dispose() {
@@ -134,8 +144,23 @@ class _FactureDetailState extends State<FactureDetail> {
     _barcodeBufferController.dispose();
     // Nettoyer le contrôleur pour éviter les fuites de mémoire
     // _impayerController.removeListener(_updateDisplayText);
-
     super.dispose();
+  }
+
+  void _initializeMarqueeData() {
+    _marqueeDataStream = Supabase.instance.client
+        .from('marquee')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((event) => event.map((row) => MarqueeData.fromMap(row)).toList());
+  }
+
+  Future<void> _launchUrl(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      throw 'Impossible d\'ouvrir $url';
+    }
   }
 
   @override
@@ -151,11 +176,191 @@ class _FactureDetailState extends State<FactureDetail> {
         scrollDirection: Axis.vertical,
         child: Column(
           children: [
-            ProductSearchBar(
-                // commerceProvider: commerceProvider,
-                // cartProvider: cartProvider,
-                barcodeBuffer: _barcodeBuffer,
-                barcodeBufferController: _barcodeBufferController),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 600) {
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width,
+                          child: ProductSearchBar(
+                              // commerceProvider: commerceProvider,
+                              // cartProvider: cartProvider,
+                              barcodeBuffer: _barcodeBuffer,
+                              barcodeBufferController:
+                                  _barcodeBufferController),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _showAddMarqueeDialog(context),
+                        icon: const Icon(Icons.add),
+                      ),
+                      SizedBox(
+                        height: 8,
+                      ),
+                      StreamBuilder<List<MarqueeData>>(
+                        stream: _marqueeDataStream,
+                        initialData: const [],
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Erreur: ${snapshot.error}'));
+                          }
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(
+                                child: Text('Aucune annonce disponible.'));
+                          }
+
+                          final marqueeData = snapshot.data!;
+
+                          return Container(
+                            height: 50,
+                            width: MediaQuery.of(context).size.width,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            color: Colors.yellow,
+                            child: Marqueer.builder(
+                              pps: 50,
+                              autoStart: true,
+                              separatorBuilder: (_, index) => const Center(
+                                child: Text(
+                                  '  -  ',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                              scrollablePointerIgnoring: true,
+                              direction: MarqueerDirection.rtl,
+                              controller: _controller,
+                              itemCount: marqueeData.length,
+                              itemBuilder: (context, index) {
+                                final item = marqueeData[index];
+
+                                return InkWell(
+                                  onTap: () => _launchUrl(item.webUrl),
+                                  child: Row(
+                                    children: [
+                                      if (item.imageUrl.isNotEmpty)
+                                        AspectRatio(
+                                          aspectRatio: 1,
+                                          child: CachedNetworkImage(
+                                              imageUrl: item.imageUrl,
+                                              fit: BoxFit.cover,
+                                              width: 50,
+                                              height: 50),
+                                        ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
+                                        style: const TextStyle(
+                                            fontSize: 18, color: Colors.black),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                } else {
+                  return Row(
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.2,
+                        child: ProductSearchBar(
+                            // commerceProvider: commerceProvider,
+                            // cartProvider: cartProvider,
+                            barcodeBuffer: _barcodeBuffer,
+                            barcodeBufferController: _barcodeBufferController),
+                      ),
+                      IconButton(
+                        onPressed: () => _showAddMarqueeDialog(context),
+                        icon: const Icon(Icons.add),
+                      ),
+                      SizedBox(
+                        width: 15,
+                      ),
+                      StreamBuilder<List<MarqueeData>>(
+                        stream: _marqueeDataStream,
+                        initialData: const [],
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return Center(
+                                child: Text('Erreur: ${snapshot.error}'));
+                          }
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(
+                                child: Text('Aucune annonce disponible.'));
+                          }
+
+                          final marqueeData = snapshot.data!;
+
+                          return Container(
+                            height: 50,
+                            width: MediaQuery.of(context).size.width * 0.43,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            color: Colors.yellow,
+                            child: Marqueer.builder(
+                              pps: 50,
+                              autoStart: true,
+                              separatorBuilder: (_, index) => const Center(
+                                child: Text(
+                                  '  -  ',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                              scrollablePointerIgnoring: true,
+                              direction: MarqueerDirection.rtl,
+                              controller: _controller,
+                              itemCount: marqueeData.length,
+                              itemBuilder: (context, index) {
+                                final item = marqueeData[index];
+
+                                return InkWell(
+                                  onTap: () => _launchUrl(item.webUrl),
+                                  child: Row(
+                                    children: [
+                                      if (item.imageUrl.isNotEmpty)
+                                        AspectRatio(
+                                          aspectRatio: 1,
+                                          child: CachedNetworkImage(
+                                              imageUrl: item.imageUrl,
+                                              fit: BoxFit.cover,
+                                              width: 50,
+                                              height: 50),
+                                        ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
+                                        style: const TextStyle(
+                                            fontSize: 18, color: Colors.black),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                }
+              },
+            ),
             LayoutBuilder(
               builder: (context, constraints) {
                 if (constraints.maxWidth < 600) {
@@ -676,360 +881,6 @@ class _FactureDetailState extends State<FactureDetail> {
         ),
       ),
     );
-
-    //   Scaffold(
-    //   body: SingleChildScrollView(
-    //     scrollDirection: Axis.vertical,
-    //     child: Column(
-    //       children: [
-    //         Padding(
-    //           padding: const EdgeInsets.symmetric(horizontal: 28),
-    //           child: TextField(
-    //             controller: _rechercheController,
-    //             decoration: InputDecoration(
-    //               labelText: 'Rechercher un produit',
-    //               suffixIcon: IconButton(
-    //                 icon: Icon(Icons.clear),
-    //                 onPressed: () {
-    //                   _rechercheController.clear();
-    //                   provider.rechercherProduits('');
-    //                 },
-    //               ),
-    //             ),
-    //             onChanged: (value) {
-    //               provider.rechercherProduits(value);
-    //             },
-    //           ),
-    //         ),
-    //         if (provider.produitsTrouves.isNotEmpty)
-    //           Expanded(
-    //             child: Padding(
-    //               padding: const EdgeInsets.symmetric(horizontal: 28),
-    //               child: ListView.builder(
-    //                 itemCount: provider.produitsTrouves.length,
-    //                 itemBuilder: (context, index) {
-    //                   final produit = provider.produitsTrouves[index];
-    //                   return ListTile(
-    //                     title: Text(produit.nom),
-    //                     subtitle: Text('Prix: ${produit.prixVente}'),
-    //                     trailing: IconButton(
-    //                       icon: Icon(Icons.add),
-    //                       onPressed: () {
-    //                         provider.ajouterProduitALaFacture(
-    //                             produit, 1, produit.prixVente);
-    //                         _rechercheController.clear();
-    //                         provider.rechercherProduits('');
-    //                       },
-    //                     ),
-    //                   );
-    //                 },
-    //               ),
-    //             ),
-    //           ),
-    //         LayoutBuilder(builder: (context, constraints) {
-    //           if (constraints.maxWidth < 600) {
-    //             return Column(
-    //               children: [
-    //                 ClientInfos(),
-    //                 TTC(
-    //                   totalAmount: provider.calculerTotalHT(),
-    //                   localImpayer:
-    //                       double.tryParse(_impayerController.text) ?? 0.0,
-    //                 ),
-    //                 TotalDetail(
-    //                   totalAmount: provider.calculerTotalHT(),
-    //                   localImpayer:
-    //                       double.tryParse(_impayerController.text) ?? 0.0,
-    //                 ),
-    //               ],
-    //             );
-    //           } else {
-    //             return Row(
-    //               children: [
-    //                 Expanded(flex: 4, child: ClientInfos()),
-    //                 Expanded(
-    //                   flex: 3,
-    //                   child: TTC(
-    //                     totalAmount: provider.calculerTotalHT(),
-    //                     localImpayer:
-    //                         double.tryParse(_impayerController.text) ?? 0.0,
-    //                   ),
-    //                 ),
-    //                 Expanded(
-    //                   flex: 2,
-    //                   child: TotalDetail(
-    //                     totalAmount: provider.calculerTotalHT(),
-    //                     localImpayer:
-    //                         double.tryParse(_impayerController.text) ?? 0.0,
-    //                   ),
-    //                 ),
-    //               ],
-    //             );
-    //           }
-    //         }),
-    //         LayoutBuilder(builder: (context, constraints) {
-    //           if (constraints.maxWidth < 600) {
-    //             return Container(
-    //               height: 60,
-    //               child: Column(
-    //                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //                 children: [
-    //                   Spacer(
-    //                     flex: 1,
-    //                   ),
-    //                   Expanded(
-    //                     flex: 3,
-    //                     child: provider.lignesFacture.isEmpty
-    //                         ? SizedBox.shrink()
-    //                         : EditableField(
-    //                             initialValue: provider.impayer,
-    //                             impayerController: _impayerController,
-    //                           ),
-    //                   ),
-    //                   Spacer(
-    //                     flex: 2,
-    //                   ),
-    //                   ElevatedButton.icon(
-    //                     onPressed: provider.lignesFacture.isEmpty
-    //                         ? null
-    //                         : () {
-    //                             provider
-    //                                 .creerNouvelleFacture(); // Crée une nouvelle facture
-    //                             _impayerController.clear();
-    //                             _rechercheController.clear();
-    //                             context
-    //                                 .read<EditableFieldProvider>()
-    //                                 .AlwaystoggleEditable();
-    //                           },
-    //                     style: ElevatedButton.styleFrom(
-    //                       foregroundColor:
-    //                           Theme.of(context).colorScheme.onPrimary,
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.primary,
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.circular(15.0),
-    //                       ),
-    //                     ),
-    //                     label: Text('Nouvelle Facture'),
-    //                     icon: Padding(
-    //                       padding: const EdgeInsets.symmetric(vertical: 18),
-    //                       child: Icon(Icons.add),
-    //                     ),
-    //                   ),
-    //                   Spacer(
-    //                     flex: 2,
-    //                   ),
-    //                   ElevatedButton.icon(
-    //                     onPressed: provider.lignesFacture.isEmpty
-    //                         ? null
-    //                         : () {
-    //                             provider.sauvegarderFacture();
-    //                             _impayerController.clear();
-    //                             context
-    //                                 .read<EditableFieldProvider>()
-    //                                 .AlwaystoggleEditable();
-    //                           },
-    //                     style: ElevatedButton.styleFrom(
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.circular(15.0),
-    //                       ),
-    //                     ),
-    //                     label: Text('Sauvegarder la facture'),
-    //                     icon: Padding(
-    //                       padding: const EdgeInsets.symmetric(vertical: 18),
-    //                       child: Icon(Icons.save),
-    //                     ),
-    //                   ),
-    //                   Spacer(
-    //                     flex: 1,
-    //                   ),
-    //                 ],
-    //               ),
-    //             );
-    //           } else {
-    //             return Container(
-    //               height: 60,
-    //               child: Row(
-    //                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-    //                 children: [
-    //                   Spacer(
-    //                     flex: 1,
-    //                   ),
-    //                   Expanded(
-    //                     flex: 3,
-    //                     child: provider.lignesFacture.isEmpty
-    //                         ? SizedBox.shrink()
-    //                         : EditableField(
-    //                             initialValue: provider.impayer,
-    //                             impayerController: _impayerController,
-    //                           ),
-    //                   ),
-    //                   Spacer(
-    //                     flex: 2,
-    //                   ),
-    //                   ElevatedButton.icon(
-    //                     onPressed: provider.lignesFacture.isEmpty
-    //                         ? null
-    //                         : () {
-    //                             provider
-    //                                 .creerNouvelleFacture(); // Crée une nouvelle facture
-    //                             _impayerController.clear();
-    //                             _rechercheController.clear();
-    //                             context
-    //                                 .read<EditableFieldProvider>()
-    //                                 .AlwaystoggleEditable();
-    //                           },
-    //                     style: ElevatedButton.styleFrom(
-    //                       foregroundColor:
-    //                           Theme.of(context).colorScheme.onPrimary,
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.primary,
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.circular(15.0),
-    //                       ),
-    //                     ),
-    //                     label: Text('Nouvelle Facture'),
-    //                     icon: Padding(
-    //                       padding: const EdgeInsets.symmetric(vertical: 18),
-    //                       child: Icon(Icons.add),
-    //                     ),
-    //                   ),
-    //                   Spacer(
-    //                     flex: 2,
-    //                   ),
-    //                   ElevatedButton.icon(
-    //                     onPressed: provider.lignesFacture.isEmpty
-    //                         ? null
-    //                         : () {
-    //                             provider.sauvegarderFacture();
-    //                             _impayerController.clear();
-    //                             context
-    //                                 .read<EditableFieldProvider>()
-    //                                 .AlwaystoggleEditable();
-    //                           },
-    //                     style: ElevatedButton.styleFrom(
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.circular(15.0),
-    //                       ),
-    //                     ),
-    //                     label: Text('Sauvegarder la facture'),
-    //                     icon: Padding(
-    //                       padding: const EdgeInsets.symmetric(vertical: 18),
-    //                       child: Icon(Icons.save),
-    //                     ),
-    //                   ),
-    //                   Spacer(
-    //                     flex: 1,
-    //                   ),
-    //                 ],
-    //               ),
-    //             );
-    //           }
-    //         }),
-    //         Expanded(
-    //           child: SingleChildScrollView(
-    //             child: DataTable(
-    //               columns: const [
-    //                 DataColumn(label: Text('Produit')),
-    //                 DataColumn(label: Text('Quantité')),
-    //                 DataColumn(label: Text('Prix Unitaire')),
-    //                 DataColumn(label: Text('Total')),
-    //                 DataColumn(label: Text('Actions')),
-    //               ],
-    //               rows: provider.lignesFacture.map((ligne) {
-    //                 final index = provider.lignesFacture.indexOf(ligne);
-    //                 final state = provider.getLigneEditionState(index);
-    //
-    //                 return DataRow(
-    //                   cells: [
-    //                     DataCell(Text(
-    //                         ligne.produit.target?.nom ?? 'Produit inconnu')),
-    //                     DataCell(
-    //                       // state.isEditedQty
-    //                       //     ? TextFormField(
-    //                       //         initialValue: ligne.quantite.toStringAsFixed(2),
-    //                       //         keyboardType: TextInputType.number,
-    //                       //         onChanged: (value) {
-    //                       //           final nouvelleQuantite =
-    //                       //               double.tryParse(value) ?? 0;
-    //                       //           provider.modifierLigne(
-    //                       //             index,
-    //                       //             nouvelleQuantite,
-    //                       //             ligne.prixUnitaire,
-    //                       //           );
-    //                       //         },
-    //                       //         onTapOutside: (event) {
-    //                       //           provider.toggleEditQty(index);
-    //                       //         },
-    //                       //       )
-    //                       //     :
-    //                       Text(ligne.quantite.toStringAsFixed(2)),
-    //                       // onTap: () {
-    //                       //   provider.toggleEditQty(index);
-    //                       // },
-    //                       // onTapDown: (TapDownDetails) {
-    //                       //   provider.toggleEditQty(index);
-    //                       // },
-    //                       // onTapCancel: () {
-    //                       //   provider.toggleEditQty(index);
-    //                       // },
-    //                     ),
-    //                     DataCell(
-    //                       // state.isEditedPu
-    //                       //     ? TextFormField(
-    //                       //         initialValue:
-    //                       //             ligne.prixUnitaire.toStringAsFixed(2),
-    //                       //         keyboardType: TextInputType.number,
-    //                       //         onChanged: (value) {
-    //                       //           final nouveauPrix =
-    //                       //               double.tryParse(value) ?? 0;
-    //                       //           provider.modifierLigne(
-    //                       //             index,
-    //                       //             ligne.quantite,
-    //                       //             nouveauPrix,
-    //                       //           );
-    //                       //         },
-    //                       //         onTapOutside: (event) {
-    //                       //           provider.toggleEditPu(index);
-    //                       //         },
-    //                       //       )
-    //                       //     :
-    //                       Text(ligne.prixUnitaire.toStringAsFixed(2)),
-    //                       //     onTap: () {
-    //                       //   provider.toggleEditPu(index);
-    //                       // }, showEditIcon: true
-    //                     ),
-    //                     DataCell(Text((ligne.quantite * ligne.prixUnitaire)
-    //                         .toStringAsFixed(2))),
-    //                     DataCell(
-    //                       Row(
-    //                         children: [
-    //                           IconButton(
-    //                             icon: Icon(Icons.delete),
-    //                             onPressed: () {
-    //                               provider.supprimerLigne(index);
-    //                             },
-    //                           ),
-    //                           IconButton(
-    //                             icon: Icon(Icons.edit),
-    //                             onPressed: () {
-    //                               _showEditDialog(
-    //                                   context, ligne, provider, index);
-    //                             },
-    //                           ),
-    //                         ],
-    //                       ),
-    //                     ),
-    //                   ],
-    //                 );
-    //               }).toList(),
-    //             ),
-    //           ),
-    //         ),
-    //       ],
-    //     ),
-    //   ),
-    // );
   }
 
   void _showEditDialog(BuildContext context, LigneDocument ligne,
@@ -1135,6 +986,13 @@ class _FactureDetailState extends State<FactureDetail> {
           ],
         );
       },
+    );
+  }
+
+  void _showAddMarqueeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AddMarqueeDialog(),
     );
   }
 }
@@ -1419,7 +1277,7 @@ class _FactureListState extends State<FactureList> {
                             ),
                           ),
                           Text(
-                            DateFormat('EEE dd MMM yyyy  -  HH:mm', 'fr')
+                            intl.DateFormat('EEE dd MMM yyyy  -  HH:mm', 'fr')
                                 .format(DateTime.parse(facture.date.toString()))
                                 .capitalize(),
                             style: TextStyle(
@@ -1915,7 +1773,7 @@ class TTC extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text(
-                NumberFormat.currency(
+                intl.NumberFormat.currency(
                   locale: 'fr_DZ', // Locale pour l'Algérie
                   symbol: '', // Symbole de la devise
                   decimalDigits: 2, // Nombre de décimales
@@ -1970,7 +1828,7 @@ class TotalDetail extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(
                   facture != null
-                      ? DateFormat('EEE dd MMM yyyy - HH:mm', 'fr')
+                      ? intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr')
                           .format(facture!.date)
                           .capitalize()
                       : '',
@@ -2611,205 +2469,104 @@ class _ProductSearchField1State extends State<ProductSearchField> {
   }
 }
 
-//
-// class CarouselBanner extends StatefulWidget {
-//   const CarouselBanner({super.key});
-//
-//   @override
-//   State<CarouselBanner> createState() => _CarouselBannerState();
-// }
-//
-// class _CarouselBannerState extends State<CarouselBanner> {
-//   final CarouselController controller = CarouselController(initialItem: 1);
-//   bool _isDragging = false;
-//   Offset? _lastPosition;
-//   late Timer _timer;
-//   final double scrollSpeed = 30.0; // Décalage en pixels par step
-//   final Duration scrollDuration = Duration(milliseconds: 800);
-//   final Duration interval = Duration(seconds: 3);
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _startAutoScroll();
-//   }
-//
-//   void _startAutoScroll() {
-//     _timer = Timer.periodic(interval, (Timer timer) {
-//       if (controller.hasClients) {
-//         double nextOffset = controller.offset + scrollSpeed;
-//
-//         if (nextOffset >= controller.position.maxScrollExtent) {
-//           // ⚡ Instantanément revenir au début (évite un effet de transition visible)
-//           controller.jumpTo(0.0);
-//         } else {
-//           // 🔄 Défilement fluide
-//           controller.animateTo(
-//             nextOffset,
-//             duration: scrollDuration,
-//             curve: Curves.easeInOut,
-//           );
-//         }
-//       }
-//     });
-//   }
-//
-//   @override
-//   void dispose() {
-//     controller.dispose();
-//     _timer.cancel();
-//     super.dispose();
-//   }
-//
-//   void _handleDragStart(Offset position) {
-//     _isDragging = true;
-//     _lastPosition = position;
-//   }
-//
-//   void _handleDragEnd(Offset position) {
-//     _isDragging = false;
-//     _lastPosition = null;
-//   }
-//
-//   void _handleDragUpdate(Offset position) {
-//     if (!_isDragging || _lastPosition == null) return;
-//
-//     final double dx = position.dx - _lastPosition!.dx;
-//     final double dy = position.dy - _lastPosition!.dy;
-//
-//     if (controller.hasClients) {
-//       controller.jumpTo(
-//         (controller.offset - dx).clamp(
-//           0.0,
-//           controller.position.maxScrollExtent,
-//         ),
-//       );
-//     }
-//
-//     _lastPosition = position;
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final double height = MediaQuery.sizeOf(context).height;
-//
-//     return MouseRegion(
-//       cursor:
-//           _isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
-//       child: Listener(
-//         onPointerDown: (event) => _handleDragStart(event.position),
-//         onPointerUp: (event) => _handleDragEnd(event.position),
-//         onPointerMove: (event) => _handleDragUpdate(event.position),
-//         child: ConstrainedBox(
-//           constraints: BoxConstraints(maxHeight: height / 2),
-//           child: CarouselView.weighted(
-//             controller: controller,
-//             //itemSnapping: true,
-//             flexWeights: const <int>[1, 7, 1],
-//             children: ImageInfo.values.map((ImageInfo image) {
-//               return HeroLayoutCard(imageInfo: image);
-//             }).toList(),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-//
-// class HeroLayoutCard extends StatelessWidget {
-//   const HeroLayoutCard({
-//     super.key,
-//     required this.imageInfo,
-//   });
-//
-//   final ImageInfo imageInfo;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     final double width = MediaQuery.sizeOf(context).width;
-//     return Stack(
-//         alignment: AlignmentDirectional.bottomStart,
-//         children: <Widget>[
-//           ClipRect(
-//             child: OverflowBox(
-//               maxWidth: width * 7 / 8,
-//               minWidth: width * 7 / 8,
-//               child: Image(
-//                 fit: BoxFit.cover,
-//                 image: NetworkImage(
-//                     'https://flutter.github.io/assets-for-api-docs/assets/material/${imageInfo.url}'),
-//               ),
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(18.0),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               mainAxisSize: MainAxisSize.min,
-//               children: <Widget>[
-//                 Text(
-//                   imageInfo.title,
-//                   overflow: TextOverflow.clip,
-//                   softWrap: false,
-//                   style: Theme.of(context)
-//                       .textTheme
-//                       .headlineLarge
-//                       ?.copyWith(color: Colors.white),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 Text(
-//                   imageInfo.subtitle,
-//                   overflow: TextOverflow.clip,
-//                   softWrap: false,
-//                   style: Theme.of(context)
-//                       .textTheme
-//                       .bodyMedium
-//                       ?.copyWith(color: Colors.white),
-//                 )
-//               ],
-//             ),
-//           ),
-//         ]);
-//   }
-// }
-//
-// enum CardInfo {
-//   camera('Cameras', Icons.video_call, Color(0xff2354C7), Color(0xffECEFFD)),
-//   lighting('Lighting', Icons.lightbulb, Color(0xff806C2A), Color(0xffFAEEDF)),
-//   climate('Climate', Icons.thermostat, Color(0xffA44D2A), Color(0xffFAEDE7)),
-//   wifi('Wifi', Icons.wifi, Color(0xff417345), Color(0xffE5F4E0)),
-//   media('Media', Icons.library_music, Color(0xff2556C8), Color(0xffECEFFD)),
-//   security(
-//       'Security', Icons.crisis_alert, Color(0xff794C01), Color(0xffFAEEDF)),
-//   safety(
-//       'Safety', Icons.medical_services, Color(0xff2251C5), Color(0xffECEFFD)),
-//   more('', Icons.add, Color(0xff201D1C), Color(0xffE3DFD8));
-//
-//   const CardInfo(this.label, this.icon, this.color, this.backgroundColor);
-//
-//   final String label;
-//   final IconData icon;
-//   final Color color;
-//   final Color backgroundColor;
-// }
-//
-// enum ImageInfo {
-//   image0('The Flow', 'Sponsored | Season 1 Now Streaming',
-//       'content_based_color_scheme_1.png'),
-//   image1('Through the Pane', 'Sponsored | Season 1 Now Streaming',
-//       'content_based_color_scheme_2.png'),
-//   image2('Iridescence', 'Sponsored | Season 1 Now Streaming',
-//       'content_based_color_scheme_3.png'),
-//   image3('Sea Change', 'Sponsored | Season 1 Now Streaming',
-//       'content_based_color_scheme_4.png'),
-//   image4('Blue Symphony', 'Sponsored | Season 1 Now Streaming',
-//       'content_based_color_scheme_5.png'),
-//   image5('When It Rains', 'Sponsored | Season 1 Now Streaming',
-//       'content_based_color_scheme_6.png');
-//
-//   const ImageInfo(this.title, this.subtitle, this.url);
-//
-//   final String title;
-//   final String subtitle;
-//   final String url;
-// }
+class AddMarqueeDialog extends StatefulWidget {
+  @override
+  _AddMarqueeDialogState createState() => _AddMarqueeDialogState();
+}
+
+class _AddMarqueeDialogState extends State<AddMarqueeDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _textController = TextEditingController();
+  final TextEditingController _prixController = TextEditingController();
+  final TextEditingController _imageUrlController = TextEditingController();
+  final TextEditingController _webUrlController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _addMarquee() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await Supabase.instance.client.from('marquee').insert({
+        'text': _textController.text.trim(),
+        'prix': double.tryParse(_prixController.text) ?? 0.0,
+        'imageUrl': _imageUrlController.text.trim(),
+        'webUrl': _webUrlController.text.trim(),
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      if (mounted) {
+        Navigator.pop(context); // Ferme la boîte de dialogue après succès
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur: ${error.toString()}')),
+      );
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Ajouter une Marquee'),
+      content: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextFormField(
+              controller: _textController,
+              decoration:
+                  const InputDecoration(labelText: 'Texte de l\'annonce'),
+              validator: (value) =>
+                  value == null || value.isEmpty ? 'Champ requis' : null,
+            ),
+            TextFormField(
+              controller: _prixController,
+              decoration: const InputDecoration(labelText: 'Prix'),
+              keyboardType: TextInputType.number,
+              validator: (value) =>
+                  value == null || double.tryParse(value) == null
+                      ? 'Entrer un prix valide'
+                      : null,
+            ),
+            TextFormField(
+              controller: _imageUrlController,
+              decoration: const InputDecoration(
+                  labelText: 'URL de l\'image (facultatif)'),
+            ),
+            TextFormField(
+              controller: _webUrlController,
+              decoration:
+                  const InputDecoration(labelText: 'URL Web (facultatif)'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Annuler'),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _addMarquee,
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : const Text('Ajouter'),
+        ),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _prixController.dispose();
+    _imageUrlController.dispose();
+    _webUrlController.dispose();
+    super.dispose();
+  }
+}

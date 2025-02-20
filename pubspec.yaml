@@ -55,7 +55,7 @@ dependencies:
   #  calendar_timeline: ^1.0.5
   shimmer: ^3.0.0
   rename: ^3.0.2
-  marquee: ^2.3.0
+  marqueer: ^2.0.1
   screenshot: ^3.0.0
   email_validator: ^3.0.0
   flutter_islamic_icons: ^1.0.2
@@ -110,6 +110,7 @@ dependencies:
   #  media_kit_libs_audio: ^1.0.5 # Native audio dependencies.
   flutter_avif: ^3.0.0
   youtube_player_flutter: ^9.1.1
+
 
 
 

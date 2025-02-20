@@ -51,6 +51,49 @@ class CarouselData {
   }
 }
 
+class MarqueeData {
+  final String text;
+  final double prix; // Utilisez double au lieu de float8
+  final String imageUrl;
+  final String webUrl;
+  final DateTime created_at;
+
+  MarqueeData({
+    required this.text,
+    required this.prix,
+    required this.imageUrl,
+    required this.webUrl,
+    required this.created_at,
+  });
+
+  // Conversion du modèle en Map pour insertion dans Supabase
+  Map<String, dynamic> toMap() {
+    return {
+      'text': text,
+
+      'prix': prix, // Converti en nombre
+      'imageUrl': imageUrl,
+      'webUrl': webUrl, // Assurez-vous que cette colonne existe dans Supabase
+      'created_at': created_at.toIso8601String(), // Format ISO pour DateTime
+    };
+  }
+
+  // Conversion d'une Map Supabase en objet CarouselData
+  factory MarqueeData.fromMap(Map<String, dynamic> map) {
+    return MarqueeData(
+      text: map['text'] ?? '',
+
+      prix: (map['prix'] as num?)?.toDouble() ?? 0.0,
+      // Conversion en double
+      imageUrl: map['imageUrl'] ?? '',
+      webUrl: map['webUrl'] ?? '',
+      // Assurez-vous que cette colonne existe
+      created_at: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
+      // Convertir le String en DateTime
+    );
+  }
+}
+
 // Bouton pour ajouter des données à Supabase
 class AddCarouselButton extends StatelessWidget {
   final TextEditingController titleController;
