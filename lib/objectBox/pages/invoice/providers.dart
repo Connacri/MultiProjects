@@ -23,7 +23,7 @@ class FacturationProvider with ChangeNotifier {
       false; // Pour suivre si une facture est en cours de modification
   bool get isEditing => _isEditing;
   bool _hasChanges =
-      false; // Pour suivre si des modifications ont été apportées
+      false; // Pour suivre si des modifications ont été apportées.
 
   bool get hasChanges => _hasChanges;
 
