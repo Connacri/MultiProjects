@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
@@ -43,7 +44,7 @@ class FacturationProvider with ChangeNotifier {
   FacturationProvider() {
     _objectBox.init().then((_) {
       //_chargerFactures();
-      chargerFactures();
+      chargerFactures2();
       _chargerFacturesTotal();
       //chargerFacturesPaginees();
     });
@@ -423,12 +424,181 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sauvegarderFacture() async {
+  // Future<void> sauvegarderFacture() async {
+  //   print('Sauvegarde de la facture en cours...');
+  //
+  //   try {
+  //     if (_factureEnCours == null) {
+  //       print('Création d\'une nouvelle facture');
+  //       final nouvelleFacture = Document(
+  //         type: 'vente',
+  //         qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
+  //         impayer: _impayer,
+  //         derniereModification: DateTime.now(),
+  //         isSynced: false,
+  //         date: DateTime.now(),
+  //       );
+  //
+  //       // Associer le client sélectionné à la nouvelle facture
+  //       //  if (_selectedClient != null) {
+  //       nouvelleFacture.client.target = _selectedClient;
+  //       // }
+  //
+  //       // Ajouter les lignes de document à la nouvelle facture
+  //       nouvelleFacture.lignesDocument.addAll(_lignesFacture);
+  //
+  //       // Sauvegarder la nouvelle facture dans la base de données
+  //       _objectBox.factureBox.put(nouvelleFacture);
+  //
+  //       // Sauvegarder les lignes de document
+  //       for (final ligne in _lignesFacture) {
+  //         ligne.facture.target = nouvelleFacture;
+  //         _objectBox.ligneFacture.put(ligne);
+  //       }
+  //
+  //       // Ajouter la nouvelle facture à la liste des factures
+  //       _facturesList.add(nouvelleFacture);
+  //     } else {
+  //       // Mettre à jour la facture existante
+  //       _factureEnCours!.lignesDocument.clear();
+  //       _factureEnCours!.lignesDocument.addAll(_lignesFacture);
+  //       _factureEnCours!.impayer = _impayer;
+  //
+  //       // Associer le client sélectionné à la facture existante
+  //       // if (_selectedClient != null) {
+  //       _factureEnCours!.client.target = _selectedClient;
+  //       //  }
+  //
+  //       // Sauvegarder la facture mise à jour dans la base de données
+  //       _objectBox.factureBox.put(_factureEnCours!);
+  //
+  //       // Sauvegarder les lignes de document
+  //       for (final ligne in _lignesFacture) {
+  //         ligne.facture.target = _factureEnCours;
+  //         _objectBox.ligneFacture.put(ligne);
+  //       }
+  //     }
+  //
+  //     // Réinitialiser l'état après la sauvegarde
+  //     _factureEnCours = null;
+  //     _lignesFacture.clear();
+  //     _impayer = 0.0;
+  //     _selectedClient = null; // Réinitialiser le client sélectionné
+  //     chargerFactures2();
+  //     // chargerFacturesPaginees();
+  //
+  //     print('Facture sauvegardée avec succès');
+  //     _isEditing = false; // Désactiver l'état d'édition après la sauvegarde
+  //     _hasChanges = false; // Réinitialiser l'état des modifications
+  //     notifyListeners();
+  //   } catch (e) {
+  //     print('Erreur lors de la sauvegarde de la facture: $e');
+  //   }
+  // }
+  Future<void> sauvegarderFacture(BuildContext context) async {
     print('Sauvegarde de la facture en cours...');
 
     try {
+      // Prepare a map to track how much quantity needs to be deducted for each product
+      final Map<int, double> quantitesToDeduct = {};
+
+      // Calculate total quantity needed for each product from invoice lines
+      for (final ligne in _lignesFacture) {
+        final produitId = ligne.produit.target?.id;
+        if (produitId != null) {
+          quantitesToDeduct[produitId] =
+              (quantitesToDeduct[produitId] ?? 0) + ligne.quantite;
+        }
+      }
+
+      // Check if we have enough stock for all products
+      for (final entry in quantitesToDeduct.entries) {
+        final produit = _objectBox.produitBox.get(entry.key);
+        if (produit == null) continue;
+
+        final stockDisponible = produit.calculerStockTotal();
+        if (stockDisponible < entry.value) {
+          //throw Exception('Stock insuffisant pour le produit: ${produit.nom}');
+          // Afficher le dialogue d'erreur
+          await showDialog(
+            context: context,
+            barrierDismissible: false, // L'utilisateur doit cliquer sur OK
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text(
+                  'Stock Insuffisant',
+                  style: TextStyle(color: Colors.red),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Le stock est insuffisant pour le produit:'),
+                    SizedBox(height: 8),
+                    Text(
+                      produit.nom,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                        'Stock disponible: ${stockDisponible.toStringAsFixed(2)}'),
+                    Text(
+                        'Quantité demandée: ${entry.value.toStringAsFixed(2)}'),
+                  ],
+                ),
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  side: BorderSide(color: Colors.red, width: 2),
+                ),
+                actions: [
+                  TextButton(
+                    child: Text(
+                      'OK',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        }
+      }
+
+      // Deduct quantities from approvisionnements
+      for (final entry in quantitesToDeduct.entries) {
+        final produitId = entry.key;
+        double quantiteADeduire = entry.value;
+
+        // Get all approvisionnements for this product, ordered by date
+
+        final query = _objectBox.approvisionnementBox
+            .query(Approvisionnement_.produit.equals(produitId))
+          ..order(Approvisionnement_.datePeremption);
+
+        final approvisionnements =
+            query.build().find(); // Build the query before executing
+
+        // Deduct quantities following FIFO
+        for (final appro in approvisionnements) {
+          if (quantiteADeduire <= 0) break;
+
+          if (appro.quantite > 0) {
+            final quantitePrelevee = min(appro.quantite, quantiteADeduire);
+            appro.quantite -= quantitePrelevee;
+            quantiteADeduire -= quantitePrelevee;
+
+            // Update the approvisionnement in the database
+            _objectBox.approvisionnementBox.put(appro);
+          }
+        }
+      }
+
+      // Original invoice saving logic
       if (_factureEnCours == null) {
-        print('Création d\'une nouvelle facture');
         final nouvelleFacture = Document(
           type: 'vente',
           qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
@@ -438,60 +608,74 @@ class FacturationProvider with ChangeNotifier {
           date: DateTime.now(),
         );
 
-        // Associer le client sélectionné à la nouvelle facture
-        //  if (_selectedClient != null) {
         nouvelleFacture.client.target = _selectedClient;
-        // }
-
-        // Ajouter les lignes de document à la nouvelle facture
         nouvelleFacture.lignesDocument.addAll(_lignesFacture);
-
-        // Sauvegarder la nouvelle facture dans la base de données
         _objectBox.factureBox.put(nouvelleFacture);
 
-        // Sauvegarder les lignes de document
         for (final ligne in _lignesFacture) {
           ligne.facture.target = nouvelleFacture;
           _objectBox.ligneFacture.put(ligne);
         }
 
-        // Ajouter la nouvelle facture à la liste des factures
         _facturesList.add(nouvelleFacture);
       } else {
-        // Mettre à jour la facture existante
         _factureEnCours!.lignesDocument.clear();
         _factureEnCours!.lignesDocument.addAll(_lignesFacture);
         _factureEnCours!.impayer = _impayer;
-
-        // Associer le client sélectionné à la facture existante
-        // if (_selectedClient != null) {
         _factureEnCours!.client.target = _selectedClient;
-        //  }
-
-        // Sauvegarder la facture mise à jour dans la base de données
         _objectBox.factureBox.put(_factureEnCours!);
 
-        // Sauvegarder les lignes de document
         for (final ligne in _lignesFacture) {
           ligne.facture.target = _factureEnCours;
           _objectBox.ligneFacture.put(ligne);
         }
       }
 
-      // Réinitialiser l'état après la sauvegarde
+      // Reset state
       _factureEnCours = null;
       _lignesFacture.clear();
       _impayer = 0.0;
-      _selectedClient = null; // Réinitialiser le client sélectionné
+      _selectedClient = null;
+      chargerFactures2();
       chargerFactures();
-      // chargerFacturesPaginees();
 
       print('Facture sauvegardée avec succès');
-      _isEditing = false; // Désactiver l'état d'édition après la sauvegarde
-      _hasChanges = false; // Réinitialiser l'état des modifications
+      _isEditing = false;
+      _hasChanges = false;
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la sauvegarde de la facture: $e');
+      // Afficher une alerte générique en cas d'erreur
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(
+              'Erreur',
+              style: TextStyle(color: Colors.red),
+            ),
+            content: Text('Une erreur est survenue lors de la sauvegarde: $e'),
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: BorderSide(color: Colors.red, width: 2),
+            ),
+            actions: [
+              TextButton(
+                child: Text(
+                  'OK',
+                  style: TextStyle(color: Colors.red),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+
+      rethrow; // Rethrow the exception to handle it in the UI
     }
   }
 
@@ -501,26 +685,79 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Future<void> supprimerFacture(Document facture) async {
+  //   // Supprimer la facture de la base de données
+  //   _objectBox.factureBox.remove(facture.id);
+  //
+  //   // Supprimer les lignes de document associées
+  //   for (final ligne in facture.lignesDocument) {
+  //     _objectBox.ligneFacture.remove(ligne.id);
+  //   }
+  //
+  //   // Mettre à jour la liste des factures
+  //   _facturesList.remove(facture);
+  //
+  //   // Si la facture supprimée est la facture en cours, la réinitialiser
+  //   if (_factureEnCours?.id == facture.id) {
+  //     _factureEnCours = null;
+  //     _lignesFacture.clear();
+  //   }
+  //
+  //   // Notifier les listeners pour mettre à jour l'interface utilisateur
+  //   notifyListeners();
+  // }
   Future<void> supprimerFacture(Document facture) async {
-    // Supprimer la facture de la base de données
-    _objectBox.factureBox.remove(facture.id);
+    try {
+      // Rétablir les quantités dans les approvisionnements
+      for (final ligne in facture.lignesDocument) {
+        final produitId = ligne.produit.target?.id;
+        if (produitId == null) continue;
 
-    // Supprimer les lignes de document associées
-    for (final ligne in facture.lignesDocument) {
-      _objectBox.ligneFacture.remove(ligne.id);
+        double quantiteARetablir = ligne.quantite;
+
+        // Récupérer les approvisionnements par ordre de date de péremption
+        final query = _objectBox.approvisionnementBox
+            .query(Approvisionnement_.produit.equals(produitId))
+          ..order(Approvisionnement_.datePeremption);
+
+        final approvisionnements = query.build().find();
+
+        // Parcourir les approvisionnements et rétablir les quantités
+        for (final appro in approvisionnements) {
+          if (quantiteARetablir <= 0) break;
+
+          // On rétablit la quantité dans l'approvisionnement le plus ancien
+          appro.quantite += quantiteARetablir;
+          quantiteARetablir = 0;
+
+          // Mettre à jour l'approvisionnement dans la base de données
+          _objectBox.approvisionnementBox.put(appro);
+        }
+      }
+
+      // Supprimer la facture de la base de données
+      _objectBox.factureBox.remove(facture.id);
+
+      // Supprimer les lignes de document associées
+      for (final ligne in facture.lignesDocument) {
+        _objectBox.ligneFacture.remove(ligne.id);
+      }
+
+      // Mettre à jour la liste des factures
+      _facturesList.remove(facture);
+
+      // Si la facture supprimée est la facture en cours, la réinitialiser
+      if (_factureEnCours?.id == facture.id) {
+        _factureEnCours = null;
+        _lignesFacture.clear();
+      }
+
+      print('Facture supprimée avec succès et quantités rétablies');
+      notifyListeners();
+    } catch (e) {
+      print('Erreur lors de la suppression de la facture: $e');
+      rethrow;
     }
-
-    // Mettre à jour la liste des factures
-    _facturesList.remove(facture);
-
-    // Si la facture supprimée est la facture en cours, la réinitialiser
-    if (_factureEnCours?.id == facture.id) {
-      _factureEnCours = null;
-      _lignesFacture.clear();
-    }
-
-    // Notifier les listeners pour mettre à jour l'interface utilisateur
-    notifyListeners();
   }
 }
 

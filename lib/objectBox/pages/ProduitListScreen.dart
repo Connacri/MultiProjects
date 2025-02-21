@@ -3,7 +3,7 @@ import 'package:syncfusion_flutter_barcodes/barcodes.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dart_date/dart_date.dart';
-import 'package:faker/faker.dart';
+import 'package:faker/faker.dart' as fak;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -21,7 +21,7 @@ import '../Utils/winMobile.dart';
 import '../classeObjectBox.dart';
 import '../tests/doublons.dart';
 import 'FournisseurListScreen.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:percent_indicator/percent_indicator.dart';
 import 'addProduct.dart';
@@ -105,7 +105,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
   }
 
   String _createUsersAndUpdateRelations(ObjectBox objectbox) {
-    final faker = Faker();
+    final faker = fak.Faker();
     StringBuffer log = StringBuffer();
     log.writeln(
         'Début de la création des utilisateurs et de la mise à jour des relations...');
@@ -648,26 +648,44 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                 produit, /*fournisseurs*/
                               );
                             },
-                            child:
-                                produit.image == null || produit.image!.isEmpty
-                                    ? CircleAvatar(
-                                        child: Icon(Icons.image_not_supported),
+                            child: produit.image == null ||
+                                    produit.image!.isEmpty
+                                ? CircleAvatar(
+                                    child: Icon(Icons.image_not_supported),
+                                  )
+                                : Column(
+                                    children: [
+                                      Expanded(
+                                          child: CircleAvatar(
+                                        backgroundImage: produit.image !=
+                                                    null &&
+                                                produit.image!.isNotEmpty
+                                            ? (produit.image!.startsWith(
+                                                    'http') // Vérifie si c'est une URL distante
+                                                ? CachedNetworkImageProvider(
+                                                    produit.image!,
+                                                    errorListener: (error) =>
+                                                        Icon(Icons.error),
+                                                  )
+                                                : FileImage(
+                                                        File(produit.image!))
+                                                    as ImageProvider)
+                                            : AssetImage(
+                                                'assets/images/default.png'), // Image par défaut
                                       )
-                                    : Column(
-                                        children: [
-                                          Expanded(
-                                            child: CircleAvatar(
-                                              backgroundImage:
-                                                  CachedNetworkImageProvider(
-                                                produit.image!,
-                                                errorListener: (error) =>
-                                                    Icon(Icons.error),
-                                              ),
-                                            ),
+                                          // child:
+                                          //                             CircleAvatar(
+                                          //                               backgroundImage:
+                                          //                                   CachedNetworkImageProvider(
+                                          //                                 produit.image!,
+                                          //                                 errorListener: (error) =>
+                                          //                                     Icon(Icons.error),
+                                          //                               ),
+                                          //                             ),
                                           ),
-                                          Text('Id:' + produit.id.toString()),
-                                        ],
-                                      ),
+                                      Text('Id:' + produit.id.toString()),
+                                    ],
+                                  ),
                           ),
                         ),
                         title: Container(
@@ -1262,6 +1280,405 @@ void _deleteProduit(BuildContext context, Produit produit) {
   );
 }
 
+// class ProduitDetailPage extends StatelessWidget {
+//   final Produit produit;
+//
+//   ProduitDetailPage({required this.produit});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//         body: CustomScrollView(
+//       slivers: [
+//         SliverAppBar(
+//             expandedHeight: 400.0,
+//             pinned: true,
+//             flexibleSpace: LayoutBuilder(
+//               builder: (BuildContext context, BoxConstraints constraints) {
+//                 // Calculer le pourcentage de collapse
+//                 double percent = (constraints.maxHeight - kToolbarHeight) /
+//                     (400.0 - kToolbarHeight);
+//                 // Limiter entre 0 et 1
+//                 percent = percent.clamp(0.0, 1.0);
+//
+//                 return FlexibleSpaceBar(
+//                   title: Text(produit.nom.capitalize,
+//                       style: TextStyle(color: Colors.white70)),
+//                   titlePadding:
+//                       EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+//                   background: Stack(
+//                     alignment: Alignment.bottomCenter,
+//                     fit: StackFit.expand,
+//                     children: [
+//                       produit.image != null && produit.image!.isNotEmpty
+//                           ? Image(
+//                               image: produit.image!.startsWith('http')
+//                                   ? CachedNetworkImageProvider(produit.image!)
+//                                   : FileImage(File(produit.image!))
+//                                       as ImageProvider,
+//                               fit: BoxFit.cover,
+//                               errorBuilder: (context, error, stackTrace) =>
+//                                   Center(child: Icon(Icons.error, size: 50)),
+//                             )
+//                           : Center(
+//                               child: Icon(Icons.image_not_supported, size: 50)),
+//                       // Image par défaut
+//
+//                       // CachedNetworkImage(
+//                       //         imageUrl: produit.image!,
+//                       //         fit: BoxFit.cover,
+//                       //         errorWidget: (context, url, error) =>
+//                       //             Center(child: Icon(Icons.error, size: 50)),
+//                       //       ),
+//                       Container(
+//                         decoration: BoxDecoration(
+//                           gradient: LinearGradient(
+//                             begin: Alignment.topCenter,
+//                             end: Alignment.bottomCenter,
+//                             colors: [
+//                               Colors.transparent,
+//                               Colors.black.withOpacity(0.8),
+//                             ],
+//                             stops: [0.3, 1.0], // position du dégradé
+//                           ),
+//                         ),
+//                       ),
+//                       Positioned(
+//                         right: 20,
+//                         bottom: 20,
+//                         child: Column(
+//                           children: [
+//                             SizedBox(
+//                               width: 100,
+//                               child: Padding(
+//                                 padding: const EdgeInsets.all(8.0),
+//                                 child: Text(
+//                                   'ID : ${produit.id} \nQR : ${produit.qr}',
+//                                   style: TextStyle(
+//                                     color: Colors.white70,
+//                                   ),
+//                                 ),
+//                               ),
+//                             ),
+//                             SizedBox(
+//                               height: 100, width: 100,
+//                               child: SfBarcodeGenerator(
+//                                 value: produit.qr.toString(),
+//                                 symbology: QRCode(),
+//                                 barColor: Colors.white70,
+//                               ),
+//
+//                               // PrettyQr(
+//                               //     data: produit.qr.toString(),
+//                               //     elementColor: Theme.of(context).hintColor,
+//                               //   ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                       Container(
+//                         decoration: BoxDecoration(
+//                           color: Colors.black.withOpacity(1 - (1 * percent)),
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                   collapseMode: CollapseMode.parallax,
+//                 );
+//               },
+//             )),
+//         SliverList(
+//           delegate: SliverChildListDelegate(
+//             [
+//               Padding(
+//                 padding:
+//                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       'Dernière Modification : ' +
+//                           timeago.format(
+//                               produit.crud.target!.derniereModification,
+//                               locale: 'fr'),
+//                       style: TextStyle(fontSize: 12),
+//                     ),
+//                     SizedBox(height: 28),
+//                     // Center(
+//                     //     child: Padding(
+//                     //   padding: const EdgeInsets.all(8.0),
+//                     //   child: Text('QR : ${produit.qr}'),
+//                     // )),
+//                     // Center(
+//                     //   child: PrettyQr(
+//                     //     data: produit.qr.toString(),
+//                     //     elementColor: Theme.of(context).hintColor,
+//                     //   ),
+//                     // ),
+//                     // SizedBox(height: 8),
+//                     // Center(child: Text('Id : ${produit.id}')),
+//                     // Center(
+//                     //   child: Text(
+//                     //     produit.nom,
+//                     //     style: TextStyle(
+//                     //         fontSize: 24, fontWeight: FontWeight.bold),
+//                     //   ),
+//                     // ),
+//                     // SizedBox(height: 28),
+//                     // Text(
+//                     //   'Prix d\'achat: ${produit.prixAchat.toStringAsFixed(2)} DZD',
+//                     //   style: TextStyle(fontSize: 16),
+//                     // ),
+//                     Text(
+//                       'Prix de vente: ${produit.prixVente.toStringAsFixed(2)} DZD',
+//                       style: TextStyle(fontSize: 16),
+//                     ),
+//                     SizedBox(height: 8),
+//                     Text(
+//                       'Stock : ' + produit.stock.truncate().toString(),
+//                       style: TextStyle(fontSize: 16),
+//                     ),
+//                     produit.description != null &&
+//                             produit.description!.isNotEmpty
+//                         ? Padding(
+//                             padding: const EdgeInsets.symmetric(vertical: 16),
+//                             child:
+//                                 Text('Description :\n${produit.description}'),
+//                           )
+//                         : SizedBox.shrink(),
+//                     // Vérifiez si les données doivent être affichées
+//                     if ((produit.qtyPartiel != null &&
+//                             produit.qtyPartiel! > 1) &&
+//                         (produit.pricePartielVente != null &&
+//                             produit.pricePartielVente! > 0)) ...[
+//                       SizedBox(height: 16),
+//                       Text(
+//                         'Nombre de pièces dans ce pack: ${produit.qtyPartiel!.truncate()}',
+//                         style: const TextStyle(fontSize: 16),
+//                       ),
+//                       const SizedBox(height: 16),
+//                       Text(
+//                         'Prix de la pièce du détail: ${produit.pricePartielVente!.toStringAsFixed(2)}',
+//                         style: const TextStyle(fontSize: 16),
+//                       ),
+//                       SizedBox(height: 16),
+//                     ],
+//                     SizedBox(height: 10),
+//                     // Text('Stock Minimal pour l\'Alert : ' +
+//                     //     produit.stockinit.toString()),
+//                     // SizedBox(height: 10),
+//                     // Text('Stock Update : ' + produit.stockUpdate.toString()),
+//                     SizedBox(height: 10),
+//                     produit.approvisionnements.isEmpty ||
+//                             produit.approvisionnements == ''
+//                         ? Container()
+//                         : SingleChildScrollView(
+//                             scrollDirection: Axis.horizontal,
+//                             child: DataTable(
+//                               columns: [
+//                                 DataColumn(label: Text('Fournisseurs')),
+//                                 DataColumn(label: Text('Date de Création')),
+//                                 DataColumn(label: Text('Quantité')),
+//                                 DataColumn(label: Text('Prix d\'Achat')),
+//                                 DataColumn(label: Text('Date de Péremption')),
+//                               ],
+//                               rows: produit.approvisionnements.map((appro) {
+//                                 return DataRow(
+//                                   cells: [
+//                                     DataCell(
+//                                       Text(
+//                                         appro.fournisseur != null &&
+//                                                 appro.fournisseur.target != null
+//                                             ? '${appro.fournisseur.target!.nom}'
+//                                             : '-', // Valeur par défaut si fournisseur ou target est null
+//                                       ),
+//                                     ),
+//                                     DataCell(
+//                                       Text(
+//                                         appro.crud != null &&
+//                                                 appro.crud.target != null
+//                                             ? DateFormat(
+//                                                     'EEE dd MMM yyyy', 'fr')
+//                                                 .format(DateTime.parse(appro
+//                                                     .crud.target!.dateCreation
+//                                                     .toString()))
+//                                             : '-', // Valeur par défaut si crud ou target est null
+//                                       ),
+//                                     ),
+//                                     DataCell(Text(
+//                                         '${appro.quantite.truncate().toStringAsFixed(2)}')),
+//                                     DataCell(Text(
+//                                         '${appro.prixAchat?.toStringAsFixed(2) ?? '-'}')),
+//                                     DataCell(
+//                                       Text(
+//                                         appro.datePeremption != null
+//                                             ? DateFormat(
+//                                                     'EEE dd MMM yyyy', 'fr')
+//                                                 .format(DateTime.parse(appro
+//                                                     .datePeremption
+//                                                     .toString()))
+//                                             : '-', // Valeur par défaut si datePeremption est null
+//                                       ),
+//                                     ),
+//                                   ],
+//                                 );
+//                               }).toList(),
+//                             ),
+//                           ),
+//                     // SizedBox(height: 10),
+//                     // ...produit.approvisionnements.map((appro) {
+//                     //   return Padding(
+//                     //     padding: EdgeInsets.symmetric(vertical: 4.0),
+//                     //     child: Text(
+//                     //         '  Date Peremption :  ${appro.datePeremption}'),
+//                     //   );
+//                     // }).toList(),
+//                     //
+//                     // SizedBox(height: 10),
+//                     SizedBox(height: 10),
+//
+//                     produit.approvisionnements.length == 0
+//                         ? SizedBox.shrink()
+//                         : Divider(),
+//                     produit.approvisionnements.isEmpty ||
+//                             !produit.approvisionnements.any((appro) =>
+//                                 appro.fournisseur != null &&
+//                                 appro.fournisseur.target != null)
+//                         ? SizedBox.shrink()
+//                         : Text(
+//                             'Fournisseurs',
+//                             style: const TextStyle(
+//                               fontSize: 20,
+//                               fontWeight: FontWeight.bold,
+//                             ),
+//                           ),
+//                     SizedBox(height: 8),
+//                     // SizedBox(height: 10),
+//                     // ...produit.approvisionnements.map((appro) {
+//                     //   return Padding(
+//                     //     padding: EdgeInsets.symmetric(vertical: 4.0),
+//                     //     child: Text(
+//                     //         '  Date Peremption :  ${appro.datePeremption}'),
+//                     //   );
+//                     // }).toList(),
+//                     // Consumer<CommerceProvider>(
+//                     //   builder: (context, produitProvider, child) {
+//                     //return
+//                     Wrap(
+//                       spacing: 6.0, // Espace horizontal entre les éléments
+//                       runSpacing: 4.0, // Espace vertical entre les lignes
+//                       children: produit.approvisionnements
+//                           .where((appro) => appro.fournisseur.target != null)
+//                           .map((appro) {
+//                         return InkWell(
+//                           onTap: () {
+//                             Navigator.of(context).push(MaterialPageRoute(
+//                                 builder: (ctx) => ProduitsFournisseurPage(
+//                                       fournisseur: appro.fournisseur.target!,
+//                                     )));
+//                           },
+//                           child: Chip(
+//                             backgroundColor:
+//                                 Theme.of(context).brightness == Brightness.dark
+//                                     ? Theme.of(context).colorScheme.surface
+//                                     : Theme.of(context)
+//                                         .colorScheme
+//                                         .primary
+//                                         .withOpacity(0.1),
+//                             labelStyle: TextStyle(
+//                               color: Theme.of(context).brightness ==
+//                                       Brightness.dark
+//                                   ? Theme.of(context).colorScheme.onSurface
+//                                   : Theme.of(context).colorScheme.primary,
+//                               fontSize:
+//                                   12, // Ajout pour une taille de texte cohérente
+//                             ),
+//                             side: BorderSide(
+//                               color: Theme.of(context)
+//                                   .colorScheme
+//                                   .primary
+//                                   .withOpacity(0.5),
+//                               width: 1, // Définir une bordure subtile
+//                             ),
+//                             shape: RoundedRectangleBorder(
+//                               borderRadius:
+//                                   BorderRadius.all(Radius.circular(10)),
+//                             ),
+//                             padding: const EdgeInsets.symmetric(
+//                                 horizontal: 8, vertical: 4),
+//                             label: Text(
+//                               appro.fournisseur.target?.nom ??
+//                                   'Fournisseur inconnu',
+//                               overflow: TextOverflow
+//                                   .ellipsis, // Gérer les textes trop longs
+//                             ),
+//                           ),
+//                         );
+//                       }).toList(),
+//                     ),
+//                     //     ;
+//                     //   },
+//                     // ),
+//                     SizedBox(
+//                       height: 20,
+//                     ),
+//                     Row(
+//                       mainAxisAlignment: MainAxisAlignment.center,
+//                       children: [
+//                         Padding(
+//                           padding: const EdgeInsets.all(8.0),
+//                           child: ElevatedButton.icon(
+//                             onPressed: () {
+//                               context
+//                                   .read<CommerceProvider>()
+//                                   .supprimerProduit(produit);
+//                               Navigator.of(context).pop();
+//                             },
+//                             style: ElevatedButton.styleFrom(
+//                               // Utilise les couleurs du thème pour le bouton de suppression
+//                               backgroundColor:
+//                                   Theme.of(context).colorScheme.error,
+//                               foregroundColor:
+//                                   Theme.of(context).colorScheme.onError,
+//                               elevation: 2,
+//                             ),
+//                             label: Text('Supprimer'),
+//                             icon: Icon(Icons.delete),
+//                           ),
+//                         ),
+//                         Padding(
+//                           padding: const EdgeInsets.all(8.0),
+//                           child: ElevatedButton.icon(
+//                             onPressed: () async {
+//                               final updatedProduit =
+//                                   await Navigator.of(context).push(
+//                                 MaterialPageRoute(
+//                                   builder: (ctx) => editProduct(
+//                                     produit: produit,
+//                                   ),
+//                                 ),
+//                               );
+//                             },
+//                             label: Text('Modifier'),
+//                             icon: Icon(Icons.edit),
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                     SizedBox(
+//                       height: 50,
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ],
+//     ));
+//   }
+// }
+
 class ProduitDetailPage extends StatelessWidget {
   final Produit produit;
 
@@ -1270,385 +1687,607 @@ class ProduitDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: CustomScrollView(
-      slivers: [
-        SliverAppBar(
-            expandedHeight: 400.0,
-            pinned: true,
-            flexibleSpace: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                // Calculer le pourcentage de collapse
-                double percent = (constraints.maxHeight - kToolbarHeight) /
-                    (400.0 - kToolbarHeight);
-                // Limiter entre 0 et 1
-                percent = percent.clamp(0.0, 1.0);
+      body: Consumer<CommerceProvider>(
+        builder: (context, produitProvider, child) {
+          if (produit.id == 0) {
+            return Center(child: Text("Produit introuvable"));
+          }
 
-                return FlexibleSpaceBar(
-                  title: Text(produit.nom.capitalize,
-                      style: TextStyle(color: Colors.white70)),
-                  titlePadding:
-                      EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                  background: Stack(
-                    alignment: Alignment.bottomCenter,
-                    fit: StackFit.expand,
-                    children: [
-                      produit.image!.isEmpty
-                          ? Center(
-                              child: Icon(Icons.image_not_supported, size: 50))
-                          : CachedNetworkImage(
-                              imageUrl: produit.image!,
-                              fit: BoxFit.cover,
-                              errorWidget: (context, url, error) =>
-                                  Center(child: Icon(Icons.error, size: 50)),
-                            ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.8),
-                            ],
-                            stops: [0.3, 1.0], // position du dégradé
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 20,
-                        bottom: 20,
-                        child: Column(
+          return CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                  expandedHeight: 400.0,
+                  pinned: true,
+                  flexibleSpace: LayoutBuilder(
+                    builder:
+                        (BuildContext context, BoxConstraints constraints) {
+                      // Calculer le pourcentage de collapse
+                      double percent =
+                          (constraints.maxHeight - kToolbarHeight) /
+                              (400.0 - kToolbarHeight);
+                      // Limiter entre 0 et 1
+                      percent = percent.clamp(0.0, 1.0);
+
+                      return FlexibleSpaceBar(
+                        title: Text(produit.nom.capitalize,
+                            style: TextStyle(color: Colors.white70)),
+                        titlePadding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        background: Stack(
+                          alignment: Alignment.bottomCenter,
+                          fit: StackFit.expand,
                           children: [
-                            SizedBox(
-                              width: 100,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  'ID : ${produit.id} \nQR : ${produit.qr}',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                  ),
+                            produit.image != null && produit.image!.isNotEmpty
+                                ? Image(
+                                    image: produit.image!.startsWith('http')
+                                        ? CachedNetworkImageProvider(
+                                            produit.image!)
+                                        : FileImage(File(produit.image!))
+                                            as ImageProvider,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Center(
+                                            child: Icon(Icons.error, size: 50)),
+                                  )
+                                : Center(
+                                    child: Icon(Icons.image_not_supported,
+                                        size: 50)),
+                            // Image par défaut
+
+                            // CachedNetworkImage(
+                            //         imageUrl: produit.image!,
+                            //         fit: BoxFit.cover,
+                            //         errorWidget: (context, url, error) =>
+                            //             Center(child: Icon(Icons.error, size: 50)),
+                            //       ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.8),
+                                  ],
+                                  stops: [0.3, 1.0], // position du dégradé
                                 ),
                               ),
                             ),
-                            SizedBox(
-                              height: 100, width: 100,
-                              child: SfBarcodeGenerator(
-                                value: produit.qr.toString(),
-                                symbology: QRCode(),
-                                barColor: Colors.white70,
-                              ),
+                            Positioned(
+                              right: 20,
+                              bottom: 20,
+                              child: Column(
+                                children: [
+                                  SizedBox(
+                                    width: 100,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        'ID : ${produit.id} \nQR : ${produit.qr}',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 100, width: 100,
+                                    child: SfBarcodeGenerator(
+                                      value: produit.qr.toString(),
+                                      symbology: QRCode(),
+                                      barColor: Colors.white70,
+                                    ),
 
-                              // PrettyQr(
-                              //     data: produit.qr.toString(),
-                              //     elementColor: Theme.of(context).hintColor,
-                              //   ),
+                                    // PrettyQr(
+                                    //     data: produit.qr.toString(),
+                                    //     elementColor: Theme.of(context).hintColor,
+                                    //   ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color:
+                                    Colors.black.withOpacity(1 - (1 * percent)),
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(1 - (1 * percent)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  collapseMode: CollapseMode.parallax,
-                );
-              },
-            )),
-        SliverList(
-          delegate: SliverChildListDelegate(
-            [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Dernière Modification : ' +
-                          timeago.format(
-                              produit.crud.target!.derniereModification,
-                              locale: 'fr'),
-                      style: TextStyle(fontSize: 12),
-                    ),
-                    SizedBox(height: 28),
-                    // Center(
-                    //     child: Padding(
-                    //   padding: const EdgeInsets.all(8.0),
-                    //   child: Text('QR : ${produit.qr}'),
-                    // )),
-                    // Center(
-                    //   child: PrettyQr(
-                    //     data: produit.qr.toString(),
-                    //     elementColor: Theme.of(context).hintColor,
-                    //   ),
-                    // ),
-                    // SizedBox(height: 8),
-                    // Center(child: Text('Id : ${produit.id}')),
-                    // Center(
-                    //   child: Text(
-                    //     produit.nom,
-                    //     style: TextStyle(
-                    //         fontSize: 24, fontWeight: FontWeight.bold),
-                    //   ),
-                    // ),
-                    // SizedBox(height: 28),
-                    // Text(
-                    //   'Prix d\'achat: ${produit.prixAchat.toStringAsFixed(2)} DZD',
-                    //   style: TextStyle(fontSize: 16),
-                    // ),
-                    Text(
-                      'Prix de vente: ${produit.prixVente.toStringAsFixed(2)} DZD',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Stock : ' + produit.stock.truncate().toString(),
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    produit.description != null &&
-                            produit.description!.isNotEmpty
-                        ? Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child:
-                                Text('Description :\n${produit.description}'),
-                          )
-                        : SizedBox.shrink(),
-                    // Vérifiez si les données doivent être affichées
-                    if ((produit.qtyPartiel != null &&
-                            produit.qtyPartiel! > 1) &&
-                        (produit.pricePartielVente != null &&
-                            produit.pricePartielVente! > 0)) ...[
-                      SizedBox(height: 16),
-                      Text(
-                        'Nombre de pièces dans ce pack: ${produit.qtyPartiel!.truncate()}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Prix de la pièce du détail: ${produit.pricePartielVente!.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 16),
-                    ],
-                    SizedBox(height: 10),
-                    // Text('Stock Minimal pour l\'Alert : ' +
-                    //     produit.stockinit.toString()),
-                    // SizedBox(height: 10),
-                    // Text('Stock Update : ' + produit.stockUpdate.toString()),
-                    SizedBox(height: 10),
-                    produit.approvisionnements.isEmpty ||
-                            produit.approvisionnements == ''
-                        ? Container()
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columns: [
-                                DataColumn(label: Text('Fournisseurs')),
-                                DataColumn(label: Text('Date de Création')),
-                                DataColumn(label: Text('Quantité')),
-                                DataColumn(label: Text('Prix d\'Achat')),
-                                DataColumn(label: Text('Date de Péremption')),
-                              ],
-                              rows: produit.approvisionnements.map((appro) {
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Text(
-                                        appro.fournisseur != null &&
-                                                appro.fournisseur.target != null
-                                            ? '${appro.fournisseur.target!.nom}'
-                                            : '-', // Valeur par défaut si fournisseur ou target est null
-                                      ),
+                        collapseMode: CollapseMode.parallax,
+                      );
+                    },
+                  )),
+              SliverList(
+                delegate: SliverChildListDelegate(
+                  [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Dernière Modification : ' +
+                                timeago.format(
+                                    produit.crud.target!.derniereModification,
+                                    locale: 'fr'),
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          SizedBox(height: 28),
+                          // Center(
+                          //     child: Padding(
+                          //   padding: const EdgeInsets.all(8.0),
+                          //   child: Text('QR : ${produit.qr}'),
+                          // )),
+                          // Center(
+                          //   child: PrettyQr(
+                          //     data: produit.qr.toString(),
+                          //     elementColor: Theme.of(context).hintColor,
+                          //   ),
+                          // ),
+                          // SizedBox(height: 8),
+                          // Center(child: Text('Id : ${produit.id}')),
+                          // Center(
+                          //   child: Text(
+                          //     produit.nom,
+                          //     style: TextStyle(
+                          //         fontSize: 24, fontWeight: FontWeight.bold),
+                          //   ),
+                          // ),
+                          // SizedBox(height: 28),
+                          // Text(
+                          //   'Prix d\'achat: ${produit.prixAchat.toStringAsFixed(2)} DZD',
+                          //   style: TextStyle(fontSize: 16),
+                          // ),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              if (constraints.maxWidth < 600) {
+                                // Layout pour les écrans larges (tablettes, desktop)
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Prix de vente: ${produit.prixVente.toStringAsFixed(2)} DZD',
+                                      style: TextStyle(fontSize: 16),
                                     ),
-                                    DataCell(
-                                      Text(
-                                        appro.crud != null &&
-                                                appro.crud.target != null
-                                            ? DateFormat(
-                                                    'EEE dd MMM yyyy', 'fr')
-                                                .format(DateTime.parse(appro
-                                                    .crud.target!.dateCreation
-                                                    .toString()))
-                                            : '-', // Valeur par défaut si crud ou target est null
-                                      ),
+                                    SizedBox(height: 8),
+                                    Text(
+                                      'Stock : ' +
+                                          produit.stock.truncate().toString(),
+                                      style: TextStyle(fontSize: 16),
                                     ),
-                                    DataCell(Text(
-                                        '${appro.quantite.truncate().toStringAsFixed(2)}')),
-                                    DataCell(Text(
-                                        '${appro.prixAchat?.toStringAsFixed(2) ?? '-'}')),
-                                    DataCell(
+                                    produit.description != null &&
+                                            produit.description!.isNotEmpty
+                                        ? Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 16),
+                                            child: Text(
+                                                'Description :\n${produit.description}'),
+                                          )
+                                        : SizedBox.shrink(),
+                                    // Vérifiez si les données doivent être affichées
+                                    if ((produit.qtyPartiel != null &&
+                                            produit.qtyPartiel! > 1) &&
+                                        (produit.pricePartielVente != null &&
+                                            produit.pricePartielVente! >
+                                                0)) ...[
+                                      SizedBox(height: 16),
                                       Text(
-                                        appro.datePeremption != null
-                                            ? DateFormat(
-                                                    'EEE dd MMM yyyy', 'fr')
-                                                .format(DateTime.parse(appro
-                                                    .datePeremption
-                                                    .toString()))
-                                            : '-', // Valeur par défaut si datePeremption est null
+                                        'Nombre de pièces dans ce pack: ${produit.qtyPartiel!.truncate()}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Prix de la pièce du détail: ${produit.pricePartielVente!.toStringAsFixed(2)}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      SizedBox(height: 16),
+                                    ],
+
+                                    produit.approvisionnements.isEmpty ||
+                                            produit.approvisionnements == ''
+                                        ? Container()
+                                        : SingleChildScrollView(
+                                            scrollDirection: Axis.horizontal,
+                                            child: DataTable(
+                                              columns: [
+                                                DataColumn(
+                                                    label:
+                                                        Text('Fournisseurs')),
+                                                DataColumn(
+                                                    label: Text(
+                                                        'Date de Création')),
+                                                DataColumn(
+                                                    label: Text('Quantité')),
+                                                DataColumn(
+                                                    label:
+                                                        Text('Prix d\'Achat')),
+                                                DataColumn(
+                                                    label: Text(
+                                                        'Date de Péremption')),
+                                              ],
+                                              rows: produit.approvisionnements
+                                                  .map((appro) {
+                                                return DataRow(
+                                                  cells: [
+                                                    DataCell(
+                                                      Text(
+                                                        appro.fournisseur !=
+                                                                    null &&
+                                                                appro.fournisseur
+                                                                        .target !=
+                                                                    null
+                                                            ? '${appro.fournisseur.target!.nom}'
+                                                            : '-', // Valeur par défaut si fournisseur ou target est null
+                                                      ),
+                                                    ),
+                                                    DataCell(
+                                                      Text(
+                                                        appro.crud != null &&
+                                                                appro.crud
+                                                                        .target !=
+                                                                    null
+                                                            ? DateFormat(
+                                                                    'EEE dd MMM yyyy',
+                                                                    'fr')
+                                                                .format(DateTime
+                                                                    .parse(appro
+                                                                        .crud
+                                                                        .target!
+                                                                        .dateCreation
+                                                                        .toString()))
+                                                            : '-', // Valeur par défaut si crud ou target est null
+                                                      ),
+                                                    ),
+                                                    DataCell(Text(
+                                                        '${appro.quantite.truncate().toStringAsFixed(2)}')),
+                                                    DataCell(Text(
+                                                        '${appro.prixAchat?.toStringAsFixed(2) ?? '-'}')),
+                                                    DataCell(
+                                                      Text(
+                                                        appro.datePeremption !=
+                                                                null
+                                                            ? DateFormat(
+                                                                    'EEE dd MMM yyyy',
+                                                                    'fr')
+                                                                .format(DateTime
+                                                                    .parse(appro
+                                                                        .datePeremption
+                                                                        .toString()))
+                                                            : '-', // Valeur par défaut si datePeremption est null
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              }).toList(),
+                                            ),
+                                          ),
+                                  ],
+                                );
+                              } else {
+                                // Layout pour les petits écrans (mobiles)
+                                return Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Prix de vente: ${produit.prixVente.toStringAsFixed(2)} DZD',
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                        SizedBox(height: 8),
+                                        Text(
+                                          'Stock : ' +
+                                              produit.stock
+                                                  .truncate()
+                                                  .toString(),
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                        produit.description != null &&
+                                                produit.description!.isNotEmpty
+                                            ? Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 16),
+                                                child: Text(
+                                                    'Description :\n${produit.description}'),
+                                              )
+                                            : SizedBox.shrink(),
+                                        // Vérifiez si les données doivent être affichées
+                                        if ((produit.qtyPartiel != null &&
+                                                produit.qtyPartiel! > 1) &&
+                                            (produit.pricePartielVente !=
+                                                    null &&
+                                                produit.pricePartielVente! >
+                                                    0)) ...[
+                                          SizedBox(height: 16),
+                                          Text(
+                                            'Nombre de pièces dans ce pack: ${produit.qtyPartiel!.truncate()}',
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Text(
+                                            'Prix de la pièce du détail: ${produit.pricePartielVente!.toStringAsFixed(2)}',
+                                            style:
+                                                const TextStyle(fontSize: 16),
+                                          ),
+                                          SizedBox(height: 16),
+                                        ],
+                                      ],
+                                    ),
+                                    SizedBox(
+                                      width: 20,
+                                    ),
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          produit.approvisionnements.isEmpty ||
+                                                  produit.approvisionnements ==
+                                                      ''
+                                              ? Container()
+                                              : SingleChildScrollView(
+                                                  scrollDirection:
+                                                      Axis.horizontal,
+                                                  child: DataTable(
+                                                    columns: [
+                                                      DataColumn(
+                                                          label: Text(
+                                                              'Fournisseurs')),
+                                                      DataColumn(
+                                                          label: Text(
+                                                              'Date de Création')),
+                                                      DataColumn(
+                                                          label:
+                                                              Text('Quantité')),
+                                                      DataColumn(
+                                                          label: Text(
+                                                              'Prix d\'Achat')),
+                                                      DataColumn(
+                                                          label: Text(
+                                                              'Date de Péremption')),
+                                                    ],
+                                                    rows: produit
+                                                        .approvisionnements
+                                                        .map((appro) {
+                                                      return DataRow(
+                                                        cells: [
+                                                          DataCell(
+                                                            Text(
+                                                              appro.fournisseur !=
+                                                                          null &&
+                                                                      appro.fournisseur
+                                                                              .target !=
+                                                                          null
+                                                                  ? '${appro.fournisseur.target!.nom}'
+                                                                  : '-', // Valeur par défaut si fournisseur ou target est null
+                                                            ),
+                                                          ),
+                                                          DataCell(
+                                                            Text(
+                                                              appro.crud !=
+                                                                          null &&
+                                                                      appro.crud
+                                                                              .target !=
+                                                                          null
+                                                                  ? DateFormat(
+                                                                          'EEE dd MMM yyyy',
+                                                                          'fr')
+                                                                      .format(DateTime.parse(appro
+                                                                          .crud
+                                                                          .target!
+                                                                          .dateCreation
+                                                                          .toString()))
+                                                                  : '-', // Valeur par défaut si crud ou target est null
+                                                            ),
+                                                          ),
+                                                          DataCell(Text(
+                                                              '${appro.quantite.truncate().toStringAsFixed(2)}')),
+                                                          DataCell(Text(
+                                                              '${appro.prixAchat?.toStringAsFixed(2) ?? '-'}')),
+                                                          DataCell(
+                                                            Text(
+                                                              appro.datePeremption !=
+                                                                      null
+                                                                  ? DateFormat(
+                                                                          'EEE dd MMM yyyy',
+                                                                          'fr')
+                                                                      .format(DateTime.parse(appro
+                                                                          .datePeremption
+                                                                          .toString()))
+                                                                  : '-', // Valeur par défaut si datePeremption est null
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    }).toList(),
+                                                  ),
+                                                ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 );
-                              }).toList(),
-                            ),
+                              }
+                            },
                           ),
-                    // SizedBox(height: 10),
-                    // ...produit.approvisionnements.map((appro) {
-                    //   return Padding(
-                    //     padding: EdgeInsets.symmetric(vertical: 4.0),
-                    //     child: Text(
-                    //         '  Date Peremption :  ${appro.datePeremption}'),
-                    //   );
-                    // }).toList(),
-                    //
-                    // SizedBox(height: 10),
-                    SizedBox(height: 10),
-                    SizedBox(
-                      height: 16,
-                    ),
-                    produit.approvisionnements.length == 0
-                        ? SizedBox.shrink()
-                        : Divider(),
-                    produit.approvisionnements.isEmpty ||
-                            !produit.approvisionnements.any((appro) =>
-                                appro.fournisseur != null &&
-                                appro.fournisseur.target != null)
-                        ? SizedBox.shrink()
-                        : Text(
-                            'Fournisseurs',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                    SizedBox(height: 8),
-                    // SizedBox(height: 10),
-                    // ...produit.approvisionnements.map((appro) {
-                    //   return Padding(
-                    //     padding: EdgeInsets.symmetric(vertical: 4.0),
-                    //     child: Text(
-                    //         '  Date Peremption :  ${appro.datePeremption}'),
-                    //   );
-                    // }).toList(),
-                    // Consumer<CommerceProvider>(
-                    //   builder: (context, produitProvider, child) {
-                    //return
-                    Wrap(
-                      spacing: 6.0, // Espace horizontal entre les éléments
-                      runSpacing: 4.0, // Espace vertical entre les lignes
-                      children: produit.approvisionnements
-                          .where((appro) => appro.fournisseur.target != null)
-                          .map((appro) {
-                        return InkWell(
-                          onTap: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (ctx) => ProduitsFournisseurPage(
-                                      fournisseur: appro.fournisseur.target!,
-                                    )));
-                          },
-                          child: Chip(
-                            backgroundColor:
-                                Theme.of(context).brightness == Brightness.dark
-                                    ? Theme.of(context).colorScheme.surface
-                                    : Theme.of(context)
+
+                          SizedBox(height: 10),
+                          // Text('Stock Minimal pour l\'Alert : ' +
+                          //     produit.stockinit.toString()),
+                          // SizedBox(height: 10),
+                          // Text('Stock Update : ' + produit.stockUpdate.toString()),
+                          SizedBox(height: 10),
+
+                          // SizedBox(height: 10),
+                          // ...produit.approvisionnements.map((appro) {
+                          //   return Padding(
+                          //     padding: EdgeInsets.symmetric(vertical: 4.0),
+                          //     child: Text(
+                          //         '  Date Peremption :  ${appro.datePeremption}'),
+                          //   );
+                          // }).toList(),
+                          //
+                          // SizedBox(height: 10),
+                          SizedBox(height: 10),
+
+                          produit.approvisionnements.length == 0
+                              ? SizedBox.shrink()
+                              : Divider(),
+                          produit.approvisionnements.isEmpty ||
+                                  !produit.approvisionnements.any((appro) =>
+                                      appro.fournisseur != null &&
+                                      appro.fournisseur.target != null)
+                              ? SizedBox.shrink()
+                              : Text(
+                                  'Fournisseurs',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                          SizedBox(height: 8),
+                          // SizedBox(height: 10),
+                          // ...produit.approvisionnements.map((appro) {
+                          //   return Padding(
+                          //     padding: EdgeInsets.symmetric(vertical: 4.0),
+                          //     child: Text(
+                          //         '  Date Peremption :  ${appro.datePeremption}'),
+                          //   );
+                          // }).toList(),
+                          // Consumer<CommerceProvider>(
+                          //   builder: (context, produitProvider, child) {
+                          //return
+                          Wrap(
+                            spacing: 6.0,
+                            // Espace horizontal entre les éléments
+                            runSpacing: 4.0,
+                            // Espace vertical entre les lignes
+                            children: produit.approvisionnements
+                                .where(
+                                    (appro) => appro.fournisseur.target != null)
+                                .map((appro) {
+                              return InkWell(
+                                onTap: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (ctx) => ProduitsFournisseurPage(
+                                            fournisseur:
+                                                appro.fournisseur.target!,
+                                          )));
+                                },
+                                child: Chip(
+                                  backgroundColor: Theme.of(context)
+                                              .brightness ==
+                                          Brightness.dark
+                                      ? Theme.of(context).colorScheme.surface
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.1),
+                                  labelStyle: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                        : Theme.of(context).colorScheme.primary,
+                                    fontSize:
+                                        12, // Ajout pour une taille de texte cohérente
+                                  ),
+                                  side: BorderSide(
+                                    color: Theme.of(context)
                                         .colorScheme
                                         .primary
-                                        .withOpacity(0.1),
-                            labelStyle: TextStyle(
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Theme.of(context).colorScheme.onSurface
-                                  : Theme.of(context).colorScheme.primary,
-                              fontSize:
-                                  12, // Ajout pour une taille de texte cohérente
-                            ),
-                            side: BorderSide(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .primary
-                                  .withOpacity(0.5),
-                              width: 1, // Définir une bordure subtile
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            label: Text(
-                              appro.fournisseur.target?.nom ??
-                                  'Fournisseur inconnu',
-                              overflow: TextOverflow
-                                  .ellipsis, // Gérer les textes trop longs
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    //     ;
-                    //   },
-                    // ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              context
-                                  .read<CommerceProvider>()
-                                  .supprimerProduit(produit);
-                              Navigator.of(context).pop();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              // Utilise les couleurs du thème pour le bouton de suppression
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                              foregroundColor:
-                                  Theme.of(context).colorScheme.onError,
-                              elevation: 2,
-                            ),
-                            label: Text('Supprimer'),
-                            icon: Icon(Icons.delete),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              final updatedProduit =
-                                  await Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (ctx) => editProduct(
-                                    produit: produit,
+                                        .withOpacity(0.5),
+                                    width: 1, // Définir une bordure subtile
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10)),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  label: Text(
+                                    appro.fournisseur.target?.nom ??
+                                        'Fournisseur inconnu',
+                                    overflow: TextOverflow
+                                        .ellipsis, // Gérer les textes trop longs
                                   ),
                                 ),
                               );
-                            },
-                            label: Text('Modifier'),
-                            icon: Icon(Icons.edit),
+                            }).toList(),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 50,
+                          //     ;
+                          //   },
+                          // ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () {
+                                      context
+                                          .read<CommerceProvider>()
+                                          .supprimerProduit(produit);
+                                      Navigator.of(context).pop();
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      // Utilise les couleurs du thème pour le bouton de suppression
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.error,
+                                      foregroundColor:
+                                          Theme.of(context).colorScheme.onError,
+                                      elevation: 2,
+                                    ),
+                                    label: FittedBox(child: Text('Supprimer')),
+                                    icon: Icon(Icons.delete),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton.icon(
+                                    onPressed: () async {
+                                      final updatedProduit =
+                                          await Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (ctx) => editProduct(
+                                            produit: produit,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    label: FittedBox(child: Text('Modifier')),
+                                    icon: Icon(Icons.edit),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(
+                            height: 50,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-        ),
-      ],
-    ));
+          );
+        },
+      ),
+    );
   }
 }
 

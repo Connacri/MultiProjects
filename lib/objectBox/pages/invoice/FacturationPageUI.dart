@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:kenzy/objectBox/pages/ProduitListScreen.dart';
 import 'package:marqueer/marqueer.dart';
 import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
@@ -288,73 +289,79 @@ class _FactureDetailState extends State<FactureDetail> {
                       SizedBox(
                         width: 15,
                       ),
-                      StreamBuilder<List<MarqueeData>>(
-                        stream: _marqueeDataStream,
-                        initialData: const [],
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError) {
-                            return Center(
-                                child: Text('Erreur: ${snapshot.error}'));
-                          }
-                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return const Center(
-                                child: Text('Aucune annonce disponible.'));
-                          }
+                      Expanded(
+                        child: StreamBuilder<List<MarqueeData>>(
+                          stream: _marqueeDataStream,
+                          initialData: const [],
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+                            if (snapshot.hasError) {
+                              return IconButton(
+                                  onPressed: () => _initializeMarqueeData(),
+                                  icon: Icon(Icons.refresh));
+                              // Center(
+                              //   child: Text('Erreur: ${snapshot.error}'));
+                            }
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Center(
+                                  child: Text('Aucune annonce disponible.'));
+                            }
 
-                          final marqueeData = snapshot.data!;
+                            final marqueeData = snapshot.data!;
 
-                          return Container(
-                            height: 50,
-                            width: MediaQuery.of(context).size.width * 0.43,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            color: Colors.yellow,
-                            child: Marqueer.builder(
-                              pps: 50,
-                              autoStart: true,
-                              separatorBuilder: (_, index) => const Center(
-                                child: Text(
-                                  '  -  ',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ),
-                              scrollablePointerIgnoring: true,
-                              direction: MarqueerDirection.rtl,
-                              controller: _controller,
-                              itemCount: marqueeData.length,
-                              itemBuilder: (context, index) {
-                                final item = marqueeData[index];
-
-                                return InkWell(
-                                  onTap: () => _launchUrl(item.webUrl),
-                                  child: Row(
-                                    children: [
-                                      if (item.imageUrl.isNotEmpty)
-                                        AspectRatio(
-                                          aspectRatio: 1,
-                                          child: CachedNetworkImage(
-                                              imageUrl: item.imageUrl,
-                                              fit: BoxFit.cover,
-                                              width: 50,
-                                              height: 50),
-                                        ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
-                                        style: const TextStyle(
-                                            fontSize: 18, color: Colors.black),
-                                      ),
-                                    ],
+                            return Container(
+                              height: 50,
+                              width: MediaQuery.of(context).size.width * 0.43,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              color: Colors.yellow,
+                              child: Marqueer.builder(
+                                pps: 50,
+                                autoStart: true,
+                                separatorBuilder: (_, index) => const Center(
+                                  child: Text(
+                                    '  -  ',
+                                    style: TextStyle(color: Colors.black),
                                   ),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                                ),
+                                scrollablePointerIgnoring: true,
+                                direction: MarqueerDirection.rtl,
+                                controller: _controller,
+                                itemCount: marqueeData.length,
+                                itemBuilder: (context, index) {
+                                  final item = marqueeData[index];
+
+                                  return InkWell(
+                                    onTap: () => _launchUrl(item.webUrl),
+                                    child: Row(
+                                      children: [
+                                        if (item.imageUrl.isNotEmpty)
+                                          AspectRatio(
+                                            aspectRatio: 1,
+                                            child: CachedNetworkImage(
+                                                imageUrl: item.imageUrl,
+                                                fit: BoxFit.cover,
+                                                width: 50,
+                                                height: 50),
+                                          ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
+                                          style: const TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.black),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ],
                   );
@@ -432,7 +439,7 @@ class _FactureDetailState extends State<FactureDetail> {
                               onPressed: provider.lignesFacture.isEmpty
                                   ? null
                                   : () {
-                                      provider.sauvegarderFacture();
+                                      provider.sauvegarderFacture(context);
                                       _impayerController.clear();
                                       context
                                           .read<EditableFieldProvider>()
@@ -618,7 +625,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                 onPressed: provider.lignesFacture.isEmpty
                                     ? null
                                     : () {
-                                        provider.sauvegarderFacture();
+                                        provider.sauvegarderFacture(context);
                                         _impayerController.clear();
                                         context
                                             .read<EditableFieldProvider>()
@@ -746,12 +753,19 @@ class _FactureDetailState extends State<FactureDetail> {
                                   },
                                 ),
                                 cells: [
-                                  DataCell(
-                                      Text(ligne.produit.target?.qr ?? ' - ')),
-                                  DataCell(Text(
-                                    ligne.produit.target?.nom ??
-                                        'Produit inconnu',
-                                    overflow: TextOverflow.ellipsis,
+                                  DataCell(SelectableText(
+                                      ligne.produit.target?.qr ?? ' - ')),
+                                  DataCell(InkWell(
+                                    onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (ctx) => ProduitDetailPage(
+                                                produit:
+                                                    ligne.produit.target!))),
+                                    child: Text(
+                                      ligne.produit.target?.nom ??
+                                          'Produit inconnu',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   )),
                                   // DataCell(
                                   //   // state.isEditedQty

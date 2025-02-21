@@ -446,7 +446,7 @@ class CommerceProvider extends ChangeNotifier {
 
     // Sauvegarder le produit mis à jour
     _objectBox.produitBox.put(existingProduct);
-
+    notifyListeners();
     // Recharger les produits si nécessaire
     chargerProduits(reset: true);
   }

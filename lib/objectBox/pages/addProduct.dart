@@ -19,6 +19,9 @@ import '../Utils/mobile_scanner/barcode_scanner_window.dart';
 import '../Utils/winMobile.dart';
 import 'ProduitListScreen.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 class addProduct extends StatefulWidget {
   const addProduct({super.key});
@@ -1865,13 +1868,47 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
     return isValid;
   }
 
+  // Future<String> _prepareImageUrl() async {
+  //   if (_image != null) {
+  //     return await uploadImageToSupabase(_image!, _existingImageUrl);
+  //   } else if (_existingImageUrl?.isNotEmpty ?? false) {
+  //     return _existingImageUrl!;
+  //   }
+  //   return '';
+  // }
   Future<String> _prepareImageUrl() async {
-    if (_image != null) {
-      return await uploadImageToSupabase(_image!, _existingImageUrl);
-    } else if (_existingImageUrl?.isNotEmpty ?? false) {
-      return _existingImageUrl!;
+    if (_image == null)
+      return _existingImageUrl?.isNotEmpty ?? false ? _existingImageUrl! : '';
+
+    final uploadedUrl = await uploadImageToSupabase(_image!, _existingImageUrl);
+    return uploadedUrl.isNotEmpty
+        ? uploadedUrl
+        : await saveImageLocally(_image!);
+  }
+
+  Future<String> saveImageLocally(File image) async {
+    try {
+      final directory = await getLocalDirectory();
+      final localPath = path.join(directory.path, path.basename(image.path));
+      await image.copy(localPath);
+      print('Image enregistrée localement : $localPath');
+      return localPath;
+    } catch (e) {
+      print('Erreur lors de la sauvegarde locale de l\'image : $e');
+      return '';
     }
-    return '';
+  }
+
+  Future<Directory> getLocalDirectory() async {
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      return getApplicationSupportDirectory();
+    } else if (Platform.isAndroid) {
+      return (await getExternalStorageDirectory()) ??
+          getApplicationDocumentsDirectory();
+    } else if (Platform.isIOS) {
+      return getApplicationDocumentsDirectory();
+    }
+    throw UnsupportedError("Plateforme non prise en charge");
   }
 
   void _addQrCodeIfNotExists() {
