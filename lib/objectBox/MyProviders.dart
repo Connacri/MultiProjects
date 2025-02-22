@@ -42,6 +42,9 @@ class CommerceProvider extends ChangeNotifier {
 
   List<Approvisionnement> get approvisionnements => _approvisionnements;
 
+  double get stockTotal =>
+      _approvisionnements.fold(0.0, (sum, appro) => sum + appro.quantite);
+
   List<Approvisionnement> get approvisionnementTemporaire =>
       _approvisionnementTemporaire;
 

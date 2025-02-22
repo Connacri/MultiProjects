@@ -155,8 +155,8 @@ class _FournisseurListScreenState extends State<FournisseurListScreen> {
         onPressed: () {
           showModalBottomSheet(
             context: context,
-            isScrollControlled:
-                true, // Permet de redimensionner en fonction de la hauteur du contenu
+            isScrollControlled: true,
+            // Permet de redimensionner en fonction de la hauteur du contenu
             builder: (context) => AddFournisseurForm(),
           );
         },
@@ -209,6 +209,7 @@ class _FournisseurListScreenState extends State<FournisseurListScreen> {
 
 class ProduitsFournisseurPage extends StatelessWidget {
   final Fournisseur fournisseur;
+
   //final List<Produit>? produits;
 
   ProduitsFournisseurPage({
@@ -305,11 +306,16 @@ class ProduitsFournisseurPage extends StatelessWidget {
                                 //   'A: ${produit.prixAchat.toStringAsFixed(2)}\nB: ${(produit.prixVente - produit.prixAchat).toStringAsFixed(2)} ',
                                 // ),
                                 Text('ID : ${produit.id} QR : ${produit.qr}'),
-                                produit.crud.target?.dateCreation != null && produit.crud.target?.derniereModification != null
+                                produit.crud.target?.dateCreation != null &&
+                                        produit.crud.target
+                                                ?.derniereModification !=
+                                            null
                                     ? Text(
-                                  'Créer le ${produit.crud.target!.dateCreation!.day}-${produit.crud.target!.dateCreation!.month}-${produit.crud.target!.dateCreation!.year}  Modifié ${timeago.format(produit.crud.target!.derniereModification, locale: 'fr')}',
-                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w300),
-                                )
+                                        'Créer le ${produit.crud.target!.dateCreation!.day}-${produit.crud.target!.dateCreation!.month}-${produit.crud.target!.dateCreation!.year}  Modifié ${timeago.format(produit.crud.target!.derniereModification, locale: 'fr')}',
+                                        style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w300),
+                                      )
                                     : SizedBox.shrink(),
 
                                 // produit.fournisseurs.isEmpty
@@ -634,6 +640,17 @@ class _SelectProductsPageState extends State<SelectProductsPage> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            // Permet de redimensionner en fonction de la hauteur du contenu
+            builder: (context) => AddFournisseurForm(),
+          );
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 }
@@ -805,9 +822,8 @@ class _AddFournisseurFormState extends State<AddFournisseurForm> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context)
-            .viewInsets
-            .bottom, // Permet de remonter le BottomSheet lorsque le clavier apparaît
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        // Permet de remonter le BottomSheet lorsque le clavier apparaît
         left: 16,
         right: 16,
         top: 16,
@@ -1090,23 +1106,36 @@ class FournisseurSearchDelegateMain extends SearchDelegate {
           fournisseur.id.toString().contains(query);
     }).toList();
 
-    return ListView.builder(
-      itemCount: results.length,
-      itemBuilder: (context, index) {
-        final fournisseur = results[index];
-        return ListTile(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) =>
-                    ProduitsFournisseurPage(fournisseur: fournisseur),
-              ),
-            );
-          },
-          title: Text(fournisseur.nom),
-          // subtitle: Text('${fournisseur.produits.length} produits'),
-        );
-      },
+    return Scaffold(
+      body: ListView.builder(
+        itemCount: results.length,
+        itemBuilder: (context, index) {
+          final fournisseur = results[index];
+          return ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProduitsFournisseurPage(fournisseur: fournisseur),
+                ),
+              );
+            },
+            title: Text(fournisseur.nom),
+            // subtitle: Text('${fournisseur.produits.length} produits'),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            // Permet de redimensionner en fonction de la hauteur du contenu
+            builder: (context) => AddFournisseurForm(),
+          );
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 
@@ -1119,23 +1148,36 @@ class FournisseurSearchDelegateMain extends SearchDelegate {
           fournisseur.id.toString().contains(query);
     }).toList();
 
-    return ListView.builder(
-      itemCount: suggestions.length,
-      itemBuilder: (context, index) {
-        final fournisseur = suggestions[index];
-        return ListTile(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) =>
-                    ProduitsFournisseurPage(fournisseur: fournisseur),
-              ),
-            );
-          },
-          title: Text('${fournisseur.id} ${fournisseur.nom}'),
-          // trailing: Text('${fournisseur.produits.length} Produits'),
-        );
-      },
+    return Scaffold(
+      body: ListView.builder(
+        itemCount: suggestions.length,
+        itemBuilder: (context, index) {
+          final fournisseur = suggestions[index];
+          return ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProduitsFournisseurPage(fournisseur: fournisseur),
+                ),
+              );
+            },
+            title: Text('${fournisseur.id} ${fournisseur.nom}'),
+            // trailing: Text('${fournisseur.produits.length} Produits'),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            // Permet de redimensionner en fonction de la hauteur du contenu
+            builder: (context) => AddFournisseurForm(),
+          );
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 }

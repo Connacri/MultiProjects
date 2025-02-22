@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../objectbox.g.dart';
 import '../../Entity.dart';
+import '../../MyProviders.dart';
 import '../../classeObjectBox.dart';
 
 class FacturationProvider with ChangeNotifier {
@@ -67,7 +68,7 @@ class FacturationProvider with ChangeNotifier {
 
   List<Document> _facturesList = [];
 
-  List<Document> get facturesList => _facturesList.reversed.toList();
+  List<Document> get facturesList => _facturesList.toList();
 
   int _currentPageFacture = 0;
   final int _pageSizeFacture = 20;
@@ -145,7 +146,7 @@ class FacturationProvider with ChangeNotifier {
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
-  Future<void> chargerFactures() async {
+  Future<void> chargerFactures({bool reset = true}) async {
     if (_isLoadingListFacture || !_hasMoreFactures) return;
 
     _isLoadingListFacture = true;
@@ -495,7 +496,8 @@ class FacturationProvider with ChangeNotifier {
   //     print('Erreur lors de la sauvegarde de la facture: $e');
   //   }
   // }
-  Future<void> sauvegarderFacture(BuildContext context) async {
+  Future<void> sauvegarderFacture(
+      BuildContext context, CommerceProvider commerceProvider) async {
     print('Sauvegarde de la facture en cours...');
 
     try {
@@ -595,6 +597,9 @@ class FacturationProvider with ChangeNotifier {
             _objectBox.approvisionnementBox.put(appro);
           }
         }
+        notifyListeners();
+        // Recharger les produits si nécessaire
+        chargerFactures2(reset: true);
       }
 
       // Original invoice saving logic
@@ -636,12 +641,14 @@ class FacturationProvider with ChangeNotifier {
       _lignesFacture.clear();
       _impayer = 0.0;
       _selectedClient = null;
-      chargerFactures2();
-      chargerFactures();
+      chargerFactures2(reset: true);
+      //chargerFactures();
 
       print('Facture sauvegardée avec succès');
       _isEditing = false;
       _hasChanges = false;
+      // 🔴 Notification pour mettre à jour les produits
+      commerceProvider.chargerProduits(reset: true);
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la sauvegarde de la facture: $e');
@@ -685,80 +692,136 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Future<void> supprimerFacture(Document facture) async {
-  //   // Supprimer la facture de la base de données
-  //   _objectBox.factureBox.remove(facture.id);
-  //
-  //   // Supprimer les lignes de document associées
-  //   for (final ligne in facture.lignesDocument) {
-  //     _objectBox.ligneFacture.remove(ligne.id);
-  //   }
-  //
-  //   // Mettre à jour la liste des factures
-  //   _facturesList.remove(facture);
-  //
-  //   // Si la facture supprimée est la facture en cours, la réinitialiser
-  //   if (_factureEnCours?.id == facture.id) {
-  //     _factureEnCours = null;
-  //     _lignesFacture.clear();
-  //   }
-  //
-  //   // Notifier les listeners pour mettre à jour l'interface utilisateur
-  //   notifyListeners();
-  // }
-  Future<void> supprimerFacture(Document facture) async {
+// Future<void> supprimerFacture(Document facture) async {
+//   // Supprimer la facture de la base de données
+//   _objectBox.factureBox.remove(facture.id);
+//
+//   // Supprimer les lignes de document associées
+//   for (final ligne in facture.lignesDocument) {
+//     _objectBox.ligneFacture.remove(ligne.id);
+//   }
+//
+//   // Mettre à jour la liste des factures
+//   _facturesList.remove(facture);
+//
+//   // Si la facture supprimée est la facture en cours, la réinitialiser
+//   if (_factureEnCours?.id == facture.id) {
+//     _factureEnCours = null;
+//     _lignesFacture.clear();
+//   }
+//
+//   // Notifier les listeners pour mettre à jour l'interface utilisateur
+//   notifyListeners();
+// }
+
+  Future<void> supprimerFacture(
+      Document facture, CommerceProvider commerceProvider) async {
     try {
-      // Rétablir les quantités dans les approvisionnements
+      // 🔄 Rétablir les quantités dans les approvisionnements
       for (final ligne in facture.lignesDocument) {
         final produitId = ligne.produit.target?.id;
         if (produitId == null) continue;
 
         double quantiteARetablir = ligne.quantite;
 
-        // Récupérer les approvisionnements par ordre de date de péremption
+        // Récupérer les approvisionnements triés par date de péremption croissante
         final query = _objectBox.approvisionnementBox
             .query(Approvisionnement_.produit.equals(produitId))
           ..order(Approvisionnement_.datePeremption);
-
         final approvisionnements = query.build().find();
 
-        // Parcourir les approvisionnements et rétablir les quantités
         for (final appro in approvisionnements) {
           if (quantiteARetablir <= 0) break;
 
-          // On rétablit la quantité dans l'approvisionnement le plus ancien
           appro.quantite += quantiteARetablir;
-          quantiteARetablir = 0;
+          quantiteARetablir = 0; // Tout est rétabli ici
 
           // Mettre à jour l'approvisionnement dans la base de données
           _objectBox.approvisionnementBox.put(appro);
         }
       }
 
-      // Supprimer la facture de la base de données
-      _objectBox.factureBox.remove(facture.id);
-
-      // Supprimer les lignes de document associées
+      // 🔴 Supprimer d'abord les lignes de document associées
       for (final ligne in facture.lignesDocument) {
         _objectBox.ligneFacture.remove(ligne.id);
       }
 
+      // 🔴 Supprimer ensuite la facture
+      _objectBox.factureBox.remove(facture.id);
+
+      // 🔄 Mettre à jour la liste des factures après suppression
+      _chargerFacturesTotal();
       // Mettre à jour la liste des factures
       _facturesList.remove(facture);
-
-      // Si la facture supprimée est la facture en cours, la réinitialiser
+      // 🗑️ Si la facture supprimée est celle en cours, la réinitialiser
       if (_factureEnCours?.id == facture.id) {
         _factureEnCours = null;
         _lignesFacture.clear();
       }
 
       print('Facture supprimée avec succès et quantités rétablies');
+      // 🔴 Notification pour mettre à jour les produits
+      commerceProvider.chargerProduits(reset: true);
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la suppression de la facture: $e');
       rethrow;
     }
   }
+
+// Future<void> supprimerFacture(Document facture) async {
+//   try {
+//     // Rétablir les quantités dans les approvisionnements
+//     for (final ligne in facture.lignesDocument) {
+//       final produitId = ligne.produit.target?.id;
+//       if (produitId == null) continue;
+//
+//       double quantiteARetablir = ligne.quantite;
+//
+//       // Récupérer les approvisionnements triés par date de péremption croissante
+//       final query = _objectBox.approvisionnementBox
+//           .query(Approvisionnement_.produit.equals(produitId))
+//         ..order(Approvisionnement_.datePeremption);
+//
+//       final approvisionnements = query.build().find();
+//
+//       // Répartir la quantité à rétablir sur plusieurs approvisionnements si nécessaire
+//       for (final appro in approvisionnements) {
+//         if (quantiteARetablir <= 0) break;
+//
+//         // On rétablit la quantité dans l'approvisionnement le plus ancien
+//         appro.quantite += quantiteARetablir;
+//         quantiteARetablir = 0;
+//
+//         // Mettre à jour l'approvisionnement dans la base de données
+//         _objectBox.approvisionnementBox.put(appro);
+//       }
+//     }
+//
+//     // Supprimer la facture de la base de données
+//     _objectBox.factureBox.remove(facture.id);
+//
+//     // Supprimer les lignes de document associées
+//     for (final ligne in facture.lignesDocument) {
+//       _objectBox.ligneFacture.remove(ligne.id);
+//     }
+//
+//     // Mettre à jour la liste des factures
+//     _facturesList.remove(facture);
+//
+//     // Si la facture supprimée est la facture en cours, la réinitialiser
+//     if (_factureEnCours?.id == facture.id) {
+//       _factureEnCours = null;
+//       _lignesFacture.clear();
+//     }
+//
+//     print('Facture supprimée avec succès et quantités rétablies');
+//     notifyListeners();
+//   } catch (e) {
+//     print('Erreur lors de la suppression de la facture: $e');
+//     rethrow;
+//   }
+// }
 }
 
 class LigneEditionState {

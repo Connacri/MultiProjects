@@ -17,6 +17,7 @@ import '../MyProviders.dart';
 import '../Utils/country_flags.dart';
 import '../Utils/mobile_scanner/barcode_scanner_window.dart';
 import '../Utils/winMobile.dart';
+import 'FournisseurListScreen.dart';
 import 'ProduitListScreen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'dart:io';
@@ -3145,13 +3146,16 @@ class _FournisseurSelectionScreenState
       ),
       body: Column(
         children: [
-          TextField(
-            decoration: InputDecoration(labelText: 'Rechercher'),
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              decoration: InputDecoration(labelText: 'Rechercher'),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
           ),
           // ElevatedButton(
           //   onPressed: () {
@@ -3192,6 +3196,17 @@ class _FournisseurSelectionScreenState
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            // Permet de redimensionner en fonction de la hauteur du contenu
+            builder: (context) => AddFournisseurForm(),
+          );
+        },
+        child: Icon(Icons.add),
       ),
     );
   }
