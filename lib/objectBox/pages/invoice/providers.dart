@@ -501,15 +501,35 @@ class FacturationProvider with ChangeNotifier {
     print('Sauvegarde de la facture en cours...');
 
     try {
-      // Prepare a map to track how much quantity needs to be deducted for each product
       final Map<int, double> quantitesToDeduct = {};
 
-      // Calculate total quantity needed for each product from invoice lines
+// Si on modifie une facture existante, récupérer ses anciennes quantités
+      final Map<int, double> ancienneQuantite = {};
+
+      if (_factureEnCours != null) {
+        for (final ancienneLigne in _factureEnCours!.lignesDocument) {
+          final produitId = ancienneLigne.produit.target?.id;
+          if (produitId != null) {
+            ancienneQuantite[produitId] =
+                (ancienneQuantite[produitId] ?? 0) + ancienneLigne.quantite;
+          }
+        }
+      }
+
+// Maintenant, on calcule la différence entre l'ancienne et la nouvelle quantité
       for (final ligne in _lignesFacture) {
         final produitId = ligne.produit.target?.id;
         if (produitId != null) {
-          quantitesToDeduct[produitId] =
-              (quantitesToDeduct[produitId] ?? 0) + ligne.quantite;
+          final nouvelleQuantite = ligne.quantite;
+          final ancienneQte = ancienneQuantite[produitId] ?? 0;
+
+          // Calculer la différence
+          final difference = nouvelleQuantite - ancienneQte;
+
+          // On ne stocke que la quantité supplémentaire à déduire
+          if (difference != 0) {
+            quantitesToDeduct[produitId] = difference;
+          }
         }
       }
 
@@ -581,21 +601,31 @@ class FacturationProvider with ChangeNotifier {
             .query(Approvisionnement_.produit.equals(produitId))
           ..order(Approvisionnement_.datePeremption);
 
-        final approvisionnements =
-            query.build().find(); // Build the query before executing
+        final approvisionnements = query.build().find();
 
-        // Deduct quantities following FIFO
-        for (final appro in approvisionnements) {
-          if (quantiteADeduire <= 0) break;
+        if (quantiteADeduire > 0) {
+          // Deduct quantities following FIFO
+          for (final appro in approvisionnements) {
+            if (quantiteADeduire < 0) break;
 
-          if (appro.quantite > 0) {
-            final quantitePrelevee = min(appro.quantite, quantiteADeduire);
-            appro.quantite -= quantitePrelevee;
-            quantiteADeduire -= quantitePrelevee;
+            if (appro.quantite > 0) {
+              final quantitePrelevee = min(appro.quantite, quantiteADeduire);
+              appro.quantite -= quantitePrelevee;
+              quantiteADeduire -= quantitePrelevee;
 
-            // Update the approvisionnement in the database
-            _objectBox.approvisionnementBox.put(appro);
+              // Update the approvisionnement in the database
+              _objectBox.approvisionnementBox.put(appro);
+            }
           }
+        } else if (quantiteADeduire < 0) {
+          // Restitution de stock si on a diminué la quantité
+          final approvisionnement = Approvisionnement(
+            quantite: -quantiteADeduire, // On remet en stock
+            datePeremption: DateTime.now()
+                .add(Duration(days: 365)), // Ajuster selon la logique
+          );
+
+          _objectBox.approvisionnementBox.put(approvisionnement);
         }
         notifyListeners();
         // Recharger les produits si nécessaire

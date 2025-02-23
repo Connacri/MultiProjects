@@ -481,6 +481,12 @@ class _FactureDetailState extends State<FactureDetail> {
                           itemCount: factureProvider.lignesFacture.length,
                           itemBuilder: (context, index) {
                             final ligne = factureProvider.lignesFacture[index];
+                            final produit = commerceProvider.produits[index];
+                            final stockRestant = produit.approvisionnements
+                                .fold<double>(
+                                    0,
+                                    (previousValue, appro) =>
+                                        previousValue + appro.quantite);
                             return Card(
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
@@ -511,15 +517,23 @@ class _FactureDetailState extends State<FactureDetail> {
                                   motion: const ScrollMotion(),
                                   dismissible: DismissiblePane(
                                     onDismissed: () {
-                                      _showEditDialog(context, ligne,
-                                          factureProvider, index);
+                                      _showEditDialog(
+                                          context,
+                                          ligne,
+                                          factureProvider,
+                                          commerceProvider,
+                                          index);
                                     },
                                   ),
                                   children: [
                                     SlidableAction(
                                       onPressed: (context) {
-                                        _showEditDialog(context, ligne,
-                                            factureProvider, index);
+                                        _showEditDialog(
+                                            context,
+                                            ligne,
+                                            factureProvider,
+                                            commerceProvider,
+                                            index);
                                       },
                                       backgroundColor: Color(0xFF0392CF),
                                       foregroundColor: Colors.white,
@@ -540,8 +554,18 @@ class _FactureDetailState extends State<FactureDetail> {
                                   ),
                                   title: Text(ligne.produit.target?.nom ??
                                       'Produit inconnu'),
-                                  subtitle: Text(
-                                      'PU: ${ligne.prixUnitaire.toStringAsFixed(2)}'),
+                                  subtitle: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                          'PU: ${ligne.prixUnitaire.toStringAsFixed(2)}'),
+                                      Spacer(),
+                                      Text(
+                                          'S.Restant: ${stockRestant.toStringAsFixed(2)}'),
+                                      Spacer(),
+                                    ],
+                                  ),
                                   trailing: Text(
                                     '${(ligne.quantite * ligne.prixUnitaire).toStringAsFixed(2)}',
                                     style: TextStyle(fontSize: 20),
@@ -776,6 +800,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                         0,
                                         (previousValue, appro) =>
                                             previousValue + appro.quantite);
+
                                 return DataRow(
                                   // color: WidgetStateProperty.resolveWith<Color?>(
                                   //   (Set<WidgetState> states) {
@@ -924,8 +949,12 @@ class _FactureDetailState extends State<FactureDetail> {
                                           IconButton(
                                             icon: Icon(Icons.edit),
                                             onPressed: () {
-                                              _showEditDialog(context, ligne,
-                                                  factureProvider, index);
+                                              _showEditDialog(
+                                                  context,
+                                                  ligne,
+                                                  factureProvider,
+                                                  commerceProvider,
+                                                  index);
                                             },
                                           ),
                                         ],
@@ -949,8 +978,12 @@ class _FactureDetailState extends State<FactureDetail> {
     });
   }
 
-  void _showEditDialog(BuildContext context, LigneDocument ligne,
-      FacturationProvider provider, int index) {
+  void _showEditDialog(
+      BuildContext context,
+      LigneDocument ligne,
+      FacturationProvider provider,
+      CommerceProvider commerceProvider,
+      int index) {
     final _formKey =
         GlobalKey<FormState>(); // Clé pour gérer l'état du formulaire
     final TextEditingController prixVenteController = TextEditingController(
@@ -968,12 +1001,14 @@ class _FactureDetailState extends State<FactureDetail> {
                     .reduce((a, b) => a + b) /
                 ligne.produit.target!.approvisionnements.length
             : 0.0;
-    final providerCommerce =
-        context.read<CommerceProvider>(); // ✅ Utiliser read ici
-    final quantiteRestante = providerCommerce.stockTotal;
+    // final providerCommerce =
+    //     context.read<CommerceProvider>(); // ✅ Utiliser read ici
+    // final quantiteRestante = providerCommerce.stockTotal;
 
     //ligne.produit.target?.calculerStockTotal() ?? 0.0;
-
+    final produit = commerceProvider.produits[index];
+    final stockRestant = produit.approvisionnements.fold<double>(
+        0, (previousValue, appro) => previousValue + appro.quantite);
     showDialog(
       context: context,
       builder: (context) {
@@ -989,7 +1024,7 @@ class _FactureDetailState extends State<FactureDetail> {
                   style: TextStyle(fontSize: 15),
                 ),
                 Text(
-                  'Quantité Restante: ${quantiteRestante.toStringAsFixed(2)}',
+                  'Quantité Restante: ${stockRestant.toStringAsFixed(2)}',
                   style: TextStyle(fontSize: 20),
                 ),
                 SizedBox(height: 16),
@@ -1014,8 +1049,8 @@ class _FactureDetailState extends State<FactureDetail> {
                     final quantite = double.tryParse(value ?? '');
                     if (quantite == null ||
                         quantite <= 0 ||
-                        quantite > quantiteRestante) {
-                      return 'La quantité doit être > 0 et ≤ ${quantiteRestante.toStringAsFixed(2)}';
+                        quantite > stockRestant) {
+                      return 'La quantité doit être > 0 et ≤ ${stockRestant.toStringAsFixed(2)}';
                     }
                     return null;
                   },
@@ -2394,12 +2429,12 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                     produit, 1, produit.prixVente);
 
                 // Afficher un message de confirmation
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${produit.nom} ajouté à la facture'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(
+                //     content: Text('${produit.nom} ajouté à la facture'),
+                //     backgroundColor: Colors.green,
+                //   ),
+                // );
               } else {
                 // Aucun produit trouvé
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -2463,11 +2498,11 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                           1,
                           option.prixVente,
                         );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${option.nom} ajouté à la facture'),
-                          ),
-                        );
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   SnackBar(
+                        //     content: Text('${option.nom} ajouté à la facture'),
+                        //   ),
+                        // );
                       },
                     ),
                   );
@@ -2512,12 +2547,12 @@ class _ProductSearchField1State extends State<ProductSearchField> {
             produit, 1, produit.prixVente);
 
         // Afficher un message de confirmation
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${produit.nom} ajouté à la facture'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text('${produit.nom} ajouté à la facture'),
+        //     backgroundColor: Colors.green,
+        //   ),
+        // );
       } else {
         // Aucun produit trouvé
         ScaffoldMessenger.of(context).showSnackBar(
