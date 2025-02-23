@@ -768,7 +768,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                 // final stockRestant = ligne.produit.target
                                 //         ?.calculerStockTotal() ??
                                 //     0.0;
-                                // Calculer le total des quantités des approvisionnements****
+                                // Calculer le total des quantités des approvisionnements***
                                 final produit =
                                     commerceProvider.produits[index];
                                 final stockRestant = produit.approvisionnements
