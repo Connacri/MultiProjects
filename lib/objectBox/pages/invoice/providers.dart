@@ -76,7 +76,7 @@ class FacturationProvider with ChangeNotifier {
 
   bool get hasMoreFactures => _hasMoreFactures;
 
-  Future<void> chargerFactures2({bool reset = true}) async {
+  Future<void> chargerFactures2({bool reset = false}) async {
     if (_isLoadingListFacture || !_hasMoreFactures) {
       print(
           "🚫 Appel ignoré : _isLoadingListFacture = $_isLoadingListFacture, _hasMoreFactures = $_hasMoreFactures");
@@ -146,44 +146,44 @@ class FacturationProvider with ChangeNotifier {
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////
-  Future<void> chargerFactures({bool reset = true}) async {
-    if (_isLoadingListFacture || !_hasMoreFactures) return;
-
-    _isLoadingListFacture = true;
-    notifyListeners();
-
-    try {
-      // Calculer l'offset et le limit pour la pagination
-      final offset = _currentPageFacture * _pageSizeFacture;
-      final limit = _pageSizeFacture; // Limite des résultats à récupérer
-      // Construire et configurer la requête
-      final query = _objectBox.factureBox
-          .query()
-          .order(Document_.derniereModification, flags: Order.descending)
-          .build()
-        ..offset = offset
-        ..limit = limit;
-
-      // Effectuer la recherche dans ObjectBox
-      final nouvellesFactures = await query
-          .find(); // Utilisation de `await` pour exécution asynchrone
-      query.close(); // Fermer la requête après utilisation
-
-      if (nouvellesFactures.isEmpty) {
-        _hasMoreFactures =
-            false; // Indiquer qu'il n'y a plus de données disponibles
-      } else {
-        _facturesList.addAll(
-            nouvellesFactures); // Ajouter les nouvelles factures à la liste
-        _currentPageFacture++; // Passer à la page suivante
-      }
-    } catch (e) {
-      print("Erreur lors de la récupération des factures : $e");
-    } finally {
-      _isLoadingListFacture = false;
-      notifyListeners();
-    }
-  }
+  // Future<void> chargerFactures({bool reset = true}) async {
+  //   if (_isLoadingListFacture || !_hasMoreFactures) return;
+  //
+  //   _isLoadingListFacture = true;
+  //   notifyListeners();
+  //
+  //   try {
+  //     // Calculer l'offset et le limit pour la pagination
+  //     final offset = _currentPageFacture * _pageSizeFacture;
+  //     final limit = _pageSizeFacture; // Limite des résultats à récupérer
+  //     // Construire et configurer la requête
+  //     final query = _objectBox.factureBox
+  //         .query()
+  //         .order(Document_.derniereModification, flags: Order.descending)
+  //         .build()
+  //       ..offset = offset
+  //       ..limit = limit;
+  //
+  //     // Effectuer la recherche dans ObjectBox
+  //     final nouvellesFactures = await query
+  //         .find(); // Utilisation de `await` pour exécution asynchrone
+  //     query.close(); // Fermer la requête après utilisation
+  //
+  //     if (nouvellesFactures.isEmpty) {
+  //       _hasMoreFactures =
+  //           false; // Indiquer qu'il n'y a plus de données disponibles
+  //     } else {
+  //       _facturesList.addAll(
+  //           nouvellesFactures); // Ajouter les nouvelles factures à la liste
+  //       _currentPageFacture++; // Passer à la page suivante
+  //     }
+  //   } catch (e) {
+  //     print("Erreur lors de la récupération des factures : $e");
+  //   } finally {
+  //     _isLoadingListFacture = false;
+  //     notifyListeners();
+  //   }
+  // }
 
   void setImpayer(double impayer) {
     _impayer = impayer;

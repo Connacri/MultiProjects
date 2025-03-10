@@ -482,7 +482,11 @@ class _FactureDetailState extends State<FactureDetail> {
                           itemCount: factureProvider.lignesFacture.length,
                           itemBuilder: (context, index) {
                             final ligne = factureProvider.lignesFacture[index];
-                            final produit = commerceProvider.produits[index];
+                            //final produit = commerceProvider.produits[index];
+                            final produit =
+                                commerceProvider.produits.firstWhere(
+                              (p) => p.id == ligne.produit.target?.id,
+                            );
                             final stockRestant = produit.approvisionnements
                                 .fold<double>(
                                     0,
@@ -637,6 +641,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                       factureProvider.lignesFacture.isEmpty
                                           ? null
                                           : () {
+                                              //  factureProvider.estEnEdition(facture);
                                               factureProvider
                                                   .creerNouvelleFacture(); // Crée une nouvelle facture
                                               _impayerController.clear();
@@ -794,8 +799,13 @@ class _FactureDetailState extends State<FactureDetail> {
                                 //         ?.calculerStockTotal() ??
                                 //     0.0;
                                 // Calculer le total des quantités des approvisionnements***
+                                // final produit =
+                                //     commerceProvider.produits[index];
                                 final produit =
-                                    commerceProvider.produits[index];
+                                    commerceProvider.produits.firstWhere(
+                                  (p) => p.id == ligne.produit.target?.id,
+                                );
+
                                 final stockRestant = produit.approvisionnements
                                     .fold<double>(
                                         0,
@@ -979,14 +989,135 @@ class _FactureDetailState extends State<FactureDetail> {
     });
   }
 
+  // void _showEditDialog(
+  //     BuildContext context,
+  //     LigneDocument ligne,
+  //     FacturationProvider provider,
+  //     CommerceProvider commerceProvider,
+  //     int index) {
+  //   final _formKey =
+  //       GlobalKey<FormState>(); // Clé pour gérer l'état du formulaire
+  //   final TextEditingController prixVenteController = TextEditingController(
+  //     text: ligne.prixUnitaire.toStringAsFixed(2),
+  //   );
+  //   final TextEditingController quantiteController = TextEditingController(
+  //     text: ligne.quantite.toStringAsFixed(2),
+  //   );
+  //
+  //   // Récupérer le prix d'achat et la quantité restante
+  //   final prixAchat =
+  //       ligne.produit.target?.approvisionnements.isNotEmpty == true
+  //           ? ligne.produit.target!.approvisionnements
+  //                   .map((a) => a.prixAchat ?? 0)
+  //                   .reduce((a, b) => a + b) /
+  //               ligne.produit.target!.approvisionnements.length
+  //           : 0.0;
+  //   // final providerCommerce =
+  //   //     context.read<CommerceProvider>(); // ✅ Utiliser read ici
+  //   // final quantiteRestante = providerCommerce.stockTotal;
+  //
+  //   //ligne.produit.target?.calculerStockTotal() ?? 0.0;
+  //   // final produit = commerceProvider.produits[index];
+  //   final produit = commerceProvider.produits.firstWhere(
+  //     (p) => p.id == ligne.produit.target?.id,
+  //   );
+  //   final stockRestant = produit.approvisionnements.fold<double>(
+  //       0, (previousValue, appro) => previousValue + appro.quantite);
+  //
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return AlertDialog(
+  //         title: Text('Modifier la Quantité ou Prix'),
+  //         content: Form(
+  //           key: _formKey, // Associer la clé au formulaire
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               Text(
+  //                 'Prix Minimal: ${prixAchat.toStringAsFixed(2)} DZD',
+  //                 style: TextStyle(fontSize: 15),
+  //               ),
+  //               Text(
+  //                 'Quantité Restante: ${(stockRestant + double.parse(quantiteController.text)).toStringAsFixed(2)}',
+  //                 style: TextStyle(fontSize: 20),
+  //               ),
+  //               SizedBox(height: 16),
+  //               TextFormField(
+  //                 controller: prixVenteController,
+  //                 decoration: InputDecoration(labelText: 'Prix de vente'),
+  //                 keyboardType: TextInputType.number,
+  //                 validator: (value) {
+  //                   final prixVente = double.tryParse(value ?? '');
+  //                   if (prixVente == null || prixVente < prixAchat) {
+  //                     return 'Le prix de vente doit être ≥ ${prixAchat.toStringAsFixed(2)}';
+  //                   }
+  //                   return null;
+  //                 },
+  //               ),
+  //               SizedBox(height: 16),
+  //               TextFormField(
+  //                 controller: quantiteController,
+  //                 decoration: InputDecoration(labelText: 'Quantité'),
+  //                 keyboardType: TextInputType.number,
+  //                 validator: (value) {
+  //                   final quantite = double.tryParse(value ?? '');
+  //                   if (quantite == null ||
+  //                       quantite <= 0 ||
+  //                       quantite > stockRestant) {
+  //                     return 'La quantité doit être > 0 et ≤ ${(stockRestant + double.parse(quantiteController.text)).toStringAsFixed(2)}';
+  //                   }
+  //                   return null;
+  //                 },
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               Navigator.pop(context); // Fermer la boîte de dialogue
+  //             },
+  //             child: Text('Annuler'),
+  //           ),
+  //           TextButton(
+  //             onPressed: () {
+  //               // Valider le formulaire
+  //               if (_formKey.currentState?.validate() ?? false) {
+  //                 // Récupérer les valeurs saisies
+  //                 final prixVente = double.tryParse(prixVenteController.text);
+  //                 final quantite = double.tryParse(quantiteController.text);
+  //
+  //                 if (prixVente == null || quantite == null) {
+  //                   ScaffoldMessenger.of(context).showSnackBar(
+  //                     SnackBar(
+  //                         content: Text('Veuillez saisir des valeurs valides')),
+  //                   );
+  //                   return;
+  //                 }
+  //
+  //                 // Mettre à jour la ligne avec les nouvelles valeurs
+  //                 provider.modifierLigne(index, quantite, prixVente);
+  //                 Navigator.pop(context); // Fermer la boîte de dialogue
+  //               }
+  //             },
+  //             child: Text('Enregistrer'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+
   void _showEditDialog(
       BuildContext context,
       LigneDocument ligne,
       FacturationProvider provider,
       CommerceProvider commerceProvider,
       int index) {
-    final _formKey =
-        GlobalKey<FormState>(); // Clé pour gérer l'état du formulaire
+    final _formKey = GlobalKey<FormState>();
+
+    // Controllers pour récupérer les valeurs
     final TextEditingController prixVenteController = TextEditingController(
       text: ligne.prixUnitaire.toStringAsFixed(2),
     );
@@ -994,102 +1125,120 @@ class _FactureDetailState extends State<FactureDetail> {
       text: ligne.quantite.toStringAsFixed(2),
     );
 
-    // Récupérer le prix d'achat et la quantité restante
-    final prixAchat =
-        ligne.produit.target?.approvisionnements.isNotEmpty == true
+    // Calcul du prix d'achat moyen
+    final double prixAchat =
+        (ligne.produit.target?.approvisionnements.isNotEmpty == true)
             ? ligne.produit.target!.approvisionnements
                     .map((a) => a.prixAchat ?? 0)
                     .reduce((a, b) => a + b) /
                 ligne.produit.target!.approvisionnements.length
             : 0.0;
-    // final providerCommerce =
-    //     context.read<CommerceProvider>(); // ✅ Utiliser read ici
-    // final quantiteRestante = providerCommerce.stockTotal;
 
-    //ligne.produit.target?.calculerStockTotal() ?? 0.0;
-    final produit = commerceProvider.produits[index];
-    final stockRestant = produit.approvisionnements.fold<double>(
+    // Récupérer le produit et le stock restant initial
+    final produit = commerceProvider.produits.firstWhere(
+      (p) => p.id == ligne.produit.target?.id,
+    );
+
+    double stockRestant = produit.approvisionnements.fold<double>(
         0, (previousValue, appro) => previousValue + appro.quantite);
+
+    // Fonction pour mettre à jour dynamiquement le stock
+    void updateStockRestant(String value) {
+      final quantite = double.tryParse(value) ?? 0.0;
+      stockRestant = produit.approvisionnements.fold<double>(
+              0, (previousValue, appro) => previousValue + appro.quantite) +
+          ligne
+              .quantite - // Réajuster l'ancienne quantité pour éviter un double comptage
+          quantite;
+    }
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Modifier la Quantité ou Prix'),
-          content: Form(
-            key: _formKey, // Associer la clé au formulaire
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Prix Minimal: ${prixAchat.toStringAsFixed(2)} DZD',
-                  style: TextStyle(fontSize: 15),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Modifier la Quantité ou Prix'),
+              content: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Prix Minimal: ${prixAchat.toStringAsFixed(2)} DZD',
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                    Text(
+                      'Quantité Restante: ${stockRestant.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: prixVenteController,
+                      decoration:
+                          const InputDecoration(labelText: 'Prix de vente'),
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        final prixVente = double.tryParse(value ?? '');
+                        if (prixVente == null || prixVente < prixAchat) {
+                          return 'Le prix de vente doit être ≥ ${prixAchat.toStringAsFixed(2)}';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: quantiteController,
+                      decoration: const InputDecoration(labelText: 'Quantité'),
+                      keyboardType: TextInputType.number,
+                      onChanged: (value) {
+                        setState(() {
+                          updateStockRestant(value);
+                        });
+                      },
+                      validator: (value) {
+                        final quantite = double.tryParse(value ?? '') ?? 0.0;
+                        if (quantite <= 0 || quantite > stockRestant) {
+                          return 'La quantité doit être > 0 et ≤ ${stockRestant.toStringAsFixed(2)}';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
                 ),
-                Text(
-                  'Quantité Restante: ${stockRestant.toStringAsFixed(2)}',
-                  style: TextStyle(fontSize: 20),
-                ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: prixVenteController,
-                  decoration: InputDecoration(labelText: 'Prix de vente'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    final prixVente = double.tryParse(value ?? '');
-                    if (prixVente == null || prixVente < prixAchat) {
-                      return 'Le prix de vente doit être ≥ ${prixAchat.toStringAsFixed(2)}';
-                    }
-                    return null;
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
                   },
+                  child: const Text('Annuler'),
                 ),
-                SizedBox(height: 16),
-                TextFormField(
-                  controller: quantiteController,
-                  decoration: InputDecoration(labelText: 'Quantité'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    final quantite = double.tryParse(value ?? '');
-                    if (quantite == null ||
-                        quantite <= 0 ||
-                        quantite > stockRestant) {
-                      return 'La quantité doit être > 0 et ≤ ${stockRestant.toStringAsFixed(2)}';
+                TextButton(
+                  onPressed: () {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      final prixVente =
+                          double.tryParse(prixVenteController.text);
+                      final quantite =
+                          double.tryParse(quantiteController.text) ?? 0.0;
+
+                      if (prixVente == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Veuillez saisir un prix valide')),
+                        );
+                        return;
+                      }
+
+                      provider.modifierLigne(index, quantite, prixVente);
+                      Navigator.pop(context);
                     }
-                    return null;
                   },
+                  child: const Text('Enregistrer'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Fermer la boîte de dialogue
-              },
-              child: Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Valider le formulaire
-                if (_formKey.currentState?.validate() ?? false) {
-                  // Récupérer les valeurs saisies
-                  final prixVente = double.tryParse(prixVenteController.text);
-                  final quantite = double.tryParse(quantiteController.text);
-
-                  if (prixVente == null || quantite == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text('Veuillez saisir des valeurs valides')),
-                    );
-                    return;
-                  }
-
-                  // Mettre à jour la ligne avec les nouvelles valeurs
-                  provider.modifierLigne(index, quantite, prixVente);
-                  Navigator.pop(context); // Fermer la boîte de dialogue
-                }
-              },
-              child: Text('Enregistrer'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -1191,7 +1340,7 @@ class _FactureListState extends State<FactureList> {
         _scrollController.position.maxScrollExtent) {
       //  print("📜 Début du chargement des factures supplémentaires...");
       Provider.of<FacturationProvider>(context, listen: false)
-          .chargerFactures();
+          .chargerFactures2();
     }
   }
 
@@ -1261,7 +1410,7 @@ class _FactureListState extends State<FactureList> {
                     }
                     if (index < factureProvider.facturesList.length) {
                       final facture =
-                          factureProvider.facturesList.reversed.toList()[index];
+                          factureProvider.facturesList.toList()[index];
                       bool estEnEdition = factureProvider.estEnEdition(facture);
                       final isEditing = factureProvider.isEditing;
                       final hasChanges = factureProvider.hasChanges;
