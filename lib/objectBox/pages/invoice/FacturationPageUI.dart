@@ -426,8 +426,9 @@ class _FactureDetailState extends State<FactureDetail> {
                                 onPressed: factureProvider.lignesFacture.isEmpty
                                     ? null
                                     : () {
-                                        factureProvider
-                                            .creerNouvelleFacture(); // Crée une nouvelle facture
+                                        factureProvider.sauvegarderFacture(
+                                            context, commerceProvider);
+                                        //   .creerNouvelleFacture(); // Crée une nouvelle facture
                                         _impayerController.clear();
                                         _rechercheController.clear();
                                         context
@@ -637,19 +638,20 @@ class _FactureDetailState extends State<FactureDetail> {
                                   flex: 2,
                                 ),
                                 ElevatedButton.icon(
-                                  onPressed:
-                                      factureProvider.lignesFacture.isEmpty
-                                          ? null
-                                          : () {
-                                              //  factureProvider.estEnEdition(facture);
-                                              factureProvider
-                                                  .creerNouvelleFacture(); // Crée une nouvelle facture
-                                              _impayerController.clear();
-                                              _rechercheController.clear();
-                                              context
-                                                  .read<EditableFieldProvider>()
-                                                  .AlwaystoggleEditable();
-                                            },
+                                  onPressed: factureProvider
+                                          .lignesFacture.isEmpty
+                                      ? null
+                                      : () {
+                                          //  factureProvider.estEnEdition(facture);
+                                          factureProvider.sauvegarderFacture(
+                                              context, commerceProvider);
+                                          // .creerNouvelleFacture(); // Crée une nouvelle facture
+                                          _impayerController.clear();
+                                          _rechercheController.clear();
+                                          context
+                                              .read<EditableFieldProvider>()
+                                              .AlwaystoggleEditable();
+                                        },
                                   style: ElevatedButton.styleFrom(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(15.0),
@@ -1411,7 +1413,7 @@ class _FactureListState extends State<FactureList> {
                     }
                     if (index < factureProvider.facturesList.length) {
                       final facture =
-                          factureProvider.facturesList.toList()[index];
+                          factureProvider.facturesList.reversed.toList()[index];
                       bool estEnEdition = factureProvider.estEnEdition(facture);
                       final isEditing = factureProvider.isEditing;
                       final hasChanges = factureProvider.hasChanges;
@@ -1420,8 +1422,31 @@ class _FactureListState extends State<FactureList> {
                           Card(
                             color: estEnEdition ? Colors.green.shade100 : null,
                             child: ListTile(
-                              onLongPress: () => factureProvider
-                                  .supprimerFacture(facture, commerceProvider),
+                              onTap: () {
+                                if (factureProvider.estEnEdition(facture)) {
+                                  factureProvider.terminerEdition();
+                                } else {
+                                  factureProvider.selectionnerFacture(facture);
+                                  factureProvider.commencerEdition(facture);
+                                  context
+                                      .read<EditableFieldProvider>()
+                                      .AlwaystoggleEditable();
+                                  context
+                                      .read<FacturationProvider>()
+                                      .AlwaystoggleEdit(index);
+                                  tabController?.animateTo(0);
+                                }
+                              },
+                              onFocusChange: (hasFocus) {
+                                if (!hasFocus &&
+                                    factureProvider.estEnEdition(facture)) {
+                                  factureProvider.terminerEdition();
+                                }
+                              },
+                              onLongPress: () {
+                                factureProvider.supprimerFacture(
+                                    facture, commerceProvider);
+                              },
                               leading: CircleAvatar(
                                 backgroundColor: estEnEdition
                                     ? Colors.white70
@@ -1488,17 +1513,6 @@ class _FactureListState extends State<FactureList> {
                                   ],
                                 ),
                               ),
-                              onTap: () {
-                                factureProvider.selectionnerFacture(facture);
-                                factureProvider.commencerEdition(facture);
-                                context
-                                    .read<EditableFieldProvider>()
-                                    .AlwaystoggleEditable();
-                                context
-                                    .read<FacturationProvider>()
-                                    .AlwaystoggleEdit(index);
-                                tabController?.animateTo(0);
-                              },
                               trailing: facture.impayer! > 0.0
                                   ? Column(
                                       crossAxisAlignment:
@@ -2638,9 +2652,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                     title: Text('${option.qr} ${option.nom}'),
                     subtitle: Text(
                         'Prix: ${option.prixVente.toStringAsFixed(2)} DZD'),
-                    onTap: () {
-                      onSelected(option);
-                    },
+                    // onTap: () {
+                    //   onSelected(option);
+                    // },
                     trailing: IconButton(
                       icon: Icon(Icons.add_shopping_cart),
                       onPressed: () {
@@ -2649,6 +2663,7 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                           1,
                           option.prixVente,
                         );
+
                         // ScaffoldMessenger.of(context).showSnackBar(
                         //   SnackBar(
                         //     content: Text('${option.nom} ajouté à la facture'),

@@ -270,6 +270,16 @@ class FacturationProvider with ChangeNotifier {
     return _factureEnEdition?.id == facture.id;
   }
 
+  void terminerEdition() {
+    _factureEnEdition = null;
+    // 🗑️ Si la facture supprimée est celle en cours, la réinitialiser
+
+    _factureEnCours = null;
+    _lignesFacture.clear();
+
+    notifyListeners();
+  }
+
   LigneEditionState getLigneEditionState(int index) {
     _ligneEditionStates.putIfAbsent(index, () => LigneEditionState());
     return _ligneEditionStates[index]!;
@@ -341,6 +351,7 @@ class FacturationProvider with ChangeNotifier {
       nouvelleLigne.produit.target = produit;
       _lignesFacture.add(nouvelleLigne);
     }
+    _hasChanges = true; // Marquer qu'il y a des modifications
 
     notifyListeners();
   }
@@ -371,12 +382,12 @@ class FacturationProvider with ChangeNotifier {
     return calculerTotalHT() + calculerTVA();
   }
 
-  void creerNouvelleFacture() {
+  void creerNouvelleFacture11() {
     // Créer une nouvelle facture
     _factureEnCours = Document(
       type: 'vente',
       // ou 'achat'
-      qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
+      qrReference: 'REFnouv${DateTime.now().millisecondsSinceEpoch}',
       // Référence unique
       impayer: 0.0,
       derniereModification: DateTime.now(),
@@ -425,77 +436,6 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Future<void> sauvegarderFacture() async {
-  //   print('Sauvegarde de la facture en cours...');
-  //
-  //   try {
-  //     if (_factureEnCours == null) {
-  //       print('Création d\'une nouvelle facture');
-  //       final nouvelleFacture = Document(
-  //         type: 'vente',
-  //         qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
-  //         impayer: _impayer,
-  //         derniereModification: DateTime.now(),
-  //         isSynced: false,
-  //         date: DateTime.now(),
-  //       );
-  //
-  //       // Associer le client sélectionné à la nouvelle facture
-  //       //  if (_selectedClient != null) {
-  //       nouvelleFacture.client.target = _selectedClient;
-  //       // }
-  //
-  //       // Ajouter les lignes de document à la nouvelle facture
-  //       nouvelleFacture.lignesDocument.addAll(_lignesFacture);
-  //
-  //       // Sauvegarder la nouvelle facture dans la base de données
-  //       _objectBox.factureBox.put(nouvelleFacture);
-  //
-  //       // Sauvegarder les lignes de document
-  //       for (final ligne in _lignesFacture) {
-  //         ligne.facture.target = nouvelleFacture;
-  //         _objectBox.ligneFacture.put(ligne);
-  //       }
-  //
-  //       // Ajouter la nouvelle facture à la liste des factures
-  //       _facturesList.add(nouvelleFacture);
-  //     } else {
-  //       // Mettre à jour la facture existante
-  //       _factureEnCours!.lignesDocument.clear();
-  //       _factureEnCours!.lignesDocument.addAll(_lignesFacture);
-  //       _factureEnCours!.impayer = _impayer;
-  //
-  //       // Associer le client sélectionné à la facture existante
-  //       // if (_selectedClient != null) {
-  //       _factureEnCours!.client.target = _selectedClient;
-  //       //  }
-  //
-  //       // Sauvegarder la facture mise à jour dans la base de données
-  //       _objectBox.factureBox.put(_factureEnCours!);
-  //
-  //       // Sauvegarder les lignes de document
-  //       for (final ligne in _lignesFacture) {
-  //         ligne.facture.target = _factureEnCours;
-  //         _objectBox.ligneFacture.put(ligne);
-  //       }
-  //     }
-  //
-  //     // Réinitialiser l'état après la sauvegarde
-  //     _factureEnCours = null;
-  //     _lignesFacture.clear();
-  //     _impayer = 0.0;
-  //     _selectedClient = null; // Réinitialiser le client sélectionné
-  //     chargerFactures2();
-  //     // chargerFacturesPaginees();
-  //
-  //     print('Facture sauvegardée avec succès');
-  //     _isEditing = false; // Désactiver l'état d'édition après la sauvegarde
-  //     _hasChanges = false; // Réinitialiser l'état des modifications
-  //     notifyListeners();
-  //   } catch (e) {
-  //     print('Erreur lors de la sauvegarde de la facture: $e');
-  //   }
-  // }
   Future<void> sauvegarderFacture(
       BuildContext context, CommerceProvider commerceProvider) async {
     print('Sauvegarde de la facture en cours...');
@@ -667,6 +607,7 @@ class FacturationProvider with ChangeNotifier {
       }
 
       // Reset state
+
       _factureEnCours = null;
       _lignesFacture.clear();
       _impayer = 0.0;
