@@ -110,6 +110,7 @@ dependencies:
   #  media_kit_libs_audio: ^1.0.5 # Native audio dependencies.
   flutter_avif: ^3.0.0
   youtube_player_flutter: ^9.1.1
+  webfeed_plus: ^1.1.2
 
 
 

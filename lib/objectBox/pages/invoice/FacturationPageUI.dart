@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http;
 import 'package:kenzy/objectBox/pages/ProduitListScreen.dart';
 import 'package:marqueer/marqueer.dart';
 import 'package:calendar_timeline/calendar_timeline.dart';
@@ -17,6 +18,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_barcodes/barcodes.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webfeed_plus/domain/rss_feed.dart';
 import '../../MyProviders.dart';
 import '../../Utils/mobile_scanner/barcode_scanner_window.dart';
 import '../../Utils/winMobile.dart';
@@ -26,6 +28,7 @@ import '../../firebase/ItemsCarousel.dart';
 import '../ClientListScreen.dart';
 import '../addProduct.dart';
 import 'providers.dart';
+import 'package:html/parser.dart' show parse;
 
 ///23/02/2025 16:45///
 class FacturationPageUI extends StatelessWidget {
@@ -132,11 +135,14 @@ class _FactureDetailState extends State<FactureDetail> {
       TextEditingController();
   late Stream<List<MarqueeData>> _marqueeDataStream;
   final MarqueerController _controller = MarqueerController();
+  late Future<List<MarqueeData>> marqueeDataFuture;
 
   @override
   void initState() {
     super.initState();
     _initializeMarqueeData();
+    marqueeDataFuture = RssService.fetchMarqueeData(
+        'https://www.shorouknews.com/Politics/world/rss');
   }
 
   @override
@@ -372,6 +378,28 @@ class _FactureDetailState extends State<FactureDetail> {
                             },
                           ),
                         ),
+                        // Expanded(
+                        //   child: FutureBuilder<List<MarqueeData>>(
+                        //     future: marqueeDataFuture,
+                        //     builder: (context, snapshot) {
+                        //       if (snapshot.connectionState ==
+                        //           ConnectionState.waiting) {
+                        //         return Center(
+                        //             child: CircularProgressIndicator());
+                        //       } else if (snapshot.hasError) {
+                        //         return Center(
+                        //             child: Text('Erreur : ${snapshot.error}'));
+                        //       } else if (!snapshot.hasData ||
+                        //           snapshot.data!.isEmpty) {
+                        //         return Center(
+                        //             child: Text('Aucune donnée disponible'));
+                        //       } else {
+                        //         return MarqueeWidget(
+                        //             marqueeDataList: snapshot.data!);
+                        //       }
+                        //     },
+                        //   ),
+                        // ),
                       ],
                     );
                   }
@@ -913,8 +941,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                         ],
                                       ),
                                     ),
-                                    DataCell(
-                                        Text(stockRestant.toStringAsFixed(2))),
+                                    DataCell(Text((stockRestant ?? 0)
+                                        .toStringAsFixed(2))),
                                     DataCell(
                                       // state.isEditedPu
                                       //     ? TextFormField(
@@ -1385,7 +1413,36 @@ class _FactureListState extends State<FactureList> {
                     padding: const EdgeInsets.all(8.0),
                     child: Text(
                         '${factureProvider.totalfactures.length} Factures'),
-                  )
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      // Afficher une boîte de dialogue de confirmation
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Confirmer la suppression'),
+                          content: Text(
+                              'Voulez-vous vraiment supprimer cette facture?'),
+                          actions: [
+                            TextButton(
+                              child: Text('Annuler'),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            TextButton(
+                              child: Text('Supprimer'),
+                              onPressed: () {
+                                // Appeler votre fonction de suppression
+                                factureProvider
+                                    .supprimerToutesFactures(commerceProvider);
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ],
               )),
 
@@ -2839,5 +2896,61 @@ class _AddMarqueeDialogState extends State<AddMarqueeDialog> {
     _imageUrlController.dispose();
     _webUrlController.dispose();
     super.dispose();
+  }
+}
+
+class RssService {
+  static Future<List<MarqueeData>> fetchMarqueeData(String url) async {
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final feed = RssFeed.parse(response.body);
+      return feed.items!.map((item) {
+        final document = parse(item.description ?? '');
+        final imgElement = document.querySelector('img');
+        final imageUrl = imgElement?.attributes['src'] ?? '';
+
+        final priceMatch =
+            RegExp(r'(\d+,\d+|\d+) DZD').firstMatch(item.description ?? '');
+        final prix = priceMatch != null
+            ? double.tryParse(priceMatch.group(1)!.replaceAll(',', '.')) ?? 0.0
+            : 0.0;
+
+        return MarqueeData(
+          text: item.title ?? 'Sans titre',
+          prix: prix,
+          imageUrl: imageUrl,
+          webUrl: item.link ?? '',
+          created_at: DateTime.now(),
+        );
+      }).toList();
+    } else {
+      throw Exception('Échec du chargement du flux RSS');
+    }
+  }
+}
+
+class MarqueeWidget extends StatelessWidget {
+  final List<MarqueeData> marqueeDataList;
+
+  MarqueeWidget({required this.marqueeDataList});
+
+  @override
+  Widget build(BuildContext context) {
+    return Marqueer(
+      pps: 30, // Pixels par seconde
+
+      child: Row(
+        children: marqueeDataList.map((data) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            child: Text(
+              data.text,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 }

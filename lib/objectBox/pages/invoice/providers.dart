@@ -141,7 +141,7 @@ class FacturationProvider with ChangeNotifier {
   List<Document> get totalfactures => _totalfactures;
 
   void _chargerFacturesTotal() {
-    _totalfactures = _objectBox.factureBox.getAll().reversed.toList();
+    _totalfactures = _objectBox.factureBox.getAll().toList();
     notifyListeners();
   }
 
@@ -609,11 +609,12 @@ class FacturationProvider with ChangeNotifier {
       // Reset state
 
       _factureEnCours = null;
+      _factureEnEdition = null;
       _lignesFacture.clear();
       _impayer = 0.0;
       _selectedClient = null;
       chargerFactures2(reset: true);
-      //chargerFactures();
+      _chargerFacturesTotal();
 
       print('Facture sauvegardée avec succès');
       _isEditing = false;
@@ -733,6 +734,8 @@ class FacturationProvider with ChangeNotifier {
       print('Facture supprimée avec succès et quantités rétablies');
       // 🔴 Notification pour mettre à jour les produits
       commerceProvider.chargerProduits(reset: true);
+      _factureEnCours = null;
+      _lignesFacture.clear();
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la suppression de la facture: $e');
@@ -740,6 +743,67 @@ class FacturationProvider with ChangeNotifier {
     }
   }
 
+  Future<void> supprimerToutesFactures(
+      CommerceProvider commerceProvider) async {
+    try {
+      // 1. Récupérer toutes les factures
+      final factures = _objectBox.factureBox.getAll();
+
+      // 2. Pour chaque facture, restaurer les quantités de stock
+      for (final facture in factures) {
+        // Rétablir les quantités dans les approvisionnements
+        for (final ligne in facture.lignesDocument) {
+          final produitId = ligne.produit.target?.id;
+          if (produitId == null) continue;
+
+          double quantiteARetablir = ligne.quantite;
+
+          // Récupérer les approvisionnements triés par date de péremption croissante
+          final query = _objectBox.approvisionnementBox
+              .query(Approvisionnement_.produit.equals(produitId))
+            ..order(Approvisionnement_.datePeremption);
+          final approvisionnements = query.build().find();
+
+          for (final appro in approvisionnements) {
+            if (quantiteARetablir <= 0) break;
+
+            appro.quantite += quantiteARetablir;
+            quantiteARetablir = 0; // Tout est rétabli ici
+
+            // Mettre à jour l'approvisionnement dans la base de données
+            _objectBox.approvisionnementBox.put(appro);
+          }
+        }
+
+        // Supprimer toutes les lignes de document associées
+        for (final ligne in facture.lignesDocument) {
+          _objectBox.ligneFacture.remove(ligne.id);
+        }
+      }
+
+      // 3. Supprimer toutes les factures d'un coup
+      _objectBox.factureBox.removeAll();
+
+      // 4. Mettre à jour l'interface utilisateur
+      facturesList.clear();
+      chargerFactures2(reset: true);
+      _chargerFacturesTotal();
+      _facturesList = [];
+      _facturesList.clear();
+      _factureEnCours = null;
+      lignesFacture.clear();
+
+      print('Toutes les factures ont été supprimées avec succès');
+
+      // 5. Notification pour mettre à jour les produits
+      commerceProvider.chargerProduits(reset: true);
+
+      notifyListeners();
+    } catch (e) {
+      print('Erreur lors de la suppression de toutes les factures: $e');
+      rethrow;
+    }
+  }
 // Future<void> supprimerFacture(Document facture) async {
 //   try {
 //     // Rétablir les quantités dans les approvisionnements
