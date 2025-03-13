@@ -2949,56 +2949,116 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      width: MediaQuery.of(context).size.width * 0.43,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      color: Colors.yellow,
-      child: Marqueer.builder(
-        pps: 60,
-        autoStart: true,
-        separatorBuilder: (_, index) => const Center(
-          child: Text(
-            '  -  ',
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-        scrollablePointerIgnoring: true,
-        direction: MarqueerDirection.ltr,
-        controller: widget.controller,
-        itemCount: widget.marqueeData.length,
-        itemBuilder: (context, index) {
-          final item = widget.marqueeData[index];
-
-          return InkWell(
-            onTap: () => _launchUrl(item.webUrl),
-            child: Row(
-              children: [
-                if (item.imageUrl.isNotEmpty)
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: CachedNetworkImage(
-                      imageUrl: item.imageUrl,
-                      fit: BoxFit.cover,
-                      width: 50,
-                      height: 50,
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                Text(
-                  item.text,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.black,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: isArabic(item.text) ? 'ArbFONTS' : 'Oswald',
-                  ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 600) {
+          return Container(
+            height: 50,
+            width: MediaQuery.of(context).size.width,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            color: Colors.yellow,
+            child: Marqueer.builder(
+              pps: 60,
+              autoStart: true,
+              separatorBuilder: (_, index) => const Center(
+                child: Text(
+                  '  -  ',
+                  style: TextStyle(color: Colors.black),
                 ),
-              ],
+              ),
+              scrollablePointerIgnoring: true,
+              direction: MarqueerDirection.ltr,
+              controller: widget.controller,
+              itemCount: widget.marqueeData.length,
+              itemBuilder: (context, index) {
+                final item = widget.marqueeData[index];
+
+                return InkWell(
+                  onTap: () => _launchUrl(item.webUrl),
+                  child: Row(
+                    children: [
+                      if (item.imageUrl.isNotEmpty)
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: CachedNetworkImage(
+                            imageUrl: item.imageUrl,
+                            fit: BoxFit.cover,
+                            width: 50,
+                            height: 50,
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.text,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w400,
+                          fontFamily:
+                              isArabic(item.text) ? 'ArbFONTS' : 'Oswald',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           );
-        },
-      ),
+        } else {
+          return Container(
+            height: 50,
+            width: MediaQuery.of(context).size.width * 0.43,
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            color: Colors.yellow,
+            child: Marqueer.builder(
+              pps: 60,
+              autoStart: true,
+              separatorBuilder: (_, index) => const Center(
+                child: Text(
+                  '  -  ',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+              scrollablePointerIgnoring: true,
+              direction: MarqueerDirection.ltr,
+              controller: widget.controller,
+              itemCount: widget.marqueeData.length,
+              itemBuilder: (context, index) {
+                final item = widget.marqueeData[index];
+
+                return InkWell(
+                  onTap: () => _launchUrl(item.webUrl),
+                  child: Row(
+                    children: [
+                      if (item.imageUrl.isNotEmpty)
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: CachedNetworkImage(
+                            imageUrl: item.imageUrl,
+                            fit: BoxFit.cover,
+                            width: 50,
+                            height: 50,
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      Text(
+                        item.text,
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w400,
+                          fontFamily:
+                              isArabic(item.text) ? 'ArbFONTS' : 'Oswald',
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        }
+      },
     );
   }
 }
