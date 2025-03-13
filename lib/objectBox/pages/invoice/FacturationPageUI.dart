@@ -2947,6 +2947,7 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
     return arabicRegex.hasMatch(text);
   }
 
+  ///
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
