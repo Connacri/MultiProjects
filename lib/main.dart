@@ -192,12 +192,24 @@ Future<void> initializeSupabase() async {
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqYm56Z2h5aGRobGl2cG9rc3R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODA1MjcsImV4cCI6MjA1NDI1NjUyN30.99PBeSXyoFJQMFopizHfLDlqLrMunSBLlBfTGcLIpv8';
 
   try {
+    // await su.Supabase.initialize(
+    //   url: supabaseUrl,
+    //   anonKey: supabaseKey,
+    //   //debug: true,
+    // );
     await su.Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseKey,
-      //debug: true,
+      authOptions: const su.FlutterAuthClientOptions(
+        authFlowType: su.AuthFlowType.pkce,
+      ),
+      realtimeClientOptions: const su.RealtimeClientOptions(
+        logLevel: su.RealtimeLogLevel.info,
+      ),
+      storageOptions: const su.StorageClientOptions(
+        retryAttempts: 10,
+      ),
     );
-
     if (su.Supabase.instance == null) {
       print('Supabase initialization failed.');
       return;

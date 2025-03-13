@@ -135,14 +135,13 @@ class _FactureDetailState extends State<FactureDetail> {
       TextEditingController();
   late Stream<List<MarqueeData>> _marqueeDataStream;
   final MarqueerController _controller = MarqueerController();
-  late Future<List<MarqueeData>> marqueeDataFuture;
 
   @override
   void initState() {
     super.initState();
-    _initializeMarqueeData();
-    marqueeDataFuture = RssService.fetchMarqueeData(
-        'https://www.shorouknews.com/Politics/world/rss');
+
+    _marqueeDataStream =
+        RssService.fetchMarqueeData('https://www.echoroukonline.com/feed');
   }
 
   @override
@@ -150,26 +149,19 @@ class _FactureDetailState extends State<FactureDetail> {
     _rechercheController.dispose();
     _impayerController.dispose();
     _barcodeBufferController.dispose();
+
     // Nettoyer le contrôleur pour éviter les fuites de mémoire
     // _impayerController.removeListener(_updateDisplayText);
     super.dispose();
   }
 
-  void _initializeMarqueeData() {
-    _marqueeDataStream = Supabase.instance.client
-        .from('marquee')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .map((event) => event.map((row) => MarqueeData.fromMap(row)).toList());
-  }
-
-  Future<void> _launchUrl(String url) async {
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
-      throw 'Impossible d\'ouvrir $url';
-    }
-  }
+  // void _initializeMarqueeData() {
+  //   _marqueeDataStream = Supabase.instance.client
+  //       .from('marquee')
+  //       .stream(primaryKey: ['id'])
+  //       .order('created_at', ascending: false)
+  //       .map((event) => event.map((row) => MarqueeData.fromMap(row)).toList());
+  // }
 
   Widget build(BuildContext context) {
     // final provider = Provider.of<FacturationProvider>(context);
@@ -228,58 +220,12 @@ class _FactureDetailState extends State<FactureDetail> {
                             }
                             if (!snapshot.hasData || snapshot.data!.isEmpty) {
                               return const Center(
-                                  child: Text('Aucune annonce disponible.'));
+                                  child: Text('Aucune News disponible.'));
                             }
 
-                            final marqueeData = snapshot.data!;
-
-                            return Container(
-                              height: 50,
-                              width: MediaQuery.of(context).size.width,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              color: Colors.yellow,
-                              child: Marqueer.builder(
-                                pps: 50,
-                                autoStart: true,
-                                separatorBuilder: (_, index) => const Center(
-                                  child: Text(
-                                    '  -  ',
-                                    style: TextStyle(color: Colors.black),
-                                  ),
-                                ),
-                                scrollablePointerIgnoring: true,
-                                direction: MarqueerDirection.rtl,
-                                controller: _controller,
-                                itemCount: marqueeData.length,
-                                itemBuilder: (context, index) {
-                                  final item = marqueeData[index];
-
-                                  return InkWell(
-                                    onTap: () => _launchUrl(item.webUrl),
-                                    child: Row(
-                                      children: [
-                                        if (item.imageUrl.isNotEmpty)
-                                          AspectRatio(
-                                            aspectRatio: 1,
-                                            child: CachedNetworkImage(
-                                                imageUrl: item.imageUrl,
-                                                fit: BoxFit.cover,
-                                                width: 50,
-                                                height: 50),
-                                          ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              color: Colors.black),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
+                            return MarqueeWidget(
+                                marqueeData: snapshot.data!,
+                                controller: _controller);
                           },
                         ),
                       ],
@@ -303,6 +249,81 @@ class _FactureDetailState extends State<FactureDetail> {
                         SizedBox(
                           width: 15,
                         ),
+                        // Expanded(
+                        //   child: StreamBuilder<List<MarqueeData>>(
+                        //     stream: _marqueeDataStream,
+                        //     initialData: const [],
+                        //     builder: (context, snapshot) {
+                        //       if (snapshot.connectionState ==
+                        //           ConnectionState.waiting) {
+                        //         return const Center(
+                        //             child: CircularProgressIndicator());
+                        //       }
+                        //       if (snapshot.hasError) {
+                        //         return IconButton(
+                        //             onPressed: () => _initializeMarqueeData(),
+                        //             icon: Icon(Icons.refresh));
+                        //         // Center(
+                        //         //   child: Text('Erreur: ${snapshot.error}'));
+                        //       }
+                        //       if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        //         return const Center(
+                        //             child: Text('Aucune annonce disponible.'));
+                        //       }
+                        //
+                        //       final marqueeData = snapshot.data!;
+                        //
+                        //       return Container(
+                        //         height: 50,
+                        //         width: MediaQuery.of(context).size.width * 0.43,
+                        //         padding:
+                        //             const EdgeInsets.symmetric(vertical: 10),
+                        //         color: Colors.yellow,
+                        //         child: Marqueer.builder(
+                        //           pps: 50,
+                        //           autoStart: true,
+                        //           separatorBuilder: (_, index) => const Center(
+                        //             child: Text(
+                        //               '  -  ',
+                        //               style: TextStyle(color: Colors.black),
+                        //             ),
+                        //           ),
+                        //           scrollablePointerIgnoring: true,
+                        //           direction: MarqueerDirection.rtl,
+                        //           controller: _controller,
+                        //           itemCount: marqueeData.length,
+                        //           itemBuilder: (context, index) {
+                        //             final item = marqueeData[index];
+                        //
+                        //             return InkWell(
+                        //               onTap: () => _launchUrl(item.webUrl),
+                        //               child: Row(
+                        //                 children: [
+                        //                   if (item.imageUrl.isNotEmpty)
+                        //                     AspectRatio(
+                        //                       aspectRatio: 1,
+                        //                       child: CachedNetworkImage(
+                        //                           imageUrl: item.imageUrl,
+                        //                           fit: BoxFit.cover,
+                        //                           width: 50,
+                        //                           height: 50),
+                        //                     ),
+                        //                   const SizedBox(width: 8),
+                        //                   Text(
+                        //                     "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
+                        //                     style: const TextStyle(
+                        //                         fontSize: 18,
+                        //                         color: Colors.black),
+                        //                   ),
+                        //                 ],
+                        //               ),
+                        //             );
+                        //           },
+                        //         ),
+                        //       );
+                        //     },
+                        //   ),
+                        // ),
                         Expanded(
                           child: StreamBuilder<List<MarqueeData>>(
                             stream: _marqueeDataStream,
@@ -314,67 +335,22 @@ class _FactureDetailState extends State<FactureDetail> {
                                     child: CircularProgressIndicator());
                               }
                               if (snapshot.hasError) {
-                                return IconButton(
-                                    onPressed: () => _initializeMarqueeData(),
-                                    icon: Icon(Icons.refresh));
-                                // Center(
-                                //   child: Text('Erreur: ${snapshot.error}'));
+                                return
+                                    // IconButton(
+                                    //   onPressed: () => _initializeMarqueeData(),
+                                    //   icon: Icon(Icons.refresh));
+                                    Center(
+                                        child: FittedBox(
+                                            child: Text(
+                                                'Erreur: ${snapshot.error}')));
                               }
                               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                                 return const Center(
-                                    child: Text('Aucune annonce disponible.'));
+                                    child: Text('Aucune News disponible.'));
                               }
-
-                              final marqueeData = snapshot.data!;
-
-                              return Container(
-                                height: 50,
-                                width: MediaQuery.of(context).size.width * 0.43,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                color: Colors.yellow,
-                                child: Marqueer.builder(
-                                  pps: 50,
-                                  autoStart: true,
-                                  separatorBuilder: (_, index) => const Center(
-                                    child: Text(
-                                      '  -  ',
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                  ),
-                                  scrollablePointerIgnoring: true,
-                                  direction: MarqueerDirection.rtl,
-                                  controller: _controller,
-                                  itemCount: marqueeData.length,
-                                  itemBuilder: (context, index) {
-                                    final item = marqueeData[index];
-
-                                    return InkWell(
-                                      onTap: () => _launchUrl(item.webUrl),
-                                      child: Row(
-                                        children: [
-                                          if (item.imageUrl.isNotEmpty)
-                                            AspectRatio(
-                                              aspectRatio: 1,
-                                              child: CachedNetworkImage(
-                                                  imageUrl: item.imageUrl,
-                                                  fit: BoxFit.cover,
-                                                  width: 50,
-                                                  height: 50),
-                                            ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
-                                            style: const TextStyle(
-                                                fontSize: 18,
-                                                color: Colors.black),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
+                              return MarqueeWidget(
+                                  marqueeData: snapshot.data!,
+                                  controller: _controller);
                             },
                           ),
                         ),
@@ -2900,56 +2876,128 @@ class _AddMarqueeDialogState extends State<AddMarqueeDialog> {
 }
 
 class RssService {
-  static Future<List<MarqueeData>> fetchMarqueeData(String url) async {
-    final response = await http.get(Uri.parse(url));
+  static Stream<List<MarqueeData>> fetchMarqueeData(String url) async* {
+    while (true) {
+      try {
+        final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final feed = RssFeed.parse(response.body);
-      return feed.items!.map((item) {
-        final document = parse(item.description ?? '');
-        final imgElement = document.querySelector('img');
-        final imageUrl = imgElement?.attributes['src'] ?? '';
+        if (response.statusCode == 200) {
+          final feed = RssFeed.parse(response.body);
+          final data = feed.items!.map((item) {
+            final document = parse(item.description ?? '');
+            final imgElement = document.querySelector('img');
+            final imageUrl = imgElement?.attributes['src'] ?? '';
 
-        final priceMatch =
-            RegExp(r'(\d+,\d+|\d+) DZD').firstMatch(item.description ?? '');
-        final prix = priceMatch != null
-            ? double.tryParse(priceMatch.group(1)!.replaceAll(',', '.')) ?? 0.0
-            : 0.0;
+            final priceMatch =
+                RegExp(r'(\d+,\d+|\d+) DZD').firstMatch(item.description ?? '');
+            final prix = priceMatch != null
+                ? double.tryParse(priceMatch.group(1)!.replaceAll(',', '.')) ??
+                    0.0
+                : 0.0;
 
-        return MarqueeData(
-          text: item.title ?? 'Sans titre',
-          prix: prix,
-          imageUrl: imageUrl,
-          webUrl: item.link ?? '',
-          created_at: DateTime.now(),
-        );
-      }).toList();
-    } else {
-      throw Exception('Échec du chargement du flux RSS');
+            return MarqueeData(
+              text: item.title ?? 'Sans titre',
+              prix: prix,
+              imageUrl: imageUrl,
+              webUrl: item.link ?? '',
+              created_at: DateTime.now(),
+            );
+          }).toList();
+
+          yield data; // Émettre les nouvelles données
+        } else {
+          yield []; // Retourner une liste vide en cas d'échec
+        }
+      } catch (e) {
+        yield []; // Gérer l'erreur et continuer le stream
+      }
+
+      await Future.delayed(
+          Duration(minutes: 5)); // Rafraîchissement toutes les 5 minutes
     }
   }
 }
 
-class MarqueeWidget extends StatelessWidget {
-  final List<MarqueeData> marqueeDataList;
+class MarqueeWidget extends StatefulWidget {
+  const MarqueeWidget({
+    Key? key,
+    required this.marqueeData,
+    required this.controller,
+  }) : super(key: key);
 
-  MarqueeWidget({required this.marqueeDataList});
+  final List<MarqueeData> marqueeData;
+  final MarqueerController controller;
+
+  @override
+  State<MarqueeWidget> createState() => _MarqueeWidgetState();
+}
+
+class _MarqueeWidgetState extends State<MarqueeWidget> {
+  Future<void> _launchUrl(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      throw 'Impossible d\'ouvrir $url';
+    }
+  }
+
+  // Fonction pour détecter si le texte est en arabe
+  bool isArabic(String text) {
+    final arabicRegex = RegExp(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]');
+    return arabicRegex.hasMatch(text);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Marqueer(
-      pps: 30, // Pixels par seconde
+    return Container(
+      height: 50,
+      width: MediaQuery.of(context).size.width * 0.43,
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      color: Colors.yellow,
+      child: Marqueer.builder(
+        pps: 60,
+        autoStart: true,
+        separatorBuilder: (_, index) => const Center(
+          child: Text(
+            '  -  ',
+            style: TextStyle(color: Colors.black),
+          ),
+        ),
+        scrollablePointerIgnoring: true,
+        direction: MarqueerDirection.ltr,
+        controller: widget.controller,
+        itemCount: widget.marqueeData.length,
+        itemBuilder: (context, index) {
+          final item = widget.marqueeData[index];
 
-      child: Row(
-        children: marqueeDataList.map((data) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: Text(
-              data.text,
-              style: TextStyle(fontWeight: FontWeight.bold),
+          return InkWell(
+            onTap: () => _launchUrl(item.webUrl),
+            child: Row(
+              children: [
+                if (item.imageUrl.isNotEmpty)
+                  AspectRatio(
+                    aspectRatio: 1,
+                    child: CachedNetworkImage(
+                      imageUrl: item.imageUrl,
+                      fit: BoxFit.cover,
+                      width: 50,
+                      height: 50,
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                Text(
+                  item.text,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: isArabic(item.text) ? 'ArbFONTS' : 'Oswald',
+                  ),
+                ),
+              ],
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
