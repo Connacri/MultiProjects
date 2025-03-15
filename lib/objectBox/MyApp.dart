@@ -1817,7 +1817,12 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                         ),
                         icon: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 50),
-                          child: Icon(Icons.add),
+                          child: Icon(
+                            Icons.add,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onPrimary, // Force la couleur
+                          ),
                         )),
                   ),
                 ),

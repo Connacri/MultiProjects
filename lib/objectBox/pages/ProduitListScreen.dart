@@ -1,4 +1,6 @@
 import 'dart:isolate';
+import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:syncfusion_flutter_barcodes/barcodes.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:cached_network_image/cached_network_image.dart';
@@ -39,6 +41,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
   final ScrollController _scrollController = ScrollController();
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
+  bool _showAll = false; // Ajoute cette variable dans ton StatefulWidget
 
   @override
   void initState() {
@@ -625,442 +628,617 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                             .split(',') // Sépare les QR codes par la virgule
                         : []; // Si null ou vide, on crée une liste vide
 
-                return Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ListTile(
-                        onTap: () async {
-                          await Navigator.of(context).push(MaterialPageRoute(
-                              builder: (ctx) => ProduitDetailPage(
-                                    produit: produit,
-                                  )));
-                        },
-                        onLongPress: () {
-                          _deleteProduit(context, produit);
-                        },
-                        leading: Tooltip(
-                          message: 'ID : ${produit.id}',
-                          child: GestureDetector(
-                            onDoubleTap: () {
-                              _showAllFournisseursDialog(
-                                context,
-                                produit, /*fournisseurs*/
-                              );
-                            },
-                            child: produit.image == null ||
-                                    produit.image!.isEmpty
-                                ? CircleAvatar(
-                                    child: Icon(Icons.image_not_supported),
-                                  )
-                                : Column(
-                                    children: [
-                                      Expanded(
-                                          child: CircleAvatar(
-                                        backgroundImage: produit.image !=
-                                                    null &&
-                                                produit.image!.isNotEmpty
-                                            ? (produit.image!.startsWith(
-                                                    'http') // Vérifie si c'est une URL distante
-                                                ? CachedNetworkImageProvider(
-                                                    produit.image!,
-                                                    errorListener: (error) =>
-                                                        Icon(Icons.error),
-                                                  )
-                                                : FileImage(
-                                                        File(produit.image!))
-                                                    as ImageProvider)
-                                            : AssetImage(
-                                                'assets/images/default.png'), // Image par défaut
-                                      )
-                                          // child:
-                                          //                             CircleAvatar(
-                                          //                               backgroundImage:
-                                          //                                   CachedNetworkImageProvider(
-                                          //                                 produit.image!,
-                                          //                                 errorListener: (error) =>
-                                          //                                     Icon(Icons.error),
-                                          //                               ),
-                                          //                             ),
-                                          ),
-                                      Text('Id:' + produit.id.toString()),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                        title: Container(
-                          width: 50,
-                          child: Row(
-                            children: [
-                              Text(
-                                produit.nom ?? '',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Spacer(),
-                              IconButton(
-                                icon: Icon(Icons.edit, size: 15),
-                                onPressed: () async {
-                                  await Navigator.of(context)
-                                      .push(MaterialPageRoute(
-                                          builder: (ctx) => editProduct(
-                                                produit: produit,
-                                              )));
-                                },
-                              )
-                            ],
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${produit.description ?? 'N/A'}',
-                              overflow: TextOverflow.ellipsis,
+                return Column(
+                  children: [
+                    Card(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Slidable(
+                            key: ValueKey(produit),
+                            endActionPane: ActionPane(
+                              motion: const ScrollMotion(),
+                              extentRatio: 0.25,
+                              // Définit la largeur de la zone d'actions (25% de la taille du Slidable)
+
+                              children: [
+                                SlidableAction(
+                                  onPressed: (context) async {
+                                    await Navigator.of(context)
+                                        .push(MaterialPageRoute(
+                                            builder: (ctx) => editProduct(
+                                                  produit: produit,
+                                                )));
+                                  },
+                                  backgroundColor: Color(0xFF0392CF),
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.save,
+                                  label: 'Edit',
+                                ),
+                              ],
                             ),
-
-                            // Text(
-                            //     'Users createdBy : ${produit.crud.target!.createdBy}'),
-                            Text(
-                              'Modifier par : ${produit.crud.target?.updatedBy ?? ''}',
-                            )
-
-                            // Text(
-                            //     'Users deletedBy : ${produit.crud.target!.deletedBy}'),
-                            // Text(
-                            //     produit.approvisionnements.isNotEmpty
-                            //         ? 'Approvisionnements:'
-                            //         : '',
-                            //     style:
-                            //         TextStyle(fontWeight: FontWeight.bold)),
-
-                            // DataTable(
-                            //   columns: const <DataColumn>[
-                            //     DataColumn(
-                            //       label: Text(
-                            //         'Quantité',
-                            //         style: TextStyle(
-                            //             fontStyle: FontStyle.italic),
-                            //       ),
-                            //     ),
-                            //     DataColumn(
-                            //       label: Text(
-                            //         'Fournisseur',
-                            //         style: TextStyle(
-                            //             fontStyle: FontStyle.italic),
-                            //       ),
-                            //     ),
-                            //     DataColumn(
-                            //       label: Text(
-                            //         'Date de péremption',
-                            //         style: TextStyle(
-                            //             fontStyle: FontStyle.italic),
-                            //       ),
-                            //     ),
-                            //     DataColumn(
-                            //       label: Text(
-                            //         'Créé le',
-                            //         style: TextStyle(
-                            //             fontStyle: FontStyle.italic),
-                            //       ),
-                            //     ),
-                            //     DataColumn(
-                            //       label: Text(
-                            //         'Prix d\'achat',
-                            //         style: TextStyle(
-                            //             fontStyle: FontStyle.italic),
-                            //       ),
-                            //     ),
-                            //   ],
-                            //   rows: produit.approvisionnements.map((appro) {
-                            //     final fournisseur = appro.fournisseur.target;
-                            //     return DataRow(
-                            //       cells: <DataCell>[
-                            //         DataCell(Text(
-                            //             appro.quantite.toStringAsFixed(2))),
-                            //         DataCell(
-                            //             Text(fournisseur?.nom ?? 'Inconnu')),
-                            //         DataCell(Text(appro.datePeremption != null
-                            //             ? DateFormat('dd/MM/yyyy').format(
-                            //                 appro.datePeremption!.toLocal())
-                            //             : "N/A")),
-                            //         DataCell(Text(DateFormat('dd/MM/yyyy')
-                            //             .format(appro
-                            //                 .crud.target!.dateCreation!
-                            //                 .toLocal()))),
-                            //         DataCell(Text(
-                            //             appro.prixAchat.toStringAsFixed(2))),
-                            //       ],
-                            //     );
-                            //   }).toList(),
-                            // ),
-
-                            // ...produit.approvisionnements.map((appro) {
-                            //   final fournisseur = appro.fournisseur.target;
-                            //   return Padding(
-                            //       padding:
-                            //           EdgeInsets.symmetric(vertical: 4.0),
-                            //       child: ListTile(
-                            //         leading: CircleAvatar(
-                            //           child: Text(
-                            //             'Quantité: ${appro.quantite.toStringAsFixed(2)}',
-                            //           ),
-                            //         ),
-                            //         title: Text(
-                            //           'Fournisseur: ${fournisseur?.nom ?? 'Inconnu'}',
-                            //         ),
-                            //         subtitle: Column(
-                            //           children: [
-                            //             Text(
-                            //               'Date de péremption: ${appro.datePeremption != null ? DateFormat('dd/MM/yyyy').format(appro.datePeremption!.toLocal()) : "N/A"}',
-                            //             ),
-                            //             Text(
-                            //               'Créer le : ${DateFormat('dd/MM/yyyy').format(appro.crud.target!.dateCreation!.toLocal())}',
-                            //             ),
-                            //           ],
-                            //         ),
-                            //         trailing: Text(
-                            //           'Prix d\'achat: ${appro.prixAchat.toStringAsFixed(2)}',
-                            //         ),
-                            //       ));
-                            // }).toList(),
-                          ],
-                        ),
-                        trailing: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                '${produit.prixVente.toStringAsFixed(2)} DZD',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ),
-                            SizedBox(
-                              height: 5,
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                text: 'Qty : $totalQuantite',
-                                style: Theme.of(context).textTheme.titleSmall,
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        double totalQuantite = 0;
-                                        double totalAmount = 0;
-
-                                        produit.approvisionnements
-                                            .forEach((appro) {
-                                          totalQuantite += appro.quantite;
-                                          totalAmount +=
-                                              appro.quantite * appro.prixAchat!;
-                                        });
-
-                                        return AlertDialog(
-                                          title: Text('Approvisionnements'),
-                                          content: SingleChildScrollView(
-                                            scrollDirection: Axis.vertical,
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: DataTable(
-                                                columns: const <DataColumn>[
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Quantité',
-                                                      style: TextStyle(
-                                                          fontStyle:
-                                                              FontStyle.italic),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Fournisseur',
-                                                      style: TextStyle(
-                                                          fontStyle:
-                                                              FontStyle.italic),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Date de péremption',
-                                                      style: TextStyle(
-                                                          fontStyle:
-                                                              FontStyle.italic),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Créé le',
-                                                      style: TextStyle(
-                                                          fontStyle:
-                                                              FontStyle.italic),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Prix d\'achat',
-                                                      style: TextStyle(
-                                                          fontStyle:
-                                                              FontStyle.italic),
-                                                    ),
-                                                  ),
-                                                  DataColumn(
-                                                    label: Text(
-                                                      'Montant',
-                                                      style: TextStyle(
-                                                          fontStyle:
-                                                              FontStyle.italic),
-                                                    ),
-                                                  ),
-                                                ],
-                                                rows: [
-                                                  ...produit.approvisionnements
-                                                      .map((appro) {
-                                                    final fournisseur = appro
-                                                        .fournisseur.target;
-                                                    return DataRow(
-                                                      cells: <DataCell>[
-                                                        DataCell(Text(appro
-                                                            .quantite
-                                                            .toStringAsFixed(
-                                                                2))),
-                                                        DataCell(Text(
-                                                            fournisseur?.nom ??
-                                                                'Inconnu')),
-                                                        DataCell(Text(appro
-                                                                    .datePeremption !=
-                                                                null
-                                                            ? DateFormat(
-                                                                    'dd/MM/yyyy')
-                                                                .format(appro
-                                                                    .datePeremption!
-                                                                    .toLocal())
-                                                            : "N/A")),
-                                                        DataCell(Text(DateFormat(
-                                                                'dd/MM/yyyy')
-                                                            .format(appro
-                                                                .crud
-                                                                .target!
-                                                                .dateCreation!
-                                                                .toLocal()))),
-                                                        DataCell(Text(appro
-                                                            .prixAchat!
-                                                            .toStringAsFixed(
-                                                                2))),
-                                                        DataCell(Text((appro
-                                                                    .quantite *
-                                                                appro
-                                                                    .prixAchat!)
-                                                            .toStringAsFixed(
-                                                                2))),
-                                                      ],
-                                                    );
-                                                  }).toList(),
-                                                  DataRow(
-                                                    cells: <DataCell>[
-                                                      DataCell(Text(
-                                                          totalQuantite
-                                                              .toStringAsFixed(
-                                                                  2))),
-                                                      DataCell(Text('')),
-                                                      DataCell(Text('')),
-                                                      DataCell(Text('')),
-                                                      DataCell(Text('')),
-                                                      DataCell(Text(totalAmount
-                                                          .toStringAsFixed(2))),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          actions: <Widget>[
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                              child: Text('Fermer'),
-                                            ),
-                                          ],
-                                        );
-                                      },
+                            child: ListTile(
+                              onTap: () async {
+                                await Navigator.of(context)
+                                    .push(MaterialPageRoute(
+                                        builder: (ctx) => ProduitDetailPage(
+                                              produit: produit,
+                                            )));
+                              },
+                              onLongPress: () {
+                                _deleteProduit(context, produit);
+                              },
+                              leading: Tooltip(
+                                message: 'ID : ${produit.id}',
+                                child: GestureDetector(
+                                  onDoubleTap: () {
+                                    _showAllFournisseursDialog(
+                                      context,
+                                      produit, /*fournisseurs*/
                                     );
                                   },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 15.0, vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                produit.approvisionnements.isNotEmpty
-                                    ? 'Dernier Approvisionnement le : ${DateFormat('dd/MM/yyyy').format(
-                                        produit.approvisionnements.last.crud
-                                                .target?.derniereModification ??
-                                            DateTime.now(),
-                                      )}'
-                                    : 'No approvisionnements available',
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Wrap(
-                                spacing:
-                                    8.0, // Espacement horizontal entre les Chips
-                                runSpacing:
-                                    7.0, // Espacement vertical entre les Chips
-                                children: qrCodes
-                                    .map((code) => Chip(
-                                          padding: EdgeInsets.zero,
-
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                                20.0), // Coins arrondis
-                                          ),
-                                          avatar: CircularFlagDetector(
-                                            barcode: code,
-                                            size:
-                                                22, // Adjust the size as needed
-                                          ),
-                                          backgroundColor: Theme.of(context)
-                                                      .brightness ==
-                                                  Brightness.dark
-                                              ? Colors.blueAccent.withOpacity(
-                                                  0.2) // Couleur pour le thème sombre
-                                              : Colors.blueAccent
-                                                  .withOpacity(0.6),
-                                          // Couleur pour le thème clair
-                                          visualDensity:
-                                              VisualDensity(vertical: -1),
-                                          label: Text(
-                                            code,
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                          .brightness ==
-                                                      Brightness.dark
-                                                  ? Colors
-                                                      .white // Couleur du texte pour le thème sombre
-                                                  : Colors
-                                                      .black, // Couleur du texte pour le thème clair
+                                  child: SizedBox(
+                                    width: 50, // Taille fixe pour un carré
+                                    height: 50,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      // Coins arrondis
+                                      child: produit.image == null ||
+                                              produit.image!.isEmpty
+                                          ? Container(
+                                              color: Colors.grey[300],
+                                              // Couleur de fond si pas d'image
+                                              child: Icon(
+                                                  Icons.image_not_supported,
+                                                  color: Colors.grey[600]),
+                                            )
+                                          : Image(
+                                              image: produit.image!
+                                                      .startsWith('http')
+                                                  ? CachedNetworkImageProvider(
+                                                      produit.image!,
+                                                      errorListener: (error) =>
+                                                          debugPrint(
+                                                              "Image error"),
+                                                    )
+                                                  : FileImage(
+                                                          File(produit.image!))
+                                                      as ImageProvider,
+                                              fit: BoxFit
+                                                  .cover, // Remplir tout l'espace disponible
                                             ),
-                                          ), // Affiche le QR code dans le Chip
-                                        ))
-                                    .toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // leading: Tooltip(
+                              //   message: 'ID : ${produit.id}',
+                              //   child: GestureDetector(
+                              //     onDoubleTap: () {
+                              //       _showAllFournisseursDialog(
+                              //         context,
+                              //         produit, /*fournisseurs*/
+                              //       );
+                              //     },
+                              //     child: produit.image == null ||
+                              //             produit.image!.isEmpty
+                              //         ? CircleAvatar(
+                              //             child:
+                              //                 Icon(Icons.image_not_supported),
+                              //           )
+                              //         : Column(
+                              //             children: [
+                              //               Expanded(
+                              //                   child: CircleAvatar(
+                              //                 backgroundImage: produit.image !=
+                              //                             null &&
+                              //                         produit.image!.isNotEmpty
+                              //                     ? (produit.image!.startsWith(
+                              //                             'http') // Vérifie si c'est une URL distante
+                              //                         ? CachedNetworkImageProvider(
+                              //                             produit.image!,
+                              //                             errorListener:
+                              //                                 (error) => Icon(
+                              //                                     Icons.error),
+                              //                           )
+                              //                         : FileImage(File(
+                              //                                 produit.image!))
+                              //                             as ImageProvider)
+                              //                     : AssetImage(
+                              //                         'assets/images/default.png'), // Image par défaut
+                              //               )
+                              //                   // child:
+                              //                   //                             CircleAvatar(
+                              //                   //                               backgroundImage:
+                              //                   //                                   CachedNetworkImageProvider(
+                              //                   //                                 produit.image!,
+                              //                   //                                 errorListener: (error) =>
+                              //                   //                                     Icon(Icons.error),
+                              //                   //                               ),
+                              //                   //                             ),
+                              //                   ),
+                              //               Text('Id:' + produit.id.toString()),
+                              //             ],
+                              //           ),
+                              //   ),
+                              // ),
+                              title: Container(
+                                width: 50,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      produit.nom ?? '',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    // Spacer(),
+                                    // IconButton(
+                                    //   icon: Icon(Icons.edit, size: 15),
+                                    //   onPressed: () async {
+                                    //     await Navigator.of(context)
+                                    //         .push(MaterialPageRoute(
+                                    //             builder: (ctx) => editProduct(
+                                    //                   produit: produit,
+                                    //                 )));
+                                    //   },
+                                    // )
+                                  ],
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${produit.description ?? 'N/A'}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+
+                                  // Text(
+                                  //     'Users createdBy : ${produit.crud.target!.createdBy}'),
+                                  Text(
+                                    'Modifier par : ${produit.crud.target?.updatedBy ?? ''}',
+                                  )
+
+                                  // Text(
+                                  //     'Users deletedBy : ${produit.crud.target!.deletedBy}'),
+                                  // Text(
+                                  //     produit.approvisionnements.isNotEmpty
+                                  //         ? 'Approvisionnements:'
+                                  //         : '',
+                                  //     style:
+                                  //         TextStyle(fontWeight: FontWeight.bold)),
+
+                                  // DataTable(
+                                  //   columns: const <DataColumn>[
+                                  //     DataColumn(
+                                  //       label: Text(
+                                  //         'Quantité',
+                                  //         style: TextStyle(
+                                  //             fontStyle: FontStyle.italic),
+                                  //       ),
+                                  //     ),
+                                  //     DataColumn(
+                                  //       label: Text(
+                                  //         'Fournisseur',
+                                  //         style: TextStyle(
+                                  //             fontStyle: FontStyle.italic),
+                                  //       ),
+                                  //     ),
+                                  //     DataColumn(
+                                  //       label: Text(
+                                  //         'Date de péremption',
+                                  //         style: TextStyle(
+                                  //             fontStyle: FontStyle.italic),
+                                  //       ),
+                                  //     ),
+                                  //     DataColumn(
+                                  //       label: Text(
+                                  //         'Créé le',
+                                  //         style: TextStyle(
+                                  //             fontStyle: FontStyle.italic),
+                                  //       ),
+                                  //     ),
+                                  //     DataColumn(
+                                  //       label: Text(
+                                  //         'Prix d\'achat',
+                                  //         style: TextStyle(
+                                  //             fontStyle: FontStyle.italic),
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  //   rows: produit.approvisionnements.map((appro) {
+                                  //     final fournisseur = appro.fournisseur.target;
+                                  //     return DataRow(
+                                  //       cells: <DataCell>[
+                                  //         DataCell(Text(
+                                  //             appro.quantite.toStringAsFixed(2))),
+                                  //         DataCell(
+                                  //             Text(fournisseur?.nom ?? 'Inconnu')),
+                                  //         DataCell(Text(appro.datePeremption != null
+                                  //             ? DateFormat('dd/MM/yyyy').format(
+                                  //                 appro.datePeremption!.toLocal())
+                                  //             : "N/A")),
+                                  //         DataCell(Text(DateFormat('dd/MM/yyyy')
+                                  //             .format(appro
+                                  //                 .crud.target!.dateCreation!
+                                  //                 .toLocal()))),
+                                  //         DataCell(Text(
+                                  //             appro.prixAchat.toStringAsFixed(2))),
+                                  //       ],
+                                  //     );
+                                  //   }).toList(),
+                                  // ),
+
+                                  // ...produit.approvisionnements.map((appro) {
+                                  //   final fournisseur = appro.fournisseur.target;
+                                  //   return Padding(
+                                  //       padding:
+                                  //           EdgeInsets.symmetric(vertical: 4.0),
+                                  //       child: ListTile(
+                                  //         leading: CircleAvatar(
+                                  //           child: Text(
+                                  //             'Quantité: ${appro.quantite.toStringAsFixed(2)}',
+                                  //           ),
+                                  //         ),
+                                  //         title: Text(
+                                  //           'Fournisseur: ${fournisseur?.nom ?? 'Inconnu'}',
+                                  //         ),
+                                  //         subtitle: Column(
+                                  //           children: [
+                                  //             Text(
+                                  //               'Date de péremption: ${appro.datePeremption != null ? DateFormat('dd/MM/yyyy').format(appro.datePeremption!.toLocal()) : "N/A"}',
+                                  //             ),
+                                  //             Text(
+                                  //               'Créer le : ${DateFormat('dd/MM/yyyy').format(appro.crud.target!.dateCreation!.toLocal())}',
+                                  //             ),
+                                  //           ],
+                                  //         ),
+                                  //         trailing: Text(
+                                  //           'Prix d\'achat: ${appro.prixAchat.toStringAsFixed(2)}',
+                                  //         ),
+                                  //       ));
+                                  // }).toList(),
+                                ],
+                              ),
+                              trailing: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${produit.prixVente.toStringAsFixed(2)} DZD',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 5,
+                                  ),
+                                  RichText(
+                                    text: TextSpan(
+                                      text: 'Qty : $totalQuantite',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall,
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              double totalQuantite = 0;
+                                              double totalAmount = 0;
+
+                                              produit.approvisionnements
+                                                  .forEach((appro) {
+                                                totalQuantite += appro.quantite;
+                                                totalAmount += appro.quantite *
+                                                    appro.prixAchat!;
+                                              });
+
+                                              return AlertDialog(
+                                                title:
+                                                    Text('Approvisionnements'),
+                                                content: SingleChildScrollView(
+                                                  scrollDirection:
+                                                      Axis.vertical,
+                                                  child: SingleChildScrollView(
+                                                    scrollDirection:
+                                                        Axis.horizontal,
+                                                    child: DataTable(
+                                                      columns: const <DataColumn>[
+                                                        DataColumn(
+                                                          label: Text(
+                                                            'Quantité',
+                                                            style: TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic),
+                                                          ),
+                                                        ),
+                                                        DataColumn(
+                                                          label: Text(
+                                                            'Fournisseur',
+                                                            style: TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic),
+                                                          ),
+                                                        ),
+                                                        DataColumn(
+                                                          label: Text(
+                                                            'Date de péremption',
+                                                            style: TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic),
+                                                          ),
+                                                        ),
+                                                        DataColumn(
+                                                          label: Text(
+                                                            'Créé le',
+                                                            style: TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic),
+                                                          ),
+                                                        ),
+                                                        DataColumn(
+                                                          label: Text(
+                                                            'Prix d\'achat',
+                                                            style: TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic),
+                                                          ),
+                                                        ),
+                                                        DataColumn(
+                                                          label: Text(
+                                                            'Montant',
+                                                            style: TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                      rows: [
+                                                        ...produit
+                                                            .approvisionnements
+                                                            .map((appro) {
+                                                          final fournisseur =
+                                                              appro.fournisseur
+                                                                  .target;
+                                                          return DataRow(
+                                                            cells: <DataCell>[
+                                                              DataCell(Text(appro
+                                                                  .quantite
+                                                                  .toStringAsFixed(
+                                                                      2))),
+                                                              DataCell(Text(
+                                                                  fournisseur
+                                                                          ?.nom ??
+                                                                      'Inconnu')),
+                                                              DataCell(Text(appro
+                                                                          .datePeremption !=
+                                                                      null
+                                                                  ? DateFormat(
+                                                                          'dd/MM/yyyy')
+                                                                      .format(appro
+                                                                          .datePeremption!
+                                                                          .toLocal())
+                                                                  : "N/A")),
+                                                              DataCell(Text(DateFormat(
+                                                                      'dd/MM/yyyy')
+                                                                  .format(appro
+                                                                      .crud
+                                                                      .target!
+                                                                      .dateCreation!
+                                                                      .toLocal()))),
+                                                              DataCell(Text(appro
+                                                                  .prixAchat!
+                                                                  .toStringAsFixed(
+                                                                      2))),
+                                                              DataCell(Text((appro
+                                                                          .quantite *
+                                                                      appro
+                                                                          .prixAchat!)
+                                                                  .toStringAsFixed(
+                                                                      2))),
+                                                            ],
+                                                          );
+                                                        }).toList(),
+                                                        DataRow(
+                                                          cells: <DataCell>[
+                                                            DataCell(Text(
+                                                                totalQuantite
+                                                                    .toStringAsFixed(
+                                                                        2))),
+                                                            DataCell(Text('')),
+                                                            DataCell(Text('')),
+                                                            DataCell(Text('')),
+                                                            DataCell(Text('')),
+                                                            DataCell(Text(
+                                                                totalAmount
+                                                                    .toStringAsFixed(
+                                                                        2))),
+                                                          ],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                actions: <Widget>[
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                    },
+                                                    child: Text('Fermer'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Text('Id:' + produit.id.toString()),
+                                SizedBox(
+                                  width: 10,
+                                ),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Padding(
+                                      //   padding:
+                                      //       const EdgeInsets.symmetric(horizontal: 8.0),
+                                      //   child: Text(
+                                      //     produit.approvisionnements.isNotEmpty
+                                      //         ? 'Dernier Approvisionnement le : ${DateFormat('dd/MM/yyyy').format(
+                                      //             produit.approvisionnements.last.crud
+                                      //                     .target?.derniereModification ??
+                                      //                 DateTime.now(),
+                                      //           )}'
+                                      //         : 'No approvisionnements available',
+                                      //   ),
+                                      // ),
+
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Wrap(
+                                          spacing: 8.0,
+                                          runSpacing: 7.0,
+                                          children: [
+                                            // Affichage des QR codes selon l'état _showAll
+                                            ...qrCodes
+                                                .take(_showAll
+                                                    ? qrCodes.length
+                                                    : 3)
+                                                .map((code) => GestureDetector(
+                                                      onTap: () {
+                                                        Clipboard.setData(
+                                                            ClipboardData(
+                                                                text:
+                                                                    code)); // Copier le QR code
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                              content: Text(
+                                                                  "QR Code copié : $code")),
+                                                        );
+                                                      },
+                                                      child: Chip(
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      20.0),
+                                                        ),
+                                                        avatar:
+                                                            CircularFlagDetector(
+                                                                barcode: code,
+                                                                size: 22),
+                                                        backgroundColor: Theme.of(
+                                                                        context)
+                                                                    .brightness ==
+                                                                Brightness.dark
+                                                            ? Colors.blueAccent
+                                                                .withOpacity(
+                                                                    0.2)
+                                                            : Colors.blueAccent
+                                                                .withOpacity(
+                                                                    0.6),
+                                                        label: Text(
+                                                          code,
+                                                          style: TextStyle(
+                                                            color: Theme.of(context)
+                                                                        .brightness ==
+                                                                    Brightness
+                                                                        .dark
+                                                                ? Colors.white
+                                                                : Colors.black,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    )),
+
+                                            // Icône pour afficher plus ou réduire
+                                            if (qrCodes.length > 3)
+                                              TextButton.icon(
+                                                onPressed: () => setState(
+                                                    () => _showAll = !_showAll),
+                                                style: TextButton.styleFrom(
+                                                  backgroundColor:
+                                                      Theme.of(context)
+                                                                  .brightness ==
+                                                              Brightness.dark
+                                                          ? Colors.lightBlue
+                                                          : Colors.green
+                                                              .withOpacity(0.6),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20.0),
+                                                  ),
+                                                ),
+                                                // icon: Icon(
+                                                //   _showAll
+                                                //       ? Icons.expand_less
+                                                //       : Icons
+                                                //           .expand_more, // Icône dynamique
+                                                //   color: Colors.white,
+                                                // ),
+                                                label: Text(
+                                                  _showAll
+                                                      ? "Réduire"
+                                                      : "+${qrCodes.length - 3}",
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                                .brightness ==
+                                                            Brightness.dark
+                                                        ? Colors.white
+                                                        : Colors.black,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 16),
+                      child: Text(
+                        produit.approvisionnements.isNotEmpty
+                            ? 'Dernier Approvisionnement le : ${DateFormat('EEEE dd/MM/yyyy à HH:mm', 'fr_FR').format(
+                                produit.approvisionnements.last.crud.target
+                                        ?.derniereModification ??
+                                    DateTime.now(),
+                              )}'
+                            : 'No approvisionnements available',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
                 );
               } else if (produitProvider.hasMoreProduits) {
                 return Center(child: CircularProgressIndicator());

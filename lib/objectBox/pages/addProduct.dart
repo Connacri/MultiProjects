@@ -2838,7 +2838,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
         maxHeight: 720, // Hauteur réduite pour les écrans mobiles
         maxWidth: 1280, // Largeur ajustée
         imageQuality:
-            50, // Augmentation légère de la qualité pour un meilleur rendu
+            10, // Augmentation légère de la qualité pour un meilleur rendu
       );
 
       if (pickedFile != null && mounted) {
