@@ -741,7 +741,7 @@ class _FactureDetailState extends State<FactureDetail> {
                               columns: [
                                 DataColumn(
                                   label: Container(
-                                    //  color: Colors.greenAccent,
+                                    //color: Colors.greenAccent,
                                     width: 30, // Largeur fixe pour QR
                                     child:
                                         Text('QR', textAlign: TextAlign.start),
@@ -841,19 +841,26 @@ class _FactureDetailState extends State<FactureDetail> {
                                     },
                                   ),
                                   cells: [
-                                    DataCell(SelectableText(
-                                        ligne.produit.target?.qr ?? ' - ')),
-                                    DataCell(InkWell(
-                                      onTap: () => Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (ctx) =>
-                                                  ProduitDetailPage(
-                                                      produit: ligne
-                                                          .produit.target!))),
-                                      child: Text(
-                                        ligne.produit.target?.nom ??
-                                            'Produit inconnu',
-                                        overflow: TextOverflow.ellipsis,
+                                    DataCell(SizedBox(
+                                      width: 150,
+                                      child: SelectableText(
+                                          maxLines: 1,
+                                          ligne.produit.target?.qr ?? ' - '),
+                                    )),
+                                    DataCell(SizedBox(
+                                      width: 150,
+                                      child: InkWell(
+                                        onTap: () => Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                                builder: (ctx) =>
+                                                    ProduitDetailPage(
+                                                        produit: ligne
+                                                            .produit.target!))),
+                                        child: Text(
+                                          ligne.produit.target?.nom ??
+                                              'Produit inconnu',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
                                     )),
                                     // DataCell(
@@ -1362,9 +1369,7 @@ class _FactureListState extends State<FactureList> {
           //     "📊 Nombre de factures dans la liste : ${factureProvider
           //         .facturesList.length}");
           // print("🔄 _hasMoreFactures : ${factureProvider.hasMoreFactures}");
-          if (factureProvider.facturesList.isEmpty) {
-            return Center(child: Text("Aucune facture disponible."));
-          }
+
           return Column(
             children: [
               Expanded(
@@ -1422,182 +1427,316 @@ class _FactureListState extends State<FactureList> {
                 ],
               )),
 
-              Expanded(
-                flex: 8,
-                child: ListView.builder(
-                  controller: _scrollController,
-                  itemCount: factureProvider.facturesList.length,
-                  itemBuilder: (context, index) {
-                    if (index != 0 &&
-                        index % 5 == 0 &&
-                        _nativeAd != null &&
-                        _nativeAdIsLoaded) {
-                      return Align(
-                          alignment: Alignment.center,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minWidth: 300,
-                              minHeight: 350,
-                              maxHeight: 400,
-                              maxWidth: 450,
-                            ),
-                            child: AdWidget(ad: _nativeAd!),
-                          ));
-                    }
-                    if (index < factureProvider.facturesList.length) {
-                      final facture =
-                          factureProvider.facturesList.reversed.toList()[index];
-                      bool estEnEdition = factureProvider.estEnEdition(facture);
-                      final isEditing = factureProvider.isEditing;
-                      final hasChanges = factureProvider.hasChanges;
-                      return Column(
-                        children: [
-                          Card(
-                            color: estEnEdition ? Colors.green.shade100 : null,
-                            child: ListTile(
-                              onTap: () {
-                                if (factureProvider.estEnEdition(facture)) {
-                                  factureProvider.terminerEdition();
-                                } else {
-                                  factureProvider.selectionnerFacture(facture);
-                                  factureProvider.commencerEdition(facture);
-                                  context
-                                      .read<EditableFieldProvider>()
-                                      .AlwaystoggleEditable();
-                                  context
-                                      .read<FacturationProvider>()
-                                      .AlwaystoggleEdit(index);
-                                  tabController?.animateTo(0);
-                                }
-                              },
-                              onFocusChange: (hasFocus) {
-                                if (!hasFocus &&
-                                    factureProvider.estEnEdition(facture)) {
-                                  factureProvider.terminerEdition();
-                                }
-                              },
-                              onLongPress: () {
-                                factureProvider.supprimerFacture(
-                                    facture, commerceProvider);
-                              },
-                              leading: CircleAvatar(
-                                backgroundColor: estEnEdition
-                                    ? Colors.white70
-                                    : Colors.green,
-                                child: estEnEdition
-                                    ? (isEditing && hasChanges
-                                        ? Icon(FontAwesomeIcons.penToSquare,
-                                            color: Colors.orange)
-                                        : Icon(FontAwesomeIcons.check,
-                                            color: Colors.green))
-                                    : Icon(FontAwesomeIcons.check,
-                                        color: Colors.white70),
-                              ),
-                              title: Text(
-                                facture.qrReference,
-                                style: TextStyle(
-                                  color: estEnEdition
-                                      ? Colors
-                                          .black // Texte en noir si estEnEdition est true
-                                      : Theme.of(context).brightness ==
-                                              Brightness.dark
-                                          ? Colors
-                                              .white // Texte en blanc en mode sombre
-                                          : Colors
-                                              .black, // Texte en noir en mode clair
-                                ),
-                              ),
-                              subtitle: Text.rich(
-                                overflow: TextOverflow.ellipsis,
-                                TextSpan(
-                                  text: 'Client: ',
-                                  style: TextStyle(
-                                    color: estEnEdition
-                                        ? Colors
-                                            .black // Texte en noir si estEnEdition est true
-                                        : Theme.of(context).brightness ==
-                                                Brightness.dark
-                                            ? Colors
-                                                .white // Texte en blanc en mode sombre
-                                            : Colors
-                                                .black, // Texte en noir en mode clair
+              factureProvider.facturesList.isEmpty
+                  ? Expanded(
+                      flex: 8,
+                      child: Center(child: Text("Aucune facture disponible.")))
+                  : Expanded(
+                      flex: 8,
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: factureProvider.facturesList.length,
+                        itemBuilder: (context, index) {
+                          if (index != 0 &&
+                              index % 5 == 0 &&
+                              _nativeAd != null &&
+                              _nativeAdIsLoaded) {
+                            return Align(
+                                alignment: Alignment.center,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    minWidth: 300,
+                                    minHeight: 350,
+                                    maxHeight: 400,
+                                    maxWidth: 450,
                                   ),
-                                  children: [
-                                    TextSpan(
-                                      text: facture.client.target?.nom ??
-                                          'Inconnu',
-                                      style: facture.client.target != null
-                                          ? TextStyle(
-                                              color: Colors.blue,
-                                              fontWeight: FontWeight.w400)
-                                          : TextStyle(
-                                              color: estEnEdition
-                                                  ? Colors
-                                                      .black // Texte en noir si estEnEdition est true
-                                                  : Theme.of(context)
-                                                              .brightness ==
-                                                          Brightness.dark
-                                                      ? Colors
-                                                          .white // Texte en blanc en mode sombre
-                                                      : Colors
-                                                          .black, // Texte en noir en mode clair
-                                            ),
+                                  child: AdWidget(ad: _nativeAd!),
+                                ));
+                          }
+                          if (index < factureProvider.facturesList.length) {
+                            final facture = factureProvider
+                                .facturesList.reversed
+                                .toList()[index];
+                            bool estEnEdition =
+                                factureProvider.estEnEdition(facture);
+                            final isEditing = factureProvider.isEditing;
+                            final hasChanges = factureProvider.hasChanges;
+                            return Column(
+                              children: [
+                                Card(
+                                  color: estEnEdition
+                                      ? Colors.green.shade100
+                                      : null,
+                                  child: ListTile(
+                                    onTap: () {
+                                      // final ligneFact = context
+                                      //     .read<FacturationProvider>()
+                                      //     .factureEnEdition!
+                                      //     .lignesDocument;
+                                      // if (ligneFact.isEmpty) {
+                                      //   showDialog(
+                                      //     context: context,
+                                      //     builder: (BuildContext context) {
+                                      //       return AlertDialog(
+                                      //         backgroundColor:
+                                      //             Colors.red.shade50,
+                                      //         // Fond rouge clair
+                                      //         shape: RoundedRectangleBorder(
+                                      //             borderRadius:
+                                      //                 BorderRadius.circular(
+                                      //                     12)),
+                                      //         title: Row(
+                                      //           children: [
+                                      //             Icon(Icons.warning,
+                                      //                 color: Colors.red),
+                                      //             SizedBox(width: 8),
+                                      //             Text("Confirmation",
+                                      //                 style: TextStyle(
+                                      //                     color: Colors.red)),
+                                      //           ],
+                                      //         ),
+                                      //         content: Text(
+                                      //           "Voulez-vous vraiment supprimer cet élément ?",
+                                      //           style: TextStyle(
+                                      //               color: Colors.black87),
+                                      //         ),
+                                      //         actions: [
+                                      //           TextButton(
+                                      //             onPressed: () {
+                                      //               factureProvider
+                                      //                   .selectionnerFacture(
+                                      //                       facture);
+                                      //               factureProvider
+                                      //                   .commencerEdition(
+                                      //                       facture);
+                                      //
+                                      //               tabController?.animateTo(0);
+                                      //               Navigator.of(context)
+                                      //                   .pop(true);
+                                      //             },
+                                      //             // Fermer le dialogue
+                                      //             child: const Text("Annuler"),
+                                      //           ),
+                                      //           ElevatedButton(
+                                      //             onPressed: () {
+                                      //               factureProvider
+                                      //                   .supprimerFacture(
+                                      //                       facture,
+                                      //                       commerceProvider);
+                                      //               Navigator.of(context)
+                                      //                   .pop(); // Fermer le dialogue après action
+                                      //             },
+                                      //             style:
+                                      //                 ElevatedButton.styleFrom(
+                                      //               backgroundColor: Colors
+                                      //                   .red, // Bouton rouge
+                                      //             ),
+                                      //             child: Text("Supprimer",
+                                      //                 style: TextStyle(
+                                      //                     color: Colors.white)),
+                                      //           ),
+                                      //         ],
+                                      //       );
+                                      //     },
+                                      //   );
+                                      // }
+
+                                      if (isEditing && hasChanges) {
+                                        print('voulez vous sauegarder?');
+
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: const Text("Confirmation"),
+                                              content: const Text(
+                                                  "Voulez-vous sauvegarder les modifications ?"),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () {
+                                                    factureProvider
+                                                        .selectionnerFacture(
+                                                            facture);
+                                                    factureProvider
+                                                        .commencerEdition(
+                                                            facture);
+
+                                                    tabController?.animateTo(0);
+                                                    Navigator.of(context)
+                                                        .pop(true);
+                                                  },
+                                                  // Fermer le dialogue
+                                                  child: const Text("Annuler"),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    factureProvider
+                                                        .sauvegarderFacture(
+                                                            context,
+                                                            commerceProvider);
+                                                    Navigator.of(context)
+                                                        .pop(); // Fermer le dialogue après action
+                                                  },
+                                                  child:
+                                                      const Text("Sauvegarder"),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      } else {
+                                        if (factureProvider
+                                            .estEnEdition(facture)) {
+                                          factureProvider.terminerEdition();
+                                          print('terminate');
+                                        } else {
+                                          factureProvider
+                                              .selectionnerFacture(facture);
+                                          factureProvider
+                                              .commencerEdition(facture);
+                                          context
+                                              .read<EditableFieldProvider>()
+                                              .AlwaystoggleEditable();
+                                          context
+                                              .read<FacturationProvider>()
+                                              .AlwaystoggleEdit(index);
+                                          tabController?.animateTo(0);
+                                        }
+                                      }
+                                    },
+                                    onFocusChange: (hasFocus) {
+                                      if (!hasFocus &&
+                                          factureProvider
+                                              .estEnEdition(facture)) {
+                                        factureProvider.terminerEdition();
+                                      }
+                                    },
+                                    onLongPress: () {
+                                      factureProvider.supprimerFacture(
+                                          facture, commerceProvider);
+                                    },
+                                    leading: CircleAvatar(
+                                      backgroundColor: estEnEdition
+                                          ? Colors.white70
+                                          : Colors.green,
+                                      child: estEnEdition
+                                          ? (isEditing && hasChanges
+                                              ? Icon(
+                                                  FontAwesomeIcons.penToSquare,
+                                                  color: Colors.orange)
+                                              : Icon(FontAwesomeIcons.check,
+                                                  color: Colors.green))
+                                          : Icon(FontAwesomeIcons.check,
+                                              color: Colors.white70),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              trailing: facture.impayer! > 0.0
-                                  ? Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '${facture.montantTotal.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            color: estEnEdition
+                                    title: Text(
+                                      facture.qrReference,
+                                      style: TextStyle(
+                                        color: estEnEdition
+                                            ? Colors
+                                                .black // Texte en noir si estEnEdition est true
+                                            : Theme.of(context).brightness ==
+                                                    Brightness.dark
                                                 ? Colors
-                                                    .black // Texte en noir si estEnEdition est true
-                                                : Theme.of(context)
-                                                            .brightness ==
-                                                        Brightness.dark
-                                                    ? Colors
-                                                        .white // Texte en blanc en mode sombre
-                                                    : Colors
-                                                        .black, // Texte en noir en mode clair
-                                          ),
-                                        ),
-                                        Text(
-                                          '${facture.impayer!.toStringAsFixed(2)}',
-                                          style: TextStyle(color: Colors.red),
-                                        ),
-                                      ],
-                                    )
-                                  : Text(
-                                      '${facture.montantTotal.toStringAsFixed(2)}',
-                                      style: TextStyle(fontSize: 20),
+                                                    .white // Texte en blanc en mode sombre
+                                                : Colors
+                                                    .black, // Texte en noir en mode clair
+                                      ),
                                     ),
-                            ),
-                          ),
-                          Text(
-                            intl.DateFormat('EEE dd MMM yyyy  -  HH:mm', 'fr')
-                                .format(DateTime.parse(facture.date.toString()))
-                                .capitalize(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                        ],
-                      );
-                    } else if (factureProvider.hasMoreFactures) {
-                      return Center(child: CircularProgressIndicator());
-                    } else {
-                      return SizedBox.shrink();
-                    }
-                  },
-                ),
-              ),
+                                    subtitle: Text.rich(
+                                      overflow: TextOverflow.ellipsis,
+                                      TextSpan(
+                                        text: 'Client: ',
+                                        style: TextStyle(
+                                          color: estEnEdition
+                                              ? Colors
+                                                  .black // Texte en noir si estEnEdition est true
+                                              : Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors
+                                                      .white // Texte en blanc en mode sombre
+                                                  : Colors
+                                                      .black, // Texte en noir en mode clair
+                                        ),
+                                        children: [
+                                          TextSpan(
+                                            text: facture.client.target?.nom ??
+                                                'Inconnu',
+                                            style: facture.client.target != null
+                                                ? TextStyle(
+                                                    color: Colors.blue,
+                                                    fontWeight: FontWeight.w400)
+                                                : TextStyle(
+                                                    color: estEnEdition
+                                                        ? Colors
+                                                            .black // Texte en noir si estEnEdition est true
+                                                        : Theme.of(context)
+                                                                    .brightness ==
+                                                                Brightness.dark
+                                                            ? Colors
+                                                                .white // Texte en blanc en mode sombre
+                                                            : Colors
+                                                                .black, // Texte en noir en mode clair
+                                                  ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    trailing: facture.impayer! > 0.0
+                                        ? Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                '${facture.montantTotal.toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  color: estEnEdition
+                                                      ? Colors
+                                                          .black // Texte en noir si estEnEdition est true
+                                                      : Theme.of(context)
+                                                                  .brightness ==
+                                                              Brightness.dark
+                                                          ? Colors
+                                                              .white // Texte en blanc en mode sombre
+                                                          : Colors
+                                                              .black, // Texte en noir en mode clair
+                                                ),
+                                              ),
+                                              Text(
+                                                '${facture.impayer!.toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                    color: Colors.red),
+                                              ),
+                                            ],
+                                          )
+                                        : Text(
+                                            '${facture.montantTotal.toStringAsFixed(2)}',
+                                            style: TextStyle(fontSize: 20),
+                                          ),
+                                  ),
+                                ),
+                                Text(
+                                  intl.DateFormat(
+                                          'EEE dd MMM yyyy  -  HH:mm', 'fr')
+                                      .format(DateTime.parse(
+                                          facture.date.toString()))
+                                      .capitalize(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                              ],
+                            );
+                          } else if (factureProvider.hasMoreFactures) {
+                            return Center(child: CircularProgressIndicator());
+                          } else {
+                            return SizedBox.shrink();
+                          }
+                        },
+                      ),
+                    ),
             ],
           );
         },
@@ -2300,7 +2439,7 @@ class EditableField extends StatelessWidget {
           Expanded(
             child: isEditable
                 ? TextFormField(
-                    // controller: impayerController,
+                    //controller: impayerController,
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       //  labelText: 'Impayé',
@@ -2350,7 +2489,10 @@ class EditableField extends StatelessWidget {
                         TextInputType.numberWithOptions(decimal: true),
                     onChanged: (value) {
                       final nouvelleImpayer = double.tryParse(value) ?? 0;
+                      impayerController.text = value;
                       providerF.modifierImpayer(nouvelleImpayer);
+                      print(nouvelleImpayer);
+                      print(impayerController.text);
                     },
                   )
                 : TextField(
@@ -2384,11 +2526,13 @@ class EditableField extends StatelessWidget {
                         TextInputType.numberWithOptions(decimal: true),
                     // Permet les nombres décimaux
                     onChanged: (value) {
-                      // Valider et formater la valeur saisie
-                      final impayer = double.tryParse(value) ?? 0.0;
-
-                      providerF.setImpayer(
-                          impayer); // Mettre à jour l'impayer dans le provider
+                      // // Valider et formater la valeur saisie
+                      // final impayer = double.tryParse(value) ?? 0.0;
+                      //
+                      // providerF.setImpayer(
+                      //     impayer); // Mettre à jour l'impayer dans le provider
+                      final nouvelleImpayer = double.tryParse(value) ?? 0;
+                      providerF.modifierImpayer(nouvelleImpayer);
                     },
                   ),
           ),

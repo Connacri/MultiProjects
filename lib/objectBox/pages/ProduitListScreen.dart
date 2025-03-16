@@ -1123,7 +1123,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                             ...qrCodes
                                                 .take(_showAll
                                                     ? qrCodes.length
-                                                    : 3)
+                                                    : 1)
                                                 .map((code) => GestureDetector(
                                                       onTap: () {
                                                         Clipboard.setData(
@@ -1175,7 +1175,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                                     )),
 
                                             // Icône pour afficher plus ou réduire
-                                            if (qrCodes.length > 3)
+                                            if (qrCodes.length > 1)
                                               TextButton.icon(
                                                 onPressed: () => setState(
                                                     () => _showAll = !_showAll),
@@ -1203,7 +1203,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                                 label: Text(
                                                   _showAll
                                                       ? "Réduire"
-                                                      : "+${qrCodes.length - 3}",
+                                                      : "+${qrCodes.length - 1}",
                                                   style: TextStyle(
                                                     color: Theme.of(context)
                                                                 .brightness ==

@@ -276,7 +276,8 @@ class FacturationProvider with ChangeNotifier {
 
     _factureEnCours = null;
     _lignesFacture.clear();
-
+    _selectedClient = null;
+    _impayer = 0.0;
     notifyListeners();
   }
 
@@ -736,6 +737,16 @@ class FacturationProvider with ChangeNotifier {
       commerceProvider.chargerProduits(reset: true);
       _factureEnCours = null;
       _lignesFacture.clear();
+
+      _factureEnEdition = null;
+
+      _impayer = 0.0;
+      _selectedClient = null;
+
+      print('Facture sauvegardée avec succès');
+      _isEditing = false;
+      _hasChanges = false;
+
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la suppression de la facture: $e');
@@ -793,6 +804,14 @@ class FacturationProvider with ChangeNotifier {
       _factureEnCours = null;
       lignesFacture.clear();
 
+      _factureEnEdition = null;
+
+      _impayer = 0.0;
+      _selectedClient = null;
+
+      print('Facture sauvegardée avec succès');
+      _isEditing = false;
+      _hasChanges = false;
       print('Toutes les factures ont été supprimées avec succès');
 
       // 5. Notification pour mettre à jour les produits
