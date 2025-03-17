@@ -128,8 +128,9 @@ class FactureDetail extends StatefulWidget {
 class _FactureDetailState extends State<FactureDetail> {
   final TextEditingController _rechercheController = TextEditingController();
 
-  final TextEditingController _impayerController =
-      TextEditingController(text: '0');
+  // final TextEditingController _impayerController =
+  //     TextEditingController(text: '0');
+  /// si l yaun probleme dans impayerProvider.impayerController je dois tout remettre a _impayerController
   String _barcodeBuffer = '';
   final TextEditingController _barcodeBufferController =
       TextEditingController();
@@ -147,7 +148,7 @@ class _FactureDetailState extends State<FactureDetail> {
   @override
   void dispose() {
     _rechercheController.dispose();
-    _impayerController.dispose();
+    //_impayerController.dispose();
     _barcodeBufferController.dispose();
 
     // Nettoyer le contrôleur pour éviter les fuites de mémoire
@@ -169,12 +170,14 @@ class _FactureDetailState extends State<FactureDetail> {
     // if (provider.factureEnCours != null) {
     //   _impayerController.text = provider.impayer.toStringAsFixed(2);
     // }
+    final impayerProvider = Provider.of<FacturationProvider>(context);
 
     return Consumer2<FacturationProvider, CommerceProvider>(
         builder: (context, factureProvider, commerceProvider, child) {
       // Update impayer controller when invoice changes
       if (factureProvider.factureEnCours != null) {
-        _impayerController.text = factureProvider.impayer.toStringAsFixed(2);
+        impayerProvider.impayerController.text =
+            factureProvider.impayer.toStringAsFixed(2);
       }
       return Scaffold(
         body: SingleChildScrollView(
@@ -220,7 +223,7 @@ class _FactureDetailState extends State<FactureDetail> {
                             }
                             if (!snapshot.hasData || snapshot.data!.isEmpty) {
                               return const Center(
-                                  child: Text('Aucune News disponible.'));
+                                  child: Icon(Icons.error_outline));
                             }
 
                             return MarqueeWidget(
@@ -346,7 +349,7 @@ class _FactureDetailState extends State<FactureDetail> {
                               }
                               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                                 return const Center(
-                                    child: Text('Aucune News disponible.'));
+                                    child: Icon(Icons.error_outline));
                               }
                               return MarqueeWidget(
                                   marqueeData: snapshot.data!,
@@ -394,8 +397,9 @@ class _FactureDetailState extends State<FactureDetail> {
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: TTC(
                             totalAmount: factureProvider.calculerTotalHT(),
-                            localImpayer:
-                                double.tryParse(_impayerController.text) ?? 0.0,
+                            localImpayer: double.tryParse(
+                                    impayerProvider.impayerController.text) ??
+                                0.0,
                           ),
                         ),
                         Padding(
@@ -405,8 +409,8 @@ class _FactureDetailState extends State<FactureDetail> {
                               : TotalDetail(
                                   totalAmount:
                                       factureProvider.calculerTotalHT(),
-                                  localImpayer: double.tryParse(
-                                          _impayerController.text) ??
+                                  localImpayer: double.tryParse(impayerProvider
+                                          .impayerController.text) ??
                                       0.0,
                                   facture: factureProvider.factureEnCours!),
                         ),
@@ -417,7 +421,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                     const EdgeInsets.fromLTRB(16, 0, 16, 8),
                                 child: EditableField(
                                   initialValue: factureProvider.impayer,
-                                  impayerController: _impayerController,
+                                  impayerController:
+                                      impayerProvider.impayerController,
                                 ),
                               ),
                         Padding(
@@ -433,7 +438,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                         factureProvider.sauvegarderFacture(
                                             context, commerceProvider);
                                         //   .creerNouvelleFacture(); // Crée une nouvelle facture
-                                        _impayerController.clear();
+                                        impayerProvider.impayerController
+                                            .clear();
                                         _rechercheController.clear();
                                         context
                                             .read<EditableFieldProvider>()
@@ -457,7 +463,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                     : () {
                                         factureProvider.sauvegarderFacture(
                                             context, commerceProvider);
-                                        _impayerController.clear();
+                                        impayerProvider.impayerController
+                                            .clear();
                                         context
                                             .read<EditableFieldProvider>()
                                             .AlwaystoggleEditable();
@@ -601,8 +608,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                 child: TTC(
                                   totalAmount:
                                       factureProvider.calculerTotalHT(),
-                                  localImpayer: double.tryParse(
-                                          _impayerController.text) ??
+                                  localImpayer: double.tryParse(impayerProvider
+                                          .impayerController.text) ??
                                       0.0,
                                 ),
                               ),
@@ -612,7 +619,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                     totalAmount:
                                         factureProvider.calculerTotalHT(),
                                     localImpayer: double.tryParse(
-                                            _impayerController.text) ??
+                                            impayerProvider
+                                                .impayerController.text) ??
                                         0.0,
                                     facture: factureProvider.factureEnCours),
                               ),
@@ -635,7 +643,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                       ? SizedBox.shrink()
                                       : EditableField(
                                           initialValue: factureProvider.impayer,
-                                          impayerController: _impayerController,
+                                          impayerController:
+                                              impayerProvider.impayerController,
                                         ),
                                 ),
                                 Spacer(
@@ -650,7 +659,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                           factureProvider.sauvegarderFacture(
                                               context, commerceProvider);
                                           // .creerNouvelleFacture(); // Crée une nouvelle facture
-                                          _impayerController.clear();
+                                          impayerProvider.impayerController
+                                              .clear();
                                           _rechercheController.clear();
                                           context
                                               .read<EditableFieldProvider>()
@@ -678,7 +688,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                       : () {
                                           factureProvider.sauvegarderFacture(
                                               context, commerceProvider);
-                                          _impayerController.clear();
+                                          impayerProvider.impayerController
+                                              .clear();
                                           context
                                               .read<EditableFieldProvider>()
                                               .AlwaystoggleEditable();
@@ -1152,17 +1163,24 @@ class _FactureDetailState extends State<FactureDetail> {
       (p) => p.id == ligne.produit.target?.id,
     );
 
-    double stockRestant = produit.approvisionnements.fold<double>(
+    double stockRestantVIrtuel = produit.approvisionnements.fold<double>(
         0, (previousValue, appro) => previousValue + appro.quantite);
-
+    double stockRestantReel = produit.approvisionnements.fold<double>(
+        0, (previousValue, appro) => previousValue + appro.quantite);
     // Fonction pour mettre à jour dynamiquement le stock
     void updateStockRestant(String value) {
       final quantite = double.tryParse(value) ?? 0.0;
-      stockRestant = produit.approvisionnements.fold<double>(
+      stockRestantVIrtuel = produit.approvisionnements.fold<double>(
               0, (previousValue, appro) => previousValue + appro.quantite) +
           ligne
               .quantite - // Réajuster l'ancienne quantité pour éviter un double comptage
           quantite;
+    }
+
+    void StockRestantReel(String value) {
+      stockRestantReel = produit.approvisionnements.fold<double>(
+              0, (previousValue, appro) => previousValue + appro.quantite) +
+          ligne.quantite;
     }
 
     showDialog(
@@ -1182,9 +1200,13 @@ class _FactureDetailState extends State<FactureDetail> {
                       style: const TextStyle(fontSize: 15),
                     ),
                     Text(
-                      'Quantité Restante: ${stockRestant.toStringAsFixed(2)}',
+                      'Quantité Restante: ${(stockRestantVIrtuel - ligne.quantite).toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 20),
                     ),
+                    // Text(
+                    //   'StockRestantReel: ${stockRestantReel.toStringAsFixed(2)}',
+                    //   style: const TextStyle(fontSize: 20),
+                    // ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: prixVenteController,
@@ -1211,8 +1233,17 @@ class _FactureDetailState extends State<FactureDetail> {
                       },
                       validator: (value) {
                         final quantite = double.tryParse(value ?? '') ?? 0.0;
-                        if (quantite <= 0 || quantite > stockRestant) {
-                          return 'La quantité doit être > 0 et ≤ ${stockRestant.toStringAsFixed(2)}';
+                        final quantiteControllerDouble =
+                            double.tryParse(quantiteController.text ?? '') ??
+                                0.0;
+                        if (quantite <= 0 ||
+                            quantite >
+                                (stockRestantVIrtuel +
+                                    quantiteControllerDouble)) {
+                          print(stockRestantReel);
+                          print(quantiteControllerDouble);
+                          print(stockRestantVIrtuel);
+                          return 'La quantité doit être > 0 et ≤ ${(stockRestantVIrtuel + quantiteControllerDouble).toStringAsFixed(2)}';
                         }
                         return null;
                       },
@@ -1243,7 +1274,11 @@ class _FactureDetailState extends State<FactureDetail> {
                         return;
                       }
 
-                      provider.modifierLigne(index, quantite, prixVente);
+                      provider.modifierLigne(
+                          index, stockRestantVIrtuel, prixVente);
+                      print(stockRestantReel);
+
+                      print(stockRestantVIrtuel);
                       Navigator.pop(context);
                     }
                   },
@@ -1574,6 +1609,8 @@ class _FactureListState extends State<FactureList> {
                                                         .sauvegarderFacture(
                                                             context,
                                                             commerceProvider);
+                                                    factureProvider
+                                                        .clearImpayer(); // Réinitialiser le champ de texte
                                                     Navigator.of(context)
                                                         .pop(); // Fermer le dialogue après action
                                                   },

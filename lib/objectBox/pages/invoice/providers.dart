@@ -278,6 +278,7 @@ class FacturationProvider with ChangeNotifier {
     _lignesFacture.clear();
     _selectedClient = null;
     _impayer = 0.0;
+    clearImpayer();
     notifyListeners();
   }
 
@@ -399,7 +400,7 @@ class FacturationProvider with ChangeNotifier {
     _impayer = 0.0;
     // Réinitialiser les lignes de la facture
     _lignesFacture.clear();
-
+    clearImpayer();
     // Notifier les listeners pour mettre à jour l'interface utilisateur
     notifyListeners();
   }
@@ -434,13 +435,12 @@ class FacturationProvider with ChangeNotifier {
     _factureEnCours = facture;
     _lignesFacture = _factureEnEdition!.lignesDocument.toList();
     _impayer = facture.impayer ?? 0.0; // Initialisez l'impayé
+
     notifyListeners();
   }
 
   Future<void> sauvegarderFacture(
       BuildContext context, CommerceProvider commerceProvider) async {
-    print('Sauvegarde de la facture en cours...');
-
     try {
       final Map<int, double> quantitesToDeduct = {};
 
@@ -613,6 +613,7 @@ class FacturationProvider with ChangeNotifier {
       _factureEnEdition = null;
       _lignesFacture.clear();
       _impayer = 0.0;
+
       _selectedClient = null;
       chargerFactures2(reset: true);
       _chargerFacturesTotal();
@@ -622,6 +623,7 @@ class FacturationProvider with ChangeNotifier {
       _hasChanges = false;
       // 🔴 Notification pour mettre à jour les produits
       commerceProvider.chargerProduits(reset: true);
+      clearImpayer();
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la sauvegarde de la facture: $e');
@@ -662,6 +664,7 @@ class FacturationProvider with ChangeNotifier {
   void annulerEdition() {
     _isEditing = false; // Désactiver l'état d'édition
     _hasChanges = false; // Réinitialiser l'état des modifications
+    clearImpayer();
     notifyListeners();
   }
 
@@ -686,6 +689,19 @@ class FacturationProvider with ChangeNotifier {
 //   // Notifier les listeners pour mettre à jour l'interface utilisateur
 //   notifyListeners();
 // }
+
+  TextEditingController impayerController = TextEditingController();
+
+  void clearImpayer() {
+    impayerController.clear(); // Réinitialiser le champ de texte
+    notifyListeners(); // Notifier les widgets pour mettre à jour l'affichage
+  }
+
+  @override
+  void dispose() {
+    impayerController.dispose();
+    super.dispose();
+  }
 
   Future<void> supprimerFacture(
       Document facture, CommerceProvider commerceProvider) async {
@@ -746,7 +762,7 @@ class FacturationProvider with ChangeNotifier {
       print('Facture sauvegardée avec succès');
       _isEditing = false;
       _hasChanges = false;
-
+      clearImpayer();
       notifyListeners();
     } catch (e) {
       print('Erreur lors de la suppression de la facture: $e');
@@ -808,7 +824,7 @@ class FacturationProvider with ChangeNotifier {
 
       _impayer = 0.0;
       _selectedClient = null;
-
+      clearImpayer();
       print('Facture sauvegardée avec succès');
       _isEditing = false;
       _hasChanges = false;

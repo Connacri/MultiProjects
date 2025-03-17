@@ -126,7 +126,7 @@ class _CarouselBannerState extends State<CarouselBanner> {
       stream: _carouselDataStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Center(child: Text('Une erreur est survenue'));
+          return const Center(child: Icon(Icons.error_outline));
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(child: CircularProgressIndicator());
