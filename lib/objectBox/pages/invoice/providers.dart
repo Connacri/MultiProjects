@@ -362,6 +362,7 @@ class FacturationProvider with ChangeNotifier {
     if (index >= 0 && index < _lignesFacture.length) {
       print('Suppression de la ligne à l\'index $index'); // Ajoutez ce log
       _lignesFacture.removeAt(index);
+
       _hasChanges = true; // Marquer qu'il y a des modifications
       notifyListeners();
     } else {
@@ -471,6 +472,7 @@ class FacturationProvider with ChangeNotifier {
           if (difference != 0) {
             quantitesToDeduct[produitId] = difference;
           }
+          print('difference = $difference');
         }
       }
 
@@ -535,7 +537,7 @@ class FacturationProvider with ChangeNotifier {
       for (final entry in quantitesToDeduct.entries) {
         final produitId = entry.key;
         double quantiteADeduire = entry.value;
-
+        print('quantiteADeduire $quantiteADeduire');
         // Get all approvisionnements for this product, ordered by date
 
         final query = _objectBox.approvisionnementBox
@@ -544,30 +546,31 @@ class FacturationProvider with ChangeNotifier {
 
         final approvisionnements = query.build().find();
 
-        if (quantiteADeduire > 0) {
-          // Deduct quantities following FIFO
-          for (final appro in approvisionnements) {
-            if (quantiteADeduire < 0) break;
+        //   if (quantiteADeduire > 0) {
+        // Deduct quantities following FIFO
+        for (final appro in approvisionnements) {
+          //if (quantiteADeduire < 0) break;
 
-            if (appro.quantite > 0) {
-              final quantitePrelevee = min(appro.quantite, quantiteADeduire);
-              appro.quantite -= quantitePrelevee;
-              quantiteADeduire -= quantitePrelevee;
+          if (appro.quantite > 0) {
+            final quantitePrelevee = min(appro.quantite, quantiteADeduire);
+            appro.quantite -= quantitePrelevee;
+            quantiteADeduire -= quantitePrelevee;
 
-              // Update the approvisionnement in the database
-              _objectBox.approvisionnementBox.put(appro);
-            }
+            // Update the approvisionnement in the database
+            _objectBox.approvisionnementBox.put(appro);
           }
-        } else if (quantiteADeduire < 0) {
-          // Restitution de stock si on a diminué la quantité
-          final approvisionnement = Approvisionnement(
-            quantite: -quantiteADeduire, // On remet en stock
-            datePeremption: DateTime.now()
-                .add(Duration(days: 365)), // Ajuster selon la logique
-          );
-
-          _objectBox.approvisionnementBox.put(approvisionnement);
         }
+        // }
+        // else if (quantiteADeduire < 0) {
+        //   // Restitution de stock si on a diminué la quantité
+        //   final approvisionnement = Approvisionnement(
+        //     quantite: quantiteADeduire, // On remet en stock
+        //     datePeremption: DateTime.now()
+        //         .add(Duration(days: 365)), // Ajuster selon la logique
+        //   );
+        //
+        //   _objectBox.approvisionnementBox.put(approvisionnement);
+        // }
         notifyListeners();
         // Recharger les produits si nécessaire
         chargerFactures2(reset: true);

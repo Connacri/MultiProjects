@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:kenzy/objectBox/pages/ProduitListScreen.dart';
@@ -874,36 +875,6 @@ class _FactureDetailState extends State<FactureDetail> {
                                         ),
                                       ),
                                     )),
-                                    // DataCell(
-                                    //   // state.isEditedQty
-                                    //   //     ? TextFormField(
-                                    //   //         initialValue: ligne.quantite.toStringAsFixed(2),
-                                    //   //         keyboardType: TextInputType.number,
-                                    //   //         onChanged: (value) {
-                                    //   //           final nouvelleQuantite =
-                                    //   //               double.tryParse(value) ?? 0;
-                                    //   //           provider.modifierLigne(
-                                    //   //             index,
-                                    //   //             nouvelleQuantite,
-                                    //   //             ligne.prixUnitaire,
-                                    //   //           );
-                                    //   //         },
-                                    //   //         onTapOutside: (event) {
-                                    //   //           provider.toggleEditQty(index);
-                                    //   //         },
-                                    //   //       )
-                                    //   //     :
-                                    //   Text(ligne.quantite.toStringAsFixed(2)),
-                                    //   // onTap: () {
-                                    //   //   provider.toggleEditQty(index);
-                                    //   // },
-                                    //   // onTapDown: (TapDownDetails) {
-                                    //   //   provider.toggleEditQty(index);
-                                    //   // },
-                                    //   // onTapCancel: () {
-                                    //   //   provider.toggleEditQty(index);
-                                    //   // },
-                                    // ),
                                     DataCell(
                                       Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -911,12 +882,20 @@ class _FactureDetailState extends State<FactureDetail> {
                                           IconButton(
                                             icon: Icon(Icons.remove),
                                             onPressed: () {
-                                              // Décrémente la quantité
+                                              // Assurez-vous que la quantité ne devient pas négative
+                                              final nouvelleQuantite = max(
+                                                      ligne.quantite - 1, 0)
+                                                  .toDouble(); // Exemple de validation
                                               factureProvider.modifierLigne(
-                                                index,
-                                                ligne.quantite - 1,
-                                                ligne.prixUnitaire,
-                                              );
+                                                  index,
+                                                  nouvelleQuantite,
+                                                  ligne.prixUnitaire);
+                                              // Décrémente la quantité
+                                              // factureProvider.modifierLigne(
+                                              //   index,
+                                              //   ligne.quantite - 1,
+                                              //   ligne.prixUnitaire,
+                                              // );
                                             },
                                           ),
                                           Text(ligne.quantite
@@ -1013,126 +992,6 @@ class _FactureDetailState extends State<FactureDetail> {
     });
   }
 
-  // void _showEditDialog(
-  //     BuildContext context,
-  //     LigneDocument ligne,
-  //     FacturationProvider provider,
-  //     CommerceProvider commerceProvider,
-  //     int index) {
-  //   final _formKey =
-  //       GlobalKey<FormState>(); // Clé pour gérer l'état du formulaire
-  //   final TextEditingController prixVenteController = TextEditingController(
-  //     text: ligne.prixUnitaire.toStringAsFixed(2),
-  //   );
-  //   final TextEditingController quantiteController = TextEditingController(
-  //     text: ligne.quantite.toStringAsFixed(2),
-  //   );
-  //
-  //   // Récupérer le prix d'achat et la quantité restante
-  //   final prixAchat =
-  //       ligne.produit.target?.approvisionnements.isNotEmpty == true
-  //           ? ligne.produit.target!.approvisionnements
-  //                   .map((a) => a.prixAchat ?? 0)
-  //                   .reduce((a, b) => a + b) /
-  //               ligne.produit.target!.approvisionnements.length
-  //           : 0.0;
-  //   // final providerCommerce =
-  //   //     context.read<CommerceProvider>(); // ✅ Utiliser read ici
-  //   // final quantiteRestante = providerCommerce.stockTotal;
-  //
-  //   //ligne.produit.target?.calculerStockTotal() ?? 0.0;
-  //   // final produit = commerceProvider.produits[index];
-  //   final produit = commerceProvider.produits.firstWhere(
-  //     (p) => p.id == ligne.produit.target?.id,
-  //   );
-  //   final stockRestant = produit.approvisionnements.fold<double>(
-  //       0, (previousValue, appro) => previousValue + appro.quantite);
-  //
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: Text('Modifier la Quantité ou Prix'),
-  //         content: Form(
-  //           key: _formKey, // Associer la clé au formulaire
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               Text(
-  //                 'Prix Minimal: ${prixAchat.toStringAsFixed(2)} DZD',
-  //                 style: TextStyle(fontSize: 15),
-  //               ),
-  //               Text(
-  //                 'Quantité Restante: ${(stockRestant + double.parse(quantiteController.text)).toStringAsFixed(2)}',
-  //                 style: TextStyle(fontSize: 20),
-  //               ),
-  //               SizedBox(height: 16),
-  //               TextFormField(
-  //                 controller: prixVenteController,
-  //                 decoration: InputDecoration(labelText: 'Prix de vente'),
-  //                 keyboardType: TextInputType.number,
-  //                 validator: (value) {
-  //                   final prixVente = double.tryParse(value ?? '');
-  //                   if (prixVente == null || prixVente < prixAchat) {
-  //                     return 'Le prix de vente doit être ≥ ${prixAchat.toStringAsFixed(2)}';
-  //                   }
-  //                   return null;
-  //                 },
-  //               ),
-  //               SizedBox(height: 16),
-  //               TextFormField(
-  //                 controller: quantiteController,
-  //                 decoration: InputDecoration(labelText: 'Quantité'),
-  //                 keyboardType: TextInputType.number,
-  //                 validator: (value) {
-  //                   final quantite = double.tryParse(value ?? '');
-  //                   if (quantite == null ||
-  //                       quantite <= 0 ||
-  //                       quantite > stockRestant) {
-  //                     return 'La quantité doit être > 0 et ≤ ${(stockRestant + double.parse(quantiteController.text)).toStringAsFixed(2)}';
-  //                   }
-  //                   return null;
-  //                 },
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.pop(context); // Fermer la boîte de dialogue
-  //             },
-  //             child: Text('Annuler'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               // Valider le formulaire
-  //               if (_formKey.currentState?.validate() ?? false) {
-  //                 // Récupérer les valeurs saisies
-  //                 final prixVente = double.tryParse(prixVenteController.text);
-  //                 final quantite = double.tryParse(quantiteController.text);
-  //
-  //                 if (prixVente == null || quantite == null) {
-  //                   ScaffoldMessenger.of(context).showSnackBar(
-  //                     SnackBar(
-  //                         content: Text('Veuillez saisir des valeurs valides')),
-  //                   );
-  //                   return;
-  //                 }
-  //
-  //                 // Mettre à jour la ligne avec les nouvelles valeurs
-  //                 provider.modifierLigne(index, quantite, prixVente);
-  //                 Navigator.pop(context); // Fermer la boîte de dialogue
-  //               }
-  //             },
-  //             child: Text('Enregistrer'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   void _showEditDialog(
       BuildContext context,
       LigneDocument ligne,
@@ -1200,7 +1059,7 @@ class _FactureDetailState extends State<FactureDetail> {
                       style: const TextStyle(fontSize: 15),
                     ),
                     Text(
-                      'Quantité Restante: ${(stockRestantVIrtuel - ligne.quantite).toStringAsFixed(2)}',
+                      'Quantité Restante: ${(stockRestantVIrtuel).toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 20),
                     ),
                     // Text(
@@ -1240,9 +1099,6 @@ class _FactureDetailState extends State<FactureDetail> {
                             quantite >
                                 (stockRestantVIrtuel +
                                     quantiteControllerDouble)) {
-                          print(stockRestantReel);
-                          print(quantiteControllerDouble);
-                          print(stockRestantVIrtuel);
                           return 'La quantité doit être > 0 et ≤ ${(stockRestantVIrtuel + quantiteControllerDouble).toStringAsFixed(2)}';
                         }
                         return null;
@@ -1274,11 +1130,7 @@ class _FactureDetailState extends State<FactureDetail> {
                         return;
                       }
 
-                      provider.modifierLigne(
-                          index, stockRestantVIrtuel, prixVente);
-                      print(stockRestantReel);
-
-                      print(stockRestantVIrtuel);
+                      provider.modifierLigne(index, quantite, prixVente);
                       Navigator.pop(context);
                     }
                   },
@@ -1504,76 +1356,10 @@ class _FactureListState extends State<FactureList> {
                                       : null,
                                   child: ListTile(
                                     onTap: () {
-                                      // final ligneFact = context
-                                      //     .read<FacturationProvider>()
-                                      //     .factureEnEdition!
-                                      //     .lignesDocument;
-                                      // if (ligneFact.isEmpty) {
-                                      //   showDialog(
-                                      //     context: context,
-                                      //     builder: (BuildContext context) {
-                                      //       return AlertDialog(
-                                      //         backgroundColor:
-                                      //             Colors.red.shade50,
-                                      //         // Fond rouge clair
-                                      //         shape: RoundedRectangleBorder(
-                                      //             borderRadius:
-                                      //                 BorderRadius.circular(
-                                      //                     12)),
-                                      //         title: Row(
-                                      //           children: [
-                                      //             Icon(Icons.warning,
-                                      //                 color: Colors.red),
-                                      //             SizedBox(width: 8),
-                                      //             Text("Confirmation",
-                                      //                 style: TextStyle(
-                                      //                     color: Colors.red)),
-                                      //           ],
-                                      //         ),
-                                      //         content: Text(
-                                      //           "Voulez-vous vraiment supprimer cet élément ?",
-                                      //           style: TextStyle(
-                                      //               color: Colors.black87),
-                                      //         ),
-                                      //         actions: [
-                                      //           TextButton(
-                                      //             onPressed: () {
-                                      //               factureProvider
-                                      //                   .selectionnerFacture(
-                                      //                       facture);
-                                      //               factureProvider
-                                      //                   .commencerEdition(
-                                      //                       facture);
-                                      //
-                                      //               tabController?.animateTo(0);
-                                      //               Navigator.of(context)
-                                      //                   .pop(true);
-                                      //             },
-                                      //             // Fermer le dialogue
-                                      //             child: const Text("Annuler"),
-                                      //           ),
-                                      //           ElevatedButton(
-                                      //             onPressed: () {
-                                      //               factureProvider
-                                      //                   .supprimerFacture(
-                                      //                       facture,
-                                      //                       commerceProvider);
-                                      //               Navigator.of(context)
-                                      //                   .pop(); // Fermer le dialogue après action
-                                      //             },
-                                      //             style:
-                                      //                 ElevatedButton.styleFrom(
-                                      //               backgroundColor: Colors
-                                      //                   .red, // Bouton rouge
-                                      //             ),
-                                      //             child: Text("Supprimer",
-                                      //                 style: TextStyle(
-                                      //                     color: Colors.white)),
-                                      //           ),
-                                      //         ],
-                                      //       );
-                                      //     },
-                                      //   );
+                                      // if (factureProvider.factureEnEdition!
+                                      //     .lignesDocument.isEmpty) {
+                                      //   factureProvider.supprimerFacture(
+                                      //       facture, commerceProvider);
                                       // }
 
                                       if (isEditing && hasChanges) {
@@ -1666,19 +1452,24 @@ class _FactureListState extends State<FactureList> {
                                           : Icon(FontAwesomeIcons.check,
                                               color: Colors.white70),
                                     ),
-                                    title: Text(
-                                      facture.qrReference,
-                                      style: TextStyle(
-                                        color: estEnEdition
-                                            ? Colors
-                                                .black // Texte en noir si estEnEdition est true
-                                            : Theme.of(context).brightness ==
-                                                    Brightness.dark
+                                    title: Column(
+                                      children: [
+                                        Text(
+                                          facture.qrReference,
+                                          style: TextStyle(
+                                            color: estEnEdition
                                                 ? Colors
-                                                    .white // Texte en blanc en mode sombre
-                                                : Colors
-                                                    .black, // Texte en noir en mode clair
-                                      ),
+                                                    .black // Texte en noir si estEnEdition est true
+                                                : Theme.of(context)
+                                                            .brightness ==
+                                                        Brightness.dark
+                                                    ? Colors
+                                                        .white // Texte en blanc en mode sombre
+                                                    : Colors
+                                                        .black, // Texte en noir en mode clair
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     subtitle: Text.rich(
                                       overflow: TextOverflow.ellipsis,
@@ -2351,7 +2142,7 @@ class TotalDetail extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'TVA (19%):',
+                          'TVA(19%):',
                           textAlign: TextAlign.start,
                           style: TextStyle(
                             fontSize: fontSize,
