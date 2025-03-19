@@ -754,7 +754,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                 DataColumn(
                                   label: Container(
                                     //color: Colors.greenAccent,
-                                    width: 30, // Largeur fixe pour QR
+                                    width: 20, // Largeur fixe pour QR
                                     child:
                                         Text('QR', textAlign: TextAlign.start),
                                   ),
@@ -762,7 +762,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                 DataColumn(
                                   label: Container(
                                     //   color: Colors.red,
-                                    width: 160, // Largeur fixe pour Produit
+                                    width: 120, // Largeur fixe pour Produit
                                     child: Text('Produit',
                                         textAlign: TextAlign.start),
                                   ),
@@ -829,6 +829,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                         0,
                                         (previousValue, appro) =>
                                             previousValue + appro.quantite);
+                                final qtt = ligne.quantite;
 
                                 return DataRow(
                                   // color: WidgetStateProperty.resolveWith<Color?>(
@@ -854,7 +855,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                   ),
                                   cells: [
                                     DataCell(SizedBox(
-                                      width: 150,
+                                      width: 50,
                                       child: SelectableText(
                                           maxLines: 1,
                                           ligne.produit.target?.qr ?? ' - '),
@@ -903,12 +904,17 @@ class _FactureDetailState extends State<FactureDetail> {
                                           IconButton(
                                             icon: Icon(Icons.add),
                                             onPressed: () {
-                                              // Incrémente la quantité
+                                              // Calculate the new quantity
+                                              final nouvelleQuantite = min(
+                                                      ligne.quantite + 1,
+                                                      stockRestant)
+                                                  .toDouble();
+
+                                              // Update with a copy of the quantity, without changing the original
                                               factureProvider.modifierLigne(
-                                                index,
-                                                ligne.quantite + 1,
-                                                ligne.prixUnitaire,
-                                              );
+                                                  index,
+                                                  nouvelleQuantite,
+                                                  ligne.prixUnitaire);
                                             },
                                           ),
                                         ],

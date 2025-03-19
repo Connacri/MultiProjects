@@ -537,9 +537,8 @@ class FacturationProvider with ChangeNotifier {
       for (final entry in quantitesToDeduct.entries) {
         final produitId = entry.key;
         double quantiteADeduire = entry.value;
-        print('quantiteADeduire $quantiteADeduire');
-        // Get all approvisionnements for this product, ordered by date
 
+        // Get all approvisionnements for this product, ordered by date
         final query = _objectBox.approvisionnementBox
             .query(Approvisionnement_.produit.equals(produitId))
           ..order(Approvisionnement_.datePeremption);
@@ -551,15 +550,17 @@ class FacturationProvider with ChangeNotifier {
         for (final appro in approvisionnements) {
           //if (quantiteADeduire < 0) break;
 
-          if (appro.quantite > 0) {
-            final quantitePrelevee = min(appro.quantite, quantiteADeduire);
-            appro.quantite -= quantitePrelevee;
-            quantiteADeduire -= quantitePrelevee;
+          //  if (appro.quantite > 0) {
+          print(
+              'yes > 000000000000 ${appro.quantite} quantiteADeduire ${quantiteADeduire}');
+          final quantitePrelevee = min(appro.quantite, quantiteADeduire);
+          appro.quantite -= quantitePrelevee;
+          quantiteADeduire -= quantitePrelevee;
 
-            // Update the approvisionnement in the database
-            _objectBox.approvisionnementBox.put(appro);
-          }
+          // Update the approvisionnement in the database
+          _objectBox.approvisionnementBox.put(appro);
         }
+        // }
         // }
         // else if (quantiteADeduire < 0) {
         //   // Restitution de stock si on a diminué la quantité
