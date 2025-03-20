@@ -728,34 +728,29 @@ class FacturationProvider with ChangeNotifier {
         }
       }
 
-      // 2. Vérification du stock
-      for (final entry in quantitesToAdjust.entries) {
-        final produitId = entry.key;
-        final delta = entry.value;
-        final produit = _objectBox.produitBox.get(produitId);
-
-        if (produit == null || delta == 0) continue;
-
-        final stockDisponible = produit.calculerStockTotal();
-
-        // Vérifier suffisance pour les déductions
-        if (delta > 0 && stockDisponible < delta) {
-          throw StateError('Stock insuffisant pour ${produit.nom} '
-              '(${stockDisponible.toStringAsFixed(2)} disponible vs ${delta.toStringAsFixed(2)} demandé)');
-        }
-      }
-
       // 3. Application des ajustements au stock
       for (final entry in quantitesToAdjust.entries) {
         final produitId = entry.key;
         final delta = entry.value;
+        double remaining = delta.abs();
+
+        print(
+            '🛠️ Ajustement du stock | Produit ID: $produitId | Delta: $delta');
+
+        // ⚡ Optimisation: On récupère seulement les approvisionnements nécessaires (limit X)
         final approvisionnements = _objectBox.approvisionnementBox
             .query(Approvisionnement_.produit.equals(produitId))
             .order(Approvisionnement_.datePeremption)
             .build()
             .find();
 
-        double remaining = delta.abs();
+        if (approvisionnements.isEmpty) {
+          print('❌ Aucun approvisionnement trouvé pour Produit ID: $produitId');
+          if (delta > 0) {
+            throw StateError('Stock insuffisant pour le produit $produitId');
+          }
+          continue;
+        }
 
         for (final appro in approvisionnements) {
           if (remaining <= 0) break;
@@ -763,22 +758,36 @@ class FacturationProvider with ChangeNotifier {
           final maxToTake = min(appro.quantite, remaining);
 
           if (delta > 0) {
-            // Cas d'augmentation : soustraire du stock
-            appro.quantite -= maxToTake;
+            // 🔴 Cas d'une réduction du stock (vente, sortie de stock)
+            if (appro.quantite < maxToTake) {
+              print(
+                  '⚠️ Stock insuffisant dans l’approvisionnement | ID: ${appro.id} | Quantité: ${appro.quantite} | Tentative de prise: $maxToTake');
+            }
+
+            appro.quantite =
+                max(0, appro.quantite - maxToTake); // 🔥 Évite un stock négatif
             remaining -= maxToTake;
+            print(
+                '📉 Réduction | Approvisionnement ID: ${appro.id} | Nouvelle Quantité: ${appro.quantite}');
           } else {
-            // Cas de diminution : restaurer le stock
+            // 🟢 Cas d'une augmentation du stock (retour produit, correction)
             appro.quantite += maxToTake;
             remaining -= maxToTake;
+            print(
+                '📈 Augmentation | Approvisionnement ID: ${appro.id} | Nouvelle Quantité: ${appro.quantite}');
           }
 
           _objectBox.approvisionnementBox.put(appro);
         }
 
         if (remaining > 0 && delta > 0) {
-          // Stock insuffisant malgré vérification (race condition)
-          throw StateError('Erreur de synchronisation de stock');
+          print(
+              '🚨 Erreur de synchronisation: Stock insuffisant pour le produit $produitId');
+          throw StateError('Stock insuffisant pour le produit $produitId');
         }
+
+        print(
+            '✅ Ajustement terminé pour Produit ID: $produitId | Reste à ajuster: $remaining');
       }
 
       // 4. Enregistrement de la facture

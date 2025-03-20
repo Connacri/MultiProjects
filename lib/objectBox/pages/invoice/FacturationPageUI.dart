@@ -887,6 +887,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                               final nouvelleQuantite = max(
                                                       ligne.quantite - 1, 0)
                                                   .toDouble(); // Exemple de validation
+                                              print(
+                                                  'nouvelleQuantite : $nouvelleQuantite');
                                               factureProvider.modifierLigne(
                                                   index,
                                                   nouvelleQuantite,
@@ -909,8 +911,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                               if (produitId == null) return;
 
                                               // 1. Récupérer les données nécessaires
-                                              final stockDisponible =
-                                                  ligne.quantite;
+
                                               final originalQuantity =
                                                   factureProvider
                                                       .getOriginalQuantity(
@@ -943,25 +944,6 @@ class _FactureDetailState extends State<FactureDetail> {
                                     DataCell(Text((stockRestant ?? 0)
                                         .toStringAsFixed(2))),
                                     DataCell(
-                                      // state.isEditedPu
-                                      //     ? TextFormField(
-                                      //         initialValue:
-                                      //             ligne.prixUnitaire.toStringAsFixed(2),
-                                      //         keyboardType: TextInputType.number,
-                                      //         onChanged: (value) {
-                                      //           final nouveauPrix =
-                                      //               double.tryParse(value) ?? 0;
-                                      //           provider.modifierLigne(
-                                      //             index,
-                                      //             ligne.quantite,
-                                      //             nouveauPrix,
-                                      //           );
-                                      //         },
-                                      //         onTapOutside: (event) {
-                                      //           provider.toggleEditPu(index);
-                                      //         },
-                                      //       )
-                                      //     :
                                       Text(
                                         ligne.prixUnitaire.toStringAsFixed(2),
                                         textAlign: TextAlign.end,
