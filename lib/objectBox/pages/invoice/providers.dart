@@ -406,6 +406,23 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  double getOriginalQuantity(int produitId) {
+    if (_factureEnCours == null) return 0.0; // Si c'est une nouvelle facture
+    final originalLines = _factureEnCours!.lignesDocument;
+    final originalLine = originalLines.firstWhere(
+      (line) => line.produit.target?.id == produitId,
+      orElse: () {
+        // Return a default LigneDocument object or handle the case appropriately
+        // For example, you can return a LigneDocument with a quantity of 0.0
+        return LigneDocument(
+            quantite: 0.0,
+            prixUnitaire: 0.0,
+            derniereModification: DateTime.now()); // Adjust this as needed
+      },
+    );
+    return originalLine.quantite;
+  }
+
   void selectionnerFacture(Document facture) {
     _factureEnEdition = Document(
       id: facture.id,
@@ -440,7 +457,7 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> sauvegarderFacture(
+  Future<void> sauvegarderFacture1(
       BuildContext context, CommerceProvider commerceProvider) async {
     try {
       final Map<int, double> quantitesToDeduct = {};
@@ -662,6 +679,184 @@ class FacturationProvider with ChangeNotifier {
       );
 
       rethrow; // Rethrow the exception to handle it in the UI
+    }
+  }
+
+  Future<void> sauvegarderFacture(
+    BuildContext context,
+    CommerceProvider commerceProvider,
+  ) async {
+    try {
+      // 1. Calcul des quantités à déduire/restaurer
+      final quantitesToAdjust = <int, double>{};
+      final ancienneQuantite = <int, double>{};
+
+      // Récupération des quantités originales
+      if (_factureEnCours != null) {
+        for (final ligne in _factureEnCours!.lignesDocument) {
+          final produitId = ligne.produit.target?.id;
+          if (produitId != null) {
+            ancienneQuantite[produitId] =
+                (ancienneQuantite[produitId] ?? 0) + ligne.quantite;
+          }
+        }
+      }
+
+      // Calcul des différences pour les produits existants
+      for (final ligne in _lignesFacture) {
+        final produitId = ligne.produit.target?.id;
+        if (produitId == null) continue;
+
+        final nouvelleQuantite = ligne.quantite;
+        final ancienneQte = ancienneQuantite[produitId] ?? 0;
+        final difference = nouvelleQuantite - ancienneQte;
+
+        if (difference != 0) {
+          quantitesToAdjust[produitId] = difference;
+        }
+      }
+
+      // Gestion des produits supprimés de la facture
+      for (final entry in ancienneQuantite.entries) {
+        final produitId = entry.key;
+        final produitPresent = _lignesFacture.any(
+          (ligne) => ligne.produit.target?.id == produitId,
+        );
+
+        if (!produitPresent) {
+          quantitesToAdjust[produitId] = -(entry.value); // Restauration
+        }
+      }
+
+      // 2. Vérification du stock
+      for (final entry in quantitesToAdjust.entries) {
+        final produitId = entry.key;
+        final delta = entry.value;
+        final produit = _objectBox.produitBox.get(produitId);
+
+        if (produit == null || delta == 0) continue;
+
+        final stockDisponible = produit.calculerStockTotal();
+
+        // Vérifier suffisance pour les déductions
+        if (delta > 0 && stockDisponible < delta) {
+          throw StateError('Stock insuffisant pour ${produit.nom} '
+              '(${stockDisponible.toStringAsFixed(2)} disponible vs ${delta.toStringAsFixed(2)} demandé)');
+        }
+      }
+
+      // 3. Application des ajustements au stock
+      for (final entry in quantitesToAdjust.entries) {
+        final produitId = entry.key;
+        final delta = entry.value;
+        final approvisionnements = _objectBox.approvisionnementBox
+            .query(Approvisionnement_.produit.equals(produitId))
+            .order(Approvisionnement_.datePeremption)
+            .build()
+            .find();
+
+        double remaining = delta.abs();
+
+        for (final appro in approvisionnements) {
+          if (remaining <= 0) break;
+
+          final maxToTake = min(appro.quantite, remaining);
+
+          if (delta > 0) {
+            // Cas d'augmentation : soustraire du stock
+            appro.quantite -= maxToTake;
+            remaining -= maxToTake;
+          } else {
+            // Cas de diminution : restaurer le stock
+            appro.quantite += maxToTake;
+            remaining -= maxToTake;
+          }
+
+          _objectBox.approvisionnementBox.put(appro);
+        }
+
+        if (remaining > 0 && delta > 0) {
+          // Stock insuffisant malgré vérification (race condition)
+          throw StateError('Erreur de synchronisation de stock');
+        }
+      }
+
+      // 4. Enregistrement de la facture
+      if (_factureEnCours == null) {
+        // Création nouvelle facture
+        final nouvelleFacture = Document(
+          type: 'vente',
+          qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
+          impayer: _impayer,
+          derniereModification: DateTime.now(),
+          date: DateTime.now(),
+        )..client.target = _selectedClient;
+
+        nouvelleFacture.lignesDocument.addAll(_lignesFacture);
+
+        _objectBox.factureBox.put(nouvelleFacture);
+        for (final ligne in _lignesFacture) {
+          ligne.facture.target = nouvelleFacture;
+          _objectBox.ligneFacture.put(ligne);
+        }
+        _facturesList.add(nouvelleFacture);
+      } else {
+        // Mise à jour facture existante
+        _factureEnCours!
+          ..lignesDocument.clear()
+          ..lignesDocument.addAll(_lignesFacture)
+          ..impayer = _impayer
+          ..client.target = _selectedClient;
+
+        _objectBox.factureBox.put(_factureEnCours!);
+        for (final ligne in _lignesFacture) {
+          ligne.facture.target = _factureEnCours;
+          _objectBox.ligneFacture.put(ligne);
+        }
+      }
+
+      // 5. Nettoyage et mise à jour
+      _factureEnCours = null;
+      _factureEnEdition = null;
+      _lignesFacture.clear();
+      _impayer = 0.0;
+      _selectedClient = null;
+
+      // Mise à jour des données
+
+      chargerFactures2(reset: true);
+      commerceProvider.chargerProduits(reset: true);
+      _chargerFacturesTotal();
+
+      print('Facture sauvegardée avec succès');
+      _isEditing = false;
+      _hasChanges = false;
+      clearImpayer();
+      notifyListeners();
+    } on StateError catch (e) {
+      // Gestion des erreurs de stock
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Text('Erreur de stock', style: TextStyle(color: Colors.red)),
+          content: Text(e.message),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            )
+          ],
+        ),
+      );
+      rethrow;
+    } catch (e, stack) {
+      print('Erreur inattendue: $e\n$stack');
+      rethrow;
+    } finally {
+      notifyListeners();
     }
   }
 

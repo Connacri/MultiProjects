@@ -904,19 +904,39 @@ class _FactureDetailState extends State<FactureDetail> {
                                           IconButton(
                                             icon: Icon(Icons.add),
                                             onPressed: () {
-                                              // Calculate the new quantity
+                                              final produitId =
+                                                  ligne.produit.target?.id;
+                                              if (produitId == null) return;
+
+                                              // 1. Récupérer les données nécessaires
+                                              final stockDisponible =
+                                                  ligne.quantite;
+                                              final originalQuantity =
+                                                  factureProvider
+                                                      .getOriginalQuantity(
+                                                          produitId);
+                                              final currentQuantity =
+                                                  ligne.quantite;
+
+                                              // 2. Calculer la quantité maximale autorisée
+                                              final maxAllowed =
+                                                  originalQuantity +
+                                                      stockRestant;
+
+                                              // 3. Calculer la nouvelle quantité avec la limite
                                               final nouvelleQuantite = min(
-                                                      ligne.quantite + 1,
-                                                      stockRestant)
+                                                      currentQuantity + 1,
+                                                      maxAllowed)
                                                   .toDouble();
 
-                                              // Update with a copy of the quantity, without changing the original
+                                              // 4. Mettre à jour la ligne
                                               factureProvider.modifierLigne(
-                                                  index,
-                                                  nouvelleQuantite,
-                                                  ligne.prixUnitaire);
+                                                index,
+                                                nouvelleQuantite,
+                                                ligne.prixUnitaire,
+                                              );
                                             },
-                                          ),
+                                          )
                                         ],
                                       ),
                                     ),
