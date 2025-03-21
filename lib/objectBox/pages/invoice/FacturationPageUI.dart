@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
@@ -22,8 +21,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webfeed_plus/domain/rss_feed.dart';
 import '../../MyProviders.dart';
 import '../../Utils/mobile_scanner/barcode_scanner_window.dart';
-import '../../Utils/winMobile.dart';
-import '../../classeObjectBox.dart';
 import '../../firebase/AddCarouselButton.dart';
 import '../../firebase/ItemsCarousel.dart';
 import '../ClientListScreen.dart';
@@ -684,7 +681,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                 ),
                                 ElevatedButton.icon(
                                   onPressed: factureProvider
-                                          .lignesFacture.isEmpty
+                                              .lignesFacture.isEmpty ||
+                                          !factureProvider.hasChanges
                                       ? null
                                       : () {
                                           factureProvider.sauvegarderFacture(
@@ -829,7 +827,6 @@ class _FactureDetailState extends State<FactureDetail> {
                                         0,
                                         (previousValue, appro) =>
                                             previousValue + appro.quantite);
-                                final qtt = ligne.quantite;
 
                                 return DataRow(
                                   // color: WidgetStateProperty.resolveWith<Color?>(
@@ -887,8 +884,8 @@ class _FactureDetailState extends State<FactureDetail> {
                                               final nouvelleQuantite = max(
                                                       ligne.quantite - 1, 0)
                                                   .toDouble(); // Exemple de validation
-                                              print(
-                                                  'nouvelleQuantite : $nouvelleQuantite');
+                                              // print(
+                                              //     'nouvelleQuantite : $nouvelleQuantite');
                                               factureProvider.modifierLigne(
                                                   index,
                                                   nouvelleQuantite,
@@ -2654,17 +2651,31 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                 padding: EdgeInsets.all(8.0),
                 itemCount: options.length,
                 itemBuilder: (BuildContext context, int index) {
-                  final Produit option = options.elementAt(index);
+                  final Produit produit = options.elementAt(index);
+                  final stockRestant = produit.approvisionnements.fold<double>(
+                      0,
+                      (previousValue, appro) => previousValue + appro.quantite);
                   return ListTile(
                     leading: CircleAvatar(
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
-                        child: FittedBox(child: Text('${option.id}')),
+                        child: FittedBox(child: Text('${produit.id}')),
                       ),
                     ),
-                    title: Text('${option.qr} ${option.nom}'),
-                    subtitle: Text(
-                        'Prix: ${option.prixVente.toStringAsFixed(2)} DZD'),
+                    title: Text('${produit.qr} ${produit.nom}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            'Prix: ${produit.prixVente.toStringAsFixed(2)} DZD'),
+
+                        ///***************************************  le travaille est ici
+                        ///je dois limiter trailing a < stockrestant****************************************************
+
+                        Text('Stock Restant : ' +
+                            (stockRestant ?? 0).toStringAsFixed(2))
+                      ],
+                    ),
                     // onTap: () {
                     //   onSelected(option);
                     // },
@@ -2672,9 +2683,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                       icon: Icon(Icons.add_shopping_cart),
                       onPressed: () {
                         facturationProvider.ajouterProduitALaFacture(
-                          option,
+                          produit,
                           1,
-                          option.prixVente,
+                          produit.prixVente,
                         );
 
                         // ScaffoldMessenger.of(context).showSnackBar(

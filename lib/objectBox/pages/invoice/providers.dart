@@ -78,26 +78,26 @@ class FacturationProvider with ChangeNotifier {
 
   Future<void> chargerFactures2({bool reset = false}) async {
     if (_isLoadingListFacture || !_hasMoreFactures) {
-      print(
-          "🚫 Appel ignoré : _isLoadingListFacture = $_isLoadingListFacture, _hasMoreFactures = $_hasMoreFactures");
+      // print(
+      //     "🚫 Appel ignoré : _isLoadingListFacture = $_isLoadingListFacture, _hasMoreFactures = $_hasMoreFactures");
       return;
     }
 
     _isLoadingListFacture = true;
     notifyListeners();
-    print("🔄 Début du chargement des factures...");
+    // print("🔄 Début du chargement des factures...");
 
     try {
       if (reset) {
         _currentPageFacture = 0;
         _facturesList.clear(); // Utilisez _facturesList au lieu de facturesList
-        print(
-            "🔄 Réinitialisation de la pagination : _currentPageFacture = $_currentPageFacture");
+        // print(
+        //     "🔄 Réinitialisation de la pagination : _currentPageFacture = $_currentPageFacture");
       }
 
       final offset = _currentPageFacture * _pageSizeFacture;
       final limit = _pageSizeFacture;
-      print("📊 Pagination : offset = $offset, limit = $limit");
+      //   print("📊 Pagination : offset = $offset, limit = $limit");
 
       final query = _objectBox.factureBox
           .query()
@@ -108,18 +108,18 @@ class FacturationProvider with ChangeNotifier {
 
       print("🔍 Exécution de la requête pour récupérer les factures...");
       final newFactures = await query.find();
-      print("✅ ${newFactures.length} factures récupérées");
+      //print("✅ ${newFactures.length} factures récupérées");
 
       // Ajouter les nouvelles factures à _facturesList
       _facturesList.addAll(
           newFactures); // Utilisez _facturesList au lieu de facturesList
-      print(
-          "📥 ${newFactures.length} factures ajoutées à _facturesList : ${_facturesList.length}");
+      // print(
+      //     "📥 ${newFactures.length} factures ajoutées à _facturesList : ${_facturesList.length}");
 
       if (newFactures.length < _pageSizeFacture) {
         _hasMoreFactures = false;
-        print(
-            "⛔ Plus de factures à charger : _hasMoreFactures = $_hasMoreFactures");
+        // print(
+        //     "⛔ Plus de factures à charger : _hasMoreFactures = $_hasMoreFactures");
       } else {
         _currentPageFacture++;
         _hasMoreFactures = true;
@@ -131,8 +131,8 @@ class FacturationProvider with ChangeNotifier {
     } finally {
       _isLoadingListFacture = false;
       notifyListeners();
-      print(
-          "✅ Chargement terminé : _isLoadingListFacture = $_isLoadingListFacture");
+      // print(
+      //     "✅ Chargement terminé : _isLoadingListFacture = $_isLoadingListFacture");
     }
   }
 
@@ -682,7 +682,7 @@ class FacturationProvider with ChangeNotifier {
     }
   }
 
-  Future<void> sauvegarderFacture(
+  Future<void> sauvegarderFacture2(
     BuildContext context,
     CommerceProvider commerceProvider,
   ) async {
@@ -863,6 +863,217 @@ class FacturationProvider with ChangeNotifier {
       rethrow;
     } catch (e, stack) {
       print('Erreur inattendue: $e\n$stack');
+      rethrow;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> sauvegarderFacture(
+    BuildContext context,
+    CommerceProvider commerceProvider,
+  ) async {
+    try {
+      // 1. Initialisation des variables
+      final quantitesToAdjust = <int, double>{};
+      final ancienneQuantite = <int, double>{};
+
+      //   print('🔍 Vérification de l\'ancienne facture en cours...');
+      if (_factureEnCours != null) {
+        for (final ligne in _factureEnCours!.lignesDocument) {
+          final produitId = ligne.produit.target?.id;
+          if (produitId != null) {
+            ancienneQuantite[produitId] =
+                (ancienneQuantite[produitId] ?? 0) + ligne.quantite;
+          }
+        }
+      }
+      print('✅ Anciennes quantités récupérées: $ancienneQuantite');
+
+// 2. Calcul des quantités à ajuster
+      final newQuantites =
+          <int, double>{}; // Nouvelle structure pour les quantités actuelles
+
+      for (final ligne in _lignesFacture) {
+        final produitId = ligne.produit.target?.id;
+        if (produitId != null) {
+          newQuantites[produitId] =
+              (newQuantites[produitId] ?? 0) + ligne.quantite;
+        }
+      }
+
+// Collecter tous les IDs de produits (anciens et nouveaux)
+      Set<int> tousProduits = {};
+      tousProduits.addAll(ancienneQuantite.keys);
+      tousProduits.addAll(newQuantites.keys);
+
+// Calculer les différences pour chaque produit
+      for (final produitId in tousProduits) {
+        final nouvelleQte = newQuantites[produitId] ?? 0;
+        final ancienneQte = ancienneQuantite[produitId] ?? 0;
+        final difference = nouvelleQte - ancienneQte;
+
+        if (difference != 0) {
+          quantitesToAdjust[produitId] = difference;
+        }
+      }
+
+      print('📊 Quantités à ajuster: $quantitesToAdjust');
+
+      // 3. Ajustement du stock
+      // Inside the for loop over quantitesToAdjust.entries:
+      for (final entry in quantitesToAdjust.entries) {
+        final produitId = entry.key;
+        final delta = entry.value;
+        double remaining = delta.abs();
+        print(
+            '🛠️ Ajustement du stock pour Produit ID: $produitId | Delta: $delta');
+
+        final approvisionnements = _objectBox.approvisionnementBox
+            .query(Approvisionnement_.produit.equals(produitId))
+            .order(Approvisionnement_.datePeremption)
+            .build()
+            .find();
+
+        if (approvisionnements.isEmpty) {
+          print('❌ Aucun approvisionnement trouvé pour Produit ID: $produitId');
+          if (delta > 0) {
+            throw StateError('Stock insuffisant pour le produit $produitId');
+          }
+          return; // Sort immédiatement de la fonction
+        }
+
+        for (final appro in approvisionnements) {
+          if (remaining <= 0) break;
+
+          // Corrected calculation for maxToTake based on delta's sign
+          final maxToTake = (delta > 0)
+              ? min(appro.quantite, remaining) // Subtract from stock
+              : remaining; // Add back to stock, no limit from appro.quantite
+
+          if (delta > 0) {
+            appro.quantite = max(0, appro.quantite - maxToTake);
+            remaining -= maxToTake;
+            print(
+                '📉 Réduction | Approvisionnement ID: ${appro.id} | Nouvelle Quantité: ${appro.quantite}');
+          } else {
+            appro.quantite += maxToTake;
+            remaining -= maxToTake;
+            print(
+                '📈 Augmentation | Approvisionnement ID: ${appro.id} | Nouvelle Quantité: ${appro.quantite}');
+          }
+
+          _objectBox.approvisionnementBox.put(appro);
+        }
+
+        // Dans la boucle de traitement des approvisionnements (lors de la vérification du stock insuffisant)
+        if (remaining > 0 && delta > 0) {
+          final produitId = entry.key;
+
+          // Récupérer le nom du produit via son ID
+          final produit = _objectBox.produitBox
+              .get(produitId); // Remplacez par votre requête ObjectBox
+          final produitNom = produit?.nom ?? 'ID: $produitId';
+
+          // Trouver l'index de la première ligne de facture concernée
+          int lineIndex = -1;
+          for (int i = 0; i < _lignesFacture.length; i++) {
+            if (_lignesFacture[i].produit.target?.id == produitId) {
+              lineIndex = i;
+              break;
+            }
+          }
+
+          // Lancer l'erreur avec le nom et l'index
+          throw StateError(
+              'Stock insuffisant pour le produit "$produitNom" à la ligne ${lineIndex + 1} de la facture');
+        }
+      }
+      //  print('✅ Ajustements de stock terminés');
+
+      // 4. Enregistrement de la facture
+      if (_factureEnCours == null) {
+        print('🆕 Création d\'une nouvelle facture...');
+        final nouvelleFacture = Document(
+          type: 'vente',
+          qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
+          impayer: _impayer,
+          derniereModification: DateTime.now(),
+          date: DateTime.now(),
+        )..client.target = _selectedClient;
+
+        nouvelleFacture.lignesDocument.addAll(_lignesFacture);
+        _objectBox.factureBox.put(nouvelleFacture);
+        for (final ligne in _lignesFacture) {
+          ligne.facture.target = nouvelleFacture;
+          _objectBox.ligneFacture.put(ligne);
+        }
+        _facturesList.add(nouvelleFacture);
+      } else {
+        // print('♻️ Mise à jour de la facture existante...');
+        _factureEnCours!
+          ..lignesDocument.clear()
+          ..lignesDocument.addAll(_lignesFacture)
+          ..impayer = _impayer
+          ..client.target = _selectedClient;
+        _objectBox.factureBox.put(_factureEnCours!);
+        for (final ligne in _lignesFacture) {
+          ligne.facture.target = _factureEnCours;
+          _objectBox.ligneFacture.put(ligne);
+        }
+      }
+
+      // 5. Nettoyage et mise à jour
+      // print('🧹 Nettoyage des variables et rafraîchissement des données...');
+      _factureEnCours = null;
+      _factureEnEdition = null;
+      _lignesFacture.clear();
+      _impayer = 0.0;
+      _selectedClient = null;
+
+      chargerFactures2(reset: true);
+      commerceProvider.chargerProduits(reset: true);
+      _chargerFacturesTotal();
+
+      print('🎉 Facture sauvegardée avec succès !');
+      print(
+          '***********************************************************************************');
+
+      _isEditing = false;
+      _hasChanges = false;
+      clearImpayer();
+      notifyListeners();
+    } on StateError catch (e) {
+      print('🚨 Erreur de stock: ${e.message}');
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Column(
+            children: [
+              Icon(
+                Icons.dangerous,
+                color: Colors.red,
+                size: 40,
+              ),
+              Text('Erreur de stock', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+          content: Text(
+            e.message,
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              child: Text('OK'),
+              onPressed: () => Navigator.of(context).pop(),
+            )
+          ],
+        ),
+      );
+      rethrow;
+    } catch (e, stack) {
+      print('❌ Erreur inattendue: $e\n$stack');
       rethrow;
     } finally {
       notifyListeners();
@@ -1135,13 +1346,13 @@ class EditableFieldProvider with ChangeNotifier {
 //   }
   void AlwaystoggleEditable() {
     _isEditable = false;
-    print('isEditable: $_isEditable'); // Ajout de log
+    // print('isEditable: $_isEditable'); // Ajout de log
     notifyListeners();
   }
 
   void toggleEditable() {
     _isEditable = !_isEditable;
-    print('isEditable: $_isEditable'); // Ajout de log
+    //   print('isEditable: $_isEditable'); // Ajout de log
     notifyListeners();
   }
 }
