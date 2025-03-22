@@ -2530,28 +2530,92 @@ class _ProductSearchField1State extends State<ProductSearchField> {
               // Détecter un collage (longueur > ancienne longueur + 1)
               if (newValue.text.length > oldValue.text.length + 1) {
                 isPasted = true;
+                // Future.microtask(() async {
+                //   if (newValue.text.isNotEmpty) {
+                //     final produit = await commerceProvider
+                //         .getProduitByQrFacture(newValue.text);
+                //
+                //     if (produit != null) {
+                //       // Calculer le stock restant
+                //       final stockRestant =
+                //           produit.approvisionnements.fold<double>(
+                //         0,
+                //         (previousValue, appro) =>
+                //             previousValue + appro.quantite,
+                //       );
+                //       // Calculer la quantité déjà ajoutée dans la facture pour ce produit
+                //       final currentQuantity = facturationProvider.lignesFacture
+                //           .where(
+                //               (ligne) => ligne.produit.target?.id == produit.id)
+                //           .fold<double>(
+                //               0, (sum, ligne) => sum + ligne.quantite);
+                //
+                //       print(
+                //           'currentQuantity ${currentQuantity} stockRestant ${stockRestant}');
+                //       if (stockRestant < 0) {
+                //         if (context.mounted) {
+                //           showDialog(
+                //             context: context,
+                //             builder: (context) => AlertDialog(
+                //               title: Text("Limite atteinte"),
+                //               content: Text(
+                //                   "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                //               actions: [
+                //                 TextButton(
+                //                   onPressed: () => Navigator.pop(context),
+                //                   child: Text("OK"),
+                //                 ),
+                //               ],
+                //             ),
+                //           );
+                //         }
+                //       } else {
+                //         // Ajouter le produit à la facture si le stock le permet
+                //         facturationProvider.ajouterProduitALaFacture(
+                //           produit,
+                //           1,
+                //           produit.prixVente,
+                //         );
+                //         // Effacer le champ après ajout
+                //         fieldTextEditingController.clear();
+                //       }
+                //     }
+                //
+                //     // Conserver le focus dans le TextFormField en redemandant le focus
+                //     fieldFocusNode.requestFocus();
+                //
+                //     setState(() {
+                //       isPasted = false;
+                //     });
+                //   }
+                // });
+
+// Par exemple dans une méthode ou dans un widget Stateful
                 Future.microtask(() async {
                   if (newValue.text.isNotEmpty) {
                     final produit = await commerceProvider
                         .getProduitByQrFacture(newValue.text);
 
                     if (produit != null) {
-                      // Calculer le stock restant
+                      // 1. Calculer le stock restant à partir de tous les approvisionnements
                       final stockRestant =
                           produit.approvisionnements.fold<double>(
                         0,
                         (previousValue, appro) =>
                             previousValue + appro.quantite,
                       );
-                      // Calculer la quantité déjà ajoutée dans la facture pour ce produit
+
+                      // 2. Calculer la quantité déjà ajoutée dans la facture pour ce produit
                       final currentQuantity = facturationProvider.lignesFacture
                           .where(
                               (ligne) => ligne.produit.target?.id == produit.id)
                           .fold<double>(
                               0, (sum, ligne) => sum + ligne.quantite);
-                      var reer = stockRestant;
+
                       print(
-                          'currentQuantity ${currentQuantity} stockRestant ${--reer}');
+                          'currentQuantity: $currentQuantity, stockRestant: $stockRestant');
+
+                      // 3. Vérifier la disponibilité du stock
                       if (stockRestant < 0) {
                         if (context.mounted) {
                           showDialog(
@@ -2559,7 +2623,8 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                             builder: (context) => AlertDialog(
                               title: Text("Limite atteinte"),
                               content: Text(
-                                  "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                                "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                              ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
@@ -2570,20 +2635,66 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                           );
                         }
                       } else {
-                        // Ajouter le produit à la facture si le stock le permet
-                        facturationProvider.ajouterProduitALaFacture(
-                          produit,
-                          1,
-                          produit.prixVente,
-                        );
-                        // Effacer le champ après ajout
+                        // 4. Si le produit est déjà présent dans la facture, on souhaite incrémenter sa quantité
+                        if (currentQuantity > 0) {
+                          // On récupère l'identifiant du produit
+                          final produitId = produit.id;
+                          // Récupérer la quantité d'origine présente dans la facture (avant toute modification)
+                          final originalQuantity = facturationProvider
+                              .getOriginalQuantity(produitId);
+                          // Calculer la quantité maximale autorisée (original + stock restant)
+                          final maxAllowed = originalQuantity + stockRestant;
+                          // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
+                          final nouvelleQuantite =
+                              min(currentQuantity + 1, maxAllowed).toDouble();
+                          print(nouvelleQuantite);
+                          print(maxAllowed);
+                          if (nouvelleQuantite > maxAllowed) {
+                            if (context.mounted) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text("Limite atteinte"),
+                                  content: Text(
+                                    "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text("OK"),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                          }
+
+                          // Identifier l'index de la ligne à modifier dans la liste
+                          final index =
+                              facturationProvider.lignesFacture.indexWhere(
+                            (ligne) => ligne.produit.target?.id == produit.id,
+                          );
+                          if (index != -1) {
+                            facturationProvider.modifierLigne(
+                              index,
+                              nouvelleQuantite,
+                              produit.prixVente,
+                            );
+                          }
+                        } else {
+                          // 5. Sinon, ajouter le produit dans la facture avec une quantité de 1
+                          facturationProvider.ajouterProduitALaFacture(
+                            produit,
+                            1,
+                            produit.prixVente,
+                          );
+                        }
+                        // Nettoyer le champ de saisie après ajout/modification
                         fieldTextEditingController.clear();
                       }
                     }
-
-                    // Conserver le focus dans le TextFormField en redemandant le focus
+                    // Redemander le focus sur le TextFormField
                     fieldFocusNode.requestFocus();
-
                     setState(() {
                       isPasted = false;
                     });
@@ -2703,6 +2814,35 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                             'Stock Restant : ${stockRestant.toStringAsFixed(2)}'),
                       ],
                     ),
+                    onTap: stockRestant <= 0
+                        ? null
+                        : () {
+                            facturationProvider.ajouterProduitALaFacture(
+                              produit,
+                              1,
+                              produit.prixVente,
+                            );
+                          },
+//                     trailing: IconButton(
+//                       icon: Icon(
+//                         Icons.add_shopping_cart,
+//                       ),
+//                       onPressed: stockRestant <= 0
+//                           ? null
+//                           : () {
+//                               facturationProvider.ajouterProduitALaFacture(
+//                                 produit,
+//                                 1,
+//                                 produit.prixVente,
+//                               );
+//
+//                               // ScaffoldMessenger.of(context).showSnackBar(
+//                               //   SnackBar(
+//                               //     content: Text('${option.nom} ajouté à la facture'),
+//                               //   ),
+//                               // );
+//                             },
+//                     ),
                   );
                 },
               ),

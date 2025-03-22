@@ -339,10 +339,12 @@ class FacturationProvider with ChangeNotifier {
     final ligneExistanteIndex = _lignesFacture.indexWhere(
       (ligne) => ligne.produit.target?.id == produit.id,
     );
-    if (quantite > 0) {
+    //  print('quantite: $quantite ||| produit.stock: ${produit.stock} ');
+    if (quantite > 0 && produit.stock > quantite) {
       if (ligneExistanteIndex != -1) {
         // Si le produit existe, incrémenter la quantité
         _lignesFacture[ligneExistanteIndex].quantite += quantite;
+        // print('**************** $quantite');
       } else {
         // Sinon, ajouter une nouvelle ligne
         final nouvelleLigne = LigneDocument(
