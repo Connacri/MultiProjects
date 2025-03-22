@@ -2478,20 +2478,29 @@ class ProductSearchField extends StatefulWidget {
 
 class _ProductSearchField1State extends State<ProductSearchField> {
   bool isPasted = false;
-  late FocusNode _focusNode; // Déclarer un FocusNode
+  late FocusNode _focusNode;
+
+  // Ajoutez une variable pour forcer la reconstruction
+  int _autocompleteVersion = 0;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode(); // Initialiser le FocusNode
-    _focusNode.requestFocus(); // Demander le focus au chargement
+    _focusNode = FocusNode();
+    _focusNode.requestFocus();
   }
 
   @override
   void dispose() {
-    _focusNode
-        .dispose(); // Nettoyer le FocusNode lors de la suppression du widget
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  // Méthode pour forcer le rafraîchissement du widget Autocomplete
+  void _refreshAutocomplete() {
+    setState(() {
+      _autocompleteVersion++;
+    });
   }
 
   @override
@@ -2500,11 +2509,12 @@ class _ProductSearchField1State extends State<ProductSearchField> {
     final facturationProvider = Provider.of<FacturationProvider>(context);
 
     return Autocomplete<Produit>(
+      key: ValueKey(_autocompleteVersion),
+      // Forcer la reconstruction ici
       optionsBuilder: (TextEditingValue textEditingValue) async {
         if (textEditingValue.text == '') {
           return const Iterable<Produit>.empty();
         }
-        // Toujours effectuer la recherche pour l'autocomplétion
         return await commerceProvider.rechercherProduits(textEditingValue.text);
       },
       displayStringForOption: (Produit option) => '${option.qr} ${option.nom}',
@@ -2515,34 +2525,65 @@ class _ProductSearchField1State extends State<ProductSearchField> {
         return TextFormField(
           controller: fieldTextEditingController,
           focusNode: fieldFocusNode,
-          // focusNode: _focusNode,
-          // Utiliser notre FocusNode personnalisé
           inputFormatters: [
             TextInputFormatter.withFunction((oldValue, newValue) {
-              // Détecter si c'est un collage en comparant les longueurs
+              // Détecter un collage (longueur > ancienne longueur + 1)
               if (newValue.text.length > oldValue.text.length + 1) {
                 isPasted = true;
-                // Traiter le texte collé de manière asynchrone
                 Future.microtask(() async {
                   if (newValue.text.isNotEmpty) {
                     final produit = await commerceProvider
                         .getProduitByQrFacture(newValue.text);
-                    if (produit != null) {
-                      facturationProvider.ajouterProduitALaFacture(
-                        produit,
-                        1,
-                        produit.prixVente,
-                      );
-                      fieldTextEditingController.clear();
 
-                      // Optionnel : Afficher un message de confirmation
-                      // ScaffoldMessenger.of(context).showSnackBar(
-                      //   SnackBar(
-                      //     content: Text('${produit.nom} ajouté à la facture'),
-                      //     backgroundColor: Colors.green,
-                      //   ),
-                      // );
+                    if (produit != null) {
+                      // Calculer le stock restant
+                      final stockRestant =
+                          produit.approvisionnements.fold<double>(
+                        0,
+                        (previousValue, appro) =>
+                            previousValue + appro.quantite,
+                      );
+                      // Calculer la quantité déjà ajoutée dans la facture pour ce produit
+                      final currentQuantity = facturationProvider.lignesFacture
+                          .where(
+                              (ligne) => ligne.produit.target?.id == produit.id)
+                          .fold<double>(
+                              0, (sum, ligne) => sum + ligne.quantite);
+                      var reer = stockRestant;
+                      print(
+                          'currentQuantity ${currentQuantity} stockRestant ${--reer}');
+                      if (stockRestant < 0) {
+                        if (context.mounted) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text("Limite atteinte"),
+                              content: Text(
+                                  "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text("OK"),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      } else {
+                        // Ajouter le produit à la facture si le stock le permet
+                        facturationProvider.ajouterProduitALaFacture(
+                          produit,
+                          1,
+                          produit.prixVente,
+                        );
+                        // Effacer le champ après ajout
+                        fieldTextEditingController.clear();
+                      }
                     }
+
+                    // Conserver le focus dans le TextFormField en redemandant le focus
+                    fieldFocusNode.requestFocus();
+
                     setState(() {
                       isPasted = false;
                     });
@@ -2555,10 +2596,6 @@ class _ProductSearchField1State extends State<ProductSearchField> {
           decoration: InputDecoration(
             labelText: 'Code Produit (ID ou QR)',
             border: OutlineInputBorder(),
-            // suffixIcon: IconButton(
-            //   icon: Icon(Icons.search),
-            //   onPressed: onFieldSubmitted,
-            // ),
             suffixIcon: (Platform.isIOS || Platform.isAndroid)
                 ? IconButton(
                     icon: Icon(Icons.qr_code_scanner),
@@ -2569,49 +2606,42 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                   )
                 : null,
           ),
-          // La méthode onChanged ne fait plus rien d'automatique
-          onChanged: (value) {
-            // Ne rien faire ici, juste laisser l'autocomplétion fonctionner
-          },
-          // onFieldSubmitted: (value) {
-          //   if (value.isNotEmpty) {
-          //     widget._processBarcode(
-          //       context,
-          //       commerceProvider,
-          //       facturationProvider,
-          //       1,
-          //       facturationProvider.lignesFacture,
-          //     );
-          //     fieldTextEditingController.clear();
-          //   } else {
-          //     ScaffoldMessenger.of(context).showSnackBar(
-          //       SnackBar(
-          //         content:
-          //             Text('Entrée invalide. Veuillez entrer un code valide.'),
-          //       ),
-          //     );
-          //   }
-          // },
+          onChanged: (value) {},
           onFieldSubmitted: (value) async {
             if (value.isNotEmpty) {
-              // Récupérer le produit par QR code
               final produit =
                   await commerceProvider.getProduitByQrFacture(value);
-
               if (produit != null) {
-                // Ajouter le produit à la facture
-                facturationProvider.ajouterProduitALaFacture(
-                    produit, 1, produit.prixVente);
+                final stockRestant = produit.approvisionnements.fold<double>(
+                  0,
+                  (previousValue, appro) => previousValue + appro.quantite,
+                );
+                final currentQuantity = facturationProvider.lignesFacture
+                    .where((ligne) => ligne.produit.target?.id == produit.id)
+                    .fold<double>(0, (sum, ligne) => sum + ligne.quantite);
 
-                // Afficher un message de confirmation
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   SnackBar(
-                //     content: Text('${produit.nom} ajouté à la facture'),
-                //     backgroundColor: Colors.green,
-                //   ),
-                // );
+                if (currentQuantity >= stockRestant) {
+                  if (context.mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text("Limite atteinte"),
+                        content: Text(
+                            "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text("OK"),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                } else {
+                  facturationProvider.ajouterProduitALaFacture(
+                      produit, 1, produit.prixVente);
+                }
               } else {
-                // Aucun produit trouvé
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Aucun produit trouvé pour ce QR code.'),
@@ -2619,14 +2649,13 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                   ),
                 );
               }
-
-              // Vider le champ après l'ajout
               fieldTextEditingController.clear();
-
-              // Rétablir le focus sur le champ
-              _focusNode.requestFocus();
+              // Utilisation d'un callback post-frame pour redemander le focus
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                FocusScope.of(context).requestFocus(fieldFocusNode);
+              });
+              _refreshAutocomplete();
             } else {
-              // Afficher un message d'erreur si le champ est vide
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Veuillez entrer un code valide.'),
@@ -2652,9 +2681,11 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                 itemCount: options.length,
                 itemBuilder: (BuildContext context, int index) {
                   final Produit produit = options.elementAt(index);
+                  // Calculer le stock restant pour chaque produit
                   final stockRestant = produit.approvisionnements.fold<double>(
-                      0,
-                      (previousValue, appro) => previousValue + appro.quantite);
+                    0,
+                    (previousValue, appro) => previousValue + appro.quantite,
+                  );
                   return ListTile(
                     leading: CircleAvatar(
                       child: Padding(
@@ -2668,32 +2699,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                       children: [
                         Text(
                             'Prix: ${produit.prixVente.toStringAsFixed(2)} DZD'),
-
-                        ///***************************************  le travaille est ici
-                        ///je dois limiter trailing a < stockrestant****************************************************
-
-                        Text('Stock Restant : ' +
-                            (stockRestant ?? 0).toStringAsFixed(2))
+                        Text(
+                            'Stock Restant : ${stockRestant.toStringAsFixed(2)}'),
                       ],
-                    ),
-                    // onTap: () {
-                    //   onSelected(option);
-                    // },
-                    trailing: IconButton(
-                      icon: Icon(Icons.add_shopping_cart),
-                      onPressed: () {
-                        facturationProvider.ajouterProduitALaFacture(
-                          produit,
-                          1,
-                          produit.prixVente,
-                        );
-
-                        // ScaffoldMessenger.of(context).showSnackBar(
-                        //   SnackBar(
-                        //     content: Text('${option.nom} ajouté à la facture'),
-                        //   ),
-                        // );
-                      },
                     ),
                   );
                 },
@@ -2716,10 +2724,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
 
   Future<void> scanQRCode(
       commerceProvider, facturationProvider, fieldTextEditingController) async {
-    // Simuler un scan de QR code pour tester
     final code = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (context) => BarcodeScannerWithScanWindow(), //QRViewExample(),
+        builder: (context) => BarcodeScannerWithScanWindow(),
       ),
     );
     final provider = Provider.of<CommerceProvider>(context, listen: false);
@@ -2728,23 +2735,11 @@ class _ProductSearchField1State extends State<ProductSearchField> {
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (ctx) => addProduct()));
     } else {
-      // Récupérer le produit par QR code
       final produit = await commerceProvider.getProduitByQrFacture(code);
-
       if (produit != null) {
-        // Ajouter le produit à la facture
         facturationProvider.ajouterProduitALaFacture(
             produit, 1, produit.prixVente);
-
-        // Afficher un message de confirmation
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text('${produit.nom} ajouté à la facture'),
-        //     backgroundColor: Colors.green,
-        //   ),
-        // );
       } else {
-        // Aucun produit trouvé
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Aucun produit trouvé pour ce QR code.'),
@@ -2752,17 +2747,333 @@ class _ProductSearchField1State extends State<ProductSearchField> {
           ),
         );
       }
-
-      // Vider le champ après l'ajout
       fieldTextEditingController.clear();
-
-      // Rétablir le focus sur le champ
       _focusNode.requestFocus();
+      _refreshAutocomplete();
     }
-    // Rediriger le focus vers le TextFormField après l'ajout
     FocusScope.of(context).requestFocus(_focusNode);
   }
 }
+
+// class _ProductSearchField1State extends State<ProductSearchField> {
+//   bool isPasted = false;
+//   late FocusNode _focusNode; // Déclarer un FocusNode
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _focusNode = FocusNode(); // Initialiser le FocusNode
+//     _focusNode.requestFocus(); // Demander le focus au chargement
+//   }
+//
+//   @override
+//   void dispose() {
+//     _focusNode
+//         .dispose(); // Nettoyer le FocusNode lors de la suppression du widget
+//     super.dispose();
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final commerceProvider = Provider.of<CommerceProvider>(context);
+//     final facturationProvider = Provider.of<FacturationProvider>(context);
+//
+//     return Autocomplete<Produit>(
+//       optionsBuilder: (TextEditingValue textEditingValue) async {
+//         if (textEditingValue.text == '') {
+//           return const Iterable<Produit>.empty();
+//         }
+//         // Toujours effectuer la recherche pour l'autocomplétion
+//         return await commerceProvider.rechercherProduits(textEditingValue.text);
+//       },
+//       displayStringForOption: (Produit option) => '${option.qr} ${option.nom}',
+//       fieldViewBuilder: (BuildContext context,
+//           TextEditingController fieldTextEditingController,
+//           FocusNode fieldFocusNode,
+//           VoidCallback onFieldSubmitted) {
+//         return TextFormField(
+//           controller: fieldTextEditingController,
+//           focusNode: fieldFocusNode,
+//           // focusNode: _focusNode,
+//           // Utiliser notre FocusNode personnalisé
+//           inputFormatters: [
+//             TextInputFormatter.withFunction((oldValue, newValue) {
+//               // Détecter si c'est un collage en comparant les longueurs
+//               if (newValue.text.length > oldValue.text.length + 1) {
+//                 isPasted = true;
+//                 // Traiter le texte collé de manière asynchrone
+//                 Future.microtask(() async {
+//                   if (newValue.text.isNotEmpty) {
+//                     final produit = await commerceProvider
+//                         .getProduitByQrFacture(newValue.text);
+//
+//                     if (produit != null) {
+//                       // Calculer le stock restant
+//                       final stockRestant = produit.approvisionnements
+//                           .fold<double>(
+//                               0,
+//                               (previousValue, appro) =>
+//                                   previousValue + appro.quantite);
+//
+//                       if (stockRestant <= 0) {
+//                         // Afficher une boîte de dialogue d'avertissement
+//                         if (context.mounted) {
+//                           showDialog(
+//                             context: context,
+//                             builder: (context) => AlertDialog(
+//                               title: Text("Stock insuffisant"),
+//                               content: Text(
+//                                   "Le produit '${produit.nom}' est en rupture de stock."),
+//                               actions: [
+//                                 TextButton(
+//                                   onPressed: () => Navigator.pop(context),
+//                                   child: Text("OK"),
+//                                 ),
+//                               ],
+//                             ),
+//                           );
+//                         }
+//                       } else {
+//                         // Ajouter le produit à la facture si le stock est suffisant
+//                         facturationProvider.ajouterProduitALaFacture(
+//                           produit,
+//                           1,
+//                           produit.prixVente,
+//                         );
+//
+//                         // Effacer le champ après ajout
+//                         fieldTextEditingController.clear();
+//                       }
+//                     }
+//
+//                     setState(() {
+//                       isPasted = false;
+//                     });
+//                   }
+//                 });
+//               }
+//               return newValue;
+//             }),
+//           ],
+//           decoration: InputDecoration(
+//             labelText: 'Code Produit (ID ou QR)',
+//             border: OutlineInputBorder(),
+//             // suffixIcon: IconButton(
+//             //   icon: Icon(Icons.search),
+//             //   onPressed: onFieldSubmitted,
+//             // ),
+//             suffixIcon: (Platform.isIOS || Platform.isAndroid)
+//                 ? IconButton(
+//                     icon: Icon(Icons.qr_code_scanner),
+//                     onPressed: () async {
+//                       await scanQRCode(commerceProvider, facturationProvider,
+//                           fieldTextEditingController);
+//                     },
+//                   )
+//                 : null,
+//           ),
+//           // La méthode onChanged ne fait plus rien d'automatique
+//           onChanged: (value) {
+//             // Ne rien faire ici, juste laisser l'autocomplétion fonctionner
+//           },
+//           // onFieldSubmitted: (value) {
+//           //   if (value.isNotEmpty) {
+//           //     widget._processBarcode(
+//           //       context,
+//           //       commerceProvider,
+//           //       facturationProvider,
+//           //       1,
+//           //       facturationProvider.lignesFacture,
+//           //     );
+//           //     fieldTextEditingController.clear();
+//           //   } else {
+//           //     ScaffoldMessenger.of(context).showSnackBar(
+//           //       SnackBar(
+//           //         content:
+//           //             Text('Entrée invalide. Veuillez entrer un code valide.'),
+//           //       ),
+//           //     );
+//           //   }
+//           // },
+//           onFieldSubmitted: (value) async {
+//             if (value.isNotEmpty) {
+//               // Récupérer le produit par QR code
+//               final produit =
+//                   await commerceProvider.getProduitByQrFacture(value);
+//
+//               if (produit != null) {
+//                 // Ajouter le produit à la facture
+//                 facturationProvider.ajouterProduitALaFacture(
+//                     produit, 1, produit.prixVente);
+//
+//                 // Afficher un message de confirmation
+//                 // ScaffoldMessenger.of(context).showSnackBar(
+//                 //   SnackBar(
+//                 //     content: Text('${produit.nom} ajouté à la facture'),
+//                 //     backgroundColor: Colors.green,
+//                 //   ),
+//                 // );
+//               } else {
+//                 // Aucun produit trouvé
+//                 ScaffoldMessenger.of(context).showSnackBar(
+//                   SnackBar(
+//                     content: Text('Aucun produit trouvé pour ce QR code.'),
+//                     backgroundColor: Colors.red,
+//                   ),
+//                 );
+//               }
+//
+//               // Vider le champ après l'ajout
+//               fieldTextEditingController.clear();
+//
+//               // Rétablir le focus sur le champ
+//               _focusNode.requestFocus();
+//             } else {
+//               // Afficher un message d'erreur si le champ est vide
+//               ScaffoldMessenger.of(context).showSnackBar(
+//                 SnackBar(
+//                   content: Text('Veuillez entrer un code valide.'),
+//                   backgroundColor: Colors.red,
+//                 ),
+//               );
+//             }
+//           },
+//         );
+//       },
+//       optionsViewBuilder: (BuildContext context,
+//           AutocompleteOnSelected<Produit> onSelected,
+//           Iterable<Produit> options) {
+//         return Align(
+//           alignment: Alignment.topLeft,
+//           child: Material(
+//             elevation: 4.0,
+//             child: Container(
+//               height: 200.0,
+//               width: 300.0,
+//               child: ListView.builder(
+//                 padding: EdgeInsets.all(8.0),
+//                 itemCount: options.length,
+//                 itemBuilder: (BuildContext context, int index) {
+//                   final Produit produit = options.elementAt(index);
+//
+//                   final stockRestant = produit.approvisionnements.fold<double>(
+//                       0,
+//                       (previousValue, appro) => previousValue + appro.quantite);
+//
+//                   return ListTile(
+//                     leading: CircleAvatar(
+//                       child: Padding(
+//                         padding: const EdgeInsets.all(4.0),
+//                         child: FittedBox(child: Text('${produit.id}')),
+//                       ),
+//                     ),
+//                     title: Text('${produit.qr} ${produit.nom}'),
+//                     subtitle: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Text(
+//                             'Prix: ${produit.prixVente.toStringAsFixed(2)} DZD'),
+//
+//                         ///***************************************  le travaille est ici
+//                         ///je dois limiter trailing a < stockrestant****************************************************
+//
+//                         Text('Stock Restant : ' +
+//                             (stockRestant ?? 0).toStringAsFixed(2)),
+//                         Text('Stock Restant : ' +
+//                             (produit.stock ?? 0).toStringAsFixed(2)),
+//                       ],
+//                     ),
+//                     // onTap: () {
+//                     //   onSelected(option);
+//                     // },
+//                     // trailing: IconButton(
+//                     //   icon: Icon(
+//                     //     Icons.add_shopping_cart,
+//                     //   ),
+//                     //   onPressed: stockRestant <= 0
+//                     //       ? null
+//                     //       : () {
+//                     //           facturationProvider.ajouterProduitALaFacture(
+//                     //             produit,
+//                     //             1,
+//                     //             produit.prixVente,
+//                     //           );
+//                     //
+//                     //           // ScaffoldMessenger.of(context).showSnackBar(
+//                     //           //   SnackBar(
+//                     //           //     content: Text('${option.nom} ajouté à la facture'),
+//                     //           //   ),
+//                     //           // );
+//                     //         },
+//                     // ),
+//                   );
+//                 },
+//               ),
+//             ),
+//           ),
+//         );
+//       },
+//       onSelected: (Produit selection) {
+//         widget._processBarcode(
+//           context,
+//           commerceProvider,
+//           facturationProvider,
+//           1,
+//           facturationProvider.lignesFacture,
+//         );
+//       },
+//     );
+//   }
+//
+//   Future<void> scanQRCode(
+//       commerceProvider, facturationProvider, fieldTextEditingController) async {
+//     // Simuler un scan de QR code pour tester
+//     final code = await Navigator.of(context).push<String>(
+//       MaterialPageRoute(
+//         builder: (context) => BarcodeScannerWithScanWindow(), //QRViewExample(),
+//       ),
+//     );
+//     final provider = Provider.of<CommerceProvider>(context, listen: false);
+//     final produit = await provider.getProduitByQrFacture(code!);
+//     if (produit == null) {
+//       Navigator.of(context)
+//           .push(MaterialPageRoute(builder: (ctx) => addProduct()));
+//     } else {
+//       // Récupérer le produit par QR code
+//       final produit = await commerceProvider.getProduitByQrFacture(code);
+//
+//       if (produit != null) {
+//         // Ajouter le produit à la facture
+//         facturationProvider.ajouterProduitALaFacture(
+//             produit, 1, produit.prixVente);
+//
+//         // Afficher un message de confirmation
+//         // ScaffoldMessenger.of(context).showSnackBar(
+//         //   SnackBar(
+//         //     content: Text('${produit.nom} ajouté à la facture'),
+//         //     backgroundColor: Colors.green,
+//         //   ),
+//         // );
+//       } else {
+//         // Aucun produit trouvé
+//         ScaffoldMessenger.of(context).showSnackBar(
+//           SnackBar(
+//             content: Text('Aucun produit trouvé pour ce QR code.'),
+//             backgroundColor: Colors.red,
+//           ),
+//         );
+//       }
+//
+//       // Vider le champ après l'ajout
+//       fieldTextEditingController.clear();
+//
+//       // Rétablir le focus sur le champ
+//       _focusNode.requestFocus();
+//     }
+//     // Rediriger le focus vers le TextFormField après l'ajout
+//     FocusScope.of(context).requestFocus(_focusNode);
+//   }
+// }
 
 class AddMarqueeDialog extends StatefulWidget {
   @override

@@ -339,20 +339,25 @@ class FacturationProvider with ChangeNotifier {
     final ligneExistanteIndex = _lignesFacture.indexWhere(
       (ligne) => ligne.produit.target?.id == produit.id,
     );
-
-    if (ligneExistanteIndex != -1) {
-      // Si le produit existe, incrémenter la quantité
-      _lignesFacture[ligneExistanteIndex].quantite += quantite;
+    if (quantite > 0) {
+      if (ligneExistanteIndex != -1) {
+        // Si le produit existe, incrémenter la quantité
+        _lignesFacture[ligneExistanteIndex].quantite += quantite;
+      } else {
+        // Sinon, ajouter une nouvelle ligne
+        final nouvelleLigne = LigneDocument(
+          quantite: quantite,
+          prixUnitaire: prixUnitaire,
+          derniereModification: DateTime.now(),
+        );
+        nouvelleLigne.produit.target = produit;
+        _lignesFacture.add(nouvelleLigne);
+      }
     } else {
-      // Sinon, ajouter une nouvelle ligne
-      final nouvelleLigne = LigneDocument(
-        quantite: quantite,
-        prixUnitaire: prixUnitaire,
-        derniereModification: DateTime.now(),
-      );
-      nouvelleLigne.produit.target = produit;
-      _lignesFacture.add(nouvelleLigne);
+      print('quantite <= 0 elle st negatif');
+      return;
     }
+
     _hasChanges = true; // Marquer qu'il y a des modifications
 
     notifyListeners();
@@ -869,7 +874,7 @@ class FacturationProvider with ChangeNotifier {
     }
   }
 
-  Future<void> sauvegarderFacture(
+  Future<void> sauvegarderFacture3(
     BuildContext context,
     CommerceProvider commerceProvider,
   ) async {
@@ -927,7 +932,7 @@ class FacturationProvider with ChangeNotifier {
         final delta = entry.value;
         double remaining = delta.abs();
         print(
-            '🛠️ Ajustement du stock pour Produit ID: $produitId | Delta: $delta');
+            '🛠️ Ajustement du stock pour Produit ID: $produitId | Delta: $delta | remaining: $remaining');
 
         final approvisionnements = _objectBox.approvisionnementBox
             .query(Approvisionnement_.produit.equals(produitId))
@@ -953,6 +958,7 @@ class FacturationProvider with ChangeNotifier {
 
           if (delta > 0) {
             appro.quantite = max(0, appro.quantite - maxToTake);
+            print('appro.quantite ${appro.quantite} | maxToTake $maxToTake');
             remaining -= maxToTake;
             print(
                 '📉 Réduction | Approvisionnement ID: ${appro.id} | Nouvelle Quantité: ${appro.quantite}');
@@ -986,10 +992,10 @@ class FacturationProvider with ChangeNotifier {
 
           // Lancer l'erreur avec le nom et l'index
           throw StateError(
-              'Stock insuffisant pour le produit "$produitNom" à la ligne ${lineIndex + 1} de la facture');
+              'Stock22 insuffisant pour le produit "$produitNom" à la ligne ${lineIndex + 1} de la facture');
         }
       }
-      //  print('✅ Ajustements de stock terminés');
+      print('✅ Ajustements de stock terminés');
 
       // 4. Enregistrement de la facture
       if (_factureEnCours == null) {
@@ -1077,6 +1083,183 @@ class FacturationProvider with ChangeNotifier {
       rethrow;
     } finally {
       notifyListeners();
+    }
+  }
+
+  Future<void> sauvegarderFacture(
+    BuildContext context,
+    CommerceProvider commerceProvider,
+  ) async {
+    try {
+      // 1. Initialisation des variables
+      final quantitesToAdjust = <int, double>{};
+      final ancienneQuantite = <int, double>{};
+
+      if (_factureEnCours != null) {
+        for (final ligne in _factureEnCours!.lignesDocument) {
+          final produitId = ligne.produit.target?.id;
+          if (produitId != null) {
+            ancienneQuantite[produitId] =
+                (ancienneQuantite[produitId] ?? 0) + ligne.quantite;
+          }
+        }
+      }
+
+      final newQuantites = <int, double>{};
+      for (final ligne in _lignesFacture) {
+        final produitId = ligne.produit.target?.id;
+        if (produitId != null) {
+          newQuantites[produitId] =
+              (newQuantites[produitId] ?? 0) + ligne.quantite;
+        }
+      }
+
+      // Collecter tous les IDs de produits (anciens et nouveaux)
+      Set<int> tousProduits = {};
+      tousProduits.addAll(ancienneQuantite.keys);
+      tousProduits.addAll(newQuantites.keys);
+
+      for (final produitId in tousProduits) {
+        final nouvelleQte = newQuantites[produitId] ?? 0;
+        final ancienneQte = ancienneQuantite[produitId] ?? 0;
+        final difference = nouvelleQte - ancienneQte;
+
+        if (difference != 0) {
+          quantitesToAdjust[produitId] = difference;
+        }
+      }
+
+      print('📊 Quantités à ajuster: $quantitesToAdjust');
+
+      // ✅ 2. Vérification du stock avant modification
+      for (final entry in quantitesToAdjust.entries) {
+        final produitId = entry.key;
+        final delta = entry.value;
+        double remaining = delta.abs();
+
+        final approvisionnements = _objectBox.approvisionnementBox
+            .query(Approvisionnement_.produit.equals(produitId))
+            .order(Approvisionnement_.datePeremption)
+            .build()
+            .find();
+
+        double totalDisponible =
+            approvisionnements.fold(0, (sum, appro) => sum + appro.quantite);
+
+        if (delta > 0 && totalDisponible < delta) {
+          // 🔴 Stock insuffisant, afficher une erreur avant toute modification
+          final produit = _objectBox.produitBox.get(produitId);
+          throw StateError(
+              'Stock insuffisant pour le produit "${produit?.nom ?? 'ID: $produitId'}".\nQuantité demandée: $delta,\nDisponible que: $totalDisponible');
+        }
+      }
+
+      // ✅ 3. Mise à jour du stock uniquement si tout est valide
+      for (final entry in quantitesToAdjust.entries) {
+        final produitId = entry.key;
+        final delta = entry.value;
+        double remaining = delta.abs();
+
+        final approvisionnements = _objectBox.approvisionnementBox
+            .query(Approvisionnement_.produit.equals(produitId))
+            .order(Approvisionnement_.datePeremption)
+            .build()
+            .find();
+
+        for (final appro in approvisionnements) {
+          if (remaining <= 0) break;
+
+          final maxToTake =
+              (delta > 0) ? min(appro.quantite, remaining) : remaining;
+
+          if (delta > 0) {
+            appro.quantite -= maxToTake;
+          } else {
+            appro.quantite += maxToTake;
+          }
+
+          remaining -= maxToTake;
+          _objectBox.approvisionnementBox.put(appro);
+        }
+      }
+
+      print('✅ Ajustements de stock terminés');
+
+      // 4. Enregistrement de la facture
+      if (_factureEnCours == null) {
+        final nouvelleFacture = Document(
+          type: 'vente',
+          qrReference: 'REF${DateTime.now().millisecondsSinceEpoch}',
+          impayer: _impayer,
+          derniereModification: DateTime.now(),
+          date: DateTime.now(),
+        )..client.target = _selectedClient;
+
+        nouvelleFacture.lignesDocument.addAll(_lignesFacture);
+        _objectBox.factureBox.put(nouvelleFacture);
+        for (final ligne in _lignesFacture) {
+          ligne.facture.target = nouvelleFacture;
+          _objectBox.ligneFacture.put(ligne);
+        }
+        _facturesList.add(nouvelleFacture);
+      } else {
+        _factureEnCours!
+          ..lignesDocument.clear()
+          ..lignesDocument.addAll(_lignesFacture)
+          ..impayer = _impayer
+          ..client.target = _selectedClient;
+        _objectBox.factureBox.put(_factureEnCours!);
+        for (final ligne in _lignesFacture) {
+          ligne.facture.target = _factureEnCours;
+          _objectBox.ligneFacture.put(ligne);
+        }
+      }
+
+      // 5. Nettoyage et mise à jour
+      _factureEnCours = null;
+      _factureEnEdition = null;
+      _lignesFacture.clear();
+      _impayer = 0.0;
+      _selectedClient = null;
+
+      chargerFactures2(reset: true);
+      commerceProvider.chargerProduits(reset: true);
+      _chargerFacturesTotal();
+
+      print('🎉 Facture sauvegardée avec succès !');
+      _isEditing = false;
+      _hasChanges = false;
+      clearImpayer();
+      notifyListeners();
+    } on StateError catch (e) {
+      print('🚨 Erreur de stock: ${e.message}');
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Column(
+            children: [
+              Icon(
+                Icons.dangerous,
+                color: Colors.red,
+                size: 40,
+              ),
+              SizedBox(height: 10),
+              Text(
+                "Erreur de stock",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: Text(e.message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("OK"),
+            ),
+          ],
+        ),
+      );
     }
   }
 
