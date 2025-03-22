@@ -2649,6 +2649,8 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                               min(currentQuantity + 1, maxAllowed).toDouble();
                           print(nouvelleQuantite);
                           print(maxAllowed);
+
+                          /// ici qand j'atteind le max il s'arret et la dialog ne s'ouvre pas
                           if (nouvelleQuantite > maxAllowed) {
                             if (context.mounted) {
                               showDialog(
