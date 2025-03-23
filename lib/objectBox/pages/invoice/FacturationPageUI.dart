@@ -2591,6 +2591,8 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                 // });
 
 // Par exemple dans une méthode ou dans un widget Stateful
+                /// sa fonctionne impecablement****************************************
+                /// reste a faire la meme chose pour onsubmitted et onTap
                 Future.microtask(() async {
                   if (newValue.text.isNotEmpty) {
                     final produit = await commerceProvider
@@ -2611,19 +2613,26 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                               (ligne) => ligne.produit.target?.id == produit.id)
                           .fold<double>(
                               0, (sum, ligne) => sum + ligne.quantite);
-
+                      final originalQuantity =
+                          facturationProvider.getOriginalQuantity(produit.id);
+                      // Calculer la quantité maximale autorisée (original + stock restant)
+                      final maxAllowed = originalQuantity + stockRestant;
+                      // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
+                      final nouvelleQuantite =
+                          min(currentQuantity + 1, maxAllowed).toDouble();
                       print(
                           'currentQuantity: $currentQuantity, stockRestant: $stockRestant');
 
                       // 3. Vérifier la disponibilité du stock
-                      if (stockRestant < 0) {
+                      if (maxAllowed <= 0) {
                         if (context.mounted) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: Text("Limite atteinte"),
+                              title: Text("Limite atteinte999"),
                               content: Text(
-                                "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                                //"Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au "
+                                "Stock Indisponible.",
                               ),
                               actions: [
                                 TextButton(
@@ -2640,13 +2649,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                           // On récupère l'identifiant du produit
                           final produitId = produit.id;
                           // Récupérer la quantité d'origine présente dans la facture (avant toute modification)
-                          final originalQuantity = facturationProvider
-                              .getOriginalQuantity(produitId);
-                          // Calculer la quantité maximale autorisée (original + stock restant)
-                          final maxAllowed = originalQuantity + stockRestant;
-                          // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
-                          final nouvelleQuantite =
-                              min(currentQuantity + 1, maxAllowed).toDouble();
+
+                          print(originalQuantity);
+                          print(currentQuantity);
                           print(nouvelleQuantite);
                           print(maxAllowed);
 
@@ -2658,7 +2663,7 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                                 builder: (context) => AlertDialog(
                                   title: Text("Limite atteinte"),
                                   content: Text(
-                                    "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                                    "Vous avez déjà ajouté ${currentQuantity + 1.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
                                   ),
                                   actions: [
                                     TextButton(
@@ -2739,8 +2744,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: Text("Limite atteinte"),
-                        content: Text(
-                            "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                        content: Text(stockRestant <= 0
+                            ? "Stock Indisponible"
+                            : "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
@@ -2764,9 +2770,9 @@ class _ProductSearchField1State extends State<ProductSearchField> {
               }
               fieldTextEditingController.clear();
               // Utilisation d'un callback post-frame pour redemander le focus
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                FocusScope.of(context).requestFocus(fieldFocusNode);
-              });
+              // WidgetsBinding.instance.addPostFrameCallback((_) {
+              //   FocusScope.of(context).requestFocus(fieldFocusNode);
+              // });
               _refreshAutocomplete();
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -2819,11 +2825,46 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                     onTap: stockRestant <= 0
                         ? null
                         : () {
-                            facturationProvider.ajouterProduitALaFacture(
-                              produit,
-                              1,
-                              produit.prixVente,
+                            // facturationProvider.ajouterProduitALaFacture(
+                            //   produit,
+                            //   1,
+                            //   produit.prixVente,
+                            // );
+                            final stockRestant =
+                                produit.approvisionnements.fold<double>(
+                              0,
+                              (previousValue, appro) =>
+                                  previousValue + appro.quantite,
                             );
+                            final currentQuantity = facturationProvider
+                                .lignesFacture
+                                .where((ligne) =>
+                                    ligne.produit.target?.id == produit.id)
+                                .fold<double>(
+                                    0, (sum, ligne) => sum + ligne.quantite);
+
+                            if (currentQuantity >= stockRestant) {
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text("Limite atteinte"),
+                                    content: Text(stockRestant <= 0
+                                        ? "Stock Indisponible"
+                                        : "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: Text("OK"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                            } else {
+                              facturationProvider.ajouterProduitALaFacture(
+                                  produit, 1, produit.prixVente);
+                            }
                           },
 //                     trailing: IconButton(
 //                       icon: Icon(
