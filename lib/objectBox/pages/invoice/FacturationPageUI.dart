@@ -2761,9 +2761,11 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                     (previousValue, appro) => previousValue + appro.quantite,
                   );
                   return ListTile(
-                    textColor: stockRestant <= 0 ? Colors.white : null,
-                    tileColor:
-                        stockRestant <= 0 ? Colors.red : Colors.transparent,
+                    mouseCursor:
+                        stockRestant <= 0 ? SystemMouseCursors.forbidden : null,
+                    textColor: stockRestant <= 0 ? Colors.red : null,
+                    // tileColor:
+                    //     stockRestant <= 0 ? Colors.red : Colors.transparent,
                     contentPadding: const EdgeInsets.only(left: 5),
                     trailing: Container(
                       width: 50, // Taille fixe pour un carré
@@ -2772,26 +2774,35 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                           borderRadius: BorderRadius.circular(10),
                           // Coins arrondis
                           child: // Remplacez votre Text(...) existant par :
-                              Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisAlignment: MainAxisAlignment.center,
+                              Row(
                             children: [
-                              // Partie entière
-                              Text(
-                                stockRestant.truncate().toString(),
-                                // Partie entière sans décimales
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 0),
+                                child: Text('DZD'),
                               ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Partie entière
+                                  Text(
+                                    stockRestant.truncate().toString(),
+                                    // Partie entière sans décimales
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400),
+                                  ),
 
-                              // Partie décimale (si nécessaire)
-                              if (stockRestant !=
-                                  stockRestant.truncateToDouble())
-                                Text(
-                                  ".${stockRestant.toStringAsFixed(2).split('.')[1]}",
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.blueGrey),
-                                )
+                                  // Partie décimale (si nécessaire)
+                                  if (stockRestant !=
+                                      stockRestant.truncateToDouble())
+                                    Text(
+                                      ".${stockRestant.toStringAsFixed(2).split('.')[1]}",
+                                      style: TextStyle(
+                                          fontSize: 12, color: Colors.blueGrey),
+                                    )
+                                ],
+                              ),
                             ],
                           )),
                     ),
