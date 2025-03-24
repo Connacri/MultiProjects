@@ -2530,36 +2530,56 @@ class _ProductSearchField1State extends State<ProductSearchField> {
               // Détecter un collage (longueur > ancienne longueur + 1)
               if (newValue.text.length > oldValue.text.length + 1) {
                 isPasted = true;
+                processAddingProduct2Invoice(
+                    newValue.text,
+                    context,
+                    commerceProvider,
+                    facturationProvider,
+                    fieldTextEditingController,
+                    fieldFocusNode,
+                    setState,
+                    isPasted);
                 // Future.microtask(() async {
                 //   if (newValue.text.isNotEmpty) {
                 //     final produit = await commerceProvider
                 //         .getProduitByQrFacture(newValue.text);
                 //
                 //     if (produit != null) {
-                //       // Calculer le stock restant
+                //       // 1. Calculer le stock restant à partir de tous les approvisionnements
                 //       final stockRestant =
                 //           produit.approvisionnements.fold<double>(
                 //         0,
                 //         (previousValue, appro) =>
                 //             previousValue + appro.quantite,
                 //       );
-                //       // Calculer la quantité déjà ajoutée dans la facture pour ce produit
+                //
+                //       // 2. Calculer la quantité déjà ajoutée dans la facture pour ce produit
                 //       final currentQuantity = facturationProvider.lignesFacture
                 //           .where(
                 //               (ligne) => ligne.produit.target?.id == produit.id)
                 //           .fold<double>(
                 //               0, (sum, ligne) => sum + ligne.quantite);
-                //
+                //       final originalQuantity =
+                //           facturationProvider.getOriginalQuantity(produit.id);
+                //       // Calculer la quantité maximale autorisée (original + stock restant)
+                //       final maxAllowed = originalQuantity + stockRestant;
+                //       // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
+                //       final nouvelleQuantite =
+                //           min(currentQuantity + 1, maxAllowed).toDouble();
                 //       print(
-                //           'currentQuantity ${currentQuantity} stockRestant ${stockRestant}');
-                //       if (stockRestant < 0) {
+                //           'currentQuantity: $currentQuantity, stockRestant: $stockRestant');
+                //
+                //       // 3. Vérifier la disponibilité du stock
+                //       if (maxAllowed <= 0) {
                 //         if (context.mounted) {
                 //           showDialog(
                 //             context: context,
                 //             builder: (context) => AlertDialog(
-                //               title: Text("Limite atteinte"),
+                //               title: Text("Limite atteinte999"),
                 //               content: Text(
-                //                   "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+                //                 //"Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au "
+                //                 "Stock Indisponible.",
+                //               ),
                 //               actions: [
                 //                 TextButton(
                 //                   onPressed: () => Navigator.pop(context),
@@ -2570,143 +2590,69 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                 //           );
                 //         }
                 //       } else {
-                //         // Ajouter le produit à la facture si le stock le permet
-                //         facturationProvider.ajouterProduitALaFacture(
-                //           produit,
-                //           1,
-                //           produit.prixVente,
-                //         );
-                //         // Effacer le champ après ajout
+                //         // 4. Si le produit est déjà présent dans la facture, on souhaite incrémenter sa quantité
+                //         if (currentQuantity > 0) {
+                //           // On récupère l'identifiant du produit
+                //           final produitId = produit.id;
+                //           // Récupérer la quantité d'origine présente dans la facture (avant toute modification)
+                //
+                //           print(originalQuantity);
+                //           print(currentQuantity);
+                //           print(nouvelleQuantite);
+                //           print(maxAllowed);
+                //
+                //           /// ici qand j'atteind le max il s'arret et la dialog ne s'ouvre pas
+                //           if (nouvelleQuantite > maxAllowed) {
+                //             if (context.mounted) {
+                //               showDialog(
+                //                 context: context,
+                //                 builder: (context) => AlertDialog(
+                //                   title: Text("Limite atteinte"),
+                //                   content: Text(
+                //                     "Vous avez déjà ajouté ${currentQuantity + 1.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                //                   ),
+                //                   actions: [
+                //                     TextButton(
+                //                       onPressed: () => Navigator.pop(context),
+                //                       child: Text("OK"),
+                //                     ),
+                //                   ],
+                //                 ),
+                //               );
+                //             }
+                //           }
+                //
+                //           // Identifier l'index de la ligne à modifier dans la liste
+                //           final index =
+                //               facturationProvider.lignesFacture.indexWhere(
+                //             (ligne) => ligne.produit.target?.id == produit.id,
+                //           );
+                //           if (index != -1) {
+                //             facturationProvider.modifierLigne(
+                //               index,
+                //               nouvelleQuantite,
+                //               produit.prixVente,
+                //             );
+                //           }
+                //         } else {
+                //           // 5. Sinon, ajouter le produit dans la facture avec une quantité de 1
+                //           facturationProvider.ajouterProduitALaFacture(
+                //             produit,
+                //             1,
+                //             produit.prixVente,
+                //           );
+                //         }
+                //         // Nettoyer le champ de saisie après ajout/modification
                 //         fieldTextEditingController.clear();
                 //       }
                 //     }
-                //
-                //     // Conserver le focus dans le TextFormField en redemandant le focus
+                //     // Redemander le focus sur le TextFormField
                 //     fieldFocusNode.requestFocus();
-                //
                 //     setState(() {
                 //       isPasted = false;
                 //     });
                 //   }
                 // });
-
-// Par exemple dans une méthode ou dans un widget Stateful
-                /// sa fonctionne impecablement****************************************
-                /// reste a faire la meme chose pour onsubmitted et onTap
-                Future.microtask(() async {
-                  if (newValue.text.isNotEmpty) {
-                    final produit = await commerceProvider
-                        .getProduitByQrFacture(newValue.text);
-
-                    if (produit != null) {
-                      // 1. Calculer le stock restant à partir de tous les approvisionnements
-                      final stockRestant =
-                          produit.approvisionnements.fold<double>(
-                        0,
-                        (previousValue, appro) =>
-                            previousValue + appro.quantite,
-                      );
-
-                      // 2. Calculer la quantité déjà ajoutée dans la facture pour ce produit
-                      final currentQuantity = facturationProvider.lignesFacture
-                          .where(
-                              (ligne) => ligne.produit.target?.id == produit.id)
-                          .fold<double>(
-                              0, (sum, ligne) => sum + ligne.quantite);
-                      final originalQuantity =
-                          facturationProvider.getOriginalQuantity(produit.id);
-                      // Calculer la quantité maximale autorisée (original + stock restant)
-                      final maxAllowed = originalQuantity + stockRestant;
-                      // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
-                      final nouvelleQuantite =
-                          min(currentQuantity + 1, maxAllowed).toDouble();
-                      print(
-                          'currentQuantity: $currentQuantity, stockRestant: $stockRestant');
-
-                      // 3. Vérifier la disponibilité du stock
-                      if (maxAllowed <= 0) {
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text("Limite atteinte999"),
-                              content: Text(
-                                //"Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au "
-                                "Stock Indisponible.",
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text("OK"),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                      } else {
-                        // 4. Si le produit est déjà présent dans la facture, on souhaite incrémenter sa quantité
-                        if (currentQuantity > 0) {
-                          // On récupère l'identifiant du produit
-                          final produitId = produit.id;
-                          // Récupérer la quantité d'origine présente dans la facture (avant toute modification)
-
-                          print(originalQuantity);
-                          print(currentQuantity);
-                          print(nouvelleQuantite);
-                          print(maxAllowed);
-
-                          /// ici qand j'atteind le max il s'arret et la dialog ne s'ouvre pas
-                          if (nouvelleQuantite > maxAllowed) {
-                            if (context.mounted) {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text("Limite atteinte"),
-                                  content: Text(
-                                    "Vous avez déjà ajouté ${currentQuantity + 1.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text("OK"),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-                          }
-
-                          // Identifier l'index de la ligne à modifier dans la liste
-                          final index =
-                              facturationProvider.lignesFacture.indexWhere(
-                            (ligne) => ligne.produit.target?.id == produit.id,
-                          );
-                          if (index != -1) {
-                            facturationProvider.modifierLigne(
-                              index,
-                              nouvelleQuantite,
-                              produit.prixVente,
-                            );
-                          }
-                        } else {
-                          // 5. Sinon, ajouter le produit dans la facture avec une quantité de 1
-                          facturationProvider.ajouterProduitALaFacture(
-                            produit,
-                            1,
-                            produit.prixVente,
-                          );
-                        }
-                        // Nettoyer le champ de saisie après ajout/modification
-                        fieldTextEditingController.clear();
-                      }
-                    }
-                    // Redemander le focus sur le TextFormField
-                    fieldFocusNode.requestFocus();
-                    setState(() {
-                      isPasted = false;
-                    });
-                  }
-                });
               }
               return newValue;
             }),
@@ -2726,62 +2672,71 @@ class _ProductSearchField1State extends State<ProductSearchField> {
           ),
           onChanged: (value) {},
           onFieldSubmitted: (value) async {
-            if (value.isNotEmpty) {
-              final produit =
-                  await commerceProvider.getProduitByQrFacture(value);
-              if (produit != null) {
-                final stockRestant = produit.approvisionnements.fold<double>(
-                  0,
-                  (previousValue, appro) => previousValue + appro.quantite,
-                );
-                final currentQuantity = facturationProvider.lignesFacture
-                    .where((ligne) => ligne.produit.target?.id == produit.id)
-                    .fold<double>(0, (sum, ligne) => sum + ligne.quantite);
-
-                if (currentQuantity >= stockRestant) {
-                  if (context.mounted) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text("Limite atteinte"),
-                        content: Text(stockRestant <= 0
-                            ? "Stock Indisponible"
-                            : "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: Text("OK"),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                } else {
-                  facturationProvider.ajouterProduitALaFacture(
-                      produit, 1, produit.prixVente);
-                }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Aucun produit trouvé pour ce QR code.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-              fieldTextEditingController.clear();
-              // Utilisation d'un callback post-frame pour redemander le focus
-              // WidgetsBinding.instance.addPostFrameCallback((_) {
-              //   FocusScope.of(context).requestFocus(fieldFocusNode);
-              // });
-              _refreshAutocomplete();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Veuillez entrer un code valide.'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
+            processAddingProduct2Invoice(
+                value,
+                context,
+                commerceProvider,
+                facturationProvider,
+                fieldTextEditingController,
+                fieldFocusNode,
+                setState,
+                isPasted);
+            // if (value.isNotEmpty) {
+            //   final produit =
+            //       await commerceProvider.getProduitByQrFacture(value);
+            //   if (produit != null) {
+            //     final stockRestant = produit.approvisionnements.fold<double>(
+            //       0,
+            //       (previousValue, appro) => previousValue + appro.quantite,
+            //     );
+            //     final currentQuantity = facturationProvider.lignesFacture
+            //         .where((ligne) => ligne.produit.target?.id == produit.id)
+            //         .fold<double>(0, (sum, ligne) => sum + ligne.quantite);
+            //
+            //     if (currentQuantity >= stockRestant) {
+            //       if (context.mounted) {
+            //         showDialog(
+            //           context: context,
+            //           builder: (context) => AlertDialog(
+            //             title: Text("Limite atteinte"),
+            //             content: Text(stockRestant <= 0
+            //                 ? "Stock Indisponible"
+            //                 : "Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible."),
+            //             actions: [
+            //               TextButton(
+            //                 onPressed: () => Navigator.pop(context),
+            //                 child: Text("OK"),
+            //               ),
+            //             ],
+            //           ),
+            //         );
+            //       }
+            //     } else {
+            //       facturationProvider.ajouterProduitALaFacture(
+            //           produit, 1, produit.prixVente);
+            //     }
+            //   } else {
+            //     ScaffoldMessenger.of(context).showSnackBar(
+            //       SnackBar(
+            //         content: Text('Aucun produit trouvé pour ce QR code.'),
+            //         backgroundColor: Colors.red,
+            //       ),
+            //     );
+            //   }
+            //   fieldTextEditingController.clear();
+            //   // Utilisation d'un callback post-frame pour redemander le focus
+            //   // WidgetsBinding.instance.addPostFrameCallback((_) {
+            //   //   FocusScope.of(context).requestFocus(fieldFocusNode);
+            //   // });
+            //   _refreshAutocomplete();
+            // } else {
+            //   ScaffoldMessenger.of(context).showSnackBar(
+            //     SnackBar(
+            //       content: Text('Veuillez entrer un code valide.'),
+            //       backgroundColor: Colors.red,
+            //     ),
+            //   );
+            // }
           },
         );
       },
@@ -2806,22 +2761,74 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                     (previousValue, appro) => previousValue + appro.quantite,
                   );
                   return ListTile(
-                    leading: CircleAvatar(
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: FittedBox(child: Text('${produit.id}')),
+                    textColor: stockRestant <= 0 ? Colors.white : null,
+                    tileColor:
+                        stockRestant <= 0 ? Colors.red : Colors.transparent,
+                    contentPadding: const EdgeInsets.only(left: 5),
+                    trailing: Container(
+                      width: 50, // Taille fixe pour un carré
+                      height: 50,
+                      child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          // Coins arrondis
+                          child: // Remplacez votre Text(...) existant par :
+                              Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Partie entière
+                              Text(
+                                stockRestant.truncate().toString(),
+                                // Partie entière sans décimales
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+
+                              // Partie décimale (si nécessaire)
+                              if (stockRestant !=
+                                  stockRestant.truncateToDouble())
+                                Text(
+                                  ".${stockRestant.toStringAsFixed(2).split('.')[1]}",
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.blueGrey),
+                                )
+                            ],
+                          )),
+                    ),
+                    title: Text(
+                      '${produit.nom}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                        'Prix: ${produit.prixVente.toStringAsFixed(2)} DZD'),
+                    leading: SizedBox(
+                      width: 50, // Taille fixe pour un carré
+                      height: 50,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        // Coins arrondis
+                        child: produit.image == null || produit.image!.isEmpty
+                            ? Container(
+                                color: Colors.grey[300],
+                                // Couleur de fond si pas d'image
+                                child: Icon(Icons.image_not_supported,
+                                    color: Colors.grey[600]),
+                              )
+                            : Image(
+                                image: produit.image!.startsWith('http')
+                                    ? CachedNetworkImageProvider(
+                                        produit.image!,
+                                        errorListener: (error) =>
+                                            debugPrint("Image error"),
+                                      )
+                                    : FileImage(File(produit.image!))
+                                        as ImageProvider,
+                                fit: BoxFit
+                                    .cover, // Remplir tout l'espace disponible
+                              ),
                       ),
                     ),
-                    title: Text('${produit.qr} ${produit.nom}'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                            'Prix: ${produit.prixVente.toStringAsFixed(2)} DZD'),
-                        Text(
-                            'Stock Restant : ${stockRestant.toStringAsFixed(2)}'),
-                      ],
-                    ),
+
                     onTap: stockRestant <= 0
                         ? null
                         : () {
@@ -2830,20 +2837,33 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                             //   1,
                             //   produit.prixVente,
                             // );
+                            // 1. Calculer le stock restant à partir de tous les approvisionnements
                             final stockRestant =
                                 produit.approvisionnements.fold<double>(
                               0,
                               (previousValue, appro) =>
                                   previousValue + appro.quantite,
                             );
+
+                            // 2. Calculer la quantité déjà ajoutée dans la facture pour ce produit
                             final currentQuantity = facturationProvider
                                 .lignesFacture
                                 .where((ligne) =>
                                     ligne.produit.target?.id == produit.id)
                                 .fold<double>(
                                     0, (sum, ligne) => sum + ligne.quantite);
+                            final originalQuantity = facturationProvider
+                                .getOriginalQuantity(produit.id);
+                            // Calculer la quantité maximale autorisée (original + stock restant)
 
-                            if (currentQuantity >= stockRestant) {
+                            final maxAllowed = originalQuantity + stockRestant;
+                            // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
+                            final nouvelleQuantite =
+                                min(currentQuantity + 1, maxAllowed).toDouble();
+                            print(
+                                'currentQuantity: $currentQuantity, stockRestant: $stockRestant');
+
+                            if (maxAllowed <= 0) {
                               if (context.mounted) {
                                 showDialog(
                                   context: context,
@@ -2862,10 +2882,69 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                                 );
                               }
                             } else {
-                              facturationProvider.ajouterProduitALaFacture(
-                                  produit, 1, produit.prixVente);
+                              // 4. Si le produit est déjà présent dans la facture, on souhaite incrémenter sa quantité
+                              if (currentQuantity > 0) {
+                                // On récupère l'identifiant du produit
+                                final produitId = produit.id;
+                                // Récupérer la quantité d'origine présente dans la facture (avant toute modification)
+
+                                print(originalQuantity);
+                                print(currentQuantity);
+                                print(nouvelleQuantite);
+                                print(maxAllowed);
+
+                                /// ici qand j'atteind le max il s'arret et la dialog ne s'ouvre pas
+                                if (nouvelleQuantite > maxAllowed) {
+                                  if (context.mounted) {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text("Limite atteinte"),
+                                        content: Text(
+                                          "Vous avez déjà ajouté ${currentQuantity + 1.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                            child: Text("OK"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                }
+
+                                // Identifier l'index de la ligne à modifier dans la liste
+                                final index = facturationProvider.lignesFacture
+                                    .indexWhere(
+                                  (ligne) =>
+                                      ligne.produit.target?.id == produit.id,
+                                );
+
+                                if (index != -1) {
+                                  facturationProvider.modifierLigne(
+                                    index,
+                                    nouvelleQuantite,
+                                    produit.prixVente,
+                                  );
+                                }
+                              } else {
+                                // 5. Sinon, ajouter le produit dans la facture avec une quantité de 1
+                                facturationProvider.ajouterProduitALaFacture(
+                                  produit,
+                                  1,
+                                  produit.prixVente,
+                                );
+                              }
                             }
+
+                            setState(() {
+                              isPasted = false;
+                              _refreshAutocomplete();
+                            });
                           },
+
 //                     trailing: IconButton(
 //                       icon: Icon(
 //                         Icons.add_shopping_cart,
@@ -2891,15 +2970,6 @@ class _ProductSearchField1State extends State<ProductSearchField> {
               ),
             ),
           ),
-        );
-      },
-      onSelected: (Produit selection) {
-        widget._processBarcode(
-          context,
-          commerceProvider,
-          facturationProvider,
-          1,
-          facturationProvider.lignesFacture,
         );
       },
     );
@@ -3545,5 +3615,119 @@ class _MarqueeWidgetState extends State<MarqueeWidget> {
         }
       },
     );
+  }
+}
+
+Future<void> processAddingProduct2Invoice(
+  String qrValue,
+  BuildContext context,
+  CommerceProvider commerceProvider,
+  FacturationProvider facturationProvider,
+  TextEditingController fieldTextEditingController,
+  FocusNode fieldFocusNode,
+  Function setState,
+  bool isPasted,
+) async {
+  if (qrValue!.isNotEmpty) {
+    final produit = await commerceProvider.getProduitByQrFacture(qrValue);
+
+    if (produit != null) {
+      // 1. Calculate remaining stock from all supplies
+      final stockRestant = produit.approvisionnements.fold<double>(
+        0,
+        (previousValue, appro) => previousValue + appro.quantite,
+      );
+
+      // 2. Calculate quantity already added to the invoice for this product
+      final currentQuantity = facturationProvider.lignesFacture
+          .where((ligne) => ligne.produit.target?.id == produit.id)
+          .fold<double>(0, (sum, ligne) => sum + ligne.quantite);
+
+      final originalQuantity =
+          facturationProvider.getOriginalQuantity(produit.id);
+
+      // Calculate maximum allowed quantity (original + remaining stock)
+      final maxAllowed = originalQuantity + stockRestant;
+
+      // Calculate new quantity ensuring not to exceed the limit
+      final nouvelleQuantite = min(currentQuantity + 1, maxAllowed).toDouble();
+
+      print('currentQuantity: $currentQuantity, stockRestant: $stockRestant');
+
+      // 3. Check stock availability
+      if (maxAllowed <= 0) {
+        if (context.mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text("Limite atteinte"),
+              content: const Text("Stock Indisponible."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        // 4. If product is already in the invoice, increment its quantity
+        if (currentQuantity > 0) {
+          print(originalQuantity);
+          print(currentQuantity);
+          print(nouvelleQuantite);
+          print(maxAllowed);
+
+          // If we reach max, stop and don't open dialog
+          if (nouvelleQuantite > maxAllowed) {
+            if (context.mounted) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text("Limite atteinte"),
+                  content: Text(
+                    "Vous avez déjà ajouté ${currentQuantity.toInt() + 1} fois '${produit.nom}', ce qui correspond au stock disponible.",
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("OK"),
+                    ),
+                  ],
+                ),
+              );
+            }
+          }
+
+          // Find the index of the line to modify in the list
+          final index = facturationProvider.lignesFacture.indexWhere(
+            (ligne) => ligne.produit.target?.id == produit.id,
+          );
+
+          if (index != -1) {
+            facturationProvider.modifierLigne(
+              index,
+              nouvelleQuantite,
+              produit.prixVente,
+            );
+          }
+        } else {
+          // 5. Otherwise, add the product to the invoice with a quantity of 1
+          facturationProvider.ajouterProduitALaFacture(
+            produit,
+            1,
+            produit.prixVente,
+          );
+        }
+        // Clear the input field after adding/modifying
+        fieldTextEditingController!.clear();
+      }
+    }
+    // Request focus on the TextFormField again
+    fieldFocusNode!.requestFocus();
+    setState(() {
+      isPasted = false;
+    });
   }
 }
