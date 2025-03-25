@@ -2106,17 +2106,34 @@ class TotalDetail extends StatelessWidget {
   }
 }
 
-class EditableField extends StatelessWidget {
-  double initialValue;
+class EditableField extends StatefulWidget {
+  final double initialValue;
   final TextEditingController impayerController;
 
   EditableField({
+    Key? key,
     required this.initialValue,
     required this.impayerController,
-    Key? key,
-  }) : super(key: key) {
-    // Initialiser le contrôleur avec la valeur initiale
-    impayerController.text = initialValue.toStringAsFixed(2);
+  }) : super(key: key);
+
+  @override
+  State<EditableField> createState() => _EditableFieldState();
+}
+
+class _EditableFieldState extends State<EditableField> {
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.requestFocus();
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -2124,39 +2141,37 @@ class EditableField extends StatelessWidget {
     final isEditable = context.watch<EditableFieldProvider>().isEditable;
     final provider = context.read<EditableFieldProvider>();
     final providerF = Provider.of<FacturationProvider>(context, listen: false);
-
+    double totalHT = providerF.calculerTotalHT();
     return Container(
-      padding: EdgeInsets.all(8.0), // Espacement à l'intérieur du cadre
+      padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
-        //      color: Colors.grey, // Couleur de fond
-        borderRadius: BorderRadius.circular(8.0), // Bords arrondis
+        borderRadius: BorderRadius.circular(8.0),
         border: Border.all(
-          color: Colors.grey, // Couleur de la bordure
-          width: 1.0, // Épaisseur de la bordure
+          color: isEditable ? Colors.grey : Colors.transparent,
+          width: 1.0,
         ),
       ),
       child: Row(
         children: [
-          Text('Impayé :'),
+          const Text('Impayé : '),
           Expanded(
             child: isEditable
                 ? TextFormField(
-                    //controller: impayerController,
+                    // controller: impayerController,
+                    // Added missing controller
+                    focusNode: _focusNode,
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
-                      //  labelText: 'Impayé',
                       prefixIcon: Transform.scale(
                         scale: 0.7,
-                        // Ajustez cette valeur pour modifier la taille (1.0 est la taille par défaut)
                         child: IconButton(
                           icon: Icon(isEditable ? Icons.check : Icons.edit),
                           color: isEditable ? Colors.green : Colors.blue,
                           onPressed: () {
                             if (isEditable) {
-                              // Appliquer les modifications et mettre à jour la valeur dans le provider
-                              final nouvelleValeur =
-                                  double.tryParse(impayerController.text) ??
-                                      0.0;
+                              final nouvelleValeur = double.tryParse(
+                                      widget.impayerController.text) ??
+                                  0.0;
                               providerF.modifierImpayer(nouvelleValeur);
                             }
                             provider.toggleEditable();
@@ -2165,77 +2180,65 @@ class EditableField extends StatelessWidget {
                       ),
                       suffixIcon: Transform.scale(
                         scale: 0.7,
-                        // Ajustez cette valeur pour modifier la taille (1.0 est la taille par défaut)
                         child: IconButton(
-                          icon: Icon(Icons.close),
+                          icon: const Icon(Icons.close),
                           color: Colors.red,
                           onPressed: () {
-                            impayerController
-                                .clear(); // Vider le texte du champ
-                            final nouvelleValeur = 0.0;
+                            // widget.impayerController.clear();
+                            // final nouvelleValeur = 0.0;
+                            // providerF.modifierImpayer(nouvelleValeur);
+                            final nouvelleValeur = double.tryParse(
+                                    widget.impayerController.text) ??
+                                0.0;
 
-                            // Mettre à jour l'état du provider avec la nouvelle valeur
-                            providerF.modifierImpayer(nouvelleValeur);
+                            if (nouvelleValeur > totalHT) {
+                              _showErrorDialog(context, totalHT);
+                              widget.impayerController.text =
+                                  totalHT.toStringAsFixed(2);
+                            } else {
+                              providerF.modifierImpayer(nouvelleValeur);
+                              provider.toggleEditable();
+                            }
                           },
                         ),
                       ),
-                      // border: OutlineInputBorder(
-                      //   borderRadius: BorderRadius.circular(8.0),
-                      //   borderSide: BorderSide.none,
-                      // ),
-                      //filled: true,
-                      //contentPadding: EdgeInsets.all(15),
                     ),
-                    // initialValue: providerF.impayer.toStringAsFixed(2),
+
                     keyboardType:
                         TextInputType.numberWithOptions(decimal: true),
                     onChanged: (value) {
-                      final nouvelleImpayer = double.tryParse(value) ?? 0;
-                      impayerController.text = value;
-                      providerF.modifierImpayer(nouvelleImpayer);
-                      print(nouvelleImpayer);
-                      print(impayerController.text);
+                      // final nouvelleImpayer = double.tryParse(value) ?? 0;
+                      // providerF.modifierImpayer(nouvelleImpayer);
+                      final nouvelleImpayer = double.tryParse(value) ?? 0.0;
+
+                      if (nouvelleImpayer > totalHT) {
+                        _showErrorDialog(context, totalHT);
+                        widget.impayerController.text =
+                            totalHT.toStringAsFixed(2);
+                      } else {
+                        providerF.modifierImpayer(nouvelleImpayer);
+                      }
                     },
                   )
-                : TextField(
-                    readOnly: true,
-                    controller: impayerController,
-                    textAlign: TextAlign.end,
-                    decoration: InputDecoration(
-                      suffixIcon: Transform.scale(
-                        scale: 0.7,
-                        // Ajustez cette valeur pour modifier la taille (1.0 est la taille par défaut)
-                        child: IconButton(
-                          icon: Icon(Icons.edit),
-                          color: Colors.blue,
-                          onPressed: () {
-                            final nouvelleValeur =
-                                double.tryParse(impayerController.text) ?? 0.0;
-                            // providerF.modifierImpayer(nouvelleValeur);
-
-                            provider.toggleEditable();
-                          },
+                : Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: Text(
+                          widget.impayerController.text,
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(fontSize: 16),
                         ),
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: false,
-                      contentPadding: EdgeInsets.all(15),
-                    ),
-                    keyboardType:
-                        TextInputType.numberWithOptions(decimal: true),
-                    // Permet les nombres décimaux
-                    onChanged: (value) {
-                      // // Valider et formater la valeur saisie
-                      // final impayer = double.tryParse(value) ?? 0.0;
-                      //
-                      // providerF.setImpayer(
-                      //     impayer); // Mettre à jour l'impayer dans le provider
-                      final nouvelleImpayer = double.tryParse(value) ?? 0;
-                      providerF.modifierImpayer(nouvelleImpayer);
-                    },
+                      IconButton(
+                          icon: const Icon(Icons.edit),
+                          color: Colors.blue,
+                          iconSize: 18,
+                          onPressed: () {
+                            provider.toggleEditable();
+                            _focusNode.requestFocus();
+                          }),
+                    ],
                   ),
           ),
         ],
@@ -2243,6 +2246,161 @@ class EditableField extends StatelessWidget {
     );
   }
 }
+
+/// Affiche une boîte de dialogue d'erreur si la valeur dépasse `totalHT`
+void _showErrorDialog(BuildContext context, totalHT) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Valeur invalide'),
+      content: Text(
+          'Le montant impayé ne peut pas dépasser ${totalHT.toStringAsFixed(2)}'),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+// class EditableField extends StatelessWidget {
+//   double initialValue;
+//   final TextEditingController impayerController;
+//
+//   EditableField({
+//     required this.initialValue,
+//     required this.impayerController,
+//     Key? key,
+//   }) : super(key: key) {
+//     // Initialiser le contrôleur avec la valeur initiale
+//     impayerController.text = initialValue.toStringAsFixed(2);
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final isEditable = context.watch<EditableFieldProvider>().isEditable;
+//     final provider = context.read<EditableFieldProvider>();
+//     final providerF = Provider.of<FacturationProvider>(context, listen: false);
+//
+//     return Container(
+//       padding: EdgeInsets.all(8.0), // Espacement à l'intérieur du cadre
+//       decoration: BoxDecoration(
+//         //      color: Colors.grey, // Couleur de fond
+//         borderRadius: BorderRadius.circular(8.0), // Bords arrondis
+//         border: Border.all(
+//           color: Colors.grey, // Couleur de la bordure
+//           width: 1.0, // Épaisseur de la bordure
+//         ),
+//       ),
+//       child: Row(
+//         children: [
+//           Text('Impayé :'),
+//           Expanded(
+//             child: isEditable
+//                 ? TextFormField(
+//                     //controller: impayerController,
+//                     textAlign: TextAlign.center,
+//                     decoration: InputDecoration(
+//                       //  labelText: 'Impayé',
+//                       prefixIcon: Transform.scale(
+//                         scale: 0.7,
+//                         // Ajustez cette valeur pour modifier la taille (1.0 est la taille par défaut)
+//                         child: IconButton(
+//                           icon: Icon(isEditable ? Icons.check : Icons.edit),
+//                           color: isEditable ? Colors.green : Colors.blue,
+//                           onPressed: () {
+//                             if (isEditable) {
+//                               // Appliquer les modifications et mettre à jour la valeur dans le provider
+//                               final nouvelleValeur =
+//                                   double.tryParse(impayerController.text) ??
+//                                       0.0;
+//                               providerF.modifierImpayer(nouvelleValeur);
+//                             }
+//                             provider.toggleEditable();
+//                           },
+//                         ),
+//                       ),
+//                       suffixIcon: Transform.scale(
+//                         scale: 0.7,
+//                         // Ajustez cette valeur pour modifier la taille (1.0 est la taille par défaut)
+//                         child: IconButton(
+//                           icon: Icon(Icons.close),
+//                           color: Colors.red,
+//                           onPressed: () {
+//                             impayerController
+//                                 .clear(); // Vider le texte du champ
+//                             final nouvelleValeur = 0.0;
+//
+//                             // Mettre à jour l'état du provider avec la nouvelle valeur
+//                             providerF.modifierImpayer(nouvelleValeur);
+//                           },
+//                         ),
+//                       ),
+//                       // border: OutlineInputBorder(
+//                       //   borderRadius: BorderRadius.circular(8.0),
+//                       //   borderSide: BorderSide.none,
+//                       // ),
+//                       //filled: true,
+//                       //contentPadding: EdgeInsets.all(15),
+//                     ),
+//                     // initialValue: providerF.impayer.toStringAsFixed(2),
+//                     keyboardType:
+//                         TextInputType.numberWithOptions(decimal: true),
+//                     onChanged: (value) {
+//                       final nouvelleImpayer = double.tryParse(value) ?? 0;
+//                       impayerController.text = value;
+//                       providerF.modifierImpayer(nouvelleImpayer);
+//                       print(nouvelleImpayer);
+//                       print(impayerController.text);
+//                     },
+//                   )
+//                 : TextField(
+//                     readOnly: true,
+//                     controller: impayerController,
+//                     textAlign: TextAlign.end,
+//                     decoration: InputDecoration(
+//                       suffixIcon: Transform.scale(
+//                         scale: 0.7,
+//                         // Ajustez cette valeur pour modifier la taille (1.0 est la taille par défaut)
+//                         child: IconButton(
+//                           icon: Icon(Icons.edit),
+//                           color: Colors.blue,
+//                           onPressed: () {
+//                             final nouvelleValeur =
+//                                 double.tryParse(impayerController.text) ?? 0.0;
+//                             // providerF.modifierImpayer(nouvelleValeur);
+//
+//                             provider.toggleEditable();
+//                           },
+//                         ),
+//                       ),
+//                       border: OutlineInputBorder(
+//                         borderRadius: BorderRadius.circular(8.0),
+//                         borderSide: BorderSide.none,
+//                       ),
+//                       filled: false,
+//                       contentPadding: EdgeInsets.all(15),
+//                     ),
+//                     keyboardType:
+//                         TextInputType.numberWithOptions(decimal: true),
+//                     // Permet les nombres décimaux
+//                     onChanged: (value) {
+//                       // // Valider et formater la valeur saisie
+//                       // final impayer = double.tryParse(value) ?? 0.0;
+//                       //
+//                       // providerF.setImpayer(
+//                       //     impayer); // Mettre à jour l'impayer dans le provider
+//                       final nouvelleImpayer = double.tryParse(value) ?? 0;
+//                       providerF.modifierImpayer(nouvelleImpayer);
+//                     },
+//                   ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class ProductSearchBar extends StatefulWidget {
   const ProductSearchBar({
