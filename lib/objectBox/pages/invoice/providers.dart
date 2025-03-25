@@ -1224,12 +1224,9 @@ class FacturationProvider with ChangeNotifier {
       _lignesFacture.clear();
       _impayer = 0.0;
       _selectedClient = null;
-
       chargerFactures2(reset: true);
       commerceProvider.chargerProduits(reset: true);
       _chargerFacturesTotal();
-
-      print('🎉 Facture sauvegardée avec succès !');
       _isEditing = false;
       _hasChanges = false;
       clearImpayer();

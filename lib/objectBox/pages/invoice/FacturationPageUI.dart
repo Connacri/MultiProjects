@@ -180,17 +180,270 @@ class _FactureDetailState extends State<FactureDetail> {
       return Scaffold(
         body: SingleChildScrollView(
           scrollDirection: Axis.vertical,
-          child: Column(
-            children: [
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth < 600) {
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 600) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        child: ProductSearchBar(
+                            // commerceProvider: commerceProvider,
+                            // cartProvider: cartProvider,
+                            barcodeBuffer: _barcodeBuffer,
+                            barcodeBufferController: _barcodeBufferController),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => _showAddMarqueeDialog(context),
+                      icon: const Icon(Icons.add),
+                    ),
+                    SizedBox(
+                      height: 8,
+                    ),
+                    StreamBuilder<List<MarqueeData>>(
+                      stream: _marqueeDataStream,
+                      initialData: const [],
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                              child: Text('Erreur: ${snapshot.error}'));
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Icon(Icons.error_outline));
+                        }
+
+                        return MarqueeWidget(
+                            marqueeData: snapshot.data!,
+                            controller: _controller);
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ClientInfos(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: TTC(
+                        totalAmount: factureProvider.calculerTotalHT(),
+                        localImpayer: double.tryParse(
+                                impayerProvider.impayerController.text) ??
+                            0.0,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: factureProvider.factureEnCours == null
+                          ? SizedBox.shrink()
+                          : TotalDetail(
+                              totalAmount: factureProvider.calculerTotalHT(),
+                              localImpayer: double.tryParse(
+                                      impayerProvider.impayerController.text) ??
+                                  0.0,
+                              facture: factureProvider.factureEnCours!),
+                    ),
+                    factureProvider.lignesFacture.isEmpty
+                        ? SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                            child: EditableField(
+                              initialValue: factureProvider.impayer,
+                              impayerController:
+                                  impayerProvider.impayerController,
+                            ),
+                          ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: factureProvider.lignesFacture.isEmpty
+                                ? null
+                                : () {
+                                    factureProvider.sauvegarderFacture(
+                                        context, commerceProvider);
+                                    //   .creerNouvelleFacture(); // Crée une nouvelle facture
+                                    impayerProvider.impayerController.clear();
+                                    _rechercheController.clear();
+                                    context
+                                        .read<EditableFieldProvider>()
+                                        .AlwaystoggleEditable();
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                            ),
+                            label: Text('Nouvelle'),
+                            icon: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              child: Icon(Icons.add),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: factureProvider.lignesFacture.isEmpty
+                                ? null
+                                : () {
+                                    factureProvider.sauvegarderFacture(
+                                        context, commerceProvider);
+                                    impayerProvider.impayerController.clear();
+                                    context
+                                        .read<EditableFieldProvider>()
+                                        .AlwaystoggleEditable();
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                            ),
+                            label: Text('Sauvegarder'),
+                            icon: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              child: Icon(Icons.save),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      itemCount: factureProvider.lignesFacture.length,
+                      itemBuilder: (context, index) {
+                        final ligne = factureProvider.lignesFacture[index];
+                        //final produit = commerceProvider.produits[index];
+                        final produit = commerceProvider.produits.firstWhere(
+                          (p) => p.id == ligne.produit.target?.id,
+                        );
+                        final stockRestant = produit.approvisionnements
+                            .fold<double>(
+                                0,
+                                (previousValue, appro) =>
+                                    previousValue + appro.quantite);
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          child: Slidable(
+                            key: ValueKey(ligne),
+                            // Use a unique key for each Slidable
+                            startActionPane: ActionPane(
+                              motion: const ScrollMotion(),
+                              extentRatio: 0.25,
+                              children: [
+                                SlidableAction(
+                                  onPressed: (context) async {
+                                    bool? confirm = await showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text("Confirmation"),
+                                        content: Text(
+                                            "Voulez-vous vraiment supprimer cette ligne de facture ?"),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            // Annuler
+                                            child: Text("Non"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            // Confirmer
+                                            child: Text("Oui"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirm == true) {
+                                      factureProvider.supprimerLigne(
+                                          index); // Suppression confirmée
+                                    }
+                                  },
+                                  backgroundColor: Color(0xFFFE4A49),
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.delete,
+                                ),
+                              ],
+                            ),
+                            endActionPane: ActionPane(
+                              motion: const ScrollMotion(),
+                              extentRatio: 0.25,
+                              children: [
+                                SlidableAction(
+                                  onPressed: (context) {
+                                    _showEditDialog(
+                                        context,
+                                        ligne,
+                                        factureProvider,
+                                        commerceProvider,
+                                        index);
+                                  },
+                                  backgroundColor: Color(0xFF0392CF),
+                                  foregroundColor: Colors.white,
+                                  icon: Icons.edit,
+                                  label: 'Edit',
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 0),
+                              dense: true,
+                              isThreeLine: true,
+                              leading: CircleAvatar(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: FittedBox(
+                                    child: Text(ligne.quantite.truncate() ==
+                                            ligne.quantite
+                                        ? '${ligne.quantite.truncate()}'
+                                        : '${ligne.quantite.toStringAsFixed(2)}'),
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                ligne.produit.target?.nom ?? 'Produit inconnu',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(
+                                  'PU: ${formatManualPrice(ligne.prixUnitaire)}'),
+                              trailing: FittedBox(
+                                child: Text(
+                                  '${formatManualPrice(ligne.quantite * ligne.prixUnitaire)}',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              } else {
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.2,
                             child: ProductSearchBar(
                                 // commerceProvider: commerceProvider,
                                 // cartProvider: cartProvider,
@@ -198,799 +451,422 @@ class _FactureDetailState extends State<FactureDetail> {
                                 barcodeBufferController:
                                     _barcodeBufferController),
                           ),
+                          IconButton(
+                            onPressed: () => _showAddMarqueeDialog(context),
+                            icon: const Icon(Icons.add),
+                          ),
+                          SizedBox(
+                            width: 15,
+                          ),
+                          Expanded(
+                            child: StreamBuilder<List<MarqueeData>>(
+                              stream: _marqueeDataStream,
+                              initialData: const [],
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                                if (snapshot.hasError) {
+                                  return
+                                      // IconButton(
+                                      //   onPressed: () => _initializeMarqueeData(),
+                                      //   icon: Icon(Icons.refresh));
+                                      Center(
+                                          child: FittedBox(
+                                              child: Text(
+                                                  'Erreur: ${snapshot.error}')));
+                                }
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
+                                  return const Center(
+                                      child: Icon(Icons.error_outline));
+                                }
+                                return MarqueeWidget(
+                                    marqueeData: snapshot.data!,
+                                    controller: _controller);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(flex: 4, child: ClientInfos()),
+                          Expanded(
+                            flex: 5,
+                            child: TTC(
+                              totalAmount: factureProvider.calculerTotalHT(),
+                              localImpayer: double.tryParse(
+                                      impayerProvider.impayerController.text) ??
+                                  0.0,
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: TotalDetail(
+                                totalAmount: factureProvider.calculerTotalHT(),
+                                localImpayer: double.tryParse(impayerProvider
+                                        .impayerController.text) ??
+                                    0.0,
+                                facture: factureProvider.factureEnCours),
+                          ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Container(
+                        height: 60,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Spacer(
+                              flex: 1,
+                            ),
+                            Expanded(
+                              flex: 5,
+                              child: factureProvider.lignesFacture.isEmpty
+                                  ? SizedBox.shrink()
+                                  : EditableField(
+                                      initialValue: factureProvider.impayer,
+                                      impayerController:
+                                          impayerProvider.impayerController,
+                                    ),
+                            ),
+                            Spacer(
+                              flex: 2,
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: factureProvider.lignesFacture.isEmpty
+                                  ? null
+                                  : () {
+                                      //  factureProvider.estEnEdition(facture);
+                                      factureProvider.sauvegarderFacture(
+                                          context, commerceProvider);
+                                      // .creerNouvelleFacture(); // Crée une nouvelle facture
+                                      impayerProvider.impayerController.clear();
+                                      _rechercheController.clear();
+                                      context
+                                          .read<EditableFieldProvider>()
+                                          .AlwaystoggleEditable();
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
+                                ),
+                              ),
+                              label: Text('Nouvelle Facture'),
+                              icon: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 18),
+                                child: Icon(Icons.add),
+                              ),
+                            ),
+                            Spacer(
+                              flex: 2,
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: factureProvider
+                                          .lignesFacture.isEmpty ||
+                                      !factureProvider.hasChanges
+                                  ? null
+                                  : () {
+                                      factureProvider.sauvegarderFacture(
+                                          context, commerceProvider);
+                                      impayerProvider.impayerController.clear();
+                                      context
+                                          .read<EditableFieldProvider>()
+                                          .AlwaystoggleEditable();
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onPrimary,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
+                                ),
+                              ),
+                              label: Text('Sauvegarder la facture'),
+                              icon: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 18),
+                                child: Icon(Icons.save),
+                              ),
+                            ),
+                            Spacer(
+                              flex: 1,
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          onPressed: () => _showAddMarqueeDialog(context),
-                          icon: const Icon(Icons.add),
-                        ),
-                        SizedBox(
-                          height: 8,
-                        ),
-                        StreamBuilder<List<MarqueeData>>(
-                          stream: _marqueeDataStream,
-                          initialData: const [],
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                  child: CircularProgressIndicator());
-                            }
-                            if (snapshot.hasError) {
-                              return Center(
-                                  child: Text('Erreur: ${snapshot.error}'));
-                            }
-                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Center(
-                                  child: Icon(Icons.error_outline));
-                            }
-
-                            return MarqueeWidget(
-                                marqueeData: snapshot.data!,
-                                controller: _controller);
-                          },
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Row(
-                      children: [
-                        SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.2,
-                          child: ProductSearchBar(
-                              // commerceProvider: commerceProvider,
-                              // cartProvider: cartProvider,
-                              barcodeBuffer: _barcodeBuffer,
-                              barcodeBufferController:
-                                  _barcodeBufferController),
-                        ),
-                        IconButton(
-                          onPressed: () => _showAddMarqueeDialog(context),
-                          icon: const Icon(Icons.add),
-                        ),
-                        SizedBox(
-                          width: 15,
-                        ),
-                        // Expanded(
-                        //   child: StreamBuilder<List<MarqueeData>>(
-                        //     stream: _marqueeDataStream,
-                        //     initialData: const [],
-                        //     builder: (context, snapshot) {
-                        //       if (snapshot.connectionState ==
-                        //           ConnectionState.waiting) {
-                        //         return const Center(
-                        //             child: CircularProgressIndicator());
-                        //       }
-                        //       if (snapshot.hasError) {
-                        //         return IconButton(
-                        //             onPressed: () => _initializeMarqueeData(),
-                        //             icon: Icon(Icons.refresh));
-                        //         // Center(
-                        //         //   child: Text('Erreur: ${snapshot.error}'));
-                        //       }
-                        //       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        //         return const Center(
-                        //             child: Text('Aucune annonce disponible.'));
-                        //       }
-                        //
-                        //       final marqueeData = snapshot.data!;
-                        //
-                        //       return Container(
-                        //         height: 50,
-                        //         width: MediaQuery.of(context).size.width * 0.43,
-                        //         padding:
-                        //             const EdgeInsets.symmetric(vertical: 10),
-                        //         color: Colors.yellow,
-                        //         child: Marqueer.builder(
-                        //           pps: 50,
-                        //           autoStart: true,
-                        //           separatorBuilder: (_, index) => const Center(
-                        //             child: Text(
-                        //               '  -  ',
-                        //               style: TextStyle(color: Colors.black),
-                        //             ),
-                        //           ),
-                        //           scrollablePointerIgnoring: true,
-                        //           direction: MarqueerDirection.rtl,
-                        //           controller: _controller,
-                        //           itemCount: marqueeData.length,
-                        //           itemBuilder: (context, index) {
-                        //             final item = marqueeData[index];
-                        //
-                        //             return InkWell(
-                        //               onTap: () => _launchUrl(item.webUrl),
-                        //               child: Row(
-                        //                 children: [
-                        //                   if (item.imageUrl.isNotEmpty)
-                        //                     AspectRatio(
-                        //                       aspectRatio: 1,
-                        //                       child: CachedNetworkImage(
-                        //                           imageUrl: item.imageUrl,
-                        //                           fit: BoxFit.cover,
-                        //                           width: 50,
-                        //                           height: 50),
-                        //                     ),
-                        //                   const SizedBox(width: 8),
-                        //                   Text(
-                        //                     "${item.text} : ${item.prix.toStringAsFixed(2)} DZD",
-                        //                     style: const TextStyle(
-                        //                         fontSize: 18,
-                        //                         color: Colors.black),
-                        //                   ),
-                        //                 ],
-                        //               ),
-                        //             );
-                        //           },
-                        //         ),
-                        //       );
-                        //     },
-                        //   ),
-                        // ),
-                        Expanded(
-                          child: StreamBuilder<List<MarqueeData>>(
-                            stream: _marqueeDataStream,
-                            initialData: const [],
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const Center(
-                                    child: CircularProgressIndicator());
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Container(
+                        width: double.infinity,
+                        child: DataTable(
+                          columnSpacing: 24,
+                          // Couleur de l'entête
+                          // dataRowColor:
+                          //     WidgetStateProperty.resolveWith<Color?>(
+                          //   (Set<WidgetState> states) {
+                          //     // Alternance des couleurs des lignes
+                          //     if (states.contains(WidgetState.selected)) {
+                          //       return Colors.grey.shade300;
+                          //     }
+                          //     return null; // Couleur par défaut
+                          //   },
+                          //),
+                          headingRowColor: WidgetStateProperty.all(
+                            Theme.of(context).colorScheme.primaryContainer,
+                          ),
+                          dataRowColor: WidgetStateProperty.resolveWith<Color?>(
+                            (Set<WidgetState> states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return Theme.of(context)
+                                    .colorScheme
+                                    .secondaryContainer;
                               }
-                              if (snapshot.hasError) {
-                                return
-                                    // IconButton(
-                                    //   onPressed: () => _initializeMarqueeData(),
-                                    //   icon: Icon(Icons.refresh));
-                                    Center(
-                                        child: FittedBox(
-                                            child: Text(
-                                                'Erreur: ${snapshot.error}')));
-                              }
-                              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                                return const Center(
-                                    child: Icon(Icons.error_outline));
-                              }
-                              return MarqueeWidget(
-                                  marqueeData: snapshot.data!,
-                                  controller: _controller);
+                              return null; // Couleur par défaut
                             },
                           ),
-                        ),
-                        // Expanded(
-                        //   child: FutureBuilder<List<MarqueeData>>(
-                        //     future: marqueeDataFuture,
-                        //     builder: (context, snapshot) {
-                        //       if (snapshot.connectionState ==
-                        //           ConnectionState.waiting) {
-                        //         return Center(
-                        //             child: CircularProgressIndicator());
-                        //       } else if (snapshot.hasError) {
-                        //         return Center(
-                        //             child: Text('Erreur : ${snapshot.error}'));
-                        //       } else if (!snapshot.hasData ||
-                        //           snapshot.data!.isEmpty) {
-                        //         return Center(
-                        //             child: Text('Aucune donnée disponible'));
-                        //       } else {
-                        //         return MarqueeWidget(
-                        //             marqueeDataList: snapshot.data!);
-                        //       }
-                        //     },
-                        //   ),
-                        // ),
-                      ],
-                    );
-                  }
-                },
-              ),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth < 600) {
-                    return Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ClientInfos(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: TTC(
-                            totalAmount: factureProvider.calculerTotalHT(),
-                            localImpayer: double.tryParse(
-                                    impayerProvider.impayerController.text) ??
-                                0.0,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: factureProvider.factureEnCours == null
-                              ? SizedBox.shrink()
-                              : TotalDetail(
-                                  totalAmount:
-                                      factureProvider.calculerTotalHT(),
-                                  localImpayer: double.tryParse(impayerProvider
-                                          .impayerController.text) ??
-                                      0.0,
-                                  facture: factureProvider.factureEnCours!),
-                        ),
-                        factureProvider.lignesFacture.isEmpty
-                            ? SizedBox.shrink()
-                            : Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                                child: EditableField(
-                                  initialValue: factureProvider.impayer,
-                                  impayerController:
-                                      impayerProvider.impayerController,
-                                ),
+                          showBottomBorder: true,
+                          columns: [
+                            DataColumn(
+                              label: Container(
+                                //color: Colors.greenAccent,
+                                width: 20, // Largeur fixe pour QR
+                                child: Text('QR', textAlign: TextAlign.start),
                               ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: factureProvider.lignesFacture.isEmpty
-                                    ? null
-                                    : () {
-                                        factureProvider.sauvegarderFacture(
-                                            context, commerceProvider);
-                                        //   .creerNouvelleFacture(); // Crée une nouvelle facture
-                                        impayerProvider.impayerController
-                                            .clear();
-                                        _rechercheController.clear();
-                                        context
-                                            .read<EditableFieldProvider>()
-                                            .AlwaystoggleEditable();
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                  ),
-                                ),
-                                label: Text('Nouvelle'),
-                                icon: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 18),
-                                  child: Icon(Icons.add),
-                                ),
+                            ),
+                            DataColumn(
+                              label: Container(
+                                //   color: Colors.red,
+                                width: 120, // Largeur fixe pour Produit
+                                child:
+                                    Text('Produit', textAlign: TextAlign.start),
                               ),
-                              ElevatedButton.icon(
-                                onPressed: factureProvider.lignesFacture.isEmpty
-                                    ? null
-                                    : () {
-                                        factureProvider.sauvegarderFacture(
-                                            context, commerceProvider);
-                                        impayerProvider.impayerController
-                                            .clear();
-                                        context
-                                            .read<EditableFieldProvider>()
-                                            .AlwaystoggleEditable();
-                                      },
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor:
-                                      Theme.of(context).colorScheme.onPrimary,
-                                  backgroundColor:
-                                      Theme.of(context).colorScheme.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15.0),
-                                  ),
-                                ),
-                                label: Text('Sauvegarder'),
-                                icon: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 18),
-                                  child: Icon(Icons.save),
-                                ),
+                            ),
+                            DataColumn(
+                              label: Container(
+                                //   color: Colors.yellow,
+                                width: 100,
+                                // Largeur fixe pour Quantité
+                                child: Text('Quantité',
+                                    textAlign: TextAlign.center),
                               ),
-                            ],
-                          ),
-                        ),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: factureProvider.lignesFacture.length,
-                          itemBuilder: (context, index) {
-                            final ligne = factureProvider.lignesFacture[index];
-                            //final produit = commerceProvider.produits[index];
+                            ),
+                            DataColumn(
+                              label: Container(
+                                //   color: Colors.blue,
+                                width: 60, // Largeur fixe pour Quantité
+                                child: Text('S.Restant',
+                                    textAlign: TextAlign.center),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Container(
+                                //     color: Colors.red,
+                                width: 50, // Largeur fixe pour Prix
+                                child:
+                                    Text('Prix U', textAlign: TextAlign.start),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Container(
+                                //      color: Colors.brown,
+                                width: 50, // Largeur fixe pour Total
+                                child:
+                                    Text('Total', textAlign: TextAlign.start),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Container(
+                                //      color: Colors.green,
+                                width: 50, // Largeur fixe pour Actions
+                                child: Text('', textAlign: TextAlign.start),
+                              ),
+                            ),
+                          ],
+                          rows: factureProvider.lignesFacture.map((ligne) {
+                            final index =
+                                factureProvider.lignesFacture.indexOf(ligne);
+                            final state =
+                                factureProvider.getLigneEditionState(index);
+                            // final stockRestant = ligne.produit.target
+                            //         ?.calculerStockTotal() ??
+                            //     0.0;
+                            // Calculer le total des quantités des approvisionnements***
+                            // final produit =
+                            //     commerceProvider.produits[index];
                             final produit =
                                 commerceProvider.produits.firstWhere(
                               (p) => p.id == ligne.produit.target?.id,
                             );
+
                             final stockRestant = produit.approvisionnements
                                 .fold<double>(
                                     0,
                                     (previousValue, appro) =>
                                         previousValue + appro.quantite);
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              child: Slidable(
-                                key: ValueKey(ligne),
-                                // Use a unique key for each Slidable
-                                startActionPane: ActionPane(
-                                  motion: const ScrollMotion(),
-                                  dismissible: DismissiblePane(
-                                    onDismissed: () {
-                                      // Remove the item from the list and trigger a rebuild
-                                      factureProvider.supprimerLigne(index);
-                                    },
-                                  ),
-                                  children: [
-                                    SlidableAction(
-                                      onPressed: (context) {
-                                        factureProvider.supprimerLigne(index);
-                                      },
-                                      backgroundColor: Color(0xFFFE4A49),
-                                      foregroundColor: Colors.white,
-                                      icon: Icons.delete,
-                                      label: 'Delete',
-                                    ),
-                                  ],
-                                ),
-                                endActionPane: ActionPane(
-                                  motion: const ScrollMotion(),
-                                  dismissible: DismissiblePane(
-                                    onDismissed: () {
-                                      _showEditDialog(
-                                          context,
-                                          ligne,
-                                          factureProvider,
-                                          commerceProvider,
-                                          index);
-                                    },
-                                  ),
-                                  children: [
-                                    SlidableAction(
-                                      onPressed: (context) {
-                                        _showEditDialog(
-                                            context,
-                                            ligne,
-                                            factureProvider,
-                                            commerceProvider,
-                                            index);
-                                      },
-                                      backgroundColor: Color(0xFF0392CF),
-                                      foregroundColor: Colors.white,
-                                      icon: Icons.save,
-                                      label: 'Edit',
-                                    ),
-                                  ],
-                                ),
-                                child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: FittedBox(
-                                        child: Text(
-                                            '${ligne.quantite.toStringAsFixed(2)}'),
-                                      ),
-                                    ),
-                                  ),
-                                  title: Text(ligne.produit.target?.nom ??
-                                      'Produit inconnu'),
-                                  subtitle: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                          'PU: ${ligne.prixUnitaire.toStringAsFixed(2)}'),
-                                      Spacer(),
-                                      Text(
-                                          'S.Restant: ${stockRestant.toStringAsFixed(2)}'),
-                                      Spacer(),
-                                    ],
-                                  ),
-                                  trailing: Text(
-                                    '${(ligne.quantite * ligne.prixUnitaire).toStringAsFixed(2)}',
-                                    style: TextStyle(fontSize: 20),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(flex: 4, child: ClientInfos()),
-                              Expanded(
-                                flex: 3,
-                                child: TTC(
-                                  totalAmount:
-                                      factureProvider.calculerTotalHT(),
-                                  localImpayer: double.tryParse(impayerProvider
-                                          .impayerController.text) ??
-                                      0.0,
-                                ),
-                              ),
-                              Expanded(
-                                flex: 2,
-                                child: TotalDetail(
-                                    totalAmount:
-                                        factureProvider.calculerTotalHT(),
-                                    localImpayer: double.tryParse(
-                                            impayerProvider
-                                                .impayerController.text) ??
-                                        0.0,
-                                    facture: factureProvider.factureEnCours),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 10,
-                          ),
-                          Container(
-                            height: 60,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Spacer(
-                                  flex: 1,
-                                ),
-                                Expanded(
-                                  flex: 3,
-                                  child: factureProvider.lignesFacture.isEmpty
-                                      ? SizedBox.shrink()
-                                      : EditableField(
-                                          initialValue: factureProvider.impayer,
-                                          impayerController:
-                                              impayerProvider.impayerController,
-                                        ),
-                                ),
-                                Spacer(
-                                  flex: 2,
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: factureProvider
-                                          .lignesFacture.isEmpty
-                                      ? null
-                                      : () {
-                                          //  factureProvider.estEnEdition(facture);
-                                          factureProvider.sauvegarderFacture(
-                                              context, commerceProvider);
-                                          // .creerNouvelleFacture(); // Crée une nouvelle facture
-                                          impayerProvider.impayerController
-                                              .clear();
-                                          _rechercheController.clear();
-                                          context
-                                              .read<EditableFieldProvider>()
-                                              .AlwaystoggleEditable();
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15.0),
-                                    ),
-                                  ),
-                                  label: Text('Nouvelle Facture'),
-                                  icon: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 18),
-                                    child: Icon(Icons.add),
-                                  ),
-                                ),
-                                Spacer(
-                                  flex: 2,
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: factureProvider
-                                              .lignesFacture.isEmpty ||
-                                          !factureProvider.hasChanges
-                                      ? null
-                                      : () {
-                                          factureProvider.sauvegarderFacture(
-                                              context, commerceProvider);
-                                          impayerProvider.impayerController
-                                              .clear();
-                                          context
-                                              .read<EditableFieldProvider>()
-                                              .AlwaystoggleEditable();
-                                        },
-                                  style: ElevatedButton.styleFrom(
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15.0),
-                                    ),
-                                  ),
-                                  label: Text('Sauvegarder la facture'),
-                                  icon: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 18),
-                                    child: Icon(Icons.save),
-                                  ),
-                                ),
-                                Spacer(
-                                  flex: 1,
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Container(
-                            width: double.infinity,
-                            child: DataTable(
-                              columnSpacing: 24,
-                              // Couleur de l'entête
-                              // dataRowColor:
-                              //     WidgetStateProperty.resolveWith<Color?>(
+
+                            return DataRow(
+                              // color: WidgetStateProperty.resolveWith<Color?>(
                               //   (Set<WidgetState> states) {
-                              //     // Alternance des couleurs des lignes
-                              //     if (states.contains(WidgetState.selected)) {
-                              //       return Colors.grey.shade300;
-                              //     }
-                              //     return null; // Couleur par défaut
+                              //     // Alternance des couleurs : grise et transparente
+                              //     return index.isEven
+                              //         ? null
+                              //         : Colors.grey.shade200;
                               //   },
-                              //),
-                              headingRowColor: WidgetStateProperty.all(
-                                Theme.of(context).colorScheme.primaryContainer,
-                              ),
-                              dataRowColor:
-                                  WidgetStateProperty.resolveWith<Color?>(
+                              // ),
+                              color: WidgetStateProperty.resolveWith<Color?>(
                                 (Set<WidgetState> states) {
-                                  if (states.contains(WidgetState.selected)) {
-                                    return Theme.of(context)
-                                        .colorScheme
-                                        .secondaryContainer;
-                                  }
-                                  return null; // Couleur par défaut
+                                  // Alternance des couleurs : surface et surfaceVariant
+                                  return index.isEven
+                                      ? Theme.of(context).colorScheme.surface
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .surfaceContainerHighest;
                                 },
                               ),
-                              showBottomBorder: true,
-                              columns: [
-                                DataColumn(
-                                  label: Container(
-                                    //color: Colors.greenAccent,
-                                    width: 20, // Largeur fixe pour QR
-                                    child:
-                                        Text('QR', textAlign: TextAlign.start),
+                              cells: [
+                                DataCell(SizedBox(
+                                  width: 50,
+                                  child: SelectableText(
+                                      maxLines: 1,
+                                      ligne.produit.target?.qr ?? ' - '),
+                                )),
+                                DataCell(SizedBox(
+                                  width: 150,
+                                  child: InkWell(
+                                    onTap: () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (ctx) => ProduitDetailPage(
+                                                produit:
+                                                    ligne.produit.target!))),
+                                    child: Text(
+                                      ligne.produit.target?.nom ??
+                                          'Produit inconnu',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )),
+                                DataCell(
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.remove),
+                                        onPressed: () {
+                                          // Assurez-vous que la quantité ne devient pas négative
+                                          final nouvelleQuantite = max(
+                                                  ligne.quantite - 1, 0)
+                                              .toDouble(); // Exemple de validation
+                                          // print(
+                                          //     'nouvelleQuantite : $nouvelleQuantite');
+                                          factureProvider.modifierLigne(
+                                              index,
+                                              nouvelleQuantite,
+                                              ligne.prixUnitaire);
+                                          // Décrémente la quantité
+                                          // factureProvider.modifierLigne(
+                                          //   index,
+                                          //   ligne.quantite - 1,
+                                          //   ligne.prixUnitaire,
+                                          // );
+                                        },
+                                      ),
+                                      Text(ligne.quantite.toStringAsFixed(2)),
+                                      IconButton(
+                                        icon: Icon(Icons.add),
+                                        onPressed: () {
+                                          final produitId =
+                                              ligne.produit.target?.id;
+                                          if (produitId == null) return;
+
+                                          // 1. Récupérer les données nécessaires
+
+                                          final originalQuantity =
+                                              factureProvider
+                                                  .getOriginalQuantity(
+                                                      produitId);
+                                          final currentQuantity =
+                                              ligne.quantite;
+
+                                          // 2. Calculer la quantité maximale autorisée
+                                          final maxAllowed =
+                                              originalQuantity + stockRestant;
+
+                                          // 3. Calculer la nouvelle quantité avec la limite
+                                          final nouvelleQuantite = min(
+                                                  currentQuantity + 1,
+                                                  maxAllowed)
+                                              .toDouble();
+
+                                          // 4. Mettre à jour la ligne
+                                          factureProvider.modifierLigne(
+                                            index,
+                                            nouvelleQuantite,
+                                            ligne.prixUnitaire,
+                                          );
+                                        },
+                                      )
+                                    ],
                                   ),
                                 ),
-                                DataColumn(
-                                  label: Container(
-                                    //   color: Colors.red,
-                                    width: 120, // Largeur fixe pour Produit
-                                    child: Text('Produit',
-                                        textAlign: TextAlign.start),
+                                DataCell(Text(
+                                    (stockRestant ?? 0).toStringAsFixed(2))),
+                                DataCell(
+                                  Text(
+                                    formatManualPrice(ligne.prixUnitaire),
+                                    textAlign: TextAlign.end,
                                   ),
+
+                                  //     onTap: () {
+                                  //   provider.toggleEditPu(index);
+                                  // }, showEditIcon: true
                                 ),
-                                DataColumn(
-                                  label: Container(
-                                    //   color: Colors.yellow,
-                                    width: 100,
-                                    // Largeur fixe pour Quantité
-                                    child: Text('Quantité',
-                                        textAlign: TextAlign.center),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Container(
-                                    //   color: Colors.blue,
-                                    width: 60, // Largeur fixe pour Quantité
-                                    child: Text('S.Restant',
-                                        textAlign: TextAlign.center),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Container(
-                                    //     color: Colors.red,
-                                    width: 50, // Largeur fixe pour Prix
-                                    child: Text('Prix U',
-                                        textAlign: TextAlign.start),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Container(
-                                    //      color: Colors.brown,
-                                    width: 50, // Largeur fixe pour Total
-                                    child: Text('Total',
-                                        textAlign: TextAlign.start),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Container(
-                                    //      color: Colors.green,
-                                    width: 50, // Largeur fixe pour Actions
-                                    child: Text('', textAlign: TextAlign.start),
+                                DataCell(Text(
+                                  formatManualPrice(
+                                      ligne.quantite * ligne.prixUnitaire),
+                                  textAlign: TextAlign.end,
+                                )),
+                                DataCell(
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(Icons.delete),
+                                        onPressed: () {
+                                          factureProvider.supprimerLigne(index);
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.edit),
+                                        onPressed: () {
+                                          _showEditDialog(
+                                              context,
+                                              ligne,
+                                              factureProvider,
+                                              commerceProvider,
+                                              index);
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
-                              rows: factureProvider.lignesFacture.map((ligne) {
-                                final index = factureProvider.lignesFacture
-                                    .indexOf(ligne);
-                                final state =
-                                    factureProvider.getLigneEditionState(index);
-                                // final stockRestant = ligne.produit.target
-                                //         ?.calculerStockTotal() ??
-                                //     0.0;
-                                // Calculer le total des quantités des approvisionnements***
-                                // final produit =
-                                //     commerceProvider.produits[index];
-                                final produit =
-                                    commerceProvider.produits.firstWhere(
-                                  (p) => p.id == ligne.produit.target?.id,
-                                );
-
-                                final stockRestant = produit.approvisionnements
-                                    .fold<double>(
-                                        0,
-                                        (previousValue, appro) =>
-                                            previousValue + appro.quantite);
-
-                                return DataRow(
-                                  // color: WidgetStateProperty.resolveWith<Color?>(
-                                  //   (Set<WidgetState> states) {
-                                  //     // Alternance des couleurs : grise et transparente
-                                  //     return index.isEven
-                                  //         ? null
-                                  //         : Colors.grey.shade200;
-                                  //   },
-                                  // ),
-                                  color:
-                                      WidgetStateProperty.resolveWith<Color?>(
-                                    (Set<WidgetState> states) {
-                                      // Alternance des couleurs : surface et surfaceVariant
-                                      return index.isEven
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .surface
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .surfaceContainerHighest;
-                                    },
-                                  ),
-                                  cells: [
-                                    DataCell(SizedBox(
-                                      width: 50,
-                                      child: SelectableText(
-                                          maxLines: 1,
-                                          ligne.produit.target?.qr ?? ' - '),
-                                    )),
-                                    DataCell(SizedBox(
-                                      width: 150,
-                                      child: InkWell(
-                                        onTap: () => Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (ctx) =>
-                                                    ProduitDetailPage(
-                                                        produit: ligne
-                                                            .produit.target!))),
-                                        child: Text(
-                                          ligne.produit.target?.nom ??
-                                              'Produit inconnu',
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    )),
-                                    DataCell(
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(Icons.remove),
-                                            onPressed: () {
-                                              // Assurez-vous que la quantité ne devient pas négative
-                                              final nouvelleQuantite = max(
-                                                      ligne.quantite - 1, 0)
-                                                  .toDouble(); // Exemple de validation
-                                              // print(
-                                              //     'nouvelleQuantite : $nouvelleQuantite');
-                                              factureProvider.modifierLigne(
-                                                  index,
-                                                  nouvelleQuantite,
-                                                  ligne.prixUnitaire);
-                                              // Décrémente la quantité
-                                              // factureProvider.modifierLigne(
-                                              //   index,
-                                              //   ligne.quantite - 1,
-                                              //   ligne.prixUnitaire,
-                                              // );
-                                            },
-                                          ),
-                                          Text(ligne.quantite
-                                              .toStringAsFixed(2)),
-                                          IconButton(
-                                            icon: Icon(Icons.add),
-                                            onPressed: () {
-                                              final produitId =
-                                                  ligne.produit.target?.id;
-                                              if (produitId == null) return;
-
-                                              // 1. Récupérer les données nécessaires
-
-                                              final originalQuantity =
-                                                  factureProvider
-                                                      .getOriginalQuantity(
-                                                          produitId);
-                                              final currentQuantity =
-                                                  ligne.quantite;
-
-                                              // 2. Calculer la quantité maximale autorisée
-                                              final maxAllowed =
-                                                  originalQuantity +
-                                                      stockRestant;
-
-                                              // 3. Calculer la nouvelle quantité avec la limite
-                                              final nouvelleQuantite = min(
-                                                      currentQuantity + 1,
-                                                      maxAllowed)
-                                                  .toDouble();
-
-                                              // 4. Mettre à jour la ligne
-                                              factureProvider.modifierLigne(
-                                                index,
-                                                nouvelleQuantite,
-                                                ligne.prixUnitaire,
-                                              );
-                                            },
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    DataCell(Text((stockRestant ?? 0)
-                                        .toStringAsFixed(2))),
-                                    DataCell(
-                                      Text(
-                                        ligne.prixUnitaire.toStringAsFixed(2),
-                                        textAlign: TextAlign.end,
-                                      ),
-
-                                      //     onTap: () {
-                                      //   provider.toggleEditPu(index);
-                                      // }, showEditIcon: true
-                                    ),
-                                    DataCell(Text(
-                                      (ligne.quantite * ligne.prixUnitaire)
-                                          .toStringAsFixed(2),
-                                      textAlign: TextAlign.end,
-                                    )),
-                                    DataCell(
-                                      Row(
-                                        children: [
-                                          IconButton(
-                                            icon: Icon(Icons.delete),
-                                            onPressed: () {
-                                              factureProvider
-                                                  .supprimerLigne(index);
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: Icon(Icons.edit),
-                                            onPressed: () {
-                                              _showEditDialog(
-                                                  context,
-                                                  ligne,
-                                                  factureProvider,
-                                                  commerceProvider,
-                                                  index);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ],
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    );
-                  }
-                },
-              ),
-            ],
+                    ],
+                  ),
+                );
+              }
+            },
           ),
         ),
       );
@@ -1060,7 +936,7 @@ class _FactureDetailState extends State<FactureDetail> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Prix Minimal: ${prixAchat.toStringAsFixed(2)} DZD',
+                      'Prix Minimal: ${formatManualPrice(prixAchat)} DZD',
                       style: const TextStyle(fontSize: 15),
                     ),
                     Text(
@@ -1927,7 +1803,8 @@ class ClientInfos extends StatelessWidget {
     final client =
         //    provider.factureEnCours?.client.target ??
         provider.selectedClient;
-
+    final clientProvider = Provider.of<ClientProvider>(context);
+    //List<Document> factures = clientProvider.getFacturesForClient(client!);
     return Card(
       margin: const EdgeInsets.all(8),
       child: InkWell(
@@ -1940,63 +1817,75 @@ class ClientInfos extends StatelessWidget {
             ),
           );
         },
+        onLongPress: () async {
+          bool? confirm = await showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text("Confirmation"),
+              content: Text("Voulez-vous vraiment réinitialiser le client ?"),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false), // Annuler
+                  child: Text("Non"),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  // Confirmer
+                  child: Text("Oui"),
+                ),
+              ],
+            ),
+          );
+
+          if (confirm == true) {
+            provider.resetClient(); // Exécuter l'action si confirmé
+          }
+        },
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: client != null
-              ? Stack(
-                  alignment: Alignment.bottomRight,
+              ? Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          height: 130,
-                          width: 130,
-                          padding: const EdgeInsets.all(8.0),
-                          child: Center(
-                            child: SfBarcodeGenerator(
-                              value: client.qr ?? '',
-                              symbology: QRCode(),
-                            ),
-                          ),
+                    Container(
+                      height: 130,
+                      width: 130,
+                      padding: const EdgeInsets.all(8.0),
+                      child: Center(
+                        child: SfBarcodeGenerator(
+                          value: client.qr ?? '',
+                          symbology: QRCode(),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Client: ${client.nom.capitalize()}',
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 18),
-                              ),
-                              Divider(),
-                              Text(
-                                'Téléphone: ${client.phone}',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Adresse: ${client.adresse.capitalize()}',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Qr: ${client.qr}',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              Text(
-                                'Nombre de factures : ${client.factures.length}',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                    IconButton(
-                      color: Colors.black54,
-                      onPressed: () {
-                        provider.resetClient();
-                      },
-                      icon: const Icon(Icons.clear),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Client: ${client.nom.capitalize()}',
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          Divider(),
+                          Text(
+                            'Téléphone: ${client.phone}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Adresse: ${client.adresse.capitalize()}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Qr: ${client.qr}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Nombre de factures : ${clientProvider.getFacturesForClient(client).length}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 )
@@ -2091,144 +1980,124 @@ class TotalDetail extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FittedBox(
-                child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 facture != null ? 'Invoice #${facture?.id}' : '',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.w500),
               ),
-            )),
+            ),
             FittedBox(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Text(
-                  facture != null
-                      ? intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr')
-                          .format(facture!.date)
-                          .capitalize()
-                      : '',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15),
-                ),
+              child: Text(
+                facture != null
+                    ? intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr')
+                        .format(facture!.date)
+                        .capitalize()
+                    : '',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 15),
               ),
             ),
             Divider(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Total:',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total: ',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                      ),
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${formatManualPrice(totalAmount)}',
+                        textAlign: TextAlign.right,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: fontSize,
                         ),
                       ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '${totalAmount.toStringAsFixed(2)} DZD',
-                          textAlign: TextAlign.right,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'TVA(19%): ',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                      ),
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${formatManualPrice(totalAmount * 0.19)}',
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: fontSize,
                         ),
                       ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'TVA(19%):',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Total TTC: ',
+                      textAlign: TextAlign.start,
+                      style: TextStyle(
+                        fontSize: fontSize,
+                      ),
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '${formatManualPrice(totalAmount * 1.19)}',
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: fontSize,
                         ),
                       ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '${(totalAmount * 0.19).toStringAsFixed(2)} DZD',
-                          textAlign: TextAlign.end,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Total TTC:',
-                          textAlign: TextAlign.start,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
-                        ),
-                      ),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '${(totalAmount * 1.19).toStringAsFixed(2)} DZD',
-                          textAlign: TextAlign.end,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: fontSize,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             Spacer(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 0, 16, 0),
-              child: _localImpayer > 0.9
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Impayés',
-                            textAlign: TextAlign.start,
-                            style: TextStyle(
-                              color: Colors.deepOrange,
-                              fontSize: fontSize,
-                            ),
+            _localImpayer > 0.9
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Impayés',
+                        textAlign: TextAlign.start,
+                        style: TextStyle(
+                          color: Colors.deepOrange,
+                          fontSize: fontSize,
+                        ),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          '${formatManualPrice(_localImpayer)}',
+                          textAlign: TextAlign.end,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.deepOrange,
+                            fontSize: fontSize,
                           ),
                         ),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            '${_localImpayer.toStringAsFixed(2)} DZD',
-                            textAlign: TextAlign.end,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.deepOrange,
-                              fontSize: fontSize,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : SizedBox.shrink(),
-            ),
+                      ),
+                    ],
+                  )
+                : SizedBox.shrink(),
             Spacer(),
           ],
         ),
@@ -2539,120 +2408,6 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                     fieldFocusNode,
                     setState,
                     isPasted);
-                // Future.microtask(() async {
-                //   if (newValue.text.isNotEmpty) {
-                //     final produit = await commerceProvider
-                //         .getProduitByQrFacture(newValue.text);
-                //
-                //     if (produit != null) {
-                //       // 1. Calculer le stock restant à partir de tous les approvisionnements
-                //       final stockRestant =
-                //           produit.approvisionnements.fold<double>(
-                //         0,
-                //         (previousValue, appro) =>
-                //             previousValue + appro.quantite,
-                //       );
-                //
-                //       // 2. Calculer la quantité déjà ajoutée dans la facture pour ce produit
-                //       final currentQuantity = facturationProvider.lignesFacture
-                //           .where(
-                //               (ligne) => ligne.produit.target?.id == produit.id)
-                //           .fold<double>(
-                //               0, (sum, ligne) => sum + ligne.quantite);
-                //       final originalQuantity =
-                //           facturationProvider.getOriginalQuantity(produit.id);
-                //       // Calculer la quantité maximale autorisée (original + stock restant)
-                //       final maxAllowed = originalQuantity + stockRestant;
-                //       // Calculer la nouvelle quantité en s'assurant de ne pas dépasser la limite
-                //       final nouvelleQuantite =
-                //           min(currentQuantity + 1, maxAllowed).toDouble();
-                //       print(
-                //           'currentQuantity: $currentQuantity, stockRestant: $stockRestant');
-                //
-                //       // 3. Vérifier la disponibilité du stock
-                //       if (maxAllowed <= 0) {
-                //         if (context.mounted) {
-                //           showDialog(
-                //             context: context,
-                //             builder: (context) => AlertDialog(
-                //               title: Text("Limite atteinte999"),
-                //               content: Text(
-                //                 //"Vous avez déjà ajouté ${currentQuantity.toInt()} fois '${produit.nom}', ce qui correspond au "
-                //                 "Stock Indisponible.",
-                //               ),
-                //               actions: [
-                //                 TextButton(
-                //                   onPressed: () => Navigator.pop(context),
-                //                   child: Text("OK"),
-                //                 ),
-                //               ],
-                //             ),
-                //           );
-                //         }
-                //       } else {
-                //         // 4. Si le produit est déjà présent dans la facture, on souhaite incrémenter sa quantité
-                //         if (currentQuantity > 0) {
-                //           // On récupère l'identifiant du produit
-                //           final produitId = produit.id;
-                //           // Récupérer la quantité d'origine présente dans la facture (avant toute modification)
-                //
-                //           print(originalQuantity);
-                //           print(currentQuantity);
-                //           print(nouvelleQuantite);
-                //           print(maxAllowed);
-                //
-                //           /// ici qand j'atteind le max il s'arret et la dialog ne s'ouvre pas
-                //           if (nouvelleQuantite > maxAllowed) {
-                //             if (context.mounted) {
-                //               showDialog(
-                //                 context: context,
-                //                 builder: (context) => AlertDialog(
-                //                   title: Text("Limite atteinte"),
-                //                   content: Text(
-                //                     "Vous avez déjà ajouté ${currentQuantity + 1.toInt()} fois '${produit.nom}', ce qui correspond au stock disponible.",
-                //                   ),
-                //                   actions: [
-                //                     TextButton(
-                //                       onPressed: () => Navigator.pop(context),
-                //                       child: Text("OK"),
-                //                     ),
-                //                   ],
-                //                 ),
-                //               );
-                //             }
-                //           }
-                //
-                //           // Identifier l'index de la ligne à modifier dans la liste
-                //           final index =
-                //               facturationProvider.lignesFacture.indexWhere(
-                //             (ligne) => ligne.produit.target?.id == produit.id,
-                //           );
-                //           if (index != -1) {
-                //             facturationProvider.modifierLigne(
-                //               index,
-                //               nouvelleQuantite,
-                //               produit.prixVente,
-                //             );
-                //           }
-                //         } else {
-                //           // 5. Sinon, ajouter le produit dans la facture avec une quantité de 1
-                //           facturationProvider.ajouterProduitALaFacture(
-                //             produit,
-                //             1,
-                //             produit.prixVente,
-                //           );
-                //         }
-                //         // Nettoyer le champ de saisie après ajout/modification
-                //         fieldTextEditingController.clear();
-                //       }
-                //     }
-                //     // Redemander le focus sur le TextFormField
-                //     fieldFocusNode.requestFocus();
-                //     setState(() {
-                //       isPasted = false;
-                //     });
-                //   }
-                // });
               }
               return newValue;
             }),
@@ -2771,47 +2526,38 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                       width: 50, // Taille fixe pour un carré
                       height: 50,
                       child: ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          // Coins arrondis
-                          child: // Remplacez votre Text(...) existant par :
-                              Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 0),
-                                child: Text('DZD'),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // Partie entière
-                                  Text(
-                                    stockRestant.truncate().toString(),
-                                    // Partie entière sans décimales
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w400),
-                                  ),
+                        borderRadius: BorderRadius.circular(10),
+                        // Coins arrondis
+                        child: // Remplacez votre Text(...) existant par :
+                            Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Partie entière
+                            Text(
+                              stockRestant.truncate().toString(),
+                              // Partie entière sans décimales
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w400),
+                            ),
 
-                                  // Partie décimale (si nécessaire)
-                                  if (stockRestant !=
-                                      stockRestant.truncateToDouble())
-                                    Text(
-                                      ".${stockRestant.toStringAsFixed(2).split('.')[1]}",
-                                      style: TextStyle(
-                                          fontSize: 12, color: Colors.blueGrey),
-                                    )
-                                ],
-                              ),
-                            ],
-                          )),
+                            // Partie décimale (si nécessaire)
+                            if (stockRestant != stockRestant.truncateToDouble())
+                              Text(
+                                ".${stockRestant.toStringAsFixed(2).split('.')[1]}",
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.blueGrey),
+                              )
+                          ],
+                        ),
+                      ),
                     ),
                     title: Text(
                       '${produit.nom}',
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
-                        'Prix: ${produit.prixVente.toStringAsFixed(2)} DZD'),
+                        'Prix: ${formatManualPrice(produit.prixVente)} DZD'),
                     leading: SizedBox(
                       width: 50, // Taille fixe pour un carré
                       height: 50,
@@ -2955,27 +2701,6 @@ class _ProductSearchField1State extends State<ProductSearchField> {
                               _refreshAutocomplete();
                             });
                           },
-
-//                     trailing: IconButton(
-//                       icon: Icon(
-//                         Icons.add_shopping_cart,
-//                       ),
-//                       onPressed: stockRestant <= 0
-//                           ? null
-//                           : () {
-//                               facturationProvider.ajouterProduitALaFacture(
-//                                 produit,
-//                                 1,
-//                                 produit.prixVente,
-//                               );
-//
-//                               // ScaffoldMessenger.of(context).showSnackBar(
-//                               //   SnackBar(
-//                               //     content: Text('${option.nom} ajouté à la facture'),
-//                               //   ),
-//                               // );
-//                             },
-//                     ),
                   );
                 },
               ),
@@ -2987,35 +2712,43 @@ class _ProductSearchField1State extends State<ProductSearchField> {
   }
 
   Future<void> scanQRCode(
-      commerceProvider, facturationProvider, fieldTextEditingController) async {
+      CommerceProvider commerceProvider,
+      FacturationProvider facturationProvider,
+      TextEditingController fieldTextEditingController) async {
     final code = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (context) => BarcodeScannerWithScanWindow(),
       ),
     );
-    final provider = Provider.of<CommerceProvider>(context, listen: false);
-    final produit = await provider.getProduitByQrFacture(code!);
-    if (produit == null) {
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (ctx) => addProduct()));
-    } else {
-      final produit = await commerceProvider.getProduitByQrFacture(code);
-      if (produit != null) {
-        facturationProvider.ajouterProduitALaFacture(
-            produit, 1, produit.prixVente);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Aucun produit trouvé pour ce QR code.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      fieldTextEditingController.clear();
-      _focusNode.requestFocus();
-      _refreshAutocomplete();
+
+    // Vérification si le code est null ou vide
+    if (code == null || code.isEmpty) {
+      return;
     }
-    FocusScope.of(context).requestFocus(_focusNode);
+
+    // Recherche du produit via le QR code
+    final produit = await commerceProvider.getProduitByQrFacture(code);
+
+    if (produit == null) {
+      // Produit introuvable, rediriger vers l'ajout de produit
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (ctx) => addProduct()),
+      );
+    } else {
+      // Produit trouvé, l'ajouter à la facture
+      facturationProvider.ajouterProduitALaFacture(
+        produit,
+        1,
+        produit.prixVente,
+      );
+    }
+
+    // Nettoyage du champ de texte et focus
+    fieldTextEditingController.clear();
+    _focusNode.requestFocus();
+
+    // Rafraîchir l'autocomplétion (si nécessaire)
+    _refreshAutocomplete();
   }
 }
 
@@ -3741,4 +3474,10 @@ Future<void> processAddingProduct2Invoice(
       isPasted = false;
     });
   }
+}
+
+String formatManualPrice(double price) {
+  return price.toStringAsFixed(2).replaceAllMapped(
+          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match[1]} ') +
+      ' DA';
 }
