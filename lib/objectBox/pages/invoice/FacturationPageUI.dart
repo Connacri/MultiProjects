@@ -1139,12 +1139,12 @@ class _FactureListState extends State<FactureList> {
           // print("🔄 _hasMoreFactures : ${factureProvider.hasMoreFactures}");
 
           return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Expanded(
                 flex: 3,
                 child: CarouselBanner(),
               ),
-              // Expanded(flex: 4, child: YouTubeVideoApp()),
               Expanded(
                   child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1194,7 +1194,40 @@ class _FactureListState extends State<FactureList> {
                   ),
                 ],
               )),
-
+              Flexible(
+                child: // Remplacez l'ancien Text par :
+                    Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                            text:
+                                'HT: ${factureProvider.totalHT.toStringAsFixed(2)}  |  '),
+                        TextSpan(
+                            text:
+                                'TVA: ${factureProvider.totalTVA.toStringAsFixed(2)}  |  '),
+                        TextSpan(
+                          text:
+                              'Impayés: ${factureProvider.totalImpayer.toStringAsFixed(2)}\n',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        TextSpan(
+                            text:
+                                'Total TTC: ${factureProvider.totalMontant.toStringAsFixed(2)} DZD  |  '),
+                        TextSpan(
+                          text:
+                              'Bénéfice: ${intl.NumberFormat.currency(locale: 'fr_FR', symbol: 'DZD').format(factureProvider.totalBenefice)}\n',
+                          style: TextStyle(color: Colors.green),
+                        ),
+                      ],
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    textAlign: TextAlign.start,
+                  ),
+                ),
+              ),
               factureProvider.facturesList.isEmpty
                   ? Expanded(
                       flex: 8,
@@ -1334,6 +1367,8 @@ class _FactureListState extends State<FactureList> {
                                               color: Colors.white70),
                                     ),
                                     title: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           facture.qrReference,
@@ -2184,21 +2219,24 @@ class _EditableFieldState extends State<EditableField> {
                           icon: const Icon(Icons.close),
                           color: Colors.red,
                           onPressed: () {
-                            // widget.impayerController.clear();
-                            // final nouvelleValeur = 0.0;
-                            // providerF.modifierImpayer(nouvelleValeur);
-                            final nouvelleValeur = double.tryParse(
-                                    widget.impayerController.text) ??
-                                0.0;
+                            widget.impayerController
+                                .clear(); // Vider le texte du champ
+                            final nouvelleValeur = 0.0;
 
-                            if (nouvelleValeur > totalHT) {
-                              _showErrorDialog(context, totalHT);
-                              widget.impayerController.text =
-                                  totalHT.toStringAsFixed(2);
-                            } else {
-                              providerF.modifierImpayer(nouvelleValeur);
-                              provider.toggleEditable();
-                            }
+                            // Mettre à jour l'état du provider avec la nouvelle valeur
+                            providerF.modifierImpayer(nouvelleValeur);
+                            // final nouvelleValeur = double.tryParse(
+                            //         widget.impayerController.text) ??
+                            //     0.0;
+                            //
+                            // if (nouvelleValeur > totalHT) {
+                            //   _showErrorDialog(context, totalHT);
+                            //   widget.impayerController.text =
+                            //       totalHT.toStringAsFixed(2);
+                            // } else {
+                            //   providerF.modifierImpayer(nouvelleValeur);
+                            //   provider.toggleEditable();
+                            // }
                           },
                         ),
                       ),
@@ -2252,9 +2290,33 @@ void _showErrorDialog(BuildContext context, totalHT) {
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Valeur invalide'),
-      content: Text(
-          'Le montant impayé ne peut pas dépasser ${totalHT.toStringAsFixed(2)}'),
+      title: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 100),
+          const SizedBox(height: 8),
+          const Text(
+            'Valeur invalide',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: FittedBox(
+              child: Text('Le montant impayé ne peut pas dépasser'),
+            ),
+          ),
+          Expanded(
+            child: FittedBox(
+              child: Text('${totalHT.toStringAsFixed(2)}'),
+            ),
+          ),
+        ],
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),

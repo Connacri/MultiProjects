@@ -145,6 +145,60 @@ class FacturationProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Calcul du total HT (hors taxes)
+  double get totalHT => facturesList.fold(0, (sumFacture, facture) {
+        return sumFacture +
+            facture.lignesDocument.fold(0, (sumLigne, ligne) {
+              final produit = ligne.produit.target;
+              final tvaRate = produit?.tax ?? 0.19; // TVA par défaut à 20%
+              final ht = (ligne.prixUnitaire * ligne.quantite) / (1 + tvaRate);
+              return sumLigne + ht;
+            });
+      });
+
+  // Calcul du total TVA
+  double get totalTVA => totalMontant - totalHT;
+
+  // Calcul du montant total des factures affichées
+  double get totalMontant =>
+      facturesList.fold(0, (sum, facture) => sum + facture.montantTotal);
+
+  // Calcul du bénéfice total (ajustez selon votre logique métier)
+  double get totalBenefice => facturesList.fold(0, (sum, facture) {
+        // Calcul du coût total de la facture
+        double coutFacture = facture.lignesDocument.fold(0, (sumLigne, ligne) {
+          // Calcul du prix d'achat moyen
+          final produit = ligne.produit.target;
+          if (produit == null || produit.approvisionnements.isEmpty)
+            return sumLigne;
+
+          final prixAchatMoyen = produit.approvisionnements
+                  .map((a) => a.prixAchat ?? 0)
+                  .reduce((a, b) => a + b) /
+              produit.approvisionnements.length;
+
+          return sumLigne + (prixAchatMoyen * ligne.quantite);
+        });
+
+        return sum + (facture.montantTotal - coutFacture);
+      });
+
+  // Calcul des impayés totaux
+  double get totalImpayer =>
+      facturesList.fold(0, (sum, facture) => sum + (facture.impayer ?? 0));
+
+// Dans votre provider
+  void chargerFacturesDuJour() {
+    final now = DateTime.now();
+    _facturesList = _totalfactures.where((f) {
+      final dateFacture = DateTime.parse(f.date.toString());
+      return dateFacture.day == now.day &&
+          dateFacture.month == now.month &&
+          dateFacture.year == now.year;
+    }).toList();
+    notifyListeners();
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////
   // Future<void> chargerFactures({bool reset = true}) async {
   //   if (_isLoadingListFacture || !_hasMoreFactures) return;
