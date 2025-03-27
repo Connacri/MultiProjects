@@ -219,7 +219,7 @@ class HeroLayoutCard extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(18.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -231,10 +231,10 @@ class HeroLayoutCard extends StatelessWidget {
                 softWrap: false,
                 style: Theme.of(context)
                     .textTheme
-                    .headlineLarge
+                    .headlineSmall
                     ?.copyWith(color: Colors.white),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 5),
               Text(
                 carouselData.prix.toStringAsFixed(2),
                 overflow: TextOverflow.clip,
@@ -251,7 +251,7 @@ class HeroLayoutCard extends StatelessWidget {
                 softWrap: false,
                 style: Theme.of(context)
                     .textTheme
-                    .bodySmall
+                    .labelSmall
                     ?.copyWith(color: Colors.white),
               )
             ],

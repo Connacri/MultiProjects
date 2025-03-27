@@ -905,8 +905,10 @@ class _FactureDetailState extends State<FactureDetail> {
 
     double stockRestantVIrtuel = produit.approvisionnements.fold<double>(
         0, (previousValue, appro) => previousValue + appro.quantite);
+
     double stockRestantReel = produit.approvisionnements.fold<double>(
         0, (previousValue, appro) => previousValue + appro.quantite);
+
     // Fonction pour mettre à jour dynamiquement le stock
     void updateStockRestant(String value) {
       final quantite = double.tryParse(value) ?? 0.0;
@@ -915,12 +917,6 @@ class _FactureDetailState extends State<FactureDetail> {
           ligne
               .quantite - // Réajuster l'ancienne quantité pour éviter un double comptage
           quantite;
-    }
-
-    void StockRestantReel(String value) {
-      stockRestantReel = produit.approvisionnements.fold<double>(
-              0, (previousValue, appro) => previousValue + appro.quantite) +
-          ligne.quantite;
     }
 
     showDialog(
@@ -1142,98 +1138,150 @@ class _FactureListState extends State<FactureList> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Expanded(
-                flex: 3,
+                flex: 5,
                 child: CarouselBanner(),
               ),
               Expanded(
+                  flex: 2,
                   child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(
-                        onPressed: () =>
-                            Navigator.of(context).push(MaterialPageRoute(
-                              builder: (ctx) => CarouselForm(),
-                            )),
-                        child: Text('Ajouter Carousel')),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                        '${factureProvider.totalfactures.length} Factures'),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () {
-                      // Afficher une boîte de dialogue de confirmation
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text('Confirmer la suppression'),
-                          content: Text(
-                              'Voulez-vous vraiment supprimer cette facture?'),
-                          actions: [
-                            TextButton(
-                              child: Text('Annuler'),
-                              onPressed: () => Navigator.of(context).pop(),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton(
+                            onPressed: () =>
+                                Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (ctx) => CarouselForm(),
+                                )),
+                            child: Text('Ajouter Carousel')),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                            '${factureProvider.totalfactures.length} Factures'),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          // Afficher une boîte de dialogue de confirmation
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text('Confirmer la suppression'),
+                              content: Text(
+                                  'Voulez-vous vraiment supprimer cette facture?'),
+                              actions: [
+                                TextButton(
+                                  child: Text('Annuler'),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                                TextButton(
+                                  child: Text('Supprimer'),
+                                  onPressed: () {
+                                    // Appeler votre fonction de suppression
+                                    factureProvider.supprimerToutesFactures(
+                                        commerceProvider);
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              child: Text('Supprimer'),
-                              onPressed: () {
-                                // Appeler votre fonction de suppression
-                                factureProvider
-                                    .supprimerToutesFactures(commerceProvider);
-                                Navigator.of(context).pop();
-                              },
-                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  )),
+              // Flexible(
+              //   child: // Remplacez l'ancien Text par :
+              //       Padding(
+              //     padding:
+              //         const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              //     child: Text.rich(
+              //       TextSpan(
+              //         children: [
+              //           TextSpan(
+              //               text:
+              //                   'HT: ${factureProvider.totalHT.toStringAsFixed(2)}  |  '),
+              //           TextSpan(
+              //               text:
+              //                   'TVA: ${factureProvider.totalTVA.toStringAsFixed(2)}  |  '),
+              //           TextSpan(
+              //             text:
+              //                 'Impayés: ${factureProvider.totalImpayer.toStringAsFixed(2)}\n',
+              //             style: TextStyle(color: Colors.red),
+              //           ),
+              //           TextSpan(
+              //               text:
+              //                   'Total TTC: ${factureProvider.totalMontant.toStringAsFixed(2)} DZD  |  '),
+              //           TextSpan(
+              //             text:
+              //                 'Bénéfice: ${intl.NumberFormat.currency(locale: 'fr_FR', symbol: 'DZD').format(factureProvider.totalBenefice)}\n',
+              //             style: TextStyle(color: Colors.green),
+              //           ),
+              //         ],
+              //         style: TextStyle(fontSize: 14),
+              //       ),
+              //       textAlign: TextAlign.start,
+              //     ),
+              //   ),
+              // ),
+              Flexible(
+                flex: 6,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _buildInfoCard(null, 'HT', factureProvider.totalHT,
+                                Colors.white70, Icons.attach_money),
+                            _buildInfoCard(
+                                'https://picsum.photos/200/300?random=5',
+                                'Bénéfice',
+                                factureProvider.totalBenefice,
+                                Colors.white70,
+                                Icons.monetization_on),
+                            _buildInfoCard(
+                                'https://picsum.photos/200/300?random=3',
+                                'Impayés',
+                                factureProvider.totalImpayer,
+                                Colors.white70,
+                                Icons.warning),
                           ],
                         ),
-                      );
-                    },
-                  ),
-                ],
-              )),
-              Flexible(
-                child: // Remplacez l'ancien Text par :
-                    Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                            text:
-                                'HT: ${factureProvider.totalHT.toStringAsFixed(2)}  |  '),
-                        TextSpan(
-                            text:
-                                'TVA: ${factureProvider.totalTVA.toStringAsFixed(2)}  |  '),
-                        TextSpan(
-                          text:
-                              'Impayés: ${factureProvider.totalImpayer.toStringAsFixed(2)}\n',
-                          style: TextStyle(color: Colors.red),
+                      ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            _buildInfoCard(
+                                'https://picsum.photos/200/300?random=2',
+                                'TVA',
+                                factureProvider.totalTVA,
+                                Colors.white70,
+                                Icons.percent),
+                            _buildInfoCard(
+                                'https://picsum.photos/200/300?random=4',
+                                'Total TTC',
+                                factureProvider.totalMontant,
+                                Colors.white70,
+                                Icons.calculate),
+                          ],
                         ),
-                        TextSpan(
-                            text:
-                                'Total TTC: ${factureProvider.totalMontant.toStringAsFixed(2)} DZD  |  '),
-                        TextSpan(
-                          text:
-                              'Bénéfice: ${intl.NumberFormat.currency(locale: 'fr_FR', symbol: 'DZD').format(factureProvider.totalBenefice)}\n',
-                          style: TextStyle(color: Colors.green),
-                        ),
-                      ],
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    textAlign: TextAlign.start,
+                      ),
+                    ],
                   ),
                 ),
               ),
+
               factureProvider.facturesList.isEmpty
                   ? Expanded(
-                      flex: 8,
+                      flex: 10,
                       child: Center(child: Text("Aucune facture disponible.")))
                   : Expanded(
-                      flex: 8,
+                      flex: 10,
                       child: ListView.builder(
                         controller: _scrollController,
                         itemCount: factureProvider.facturesList.length,
@@ -1489,6 +1537,88 @@ class _FactureListState extends State<FactureList> {
   }
 }
 
+Widget _buildInfoCard(
+    String? imageUrl, String label, double value, Color color, IconData icon) {
+  return Expanded(
+    child: Container(
+      margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      child: Stack(
+        children: [
+          // Image en arrière-plan avec dégradé blanc
+          imageUrl != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.network(
+                    imageUrl,
+                    height: 100,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Container(
+                    color: Colors.green,
+                    height: 100,
+                    width: double.infinity,
+                  ),
+                ),
+          // Dégradé blanc en bas
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Colors.black87.withOpacity(0.9)],
+                ),
+              ),
+            ),
+          ),
+          // Contenu avec icône et texte
+          Positioned(
+            bottom: 10,
+            left: 10,
+            right: 10,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      icon,
+                      color: color,
+                    ),
+                    FittedBox(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white70),
+                      ),
+                    ),
+                  ],
+                ),
+                FittedBox(
+                  child: Text(
+                    intl.NumberFormat.currency(locale: 'fr_FR', symbol: 'DZD')
+                        .format(value),
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: color),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 // class _FactureListState extends State<FactureList> {
 //   final FacturationProvider _factureProvider = FacturationProvider();
 //
