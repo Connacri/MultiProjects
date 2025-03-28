@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Compte à Rebours Détaillé</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.14/lottie.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(5px);
+            max-width: 600px;
+            width: 100%;
+        }
+        #lottie-animation {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 20px;
+        }
+        #countdown {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .countdown-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+            flex-grow: 1;
+            aspect-ratio: 1 / 1;
+            min-width: 0;
+        }
+        .countdown-item h2 {
+            font-size: 2.5rem;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+        .countdown-item p {
+            font-size: 1rem;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .payment-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .payment-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            transition: transform 0.3s ease;
+        }
+        .payment-icon:hover {
+            transform: scale(1.1);
+        }
+        .payment-icon svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+        .download-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .download-icon:hover {
+            transform: scale(1.1);
+        }
+        .download-icon svg {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Styles pour les écrans <= 600px */
+        @media (max-width: 600px) {
+            #lottie-animation {
+                width: 200px;
+                height: 200px;
+            }
+            .countdown-item h2 {
+                font-size: 1.5rem;
+            }
+            .countdown-item p {
+                font-size: 0.8rem;
+            }
+            .payment-icons {
+                gap: 10px;
+            }
+            .payment-icon {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="lottie-animation"></div>
+    <div id="error-message"></div>
+    <div id="countdown">
+        <div class="countdown-item">
+            <h2 id="days">00</h2>
+            <p>Jours</p>
+        </div>
+        <div class="countdown-item">
+            <h2 id="hours">00</h2>
+            <p>Heures</p>
+        </div>
+        <div class="countdown-item">
+            <h2 id="minutes">00</h2>
+            <p>Minutes</p>
+        </div>
+        <div class="countdown-item">
+            <h2 id="seconds">00</h2>
+            <p>Secondes</p>
+        </div>
+        <div class="countdown-item">
+            <h2 id="milliseconds">00</h2>
+            <p>Millisecondes</p>
+        </div>
+    </div>
+
+    <div class="payment-icons">
+        <div class="payment-icon">
+            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10C27.91 10 10 27.91 10 50s17.91 40 40 40 40-17.91 40-40S72.09 10 50 10zm0 75c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z"/>
+                <path d="M50 25c-13.81 0-25 11.19-25 25s11.19 25 25 25 25-11.19 25-25-11.19-25-25-25zm0 45c-11.04 0-20-8.96-20-20s8.96-20 20-20 20 8.96 20 20-8.96 20-20-20zm-10-20c0 5.52 4.48 10 10 10s10-4.48 10-10-4.48-10-10-10-10 4.48-10 10z"/>
+                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Dahabiya
+                </text>
+            </svg>
+        </div>
+
+        <div class="payment-icon">
+            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10c-22.09 0-40 17.91-40 40s17.91 40 40 40 40-17.91 40-40-17.91-40-40-40zm0 75c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z"/>
+                <path d="M50 30c-11.04 0-20 8.96-20 20s8.96 20 20 20 20-8.96 20-20-8.96-20-20-20zm0 35c-8.27 0-15-6.73-15-15s6.73-15 15-15 15 6.73 15 15-6.73 15-15 15z"/>
+                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Baridimob
+                </text>
+            </svg>
+        </div>
+
+        <div class="payment-icon">
+            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10c-22.09 0-40 17.91-40 40s17.91 40 40 40 40-17.91 40-40-17.91-40-40-40zm0 75c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z"/>
+                <path d="M50 30c-11.04 0-20 8.96-20 20s8.96 20 20 20 20-8.96 20-20-8.96-20-20-20zm0 35c-8.27 0-15-6.73-15-15s6.73-15 15-15 15 6.73 15 15-6.73 15-15 15z"/>
+                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Binance Pay
+                </text>
+            </svg>
+        </div>
+
+        <div class="payment-icon">
+            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M80 20H20c-5.5 0-10 4.5-10 10v40c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V30c0-5.5-4.5-10-10-10zm5 50c0 2.8-2.2 5-5 5H20c-2.8 0-5-2.2-5-5V30c0-2.8 2.2-5 5-5h60c2.8 0 5 2.2 5 5v40z"/>
+                <path d="M30 40c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm40 0c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5z"/>
+                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Visa Card
+                </text>
+            </svg>
+        </div>
+
+        <a class="download-icon"
+           href="https://mega.nz/file/cBMxxYCS#N7gloNreErxaY_NYgqTtFOwx3ILbr8UTap4h-1j_e9Y" target="_blank">
+            <svg fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+            </svg>
+        </a>
+    </div>
+</div>
+
+<script>
+    const lottiePathOptions = [
+        '/assets/lotties/1 (91).json',
+        'assets/lotties/1 (91).json',
+        '/1 (4).json',
+        'home/assets/lotties/1 (91).json'
+    ];
+
+    function loadLottieAnimation() {
+        const container = document.getElementById('lottie-animation');
+        const errorMessage = document.getElementById('error-message');
+
+        function tryNextPath(paths) {
+            if (paths.length === 0) {
+                errorMessage.textContent = 'Impossible de charger l\'animation Lottie. Vérifiez les chemins.';
+                return;
+            }
+
+            const currentPath = paths.shift();
+
+            try {
+                const animation = lottie.loadAnimation({
+                    container: container,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: currentPath
+                });
+
+                animation.addEventListener('DOMLoaded', () => {
+                    console.log(`Lottie chargé avec succès depuis : ${currentPath}`);
+                    errorMessage.textContent = '';
+                });
+
+                animation.addEventListener('error', (error) => {
+                    console.error(`Erreur de chargement Lottie depuis ${currentPath}:`, error);
+                    tryNextPath(paths);
+                });
+            } catch (error) {
+                console.error(`Erreur lors du chargement de ${currentPath}:`, error);
+                tryNextPath(paths);
+            }
+        }
+
+        tryNextPath([...lottiePathOptions]);
+    }
+
+    loadLottieAnimation();
+
+    function updateCountdown() {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const targetDate = new Date(currentYear, 5, 1);
+
+        if (now > targetDate) {
+            targetDate.setFullYear(currentYear + 1);
+        }
+
+        const difference = targetDate.getTime() - now.getTime();
+
+        const d = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const h = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const m = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((difference % (1000 * 60)) / 1000);
+        const ms = Math.floor((difference % 1000) / 10); // Ajustement ici
+
+        document.getElementById('days').textContent = d.toString().padStart(2, '0');
+        document.getElementById('hours').textContent = h.toString().padStart(2, '0');
+        document.getElementById('minutes').textContent = m.toString().padStart(2, '0');
+        document.getElementById('seconds').textContent = s.toString().padStart(2, '0');
+        document.getElementById('milliseconds').textContent = ms.toString().padStart(2, '0'); // Ajustement ici
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 10);
+</script>
+</body>
+</html>
