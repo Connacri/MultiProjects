@@ -1265,7 +1265,7 @@ class _FactureListState extends State<FactureList> {
                             _buildInfoCard(
                                 'https://picsum.photos/200/300?random=4',
                                 'Total TTC',
-                                factureProvider.totalMontant,
+                                factureProvider.totalMontant * 1.19,
                                 Colors.white70,
                                 Icons.calculate),
                           ],
@@ -1303,9 +1303,8 @@ class _FactureListState extends State<FactureList> {
                                 ));
                           }
                           if (index < factureProvider.facturesList.length) {
-                            final facture = factureProvider
-                                .facturesList.reversed
-                                .toList()[index];
+                            final facture =
+                                factureProvider.facturesList.toList()[index];
                             bool estEnEdition =
                                 factureProvider.estEnEdition(facture);
                             final isEditing = factureProvider.isEditing;

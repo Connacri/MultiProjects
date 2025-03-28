@@ -150,14 +150,15 @@ class FacturationProvider with ChangeNotifier {
         return sumFacture +
             facture.lignesDocument.fold(0, (sumLigne, ligne) {
               final produit = ligne.produit.target;
-              final tvaRate = produit?.tax ?? 0.19; // TVA par défaut à 20%
-              final ht = (ligne.prixUnitaire * ligne.quantite) / (1 + tvaRate);
+              //final tvaRate = produit?.tax ?? 0.19; // TVA par défaut à 20%
+              final ht =
+                  (ligne.prixUnitaire * ligne.quantite); // (1 + tvaRate);
               return sumLigne + ht;
             });
       });
 
   // Calcul du total TVA
-  double get totalTVA => totalMontant - totalHT;
+  double get totalTVA => totalHT * 0.19;
 
   // Calcul du montant total des factures affichées
   double get totalMontant =>

@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Compte à Rebours Détaillé</title>
+    <title>Algerian LaunchPool</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.14/lottie.min.js"></script>
     <style>
@@ -32,15 +32,41 @@
             width: 100%;
         }
         #lottie-animation {
-            width: 300px;
-            height: 300px;
+            width: 500px;
+            height: 350px;
             margin: 0 auto 20px;
         }
         #countdown {
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .milliseconds-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px 30px;
+            margin-bottom: 10px;
+        }
+        .milliseconds-container h2 {
+            font-size: 2.5rem;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+        .milliseconds-container p {
+            font-size: 1rem;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .time-container {
+            display: flex;
             justify-content: center;
             gap: 10px;
-            margin-top: 20px;
+            width: 100%;
             flex-wrap: wrap;
         }
         .countdown-item {
@@ -117,12 +143,14 @@
         /* Styles pour les écrans <= 600px */
         @media (max-width: 600px) {
             #lottie-animation {
-                width: 200px;
-                height: 200px;
+                width: 400px;
+                height: 300px;
             }
+            .milliseconds-container h2,
             .countdown-item h2 {
                 font-size: 1.5rem;
             }
+            .milliseconds-container p,
             .countdown-item p {
                 font-size: 0.8rem;
             }
@@ -141,25 +169,31 @@
     <div id="lottie-animation"></div>
     <div id="error-message"></div>
     <div id="countdown">
-        <div class="countdown-item">
-            <h2 id="days">00</h2>
-            <p>Jours</p>
-        </div>
-        <div class="countdown-item">
-            <h2 id="hours">00</h2>
-            <p>Heures</p>
-        </div>
-        <div class="countdown-item">
-            <h2 id="minutes">00</h2>
-            <p>Minutes</p>
-        </div>
-        <div class="countdown-item">
-            <h2 id="seconds">00</h2>
-            <p>Secondes</p>
-        </div>
-        <div class="countdown-item">
+        <!-- Millisecondes en haut -->
+        <div class="milliseconds-container">
             <h2 id="milliseconds">00</h2>
             <p>Millisecondes</p>
+        </div>
+
+        <!-- Autres unités de temps en dessous -->
+        <div class="time-container">
+            <div class="countdown-item">
+                <h2 id="days">00</h2>
+                <p>Jours</p>
+            </div>
+            <div class="countdown-item">
+                <h2 id="hours">00</h2>
+                <p>Heures</p>
+            </div>
+            <div class="countdown-item">
+                <h2 id="minutes">00</h2>
+                <p>Minutes</p>
+            </div>
+            <div class="countdown-item">
+                <h2 id="seconds">00</h2>
+                <p>Secondes</p>
+            </div>
+
         </div>
     </div>
 
@@ -201,7 +235,8 @@
         </div>
 
         <a class="download-icon"
-           href="https://mega.nz/file/cBMxxYCS#N7gloNreErxaY_NYgqTtFOwx3ILbr8UTap4h-1j_e9Y" target="_blank">
+           href="https://mega.nz/file/VRdm3RyD#HelV8L_GeUSaFNpNdXi0RLh-ZPGoqPII0yjw8hvwzWc"
+           target="_blank">
             <svg fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>

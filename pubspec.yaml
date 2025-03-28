@@ -125,8 +125,8 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  #  image_path: "assets/images/dolphin-emoji.png"
-  image_path: "assets/images/ic_launcher/1024.png"
+  image_path: "assets/icon/icon.png"
+  #  image_path: "assets/images/ic_launcher/1024.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
