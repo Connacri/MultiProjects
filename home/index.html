@@ -33,15 +33,13 @@
         }
         #lottie-animation {
             width: 500px;
-            height: 280px;
-            margin: 0 auto 10px;
+            height: 300px;
         }
         #countdown {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 20px;
-            margin-top: 10px;
         }
         .milliseconds-container {
             display: flex;
@@ -49,13 +47,11 @@
             align-items: center;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            padding: 15px 30px;
-            margin-bottom: 10px;
+            padding: 10px;
         }
         .milliseconds-container h2 {
             font-size: 2.5rem;
             line-height: 1;
-            margin-bottom: 5px;
         }
         .milliseconds-container p {
             font-size: 1rem;
@@ -77,14 +73,11 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             padding: 10px;
-            flex-grow: 1;
-            aspect-ratio: 1 / 1;
-            min-width: 0;
+
         }
         .countdown-item h2 {
             font-size: 2.5rem;
             line-height: 1;
-            margin-bottom: 5px;
         }
         .countdown-item p {
             font-size: 1rem;
@@ -118,7 +111,6 @@
         }
         #error-message {
             color: red;
-            margin-top: 10px;
         }
         .download-icon {
             width: 60px;
@@ -162,18 +154,42 @@
                 height: 50px;
             }
         }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        .testimonial-section {
+            margin-top: 40px;
+        }
+        .testimonial {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .testimonial img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .testimonial p {
+            font-size: 1rem;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
+<h1>Bienvenue sur Algerian LaunchPool</h1>
 <div class="container">
+
     <div id="lottie-animation"></div>
     <div id="error-message"></div>
     <div id="countdown">
-        <!-- Millisecondes en haut -->
-        <div class="milliseconds-container">
-            <h2 id="milliseconds">00</h2>
-            <p>Millisecondes</p>
-        </div>
+
 
         <!-- Autres unités de temps en dessous -->
         <div class="time-container">
@@ -192,6 +208,11 @@
             <div class="countdown-item">
                 <h2 id="seconds">00</h2>
                 <p>Secondes</p>
+            </div>
+            <!-- Millisecondes en haut -->
+            <div class="countdown-item">
+                <h2 id="milliseconds">00</h2>
+                <p>Millisecondes</p>
             </div>
 
         </div>
@@ -242,6 +263,20 @@
             </svg>
         </a>
     </div>
+
+    <div class="testimonial-section">
+        <h2>Avis de nos utilisateurs</h2>
+        <div class="testimonial">
+            <img alt="User 1" src="https://randomuser.me/api/portraits/men/32.jpg">
+            <p>"Une plateforme incroyable qui m'a permis d'investir facilement et en toute sécurité
+                !" - Ahmed B.</p>
+        </div>
+        <div class="testimonial">
+            <img alt="User 2" src="https://randomuser.me/api/portraits/women/44.jpg">
+            <p>"Très intuitive et efficace, je recommande fortement !" - Samira K.</p>
+        </div>
+    </div>
+    <div id="testimonials"></div>
 </div>
 
 <script>
@@ -319,6 +354,45 @@
 
     updateCountdown();
     setInterval(updateCountdown, 10);
+</script>
+<script>
+    const testimonials = [
+        { name: "Ahmed Bensalem", text: "Service incroyable ! J'adore l'expérience utilisateur.", img: "https://randomuser.me/api/portraits/men/1.jpg" },
+        { name: "Yasmine Touati", text: "Très utile et facile à utiliser, je recommande !", img: "https://randomuser.me/api/portraits/women/2.jpg" },
+        { name: "Karim Belkacem", text: "Une vraie révolution, félicitations à l'équipe !", img: "https://randomuser.me/api/portraits/men/3.jpg" },
+        { name: "Fatima Zohra Cherif", text: "Excellente interface et service au top !", img: "https://randomuser.me/api/portraits/women/4.jpg" },
+        { name: "Rachid Meddah", text: "Je suis impressionné par la rapidité et l'efficacité.", img: "https://randomuser.me/api/portraits/men/5.jpg" },
+        { name: "Nadia Bahloul", text: "Application très fluide et bien pensée.", img: "https://randomuser.me/api/portraits/women/6.jpg" },
+        { name: "Amine Chikhi", text: "Une expérience incroyable, bravo !", img: "https://randomuser.me/api/portraits/men/7.jpg" },
+        { name: "Lina Saadi", text: "Design agréable et très pratique.", img: "https://randomuser.me/api/portraits/women/8.jpg" },
+        { name: "Mohamed Gacem", text: "Simple et efficace, je l'utilise tous les jours.", img: "https://randomuser.me/api/portraits/men/9.jpg" },
+        { name: "Sabrina Merouani", text: "Une belle découverte, merci pour ce travail !", img: "https://randomuser.me/api/portraits/women/10.jpg" },
+        { name: "Hassan Boudjemaa", text: "J'ai recommandé cette application à tous mes amis.", img: "https://randomuser.me/api/portraits/men/11.jpg" },
+        { name: "Sofiane Khelifa", text: "Très pratique et bien structuré.", img: "https://randomuser.me/api/portraits/men/12.jpg" },
+        { name: "Meriem Benali", text: "Un must-have pour tous ceux qui veulent de l'efficacité.", img: "https://randomuser.me/api/portraits/women/13.jpg" },
+        { name: "Yacine Ziani", text: "Parfait pour mes besoins quotidiens !", img: "https://randomuser.me/api/portraits/men/14.jpg" },
+        { name: "Fouad Benslama", text: "C'est exactement ce que je recherchais !", img: "https://randomuser.me/api/portraits/men/15.jpg" },
+        { name: "Hana Bouzid", text: "Très satisfait de cette application !", img: "https://randomuser.me/api/portraits/women/16.jpg" },
+        { name: "Omar Medjani", text: "Un outil incontournable, bravo aux développeurs.", img: "https://randomuser.me/api/portraits/men/17.jpg" },
+        { name: "Amina Kacem", text: "Interface intuitive et facile à utiliser.", img: "https://randomuser.me/api/portraits/women/18.jpg" },
+        { name: "Reda Mokrani", text: "Je ne peux plus m'en passer !", img: "https://randomuser.me/api/portraits/men/19.jpg" },
+        { name: "Zohra Benmebarek", text: "Superbe application, continuez comme ça !", img: "https://randomuser.me/api/portraits/women/20.jpg" }
+    ];
+
+    const testimonialsContainer = document.getElementById("testimonials");
+
+    testimonials.forEach(testimonial => {
+        const testimonialElement = document.createElement("div");
+        testimonialElement.classList.add("testimonial");
+        testimonialElement.innerHTML = `
+            <img src="${testimonial.img}" alt="${testimonial.name}">
+            <div class="testimonial-text">
+                <strong>${testimonial.name}</strong>
+                <p>${testimonial.text}</p>
+            </div>
+        `;
+        testimonialsContainer.appendChild(testimonialElement);
+    });
 </script>
 </body>
 </html>
