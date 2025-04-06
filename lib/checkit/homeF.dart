@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:kenzy/checkit/provider.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:provider/provider.dart';
+
+import '../objectBox/Utils/My_widgets.dart';
 
 class SignalementHomePageSupabase extends StatefulWidget {
   @override
@@ -15,11 +18,10 @@ class SignalementHomePageSupabase extends StatefulWidget {
 class _SignalementHomePageSupabaseState
     extends State<SignalementHomePageSupabase> {
   final numeroController = TextEditingController();
-  final utilisateurController = TextEditingController();
-  final descriptionController = TextEditingController();
   final motifController = TextEditingController();
-  final graviteController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
+  //final _numeroFieldKey = GlobalKey<FormFieldState>();
   String? numeroRecherche;
 
   @override
@@ -31,14 +33,20 @@ class _SignalementHomePageSupabaseState
     });
   }
 
-  String _normaliserNumero(String numero) {
-    numero = numero.replaceAll(RegExp(r'\s+'), '');
-    if (numero.startsWith('+213')) {
-      return '0${numero.substring(4)}';
-    } else if (numero.startsWith('213')) {
-      return '0${numero.substring(3)}';
-    }
-    return numero;
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Erreur'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -49,174 +57,194 @@ class _SignalementHomePageSupabaseState
       appBar: AppBar(title: Text('Numéros signalés')),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: numeroController,
-              decoration: InputDecoration(labelText: 'Numéro'),
-              keyboardType: TextInputType.phone,
-            ),
-            // TextField(
-            //   controller: utilisateurController,
-            //   decoration: InputDecoration(labelText: 'Nom du signaleur'),
-            // ),
-            TextField(
-              controller: motifController,
-              decoration: InputDecoration(labelText: 'Motif'),
-            ),
-            // TextField(
-            //   controller: graviteController,
-            //   keyboardType: TextInputType.number,
-            //   decoration: InputDecoration(labelText: 'Gravité (1-5)'),
-            // ),
-            // TextField(
-            //   controller: descriptionController,
-            //   decoration:
-            //       InputDecoration(labelText: 'Description (optionnelle)'),
-            // ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    final numero =
-                        _normaliserNumero(numeroController.text.trim());
-
-                    if (numero.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            "Veuillez remplir tous les champs obligatoires"),
-                      ));
-                      return;
-                    }
-
-                    final operateur = provider.detecterOperateur(numero);
-                    final logo = provider.getLogoOperateur(operateur);
-
-                    final signalement = Signalement(
-                      numero: int.tryParse(numero) ?? 0,
-                      signalePar: utilisateurController.text.trim(),
-                      motif: motifController.text.trim(),
-                      gravite: int.tryParse(graviteController.text.trim()) ?? 1,
-                      description: descriptionController.text.trim().isEmpty
-                          ? null
-                          : descriptionController.text.trim(),
-                      date: DateTime.now(),
-                    );
-
-                    await provider.ajouterSignalement(signalement);
-
-                    numeroController.clear();
-                    utilisateurController.clear();
-                    motifController.clear();
-                    graviteController.clear();
-                    descriptionController.clear();
-
-                    setState(() {
-                      numeroRecherche = numero;
-                    });
-                  },
-                  child: Text("Ajouter"),
-                ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      numeroRecherche =
-                          _normaliserNumero(numeroController.text.trim());
-                    });
-                  },
-                  child: Text("Rechercher"),
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
-            if (numeroRecherche != null) ...[
-              // Obtenir le logo de l'opérateur
-
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              AnimatedTextField(
+                // fieldKey: _numeroFieldKey,
+                controller: numeroController,
+                labelText: 'Numéro',
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]')),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez entrer un numéro';
+                  }
+                  if (!provider.isValidAlgerianPhoneNumber(value)) {
+                    return 'Numéro de téléphone invalide';
+                  }
+                  return null;
+                },
+                resetOnClear: true,
+              ),
+              AnimatedTextField(
+                controller: motifController,
+                labelText: 'Motif',
+                validator: (value) {
+                  // if (value == null || value.isEmpty) {
+                  //   return 'Veuillez entrer un motif';
+                  // }
+                  // return null;
+                },
+              ),
+              SizedBox(height: 12),
               Row(
                 children: [
-                  SizedBox(
-                    width: 100, // Taille fixe pour un carré
-                    height: 100,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      // Coins arrondis
-                      child: provider.getLogoOperateur(provider
-                                      .detecterOperateur(numeroRecherche!)) ==
-                                  null ||
-                              provider
-                                  .getLogoOperateur(provider
-                                      .detecterOperateur(numeroRecherche!))
-                                  .isEmpty
-                          ? Container(
-                              color: Colors.grey[300],
-                              // Couleur de fond si pas d'image
-                              child: Icon(Icons.image_not_supported,
-                                  color: Colors.grey[600]),
-                            )
-                          : Image(
-                              image: provider
-                                      .getLogoOperateur(provider
-                                          .detecterOperateur(numeroRecherche!))
-                                      .startsWith('http')
-                                  ? CachedNetworkImageProvider(
-                                      provider.getLogoOperateur(provider
-                                          .detecterOperateur(numeroRecherche!)),
-                                      errorListener: (error) =>
-                                          debugPrint("Image error"),
-                                    )
-                                  : FileImage(File(provider.getLogoOperateur(
-                                      provider.detecterOperateur(
-                                          numeroRecherche!)))) as ImageProvider,
-                              fit: BoxFit
-                                  .cover, // Remplir tout l'espace disponible
-                            ),
-                    ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        final numero =
+                            provider.normalizeAndValidateAlgerianPhone(
+                                numeroController.text.trim());
+
+                        if (numero == null) {
+                          _showErrorDialog(
+                              "Le numéro de téléphone est invalide.");
+                          return;
+                        }
+
+                        final signalement = Signalement(
+                          numero: numero,
+                          signalePar: 'Utilisateur',
+                          motif: motifController.text.trim(),
+                          gravite: 1,
+                          description: '',
+                          date: DateTime.now(),
+                        );
+
+                        await provider.ajouterSignalement(signalement);
+
+                        // Réinitialiser les champs
+                        numeroController.clear();
+                        motifController.clear();
+                        //  _numeroFieldKey.currentState?.reset();
+
+                        // Réinitialiser l'icône en appelant resetIcon()
+                        // (Vous pouvez soit appeler directement resetIcon() ici, soit gérer cela via un listener)
+                        // Par exemple, si AnimatedTextField expose une méthode resetIcon :
+                        // animatedTextFieldKey.currentState?.resetIcon();
+
+                        setState(() {
+                          numeroRecherche = numero;
+                        });
+                      }
+                    },
+                    child: Text("Ajouter"),
                   ),
-                  Text(
-                    "Signalements pour $numeroRecherche : ${provider.nombreSignalements(numeroRecherche!)}",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      final numero = provider.normalizeAndValidateAlgerianPhone(
+                          numeroController.text.trim());
+
+                      if (numero == null) {
+                        _showErrorDialog(
+                            "Le numéro de téléphone est invalide.");
+                        return;
+                      }
+
+                      setState(() {
+                        numeroRecherche = numero;
+                      });
+                    },
+                    child: Text("Rechercher"),
                   ),
                 ],
               ),
-              SizedBox(height: 8),
-              Expanded(
-                child: ListView(
-                  children: provider.getSignalements(numeroRecherche!).map((s) {
-                    // Détecter l'opérateur basé sur le numéro
-                    String operateur =
-                        provider.detecterOperateur(s.numero.toString());
-
-                    // Obtenir le logo de l'opérateur
-                    String logoOperateur = provider.getLogoOperateur(operateur);
-
-                    return ListTile(
-                      //leading: CircleAvatar(child: Image.asset(logoOperateur)),
-                      title: Text("${s.signalePar} - Gravité: ${s.gravite}"),
-                      subtitle: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Flexible(
-                            // Changed from Expanded
-                            child: DangerBarWithAnimation(degree: s.gravite),
+              SizedBox(height: 16),
+              if (numeroRecherche != null) ...[
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: provider.getLogoOperateur(provider
+                                        .detecterOperateur(numeroRecherche!)) ==
+                                    null ||
+                                provider
+                                    .getLogoOperateur(provider
+                                        .detecterOperateur(numeroRecherche!))
+                                    .isEmpty
+                            ? Container(
+                                color: Colors.grey[300],
+                                child: Icon(Icons.image_not_supported,
+                                    color: Colors.grey[600]),
+                              )
+                            : Image(
+                                image: provider
+                                        .getLogoOperateur(
+                                            provider.detecterOperateur(
+                                                numeroRecherche!))
+                                        .startsWith('http')
+                                    ? CachedNetworkImageProvider(
+                                        provider.getLogoOperateur(
+                                            provider.detecterOperateur(
+                                                numeroRecherche!)),
+                                        errorListener: (error) =>
+                                            debugPrint("Image error"),
+                                      )
+                                    : FileImage(File(provider.getLogoOperateur(
+                                            provider.detecterOperateur(
+                                                numeroRecherche!))))
+                                        as ImageProvider,
+                                fit: BoxFit.contain,
+                              ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    provider.nombreSignalements(numeroRecherche!) == 0
+                        ? Text(
+                            "Ce numéro de téléphone 0$numeroRecherche n'a jamais été signalé",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          )
+                        : Text(
+                            "Ce numéro de téléphone 0$numeroRecherche a été signalé ${provider.nombreSignalements(numeroRecherche!)} fois",
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          Text('Opérateur : $operateur'),
-                          Text(s.description ?? 'Aucune description'),
-                        ],
-                      ),
-                      trailing: Text(
-                        '${s.date.day}/${s.date.month}/${s.date.year}',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                    );
-                  }).toList(),
+                    DangerBarWithAnimation(
+                        degree: provider.nombreSignalements(numeroRecherche!)),
+                  ],
                 ),
-              ),
+                SizedBox(height: 8),
+                // Expanded(
+                //   child: ListView(
+                //     children:
+                //         provider.getSignalements(numeroRecherche!).map((s) {
+                //       String operateur =
+                //           provider.detecterOperateur(s.numero.toString());
+                //       String logoOperateur =
+                //           provider.getLogoOperateur(operateur);
+                //
+                //       return ListTile(
+                //         title: Text("${s.signalePar} - Gravité: ${s.gravite}"),
+                //         subtitle: Column(
+                //           mainAxisSize: MainAxisSize.min,
+                //           crossAxisAlignment: CrossAxisAlignment.start,
+                //           children: [
+                //             Flexible(
+                //               child: DangerBarWithAnimation(degree: s.gravite),
+                //             ),
+                //             Text(s.description ?? 'Aucune description'),
+                //           ],
+                //         ),
+                //         trailing: Text(
+                //           '${s.date.day}/${s.date.month}/${s.date.year}',
+                //           style: TextStyle(fontSize: 12),
+                //         ),
+                //       );
+                //     }).toList(),
+                //   ),
+                // ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -270,13 +298,13 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
       case 2:
         return Colors.lightGreen;
       case 3:
-        return Colors.orange;
-      case 4:
         return Colors.yellow;
+      case 4:
+        return Colors.orange;
       case 5:
         return Colors.red;
       default:
-        return Colors.green;
+        return Colors.black;
     }
   }
 

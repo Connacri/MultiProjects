@@ -56,7 +56,7 @@ class _SignalementHomePageState extends State<SignalementHomePage> {
                 ElevatedButton(
                   onPressed: () async {
                     final signalement = Signalement(
-                      numero: int.parse(numeroController.text.trim()),
+                      numero: numeroController.text.trim(),
                       signalePar: utilisateurController.text.trim(),
                       motif: motifController.text.trim(),
                       gravite: int.tryParse(graviteController.text.trim()) ?? 1,

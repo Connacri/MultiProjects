@@ -9,12 +9,15 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
+import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../checkit/home.dart';
 import '../../checkit/homeF.dart';
+import '../../checkit/providerF.dart';
 import '../tests/hotelScreen.dart';
 import '../tests/hotelScreenFiable.dart';
 
@@ -707,6 +710,114 @@ class ReservationNavigationButtons extends StatelessWidget {
         ),
         SizedBox(height: 10),
       ],
+    );
+  }
+}
+
+class AnimatedTextField extends StatefulWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final TextInputType keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final FormFieldValidator<String>? validator;
+  final GlobalKey<FormFieldState>? fieldKey;
+  final bool resetOnClear;
+
+  AnimatedTextField({
+    required this.controller,
+    required this.labelText,
+    this.keyboardType = TextInputType.text,
+    this.inputFormatters,
+    this.validator,
+    this.fieldKey,
+    this.resetOnClear = false,
+  });
+
+  @override
+  _AnimatedTextFieldState createState() => _AnimatedTextFieldState();
+}
+
+class _AnimatedTextFieldState extends State<AnimatedTextField>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+  bool _isValid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    _controller.forward();
+
+    // Ajout du listener en référence à une méthode correctement définie.
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  // Méthode pour gérer les changements du controller
+  void _onControllerChanged() {
+    // Si le texte est vide et que l'icône est validée, on réinitialise _isValid.
+    if (widget.controller.text.isEmpty && _isValid) {
+      setState(() {
+        _isValid = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    // Retirer le listener pour éviter d'éventuels appels sur un state déjà détruit.
+    widget.controller.removeListener(_onControllerChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _validatePhoneNumber(String value) {
+    final provider =
+        Provider.of<SignalementProviderSupabase>(context, listen: false);
+    setState(() {
+      if (value.isEmpty) {
+        _isValid = false;
+      } else {
+        _isValid = provider.isValidAlgerianPhoneNumber(value);
+      }
+    });
+  }
+
+  void resetIcon() {
+    if (widget.resetOnClear) {
+      setState(() {
+        _isValid = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: TextFormField(
+        key: widget.fieldKey,
+        controller: widget.controller,
+        decoration: InputDecoration(
+          labelText: widget.labelText,
+          suffixIcon: widget.controller.text.isNotEmpty
+              ? _isValid
+                  ? Icon(Icons.check_circle, color: Colors.green)
+                  : Icon(Icons.error, color: Colors.red)
+              : null,
+        ),
+        keyboardType: widget.keyboardType,
+        inputFormatters: widget.inputFormatters,
+        validator: widget.validator,
+        onChanged: _validatePhoneNumber,
+      ),
     );
   }
 }

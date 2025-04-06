@@ -10,54 +10,34 @@ class SignalementProviderSupabase with ChangeNotifier {
   Map<String, List<Signalement>> get signalementsParNumero =>
       _signalementsParNumero;
 
-  String normalizeNumero(dynamic numero) {
-    // Convertir l'entrée en String et supprimer les espaces
-    String numStr = numero.toString().replaceAll(RegExp(r'\s+'), '');
-
-    // Retirer le préfixe +213 s'il est présent
-    if (numStr.startsWith('+213')) {
-      numStr = numStr.substring(4);
+  String? normalizeAndValidateAlgerianPhone(String numero) {
+    // Supprimer les espaces
+    String num = numero.toString().replaceAll(RegExp(r'\s+'), '');
+    // Enlever préfixe 213
+    if (num.startsWith('213')) {
+      num = num.substring(3);
     }
-    // Retirer le préfixe 00213 s'il est présent
-    else if (numStr.startsWith('00213')) {
-      numStr = numStr.substring(5);
+    // Enlever préfixe +213
+    if (num.startsWith('+213')) {
+      num = num.substring(4);
+    }
+    // Enlever préfixe 00213
+    else if (num.startsWith('00213')) {
+      num = num.substring(5);
+    }
+    // Enlever 0 initial
+    else if (num.startsWith('0')) {
+      num = num.substring(1);
     }
 
-    // Retirer le 0 initial s'il est présent
-    if (numStr.startsWith('0')) {
-      numStr = numStr.substring(1);
+    // Vérifier que c’est bien un numéro algérien à 9 chiffres commençant par 5, 6 ou 7
+    if (RegExp(r'^[5-7][0-9]{8}$').hasMatch(num)) {
+      return num;
     }
 
-    return numStr;
+    return null; // Numéro invalide
   }
 
-  // Future<void> chargerSignalements() async {
-  //   final response = await _client
-  //       .from('signalements')
-  //       .select()
-  //       .order('date', ascending: false);
-  //
-  //   final data = response as List;
-  //
-  //   _signalementsParNumero.clear();
-  //
-  //   for (final item in data) {
-  //     final s = Signalement.fromJson(item);
-  //
-  //     // Normalisation du numéro
-  //     String numero = s.numero.toString().replaceAll(RegExp(r'\s+'), '');
-  //     if (numero.startsWith('+213')) {
-  //       numero = '0' + numero.substring(4);
-  //     } else if (numero.startsWith('213')) {
-  //       numero = '0' + numero.substring(3);
-  //     }
-  //
-  //     // Utilise le numéro normalisé comme clé
-  //     _signalementsParNumero.putIfAbsent(numero, () => []).add(s);
-  //   }
-  //
-  //   notifyListeners();
-  // }
   Future<void> chargerSignalements() async {
     final response = await _client
         .from('signalements')
@@ -71,10 +51,10 @@ class SignalementProviderSupabase with ChangeNotifier {
       final s = Signalement.fromJson(item);
 
       // Normalisation du numéro
-      String numero = normalizeNumero(s.numero.toString());
+      String? numero = normalizeAndValidateAlgerianPhone(s.numero.toString());
 
       // Utilise le numéro normalisé comme clé
-      _signalementsParNumero.putIfAbsent(numero, () => []).add(s);
+      _signalementsParNumero.putIfAbsent(numero.toString(), () => []).add(s);
     }
 
     notifyListeners();
@@ -118,5 +98,13 @@ class SignalementProviderSupabase with ChangeNotifier {
 
   List<Signalement> getSignalements(String numero) {
     return _signalementsParNumero[numero] ?? [];
+  }
+
+  bool isValidAlgerianPhoneNumber(String phoneNumber) {
+    // Supprimer les espaces
+    String num = phoneNumber.replaceAll(RegExp(r'\s+'), '');
+
+    // Vérifier les formats valides
+    return RegExp(r'^(\+213|213|00213|0)?(5|6|7)\d{8}$').hasMatch(num);
   }
 }

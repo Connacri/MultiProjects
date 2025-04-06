@@ -62,7 +62,7 @@ class SignalementProvider with ChangeNotifier {
 
 /// Modèle de données pour un signalement
 class Signalement {
-  final int numero;
+  final String numero;
   final String? description;
   final String signalePar;
   final String motif;
