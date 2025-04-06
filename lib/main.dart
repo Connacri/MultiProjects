@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 // import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -29,6 +30,7 @@ import 'objectBox/FuturisticConnectionUI.dart';
 import 'objectBox/MyApp.dart';
 import 'objectBox/Utils/hash3.dart';
 import 'objectBox/hash.dart';
+
 //import 'package:media_kit/media_kit.dart'; // Importez media_kit
 
 ///gere les gestu
@@ -53,17 +55,29 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 //     print('Erreur lors de la connexion anonyme : ${e.code}');
 //   }
 // }
-
+// const apiKey = "AIzaSyCUqIwqieBQxsqzXnWKISJSw52XLbJxWKk";
+// const projectId = "walletdz-d12e0";
 //late ObjectBox objectbox;
 Future<void> main() async {
+  // Initialisation de Flutter
   WidgetsFlutterBinding.ensureInitialized();
-  initializeSupabase();
 
+  // Initialisation de Supabase (si async)
+  await initializeSupabase();
+
+  //await Firebase.initializeApp(name: projectId, demoProjectId: projectId);
+  // Initialisation de Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Configuration de Firestore (cache local activé)
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+  );
   //try {
   // Initialiser Firebase en attendant la fin de l'initialisation
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
+
   // print('Firebase initialisé avec succès.');
   // // Connexion anonyme
   // await signInAnonymously();

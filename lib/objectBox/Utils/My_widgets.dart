@@ -13,7 +13,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:video_player/video_player.dart';
 
-
+import '../../checkit/home.dart';
+import '../../checkit/homeF.dart';
+import '../tests/hotelScreen.dart';
+import '../tests/hotelScreenFiable.dart';
 
 class MyApp_image_picker extends StatelessWidget {
   const MyApp_image_picker({super.key});
@@ -81,11 +84,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _onImageButtonPressed(
-      ImageSource source, {
-        required BuildContext context,
-        bool isMultiImage = false,
-        bool isMedia = false,
-      }) async {
+    ImageSource source, {
+    required BuildContext context,
+    bool isMultiImage = false,
+    bool isMedia = false,
+  }) async {
     if (_controller != null) {
       await _controller!.setVolume(0.0);
     }
@@ -100,17 +103,17 @@ class _MyHomePageState extends State<MyHomePage> {
           try {
             final List<XFile> pickedFileList = isMedia
                 ? await _picker.pickMultipleMedia(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-              imageQuality: quality,
-              limit: limit,
-            )
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    imageQuality: quality,
+                    limit: limit,
+                  )
                 : await _picker.pickMultiImage(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-              imageQuality: quality,
-              limit: limit,
-            );
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    imageQuality: quality,
+                    limit: limit,
+                  );
             setState(() {
               _mediaFileList = pickedFileList;
             });
@@ -228,16 +231,16 @@ class _MyHomePageState extends State<MyHomePage> {
               child: kIsWeb
                   ? Image.network(_mediaFileList![index].path)
                   : (mime == null || mime.startsWith('image/')
-                  ? Image.file(
-                File(_mediaFileList![index].path),
-                errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) {
-                  return const Center(
-                      child:
-                      Text('This image type is not supported'));
-                },
-              )
-                  : _buildInlineVideoPlayer(index)),
+                      ? Image.file(
+                          File(_mediaFileList![index].path),
+                          errorBuilder: (BuildContext context, Object error,
+                              StackTrace? stackTrace) {
+                            return const Center(
+                                child:
+                                    Text('This image type is not supported'));
+                          },
+                        )
+                      : _buildInlineVideoPlayer(index)),
             );
           },
           itemCount: _mediaFileList!.length,
@@ -258,7 +261,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildInlineVideoPlayer(int index) {
     final VideoPlayerController controller =
-    VideoPlayerController.file(File(_mediaFileList![index].path));
+        VideoPlayerController.file(File(_mediaFileList![index].path));
     const double volume = kIsWeb ? 0.0 : 1.0;
     controller.setVolume(volume);
     controller.initialize();
@@ -308,32 +311,32 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
             ? FutureBuilder<void>(
-          future: retrieveLostData(),
-          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.waiting:
-                return const Text(
-                  'You have not yet picked an image.',
-                  textAlign: TextAlign.center,
-                );
-              case ConnectionState.done:
-                return _handlePreview();
-              case ConnectionState.active:
-                if (snapshot.hasError) {
-                  return Text(
-                    'Pick image/video error: ${snapshot.error}}',
-                    textAlign: TextAlign.center,
-                  );
-                } else {
-                  return const Text(
-                    'You have not yet picked an image.',
-                    textAlign: TextAlign.center,
-                  );
-                }
-            }
-          },
-        )
+                future: retrieveLostData(),
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return const Text(
+                        'You have not yet picked an image.',
+                        textAlign: TextAlign.center,
+                      );
+                    case ConnectionState.done:
+                      return _handlePreview();
+                    case ConnectionState.active:
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Pick image/video error: ${snapshot.error}}',
+                          textAlign: TextAlign.center,
+                        );
+                      } else {
+                        return const Text(
+                          'You have not yet picked an image.',
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                  }
+                },
+              )
             : _handlePreview(),
       ),
       floatingActionButton: Column(
@@ -467,14 +470,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 TextField(
                   controller: maxWidthController,
                   keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       hintText: 'Enter maxWidth if desired'),
                 ),
                 TextField(
                   controller: maxHeightController,
                   keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       hintText: 'Enter maxHeight if desired'),
                 ),
@@ -574,5 +577,136 @@ class AspectRatioVideoState extends State<AspectRatioVideo> {
     } else {
       return Container();
     }
+  }
+}
+
+class ReservationNavigationButtons extends StatelessWidget {
+  final List<String> roomNumbers;
+
+  const ReservationNavigationButtons({Key? key, required this.roomNumbers})
+      : super(key: key);
+
+  List<Reservation> get sampleReservations => [
+        Reservation(
+          clientName: "John Doe",
+          roomName: "101",
+          startDate: DateTime(2024, 1, 5),
+          endDate: DateTime(2024, 1, 9),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "102",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "103",
+          startDate: DateTime(2024, 2, 1),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "104",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "105",
+          startDate: DateTime(2024, 1, 2),
+          endDate: DateTime(2024, 1, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "108",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (ctx) => HotelReservationChart(
+                      fromDate: DateTime(2024, 1, 1),
+                      toDate: DateTime(2024, 12, 31),
+                      roomNames: roomNumbers,
+                      reservations: sampleReservations,
+                    ),
+                  ));
+                },
+                child: Text('Hotel'),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (ctx) => CalendarTableWithDragging(
+                      fromDate: DateTime.now(),
+                      toDate: DateTime.now().add(Duration(days: 30)),
+                      roomNames: roomNumbers,
+                      reservations: sampleReservations,
+                    ),
+                  ));
+                },
+                child: Text('Hotel Fiable'),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (ctx) => SignalementHomePage(),
+                  ));
+                },
+                child: Text('checkitHome'),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (ctx) => SignalementHomePageSupabase(),
+                  ));
+                },
+                child: Text('checkitSupabase'),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
+      ],
+    );
   }
 }

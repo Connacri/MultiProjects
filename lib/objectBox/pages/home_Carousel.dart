@@ -10,9 +10,12 @@ import 'package:kenzy/objectBox/tests/cruds.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../checkit/home.dart';
+import '../../checkit/homeF.dart';
 import '../Entity.dart';
 
 import '../MyProviders.dart';
+import '../Utils/My_widgets.dart';
 import '../tests/hotel2.dart';
 import '../tests/hotelScreen.dart';
 import '../tests/hotelScreenFiable.dart';
@@ -266,136 +269,12 @@ class _CarouselExampleState extends State<CarouselExample> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              ElevatedButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) =>
-                            //     CalendarTableWithDragging(
-                            //   fromDate: DateTime.now(),
-                            //   toDate: DateTime.now().add(Duration(days: 30)),
-                            // ),
-                            HotelReservationChart(
-                          fromDate: DateTime(2024, 1, 1),
-                          toDate: DateTime(2024, 12, 31),
-                          roomNames: roomNumbers,
-                          reservations: [
-                            Reservation(
-                              clientName: "John Doe",
-                              roomName: "101",
-                              startDate: DateTime(2024, 1, 5),
-                              endDate: DateTime(2024, 1, 9),
-                              pricePerNight: 100.0,
-                              status: "Confirmed",
-                            ),
-                            Reservation(
-                              clientName: "Jane Smith",
-                              roomName: "102",
-                              startDate: DateTime(2024, 2, 4),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 150.0,
-                              status: "Checked In",
-                            ),
-                            Reservation(
-                              clientName: "John Doe",
-                              roomName: "103",
-                              startDate: DateTime(2024, 2, 1),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 100.0,
-                              status: "Confirmed",
-                            ),
-                            Reservation(
-                              clientName: "Jane Smith",
-                              roomName: "104",
-                              startDate: DateTime(2024, 2, 4),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 150.0,
-                              status: "Checked In",
-                            ),
-                            Reservation(
-                              clientName: "John Doe",
-                              roomName: "105",
-                              startDate: DateTime(2024, 1, 2),
-                              endDate: DateTime(2024, 1, 5),
-                              pricePerNight: 100.0,
-                              status: "Confirmed",
-                            ),
-                            Reservation(
-                              clientName: "Jane Smith",
-                              roomName: "108",
-                              startDate: DateTime(2024, 2, 4),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 150.0,
-                              status: "Checked In",
-                            ),
-                          ],
-                        ),
-                      )),
-                  child: Text('Hotel')),
-              SizedBox(
-                width: 20,
-              ),
-              ElevatedButton(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) => CalendarTableWithDragging(
-                          fromDate: DateTime.now(),
-                          toDate: DateTime.now().add(Duration(days: 30)),
-                          roomNames: roomNumbers,
-                          reservations: [
-                            Reservation(
-                              clientName: "John Doe",
-                              roomName: "101",
-                              startDate: DateTime(2024, 1, 5),
-                              endDate: DateTime(2024, 1, 9),
-                              pricePerNight: 100.0,
-                              status: "Confirmed",
-                            ),
-                            Reservation(
-                              clientName: "Jane Smith",
-                              roomName: "102",
-                              startDate: DateTime(2024, 2, 4),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 150.0,
-                              status: "Checked In",
-                            ),
-                            Reservation(
-                              clientName: "John Doe",
-                              roomName: "103",
-                              startDate: DateTime(2024, 2, 1),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 100.0,
-                              status: "Confirmed",
-                            ),
-                            Reservation(
-                              clientName: "Jane Smith",
-                              roomName: "104",
-                              startDate: DateTime(2024, 2, 4),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 150.0,
-                              status: "Checked In",
-                            ),
-                            Reservation(
-                              clientName: "John Doe",
-                              roomName: "105",
-                              startDate: DateTime(2024, 1, 2),
-                              endDate: DateTime(2024, 1, 5),
-                              pricePerNight: 100.0,
-                              status: "Confirmed",
-                            ),
-                            Reservation(
-                              clientName: "Jane Smith",
-                              roomName: "108",
-                              startDate: DateTime(2024, 2, 4),
-                              endDate: DateTime(2024, 2, 5),
-                              pricePerNight: 150.0,
-                              status: "Checked In",
-                            ),
-                          ],
-                        ),
-                      )),
-                  child: Text('Hotel Fiable')),
-            ],
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ReservationNavigationButtons(
+              roomNumbers: ['101', '102', '103', '104', '105', '108'],
+            ),
           ),
           const Padding(
             padding: EdgeInsetsDirectional.only(top: 8.0, start: 8.0),

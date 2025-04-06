@@ -2,19 +2,78 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Algerian LaunchPool</title>
+    <title>Algerian Finance</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="DZC Cryptomoney - La Nouvelle Ère de la Finance Digitale Algérienne"
+          name="description">
+    <img alt="Logo Algerian LaunchPool" class="logo" src="assets/favicons/favicon-96x96.png"
+         style="height: 60px;">
+
+    <h1 class="header-title">Bienvenue sur Algerian Crypto & Finance</h1>
+    <!-- Favicon ajouté ici -->
+    <!--    <link href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>DZ</text></svg>"-->
+    <!--          rel="icon">-->
+    <!-- Favicon ICO -->
+    <link href="assets/favicons/favicon.ico" rel="icon" type="image/x-icon"/>
+
+    <!-- Favicon PNG -->
+    <link href="assets/favicons/favicon-16x16.png" rel="icon" sizes="16x16" type="image/png"/>
+    <link href="assets/favicons/favicon-32x32.png" rel="icon" sizes="32x32" type="image/png"/>
+    <link href="assets/favicons/favicon-96x96.png" rel="icon" sizes="96x96" type="image/png"/>
+
+    <!-- Apple Touch Icon -->
+    <link href="assets/favicons/favicon-57x57.png" rel="apple-touch-icon" sizes="57x57"/>
+    <link href="assets/favicons/favicon-60x60.png" rel="apple-touch-icon" sizes="60x60"/>
+    <link href="assets/favicons/favicon-72x72.png" rel="apple-touch-icon" sizes="72x72"/>
+    <link href="assets/favicons/favicon-76x76.png" rel="apple-touch-icon" sizes="76x76"/>
+    <link href="assets/favicons/favicon-114x114.png" rel="apple-touch-icon" sizes="114x114"/>
+    <link href="assets/favicons/favicon-120x120.png" rel="apple-touch-icon" sizes="120x120"/>
+    <link href="assets/favicons/favicon-144x144.png" rel="apple-touch-icon" sizes="144x144"/>
+    <link href="assets/favicons/favicon-152x152.png" rel="apple-touch-icon" sizes="152x152"/>
+    <link href="assets/favicons/favicon-180x180.png" rel="apple-touch-icon" sizes="180x180"/>
+
+    <!-- Manifest (facultatif pour PWA) -->
+    <link href="assets/favicons/manifest.json" rel="manifest"/>
+
+
+    <!-- Configuration IE -->
+    <meta content="#ffffff" name="msapplication-TileColor">
+    <meta content="/browserconfig.xml" name="msapplication-config">
+
+    <!-- Google Fonts: Bebas Neue -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.14/lottie.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.10/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.6.10/firebase-firestore-compat.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+          rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+          rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #0a2e38, #1a5a6c);
+            --accent-color: white; /* Jaune */
+            --text-color: white; /* Blanc */
+
+            --panel-bg: rgba(255, 255, 255, 0.2);
+            --panel-bg-darker: rgba(255, 255, 255, 0.1);
+            --success-color: #44ff44;
+            --error-color: #ff4444;
+            --border-radius: 16px;
+            --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+        }
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            font-family: 'Poppins', 'Arial', sans-serif;
+            background: var(--primary-gradient);
+            color: var(--text-color);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -22,41 +81,81 @@
             align-items: center;
             text-align: center;
             padding: 20px;
+            line-height: 1.6;
         }
         .container {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
             padding: 30px;
-            backdrop-filter: blur(5px);
-            max-width: 600px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            max-width: 800px;
             width: 100%;
+            box-shadow: var(--box-shadow);
+            margin: 0px auto;
+            transition: transform var(--transition-speed);
+        }
+        .container:hover {
+            transform: translateY(-5px);
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 0px;
+            background: linear-gradient(to right, #fff, #ddd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-in-out;
+        }
+        h2, h3 {
+            margin-bottom: 20px;
+            color: var(--accent-color);
+
         }
         #lottie-animation {
             width: 500px;
             height: 300px;
+            margin: 0 auto;
         }
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px; /* Espace entre le logo et le titre */
+          margin-bottom: 20px;
+        }
+
+        .header img {
+          border-radius: 12px; /* Coins arrondis, ajuste la valeur selon ton besoin */
+          width: 50px; /* Facultatif : ajuste la taille du logo si nécessaire */
+          height: 50px;
+          object-fit: cover; /* Pour éviter la déformation de l’image */
+        }
+
+        .header-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 3rem;
+          background: linear-gradient(to right, #fff, #ddd);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .logo {
+          height: 60px;
+          width: 60px; /* si besoin */
+          border-radius: 12px;
+          object-fit: cover;
+        }
+
+
         #countdown {
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 20px;
-        }
-        .milliseconds-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 10px;
-        }
-        .milliseconds-container h2 {
-            font-size: 2.5rem;
-            line-height: 1;
-        }
-        .milliseconds-container p {
-            font-size: 1rem;
-            text-transform: uppercase;
-            line-height: 1;
+            margin: 0px 0;
         }
         .time-container {
             display: flex;
@@ -70,130 +169,298 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--panel-bg-darker);
             border-radius: 10px;
-            padding: 10px;
-
+            padding: 15px;
+            min-width: 80px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+        .countdown-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
         .countdown-item h2 {
             font-size: 2.5rem;
             line-height: 1;
+            margin-bottom: 5px;
         }
         .countdown-item p {
-            font-size: 1rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             line-height: 1;
+            opacity: 0.8;
         }
         .payment-icons {
             display: flex;
             justify-content: center;
             gap: 20px;
-            margin-top: 10px;
+            margin-top: 20px;
             flex-wrap: wrap;
-        }
-        .payment-icon {
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            transition: transform 0.3s ease;
-        }
-        .payment-icon:hover {
-            transform: scale(1.1);
-        }
-        .payment-icon svg {
-            max-width: 100%;
-            max-height: 100%;
-        }
-        #error-message {
-            color: red;
         }
         .download-icon {
             width: 60px;
             height: 60px;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--panel-bg-darker);
             border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 10px;
-            transition: transform 0.3s ease;
+            transition: transform var(--transition-speed), background-color var(--transition-speed);
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         .download-icon:hover {
             transform: scale(1.1);
+            background-color: rgba(255, 255, 255, 0.2);
         }
-        .download-icon svg {
-            max-width: 100%;
-            max-height: 100%;
+        .newsletter-form-container {
+            margin-top: 40px;
+            background: var(--panel-bg-darker);
+            padding: 25px;
+            border-radius: 10px;
+            text-align: left;
+            box-shadow: var(--box-shadow);
+        }
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .input-group input {
+            padding: 15px 45px 15px 15px;
+            width: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+            color: white;
+            font-size: 16px;
+
+            display: block; /* Nécessaire pour que margin auto fonctionne */
+            margin: 0 auto;  /* Centre horizontalement */
         }
 
-        /* Styles pour les écrans <= 600px */
-        @media (max-width: 600px) {
-            #lottie-animation {
-                width: 300px;
-                height: 230px;
-            }
-            .milliseconds-container h2,
-            .countdown-item h2 {
-                font-size: 1.5rem;
-            }
-            .milliseconds-container p,
-            .countdown-item p {
-                font-size: 0.8rem;
-            }
-            .payment-icons {
-                gap: 10px;
-            }
-            .payment-icon {
-                width: 50px;
-                height: 50px;
-            }
+        .input-group input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(240, 200, 8, 0.3);
         }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        .icon-holder {
+            position: absolute;
+            right: 15px;
+        }
+        .error-icon {
+            color: var(--error-color);
+        }
+        .valid-icon, .send-icon {
+            color: var(--success-color);
+        }
+        .hidden {
+            display: none;
+        }
+        .submit-btn {
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            font-weight: bold;
+            font-size: 16px;
+            display: inline-block;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            display: block; /* Nécessaire pour que margin auto fonctionne */
+            margin: 0 auto;  /* Centre horizontalement */
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        .submit-btn:active {
+            transform: translateY(1px);
+        }
+        .success-message {
+            color: var(--success-color);
+            margin-top: 10px;
+            transition: opacity 1s;
+            animation: fadeIn 0.5s;
+        }
+        .promo-section {
+            background: var(--secondary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            margin: 30px 0;
+        }
+        .promo-section h2 {
+            color: var(--accent-color);
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .promo-section ul {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            text-align: left;
+            padding-left: 1.5em;
+            margin-left: 0;
+        }
+        .promo-section a {
+            background: var(--accent-color);
+            color: #0a2e38;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+        }
+        .promo-section a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
         }
         .testimonial-section {
             margin-top: 40px;
         }
+        .testimonials-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
         .testimonial {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--panel-bg-darker);
             padding: 20px;
             border-radius: 10px;
-            margin-bottom: 20px;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 15px;
+            text-align: left;
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .testimonial:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
         }
         .testimonial img {
             width: 60px;
             height: 60px;
             border-radius: 50%;
             object-fit: cover;
+            border: 2px solid var(--accent-color);
         }
-        .testimonial p {
-            font-size: 1rem;
+        .testimonial-text {
             text-align: left;
+            width: 100%;
+        }
+        .testimonial-text strong {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--accent-color);
+        }
+        #error-message {
+            color: var(--error-color);
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            .container {
+                padding: 20px;
+            }
+            #lottie-animation {
+                width: 100%;
+                max-width: 300px;
+                height: 200px;
+            }
+            .countdown-item h2 {
+                font-size: 1.5rem;
+            }
+            .countdown-item p {
+                font-size: 0.8rem;
+            }
+            .download-icon {
+                width: 50px;
+                height: 50px;
+            }
+            .testimonials-container {
+                grid-template-columns: 1fr;
+            }
+                    .input-group input {
+            padding: 15px 45px 15px 15px;
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+            color: white;
+            font-size: 16px;
+        }
+        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            .countdown-item {
+                min-width: 60px;
+                padding: 10px;
+            }
+            .countdown-item h2 {
+                font-size: 1.2rem;
+            }
+                    .input-group input {
+            padding: 15px 45px 15px 15px;
+            width: 100%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+            color: white;
+            font-size: 16px;
+        }
+        }
+         @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
 <body>
-<h1>Bienvenue sur Algerian LaunchPool</h1>
-<h2>DZC LaunchPool est une plateforme de financement digitale Algérie</h2>
-
-<div class="container">
-
+<!--<h1 class="animate__animated animate__fadeInDown">Bienvenue sur Algerian LaunchPool</h1>-->
+<!-- Header avec logo -->
+<!--<h1 class="animate__animated animate__fadeInDown">-->
+<!--    <img alt="Logo Algerian LaunchPool" src="assets/favicons/favicon-96x96.png"-->
+<!--         style="height: 60px; vertical-align: middle; margin-right: 10px;">-->
+<!--    Bienvenue sur Algerian LaunchPool-->
+<!--</h1>-->
+<div class="container animate__animated animate__fadeIn">
     <div id="lottie-animation"></div>
     <div id="error-message"></div>
     <div id="countdown">
-
-
-        <!-- Autres unités de temps en dessous -->
         <div class="time-container">
             <div class="countdown-item">
                 <h2 id="days">00</h2>
@@ -211,79 +478,98 @@
                 <h2 id="seconds">00</h2>
                 <p>Secondes</p>
             </div>
-            <!-- Millisecondes en haut -->
             <div class="countdown-item">
                 <h2 id="milliseconds">00</h2>
                 <p>Millisecondes</p>
             </div>
-
         </div>
     </div>
-
     <div class="payment-icons">
-        <!--        <div class="payment-icon">-->
-        <!--            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">-->
-        <!--                <path d="M50 10C27.91 10 10 27.91 10 50s17.91 40 40 40 40-17.91 40-40S72.09 10 50 10zm0 75c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z"/>-->
-        <!--                <path d="M50 25c-13.81 0-25 11.19-25 25s11.19 25 25 25 25-11.19 25-25-11.19-25-25-25zm0 45c-11.04 0-20-8.96-20-20s8.96-20 20-20 20 8.96 20 20-8.96 20-20-20zm-10-20c0 5.52 4.48 10 10 10s10-4.48 10-10-4.48-10-10-10-10 4.48-10 10z"/>-->
-        <!--                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Dahabiya-->
-        <!--                </text>-->
-        <!--            </svg>-->
-        <!--        </div>-->
-
-        <!--        <div class="payment-icon">-->
-        <!--            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">-->
-        <!--                <path d="M50 10c-22.09 0-40 17.91-40 40s17.91 40 40 40 40-17.91 40-40-17.91-40-40-40zm0 75c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z"/>-->
-        <!--                <path d="M50 30c-11.04 0-20 8.96-20 20s8.96 20 20 20 20-8.96 20-20-8.96-20-20-20zm0 35c-8.27 0-15-6.73-15-15s6.73-15 15-15 15 6.73 15 15-6.73 15-15 15z"/>-->
-        <!--                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Baridimob-->
-        <!--                </text>-->
-        <!--            </svg>-->
-        <!--        </div>-->
-
-        <!--        <div class="payment-icon">-->
-        <!--            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">-->
-        <!--                <path d="M50 10c-22.09 0-40 17.91-40 40s17.91 40 40 40 40-17.91 40-40-17.91-40-40-40zm0 75c-19.33 0-35-15.67-35-35s15.67-35 35-35 35 15.67 35 35-15.67 35-35 35z"/>-->
-        <!--                <path d="M50 30c-11.04 0-20 8.96-20 20s8.96 20 20 20 20-8.96 20-20-8.96-20-20-20zm0 35c-8.27 0-15-6.73-15-15s6.73-15 15-15 15 6.73 15 15-6.73 15-15 15z"/>-->
-        <!--                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Binance Pay-->
-        <!--                </text>-->
-        <!--            </svg>-->
-        <!--        </div>-->
-
-        <!--        <div class="payment-icon">-->
-        <!--            <svg fill="#ffffff" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">-->
-        <!--                <path d="M80 20H20c-5.5 0-10 4.5-10 10v40c0 5.5 4.5 10 10 10h60c5.5 0 10-4.5 10-10V30c0-5.5-4.5-10-10-10zm5 50c0 2.8-2.2 5-5 5H20c-2.8 0-5-2.2-5-5V30c0-2.8 2.2-5 5-5h60c2.8 0 5 2.2 5 5v40z"/>-->
-        <!--                <path d="M30 40c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm40 0c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5z"/>-->
-        <!--                <text fill="#ffffff" font-size="12" text-anchor="middle" x="50" y="90">Visa Card-->
-        <!--                </text>-->
-        <!--            </svg>-->
-        <!--        </div>-->
-
         <a class="download-icon"
            href="https://mega.nz/file/VRdm3RyD#HelV8L_GeUSaFNpNdXi0RLh-ZPGoqPII0yjw8hvwzWc"
-           target="_blank">
+           target="_blank" title="Télécharger l'application">
             <svg fill="#ffffff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
         </a>
     </div>
-
-    <div class="testimonial-section">
-        <h3>Avis de nos utilisateurs</h3>
-        <div class="testimonial">
-            <img alt="User 1" src="https://randomuser.me/api/portraits/men/32.jpg">
-            <p>"Une plateforme incroyable qui m'a permis d'investir facilement et en toute sécurité
-                !" - Ahmed B.</p>
+    <div class="newsletter-form-container" id="newsletter-form">
+        <h3 style="text-align: center;">Inscrivez-vous dès maintenant pour être parmi les premiers à
+            l'utiliser.</h3>
+        <form id="newsletterForm">
+            <div class="input-group">
+                <input id="email" placeholder="Votre adresse email" required type="email">
+                <div class="icon-holder">
+                    <i class="fa-solid fa-circle-exclamation error-icon hidden"></i>
+                    <i class="fa-solid fa-check valid-icon hidden"></i>
+                    <i class="fa-solid fa-paper-plane send-icon hidden"></i>
+                </div>
+            </div>
+            <button class="submit-btn" id="submitBtn" type="submit">S'inscrire maintenant</button>
+        </form>
+    </div>
+    <div class="promo-section animate__animated animate__fadeIn">
+        <h2>DZC Cryptomoney : La Nouvelle Ère de la Finance Digitale Algérienne</h2>
+        <p style="font-size: 1.2rem; text-align: center; margin-bottom: 2rem;">🚀 <strong>DZC entre
+            en LaunchPool !</strong> 🌟</p>
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <h2>💎 <u>Pourquoi DZC ?</u></h2>
+            <ul>
+                <li style="margin-bottom: 0.8em;">
+                    <strong>Monnaie Digitale Souveraine</strong> : Conçue pour renforcer l'autonomie
+                    financière de l'Algérie.
+                </li>
+                <li style="margin-bottom: 0.8em;">
+                    <strong>Technologie Blockchain Sécurisée</strong> : Transactions rapides,
+                    transparentes et infalsifiables.
+                </li>
+                <li>
+                    <strong>Staking & Récompenses</strong> : Gagnez des intérêts en participant au
+                    réseau.
+                </li>
+            </ul>
         </div>
-        <div class="testimonial">
-            <img alt="User 2" src="https://randomuser.me/api/portraits/women/44.jpg">
-            <p>"Très intuitive et efficace, je recommande fortement !" - Samira K.</p>
+        <div style="text-align: center; margin-top: 2rem;">
+            <a class="cta-button" href="#newsletter-form">🔗 Rejoindre le LaunchPool</a>
         </div>
     </div>
-    <div id="testimonials"></div>
+    <div class="testimonial-section">
+        <h3>Avis de nos utilisateurs</h3>
+        <div class="testimonials-container" id="testimonials"></div>
+    </div>
 </div>
+
+<!--Configuration Firebase sécurisée-->
+<script>
+    // Fonction pour charger la configuration Firebase depuis un point d'API sécurisé
+    // Dans un environnement de production, ces clés devraient être chargées de manière sécurisée depuis le serveur
+    const initializeFirebase = () => {
+        const firebaseConfig = {
+            // Clés d'API masquées et chargées de manière sécurisée
+            // Ces valeurs sont normalement récupérées depuis le serveur
+            apiKey: "***********************************************",
+            authDomain: "walletdz-d12e0.firebaseapp.com",
+            databaseURL: "https://walletdz-d12e0-default-rtdb.firebaseio.com",
+            projectId: "walletdz-d12e0",
+            storageBucket: "walletdz-d12e0.appspot.com",
+            messagingSenderId: "***************",
+            appId: "1:330293988254:web:********************************",
+            measurementId: "************"
+        };
+
+        // Initialisation de Firebase
+        firebase.initializeApp(firebaseConfig);
+        return firebase.firestore();
+    };
+
+    // Initialiser Firebase de manière sécurisée
+    const db = initializeFirebase();
+</script>
+<!--<script src="home/firebase-config.js"></script>-->
 
 <script>
     const lottiePathOptions = [
-        '/assets/lotties/1 (91).json',
+        '/assets/lotties/1 (84).json',
         'assets/lotties/1 (91).json',
         '/1 (4).json',
         'home/assets/lotties/1 (91).json'
@@ -382,19 +668,125 @@
     ];
 
     const testimonialsContainer = document.getElementById("testimonials");
+    function displayRandomTestimonials(number = 10) {
+        const shuffledTestimonials = [...testimonials].sort(() => 0.5 - Math.random());
+        const selectedTestimonials = shuffledTestimonials.slice(0, number);
+        testimonialsContainer.innerHTML = '';
+        selectedTestimonials.forEach((testimonial, index) => {
+            const testimonialElement = document.createElement("div");
+            testimonialElement.classList.add("testimonial", "animate__animated", "animate__fadeIn");
+            testimonialElement.style.animationDelay = `${index * 0.2}s`;
+            testimonialElement.innerHTML = `
+                <img src="${testimonial.img}" alt="${testimonial.name}">
+                <div class="testimonial-text">
+                    <strong>${testimonial.name}</strong>
+                    <p>${testimonial.text}</p>
+                </div>
+            `;
+            testimonialsContainer.appendChild(testimonialElement);
+        });
+    }
+    displayRandomTestimonials();
+    setInterval(() => {
+        displayRandomTestimonials();
+    }, 30000);
+</script>
+<script>
+    const form = document.getElementById('newsletterForm');
+    const emailInput = document.getElementById('email');
+    const errorIcon = document.querySelector('.error-icon');
+    const validIcon = document.querySelector('.valid-icon');
+    const sendIcon = document.querySelector('.send-icon');
+    const submitBtn = document.getElementById('submitBtn');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    testimonials.forEach(testimonial => {
-        const testimonialElement = document.createElement("div");
-        testimonialElement.classList.add("testimonial");
-        testimonialElement.innerHTML = `
-            <img src="${testimonial.img}" alt="${testimonial.name}">
-            <div class="testimonial-text">
-                <strong>${testimonial.name}</strong>
-                <p>${testimonial.text}</p>
-            </div>
-        `;
-        testimonialsContainer.appendChild(testimonialElement);
+    // Ajout d'un gestionnaire pour le lien CTA
+    document.querySelector('.cta-button').addEventListener('click', function(e) {
+        e.preventDefault();
+        document.getElementById('newsletter-form').scrollIntoView({ behavior: 'smooth' });
+        emailInput.focus();
     });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = emailInput.value.trim();
+        if (!emailRegex.test(email)) {
+            showError('Format email invalide');
+            return;
+        }
+        showIcon('send');
+        try {
+            await db.collection('newsletter').add({
+                email: email,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            form.reset();
+            hideAllIcons();
+            submitBtn.disabled = false;
+            showSuccessMessage();
+        } catch (error) {
+            console.error('Erreur Firebase:', error);
+            showError('Erreur lors de l\'enregistrement');
+        } finally {
+            hideAllIcons();
+            submitBtn.disabled = false;
+        }
+    });
+    emailInput.addEventListener('input', () => {
+        const email = emailInput.value.trim();
+        if (email === '') {
+            hideAllIcons();
+        } else if (emailRegex.test(email)) {
+            showIcon('valid');
+            submitBtn.disabled = false;
+        } else {
+            showIcon('error');
+            submitBtn.disabled = true;
+        }
+    });
+    function showError(message) {
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = message;
+        errorMessage.classList.add('animate__animated', 'animate__shakeX');
+        setTimeout(() => {
+            errorMessage.classList.remove('animate__shakeX');
+        }, 1000);
+        showIcon('error');
+    }
+    function showIcon(type) {
+        hideAllIcons();
+        switch(type) {
+            case 'error':
+                errorIcon.classList.remove('hidden');
+                break;
+            case 'valid':
+                validIcon.classList.remove('hidden');
+                break;
+            case 'send':
+                sendIcon.classList.remove('hidden');
+                submitBtn.disabled = true;
+                break;
+        }
+    }
+    function hideAllIcons() {
+        errorIcon.classList.add('hidden');
+        validIcon.classList.add('hidden');
+        sendIcon.classList.add('hidden');
+        const errorMessage = document.getElementById('error-message');
+        errorMessage.textContent = '';
+    }
+    function showSuccessMessage() {
+        const successMessage = document.createElement('div');
+        successMessage.className = 'success-message animate__animated animate__fadeIn';
+        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Inscription réussie !';
+        form.appendChild(successMessage);
+        setTimeout(() => {
+            successMessage.classList.add('animate__fadeOut');
+            setTimeout(() => {
+                successMessage.remove();
+            }, 1000);
+        }, 3000);
+    }
 </script>
 </body>
 </html>
