@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kenzy/checkit/provider.dart';
 import 'package:kenzy/checkit/providerF.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
 import '../objectBox/Utils/My_widgets.dart';
@@ -138,6 +139,9 @@ class _SignalementHomePageSupabaseState
                   SizedBox(width: 10),
                   ElevatedButton(
                     onPressed: () {
+                      setState(() {
+                        numeroRecherche = null;
+                      });
                       final numero = provider.normalizeAndValidateAlgerianPhone(
                           numeroController.text.trim());
 
@@ -200,11 +204,11 @@ class _SignalementHomePageSupabaseState
                     ),
                     SizedBox(height: 20),
                     provider.nombreSignalements(numeroRecherche!) == 0
-                        ? Text(
+                        ? SelectableText(
                             "Ce numéro de téléphone 0$numeroRecherche n'a jamais été signalé",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           )
-                        : Text(
+                        : SelectableText(
                             "Ce numéro de téléphone 0$numeroRecherche a été signalé ${provider.nombreSignalements(numeroRecherche!)} fois",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
@@ -290,7 +294,7 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
     super.dispose();
   }
 
-  // Retourne la couleur et le texte associé au degré de gravité
+  // Retourne la couleur associée au degré de gravité
   Color getColorForDegree(int degree) {
     switch (degree) {
       case 1:
@@ -308,33 +312,58 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
     }
   }
 
+  // Retourne le texte associé au degré de gravité
   String getTextForDegree(int degree) {
     switch (degree) {
       case 1:
-        return 'Faible Gravité';
+        return 'Ce numéro n\'a pas été signalé.';
       case 2:
-        return 'Modéré';
+        return 'Ce numéro présente un risque modéré.';
       case 3:
-        return 'Moyenne';
+        return 'Ce numéro présente un risque moyen.';
       case 4:
-        return 'Elevée';
+        return 'Ce numéro présente un risque élevé.';
       case 5:
-        return 'Très Elevée';
+        return 'Ce numéro présente un risque très élevé.';
       default:
-        return 'Inconnu';
+        return 'Risque inconnu.';
     }
   }
 
-  @override
+  // Retourne le chemin du fichier Lottie associé au degré de gravité
+  String getLottieFilePathForDegree(int degree) {
+    switch (degree) {
+      case 1:
+        return 'assets/lotties/1 (119).json';
+      case 2:
+        return 'assets/lotties/1 (120).json';
+      case 3:
+        return 'assets/lotties/1 (118).json';
+      case 4:
+        return 'assets/lotties/1 (122).json';
+      case 5:
+        return 'assets/lotties/1 (123).json';
+      default:
+        return 'assets/lotties/1 (124).json';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
+        SizedBox(
+          height: 100,
+          width: 100,
+          child: Lottie.asset(getLottieFilePathForDegree(widget.degree)),
+        ),
+        SelectableText(
           getTextForDegree(widget.degree),
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.bold,
+            fontSize: 30,
             color: getColorForDegree(widget.degree),
           ),
         ),
