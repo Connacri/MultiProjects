@@ -840,6 +840,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
                     contentPadding: EdgeInsets.all(15),
                   )
                 : InputDecoration(
+                    labelText: widget.labelText,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       borderSide: BorderSide.none,

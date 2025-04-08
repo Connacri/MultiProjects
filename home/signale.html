@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Signalement de Numéros</title>
+    <link href="styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Signalé un Numéros</h1>
+    <form id="signalementForm">
+        <div class="form-group">
+            <label for="numero">Numéro</label>
+            <input id="numero" name="numero" pattern="[0-9+ ]*" placeholder="Entrez le numéro"
+                   required
+                   type="text">
+        </div>
+        <div class="form-group">
+            <label for="motif">Motif</label>
+            <input id="motif" name="motif" placeholder="Entrez le motif" required type="text">
+        </div>
+        <div class="button-group">
+            <button onclick="ajouterSignalement()" type="button">Ajouter</button>
+            <button onclick="rechercherSignalement()" type="button">Rechercher</button>
+        </div>
+    </form>
+    <div id="resultat"></div>
+</div>
+<div id="snackbar">Le numéro a été signalé avec succès !</div>
+<script src="script.js"></script>
+</body>
+</html>

@@ -21,6 +21,7 @@ class _SignalementHomePageSupabaseState
   final numeroController = TextEditingController();
   final motifController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _showDetail = false;
 
   //final _numeroFieldKey = GlobalKey<FormFieldState>();
   String? numeroRecherche;
@@ -93,17 +94,37 @@ class _SignalementHomePageSupabaseState
                   resetOnClear: true,
                   isNumberPhone: true,
                 ),
-                AnimatedTextField(
-                  controller: motifController,
-                  labelText: 'Motif',
-                  validator: (value) {
-                    // if (value == null || value.isEmpty) {
-                    //   return 'Veuillez entrer un motif';
-                    // }
-                    // return null;
-                  },
-                  isNumberPhone: false,
-                ),
+                TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _showDetail = !_showDetail;
+                      });
+                    },
+                    child: Text(_showDetail ? "Ajouter Motif" : 'Reduire')),
+
+                // IconButton(
+                //   onPressed: () {
+                //     setState(() {
+                //       _showDetail = !_showDetail;
+                //     });
+                //   },
+                //   icon: Icon(_showDetail
+                //       ? Icons.keyboard_arrow_down
+                //       : Icons.keyboard_arrow_up),
+                // ),
+                _showDetail
+                    ? SizedBox.shrink()
+                    : AnimatedTextField(
+                        controller: motifController,
+                        labelText: 'Motif',
+                        validator: (value) {
+                          // if (value == null || value.isEmpty) {
+                          //   return 'Veuillez entrer un motif';
+                          // }
+                          // return null;
+                        },
+                        isNumberPhone: false,
+                      ),
                 SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
