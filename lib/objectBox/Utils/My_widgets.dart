@@ -722,6 +722,7 @@ class AnimatedTextField extends StatefulWidget {
   final FormFieldValidator<String>? validator;
   final GlobalKey<FormFieldState>? fieldKey;
   final bool resetOnClear;
+  final bool isNumberPhone;
 
   AnimatedTextField({
     required this.controller,
@@ -731,6 +732,7 @@ class AnimatedTextField extends StatefulWidget {
     this.validator,
     this.fieldKey,
     this.resetOnClear = false,
+    required this.isNumberPhone,
   });
 
   @override
@@ -741,6 +743,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+
   bool _isValid = false;
 
   @override
@@ -801,23 +804,55 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-      opacity: _animation,
-      child: TextFormField(
-        key: widget.fieldKey,
-        controller: widget.controller,
-        decoration: InputDecoration(
-          labelText: widget.labelText,
-          suffixIcon: widget.controller.text.isNotEmpty
-              ? _isValid
-                  ? Icon(Icons.check_circle, color: Colors.green)
-                  : Icon(Icons.error, color: Colors.red)
-              : null,
-        ),
-        keyboardType: widget.keyboardType,
-        inputFormatters: widget.inputFormatters,
-        validator: widget.validator,
-        onChanged: _validatePhoneNumber,
-      ),
-    );
+        opacity: _animation,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextFormField(
+            key: widget.fieldKey,
+            controller: widget.controller,
+            decoration: widget.isNumberPhone
+                ? InputDecoration(
+                    labelText: widget.labelText,
+                    prefixIcon: widget.controller.text.isNotEmpty
+                        ? _isValid
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : Icon(Icons.error, color: Colors.red)
+                        : null,
+                    suffixIcon: widget.controller.text.isNotEmpty
+                        ? Transform.scale(
+                            scale: 0.7,
+                            child: IconButton(
+                              icon: Icon(Icons.close),
+                              color: Colors.red,
+                              onPressed: () {
+                                setState(() {
+                                  widget.controller.clear();
+                                });
+                              },
+                            ),
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    contentPadding: EdgeInsets.all(15),
+                  )
+                : InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    contentPadding: EdgeInsets.all(15),
+                  ),
+            keyboardType: widget.keyboardType,
+            inputFormatters: widget.inputFormatters,
+            validator: widget.validator,
+            onChanged: _validatePhoneNumber,
+            textAlign: TextAlign.center,
+          ),
+        ));
   }
 }
