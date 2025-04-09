@@ -39,7 +39,9 @@ class _SignUpWidgetState extends State<SignUpWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    Size size = MediaQuery
+        .of(context)
+        .size;
     return Scaffold(
       backgroundColor: Colors.white,
       body: ListView(
@@ -74,7 +76,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                 fontFamily: 'Oswald'),
                           ),
                           Lottie.asset(
-                            'assets/lotties/27637-welcome.json',
+                            'assets/lotties/1 (111).json',
                             repeat: true,
                             // reverse: true,
                             animate: true,
@@ -113,10 +115,10 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       contentPadding: EdgeInsets.symmetric(
                                           horizontal: 15, vertical: 5),
                                       hintStyle:
-                                          TextStyle(color: Colors.black12),
+                                      TextStyle(color: Colors.black12),
                                     ),
                                     autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
+                                    AutovalidateMode.onUserInteraction,
                                     // validator: (email) =>
                                     //     email != null && !EmailValidator.validate(email)
                                     //         ? 'Entrer a Valide E-Mail'
@@ -139,14 +141,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       contentPadding: EdgeInsets.symmetric(
                                           horizontal: 15, vertical: 5),
                                       hintStyle:
-                                          TextStyle(color: Colors.black12),
+                                      TextStyle(color: Colors.black12),
                                     ),
                                     autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
+                                    AutovalidateMode.onUserInteraction,
                                     validator: (value) =>
-                                        value != null && value.length < 6
-                                            ? 'Entrer min 6 characteres.'
-                                            : null,
+                                    value != null && value.length < 6
+                                        ? 'Entrer min 6 characteres.'
+                                        : null,
                                     // onChanged : _password = value!,
                                     //   onEditingComplete :
                                   ),
@@ -169,13 +171,14 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       contentPadding: EdgeInsets.symmetric(
                                           horizontal: 15, vertical: 5),
                                       hintStyle:
-                                          TextStyle(color: Colors.black12),
+                                      TextStyle(color: Colors.black12),
                                     ),
                                     autovalidateMode:
-                                        AutovalidateMode.onUserInteraction,
-                                    validator: (value) => value !=
-                                            passwordController
-                                                .text //(value) => value != null && value.length < 6
+                                    AutovalidateMode.onUserInteraction,
+                                    validator: (value) =>
+                                    value !=
+                                        passwordController
+                                            .text //(value) => value != null && value.length < 6
                                         ? 'Mot de Passe de Confimation n\'est Pas le Même.'
                                         : null,
                                   ),
@@ -185,7 +188,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                         backgroundColor: Colors.black54,
                                         shape: RoundedRectangleBorder(
                                             borderRadius:
-                                                BorderRadius.circular(15)),
+                                            BorderRadius.circular(15)),
                                         elevation: 4.0,
                                         minimumSize: const Size.fromHeight(50)),
                                     icon: const Icon(
@@ -198,8 +201,10 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                       style: TextStyle(
                                           fontSize: 24, color: Colors.white),
                                     ),
-                                    onPressed: () => signUp().whenComplete(
-                                        () => Navigator.of(context).pop()),
+                                    onPressed: () =>
+                                        signUp().whenComplete(
+                                                () =>
+                                                Navigator.of(context).pop()),
                                   ),
                                 ],
                               ),
@@ -216,17 +221,18 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                   ),
                                   text: 'J\'ai Déja Un Compte ? ',
                                   children: [
-                                TextSpan(
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = widget.onClickedSignIn,
-                                    text: 'Entrer',
-                                    style: const TextStyle(
-                                        decoration: TextDecoration.underline,
-                                        color: Colors.blue,
-                                        fontFamily: 'Oswald',
-                                        //color: Colors.black54,
-                                        fontWeight: FontWeight.bold)),
-                              ])),
+                                    TextSpan(
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = widget.onClickedSignIn,
+                                        text: 'Entrer',
+                                        style: const TextStyle(
+                                            decoration: TextDecoration
+                                                .underline,
+                                            color: Colors.blue,
+                                            fontFamily: 'Oswald',
+                                            //color: Colors.black54,
+                                            fontWeight: FontWeight.bold)),
+                                  ])),
                           const SizedBox(
                             height: 12,
                           ),
@@ -240,9 +246,10 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                                 fontFamily: 'Oswald',
                               ),
                             ),
-                            onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) =>
+                            onTap: () =>
+                                Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>
                                         const reset_password())),
                           ),
                           const SizedBox(height: 24),
@@ -271,7 +278,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
 
     try {
       UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         password: passwordController.text.trim(),
         email: emailController.text.trim(),
       );
