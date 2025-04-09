@@ -1,0 +1,2 @@
+C:/Users/gzers/StudioProjects/kenzy/android/app/.cxx/Debug/d3b475be/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/gzers/StudioProjects/kenzy/android/app/.cxx/Debug/d3b475be/armeabi-v7a/CMakeFiles/rebuild_cache.dir
