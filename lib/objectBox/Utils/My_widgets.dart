@@ -15,6 +15,7 @@ import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../Oauth/MainPage.dart';
 import '../../checkit/home.dart';
 import '../../checkit/homeF.dart';
 import '../../checkit/providerF.dart';
@@ -707,6 +708,19 @@ class ReservationNavigationButtons extends StatelessWidget {
               ),
             ),
           ],
+        ),
+        SizedBox(
+          height: 20,
+        ),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (ctx) => MainSignal(),
+              ));
+            },
+            child: Text('MainSignal'),
+          ),
         ),
         SizedBox(height: 10),
       ],

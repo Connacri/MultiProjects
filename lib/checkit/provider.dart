@@ -26,13 +26,13 @@ class SignalementProvider with ChangeNotifier {
       final Map<dynamic, dynamic>? data = event.snapshot.value as Map?;
       _signalementsParNumero =
           (data ?? {}).map<String, List<Signalement>>((key, value) {
-        final signalements = (value as Map? ?? {})
-            .values
-            .whereType<Map<dynamic, dynamic>>()
-            .map(Signalement.fromJson)
-            .toList();
-        return MapEntry(key.toString(), signalements);
-      });
+            final signalements = (value as Map? ?? {})
+                .values
+                .whereType<Map<dynamic, dynamic>>()
+                .map(Signalement.fromJson)
+                .toList();
+            return MapEntry(key.toString(), signalements);
+          });
       notifyListeners();
     });
   }
@@ -81,7 +81,8 @@ class Signalement {
   });
 
   /// Convertir en JSON pour Firestore
-  Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() =>
+      {
         'user': user,
         'numero': numero,
         'description': description,
@@ -93,7 +94,7 @@ class Signalement {
 
   static Signalement fromJson(Map<dynamic, dynamic> json) {
     return Signalement(
-      user: json['user'],
+      user: json['user'] ?? '0',
       numero: json['numero'],
       description: json['description'] ?? '',
       signalePar: json['signalePar'],

@@ -1,16 +1,65 @@
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_in_app_messaging/firebase_in_app_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kenzy/checkit/provider.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-
-import '../Oauth/verifi_auth.dart';
+import '../Oauth/AuthPage.dart';
+import '../Oauth/MainPage.dart';
+import '../Oauth/Ogoogle/googleSignInProvider.dart';
 import '../objectBox/Utils/My_widgets.dart';
-import 'login.dart';
+
+final navigatorKey = GlobalKey<NavigatorState>();
+
+/// This is the main application widget.
+class MainSignal extends StatelessWidget {
+  MainSignal({Key? key}) : super(key: key);
+
+  static const String _title = 'Oran ';
+  final GoogleUser2 = FirebaseAuth.instance.currentUser;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  static FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+  static FirebaseInAppMessaging fiam = FirebaseInAppMessaging.instance;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return ChangeNotifierProvider(
+        create: (context) => googleSignInProvider(),
+        //lazy: true,
+        child: MaterialApp(
+          locale: const Locale('fr', 'CA'),
+
+          //scaffoldMessengerKey: Utils.messengerKey,
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: _title,
+          themeMode: ThemeMode.dark,
+          theme: ThemeData(
+            useMaterial3: true,
+            fontFamily: "Oswald",
+            colorScheme: ColorScheme.fromSwatch(
+                primarySwatch: Colors.lightBlue, backgroundColor: Colors.white),
+            appBarTheme: AppBarTheme(
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+              ),
+            ),
+          ),
+          home: // upload_random(),
+              //gantt_chart(),
+
+              MainPageAuth(),
+        ));
+  }
+}
 
 class SignalementHomePageSupabase extends StatefulWidget {
   @override
@@ -73,7 +122,17 @@ class _SignalementHomePageSupabaseState
     final provider = Provider.of<SignalementProviderSupabase>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Signalé un Numéro de Téléphone')),
+      appBar: AppBar(
+        title: Text('Signalé un Numéro'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -88,12 +147,44 @@ class _SignalementHomePageSupabaseState
                   width: 200,
                   child: Lottie.asset('assets/lotties/1 (32).json'),
                 ),
-                ElevatedButton(
-                    onPressed: () => Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (ctx) => MyAppAuth())),
-                    child: Text('LoginPage')),
+                // ElevatedButton(
+                //     onPressed: () => Navigator.of(context)
+                //         .push(MaterialPageRoute(builder: (ctx) => MyAppAuth())),
+                //     child: Text('LoginPage')),
+                //
+                // SizedBox(
+                //   height: 20,
+                // ),
+                // Padding(
+                //   padding: const EdgeInsets.all(28.0),
+                //   child: ElevatedButton.icon(
+                //     style: ElevatedButton.styleFrom(
+                //         backgroundColor: Colors.black54,
+                //         shape: RoundedRectangleBorder(
+                //             borderRadius: BorderRadius.circular(15)),
+                //         elevation: 4.0,
+                //         minimumSize: const Size.fromHeight(50)),
+                //     icon: Icon(
+                //       Icons.cancel,
+                //       color: Colors.red,
+                //     ),
+                //     label: const Text(
+                //       'Deconnexion',
+                //       style: TextStyle(fontSize: 24, color: Colors.white),
+                //     ),
+                //     onPressed: () async {
+                //       FirebaseAuth.instance.signOut();
+                //       final provider = Provider.of<googleSignInProvider>(
+                //           context,
+                //           listen: false);
+                //       await provider.logouta();
+                //       // Navigator.of(context).pop();
+                //       // Navigator.pop(context, true);
+                //     },
+                //   ),
+                // ),
                 SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
                 AnimatedTextField(
                   // fieldKey: _numeroFieldKey,
@@ -143,7 +234,6 @@ class _SignalementHomePageSupabaseState
                       });
                     },
                     child: Text(_showDetail ? "Ajouter Motif" : 'Reduire')),
-
                 // IconButton(
                 //   onPressed: () {
                 //     setState(() {
@@ -174,6 +264,16 @@ class _SignalementHomePageSupabaseState
                     ElevatedButton(
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user == null) {
+                            // Rediriger vers la page d'authentification
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => AuthPage()),
+                            );
+                            return;
+                          }
                           final numero =
                               provider.normalizeAndValidateAlgerianPhone(
                                   numeroController.text.trim());
