@@ -62,6 +62,7 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-2282149611905342~2957460195" />
+
     </application>
     <queries>
         <!-- If your app checks for SMS support -->

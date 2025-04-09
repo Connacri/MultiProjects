@@ -64,6 +64,7 @@ class _SignalementHomePageState extends State<SignalementHomePage> {
                           ? null
                           : descriptionController.text.trim(),
                       date: DateTime.now(),
+                      user: '',
                     );
                     await provider.ajouterSignalement(signalement);
                     numeroController.clear();

@@ -8,7 +8,9 @@ import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
+import '../Oauth/verifi_auth.dart';
 import '../objectBox/Utils/My_widgets.dart';
+import 'login.dart';
 
 class SignalementHomePageSupabase extends StatefulWidget {
   @override
@@ -21,7 +23,7 @@ class _SignalementHomePageSupabaseState
   final numeroController = TextEditingController();
   final motifController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool _showDetail = false;
+  bool _showDetail = true;
 
   //final _numeroFieldKey = GlobalKey<FormFieldState>();
   String? numeroRecherche;
@@ -51,12 +53,27 @@ class _SignalementHomePageSupabaseState
     );
   }
 
+  String selectedMotif = 'Fraude ou tentative de fraude';
+
+  final List<String> motifs = [
+    'Fraude ou tentative de fraude',
+    'Comportement abusif ou agressif',
+    'Retours excessifs ou abusifs',
+    'Non-paiement ou paiements en retard',
+    'Violation des conditions d\'utilisation',
+    'Vol à l\'étalage',
+    'Fausse réclamation ou plainte',
+    'Utilisation inappropriée des promotions',
+    'Comportement suspect',
+    'Non-respect des règles de sécurité',
+  ];
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SignalementProviderSupabase>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Numéros signalés')),
+      appBar: AppBar(title: Text('Signalé un Numéro de Téléphone')),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(12.0),
@@ -69,8 +86,12 @@ class _SignalementHomePageSupabaseState
                 SizedBox(
                   height: 200,
                   width: 200,
-                  child: Lottie.asset('assets/lotties/1 (29).json'),
+                  child: Lottie.asset('assets/lotties/1 (32).json'),
                 ),
+                ElevatedButton(
+                    onPressed: () => Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (ctx) => MyAppAuth())),
+                    child: Text('LoginPage')),
                 SizedBox(
                   height: 20,
                 ),
@@ -93,6 +114,27 @@ class _SignalementHomePageSupabaseState
                   },
                   resetOnClear: true,
                   isNumberPhone: true,
+                ),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(labelText: 'Motif'),
+                  value: selectedMotif,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      selectedMotif = newValue!;
+                    });
+                  },
+                  items: motifs.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez sélectionner un motif';
+                    }
+                    return null;
+                  },
                 ),
                 TextButton(
                     onPressed: () {
@@ -147,8 +189,9 @@ class _SignalementHomePageSupabaseState
                             signalePar: 'Utilisateur',
                             motif: motifController.text.trim(),
                             gravite: 1,
-                            description: '',
+                            description: selectedMotif,
                             date: DateTime.now(),
+                            user: '',
                           );
 
                           await provider.ajouterSignalement(signalement);
@@ -162,7 +205,9 @@ class _SignalementHomePageSupabaseState
                           // (Vous pouvez soit appeler directement resetIcon() ici, soit gérer cela via un listener)
                           // Par exemple, si AnimatedTextField expose une méthode resetIcon :
                           // animatedTextFieldKey.currentState?.resetIcon();
-
+                          setState(() {
+                            selectedMotif = motifs.first;
+                          });
                           setState(() {
                             numeroRecherche = numero;
                           });

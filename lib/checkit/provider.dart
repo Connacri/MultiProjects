@@ -62,6 +62,7 @@ class SignalementProvider with ChangeNotifier {
 
 /// Modèle de données pour un signalement
 class Signalement {
+  final String user;
   final String numero;
   final String? description;
   final String signalePar;
@@ -70,6 +71,7 @@ class Signalement {
   final DateTime date;
 
   Signalement({
+    required this.user,
     required this.numero,
     this.description,
     required this.signalePar,
@@ -80,6 +82,7 @@ class Signalement {
 
   /// Convertir en JSON pour Firestore
   Map<String, dynamic> toJson() => {
+        'user': user,
         'numero': numero,
         'description': description,
         'signalePar': signalePar,
@@ -90,6 +93,7 @@ class Signalement {
 
   static Signalement fromJson(Map<dynamic, dynamic> json) {
     return Signalement(
+      user: json['user'],
       numero: json['numero'],
       description: json['description'] ?? '',
       signalePar: json['signalePar'],
