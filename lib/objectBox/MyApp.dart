@@ -8,10 +8,6 @@ import 'package:kenzy/objectBox/pages/home_Carousel.dart';
 import 'package:kenzy/objectBox/tests/hotelScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'package:supabase_flutter/supabase_flutter.dart' as su;
-import '../checkit/home.dart';
-import '../checkit/homeF.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import '../main.dart';

@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kenzy/checkit/HomePage.dart';
 import 'package:provider/provider.dart';
-import '../checkit/homeF.dart';
 import 'Ogoogle/googleSignInProvider.dart';
 
 class CheckRole extends StatelessWidget {

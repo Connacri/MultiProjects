@@ -10,8 +10,6 @@ import 'package:kenzy/objectBox/tests/cruds.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../checkit/home.dart';
-import '../../checkit/homeF.dart';
 import '../Entity.dart';
 
 import '../MyProviders.dart';
