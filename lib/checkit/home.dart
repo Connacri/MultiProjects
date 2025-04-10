@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:kenzy/checkit/provider.dart';
 import 'package:provider/provider.dart';
 
+import 'Models.dart';
+
 /// Interface principale avec formulaire d'ajout et recherche
 class SignalementHomePage extends StatefulWidget {
   @override

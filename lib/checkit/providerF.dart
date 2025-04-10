@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:kenzy/checkit/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'Models.dart';
+
 class SignalementProviderSupabase with ChangeNotifier {
   final _client = Supabase.instance.client;
 
@@ -92,8 +94,11 @@ class SignalementProviderSupabase with ChangeNotifier {
     await chargerSignalements(); // recharge après ajout
   }
 
-  int nombreSignalements(String numero) {
-    return _signalementsParNumero[numero]?.length ?? 0;
+  Future<int> nombreSignalements(String numero) async {
+    final response =
+        await _client.from('signalements').select().eq('numero', numero);
+
+    return (response as List).length;
   }
 
   List<Signalement> getSignalements(String numero) {

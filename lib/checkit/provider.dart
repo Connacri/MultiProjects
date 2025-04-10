@@ -3,6 +3,8 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'Models.dart';
+
 final firebaseApp = Firebase.app();
 
 /// Provider pour gérer les signalements via Firebase Realtime Database
@@ -26,13 +28,13 @@ class SignalementProvider with ChangeNotifier {
       final Map<dynamic, dynamic>? data = event.snapshot.value as Map?;
       _signalementsParNumero =
           (data ?? {}).map<String, List<Signalement>>((key, value) {
-            final signalements = (value as Map? ?? {})
-                .values
-                .whereType<Map<dynamic, dynamic>>()
-                .map(Signalement.fromJson)
-                .toList();
-            return MapEntry(key.toString(), signalements);
-          });
+        final signalements = (value as Map? ?? {})
+            .values
+            .whereType<Map<dynamic, dynamic>>()
+            .map(Signalement.fromJson)
+            .toList();
+        return MapEntry(key.toString(), signalements);
+      });
       notifyListeners();
     });
   }
@@ -61,46 +63,3 @@ class SignalementProvider with ChangeNotifier {
 }
 
 /// Modèle de données pour un signalement
-class Signalement {
-  final String user;
-  final String numero;
-  final String? description;
-  final String signalePar;
-  final String motif;
-  final int gravite;
-  final DateTime date;
-
-  Signalement({
-    required this.user,
-    required this.numero,
-    this.description,
-    required this.signalePar,
-    required this.motif,
-    required this.gravite,
-    required this.date,
-  });
-
-  /// Convertir en JSON pour Firestore
-  Map<String, dynamic> toJson() =>
-      {
-        'user': user,
-        'numero': numero,
-        'description': description,
-        'signalePar': signalePar,
-        'motif': motif,
-        'gravite': gravite,
-        'date': date.toIso8601String(),
-      };
-
-  static Signalement fromJson(Map<dynamic, dynamic> json) {
-    return Signalement(
-      user: json['user'] ?? '0',
-      numero: json['numero'],
-      description: json['description'] ?? '',
-      signalePar: json['signalePar'],
-      motif: json['motif'],
-      gravite: json['gravite'],
-      date: DateTime.parse(json['date']),
-    );
-  }
-}

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:kenzy/checkit/HomePage.dart';
 import 'package:provider/provider.dart';
 import '../checkit/homeF.dart';
 import 'Ogoogle/googleSignInProvider.dart';
@@ -34,9 +35,9 @@ class CheckRole extends StatelessWidget {
           var userRole = data['role'];
           // Check user role
           if (userRole == "admin") {
-            return MainSignal(); // Normalement Tani Premium Page
+            return HomePage3(); // Normalement Tani Premium Page
           } else {
-            return MainSignal();
+            return HomePage3();
           }
         } else
           return Scaffold(

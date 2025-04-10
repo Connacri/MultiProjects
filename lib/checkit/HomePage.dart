@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 
 import '../objectBox/Utils/My_widgets.dart';
 import 'AuthProvider.dart';
+import 'Models.dart';
 
 class HomePage3 extends StatefulWidget {
   @override
@@ -84,6 +85,7 @@ class _HomePage3State extends State<HomePage3> {
   Widget build(BuildContext context) {
     final provider = Provider.of<SignalementProviderSupabase>(context);
     return Scaffold(
+      resizeToAvoidBottomInset: true, // important !
       appBar: AppBar(
         title: Text('Google Sign-In Demo'),
         actions: [
@@ -105,7 +107,7 @@ class _HomePage3State extends State<HomePage3> {
                 SizedBox(
                   height: 200,
                   width: 200,
-                  child: Lottie.asset('assets/lotties/1 (32).json'),
+                  child: Lottie.asset('assets/lotties/1 (128).json'),
                 ),
                 SizedBox(
                   height: 10,
@@ -125,8 +127,9 @@ class _HomePage3State extends State<HomePage3> {
                   isNumberPhone: true,
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(30.0),
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
                     decoration: InputDecoration(labelText: 'Motif'),
                     value: selectedMotif,
                     onChanged: (String? newValue) {
@@ -314,26 +317,44 @@ class _googleBtnState extends State<googleBtn> {
                   child: Padding(
                     padding: const EdgeInsets.all(15.0),
                     child: Column(
+                      //  mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'J\'ai Pas Encore un Compte'.toUpperCase(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              color: Colors.black45,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Oswald'),
+                        SizedBox(
+                          height: 200,
+                          width: 200,
+                          child: Lottie.asset('assets/lotties/google.json'),
                         ),
-                        Text(
-                          'Utilisant Ton Compte Google'.toUpperCase(),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              color: Colors.black45,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              fontFamily: 'Oswald'),
+                        SizedBox(
+                          height: 40,
                         ),
-                        const SizedBox(height: 10),
+                        FittedBox(
+                          child: Text(
+                            'Utilisant Ton Compte Google pour ce connecter\net te permettre de signaler des les numéros'
+                                .toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Oswald'),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        FittedBox(
+                          child: Text(
+                            'استخدام حسابك الخاص قوقل لتسجيل الدخول\nحتى تتمكن من الإبلاغ عن الأرقام'
+                                .toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                color: Colors.black45,
+                                fontSize: 25,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'ArbFONTS'),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
                         ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black54,
@@ -358,6 +379,7 @@ class _googleBtnState extends State<googleBtn> {
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text('Connecté en tant que ${_user!.displayName}'),
                   SizedBox(height: 20),
@@ -376,8 +398,8 @@ class _googleBtnState extends State<googleBtn> {
 }
 
 void _showSignalementDialog(BuildContext context, String numeroRecherche,
-    SignalementProviderSupabase provider) {
-  final nbSignalements = provider.nombreSignalements(numeroRecherche);
+    SignalementProviderSupabase provider) async {
+  final nbSignalements = await provider.nombreSignalements(numeroRecherche);
 
   showDialog(
     context: context,
@@ -430,37 +452,31 @@ void _showSignalementDialog(BuildContext context, String numeroRecherche,
               SelectableText(
                 nbSignalements == 0
                     ? "Ce numéro de téléphone\n0$numeroRecherche\nn'a jamais été signalé"
-                    : "Ce numéro de téléphone 0$numeroRecherche a été signalé $nbSignalements fois",
+                    : "Ce numéro de téléphone 0$numeroRecherche a été signalé",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              CircleAvatar(
+                child: Text(
+                  nbSignalements.toString(),
+                  style: TextStyle(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white70),
+                ),
+                maxRadius: 30,
+                minRadius: 30,
+                backgroundColor: getColorForSignalements(nbSignalements),
+              ),
+              Text(
+                "Fois",
               ),
               SizedBox(height: 10),
-
-              // Barre de danger animée
               DangerBarWithAnimation(degree: nbSignalements),
-
               SizedBox(height: 10),
-
-              // // Détails des signalements (optionnel)
-              // if (nbSignalements > 0)
-              //   ...provider.getSignalements(numeroRecherche).map((s) {
-              //     String operateur =
-              //         provider.detecterOperateur(s.numero.toString());
-              //     return ListTile(
-              //       title: Text("${s.signalePar} :${s.gravite}"),
-              //       subtitle: Column(
-              //         crossAxisAlignment: CrossAxisAlignment.start,
-              //         children: [
-              //           Text(s.description ?? 'Aucune description'),
-              //           Text(
-              //             '${s.date.day}/${s.date.month}/${s.date.year}',
-              //             style: TextStyle(fontSize: 12),
-              //           ),
-              //         ],
-              //       ),
-              //       trailing: Text("${s.gravite}"),
-              //     );
-              //   }).toList(),
             ],
           ),
         ),
@@ -514,23 +530,6 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
     super.dispose();
   }
 
-  // Retourne la couleur associée au degré de gravité
-  Color getColorForSignalements(int signalements) {
-    if (signalements == 0) {
-      return Colors.green;
-    } else if (signalements == 1) {
-      return Colors.lightGreen;
-    } else if (signalements == 2) {
-      return Colors.yellow;
-    } else if (signalements == 3 || signalements == 4) {
-      return Colors.orange;
-    } else if (signalements >= 5) {
-      return Colors.red;
-    } else {
-      return Colors.grey;
-    }
-  }
-
   // Retourne le texte associé au degré de gravité
 
   String getTextForSignalements(int signalements) {
@@ -553,17 +552,17 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
   String getLottieFilePathForDegree(int degree) {
     switch (degree) {
       case 1:
-        return 'assets/lotties/1 (119).json';
+        return 'assets/lotties/1 (7).json';
       case 2:
-        return 'assets/lotties/1 (120).json';
+        return 'assets/lotties/1 (27).json';
       case 3:
-        return 'assets/lotties/1 (118).json';
+        return 'assets/lotties/1 (71).json';
       case 4:
-        return 'assets/lotties/1 (122).json';
+        return 'assets/lotties/1 (124).json';
       case 5:
         return 'assets/lotties/1 (123).json';
       default:
-        return 'assets/lotties/1 (12).json';
+        return 'assets/lotties/1 (129).json';
     }
   }
 
@@ -582,11 +581,28 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
           textAlign: TextAlign.center,
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 30,
+            fontSize: 18,
             color: getColorForSignalements(widget.degree),
           ),
         ),
       ],
     );
+  }
+}
+
+// Retourne la couleur associée au degré de gravité
+Color getColorForSignalements(int signalements) {
+  if (signalements == 0) {
+    return Colors.green;
+  } else if (signalements == 1) {
+    return Colors.lightGreen;
+  } else if (signalements == 2) {
+    return Colors.yellow;
+  } else if (signalements == 3 || signalements == 4) {
+    return Colors.orange;
+  } else if (signalements >= 5) {
+    return Colors.red;
+  } else {
+    return Colors.grey;
   }
 }

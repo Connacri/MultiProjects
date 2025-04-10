@@ -1,12 +1,5 @@
-// Copyright 2013 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-// ignore_for_file: public_member_api_docs
-
 import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -14,15 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
-
-import '../../Oauth/MainPage.dart';
 import '../../checkit/HomePage.dart';
 import '../../checkit/home.dart';
-import '../../checkit/homeF.dart';
-import '../../checkit/main.dart';
 import '../../checkit/providerF.dart';
 import '../tests/hotelScreen.dart';
-import '../tests/hotelScreenFiable.dart';
 
 class MyApp_image_picker extends StatelessWidget {
   const MyApp_image_picker({super.key});
