@@ -16,8 +16,10 @@ import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../Oauth/MainPage.dart';
+import '../../checkit/HomePage.dart';
 import '../../checkit/home.dart';
 import '../../checkit/homeF.dart';
+import '../../checkit/main.dart';
 import '../../checkit/providerF.dart';
 import '../tests/hotelScreen.dart';
 import '../tests/hotelScreenFiable.dart';
@@ -646,82 +648,75 @@ class ReservationNavigationButtons extends StatelessWidget {
     return ListView(
       shrinkWrap: true,
       children: [
+        // Row(
+        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //   children: [
+        //      ElevatedButton(
+        //         onPressed: () {
+        //           Navigator.of(context).push(MaterialPageRoute(
+        //             builder: (ctx) => HotelReservationChart(
+        //               fromDate: DateTime(2024, 1, 1),
+        //               toDate: DateTime(2024, 12, 31),
+        //               roomNames: roomNumbers,
+        //               reservations: sampleReservations,
+        //             ),
+        //           ));
+        //         },
+        //         child: Text('Hotel'),
+        //       ),
+        //
+        //     SizedBox(width: 10),
+        //      ElevatedButton(
+        //         onPressed: () {
+        //           Navigator.of(context).push(MaterialPageRoute(
+        //             builder: (ctx) => CalendarTableWithDragging(
+        //               fromDate: DateTime.now(),
+        //               toDate: DateTime.now().add(Duration(days: 30)),
+        //               roomNames: roomNumbers,
+        //               reservations: sampleReservations,
+        //             ),
+        //           ));
+        //         },
+        //         child: Text('Hotel Fiable'),
+        //       ),
+        //
+        //   ],
+        // ),
+        // SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (ctx) => HotelReservationChart(
-                      fromDate: DateTime(2024, 1, 1),
-                      toDate: DateTime(2024, 12, 31),
-                      roomNames: roomNumbers,
-                      reservations: sampleReservations,
-                    ),
-                  ));
-                },
-                child: Text('Hotel'),
-              ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (ctx) => SignalementHomePage(),
+                ));
+              },
+              child: Text('checkitHome'),
             ),
             SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (ctx) => CalendarTableWithDragging(
-                      fromDate: DateTime.now(),
-                      toDate: DateTime.now().add(Duration(days: 30)),
-                      roomNames: roomNumbers,
-                      reservations: sampleReservations,
-                    ),
-                  ));
-                },
-                child: Text('Hotel Fiable'),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (ctx) => SignalementHomePage(),
-                  ));
-                },
-                child: Text('checkitHome'),
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (ctx) => SignalementHomePageSupabase(),
-                  ));
-                },
-                child: Text('checkitSupabase'),
-              ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (ctx) => HomePage3(),
+                ));
+              },
+              child: Text('HomePage3'),
             ),
           ],
         ),
         SizedBox(
           height: 20,
         ),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (ctx) => MainSignal(),
-              ));
-            },
-            child: Text('MainSignal'),
-          ),
-        ),
+        // ElevatedButton(
+        //   onPressed: () {
+        //     Navigator.of(context).push(MaterialPageRoute(
+        //       builder: (ctx) => MainSignal(),
+        //     ));
+        //   },
+        //   child: Text('MainSignal'),
+        // ),
+
         SizedBox(height: 10),
       ],
     );

@@ -34,12 +34,7 @@ class CheckRole extends StatelessWidget {
           var userRole = data['role'];
           // Check user role
           if (userRole == "admin") {
-            return Scaffold(
-              appBar: AppBar(
-                title: Text('admin page'),
-              ),
-              body: MainSignal(),
-            ); // Normalement Tani Premium Page
+            return MainSignal(); // Normalement Tani Premium Page
           } else {
             return MainSignal();
           }

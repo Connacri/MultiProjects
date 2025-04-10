@@ -3,12 +3,14 @@ import 'dart:ui';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:kenzy/Oauth/Ogoogle/googleSignInProvider.dart';
 
 class VerifyEmailPage extends StatefulWidget {
   const VerifyEmailPage({
     Key? key,
     // required this.email
   }) : super(key: key);
+
   //final String email;
   @override
   State<VerifyEmailPage> createState() => _VerifyEmailPageState();
@@ -76,6 +78,18 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
     Size size = MediaQuery.of(context).size;
     return isEmailVerified
         ? Scaffold(
+            appBar: AppBar(
+              actions: [
+                IconButton(
+                    onPressed: () async {
+                      await googleSignInProvider().logouta();
+                    },
+                    icon: Icon(
+                      Icons.logout,
+                      color: Colors.red,
+                    ))
+              ],
+            ),
             body: Center(
               child: Text('Profil verified'),
             ),

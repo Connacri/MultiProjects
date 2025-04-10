@@ -280,8 +280,8 @@ class _LoginWidgetState extends State<LoginWidget> {
                                         //  if (user != null) {
                                         provider.googleLogin().whenComplete(
                                               () => Navigator.of(context)
-                                                  .popUntil(
-                                                      (route) => route.isFirst),
+                                                  .popUntil((route) =>
+                                                      route.isCurrent),
                                             );
                                       },
                                     ), // Google
@@ -467,4 +467,72 @@ Future updateUserDoc(User userGoo) async {
       'lastActive': Timestamp.now(),
     },
   );
+}
+
+class googleButtonAuth extends StatelessWidget {
+  const googleButtonAuth({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              children: [
+                Text(
+                  'J\'ai Pas Encore un Compte'.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.black45,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Oswald'),
+                ),
+                Text(
+                  'Utilisant Ton Compte Google'.toUpperCase(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.black45,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Oswald'),
+                ),
+                const SizedBox(height: 10),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black54,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                      elevation: 4.0,
+                      minimumSize: const Size.fromHeight(50)),
+                  icon: Icon(
+                    FontAwesomeIcons.google,
+                    color: Colors.red,
+                  ),
+                  label: const Text(
+                    'Google',
+                    style: TextStyle(fontSize: 24, color: Colors.white),
+                  ),
+                  onPressed: () async {
+                    final provider = await Provider.of<googleSignInProvider>(
+                        context,
+                        listen: false);
+
+                    //  if (user != null) {
+                    provider.googleLogin().whenComplete(
+                          () => Navigator.of(context)
+                              .popUntil((route) => route.isCurrent),
+                        );
+                  },
+                ), // Google
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

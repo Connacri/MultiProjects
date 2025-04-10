@@ -1,106 +1,41 @@
 import 'dart:io';
-import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_in_app_messaging/firebase_in_app_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kenzy/checkit/provider.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-import '../Oauth/AuthPage.dart';
-import '../Oauth/MainPage.dart';
-import '../Oauth/Ogoogle/googleSignInProvider.dart';
-import '../Oauth/login.dart';
+
 import '../objectBox/Utils/My_widgets.dart';
+import 'AuthProvider.dart';
 
-final navigatorKey = GlobalKey<NavigatorState>();
-
-/// This is the main application widget.
-class MainSignal extends StatelessWidget {
-  MainSignal({Key? key}) : super(key: key);
-
-  static const String _title = 'Oran ';
-  final GoogleUser2 = FirebaseAuth.instance.currentUser;
-  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-
-  static FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-  static FirebaseInAppMessaging fiam = FirebaseInAppMessaging.instance;
-
+class HomePage3 extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return ChangeNotifierProvider(
-        create: (context) => googleSignInProvider(),
-        //lazy: true,
-        child: MaterialApp(
-          theme: ThemeData(
-            fontFamily: 'oswald',
-            brightness: Brightness.light,
-            primarySwatch: Colors.blue,
-            chipTheme: ChipThemeData(
-              backgroundColor: Colors.grey[300]!,
-              labelStyle: TextStyle(fontFamily: 'oswald'),
-            ),
-            textTheme: TextTheme(
-              bodyMedium: TextStyle(color: Colors.black),
-              // Texte par défaut en noir
-              bodyLarge: TextStyle(color: Colors.black),
-              // Texte plus grand en noir
-              bodySmall: TextStyle(color: Colors.black),
-              // Texte plus petit en noir
-              titleMedium: TextStyle(color: Colors.black),
-              // Titres en noir
-              titleLarge: TextStyle(color: Colors.black),
-              // Titres plus grands en noir
-              labelLarge: TextStyle(color: Colors.black), // Labels en noir
-            ),
-          ),
-          darkTheme: ThemeData(
-            fontFamily: 'oswald',
-            brightness: Brightness.dark,
-            primaryColor: Colors.blueGrey,
-            chipTheme: ChipThemeData(
-              backgroundColor: Colors.grey[800]!,
-              labelStyle: TextStyle(fontFamily: 'oswald'),
-            ),
-            textTheme: TextTheme(
-              bodyMedium: TextStyle(color: Colors.white),
-              // Texte en blanc pour le mode sombre
-              bodyLarge: TextStyle(color: Colors.white),
-              bodySmall: TextStyle(color: Colors.white),
-              titleMedium: TextStyle(color: Colors.white),
-              titleLarge: TextStyle(color: Colors.white),
-              labelLarge: TextStyle(color: Colors.white),
-            ),
-          ),
-          home: SignalementHomePageSupabase(),
-        ));
-  }
+  _HomePage3State createState() => _HomePage3State();
 }
 
-class SignalementHomePageSupabase extends StatefulWidget {
-  @override
-  State<SignalementHomePageSupabase> createState() =>
-      _SignalementHomePageSupabaseState();
-}
-
-class _SignalementHomePageSupabaseState
-    extends State<SignalementHomePageSupabase> {
+class _HomePage3State extends State<HomePage3> {
+  final AuthService _authService = AuthService();
+  User? _user;
   final numeroController = TextEditingController();
   final motifController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _showDetail = true;
-
-  //final _numeroFieldKey = GlobalKey<FormFieldState>();
   String? numeroRecherche;
 
   @override
   void initState() {
     super.initState();
+    _user = FirebaseAuth.instance.currentUser;
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      setState(() {
+        _user = user;
+      });
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SignalementProviderSupabase>(context, listen: false)
           .chargerSignalements();
@@ -138,30 +73,34 @@ class _SignalementHomePageSupabaseState
     'Non-respect des règles de sécurité',
   ];
 
+  void _handleSignOut() async {
+    await _authService.signOut();
+    setState(() {
+      _user = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SignalementProviderSupabase>(context);
-    final auth = Provider.of<googleSignInProvider>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Signalé un Numéro'),
+        title: Text('Google Sign-In Demo'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () {
-              FirebaseAuth.instance.signOut();
-            },
-          ),
+          if (_user != null)
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: _handleSignOut,
+            ),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: const EdgeInsets.all(8.0),
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
                   height: 200,
@@ -185,26 +124,29 @@ class _SignalementHomePageSupabaseState
                   resetOnClear: true,
                   isNumberPhone: true,
                 ),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: 'Motif'),
-                  value: selectedMotif,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedMotif = newValue!;
-                    });
-                  },
-                  items: motifs.map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez sélectionner un motif';
-                    }
-                    return null;
-                  },
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: DropdownButtonFormField<String>(
+                    decoration: InputDecoration(labelText: 'Motif'),
+                    value: selectedMotif,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedMotif = newValue!;
+                      });
+                    },
+                    items: motifs.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez sélectionner un motif';
+                      }
+                      return null;
+                    },
+                  ),
                 ),
                 TextButton(
                     onPressed: () {
@@ -232,18 +174,8 @@ class _SignalementHomePageSupabaseState
                   children: [
                     ElevatedButton(
                       onPressed: () async {
-                        if (auth.user != null) {
+                        if (_user != null) {
                           if (_formKey.currentState!.validate()) {
-                            final user = FirebaseAuth.instance.currentUser;
-                            if (user == null) {
-                              // Rediriger vers la page d'authentification
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => AuthPage()),
-                              );
-                              return;
-                            }
                             final numero =
                                 provider.normalizeAndValidateAlgerianPhone(
                                     numeroController.text.trim());
@@ -291,8 +223,8 @@ class _SignalementHomePageSupabaseState
                             );
                           }
                         } else {
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (ctx) => googleButtonAuth()));
+                          Navigator.of(context).push(
+                              MaterialPageRoute(builder: (ctx) => googleBtn()));
                         }
                       },
                       child: Text("Ajouter"),
@@ -331,109 +263,216 @@ class _SignalementHomePageSupabaseState
       ),
     );
   }
+}
 
-  void _showSignalementDialog(BuildContext context, String numeroRecherche,
-      SignalementProviderSupabase provider) {
-    final nbSignalements = provider.nombreSignalements(numeroRecherche);
+class googleBtn extends StatefulWidget {
+  @override
+  _googleBtnState createState() => _googleBtnState();
+}
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.all(20),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Logo opérateur
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: provider.getLogoOperateur(provider
-                                    .detecterOperateur(numeroRecherche)) ==
-                                null ||
-                            provider
-                                .getLogoOperateur(
-                                    provider.detecterOperateur(numeroRecherche))
-                                .isEmpty
-                        ? Container(
-                            color: Colors.grey[300],
-                            child: Icon(Icons.image_not_supported,
-                                color: Colors.grey[600]),
-                          )
-                        : Image(
-                            image: provider
-                                    .getLogoOperateur(provider
-                                        .detecterOperateur(numeroRecherche))
-                                    .startsWith('http')
-                                ? CachedNetworkImageProvider(
-                                    provider.getLogoOperateur(provider
-                                        .detecterOperateur(numeroRecherche)),
-                                    errorListener: (error) =>
-                                        debugPrint("Image error"),
-                                  )
-                                : FileImage(File(provider.getLogoOperateur(
-                                    provider.detecterOperateur(
-                                        numeroRecherche)))) as ImageProvider,
-                            fit: BoxFit.contain,
+class _googleBtnState extends State<googleBtn> {
+  final AuthService _authService = AuthService();
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = FirebaseAuth.instance.currentUser;
+  }
+
+  void _handleSignIn() async {
+    User? user = await _authService.signInWithGoogle();
+    setState(() {
+      _user = user;
+    });
+  }
+
+  void _handleSignOut() async {
+    await _authService.signOut();
+    setState(() {
+      _user = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Google Sign-In Demo'),
+        actions: [
+          if (_user != null)
+            IconButton(
+              icon: Icon(Icons.logout),
+              onPressed: _handleSignOut,
+            ),
+        ],
+      ),
+      body: Center(
+        child: _user == null
+            ? Center(
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Column(
+                      children: [
+                        Text(
+                          'J\'ai Pas Encore un Compte'.toUpperCase(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Colors.black45,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Oswald'),
+                        ),
+                        Text(
+                          'Utilisant Ton Compte Google'.toUpperCase(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              color: Colors.black45,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Oswald'),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black54,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15)),
+                              elevation: 4.0,
+                              minimumSize: const Size.fromHeight(50)),
+                          icon: Icon(
+                            FontAwesomeIcons.google,
+                            color: Colors.red,
                           ),
+                          label: const Text(
+                            'Google',
+                            style: TextStyle(fontSize: 24, color: Colors.white),
+                          ),
+                          onPressed: _handleSignIn,
+                        ), // Google
+                      ],
+                    ),
                   ),
                 ),
-                SizedBox(height: 10),
-
-                // Texte signalement
-                SelectableText(
-                  nbSignalements == 0
-                      ? "Ce numéro de téléphone\n0$numeroRecherche\nn'a jamais été signalé"
-                      : "Ce numéro de téléphone 0$numeroRecherche a été signalé $nbSignalements fois",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-                ),
-                SizedBox(height: 10),
-
-                // Barre de danger animée
-                Padding(
-                  padding: const EdgeInsets.all(18.0),
-                  child: DangerBarWithAnimation(degree: nbSignalements),
-                ),
-
-                SizedBox(height: 10),
-
-                // // Détails des signalements (optionnel)
-                // if (nbSignalements > 0)
-                //   ...provider.getSignalements(numeroRecherche).map((s) {
-                //     String operateur =
-                //         provider.detecterOperateur(s.numero.toString());
-                //     return ListTile(
-                //       title: Text("${s.signalePar} :${s.gravite}"),
-                //       subtitle: Column(
-                //         crossAxisAlignment: CrossAxisAlignment.start,
-                //         children: [
-                //           Text(s.description ?? 'Aucune description'),
-                //           Text(
-                //             '${s.date.day}/${s.date.month}/${s.date.year}',
-                //             style: TextStyle(fontSize: 12),
-                //           ),
-                //         ],
-                //       ),
-                //       trailing: Text("${s.gravite}"),
-                //     );
-                //   }).toList(),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text("Fermer"),
-            ),
-          ],
-        );
-      },
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Connecté en tant que ${_user!.displayName}'),
+                  SizedBox(height: 20),
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(_user!.photoURL ?? ''),
+                    radius: 40,
+                  ),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text('Retour'))
+                ],
+              ),
+      ),
     );
   }
+}
+
+void _showSignalementDialog(BuildContext context, String numeroRecherche,
+    SignalementProviderSupabase provider) {
+  final nbSignalements = provider.nombreSignalements(numeroRecherche);
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        contentPadding: EdgeInsets.all(20),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Logo opérateur
+              SizedBox(
+                width: 100,
+                height: 100,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: provider.getLogoOperateur(provider
+                                  .detecterOperateur(numeroRecherche)) ==
+                              null ||
+                          provider
+                              .getLogoOperateur(
+                                  provider.detecterOperateur(numeroRecherche))
+                              .isEmpty
+                      ? Container(
+                          color: Colors.grey[300],
+                          child: Icon(Icons.image_not_supported,
+                              color: Colors.grey[600]),
+                        )
+                      : Image(
+                          image: provider
+                                  .getLogoOperateur(provider
+                                      .detecterOperateur(numeroRecherche))
+                                  .startsWith('http')
+                              ? CachedNetworkImageProvider(
+                                  provider.getLogoOperateur(provider
+                                      .detecterOperateur(numeroRecherche)),
+                                  errorListener: (error) =>
+                                      debugPrint("Image error"),
+                                )
+                              : FileImage(File(provider.getLogoOperateur(
+                                  provider.detecterOperateur(
+                                      numeroRecherche)))) as ImageProvider,
+                          fit: BoxFit.contain,
+                        ),
+                ),
+              ),
+              SizedBox(height: 10),
+
+              // Texte signalement
+              SelectableText(
+                nbSignalements == 0
+                    ? "Ce numéro de téléphone\n0$numeroRecherche\nn'a jamais été signalé"
+                    : "Ce numéro de téléphone 0$numeroRecherche a été signalé $nbSignalements fois",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+              ),
+              SizedBox(height: 10),
+
+              // Barre de danger animée
+              DangerBarWithAnimation(degree: nbSignalements),
+
+              SizedBox(height: 10),
+
+              // // Détails des signalements (optionnel)
+              // if (nbSignalements > 0)
+              //   ...provider.getSignalements(numeroRecherche).map((s) {
+              //     String operateur =
+              //         provider.detecterOperateur(s.numero.toString());
+              //     return ListTile(
+              //       title: Text("${s.signalePar} :${s.gravite}"),
+              //       subtitle: Column(
+              //         crossAxisAlignment: CrossAxisAlignment.start,
+              //         children: [
+              //           Text(s.description ?? 'Aucune description'),
+              //           Text(
+              //             '${s.date.day}/${s.date.month}/${s.date.year}',
+              //             style: TextStyle(fontSize: 12),
+              //           ),
+              //         ],
+              //       ),
+              //       trailing: Text("${s.gravite}"),
+              //     );
+              //   }).toList(),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text("Fermer"),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 class DangerBarWithAnimation extends StatefulWidget {
