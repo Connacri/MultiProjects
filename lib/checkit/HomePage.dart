@@ -25,6 +25,7 @@ class _HomePage3State extends State<HomePage3> {
   final motifController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _showDetail = true;
+  bool _showSignalBtn = true;
   String? numeroRecherche;
 
   @override
@@ -86,98 +87,275 @@ class _HomePage3State extends State<HomePage3> {
     return Scaffold(
       resizeToAvoidBottomInset: true, // important !
       appBar: AppBar(
-        title: Text('Google Sign-In Demo'),
+        title: Text(
+          'Check-it',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.black45,
+            fontSize: 23,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
         actions: [
           if (_user != null)
             IconButton(
               icon: Icon(Icons.logout),
               onPressed: _handleSignOut,
             ),
+          _user != null
+              ? InkWell(
+                  onTap: () => Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (ctx) => googleBtn())),
+                  child: CircleAvatar(
+                    backgroundImage: NetworkImage(_user!.photoURL ?? ''),
+                    radius: 20, // Important : plus petit pour AppBar
+                  ),
+                )
+              : Icon(Icons.account_circle),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              children: [
-                SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: Lottie.asset('assets/lotties/1 (128).json'),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                AnimatedTextField(
-                  // fieldKey: _numeroFieldKey,
-                  controller: numeroController,
-                  labelText: 'Numéro',
-                  keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]')),
-                  ],
-                  resetOnClear: true,
-                  isNumberPhone: true,
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(30.0),
-                  child: DropdownButtonFormField<String>(
-                    isExpanded: true,
-                    decoration: InputDecoration(labelText: 'Motif'),
-                    value: selectedMotif,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedMotif = newValue!;
-                      });
-                    },
-                    items: motifs.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Veuillez sélectionner un motif';
-                      }
-                      return null;
-                    },
+          padding: //const EdgeInsets.all(8.0),
+              EdgeInsets.only(
+            left: 8,
+            right: 8,
+            bottom: MediaQuery.of(context).viewInsets.bottom +
+                10, // espace sous le clavier
+            top: 0,
+          ),
+          child: IntrinsicHeight(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  FittedBox(
+                    child: Text(
+                      'شكيت'.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.black45,
+                          fontSize: 25,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'ArbFONTS'),
+                    ),
                   ),
-                ),
-                TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _showDetail = !_showDetail;
-                      });
-                    },
-                    child: Text(_showDetail ? "Ajouter Motif" : 'Reduire')),
-                _showDetail
-                    ? SizedBox.shrink()
-                    : AnimatedTextField(
-                        controller: motifController,
-                        labelText: 'Motif',
-                        validator: (value) {
-                          // if (value == null || value.isEmpty) {
-                          //   return 'Veuillez entrer un motif';
-                          // }
-                          // return null;
-                        },
-                        isNumberPhone: false,
-                      ),
-                SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_user != null) {
-                          if (_formKey.currentState!.validate()) {
+                  SizedBox(
+                    height: 10,
+                  ),
+                  SizedBox(
+                    height: 200,
+                    width: 200,
+                    child: Lottie.asset('assets/lotties/1 (128).json'),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  AnimatedTextField(
+                    // fieldKey: _numeroFieldKey,
+                    controller: numeroController,
+                    labelText: 'Numéro',
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9+ ]')),
+                    ],
+                    resetOnClear: true,
+                    isNumberPhone: true,
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  _showSignalBtn
+                      ? SizedBox.shrink()
+                      : _showDetail
+                          ? Row(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: DropdownButtonFormField<String>(
+                                      isExpanded: true,
+                                      decoration: InputDecoration(
+                                        labelText: 'Motif',
+                                        alignLabelWithHint: true,
+                                        hintText: 'Entrez un texte long ici...',
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8.0),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        filled: true,
+                                        contentPadding: EdgeInsets.all(15),
+                                      ),
+                                      value: selectedMotif,
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          selectedMotif = newValue!;
+                                        });
+                                      },
+                                      items: motifs
+                                          .map<DropdownMenuItem<String>>(
+                                              (String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Veuillez sélectionner un motif';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showDetail = !_showDetail;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _showDetail ? FontAwesomeIcons.plus : null,
+                                    size: 17,
+                                  ),
+                                ),
+                                //child: Text(_showDetail ? "Ajouter Motif" : 'Reduire')),
+                              ],
+                            )
+                          : SizedBox.shrink(),
+                  _showSignalBtn
+                      ? SizedBox.shrink()
+                      : _showDetail
+                          ? SizedBox.shrink()
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: AnimatedLongTextField(
+                                    controller: motifController,
+                                    labelText: 'Motif',
+                                    validator: (value) {
+                                      // if (value == null || value.isEmpty) {
+                                      //   return 'Veuillez entrer un motif';
+                                      // }
+                                      // return null;
+                                    },
+                                    isNumberPhone: false,
+                                  ),
+                                  // AnimatedTextField(
+                                  //   controller: motifController,
+                                  //   labelText: 'Motif',
+                                  //   validator: (value) {
+                                  //     // if (value == null || value.isEmpty) {
+                                  //     //   return 'Veuillez entrer un motif';
+                                  //     // }
+                                  //     // return null;
+                                  //   },
+                                  //   isNumberPhone: false,
+                                  // ),
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showDetail = !_showDetail;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    FontAwesomeIcons.minus,
+                                    size: 17,
+                                  ),
+                                ),
+                              ],
+                            ),
+                  SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: _showSignalBtn
+                        ? MainAxisAlignment.center
+                        : MainAxisAlignment.spaceAround,
+                    children: [
+                      _showSignalBtn
+                          ? SizedBox.shrink()
+                          : ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.onPrimary,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
+                                ),
+                              ),
+                              onPressed: () async {
+                                if (_user != null) {
+                                  if (_formKey.currentState!.validate()) {
+                                    final numero = provider
+                                        .normalizeAndValidateAlgerianPhone(
+                                            numeroController.text.trim());
+
+                                    if (numero == null) {
+                                      _showErrorDialog(
+                                          "Le numéro de téléphone est invalide.");
+                                      return;
+                                    }
+
+                                    final signalement = Signalement(
+                                      numero: numero,
+                                      signalePar: 'Utilisateur',
+                                      motif: motifController.text.trim(),
+                                      gravite: 1,
+                                      description: selectedMotif,
+                                      date: DateTime.now(),
+                                      user: '',
+                                    );
+
+                                    await provider
+                                        .ajouterSignalement(signalement);
+
+                                    // Réinitialiser les champs
+                                    numeroController.clear();
+                                    motifController.clear();
+                                    //  _numeroFieldKey.currentState?.reset();
+
+                                    // Réinitialiser l'icône en appelant resetIcon()
+                                    // (Vous pouvez soit appeler directement resetIcon() ici, soit gérer cela via un listener)
+                                    // Par exemple, si AnimatedTextField expose une méthode resetIcon :
+                                    // animatedTextFieldKey.currentState?.resetIcon();
+                                    setState(() {
+                                      selectedMotif = motifs.first;
+                                      numeroRecherche = numero;
+                                      _showSignalBtn = !_showSignalBtn;
+                                    });
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'le Numéro 0$numero a bien été signalé'),
+                                        backgroundColor: Colors.green,
+                                        duration: Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                } else {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (ctx) => googleBtn()));
+                                }
+                              },
+                              label: Text("Signaler"),
+                              icon: Icon(
+                                Icons.add,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                      SizedBox(width: 10),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            setState(() {
+                              numeroRecherche = null;
+                            });
                             final numero =
                                 provider.normalizeAndValidateAlgerianPhone(
                                     numeroController.text.trim());
@@ -188,77 +366,26 @@ class _HomePage3State extends State<HomePage3> {
                               return;
                             }
 
-                            final signalement = Signalement(
-                              numero: numero,
-                              signalePar: 'Utilisateur',
-                              motif: motifController.text.trim(),
-                              gravite: 1,
-                              description: selectedMotif,
-                              date: DateTime.now(),
-                              user: '',
-                            );
-
-                            await provider.ajouterSignalement(signalement);
-
-                            // Réinitialiser les champs
-                            numeroController.clear();
-                            motifController.clear();
-                            //  _numeroFieldKey.currentState?.reset();
-
-                            // Réinitialiser l'icône en appelant resetIcon()
-                            // (Vous pouvez soit appeler directement resetIcon() ici, soit gérer cela via un listener)
-                            // Par exemple, si AnimatedTextField expose une méthode resetIcon :
-                            // animatedTextFieldKey.currentState?.resetIcon();
-                            setState(() {
-                              selectedMotif = motifs.first;
-                            });
                             setState(() {
                               numeroRecherche = numero;
                             });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    'le Numéro 0$numero a bien été signalé'),
-                                backgroundColor: Colors.green,
-                                duration: Duration(seconds: 3),
-                              ),
-                            );
-                          }
-                        } else {
-                          Navigator.of(context).push(
-                              MaterialPageRoute(builder: (ctx) => googleBtn()));
-                        }
-                      },
-                      child: Text("Ajouter"),
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          numeroRecherche = null;
-                        });
-                        final numero =
-                            provider.normalizeAndValidateAlgerianPhone(
-                                numeroController.text.trim());
-
-                        if (numero == null) {
-                          _showErrorDialog(
-                              "Le numéro de téléphone est invalide.");
-                          return;
-                        }
-
-                        setState(() {
-                          numeroRecherche = numero;
-                        });
-                        _showSignalementDialog(
-                            context, numeroRecherche!, provider);
-                      },
-                      child: Text("Rechercher"),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-              ],
+                            _showSignalementDialog(
+                                context, numeroRecherche!, provider);
+                            setState(() {
+                              _showSignalBtn = false;
+                            });
+                          },
+                          label: Text("Rechercher"),
+                          icon: Icon(
+                            Icons.search,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),
@@ -319,8 +446,8 @@ class _googleBtnState extends State<googleBtn> {
                       //  mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(
-                          height: 200,
-                          width: 200,
+                          height: 150,
+                          width: 150,
                           child: Lottie.asset('assets/lotties/google.json'),
                         ),
                         SizedBox(
@@ -382,10 +509,15 @@ class _googleBtnState extends State<googleBtn> {
                 children: [
                   Text('Connecté en tant que ${_user!.displayName}'),
                   SizedBox(height: 20),
+                  Text('Connecté en tant que ${_user!.email}'),
+                  SizedBox(height: 20),
+                  Text('Connecté en tant que ${_user!.phoneNumber}'),
+                  SizedBox(height: 20),
                   CircleAvatar(
                     backgroundImage: NetworkImage(_user!.photoURL ?? ''),
                     radius: 40,
                   ),
+                  SizedBox(height: 20),
                   ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text('Retour'))
@@ -450,30 +582,36 @@ void _showSignalementDialog(BuildContext context, String numeroRecherche,
               // Texte signalement
               SelectableText(
                 nbSignalements == 0
-                    ? "Ce numéro de téléphone\n0$numeroRecherche\nn'a jamais été signalé"
+                    ? "Utilisateur\n0$numeroRecherche\n"
                     : "Ce numéro de téléphone 0$numeroRecherche a été signalé",
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
               ),
-              SizedBox(
-                height: 10,
-              ),
-              CircleAvatar(
-                child: Text(
-                  nbSignalements.toString(),
-                  style: TextStyle(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white70),
-                ),
-                maxRadius: 30,
-                minRadius: 30,
-                backgroundColor: getColorForSignalements(nbSignalements),
-              ),
-              Text(
-                "Fois",
-              ),
-              SizedBox(height: 10),
+              nbSignalements == 0
+                  ? SizedBox.shrink()
+                  : SizedBox(
+                      height: 10,
+                    ),
+              nbSignalements == 0
+                  ? SizedBox.shrink()
+                  : CircleAvatar(
+                      child: Text(
+                        nbSignalements.toString(),
+                        style: TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white70),
+                      ),
+                      maxRadius: 30,
+                      minRadius: 30,
+                      backgroundColor: getColorForSignalements(nbSignalements),
+                    ),
+              nbSignalements == 0
+                  ? SizedBox.shrink()
+                  : Text(
+                      "Fois",
+                    ),
+              nbSignalements == 0 ? SizedBox.shrink() : SizedBox(height: 10),
               DangerBarWithAnimation(degree: nbSignalements),
               SizedBox(height: 10),
             ],
@@ -548,20 +686,19 @@ class _DangerBarWithAnimationState extends State<DangerBarWithAnimation>
   }
 
   // Retourne le chemin du fichier Lottie associé au degré de gravité
-  String getLottieFilePathForDegree(int degree) {
-    switch (degree) {
-      case 1:
-        return 'assets/lotties/1 (7).json';
-      case 2:
-        return 'assets/lotties/1 (27).json';
-      case 3:
-        return 'assets/lotties/1 (71).json';
-      case 4:
-        return 'assets/lotties/1 (124).json';
-      case 5:
-        return 'assets/lotties/1 (123).json';
-      default:
-        return 'assets/lotties/1 (129).json';
+  String getLottieFilePathForDegree(int signalements) {
+    if (signalements == 0) {
+      return 'assets/lotties/1 (7).json';
+    } else if (signalements == 1) {
+      return 'assets/lotties/1 (27).json';
+    } else if (signalements == 2) {
+      return 'assets/lotties/1 (71).json';
+    } else if (signalements == 3 || signalements == 4) {
+      return 'assets/lotties/1 (124).json';
+    } else if (signalements >= 5) {
+      return 'assets/lotties/1 (123).json';
+    } else {
+      return 'assets/lotties/1 (129).json';
     }
   }
 

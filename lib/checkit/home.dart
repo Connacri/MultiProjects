@@ -5,12 +5,13 @@ import 'package:provider/provider.dart';
 import 'Models.dart';
 
 /// Interface principale avec formulaire d'ajout et recherche
-class SignalementHomePage extends StatefulWidget {
+class SignalHomePage_Firebase extends StatefulWidget {
   @override
-  State<SignalementHomePage> createState() => _SignalementHomePageState();
+  State<SignalHomePage_Firebase> createState() =>
+      _SignalHomePage_FirebaseState();
 }
 
-class _SignalementHomePageState extends State<SignalementHomePage> {
+class _SignalHomePage_FirebaseState extends State<SignalHomePage_Firebase> {
   final numeroController = TextEditingController();
   final utilisateurController = TextEditingController();
   final descriptionController = TextEditingController();

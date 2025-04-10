@@ -8,6 +8,7 @@ import 'package:kenzy/objectBox/pages/home_Carousel.dart';
 import 'package:kenzy/objectBox/tests/hotelScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../checkit/HomePage.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import '../main.dart';
@@ -144,10 +145,11 @@ class MyApp9 extends StatelessWidget {
 
           //darkTheme: ThemeData.dark(),
           // home: Scaffold(body: FactureList()),
-          home: /*showPlatform*/ adaptiveHome(
-            objectBox: objectBox,
-          ),
+          /// hada houwa tali         // home: /*showPlatform*/ adaptiveHome(
+          //   objectBox: objectBox,
+          // ),
           //   home: FacturationPageUI(),
+          home: HomePage3(),
         );
       }),
     );
