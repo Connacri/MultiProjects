@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 // import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -61,7 +62,8 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 Future<void> main() async {
   // Initialisation de Flutter
   WidgetsFlutterBinding.ensureInitialized();
-
+  MobileAds.instance.initialize();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   // Initialisation de Supabase (si async)
   await initializeSupabase();
 
@@ -377,4 +379,10 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     super.dispose();
   }
+}
+
+// Handler pour les messages en arrière-plan
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Message reçu en arrière-plan : ${message.messageId}");
 }

@@ -1,10 +1,14 @@
 import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:kenzy/checkit/admobHelper.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +31,10 @@ class _HomePage3State extends State<HomePage3> {
   bool _showDetail = true;
   bool _showSignalBtn = true;
   String? numeroRecherche;
+  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  BannerAd? _bannerAd;
+
+  InterstitialAd? _interstitialAd;
 
   @override
   void initState() {
@@ -41,6 +49,70 @@ class _HomePage3State extends State<HomePage3> {
       Provider.of<SignalementProviderSupabase>(context, listen: false)
           .chargerSignalements();
     });
+    if (Platform.isAndroid)
+      BannerAd(
+        adUnitId: AdHelper.bannerAdUnitId,
+        request: AdRequest(),
+        size: AdSize.banner,
+        listener: BannerAdListener(onAdLoaded: (ad) {
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        }, onAdFailedToLoad: (ad, err) {
+          print('Failure to load _adBanner ${err.message}');
+          ad.dispose();
+        }),
+      )..load();
+    if (Platform.isAndroid)
+      InterstitialAd.load(
+          adUnitId: AdHelper.getInterstatitialAdUnitId,
+          request: AdRequest(),
+          adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
+            ad.fullScreenContentCallback = FullScreenContentCallback(
+                onAdDismissedFullScreenContent: (ad) {});
+            setState(() {
+              _interstitialAd = ad;
+            });
+          }, onAdFailedToLoad: (err) {
+            print('Failure to load Interstatitial ad ${err.message}');
+          }));
+    if (Platform.isAndroid) _interstitialAd?.show();
+    _initializeFCM();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Affichez l'annonce dès que l'application se charge
+    if (_interstitialAd != null) {
+      _interstitialAd!.show();
+    }
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    _interstitialAd?.dispose();
+
+    super.dispose();
+  }
+
+  void _initializeFCM() async {
+    await _messaging.requestPermission();
+    await _messaging.subscribeToTopic('checkit_alerts');
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Message reçu : ${message.notification?.title}');
+      // Gère le message reçu
+    });
+
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  Future<void> _firebaseMessagingBackgroundHandler(
+      RemoteMessage message) async {
+    await Firebase.initializeApp();
+    print('Message en arrière-plan : ${message.messageId}');
   }
 
   void _showErrorDialog(String message) {
@@ -72,6 +144,20 @@ class _HomePage3State extends State<HomePage3> {
     'Utilisation inappropriée des promotions',
     'Comportement suspect',
     'Non-respect des règles de sécurité',
+    'Refus de réception de la commande',
+    'Comportement suspect',
+    'Retard dans le paiement',
+    'Utilisation de moyens de paiement frauduleux',
+    'Mauvaise foi lors de la réclamation',
+    'Non-respect des conditions de livraison',
+    'Abus de retour ou d\'échange',
+    'Demande de remboursement injustifiée',
+    'Utilisation de documents falsifiés',
+    'Non-remise de la marchandise à la bonne personne',
+    'Tentative de fraude sur les produits',
+    'Modifications fréquentes des informations de commande',
+    'Comportement menaçant',
+    'Ignorance des consignes de sécurité',
   ];
 
   void _handleSignOut() async {
@@ -108,10 +194,13 @@ class _HomePage3State extends State<HomePage3> {
                       .push(MaterialPageRoute(builder: (ctx) => googleBtn())),
                   child: CircleAvatar(
                     backgroundImage: NetworkImage(_user!.photoURL ?? ''),
-                    radius: 20, // Important : plus petit pour AppBar
+                    radius: 15, // Important : plus petit pour AppBar
                   ),
                 )
               : Icon(Icons.account_circle),
+          SizedBox(
+            width: 14,
+          )
         ],
       ),
       body: SingleChildScrollView(
@@ -120,8 +209,7 @@ class _HomePage3State extends State<HomePage3> {
               EdgeInsets.only(
             left: 8,
             right: 8,
-            bottom: MediaQuery.of(context).viewInsets.bottom +
-                10, // espace sous le clavier
+            bottom: MediaQuery.of(context).viewInsets.bottom + 10,
             top: 0,
           ),
           child: IntrinsicHeight(
@@ -384,6 +472,12 @@ class _HomePage3State extends State<HomePage3> {
                     ],
                   ),
                   SizedBox(height: 16),
+                  if (_bannerAd != null)
+                    Container(
+                      width: _bannerAd!.size.width.toDouble(),
+                      height: _bannerAd!.size.height.toDouble(),
+                      child: AdWidget(ad: _bannerAd!),
+                    )
                 ],
               ),
             ),
