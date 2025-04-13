@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -15,9 +14,11 @@ import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 
+import '../MyListLotties.dart';
 import '../objectBox/Utils/My_widgets.dart';
 import 'AuthProvider.dart';
 import 'Models.dart';
+import 'admob/main.dart';
 
 class HomePage3 extends StatefulWidget {
   @override
@@ -84,6 +85,15 @@ class _HomePage3State extends State<HomePage3> {
     _loadBannerAd();
     _loadInterstitialAd();
     _initializeFCM();
+    numeroController.addListener(_handleTextChange);
+  }
+
+  void _handleTextChange() {
+    if (numeroController.text.isEmpty) {
+      setState(() {
+        _showSignalBtn = true;
+      });
+    }
   }
 
   Future<void> _loadBannerAd() async {
@@ -147,7 +157,7 @@ class _HomePage3State extends State<HomePage3> {
   void dispose() {
     _bannerAd?.dispose();
     _interstitialAd?.dispose();
-
+    numeroController.removeListener(_handleTextChange);
     super.dispose();
   }
 
@@ -173,12 +183,21 @@ class _HomePage3State extends State<HomePage3> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Center(child: Text('Erreur')),
-        content: FittedBox(
+        title: Center(
             child: Text(
-          message,
-          textAlign: TextAlign.center,
+          'Erreur',
+          style: TextStyle(
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).primaryColor),
         )),
+        content: Padding(
+          padding: const EdgeInsets.all(18.0),
+          child: FittedBox(
+              child: Text(
+            message,
+            textAlign: TextAlign.center,
+          )),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -264,14 +283,15 @@ class _HomePage3State extends State<HomePage3> {
           ),
         ),
         actions: [
+          IconButton.outlined(
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (ctx) => LottieListPage())),
+              icon: Icon(Icons.animation)),
           if (_user != null)
             IconButton(
               icon: Icon(Icons.logout),
               onPressed: _handleSignOut,
             ),
-          SizedBox(
-            width: 14,
-          )
         ],
       ),
       body: SingleChildScrollView(
@@ -322,6 +342,12 @@ class _HomePage3State extends State<HomePage3> {
                     ],
                     resetOnClear: true,
                     isNumberPhone: true,
+                    onTextCleared: () {
+                      setState(() {
+                        _showSignalBtn =
+                            true; // Ceci sera appelé quand le champ est vidé
+                      });
+                    },
                   ),
                   SizedBox(
                     height: 10,
@@ -391,6 +417,7 @@ class _HomePage3State extends State<HomePage3> {
                       : _showDetail
                           ? SizedBox.shrink()
                           : Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: AnimatedLongTextField(
@@ -429,7 +456,7 @@ class _HomePage3State extends State<HomePage3> {
                                 ),
                               ],
                             ),
-                  SizedBox(height: 30),
+                  _showSignalBtn ? SizedBox.shrink() : SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: _showSignalBtn
                         ? MainAxisAlignment.center
@@ -464,6 +491,8 @@ class _HomePage3State extends State<HomePage3> {
                                     final alreadyReported =
                                         await provider.checkIfAlreadyReported(
                                             numero, _user!.uid);
+                                    print(numero);
+                                    print(_user!.uid);
 
                                     if (alreadyReported) {
                                       _showErrorDialog(
@@ -473,7 +502,7 @@ class _HomePage3State extends State<HomePage3> {
 
                                     final signalement = Signalement(
                                       numero: numero,
-                                      signalePar: _user!.uid,
+                                      signalePar: _user!.displayName!,
                                       motif: motifController.text.trim(),
                                       gravite: 1,
                                       description: selectedMotif,
@@ -556,12 +585,24 @@ class _HomePage3State extends State<HomePage3> {
                     ],
                   ),
                   SizedBox(height: 16),
+                  Spacer(),
                   if (_bannerAd != null)
-                    Container(
-                      width: _bannerAd!.size.width.toDouble(),
-                      height: _bannerAd!.size.height.toDouble(),
-                      child: AdWidget(ad: _bannerAd!),
-                    )
+                    Expanded(
+                      child: Container(
+                        width: _bannerAd!.size.width.toDouble(),
+                        height: _bannerAd!.size.height.toDouble(),
+                        child: AdWidget(ad: _bannerAd!),
+                      ),
+                    ),
+                  InkWell(
+                    onTap: () => Navigator.of(context)
+                        .push(MaterialPageRoute(builder: (ctx) => MyApp000())),
+                    child: SizedBox(
+                      height: 200,
+                      width: 200,
+                      child: Lottie.asset('assets/lotties/1 (26).json'),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -655,26 +696,6 @@ class _googleBtnState extends State<googleBtn> {
     }
   }
 
-  // void _handleSignIn() async {
-  //   setState(() => isLoading = true);
-  //
-  //   try {
-  //     User? user = await _authService.signInWithGoogle();
-  //     setState(() {
-  //       _user = user;
-  //       isLoading = false;
-  //     });
-  //   } catch (e) {
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //     print('Erreur d\'authentification: $e');
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Erreur lors de la connexion : $e')),
-  //     );
-  //   }
-  // }
-// Dans la méthode de connexion
   Future<void> _handleSignIn() async {
     setState(() => isLoading = true);
 
@@ -700,9 +721,12 @@ class _googleBtnState extends State<googleBtn> {
     setState(() => isSigningOut = true);
 
     try {
-      await _authService.signOut();
+      // On attend que les deux futures se terminent : la déconnexion + le délai
+      await Future.wait([
+        _authService.signOut(),
+        Future.delayed(const Duration(seconds: 2)), // 👈 délai imposé
+      ]);
 
-      // Rafraîchir l'UI après déconnexion
       setState(() {
         _user = null;
         _reportedNumbers.clear();
@@ -710,7 +734,7 @@ class _googleBtnState extends State<googleBtn> {
     } catch (e) {
       print('Erreur déconnexion: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la déconnexion')),
+        const SnackBar(content: Text('Erreur lors de la déconnexion')),
       );
     } finally {
       setState(() => isSigningOut = false);
@@ -724,18 +748,6 @@ class _googleBtnState extends State<googleBtn> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Check-it Profil'),
-        actions: [
-          if (_user != null)
-            IconButton(
-              icon: isSigningOut
-                  ? CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    )
-                  : Icon(Icons.logout),
-              onPressed: isSigningOut ? null : _handleSignOut,
-            ),
-        ],
       ),
       body: Center(
         child: isLoading
@@ -819,53 +831,99 @@ class _googleBtnState extends State<googleBtn> {
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        SizedBox(height: 20),
-        CircleAvatar(
-          backgroundImage: NetworkImage(_user!.photoURL ?? ''),
-          radius: 40,
-        ),
-        SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            'Connecté en tant que\n${_user!.displayName}',
-            textAlign: TextAlign.center,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Text(
-          '${_user!.email}',
-          style: TextStyle(
-            fontSize: 16,
-          ),
-        ),
-        ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
+          padding: const EdgeInsets.all(18.0),
+          child: Card(
+            elevation: 4,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 45,
+                      backgroundImage: _user?.photoURL != null
+                          ? NetworkImage(_user!.photoURL!)
+                          : AssetImage('assets/images/default_avatar.png')
+                              as ImageProvider,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    _user?.displayName ?? 'Utilisateur',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    _user?.email ?? '',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: _handleSignOut,
+                      icon: Icon(
+                        Icons.logout,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      label: Text('Se déconnecter'),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  TextButton(
+                    onPressed: () => _showDeleteAccountConfirmation(context),
+                    child: const Text(
+                      'Supprimer définitivement mon compte',
+                      style: TextStyle(
+                        color: Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            onPressed: _handleSignOut,
-            label: Text(
-              'SignOut',
-              overflow: TextOverflow.ellipsis,
-            ),
-            icon: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Icon(
-                Icons.logout,
-                color:
-                    Theme.of(context).colorScheme.onPrimary, // Force la couleur
-              ),
-            )),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
           child: Divider(),
         ),
-        _buildReportedNumbersList(signalementProvider),
+        _reportedNumbers.length == 0
+            ? Expanded(
+                child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30),
+                child: Lottie.asset('assets/lotties/1 (123).json'),
+              ))
+            : _buildReportedNumbersList(signalementProvider),
       ],
     );
   }
@@ -881,17 +939,20 @@ class _googleBtnState extends State<googleBtn> {
           return false;
         },
         child: Padding(
-          padding: const EdgeInsets.only(left: 20),
+          padding: const EdgeInsets.only(left: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                'Les Numeros que j\'ai déja signalé',
-                textAlign: TextAlign.left,
-                style: TextStyle(
-                  fontSize: 16,
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Signalements récents',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ),
+              SizedBox(height: 8),
               _reportedNumbers.length == 0
                   ? SizedBox.shrink()
                   : Padding(
@@ -922,43 +983,61 @@ class _googleBtnState extends State<googleBtn> {
                     final nbSignalements = signalementProvider
                         .nombreSignalements(reportedNumber['numero']);
                     print(nbSignalements);
-                    return ListTile(
-                      leading: FutureBuilder<int>(
-                        future: signalementProvider
-                            .nombreSignalements(reportedNumber['numero']),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return CircleAvatar(
-                                child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: const CircularProgressIndicator(),
-                            ));
-                          }
-                          return CircleAvatar(
-                            child: Text(
-                              snapshot.hasData ? snapshot.data.toString() : '0',
+                    return Material(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: ListTile(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          tileColor: Colors.deepPurple.shade50,
+                          dense: true,
+                          leading: FutureBuilder<int>(
+                            future: signalementProvider
+                                .nombreSignalements(reportedNumber['numero']),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return CircleAvatar(
+                                    child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: const CircularProgressIndicator(),
+                                ));
+                              }
+                              return CircleAvatar(
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                child: Text(
+                                    snapshot.hasData
+                                        ? snapshot.data.toString()
+                                        : '0',
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                    )),
+                              );
+                            },
+                          ),
+                          title: Text('0${reportedNumber['numero']}'),
+                          subtitle: Text(
+                            reportedNumber['date'] != null
+                                ? DateFormat('dd/MM/yyyy HH:mm').format(
+                                    DateTime.parse(reportedNumber['date']!)
+                                        .toLocal())
+                                : 'Date inconnue',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              size: 23,
+                              color: Colors.red,
                             ),
-                          );
-                        },
-                      ),
-                      title: Text('0${reportedNumber['numero']}'),
-                      subtitle: Text(
-                        reportedNumber['date'] != null
-                            ? DateFormat('dd/MM/yyyy HH:mm').format(
-                                DateTime.parse(reportedNumber['date']!)
-                                    .toLocal())
-                            : 'Date inconnue',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(
-                          Icons.delete,
-                          size: 22,
-                          color: Colors.red,
+                            onPressed: () =>
+                                _deleteReportedNumber(reportedNumber['numero']),
+                          ),
                         ),
-                        onPressed: () =>
-                            _deleteReportedNumber(reportedNumber['numero']),
                       ),
                     );
                   },
@@ -980,6 +1059,50 @@ class _googleBtnState extends State<googleBtn> {
         _loadReportedNumbers(); // Recharge les données quand l'utilisateur se connecte
       }
     });
+  }
+
+  void _showDeleteAccountConfirmation(BuildContext context) {
+    final scaffoldContext = context;
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmation requise'),
+        content: const Text(
+          'Cette action supprimera votre compte et tous vos signalements de façon irréversible.\n'
+          'Êtes-vous absolument sûr ?',
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Annuler'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          TextButton(
+            child: const Text('Confirmer'),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+
+              final success = await _authService.deleteUserAccountPermanently();
+
+              if (mounted) {
+                if (success) {
+                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                      SnackBar(content: Text('Compte supprimé avec succès')));
+
+                  Navigator.pushAndRemoveUntil(
+                    scaffoldContext,
+                    MaterialPageRoute(builder: (_) => HomePage3()),
+                    (route) => false,
+                  );
+                } else {
+                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+                      SnackBar(content: Text('Échec de la suppression')));
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 

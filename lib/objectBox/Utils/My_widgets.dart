@@ -720,6 +720,7 @@ class AnimatedTextField extends StatefulWidget {
   final GlobalKey<FormFieldState>? fieldKey;
   final bool resetOnClear;
   final bool isNumberPhone;
+  final VoidCallback? onTextCleared;
 
   AnimatedTextField({
     required this.controller,
@@ -730,6 +731,7 @@ class AnimatedTextField extends StatefulWidget {
     this.fieldKey,
     this.resetOnClear = false,
     required this.isNumberPhone,
+    this.onTextCleared,
   });
 
   @override
@@ -767,6 +769,10 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
       setState(() {
         _isValid = false;
       });
+      // Appeler le callback si le texte est vide
+      if (widget.onTextCleared != null) {
+        widget.onTextCleared!();
+      }
     }
   }
 
@@ -790,13 +796,13 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
     });
   }
 
-  void resetIcon() {
-    if (widget.resetOnClear) {
-      setState(() {
-        _isValid = false;
-      });
-    }
-  }
+  // void resetIcon() {
+  //   if (widget.resetOnClear) {
+  //     setState(() {
+  //       _isValid = false;
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -822,9 +828,14 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
                               icon: Icon(Icons.close),
                               color: Colors.red,
                               onPressed: () {
+                                FocusScope.of(context)
+                                    .unfocus(); // Enlève le fo
                                 setState(() {
                                   widget.controller.clear();
                                 });
+                                if (widget.onTextCleared != null) {
+                                  widget.onTextCleared!();
+                                }
                               },
                             ),
                           )

@@ -308,6 +308,8 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+final globalScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class _MyAppState extends State<MyApp> {
   bool _isLicenseValidated = false;
   bool _isLicenseDemoValidated = false;
@@ -343,6 +345,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        scaffoldMessengerKey: globalScaffoldMessengerKey,
         scrollBehavior: CustomScrollBehavior(),
         // Applique le nouveau ScrollBehavior
         theme: ThemeData(
