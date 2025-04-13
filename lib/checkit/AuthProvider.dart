@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as su;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -36,32 +35,5 @@ class AuthService {
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
-  }
-}
-
-Future<void> _createUserInSupabase(User firebaseUser) async {
-  final supabase = su.Supabase.instance.client;
-
-  // Vérifie si le user existe déjà
-  final existing = await supabase
-      .from('users')
-      .select()
-      .eq('firebase_id', firebaseUser.uid)
-      .maybeSingle();
-
-  if (existing != null) return; // utilisateur déjà enregistré
-
-  // Insertion
-  final response = await supabase.from('users').upsert({
-    'firebase_id': firebaseUser.uid,
-    'email': firebaseUser.email,
-    'full_name': firebaseUser.displayName,
-    'phone': firebaseUser.phoneNumber,
-    'created_at': DateTime.now().toIso8601String(),
-    'metadata': {'photo_url': firebaseUser.photoURL},
-  });
-
-  if (response.error != null) {
-    print('Erreur insertion Supabase : ${response.error!.message}');
   }
 }

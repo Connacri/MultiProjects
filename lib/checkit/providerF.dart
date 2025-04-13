@@ -40,10 +40,11 @@ class SignalementProviderSupabase with ChangeNotifier {
     return null; // Numéro invalide
   }
 
-  Future<void> chargerSignalements() async {
+  Future<void> chargerSignalements(String userID) async {
     final response = await _client
         .from('signalements')
         .select()
+        .eq('signalePar', userID)
         .order('date', ascending: false);
 
     final data = response as List;
@@ -89,9 +90,10 @@ class SignalementProviderSupabase with ChangeNotifier {
     }
   }
 
-  Future<void> ajouterSignalement(Signalement signalement) async {
+  Future<void> ajouterSignalement(
+      Signalement signalement, String userID) async {
     await _client.from('signalements').insert(signalement.toJson());
-    await chargerSignalements(); // recharge après ajout
+    await chargerSignalements(userID); // recharge après ajout
   }
 
   Future<int> nombreSignalements(String numero) async {

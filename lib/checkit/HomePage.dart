@@ -51,7 +51,7 @@ class _HomePage3State extends State<HomePage3> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SignalementProviderSupabase>(context, listen: false)
-          .chargerSignalements();
+          .chargerSignalements(_user!.uid);
     });
     // if (Platform.isAndroid)
     //   BannerAd(
@@ -481,8 +481,8 @@ class _HomePage3State extends State<HomePage3> {
                                       user: _user!.uid,
                                     );
 
-                                    await provider
-                                        .ajouterSignalement(signalement);
+                                    await provider.ajouterSignalement(
+                                        signalement, _user!.uid);
 
                                     // Réinitialiser les champs
                                     numeroController.clear();
@@ -585,11 +585,13 @@ class _googleBtnState extends State<googleBtn> {
   bool hasMore = true;
   int currentPage = 0;
   final int pageSize = 10; // Nombre de résultats par page
+  bool isSigningOut = false;
 
   @override
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
+    _setupAuthListener();
     if (_user != null) {
       _loadReportedNumbers();
     }
@@ -602,7 +604,7 @@ class _googleBtnState extends State<googleBtn> {
     try {
       final data = await su.Supabase.instance.client
           .from('signalements')
-          .select('numero')
+          .select('numero, date') // Ajouter le champ date ici
           .eq('signalePar', _user!.uid)
           .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
           .order('date', ascending: false);
@@ -612,6 +614,8 @@ class _googleBtnState extends State<googleBtn> {
         hasMore = data.length == pageSize;
         if (hasMore) currentPage++;
       });
+      // Debug: Vérifier les données reçues
+      print('Données avec date: ${data.map((e) => e['date'])}');
     } catch (e) {
       if (e is su.PostgrestException) {
         print('Erreur de pagination: ${e.details}');
@@ -651,45 +655,85 @@ class _googleBtnState extends State<googleBtn> {
     }
   }
 
-  void _handleSignIn() async {
-    setState(() {
-      isLoading = true;
-    });
+  // void _handleSignIn() async {
+  //   setState(() => isLoading = true);
+  //
+  //   try {
+  //     User? user = await _authService.signInWithGoogle();
+  //     setState(() {
+  //       _user = user;
+  //       isLoading = false;
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       isLoading = false;
+  //     });
+  //     print('Erreur d\'authentification: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Erreur lors de la connexion : $e')),
+  //     );
+  //   }
+  // }
+// Dans la méthode de connexion
+  Future<void> _handleSignIn() async {
+    setState(() => isLoading = true);
 
     try {
       User? user = await _authService.signInWithGoogle();
-      setState(() {
-        _user = user;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      print('Erreur d\'authentification: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la connexion : $e')),
-      );
+      if (user != null) {
+        // Recharge les données utilisateur
+        Provider.of<SignalementProviderSupabase>(context, listen: false)
+            .chargerSignalements(user.uid);
+
+        Navigator.pushReplacement(
+          // Force le rafraîchissement
+          context,
+          MaterialPageRoute(builder: (ctx) => HomePage3()),
+        );
+      }
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
-  void _handleSignOut() async {
-    await _authService.signOut();
-    setState(() {
-      _user = null;
-    });
+  Future<void> _handleSignOut() async {
+    setState(() => isSigningOut = true);
+
+    try {
+      await _authService.signOut();
+
+      // Rafraîchir l'UI après déconnexion
+      setState(() {
+        _user = null;
+        _reportedNumbers.clear();
+      });
+    } catch (e) {
+      print('Erreur déconnexion: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la déconnexion')),
+      );
+    } finally {
+      setState(() => isSigningOut = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final signalementProvider =
+        Provider.of<SignalementProviderSupabase>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('Check-it Profil'),
         actions: [
           if (_user != null)
             IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: _handleSignOut,
+              icon: isSigningOut
+                  ? CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    )
+                  : Icon(Icons.logout),
+              onPressed: isSigningOut ? null : _handleSignOut,
             ),
         ],
       ),
@@ -698,7 +742,7 @@ class _googleBtnState extends State<googleBtn> {
             ? CircularProgressIndicator()
             : _user == null
                 ? _buildLoginUI()
-                : _buildProfileUI(),
+                : _buildProfileUI(signalementProvider),
       ),
     );
   }
@@ -709,35 +753,40 @@ class _googleBtnState extends State<googleBtn> {
         padding: const EdgeInsets.all(15.0),
         child: Column(
           children: [
-            SizedBox(
-              height: 150,
-              width: 150,
-              child: Lottie.asset('assets/lotties/google.json'),
-            ),
-            SizedBox(height: 40),
-            FittedBox(
-              child: Text(
-                'Utilisant Ton Compte Google pour ce connecter\net te permettre de signaler des les numéros'
-                    .toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.black45,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Oswald'),
+            Lottie.asset('assets/lotties/google.json',
+                height: 200, width: 200, fit: BoxFit.cover),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
+                child: FittedBox(
+                  child: Text(
+                    'Utilisant Ton Compte Google\npour ce connecter et te permettre\nde signaler des les numéros'
+                        .toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Oswald'),
+                  ),
+                ),
               ),
             ),
-            SizedBox(height: 10),
-            FittedBox(
-              child: Text(
-                'استخدام حسابك الخاص قوقل لتسجيل الدخول\nحتى تتمكن من الإبلاغ عن الأرقام'
-                    .toUpperCase(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.black45,
-                    fontSize: 25,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'ArbFONTS'),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+                child: FittedBox(
+                  child: Text(
+                    'استخدام حسابك الخاص قوقل\nلتسجيل الدخول حتى تتمكن\nمن الإبلاغ عن الأرقام'
+                        .toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 25,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'ArbFONTS'),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -758,60 +807,70 @@ class _googleBtnState extends State<googleBtn> {
               ),
               onPressed: _handleSignIn,
             ),
+            Spacer()
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileUI() {
+  Widget _buildProfileUI(signalementProvider) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        SizedBox(height: 20),
         CircleAvatar(
           backgroundImage: NetworkImage(_user!.photoURL ?? ''),
           radius: 40,
         ),
-        SizedBox(height: 20),
-        Text('Connecté en tant que ${_user!.displayName}'),
-        SizedBox(height: 20),
-        Text('${_user!.email}'),
-        SizedBox(height: 20),
+        SizedBox(height: 10),
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0),
-                ),
-              ),
-              onPressed: _handleSignOut,
-              label: Text(
-                'SignOut',
-                overflow: TextOverflow.ellipsis,
-              ),
-              icon: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Icon(
-                  Icons.logout,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onPrimary, // Force la couleur
-                ),
-              )),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            'Connecté en tant que\n${_user!.displayName}',
+            textAlign: TextAlign.center,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
         ),
-        SizedBox(
-          height: 20,
+        Text(
+          '${_user!.email}',
+          style: TextStyle(
+            fontSize: 16,
+          ),
         ),
-        _buildReportedNumbersList(),
+        ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+            ),
+            onPressed: _handleSignOut,
+            label: Text(
+              'SignOut',
+              overflow: TextOverflow.ellipsis,
+            ),
+            icon: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Icon(
+                Icons.logout,
+                color:
+                    Theme.of(context).colorScheme.onPrimary, // Force la couleur
+              ),
+            )),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+          child: Divider(),
+        ),
+        _buildReportedNumbersList(signalementProvider),
       ],
     );
   }
 
-  Widget _buildReportedNumbersList() {
+  Widget _buildReportedNumbersList(signalementProvider) {
     return Expanded(
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
@@ -826,10 +885,17 @@ class _googleBtnState extends State<googleBtn> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              Text(
+                'Les Numeros que j\'ai déja signalé',
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  fontSize: 16,
+                ),
+              ),
               _reportedNumbers.length == 0
                   ? SizedBox.shrink()
                   : Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.only(right: 8),
                       child: TextButton(
                         onPressed: () => _deleteAllReportedNumbers(),
                         child: Text(
@@ -852,18 +918,43 @@ class _googleBtnState extends State<googleBtn> {
                     }
 
                     final reportedNumber = _reportedNumbers[index];
-                    print(reportedNumber['date'].toString());
+
+                    final nbSignalements = signalementProvider
+                        .nombreSignalements(reportedNumber['numero']);
+                    print(nbSignalements);
                     return ListTile(
+                      leading: FutureBuilder<int>(
+                        future: signalementProvider
+                            .nombreSignalements(reportedNumber['numero']),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return CircleAvatar(
+                                child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: const CircularProgressIndicator(),
+                            ));
+                          }
+                          return CircleAvatar(
+                            child: Text(
+                              snapshot.hasData ? snapshot.data.toString() : '0',
+                            ),
+                          );
+                        },
+                      ),
                       title: Text('0${reportedNumber['numero']}'),
                       subtitle: Text(
                         reportedNumber['date'] != null
-                            ? _formatDate(reportedNumber['date']!)
+                            ? DateFormat('dd/MM/yyyy HH:mm').format(
+                                DateTime.parse(reportedNumber['date']!)
+                                    .toLocal())
                             : 'Date inconnue',
+                        style: TextStyle(fontSize: 12),
                       ),
                       trailing: IconButton(
                         icon: const Icon(
                           Icons.delete,
-                          size: 25,
+                          size: 22,
                           color: Colors.red,
                         ),
                         onPressed: () =>
@@ -880,14 +971,15 @@ class _googleBtnState extends State<googleBtn> {
     );
   }
 
-  // Méthode helper séparée
-  String _formatDate(String dateString) {
-    try {
-      final date = DateTime.parse(dateString).toLocal();
-      return DateFormat('dd/MM/yyyy HH:mm').format(date);
-    } catch (e) {
-      return 'Format invalide';
-    }
+  void _setupAuthListener() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user != null && mounted) {
+        setState(() {
+          _user = user;
+        });
+        _loadReportedNumbers(); // Recharge les données quand l'utilisateur se connecte
+      }
+    });
   }
 }
 
