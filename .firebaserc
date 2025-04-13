@@ -1,5 +1,13 @@
 {
-  "projects": {
-    "default": "walletdz-d12e0"
-  }
+  "projects": {},
+  "targets": {
+    "walletdz-d12e0": {
+      "hosting": {
+        "delete_account": [
+          "deletemyaccountcheckit"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

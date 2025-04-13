@@ -8,10 +8,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:intl/intl.dart';
 import 'package:kenzy/checkit/admobHelper.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as su;
 
 import '../objectBox/Utils/My_widgets.dart';
 import 'AuthProvider.dart';
@@ -35,6 +37,8 @@ class _HomePage3State extends State<HomePage3> {
   BannerAd? _bannerAd;
 
   InterstitialAd? _interstitialAd;
+  bool _isBannerAdReady = false;
+  bool _isInterstitialAdReady = false;
 
   @override
   void initState() {
@@ -49,35 +53,85 @@ class _HomePage3State extends State<HomePage3> {
       Provider.of<SignalementProviderSupabase>(context, listen: false)
           .chargerSignalements();
     });
-    if (Platform.isAndroid)
-      BannerAd(
-        adUnitId: AdHelper.bannerAdUnitId,
-        request: AdRequest(),
-        size: AdSize.banner,
-        listener: BannerAdListener(onAdLoaded: (ad) {
+    // if (Platform.isAndroid)
+    //   BannerAd(
+    //     adUnitId: AdHelper.bannerAdUnitId,
+    //     request: AdRequest(),
+    //     size: AdSize.banner,
+    //     listener: BannerAdListener(onAdLoaded: (ad) {
+    //       setState(() {
+    //         _bannerAd = ad as BannerAd;
+    //       });
+    //     }, onAdFailedToLoad: (ad, err) {
+    //       print('Failure to load _adBanner ${err.message}');
+    //       ad.dispose();
+    //     }),
+    //   )..load();
+    // if (Platform.isAndroid)
+    //   InterstitialAd.load(
+    //       adUnitId: AdHelper.getInterstatitialAdUnitId,
+    //       request: AdRequest(),
+    //       adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
+    //         ad.fullScreenContentCallback = FullScreenContentCallback(
+    //             onAdDismissedFullScreenContent: (ad) {});
+    //         setState(() {
+    //           _interstitialAd = ad;
+    //         });
+    //       }, onAdFailedToLoad: (err) {
+    //         print('Failure to load Interstatitial ad ${err.message}');
+    //       }));
+    // if (Platform.isAndroid) _interstitialAd?.show();
+    _loadBannerAd();
+    _loadInterstitialAd();
+    _initializeFCM();
+  }
+
+  Future<void> _loadBannerAd() async {
+    if (!Platform.isAndroid) return;
+
+    await BannerAd(
+      adUnitId: AdHelper.bannerAdUnitId,
+      request: AdRequest(),
+      size: AdSize.banner,
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
           setState(() {
             _bannerAd = ad as BannerAd;
+            _isBannerAdReady = true;
           });
-        }, onAdFailedToLoad: (ad, err) {
-          print('Failure to load _adBanner ${err.message}');
+        },
+        onAdFailedToLoad: (ad, err) {
+          print('Erreur bannière: ${err.message}');
           ad.dispose();
-        }),
-      )..load();
-    if (Platform.isAndroid)
-      InterstitialAd.load(
-          adUnitId: AdHelper.getInterstatitialAdUnitId,
-          request: AdRequest(),
-          adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
-            ad.fullScreenContentCallback = FullScreenContentCallback(
-                onAdDismissedFullScreenContent: (ad) {});
-            setState(() {
-              _interstitialAd = ad;
-            });
-          }, onAdFailedToLoad: (err) {
-            print('Failure to load Interstatitial ad ${err.message}');
-          }));
-    if (Platform.isAndroid) _interstitialAd?.show();
-    _initializeFCM();
+          _isBannerAdReady = false;
+        },
+      ),
+    ).load();
+  }
+
+  Future<void> _loadInterstitialAd() async {
+    if (!Platform.isAndroid) return;
+
+    await InterstitialAd.load(
+      adUnitId: AdHelper.getInterstatitialAdUnitId,
+      request: AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd = ad;
+          _isInterstitialAdReady = true;
+          ad.fullScreenContentCallback = FullScreenContentCallback(
+            onAdDismissedFullScreenContent: (ad) {
+              _interstitialAd?.dispose();
+              _loadInterstitialAd();
+            },
+          );
+        },
+        onAdFailedToLoad: (err) {
+          print('Erreur interstitiel: ${err.message}');
+          _isInterstitialAdReady = false;
+        },
+      ),
+    );
   }
 
   @override
@@ -119,8 +173,12 @@ class _HomePage3State extends State<HomePage3> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Erreur'),
-        content: Text(message),
+        title: Center(child: Text('Erreur')),
+        content: FittedBox(
+            child: Text(
+          message,
+          textAlign: TextAlign.center,
+        )),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -173,9 +231,32 @@ class _HomePage3State extends State<HomePage3> {
     return Scaffold(
       resizeToAvoidBottomInset: true, // important !
       appBar: AppBar(
+        leading: _user != null
+            ? Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: InkWell(
+                  onTap: () => Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (ctx) => googleBtn())),
+                  child: CircleAvatar(
+                    backgroundImage: NetworkImage(_user!.photoURL ?? ''),
+                    radius: 15, // Important : plus petit pour AppBar
+                  ),
+                ),
+              )
+            : IconButton(
+                onPressed: () => Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (ctx) => googleBtn())),
+                icon: Icon(
+                  Icons.account_circle,
+                  size: 35,
+                ),
+              ),
         title: Text(
-          'Check-it',
+          _user != null
+              ? '${_user!.displayName ?? "Utilisateur"} Check-it'
+              : 'Unknow User Check-it',
           textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Colors.black45,
             fontSize: 23,
@@ -188,16 +269,6 @@ class _HomePage3State extends State<HomePage3> {
               icon: Icon(Icons.logout),
               onPressed: _handleSignOut,
             ),
-          _user != null
-              ? InkWell(
-                  onTap: () => Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (ctx) => googleBtn())),
-                  child: CircleAvatar(
-                    backgroundImage: NetworkImage(_user!.photoURL ?? ''),
-                    radius: 15, // Important : plus petit pour AppBar
-                  ),
-                )
-              : Icon(Icons.account_circle),
           SizedBox(
             width: 14,
           )
@@ -226,7 +297,7 @@ class _HomePage3State extends State<HomePage3> {
                       style: const TextStyle(
                           color: Colors.black45,
                           fontSize: 25,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                           fontFamily: 'ArbFONTS'),
                     ),
                   ),
@@ -389,14 +460,25 @@ class _HomePage3State extends State<HomePage3> {
                                       return;
                                     }
 
+                                    // Vérification si le numéro a déjà été signalé par l'utilisateur
+                                    final alreadyReported =
+                                        await provider.checkIfAlreadyReported(
+                                            numero, _user!.uid);
+
+                                    if (alreadyReported) {
+                                      _showErrorDialog(
+                                          "Vous avez déjà signalé\n0$numero.");
+                                      return;
+                                    }
+
                                     final signalement = Signalement(
                                       numero: numero,
-                                      signalePar: 'Utilisateur',
+                                      signalePar: _user!.uid,
                                       motif: motifController.text.trim(),
                                       gravite: 1,
                                       description: selectedMotif,
                                       date: DateTime.now(),
-                                      user: '',
+                                      user: _user!.uid,
                                     );
 
                                     await provider
@@ -405,12 +487,7 @@ class _HomePage3State extends State<HomePage3> {
                                     // Réinitialiser les champs
                                     numeroController.clear();
                                     motifController.clear();
-                                    //  _numeroFieldKey.currentState?.reset();
 
-                                    // Réinitialiser l'icône en appelant resetIcon()
-                                    // (Vous pouvez soit appeler directement resetIcon() ici, soit gérer cela via un listener)
-                                    // Par exemple, si AnimatedTextField expose une méthode resetIcon :
-                                    // animatedTextFieldKey.currentState?.resetIcon();
                                     setState(() {
                                       selectedMotif = motifs.first;
                                       numeroRecherche = numero;
@@ -420,7 +497,7 @@ class _HomePage3State extends State<HomePage3> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                            'le Numéro 0$numero a bien été signalé'),
+                                            'Le numéro 0$numero a bien été signalé'),
                                         backgroundColor: Colors.green,
                                         duration: Duration(seconds: 3),
                                       ),
@@ -441,6 +518,13 @@ class _HomePage3State extends State<HomePage3> {
                       Center(
                         child: ElevatedButton.icon(
                           onPressed: () async {
+                            //////////////////////////////////////////////////////////////
+                            if (_isInterstitialAdReady) {
+                              _interstitialAd?.show();
+                            } else {
+                              print("L'annonce interstitielle n'est pas prête");
+                            }
+                            //////////////////////////////////////////////////////////////
                             setState(() {
                               numeroRecherche = null;
                             });
@@ -496,18 +580,97 @@ class googleBtn extends StatefulWidget {
 class _googleBtnState extends State<googleBtn> {
   final AuthService _authService = AuthService();
   User? _user;
+  bool isLoading = false;
+  List<Map<String, dynamic>> _reportedNumbers = [];
+  bool hasMore = true;
+  int currentPage = 0;
+  final int pageSize = 10; // Nombre de résultats par page
 
   @override
   void initState() {
     super.initState();
     _user = FirebaseAuth.instance.currentUser;
+    if (_user != null) {
+      _loadReportedNumbers();
+    }
+  }
+
+  Future<void> _loadReportedNumbers() async {
+    if (isLoading || !hasMore) return;
+    setState(() => isLoading = true);
+
+    try {
+      final data = await su.Supabase.instance.client
+          .from('signalements')
+          .select('numero')
+          .eq('signalePar', _user!.uid)
+          .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
+          .order('date', ascending: false);
+
+      setState(() {
+        _reportedNumbers.addAll(List<Map<String, dynamic>>.from(data));
+        hasMore = data.length == pageSize;
+        if (hasMore) currentPage++;
+      });
+    } catch (e) {
+      if (e is su.PostgrestException) {
+        print('Erreur de pagination: ${e.details}');
+      }
+      hasMore = false;
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _deleteReportedNumber(String numero) async {
+    try {
+      await su.Supabase.instance.client
+          .from('signalements')
+          .delete()
+          .eq('numero', numero)
+          .eq('signalePar', _user!.uid);
+
+      setState(() {
+        _reportedNumbers.removeWhere((item) => item['numero'] == numero);
+      });
+    } catch (e) {
+      print('Erreur suppression: ${e.toString()}');
+    }
+  }
+
+  Future<void> _deleteAllReportedNumbers() async {
+    try {
+      await su.Supabase.instance.client
+          .from('signalements')
+          .delete()
+          .eq('signalePar', _user!.uid);
+
+      setState(() => _reportedNumbers.clear());
+    } catch (e) {
+      print('Erreur suppression totale: ${e.toString()}');
+    }
   }
 
   void _handleSignIn() async {
-    User? user = await _authService.signInWithGoogle();
     setState(() {
-      _user = user;
+      isLoading = true;
     });
+
+    try {
+      User? user = await _authService.signInWithGoogle();
+      setState(() {
+        _user = user;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      print('Erreur d\'authentification: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la connexion : $e')),
+      );
+    }
   }
 
   void _handleSignOut() async {
@@ -521,7 +684,7 @@ class _googleBtnState extends State<googleBtn> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Google Sign-In Demo'),
+        title: Text('Check-it Profil'),
         actions: [
           if (_user != null)
             IconButton(
@@ -531,94 +694,200 @@ class _googleBtnState extends State<googleBtn> {
         ],
       ),
       body: Center(
-        child: _user == null
-            ? Center(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(15.0),
-                    child: Column(
-                      //  mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 150,
-                          width: 150,
-                          child: Lottie.asset('assets/lotties/google.json'),
-                        ),
-                        SizedBox(
-                          height: 40,
-                        ),
-                        FittedBox(
-                          child: Text(
-                            'Utilisant Ton Compte Google pour ce connecter\net te permettre de signaler des les numéros'
-                                .toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                color: Colors.black45,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Oswald'),
-                          ),
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        FittedBox(
-                          child: Text(
-                            'استخدام حسابك الخاص قوقل لتسجيل الدخول\nحتى تتمكن من الإبلاغ عن الأرقام'
-                                .toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                color: Colors.black45,
-                                fontSize: 25,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'ArbFONTS'),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black54,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15)),
-                              elevation: 4.0,
-                              minimumSize: const Size.fromHeight(50)),
-                          icon: Icon(
-                            FontAwesomeIcons.google,
-                            color: Colors.red,
-                          ),
-                          label: const Text(
-                            'Google',
-                            style: TextStyle(fontSize: 24, color: Colors.white),
-                          ),
-                          onPressed: _handleSignIn,
-                        ), // Google
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text('Connecté en tant que ${_user!.displayName}'),
-                  SizedBox(height: 20),
-                  Text('Connecté en tant que ${_user!.email}'),
-                  SizedBox(height: 20),
-                  Text('Connecté en tant que ${_user!.phoneNumber}'),
-                  SizedBox(height: 20),
-                  CircleAvatar(
-                    backgroundImage: NetworkImage(_user!.photoURL ?? ''),
-                    radius: 40,
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text('Retour'))
-                ],
-              ),
+        child: isLoading
+            ? CircularProgressIndicator()
+            : _user == null
+                ? _buildLoginUI()
+                : _buildProfileUI(),
       ),
     );
+  }
+
+  Widget _buildLoginUI() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 150,
+              width: 150,
+              child: Lottie.asset('assets/lotties/google.json'),
+            ),
+            SizedBox(height: 40),
+            FittedBox(
+              child: Text(
+                'Utilisant Ton Compte Google pour ce connecter\net te permettre de signaler des les numéros'
+                    .toUpperCase(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.black45,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Oswald'),
+              ),
+            ),
+            SizedBox(height: 10),
+            FittedBox(
+              child: Text(
+                'استخدام حسابك الخاص قوقل لتسجيل الدخول\nحتى تتمكن من الإبلاغ عن الأرقام'
+                    .toUpperCase(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.black45,
+                    fontSize: 25,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'ArbFONTS'),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black54,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
+                  elevation: 4.0,
+                  minimumSize: const Size.fromHeight(50)),
+              icon: Icon(
+                FontAwesomeIcons.google,
+                color: Colors.red,
+              ),
+              label: const Text(
+                'Google',
+                style: TextStyle(fontSize: 24, color: Colors.white),
+              ),
+              onPressed: _handleSignIn,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileUI() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          backgroundImage: NetworkImage(_user!.photoURL ?? ''),
+          radius: 40,
+        ),
+        SizedBox(height: 20),
+        Text('Connecté en tant que ${_user!.displayName}'),
+        SizedBox(height: 20),
+        Text('${_user!.email}'),
+        SizedBox(height: 20),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+              ),
+              onPressed: _handleSignOut,
+              label: Text(
+                'SignOut',
+                overflow: TextOverflow.ellipsis,
+              ),
+              icon: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Icon(
+                  Icons.logout,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onPrimary, // Force la couleur
+                ),
+              )),
+        ),
+        SizedBox(
+          height: 20,
+        ),
+        _buildReportedNumbersList(),
+      ],
+    );
+  }
+
+  Widget _buildReportedNumbersList() {
+    return Expanded(
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollEndNotification &&
+              notification.metrics.extentAfter < 500) {
+            _loadReportedNumbers();
+          }
+          return false;
+        },
+        child: Padding(
+          padding: const EdgeInsets.only(left: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _reportedNumbers.length == 0
+                  ? SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextButton(
+                        onPressed: () => _deleteAllReportedNumbers(),
+                        child: Text(
+                          'Delete All',
+                          textAlign: TextAlign.end,
+                          style: TextStyle(fontSize: 12, color: Colors.red),
+                        ),
+                      ),
+                    ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _reportedNumbers.length + (hasMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= _reportedNumbers.length) {
+                      return Center(
+                        child: hasMore
+                            ? const CircularProgressIndicator()
+                            : const Text('Fin des résultats'),
+                      );
+                    }
+
+                    final reportedNumber = _reportedNumbers[index];
+                    print(reportedNumber['date'].toString());
+                    return ListTile(
+                      title: Text('0${reportedNumber['numero']}'),
+                      subtitle: Text(
+                        reportedNumber['date'] != null
+                            ? _formatDate(reportedNumber['date']!)
+                            : 'Date inconnue',
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          size: 25,
+                          color: Colors.red,
+                        ),
+                        onPressed: () =>
+                            _deleteReportedNumber(reportedNumber['numero']),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Méthode helper séparée
+  String _formatDate(String dateString) {
+    try {
+      final date = DateTime.parse(dateString).toLocal();
+      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+    } catch (e) {
+      return 'Format invalide';
+    }
   }
 }
 
@@ -827,7 +1096,7 @@ Color getColorForSignalements(int signalements) {
   } else if (signalements == 1) {
     return Colors.lightGreen;
   } else if (signalements == 2) {
-    return Colors.yellow;
+    return Colors.blue;
   } else if (signalements == 3 || signalements == 4) {
     return Colors.orange;
   } else if (signalements >= 5) {

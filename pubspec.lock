@@ -430,22 +430,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
-  equatable:
-    dependency: transitive
-    description:
-      name: equatable
-      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
-  excel:
-    dependency: "direct main"
-    description:
-      name: excel
-      sha256: "1a15327dcad260d5db21d1f6e04f04838109b39a2f6a84ea486ceda36e468780"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.0.6"
   exif:
     dependency: transitive
     description:
@@ -674,26 +658,26 @@ packages:
     dependency: "direct main"
     description:
       name: firebase_storage
-      sha256: e84917f77ed7911837963ae4a12f345e00e6fbb7417a5dd61030ad1c70f87e87
+      sha256: b66435730252985c49aabe83e0490bcfab2e7b3f2192bf421ca596fa490de14a
       url: "https://pub.dev"
     source: hosted
-    version: "12.4.2"
+    version: "12.4.5"
   firebase_storage_platform_interface:
     dependency: transitive
     description:
       name: firebase_storage_platform_interface
-      sha256: a32eaf283962d4249fa70c3f60efe8657fc75d4e1beaea517c4af61a14b0ba6b
+      sha256: "08d32cae58200c34f504098d106952213f2e4c32db111ae7757a86887428ab81"
       url: "https://pub.dev"
     source: hosted
-    version: "5.2.2"
+    version: "5.2.5"
   firebase_storage_web:
     dependency: transitive
     description:
       name: firebase_storage_web
-      sha256: "3969d79a085b7b2c226fe79b1673ac7155d3064657a1bf07783db0b67b189da2"
+      sha256: d6aee6867f8c369a88484367a8b1f0f6d0f022b4ff2622b51e32dfeef839f9d4
       url: "https://pub.dev"
     source: hosted
-    version: "3.10.9"
+    version: "3.10.12"
   firedart:
     dependency: "direct main"
     description:
@@ -1866,6 +1850,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.2"
+  rename_app:
+    dependency: "direct main"
+    description:
+      name: rename_app
+      sha256: "7cb304cea0b3cbcc332eab80b21df3c168f25ee47e59e22f88c52476e8ae3e97"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.6.2"
   retry:
     dependency: transitive
     description:

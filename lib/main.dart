@@ -77,6 +77,7 @@ Future<void> main() async {
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
+
   //try {
   // Initialiser Firebase en attendant la fin de l'initialisation
 

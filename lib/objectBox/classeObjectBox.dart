@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
-import 'package:excel/excel.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:objectbox/objectbox.dart';
@@ -509,238 +508,238 @@ class ObjectBox {
     }
   }
 
-  Future<void> importProduitsDepuisExcel(
-    String filePath,
-    int userCount,
-    int clientCount,
-    int fournisseurCount,
-  ) async {
-    final faker = Faker();
-    final random = Random();
-    final file = File(filePath);
-    await checkStoragePermission();
-    final bytes = await file.readAsBytes();
-    final excel = Excel.decodeBytes(bytes);
-    final roles = ['admin', 'public', 'vendeur', 'owner', 'manager', 'it'];
-
-    // Création des utilisateurs
-    final users = List.generate(userCount, (_) {
-      roles.shuffle(random);
-      return User(
-        phone: faker.phoneNumber.de(),
-        username: faker.person.name(),
-        password: faker.internet.password(),
-        email: faker.internet.email(),
-        role: roles.first,
-        derniereModification: DateTime.now(),
-      );
-    });
-    await userBox.putMany(users);
-
-    // Création des fournisseurs
-    final fournisseurs = List.generate(fournisseurCount, (_) {
-      final now = DateTime.now();
-      return Fournisseur(
-        nom: faker.company.name(),
-        phone: faker.phoneNumber.us(),
-        adresse: faker.address.streetAddress(),
-        qr: faker.randomGenerator.integer(999999).toString(),
-        derniereModification:
-            faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
-      )..crud.target = Crud(
-          createdBy: 1,
-          updatedBy: 1,
-          deletedBy: 1,
-          dateCreation: faker.date.dateTime(minYear: 2010, maxYear: now.year),
-          derniereModification:
-              faker.date.dateTime(minYear: 2000, maxYear: now.year),
-        );
-    });
-    await fournisseurBox.putMany(fournisseurs);
-
-    // Importation des produits depuis Excel
-    for (var table in excel.tables.keys) {
-      for (var row in excel.tables[table]!.rows.skip(1)) {
-        final designation = row[1]?.value?.toString() ?? faker.food.dish();
-        final prixAchat = double.tryParse(row[6]?.value?.toString() ?? '') ??
-            faker.randomGenerator.decimal();
-        final prixVente = double.tryParse(row[7]?.value?.toString() ?? '') ??
-            faker.randomGenerator.decimal();
-        final stock = double.tryParse(row[5]?.value?.toString() ?? '') ??
-            faker.randomGenerator.integer(100).toDouble();
-        // Nettoyage du code QR (suppression des espaces)
-        final qrCode = (row[0]?.value?.toString() ?? '').replaceAll(' ', '');
-        // Création d'un produit
-        final produit = Produit(
-          qr: qrCode,
-          image:
-              'https://picsum.photos/200/300?random=${faker.randomGenerator.integer(5000)}',
-          nom: designation,
-          description: row[1]?.value?.toString() ?? faker.lorem.sentence(),
-          prixVente: prixVente,
-          minimStock: faker.randomGenerator.decimal(min: 1, scale: 2),
-          alertPeremption: Random().nextInt(1000),
-          derniereModification:
-              faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
-        )..crud.target = Crud(
-            createdBy: faker.randomGenerator.integer(1000),
-            updatedBy: faker.randomGenerator.integer(1000),
-            deletedBy: faker.randomGenerator.integer(1000),
-            dateCreation: faker.date.dateTime(minYear: 2010, maxYear: 2024),
-            derniereModification: faker.date
-                .dateTime(minYear: 2000, maxYear: DateTime.now().year),
-          );
-
-        // Création des approvisionnements pour chaque produit
-        final nombreApprovisionnements =
-            faker.randomGenerator.integer(10, min: 1);
-        for (int i = 0; i < nombreApprovisionnements; i++) {
-          final fournisseur = fournisseurs[random.nextInt(fournisseurs.length)];
-
-          final approvisionnement = Approvisionnement(
-            quantite: stock,
-            prixAchat: prixAchat,
-            datePeremption: faker.date.dateTime(
-                minYear: DateTime.now().year, maxYear: DateTime.now().year + 2),
-            derniereModification: faker.date
-                .dateTime(minYear: 2000, maxYear: DateTime.now().year),
-          )
-            ..produit.target = produit
-            ..fournisseur.target = fournisseur
-            ..crud.target = Crud(
-              createdBy: faker.randomGenerator.integer(1000),
-              updatedBy: faker.randomGenerator.integer(1000),
-              deletedBy: faker.randomGenerator.integer(1000),
-              dateCreation: DateTime.now(),
-              derniereModification: DateTime.now(),
-            );
-
-          produit.approvisionnements.add(approvisionnement);
-        }
-
-        //await produitBox.put(produit);
-        // Insérer ou mettre à jour le produit
-        await insertOrUpdateProduit(produit);
-        print(produit.id.toString() +
-            ' ===> ' +
-            produit.nom +
-            ' ===> ' +
-            produit.qr.toString());
-      }
-    }
-
-    // Création des clients et factures
-    final clients = List.generate(clientCount, (_) {
-      final client = Client(
-        qr: faker.randomGenerator.integer(999999).toString(),
-        nom: faker.person.name(),
-        phone: faker.phoneNumber.us(),
-        adresse: faker.address.streetAddress(),
-        description: faker.lorem.sentence(),
-        derniereModification:
-            faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
-      )..crud.target = Crud(
-          createdBy: 1,
-          updatedBy: 1,
-          deletedBy: 1,
-          dateCreation: faker.date.dateTime(minYear: 2010, maxYear: 2024),
-          derniereModification:
-              faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
-        );
-
-      // Création d'un nombre aléatoire de factures pour chaque client
-      final nombreFactures = faker.randomGenerator.integer(50);
-      client.factures
-          .addAll(List.generate(nombreFactures, (_) => _createFacture(faker)));
-
-      return client;
-    });
-    await clientBox.putMany(clients);
-
-    // Création des factures sans clients
-    final facturesSansClient = List.generate(
-      faker.randomGenerator.integer(10, min: 1),
-      (_) => _createFacture(faker),
-    );
-    await factureBox.putMany(facturesSansClient);
-  }
-
-  Future<void> importProduitsRestantsDepuisExcel(String filePath) async {
-    final file = File(filePath);
-    final bytes = await file.readAsBytes();
-    final excel = Excel.decodeBytes(bytes);
-    final faker = Faker();
-    final random = Random();
-
-    for (var table in excel.tables.keys) {
-      for (var row in excel.tables[table]!.rows.skip(1)) {
-        final designation = row[1]?.value?.toString() ?? faker.food.dish();
-        final prixAchat = double.tryParse(row[6]?.value?.toString() ?? '') ??
-            faker.randomGenerator.decimal();
-        final prixVente = double.tryParse(row[7]?.value?.toString() ?? '') ??
-            faker.randomGenerator.decimal();
-        final stock = double.tryParse(row[5]?.value?.toString() ?? '') ??
-            faker.randomGenerator.integer(100).toDouble();
-
-        // Nettoyage du code QR (suppression des espaces)
-        final qrCode = (row[0]?.value?.toString() ?? '').replaceAll(' ', '');
-
-        // Vérification de l'existence du produit dans ObjectBox
-        final existingProduit = await produitBox
-            .query(Produit_.qr.equals(qrCode))
-            .build()
-            .findFirst();
-
-        if (existingProduit == null) {
-          // Création d'un nouveau produit s'il n'existe pas
-          final produit = Produit(
-            qr: qrCode,
-            image:
-                'https://picsum.photos/200/300?random=${faker.randomGenerator.integer(5000)}',
-            nom: designation,
-            description: row[1]?.value?.toString() ?? faker.lorem.sentence(),
-            prixVente: prixVente,
-            minimStock: faker.randomGenerator.decimal(min: 1, scale: 2),
-            alertPeremption: random.nextInt(1000),
-            derniereModification: DateTime.now(),
-          )..crud.target = Crud(
-              createdBy: faker.randomGenerator.integer(1000),
-              updatedBy: faker.randomGenerator.integer(1000),
-              deletedBy: faker.randomGenerator.integer(1000),
-              dateCreation: DateTime.now(),
-              derniereModification: DateTime.now(),
-            );
-
-          // Création d'un approvisionnement initial pour le nouveau produit
-          final approvisionnement = Approvisionnement(
-            quantite: stock,
-            prixAchat: prixAchat,
-            datePeremption: faker.date.dateTime(
-                minYear: DateTime.now().year, maxYear: DateTime.now().year + 2),
-            derniereModification: DateTime.now(),
-          )
-            ..produit.target = produit
-            ..fournisseur.target = await getFournisseurAleatoire()
-            ..crud.target = Crud(
-              createdBy: faker.randomGenerator.integer(1000),
-              updatedBy: faker.randomGenerator.integer(1000),
-              deletedBy: faker.randomGenerator.integer(1000),
-              dateCreation: DateTime.now(),
-              derniereModification: DateTime.now(),
-            );
-
-          produit.approvisionnements.add(approvisionnement);
-
-          await produitBox.put(produit);
-          print(
-              'Nouveau produit importé: ${produit.id} - ${produit.nom} - QR: ${produit.qr}');
-        } else {
-          print(
-              'Produit déjà existant: ${existingProduit.id} - ${existingProduit.nom} - QR: ${existingProduit.qr}');
-        }
-      }
-    }
-  }
+  // Future<void> importProduitsDepuisExcel(
+  //   String filePath,
+  //   int userCount,
+  //   int clientCount,
+  //   int fournisseurCount,
+  // ) async {
+  //   final faker = Faker();
+  //   final random = Random();
+  //   final file = File(filePath);
+  //   await checkStoragePermission();
+  //   final bytes = await file.readAsBytes();
+  //   final excel = Excel.decodeBytes(bytes);
+  //   final roles = ['admin', 'public', 'vendeur', 'owner', 'manager', 'it'];
+  //
+  //   // Création des utilisateurs
+  //   final users = List.generate(userCount, (_) {
+  //     roles.shuffle(random);
+  //     return User(
+  //       phone: faker.phoneNumber.de(),
+  //       username: faker.person.name(),
+  //       password: faker.internet.password(),
+  //       email: faker.internet.email(),
+  //       role: roles.first,
+  //       derniereModification: DateTime.now(),
+  //     );
+  //   });
+  //   await userBox.putMany(users);
+  //
+  //   // Création des fournisseurs
+  //   final fournisseurs = List.generate(fournisseurCount, (_) {
+  //     final now = DateTime.now();
+  //     return Fournisseur(
+  //       nom: faker.company.name(),
+  //       phone: faker.phoneNumber.us(),
+  //       adresse: faker.address.streetAddress(),
+  //       qr: faker.randomGenerator.integer(999999).toString(),
+  //       derniereModification:
+  //           faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+  //     )..crud.target = Crud(
+  //         createdBy: 1,
+  //         updatedBy: 1,
+  //         deletedBy: 1,
+  //         dateCreation: faker.date.dateTime(minYear: 2010, maxYear: now.year),
+  //         derniereModification:
+  //             faker.date.dateTime(minYear: 2000, maxYear: now.year),
+  //       );
+  //   });
+  //   await fournisseurBox.putMany(fournisseurs);
+  //
+  //   // Importation des produits depuis Excel
+  //   for (var table in excel.tables.keys) {
+  //     for (var row in excel.tables[table]!.rows.skip(1)) {
+  //       final designation = row[1]?.value?.toString() ?? faker.food.dish();
+  //       final prixAchat = double.tryParse(row[6]?.value?.toString() ?? '') ??
+  //           faker.randomGenerator.decimal();
+  //       final prixVente = double.tryParse(row[7]?.value?.toString() ?? '') ??
+  //           faker.randomGenerator.decimal();
+  //       final stock = double.tryParse(row[5]?.value?.toString() ?? '') ??
+  //           faker.randomGenerator.integer(100).toDouble();
+  //       // Nettoyage du code QR (suppression des espaces)
+  //       final qrCode = (row[0]?.value?.toString() ?? '').replaceAll(' ', '');
+  //       // Création d'un produit
+  //       final produit = Produit(
+  //         qr: qrCode,
+  //         image:
+  //             'https://picsum.photos/200/300?random=${faker.randomGenerator.integer(5000)}',
+  //         nom: designation,
+  //         description: row[1]?.value?.toString() ?? faker.lorem.sentence(),
+  //         prixVente: prixVente,
+  //         minimStock: faker.randomGenerator.decimal(min: 1, scale: 2),
+  //         alertPeremption: Random().nextInt(1000),
+  //         derniereModification:
+  //             faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+  //       )..crud.target = Crud(
+  //           createdBy: faker.randomGenerator.integer(1000),
+  //           updatedBy: faker.randomGenerator.integer(1000),
+  //           deletedBy: faker.randomGenerator.integer(1000),
+  //           dateCreation: faker.date.dateTime(minYear: 2010, maxYear: 2024),
+  //           derniereModification: faker.date
+  //               .dateTime(minYear: 2000, maxYear: DateTime.now().year),
+  //         );
+  //
+  //       // Création des approvisionnements pour chaque produit
+  //       final nombreApprovisionnements =
+  //           faker.randomGenerator.integer(10, min: 1);
+  //       for (int i = 0; i < nombreApprovisionnements; i++) {
+  //         final fournisseur = fournisseurs[random.nextInt(fournisseurs.length)];
+  //
+  //         final approvisionnement = Approvisionnement(
+  //           quantite: stock,
+  //           prixAchat: prixAchat,
+  //           datePeremption: faker.date.dateTime(
+  //               minYear: DateTime.now().year, maxYear: DateTime.now().year + 2),
+  //           derniereModification: faker.date
+  //               .dateTime(minYear: 2000, maxYear: DateTime.now().year),
+  //         )
+  //           ..produit.target = produit
+  //           ..fournisseur.target = fournisseur
+  //           ..crud.target = Crud(
+  //             createdBy: faker.randomGenerator.integer(1000),
+  //             updatedBy: faker.randomGenerator.integer(1000),
+  //             deletedBy: faker.randomGenerator.integer(1000),
+  //             dateCreation: DateTime.now(),
+  //             derniereModification: DateTime.now(),
+  //           );
+  //
+  //         produit.approvisionnements.add(approvisionnement);
+  //       }
+  //
+  //       //await produitBox.put(produit);
+  //       // Insérer ou mettre à jour le produit
+  //       await insertOrUpdateProduit(produit);
+  //       print(produit.id.toString() +
+  //           ' ===> ' +
+  //           produit.nom +
+  //           ' ===> ' +
+  //           produit.qr.toString());
+  //     }
+  //   }
+  //
+  //   // Création des clients et factures
+  //   final clients = List.generate(clientCount, (_) {
+  //     final client = Client(
+  //       qr: faker.randomGenerator.integer(999999).toString(),
+  //       nom: faker.person.name(),
+  //       phone: faker.phoneNumber.us(),
+  //       adresse: faker.address.streetAddress(),
+  //       description: faker.lorem.sentence(),
+  //       derniereModification:
+  //           faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+  //     )..crud.target = Crud(
+  //         createdBy: 1,
+  //         updatedBy: 1,
+  //         deletedBy: 1,
+  //         dateCreation: faker.date.dateTime(minYear: 2010, maxYear: 2024),
+  //         derniereModification:
+  //             faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+  //       );
+  //
+  //     // Création d'un nombre aléatoire de factures pour chaque client
+  //     final nombreFactures = faker.randomGenerator.integer(50);
+  //     client.factures
+  //         .addAll(List.generate(nombreFactures, (_) => _createFacture(faker)));
+  //
+  //     return client;
+  //   });
+  //   await clientBox.putMany(clients);
+  //
+  //   // Création des factures sans clients
+  //   final facturesSansClient = List.generate(
+  //     faker.randomGenerator.integer(10, min: 1),
+  //     (_) => _createFacture(faker),
+  //   );
+  //   await factureBox.putMany(facturesSansClient);
+  // }
+  //
+  // Future<void> importProduitsRestantsDepuisExcel(String filePath) async {
+  //   final file = File(filePath);
+  //   final bytes = await file.readAsBytes();
+  //   final excel = Excel.decodeBytes(bytes);
+  //   final faker = Faker();
+  //   final random = Random();
+  //
+  //   for (var table in excel.tables.keys) {
+  //     for (var row in excel.tables[table]!.rows.skip(1)) {
+  //       final designation = row[1]?.value?.toString() ?? faker.food.dish();
+  //       final prixAchat = double.tryParse(row[6]?.value?.toString() ?? '') ??
+  //           faker.randomGenerator.decimal();
+  //       final prixVente = double.tryParse(row[7]?.value?.toString() ?? '') ??
+  //           faker.randomGenerator.decimal();
+  //       final stock = double.tryParse(row[5]?.value?.toString() ?? '') ??
+  //           faker.randomGenerator.integer(100).toDouble();
+  //
+  //       // Nettoyage du code QR (suppression des espaces)
+  //       final qrCode = (row[0]?.value?.toString() ?? '').replaceAll(' ', '');
+  //
+  //       // Vérification de l'existence du produit dans ObjectBox
+  //       final existingProduit = await produitBox
+  //           .query(Produit_.qr.equals(qrCode))
+  //           .build()
+  //           .findFirst();
+  //
+  //       if (existingProduit == null) {
+  //         // Création d'un nouveau produit s'il n'existe pas
+  //         final produit = Produit(
+  //           qr: qrCode,
+  //           image:
+  //               'https://picsum.photos/200/300?random=${faker.randomGenerator.integer(5000)}',
+  //           nom: designation,
+  //           description: row[1]?.value?.toString() ?? faker.lorem.sentence(),
+  //           prixVente: prixVente,
+  //           minimStock: faker.randomGenerator.decimal(min: 1, scale: 2),
+  //           alertPeremption: random.nextInt(1000),
+  //           derniereModification: DateTime.now(),
+  //         )..crud.target = Crud(
+  //             createdBy: faker.randomGenerator.integer(1000),
+  //             updatedBy: faker.randomGenerator.integer(1000),
+  //             deletedBy: faker.randomGenerator.integer(1000),
+  //             dateCreation: DateTime.now(),
+  //             derniereModification: DateTime.now(),
+  //           );
+  //
+  //         // Création d'un approvisionnement initial pour le nouveau produit
+  //         final approvisionnement = Approvisionnement(
+  //           quantite: stock,
+  //           prixAchat: prixAchat,
+  //           datePeremption: faker.date.dateTime(
+  //               minYear: DateTime.now().year, maxYear: DateTime.now().year + 2),
+  //           derniereModification: DateTime.now(),
+  //         )
+  //           ..produit.target = produit
+  //           ..fournisseur.target = await getFournisseurAleatoire()
+  //           ..crud.target = Crud(
+  //             createdBy: faker.randomGenerator.integer(1000),
+  //             updatedBy: faker.randomGenerator.integer(1000),
+  //             deletedBy: faker.randomGenerator.integer(1000),
+  //             dateCreation: DateTime.now(),
+  //             derniereModification: DateTime.now(),
+  //           );
+  //
+  //         produit.approvisionnements.add(approvisionnement);
+  //
+  //         await produitBox.put(produit);
+  //         print(
+  //             'Nouveau produit importé: ${produit.id} - ${produit.nom} - QR: ${produit.qr}');
+  //       } else {
+  //         print(
+  //             'Produit déjà existant: ${existingProduit.id} - ${existingProduit.nom} - QR: ${existingProduit.qr}');
+  //       }
+  //     }
+  //   }
+  // }
 
   Future<Fournisseur> getFournisseurAleatoire() async {
     final count = await fournisseurBox.count();

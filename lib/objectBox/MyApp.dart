@@ -149,7 +149,11 @@ class MyApp9 extends StatelessWidget {
           //   objectBox: objectBox,
           // ),
           //   home: FacturationPageUI(),
-          home: HomePage3(),
+          home: Platform.isAndroid || Platform.isIOS
+              ? HomePage3()
+              : /*showPlatform*/ adaptiveHome(
+                  objectBox: objectBox,
+                ),
         );
       }),
     );
@@ -1284,26 +1288,26 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                           'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSdyzjpBSojo_zxZ535JaX7d9dVC-aF-fPr3A&s'),
                     ),
                   ),
-                  IconButton(
-                    onPressed: () async {
-                      if (Platform.isAndroid) {
-                        String filePath =
-                            "/storage/emulated/0/Download/Articles.xls";
-                        await widget.objectBox
-                            //   .importProduitsRestantsDepuisExcel(filePath);
-                            .importProduitsDepuisExcel(filePath, 20, 3000, 500);
-                      } else {
-                        String filePath =
-                            "C:/Users/INDRA/Documents/Articles.xls"; // Assurez-vous de mettre le bon chemin ici.
-                        await widget.objectBox
-                            //  .importProduitsRestantsDepuisExcel(filePath);
-                            .importProduitsDepuisExcel(filePath, 20, 3000, 500);
-                      }
-
-                      print("Produits importés avec succès !");
-                    },
-                    icon: Icon(FontAwesomeIcons.fileExcel),
-                  ),
+                  // IconButton(
+                  //   onPressed: () async {
+                  //     if (Platform.isAndroid) {
+                  //       String filePath =
+                  //           "/storage/emulated/0/Download/Articles.xls";
+                  //       await widget.objectBox
+                  //           //   .importProduitsRestantsDepuisExcel(filePath);
+                  //           .importProduitsDepuisExcel(filePath, 20, 3000, 500);
+                  //     } else {
+                  //       String filePath =
+                  //           "C:/Users/INDRA/Documents/Articles.xls"; // Assurez-vous de mettre le bon chemin ici.
+                  //       await widget.objectBox
+                  //           //  .importProduitsRestantsDepuisExcel(filePath);
+                  //           .importProduitsDepuisExcel(filePath, 20, 3000, 500);
+                  //     }
+                  //
+                  //     print("Produits importés avec succès !");
+                  //   },
+                  //   icon: Icon(FontAwesomeIcons.fileExcel),
+                  // ),
                   IconButton(
                     onPressed: () {
                       Navigator.of(context).push(

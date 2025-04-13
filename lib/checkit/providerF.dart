@@ -112,4 +112,17 @@ class SignalementProviderSupabase with ChangeNotifier {
     // Vérifier les formats valides
     return RegExp(r'^(\+213|213|00213|0)?(5|6|7)\d{8}$').hasMatch(num);
   }
+
+  Future<bool> checkIfAlreadyReported(String numero, String userId) async {
+    final response = await _client
+        .from('signalements')
+        .select('id')
+        .eq('numero', numero) // Vérifie si le numéro existe
+        .eq('signalePar', userId) // Vérifie si l'utilisateur l'a déjà signalé
+        .limit(
+            1); // Limite à 1 résultat (même si plusieurs existent, on prend le premier)
+
+    return response
+        .isNotEmpty; // Si la liste n'est pas vide, cela signifie qu'il existe un signalement
+  }
 }

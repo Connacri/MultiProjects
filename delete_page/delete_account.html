@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Suppression de compte</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+        input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+        h1, h2 { color: #333; }
+        .notice { background: #f0f0f0; padding: 10px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+<h1>Suppression de votre compte</h1>
+<p>Si vous souhaitez supprimer définitivement votre compte et toutes vos données personnelles
+    associées à l'application <strong>Check-it</strong>, veuillez remplir le formulaire ci-dessous.
+    Vous recevrez un email de confirmation avant que la suppression soit effectuée.</p>
+
+<div class="notice">
+    <strong>Attention :</strong> Cette action est <u>irréversible</u>. Toutes vos données seront
+    supprimées définitivement après confirmation.
+</div>
+
+<form id="deleteForm">
+    <input name="email" placeholder="Email" required type="email"/>
+    <input name="password" placeholder="Mot de passe" required type="password"/>
+    <input name="phone" placeholder="Téléphone" required type="tel"/>
+    <button type="submit">Demander la suppression</button>
+</form>
+
+
+<h2>Données supprimées</h2>
+<ul>
+    <li>Informations de compte (email, nom, numéro de téléphone, mot de passe hashé)</li>
+    <li>Historique d'utilisation</li>
+    <li>Données personnelles stockées sur nos serveurs</li>
+</ul>
+
+<h2>Données conservées</h2>
+<p>Nous conservons certaines données minimales pendant 30 jours à des fins légales (lutte contre les
+    fraudes ou obligations réglementaires), après quoi elles sont automatiquement supprimées.</p>
+
+<h2>Assistance</h2>
+<p>Si vous avez des difficultés, vous pouvez aussi nous contacter à l’adresse : <strong>oran.inturk@gmail.com</strong>
+</p>
+</body>
+</html>

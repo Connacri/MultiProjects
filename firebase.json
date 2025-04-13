@@ -15,6 +15,13 @@
         "source": "**",
         "destination": "/index.html"
       }
+    ],
+    "target": "delete_account",
+    "public": "delete_page",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
     ]
   },
   "storage": {
