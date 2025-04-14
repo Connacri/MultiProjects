@@ -4,45 +4,172 @@
     <meta charset="UTF-8">
     <title>Suppression de compte</title>
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <!-- Chargement des SDK nécessaires dans le bon ordre -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     <style>
         body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-        input, button { display: block; width: 100%; margin: 10px 0; padding: 10px; }
+        button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 12px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #3367D6; }
+        button:disabled {
+            background: #9E9E9E;
+            cursor: not-allowed;
+        }
         h1, h2 { color: #333; }
-        .notice { background: #f0f0f0; padding: 10px; margin-bottom: 20px; }
+        .notice {
+            background: #f8f9fa;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #fbbc05;
+        }
+        .google-btn {
+            background: #4285F4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .google-icon {
+            background: white;
+            padding: 8px;
+            border-radius: 2px;
+            margin-right: 12px;
+        }
+        #userInfo {
+            display: none;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        #snackbar {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+        }
+        #snackbar.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
     </style>
 </head>
 <body>
 <h1>Suppression de votre compte</h1>
-<p>Si vous souhaitez supprimer définitivement votre compte et toutes vos données personnelles
-    associées à l'application <strong>Check-it</strong>, veuillez remplir le formulaire ci-dessous.
-    Vous recevrez un email de confirmation avant que la suppression soit effectuée.</p>
+<p>Pour supprimer définitivement votre compte <strong>Check-it</strong>, veuillez vous connecter
+    avec Google.</p>
 
 <div class="notice">
     <strong>Attention :</strong> Cette action est <u>irréversible</u>. Toutes vos données seront
-    supprimées définitivement après confirmation.
+    supprimées définitivement.
 </div>
 
-<form id="deleteForm">
-    <input name="email" placeholder="Email" required type="email"/>
-    <input name="password" placeholder="Mot de passe" required type="password"/>
-    <input name="phone" placeholder="Téléphone" required type="tel"/>
-    <button type="submit">Demander la suppression</button>
-</form>
+<div id="authSection">
+    <button class="google-btn" id="googleSignIn">
+        <img class="google-icon"
+             height="20"
+             src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+             width="20">
+        Se connecter avec Google
+    </button>
+</div>
 
+<div id="userInfo">
+    <p>Connecté en tant que : <span id="userEmail"></span></p>
+    <button id="deleteAccount">Supprimer définitivement mon compte</button>
+</div>
 
-<h2>Données supprimées</h2>
-<ul>
-    <li>Informations de compte (email, nom, numéro de téléphone, mot de passe hashé)</li>
-    <li>Historique d'utilisation</li>
-    <li>Données personnelles stockées sur nos serveurs</li>
-</ul>
+<div id="snackbar"></div>
 
-<h2>Données conservées</h2>
-<p>Nous conservons certaines données minimales pendant 30 jours à des fins légales (lutte contre les
-    fraudes ou obligations réglementaires), après quoi elles sont automatiquement supprimées.</p>
+<script>
+    // Vérifier si le domaine est autorisé
+    function isDomainAuthorized() {
+        const authorizedDomains = [
+            'localhost',
+            '127.0.0.1',
+            'walletdz-d12e0.web.app',
+            'walletdz-d12e0.firebaseapp.com'
+            // Ajoutez ici vos autres domaines si nécessaire
+        ];
 
-<h2>Assistance</h2>
-<p>Si vous avez des difficultés, vous pouvez aussi nous contacter à l’adresse : <strong>oran.inturk@gmail.com</strong>
-</p>
+        return authorizedDomains.includes(window.location.hostname);
+    }
+
+    // Configuration Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUqIwqieBQxsqzXnWKISJSw52XLbJxWKk",
+        authDomain: "walletdz-d12e0.firebaseapp.com",
+        projectId: "walletdz-d12e0",
+        storageBucket: "walletdz-d12e0.appspot.com",
+        messagingSenderId: "330293988254",
+        appId: "1:330293988254:web:9d7fdff13400352b41648f"
+    };
+
+    // Initialiser Firebase seulement si le domaine est autorisé
+    if (isDomainAuthorized()) {
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Initialiser Supabase
+        const supabase = window.supabase.createClient(
+            'https://zjbnzghyhdhlivpokstz.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqYm56Z2h5aGRobGl2cG9rc3R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODA1MjcsImV4cCI6MjA1NDI1NjUyN30.99PBeSXyoFJQMFopizHfLDlqLrMunSBLlBfTGcLIpv8'
+        );
+
+        // [Vos fonctions existantes: signInWithGoogle, deleteAccount, etc.]
+        document.getElementById('googleSignIn').addEventListener('click', signInWithGoogle);
+
+        async function signInWithGoogle() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                const result = await auth.signInWithPopup(provider);
+                showUserInfo(result.user);
+                showSnackbar('Connexion réussie', 'success');
+            } catch (error) {
+                console.error("Erreur d'authentification:", error);
+                showSnackbar(`Erreur: ${error.message}`, 'error');
+            }
+        }
+
+    } else {
+        document.getElementById('googleSignIn').disabled = true;
+        showSnackbar('Ce domaine n\'est pas autorisé pour la connexion', 'error');
+        console.error('Domaine non autorisé:', window.location.hostname);
+    }
+
+    function showSnackbar(message, type) {
+        const snackbar = document.getElementById('snackbar');
+        snackbar.textContent = message;
+        snackbar.className = 'show ' + type;
+        setTimeout(() => snackbar.className = '', 3000);
+    }
+</script>
 </body>
 </html>

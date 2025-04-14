@@ -61,8 +61,8 @@ class _AnchoredAdaptiveExampleState extends State<AnchoredAdaptiveExample> {
 
     _anchoredAdaptiveAd = BannerAd(
       adUnitId: Platform.isAndroid
-          ? 'ca-app-pub-3940256099942544/9214589741'
-          : 'ca-app-pub-3940256099942544/2435281174',
+          ? 'ca-app-pub-2282149611905342/7158757522'
+          : 'ca-app-pub-2282149611905342/7158757522',
       size: size,
       request: AdRequest(),
       listener: BannerAdListener(

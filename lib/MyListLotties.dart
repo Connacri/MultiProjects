@@ -65,13 +65,12 @@ class _LottieListPageState extends State<LottieListPage> {
                     lottieFileName,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 100,
-                    width: 100,
+
+                  FittedBox(
                     child: Lottie.asset(
-                        '$lottieFilePath'), // Chemin du fichier Lottie
-                  ),
+                      '$lottieFilePath',
+                    ),
+                  ), // Chemin du fichier Lottie
                 ],
               ),
             ),

@@ -35,11 +35,77 @@ class _HomePage3State extends State<HomePage3> {
   bool _showSignalBtn = true;
   String? numeroRecherche;
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+
   BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
+  InterstitialAd? _interstitialAd1;
+  InterstitialAd? _interstitialAd2;
+
+  bool _isAd1Ready = false;
+  bool _isAd2Ready = false;
+  String adUnitId1 = 'ca-app-pub-2282149611905342/4286974188';
+  String adUnitId2 = 'ca-app-pub-2282149611905342/7655852483';
+
+  static final AdRequest request = AdRequest(
+    keywords: <String>[
+      'achat',
+      'promo',
+      'remise',
+      'shopping',
+      'soldes',
+      'market dz',
+      'prix',
+      'commande en ligne',
+      'baridi mob',
+      'edahabia',
+      'cib',
+      'application bancaire',
+      'crypto dz',
+      'pret algerie',
+      'investissement',
+      'voiture',
+      'leasing algerie',
+      'location voiture',
+      'auto occasion',
+      'marché de l’auto',
+      'assurance auto',
+      'voiture',
+      'leasing algerie',
+      'location voiture',
+      'auto occasion',
+      'marché de l’auto',
+      'assurance auto',
+      'mobilis',
+      'djezzy',
+      'oota',
+      'forfait internet',
+      'recharge',
+      'appels pas chers',
+      'internet algerie',
+      'louer appartement',
+      'vente maison',
+      'immobilier algerie',
+      'terrain à vendre',
+      'location studio',
+      'b2b algerie',
+      'grossiste',
+      'fournisseur',
+      'marché de gros',
+      'logiciel de caisse',
+      'gestion stock'
+    ],
+    contentUrl: 'walletdz-d12e0.web.app',
+    nonPersonalizedAds: true,
+  );
 
   InterstitialAd? _interstitialAd;
-  bool _isBannerAdReady = false;
-  bool _isInterstitialAdReady = false;
+  int _numInterstitialLoadAttempts = 0;
+
+  // RewardedAd? _rewardedAd;
+  // int _numRewardedLoadAttempts = 0;
+  //
+  // RewardedInterstitialAd? _rewardedInterstitialAd;
+  // int _numRewardedInterstitialLoadAttempts = 0;
 
   @override
   void initState() {
@@ -54,20 +120,20 @@ class _HomePage3State extends State<HomePage3> {
       Provider.of<SignalementProviderSupabase>(context, listen: false)
           .chargerSignalements(_user!.uid);
     });
-    // if (Platform.isAndroid)
-    //   BannerAd(
-    //     adUnitId: AdHelper.bannerAdUnitId,
-    //     request: AdRequest(),
-    //     size: AdSize.banner,
-    //     listener: BannerAdListener(onAdLoaded: (ad) {
-    //       setState(() {
-    //         _bannerAd = ad as BannerAd;
-    //       });
-    //     }, onAdFailedToLoad: (ad, err) {
-    //       print('Failure to load _adBanner ${err.message}');
-    //       ad.dispose();
-    //     }),
-    //   )..load();
+    if (Platform.isAndroid)
+      BannerAd(
+        adUnitId: AdHelper.bannerAdUnitId,
+        request: AdRequest(),
+        size: AdSize.banner,
+        listener: BannerAdListener(onAdLoaded: (ad) {
+          setState(() {
+            _bannerAd = ad as BannerAd;
+          });
+        }, onAdFailedToLoad: (ad, err) {
+          print('Failure to load _adBanner ${err.message}');
+          ad.dispose();
+        }),
+      )..load();
     // if (Platform.isAndroid)
     //   InterstitialAd.load(
     //       adUnitId: AdHelper.getInterstatitialAdUnitId,
@@ -82,18 +148,13 @@ class _HomePage3State extends State<HomePage3> {
     //         print('Failure to load Interstatitial ad ${err.message}');
     //       }));
     // if (Platform.isAndroid) _interstitialAd?.show();
-    _loadBannerAd();
-    _loadInterstitialAd();
+
     _initializeFCM();
     numeroController.addListener(_handleTextChange);
-  }
-
-  void _handleTextChange() {
-    if (numeroController.text.isEmpty) {
-      setState(() {
-        _showSignalBtn = true;
-      });
-    }
+    _loadBannerAd();
+    _createInterstitialAd();
+    _loadInterstitialAd1();
+    _loadInterstitialAd2();
   }
 
   Future<void> _loadBannerAd() async {
@@ -119,45 +180,176 @@ class _HomePage3State extends State<HomePage3> {
     ).load();
   }
 
-  Future<void> _loadInterstitialAd() async {
-    if (!Platform.isAndroid) return;
+  void _createInterstitialAd() {
+    InterstitialAd.load(
+        adUnitId: 'ca-app-pub-2282149611905342/3772447790',
+        request: request,
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (InterstitialAd ad) {
+            print('$ad loaded');
+            _interstitialAd = ad;
+            _numInterstitialLoadAttempts = 0;
+            _interstitialAd!.setImmersiveMode(true);
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            print('InterstitialAd failed to load: $error.');
+            _numInterstitialLoadAttempts += 1;
+            _interstitialAd = null;
+            if (_numInterstitialLoadAttempts < maxFailedLoadAttempts) {
+              _createInterstitialAd();
+            }
+          },
+        ));
+  }
 
-    await InterstitialAd.load(
-      adUnitId: AdHelper.getInterstatitialAdUnitId,
-      request: AdRequest(),
+  void _loadInterstitialAd1() {
+    InterstitialAd.load(
+      adUnitId: adUnitId1,
+      request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
-          _interstitialAd = ad;
-          _isInterstitialAdReady = true;
-          ad.fullScreenContentCallback = FullScreenContentCallback(
-            onAdDismissedFullScreenContent: (ad) {
-              _interstitialAd?.dispose();
-              _loadInterstitialAd();
-            },
-          );
+          _interstitialAd1 = ad;
+          setState(() {
+            _isAd1Ready = true;
+          });
+          print('Ad 1 is ready');
         },
-        onAdFailedToLoad: (err) {
-          print('Erreur interstitiel: ${err.message}');
-          _isInterstitialAdReady = false;
+        onAdFailedToLoad: (error) {
+          print('Ad 1 failed to load: $error');
+          setState(() {
+            _isAd1Ready = false;
+          });
         },
       ),
     );
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Affichez l'annonce dès que l'application se charge
-    if (_interstitialAd != null) {
-      _interstitialAd!.show();
+  void _loadInterstitialAd2() {
+    InterstitialAd.load(
+      adUnitId: adUnitId2,
+      request: const AdRequest(),
+      adLoadCallback: InterstitialAdLoadCallback(
+        onAdLoaded: (ad) {
+          _interstitialAd2 = ad;
+          setState(() {
+            _isAd2Ready = true;
+          });
+          print('Ad 2 is ready');
+        },
+        onAdFailedToLoad: (error) {
+          print('Ad 2 failed to load: $error');
+          setState(() {
+            _isAd2Ready = false;
+          });
+        },
+      ),
+    );
+  }
+
+  void _showReadyInterstitialAd({VoidCallback? onAdClosed}) {
+    if (_isAd1Ready && _interstitialAd1 != null) {
+      _interstitialAd1!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          print('Ad 1 dismissed.');
+          ad.dispose();
+          _loadInterstitialAd1(); // Recharge l'ad
+          if (onAdClosed != null) {
+            onAdClosed(); // même si la pub échoue, on continue
+          }
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          print('Ad 1 failed to show: $error');
+          ad.dispose();
+          _loadInterstitialAd1(); // Recharge l'ad
+          if (onAdClosed != null) {
+            onAdClosed(); // même si la pub échoue, on continue
+          }
+        },
+      );
+      _interstitialAd1!.show();
+      _interstitialAd1 = null; // Réinitialiser après affichage
+    } else if (_isAd2Ready && _interstitialAd2 != null) {
+      _interstitialAd2!.fullScreenContentCallback = FullScreenContentCallback(
+        onAdDismissedFullScreenContent: (ad) {
+          print('Ad 2 dismissed.');
+          ad.dispose();
+          _loadInterstitialAd2(); // Recharge l'ad
+          if (onAdClosed != null) {
+            onAdClosed(); // même si la pub échoue, on continue
+          }
+        },
+        onAdFailedToShowFullScreenContent: (ad, error) {
+          print('Ad 2 failed to show: $error');
+          ad.dispose();
+          _loadInterstitialAd2(); // Recharge l'ad
+          if (onAdClosed != null) {
+            onAdClosed(); // même si la pub échoue, on continue
+          }
+        },
+      );
+      _interstitialAd2!.show();
+      _interstitialAd2 = null; // Réinitialiser après affichage
+    } else {
+      print('Aucune interstitial prête');
+    }
+  }
+
+  void _showInterstitialAd({VoidCallback? onAdClosed}) {
+    if (_interstitialAd == null) {
+      print('Warning: attempt to show interstitial before loaded.');
+      if (onAdClosed != null) onAdClosed(); // navigation directe si pub absente
+      return;
+    }
+
+    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (InterstitialAd ad) =>
+          print('ad onAdShowedFullScreenContent.'),
+      onAdDismissedFullScreenContent: (InterstitialAd ad) {
+        print('$ad onAdDismissedFullScreenContent.');
+        ad.dispose();
+        _createInterstitialAd(); // recharger une nouvelle pub
+
+        if (onAdClosed != null) {
+          onAdClosed(); // 👈 navigation ici
+        }
+      },
+      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
+        print('$ad onAdFailedToShowFullScreenContent: $error');
+        ad.dispose();
+        _createInterstitialAd();
+
+        if (onAdClosed != null) {
+          onAdClosed(); // même si la pub échoue, on continue
+        }
+      },
+    );
+
+    _interstitialAd!.show();
+    _interstitialAd = null;
+  }
+
+  void _handleTextChange() {
+    if (numeroController.text.isEmpty) {
+      setState(() {
+        _showSignalBtn = true;
+      });
     }
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
   void dispose() {
-    _bannerAd?.dispose();
-    _interstitialAd?.dispose();
     numeroController.removeListener(_handleTextChange);
+    _interstitialAd?.dispose();
+    //_rewardedAd?.dispose();
+    _bannerAd?.dispose();
+    _interstitialAd1?.dispose();
+    _interstitialAd2?.dispose();
+    // _rewardedInterstitialAd?.dispose();
     super.dispose();
   }
 
@@ -238,9 +430,11 @@ class _HomePage3State extends State<HomePage3> {
   ];
 
   void _handleSignOut() async {
-    await _authService.signOut();
-    setState(() {
-      _user = null;
+    _showInterstitialAd(onAdClosed: () async {
+      await _authService.signOut();
+      setState(() {
+        _user = null;
+      });
     });
   }
 
@@ -254,8 +448,13 @@ class _HomePage3State extends State<HomePage3> {
             ? Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: InkWell(
-                  onTap: () => Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (ctx) => googleBtn())),
+                  onTap: () {
+                    _showReadyInterstitialAd(onAdClosed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (ctx) => googleBtn()),
+                      );
+                    });
+                  },
                   child: CircleAvatar(
                     backgroundImage: NetworkImage(_user!.photoURL ?? ''),
                     radius: 15, // Important : plus petit pour AppBar
@@ -283,10 +482,12 @@ class _HomePage3State extends State<HomePage3> {
           ),
         ),
         actions: [
-          IconButton.outlined(
-              onPressed: () => Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (ctx) => LottieListPage())),
-              icon: Icon(Icons.animation)),
+          _user == null || _user!.email != 'forslog@gmail.com'
+              ? SizedBox.shrink()
+              : IconButton.outlined(
+                  onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (ctx) => LottieListPage())),
+                  icon: Icon(Icons.animation)),
           if (_user != null)
             IconButton(
               icon: Icon(Icons.logout),
@@ -548,11 +749,11 @@ class _HomePage3State extends State<HomePage3> {
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             //////////////////////////////////////////////////////////////
-                            if (_isInterstitialAdReady) {
-                              _interstitialAd?.show();
-                            } else {
-                              print("L'annonce interstitielle n'est pas prête");
-                            }
+                            // if (_isInterstitialAdReady) {
+                            //   _interstitialAd?.show();
+                            // } else {
+                            //   print("L'annonce interstitielle n'est pas prête");
+                            // }
                             //////////////////////////////////////////////////////////////
                             setState(() {
                               numeroRecherche = null;
@@ -594,15 +795,17 @@ class _HomePage3State extends State<HomePage3> {
                         child: AdWidget(ad: _bannerAd!),
                       ),
                     ),
-                  InkWell(
-                    onTap: () => Navigator.of(context)
-                        .push(MaterialPageRoute(builder: (ctx) => MyApp000())),
-                    child: SizedBox(
-                      height: 200,
-                      width: 200,
-                      child: Lottie.asset('assets/lotties/1 (26).json'),
-                    ),
-                  ),
+                  _user == null || _user!.email != 'forslog@gmail.com'
+                      ? SizedBox.shrink()
+                      : InkWell(
+                          onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(builder: (ctx) => MyApp000())),
+                          child: SizedBox(
+                            height: 200,
+                            width: 200,
+                            child: Lottie.asset('assets/lotties/1 (26).json'),
+                          ),
+                        ),
                 ],
               ),
             ),

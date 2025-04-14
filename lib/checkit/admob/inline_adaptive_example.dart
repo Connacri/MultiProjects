@@ -58,8 +58,8 @@ class _InlineAdaptiveExampleState extends State<InlineAdaptiveExample> {
 
     _inlineAdaptiveAd = AdManagerBannerAd(
       adUnitId: Platform.isAndroid
-          ? '/21775744923/example/banner'
-          : '/6499/example/adaptive-banner',
+          ? 'ca-app-pub-2282149611905342/7158757522'
+          : 'ca-app-pub-2282149611905342/7158757522',
       sizes: [size],
       request: AdManagerAdRequest(),
       listener: AdManagerBannerAdListener(

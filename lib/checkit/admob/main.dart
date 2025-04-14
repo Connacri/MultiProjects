@@ -82,8 +82,8 @@ class _MyApp000State extends State<MyApp000> {
   void _createInterstitialAd() {
     InterstitialAd.load(
         adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-3940256099942544/1033173712'
-            : 'ca-app-pub-3940256099942544/4411468910',
+            ? 'ca-app-pub-2282149611905342/4286974188'
+            : 'ca-app-pub-2282149611905342/4286974188',
         request: request,
         adLoadCallback: InterstitialAdLoadCallback(
           onAdLoaded: (InterstitialAd ad) {
@@ -129,8 +129,8 @@ class _MyApp000State extends State<MyApp000> {
   void _createRewardedAd() {
     RewardedAd.load(
         adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-3940256099942544/5224354917'
-            : 'ca-app-pub-3940256099942544/1712485313',
+            ? 'ca-app-pub-2282149611905342/5226922276'
+            : 'ca-app-pub-2282149611905342/5226922276',
         request: request,
         rewardedAdLoadCallback: RewardedAdLoadCallback(
           onAdLoaded: (RewardedAd ad) {
@@ -180,8 +180,8 @@ class _MyApp000State extends State<MyApp000> {
   void _createRewardedInterstitialAd() {
     RewardedInterstitialAd.load(
         adUnitId: Platform.isAndroid
-            ? 'ca-app-pub-3940256099942544/5354046379'
-            : 'ca-app-pub-3940256099942544/6978759866',
+            ? 'ca-app-pub-2282149611905342/5226922276'
+            : 'ca-app-pub-2282149611905342/5226922276',
         request: request,
         rewardedInterstitialAdLoadCallback: RewardedInterstitialAdLoadCallback(
           onAdLoaded: (RewardedInterstitialAd ad) {
