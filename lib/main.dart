@@ -31,7 +31,7 @@ import 'objectBox/FuturisticConnectionUI.dart';
 import 'objectBox/MyApp.dart';
 import 'objectBox/Utils/hash3.dart';
 import 'objectBox/hash.dart';
-
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 //import 'package:media_kit/media_kit.dart'; // Importez media_kit
 
 ///gere les gestu
@@ -61,7 +61,9 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 //late ObjectBox objectbox;
 Future<void> main() async {
   // Initialisation de Flutter
-  WidgetsFlutterBinding.ensureInitialized();
+  //WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  //FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   MobileAds.instance.initialize();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   // Initialisation de Supabase (si async)
@@ -187,9 +189,10 @@ Future<void> main() async {
 //     }
 //   });
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
-  // splash.FlutterNativeSplash.removeAfter(initialization);
+
   //WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  //splash.FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  FlutterNativeSplash.remove();
   timeago.setLocaleMessages('fr', timeago.FrMessages());
   timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
   //

@@ -12,11 +12,13 @@ import 'package:kenzy/checkit/admobHelper.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
-
+import 'package:timeago/timeago.dart' as timeago;
 import '../MyListLotties.dart';
 import '../objectBox/Utils/My_widgets.dart';
 import 'AuthProvider.dart';
+import 'EnhancedCallScreen.dart';
 import 'Models.dart';
 import 'admob/main.dart';
 
@@ -43,8 +45,8 @@ class _HomePage3State extends State<HomePage3> {
 
   bool _isAd1Ready = false;
   bool _isAd2Ready = false;
-  String adUnitId1 = 'ca-app-pub-2282149611905342/4286974188';
-  String adUnitId2 = 'ca-app-pub-2282149611905342/7655852483';
+  String adUnitId1 = 'ca-app-pub-2282149611905342/7655852483';
+  String adUnitId2 = 'ca-app-pub-2282149611905342/4286974188';
 
   static final AdRequest request = AdRequest(
     keywords: <String>[
@@ -99,7 +101,7 @@ class _HomePage3State extends State<HomePage3> {
   );
 
   InterstitialAd? _interstitialAd;
-  int _numInterstitialLoadAttempts = 0;
+  bool _isInterstitialAdReady = false;
 
   // RewardedAd? _rewardedAd;
   // int _numRewardedLoadAttempts = 0;
@@ -134,25 +136,11 @@ class _HomePage3State extends State<HomePage3> {
           ad.dispose();
         }),
       )..load();
-    // if (Platform.isAndroid)
-    //   InterstitialAd.load(
-    //       adUnitId: AdHelper.getInterstatitialAdUnitId,
-    //       request: AdRequest(),
-    //       adLoadCallback: InterstitialAdLoadCallback(onAdLoaded: (ad) {
-    //         ad.fullScreenContentCallback = FullScreenContentCallback(
-    //             onAdDismissedFullScreenContent: (ad) {});
-    //         setState(() {
-    //           _interstitialAd = ad;
-    //         });
-    //       }, onAdFailedToLoad: (err) {
-    //         print('Failure to load Interstatitial ad ${err.message}');
-    //       }));
-    // if (Platform.isAndroid) _interstitialAd?.show();
 
     _initializeFCM();
     numeroController.addListener(_handleTextChange);
     _loadBannerAd();
-    _createInterstitialAd();
+
     _loadInterstitialAd1();
     _loadInterstitialAd2();
   }
@@ -162,7 +150,7 @@ class _HomePage3State extends State<HomePage3> {
 
     await BannerAd(
       adUnitId: AdHelper.bannerAdUnitId,
-      request: AdRequest(),
+      request: request,
       size: AdSize.banner,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
@@ -180,35 +168,14 @@ class _HomePage3State extends State<HomePage3> {
     ).load();
   }
 
-  void _createInterstitialAd() {
-    InterstitialAd.load(
-        adUnitId: 'ca-app-pub-2282149611905342/3772447790',
-        request: request,
-        adLoadCallback: InterstitialAdLoadCallback(
-          onAdLoaded: (InterstitialAd ad) {
-            print('$ad loaded');
-            _interstitialAd = ad;
-            _numInterstitialLoadAttempts = 0;
-            _interstitialAd!.setImmersiveMode(true);
-          },
-          onAdFailedToLoad: (LoadAdError error) {
-            print('InterstitialAd failed to load: $error.');
-            _numInterstitialLoadAttempts += 1;
-            _interstitialAd = null;
-            if (_numInterstitialLoadAttempts < maxFailedLoadAttempts) {
-              _createInterstitialAd();
-            }
-          },
-        ));
-  }
-
   void _loadInterstitialAd1() {
     InterstitialAd.load(
       adUnitId: adUnitId1,
-      request: const AdRequest(),
+      request: request,
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd1 = ad;
+          _isInterstitialAdReady = true; // La publicité est prête
           setState(() {
             _isAd1Ready = true;
           });
@@ -216,6 +183,7 @@ class _HomePage3State extends State<HomePage3> {
         },
         onAdFailedToLoad: (error) {
           print('Ad 1 failed to load: $error');
+          _isInterstitialAdReady = false; // Échec du chargement
           setState(() {
             _isAd1Ready = false;
           });
@@ -227,10 +195,11 @@ class _HomePage3State extends State<HomePage3> {
   void _loadInterstitialAd2() {
     InterstitialAd.load(
       adUnitId: adUnitId2,
-      request: const AdRequest(),
+      request: request,
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd2 = ad;
+          _isInterstitialAdReady = true; // La publicité est prête
           setState(() {
             _isAd2Ready = true;
           });
@@ -238,6 +207,7 @@ class _HomePage3State extends State<HomePage3> {
         },
         onAdFailedToLoad: (error) {
           print('Ad 2 failed to load: $error');
+          _isInterstitialAdReady = false; // Échec du chargement
           setState(() {
             _isAd2Ready = false;
           });
@@ -292,40 +262,6 @@ class _HomePage3State extends State<HomePage3> {
     } else {
       print('Aucune interstitial prête');
     }
-  }
-
-  void _showInterstitialAd({VoidCallback? onAdClosed}) {
-    if (_interstitialAd == null) {
-      print('Warning: attempt to show interstitial before loaded.');
-      if (onAdClosed != null) onAdClosed(); // navigation directe si pub absente
-      return;
-    }
-
-    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdShowedFullScreenContent: (InterstitialAd ad) =>
-          print('ad onAdShowedFullScreenContent.'),
-      onAdDismissedFullScreenContent: (InterstitialAd ad) {
-        print('$ad onAdDismissedFullScreenContent.');
-        ad.dispose();
-        _createInterstitialAd(); // recharger une nouvelle pub
-
-        if (onAdClosed != null) {
-          onAdClosed(); // 👈 navigation ici
-        }
-      },
-      onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
-        print('$ad onAdFailedToShowFullScreenContent: $error');
-        ad.dispose();
-        _createInterstitialAd();
-
-        if (onAdClosed != null) {
-          onAdClosed(); // même si la pub échoue, on continue
-        }
-      },
-    );
-
-    _interstitialAd!.show();
-    _interstitialAd = null;
   }
 
   void _handleTextChange() {
@@ -430,12 +366,29 @@ class _HomePage3State extends State<HomePage3> {
   ];
 
   void _handleSignOut() async {
-    _showInterstitialAd(onAdClosed: () async {
+    // _showReadyInterstitialAd(onAdClosed: () async {
+    //   await _authService.signOut();
+    //   setState(() {
+    //     _user = null;
+    //   });
+    // });
+    // Vérifiez si une publicité interstitielle est prête
+    if (_isInterstitialAdReady) {
+      _showReadyInterstitialAd(
+        onAdClosed: () async {
+          // Redirection après la fermeture de la publicité
+          await _authService.signOut();
+          setState(() {
+            _user = null;
+          });
+        },
+      );
+    } else {
       await _authService.signOut();
       setState(() {
         _user = null;
       });
-    });
+    }
   }
 
   @override
@@ -449,11 +402,22 @@ class _HomePage3State extends State<HomePage3> {
                 padding: const EdgeInsets.all(10.0),
                 child: InkWell(
                   onTap: () {
-                    _showReadyInterstitialAd(onAdClosed: () {
+                    // Vérifiez si une publicité interstitielle est prête
+                    if (_isInterstitialAdReady) {
+                      _showReadyInterstitialAd(
+                        onAdClosed: () {
+                          // Redirection après la fermeture de la publicité
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (ctx) => googleBtn()),
+                          );
+                        },
+                      );
+                    } else {
+                      // Si aucune publicité n'est prête, redirigez directement
                       Navigator.of(context).push(
                         MaterialPageRoute(builder: (ctx) => googleBtn()),
                       );
-                    });
+                    }
                   },
                   child: CircleAvatar(
                     backgroundImage: NetworkImage(_user!.photoURL ?? ''),
@@ -801,11 +765,37 @@ class _HomePage3State extends State<HomePage3> {
                           onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(builder: (ctx) => MyApp000())),
                           child: SizedBox(
-                            height: 200,
-                            width: 200,
+                            height: 180,
+                            width: 180,
                             child: Lottie.asset('assets/lotties/1 (26).json'),
                           ),
                         ),
+                  _user == null
+                      ? SizedBox.shrink()
+                      : ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onPrimary,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(50.0),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 16),
+                          ),
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (ctx) => EnhancedCallScreen())),
+                          label: Text("Journal des appels de mon tel"),
+                          icon: Icon(
+                            Icons.phone,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
+                  SizedBox(
+                    height: 10,
+                  )
                 ],
               ),
             ),
@@ -849,7 +839,7 @@ class _googleBtnState extends State<googleBtn> {
       final data = await su.Supabase.instance.client
           .from('signalements')
           .select('numero, date') // Ajouter le champ date ici
-          .eq('signalePar', _user!.uid)
+          .eq('user', _user!.uid)
           .range(currentPage * pageSize, (currentPage + 1) * pageSize - 1)
           .order('date', ascending: false);
 
@@ -1029,229 +1019,531 @@ class _googleBtnState extends State<googleBtn> {
     );
   }
 
+// 1. D'abord, modifions la méthode _buildProfileUI
   Widget _buildProfileUI(signalementProvider) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Padding(
-          padding: const EdgeInsets.all(18.0),
-          child: Card(
-            elevation: 4,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Column(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 8,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 45,
-                      backgroundImage: _user?.photoURL != null
-                          ? NetworkImage(_user!.photoURL!)
-                          : AssetImage('assets/images/default_avatar.png')
-                              as ImageProvider,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    _user?.displayName ?? 'Utilisateur',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    _user?.email ?? '',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onPrimary,
-                        padding: EdgeInsets.symmetric(vertical: 14),
+        Expanded(
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Carte de profil
+                    Padding(
+                      padding: const EdgeInsets.all(18.0),
+                      child: Card(
+                        elevation: 4,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(16)),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 24, horizontal: 16),
+                          child: Column(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8,
+                                      offset: Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 45,
+                                  backgroundImage: _user?.photoURL != null
+                                      ? NetworkImage(_user!.photoURL!)
+                                      : AssetImage(
+                                              'assets/images/default_avatar.png')
+                                          as ImageProvider,
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                _user?.displayName ?? 'Utilisateur',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                _user?.email ?? '',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.primary,
+                                  foregroundColor:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  //padding: EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: _handleSignOut,
+                                icon: Icon(
+                                  Icons.logout,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                ),
+                                label: Text('Se déconnecter'),
+                              ),
+                              const SizedBox(height: 20),
+                              TextButton(
+                                onPressed: () =>
+                                    _showDeleteAccountConfirmation(context),
+                                child: const Text(
+                                  'Supprimer définitivement mon compte',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      onPressed: _handleSignOut,
-                      icon: Icon(
-                        Icons.logout,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                      label: Text('Se déconnecter'),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  TextButton(
-                    onPressed: () => _showDeleteAccountConfirmation(context),
-                    child: const Text(
-                      'Supprimer définitivement mon compte',
-                      style: TextStyle(
-                        color: Colors.red,
+
+                    // Divider
+                    if (_reportedNumbers.length != 0)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                        child: Divider(),
                       ),
-                    ),
-                  ),
-                ],
+
+                    // Animation Lottie quand il n'y a pas de signalements
+                    if (_reportedNumbers.length == 0)
+                      Container(
+                        height: 250,
+                        padding: const EdgeInsets.symmetric(vertical: 30),
+                        child: Lottie.asset('assets/lotties/1 (123).json'),
+                      ),
+                  ],
+                ),
               ),
-            ),
+
+              // Liste des signalements
+              if (_reportedNumbers.length > 0)
+                SliverFillRemaining(
+                  child: _buildReportedNumbersListContent(signalementProvider),
+                ),
+            ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-          child: Divider(),
-        ),
-        _reportedNumbers.length == 0
-            ? Expanded(
-                child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: Lottie.asset('assets/lotties/1 (123).json'),
-              ))
-            : _buildReportedNumbersList(signalementProvider),
       ],
     );
   }
 
-  Widget _buildReportedNumbersList(signalementProvider) {
-    return Expanded(
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollEndNotification &&
-              notification.metrics.extentAfter < 500) {
-            _loadReportedNumbers();
-          }
-          return false;
-        },
-        child: Padding(
-          padding: const EdgeInsets.only(left: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Signalements récents',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-              SizedBox(height: 8),
-              _reportedNumbers.length == 0
-                  ? SizedBox.shrink()
-                  : Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: TextButton(
-                        onPressed: () => _deleteAllReportedNumbers(),
+// 2. Créons une nouvelle méthode pour le contenu de la liste sans Expanded
+  Widget _buildReportedNumbersListContent(signalementProvider) {
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollEndNotification &&
+            notification.metrics.extentAfter < 500) {
+          _loadReportedNumbers();
+        }
+        return false;
+      },
+      child: Padding(
+        padding: const EdgeInsets.only(left: 10, right: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // Align(
+            //   alignment: Alignment.centerLeft,
+            //   child: Text(
+            //     'Signalements récents',
+            //     style: TextStyle(
+            //       fontWeight: FontWeight.w400,
+            //     ),
+            //   ),
+            // ),
+            // SizedBox(height: 8),
+            // _reportedNumbers.length == 0
+            //     ? SizedBox.shrink()
+            //     : Padding(
+            //         padding: const EdgeInsets.only(right: 8),
+            //         child: TextButton(
+            //           onPressed: () => _deleteAllReportedNumbers(),
+            //           child: Text(
+            //             'Delete All',
+            //             textAlign: TextAlign.end,
+            //             style: TextStyle(fontSize: 12, color: Colors.red),
+            //           ),
+            //         ),
+            //       ),
+            _reportedNumbers.length == 0
+                ? SizedBox.shrink()
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
                         child: Text(
-                          'Delete All',
-                          textAlign: TextAlign.end,
-                          style: TextStyle(fontSize: 12, color: Colors.red),
+                          'Signalements récents',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: TextButton(
+                          onPressed: () => _deleteAllReportedNumbers(),
+                          child: Text(
+                            'Delete All',
+                            textAlign: TextAlign.end,
+                            style: TextStyle(fontSize: 12, color: Colors.red),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+            Expanded(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                // Changé pour permettre le défilement
+                itemCount: _reportedNumbers.length + (hasMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index >= _reportedNumbers.length) {
+                    return Center(
+                      child: hasMore
+                          ? const CircularProgressIndicator()
+                          : const Text('Fin des résultats'),
+                    );
+                  }
+
+                  final reportedNumber = _reportedNumbers[index];
+
+                  return Material(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: ListTile(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        tileColor: Colors.deepPurple.shade50,
+                        dense: true,
+                        leading: FutureBuilder<int>(
+                          future: signalementProvider
+                              .nombreSignalements(reportedNumber['numero']),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return MyShimmerCircleAvatar();
+                            }
+                            return CircleAvatar(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              child: Text(
+                                NumberFormat.compact().format(
+                                    snapshot.data ?? 0), // 1500 → "1.5K"
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                ),
+                              ),
+                              // Text(
+                              //   snapshot.hasData
+                              //       ? snapshot.data.toString()
+                              //       : '0',
+                              //   style: TextStyle(
+                              //     fontSize: 20,
+                              //     color:
+                              //         Theme.of(context).colorScheme.onPrimary,
+                              //   ),
+                              // ),
+                            );
+                          },
+                        ),
+                        title: Text(
+                          formatPhoneNumber('0${reportedNumber['numero']}'),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        subtitle: Text(
+                          reportedNumber['date'] != null
+                              ? timeago.format(
+                                  DateTime.parse(reportedNumber['date']!)
+                                      .toLocal(),
+                                  locale:
+                                      'fr', // Optionnel - pour avoir les textes en français
+                                )
+                              : 'Date inconnue',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        // Text(
+                        //   reportedNumber['date'] != null
+                        //       ? DateFormat('dd/MM/yyyy HH:mm').format(
+                        //           DateTime.parse(reportedNumber['date']!)
+                        //               .toLocal())
+                        //       : 'Date inconnue',
+                        //   style: TextStyle(fontSize: 11),
+                        // ),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.delete,
+                            size: 23,
+                            color: Colors.red,
+                          ),
+                          onPressed: () =>
+                              _deleteReportedNumber(reportedNumber['numero']),
                         ),
                       ),
                     ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _reportedNumbers.length + (hasMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index >= _reportedNumbers.length) {
-                      return Center(
-                        child: hasMore
-                            ? const CircularProgressIndicator()
-                            : const Text('Fin des résultats'),
-                      );
-                    }
-
-                    final reportedNumber = _reportedNumbers[index];
-
-                    final nbSignalements = signalementProvider
-                        .nombreSignalements(reportedNumber['numero']);
-                    print(nbSignalements);
-                    return Material(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: ListTile(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          tileColor: Colors.deepPurple.shade50,
-                          dense: true,
-                          leading: FutureBuilder<int>(
-                            future: signalementProvider
-                                .nombreSignalements(reportedNumber['numero']),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return CircleAvatar(
-                                    child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: const CircularProgressIndicator(),
-                                ));
-                              }
-                              return CircleAvatar(
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.primary,
-                                child: Text(
-                                    snapshot.hasData
-                                        ? snapshot.data.toString()
-                                        : '0',
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary,
-                                    )),
-                              );
-                            },
-                          ),
-                          title: Text('0${reportedNumber['numero']}'),
-                          subtitle: Text(
-                            reportedNumber['date'] != null
-                                ? DateFormat('dd/MM/yyyy HH:mm').format(
-                                    DateTime.parse(reportedNumber['date']!)
-                                        .toLocal())
-                                : 'Date inconnue',
-                            style: TextStyle(fontSize: 12),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              size: 23,
-                              color: Colors.red,
-                            ),
-                            onPressed: () =>
-                                _deleteReportedNumber(reportedNumber['numero']),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  // Widget _buildProfileUI(signalementProvider) {
+  //   return Column(
+  //     mainAxisAlignment: MainAxisAlignment.center,
+  //     crossAxisAlignment: CrossAxisAlignment.center,
+  //     children: [
+  //       Padding(
+  //         padding: const EdgeInsets.all(18.0),
+  //         child: Card(
+  //           elevation: 4,
+  //           shape:
+  //               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  //           child: Padding(
+  //             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+  //             child: Column(
+  //               children: [
+  //                 Container(
+  //                   decoration: BoxDecoration(
+  //                     shape: BoxShape.circle,
+  //                     boxShadow: [
+  //                       BoxShadow(
+  //                         color: Colors.black.withOpacity(0.1),
+  //                         blurRadius: 8,
+  //                         offset: Offset(0, 4),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   child: CircleAvatar(
+  //                     radius: 45,
+  //                     backgroundImage: _user?.photoURL != null
+  //                         ? NetworkImage(_user!.photoURL!)
+  //                         : AssetImage('assets/images/default_avatar.png')
+  //                             as ImageProvider,
+  //                   ),
+  //                 ),
+  //                 SizedBox(height: 16),
+  //                 Text(
+  //                   _user?.displayName ?? 'Utilisateur',
+  //                   style: TextStyle(
+  //                     fontSize: 20,
+  //                     fontWeight: FontWeight.bold,
+  //                     letterSpacing: 0.5,
+  //                   ),
+  //                 ),
+  //                 SizedBox(height: 4),
+  //                 Text(
+  //                   _user?.email ?? '',
+  //                   style: TextStyle(
+  //                     fontSize: 16,
+  //                     color: Colors.grey[600],
+  //                   ),
+  //                 ),
+  //                 SizedBox(height: 20),
+  //                 SizedBox(
+  //                   width: double.infinity,
+  //                   child: ElevatedButton.icon(
+  //                     style: ElevatedButton.styleFrom(
+  //                       backgroundColor: Theme.of(context).colorScheme.primary,
+  //                       foregroundColor:
+  //                           Theme.of(context).colorScheme.onPrimary,
+  //                       padding: EdgeInsets.symmetric(vertical: 14),
+  //                       shape: RoundedRectangleBorder(
+  //                         borderRadius: BorderRadius.circular(12),
+  //                       ),
+  //                     ),
+  //                     onPressed: _handleSignOut,
+  //                     icon: Icon(
+  //                       Icons.logout,
+  //                       color: Theme.of(context).colorScheme.onPrimary,
+  //                     ),
+  //                     label: Text('Se déconnecter'),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 30),
+  //                 TextButton(
+  //                   onPressed: () => _showDeleteAccountConfirmation(context),
+  //                   child: const Text(
+  //                     'Supprimer définitivement mon compte',
+  //                     style: TextStyle(
+  //                       color: Colors.red,
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ),
+  //       Padding(
+  //         padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+  //         child: Divider(),
+  //       ),
+  //       _reportedNumbers.length == 0
+  //           ? Expanded(
+  //               child: Padding(
+  //               padding: const EdgeInsets.symmetric(vertical: 30),
+  //               child: Lottie.asset('assets/lotties/1 (123).json'),
+  //             ))
+  //           : _buildReportedNumbersList(signalementProvider),
+  //     ],
+  //   );
+  // }
+  //
+  // Widget _buildReportedNumbersList(signalementProvider) {
+  //   return Expanded(
+  //     child: NotificationListener<ScrollNotification>(
+  //       onNotification: (notification) {
+  //         if (notification is ScrollEndNotification &&
+  //             notification.metrics.extentAfter < 500) {
+  //           _loadReportedNumbers();
+  //         }
+  //         return false;
+  //       },
+  //       child: Padding(
+  //         padding: const EdgeInsets.only(left: 10),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.end,
+  //           children: [
+  //             Align(
+  //               alignment: Alignment.centerLeft,
+  //               child: Text(
+  //                 'Signalements récents',
+  //                 style: TextStyle(
+  //                   fontWeight: FontWeight.w400,
+  //                 ),
+  //               ),
+  //             ),
+  //             SizedBox(height: 8),
+  //             _reportedNumbers.length == 0
+  //                 ? SizedBox.shrink()
+  //                 : Padding(
+  //                     padding: const EdgeInsets.only(right: 8),
+  //                     child: TextButton(
+  //                       onPressed: () => _deleteAllReportedNumbers(),
+  //                       child: Text(
+  //                         'Delete All',
+  //                         textAlign: TextAlign.end,
+  //                         style: TextStyle(fontSize: 12, color: Colors.red),
+  //                       ),
+  //                     ),
+  //                   ),
+  //             Expanded(
+  //               child: ListView.builder(
+  //                 shrinkWrap: true,
+  //                 physics: NeverScrollableScrollPhysics(),
+  //                 itemCount: _reportedNumbers.length + (hasMore ? 1 : 0),
+  //                 itemBuilder: (context, index) {
+  //                   if (index >= _reportedNumbers.length) {
+  //                     return Center(
+  //                       child: hasMore
+  //                           ? const CircularProgressIndicator()
+  //                           : const Text('Fin des résultats'),
+  //                     );
+  //                   }
+  //
+  //                   final reportedNumber = _reportedNumbers[index];
+  //
+  //                   final nbSignalements = signalementProvider
+  //                       .nombreSignalements(reportedNumber['numero']);
+  //                   print(nbSignalements);
+  //                   return Material(
+  //                     child: Padding(
+  //                       padding: const EdgeInsets.only(bottom: 16),
+  //                       child: ListTile(
+  //                         shape: RoundedRectangleBorder(
+  //                           borderRadius: BorderRadius.circular(16),
+  //                         ),
+  //                         tileColor: Colors.deepPurple.shade50,
+  //                         dense: true,
+  //                         leading: FutureBuilder<int>(
+  //                           future: signalementProvider
+  //                               .nombreSignalements(reportedNumber['numero']),
+  //                           builder: (context, snapshot) {
+  //                             if (snapshot.connectionState ==
+  //                                 ConnectionState.waiting) {
+  //                               return CircleAvatar(
+  //                                   child: Padding(
+  //                                 padding: const EdgeInsets.all(12.0),
+  //                                 child: const CircularProgressIndicator(),
+  //                               ));
+  //                             }
+  //                             return CircleAvatar(
+  //                               backgroundColor:
+  //                                   Theme.of(context).colorScheme.primary,
+  //                               child: Text(
+  //                                   snapshot.hasData
+  //                                       ? snapshot.data.toString()
+  //                                       : '0',
+  //                                   style: TextStyle(
+  //                                     color: Theme.of(context)
+  //                                         .colorScheme
+  //                                         .onPrimary,
+  //                                   )),
+  //                             );
+  //                           },
+  //                         ),
+  //                         title: Text('0${reportedNumber['numero']}'),
+  //                         subtitle: Text(
+  //                           reportedNumber['date'] != null
+  //                               ? DateFormat('dd/MM/yyyy HH:mm').format(
+  //                                   DateTime.parse(reportedNumber['date']!)
+  //                                       .toLocal())
+  //                               : 'Date inconnue',
+  //                           style: TextStyle(fontSize: 12),
+  //                         ),
+  //                         trailing: IconButton(
+  //                           icon: const Icon(
+  //                             Icons.delete,
+  //                             size: 23,
+  //                             color: Colors.red,
+  //                           ),
+  //                           onPressed: () =>
+  //                               _deleteReportedNumber(reportedNumber['numero']),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   void _setupAuthListener() {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
@@ -1307,6 +1599,46 @@ class _googleBtnState extends State<googleBtn> {
       ),
     );
   }
+
+  String formatPhoneNumber(String rawNumber) {
+    // Supprime tous les caractères non numériques
+    String digitsOnly = rawNumber.replaceAll(RegExp(r'[^\d]'), '');
+
+    // Vérifie que le numéro commence par 0 et a 10 chiffres
+    if (digitsOnly.length == 10 && digitsOnly.startsWith('0')) {
+      return '${digitsOnly.substring(0, 2)}.' // 06.
+          '${digitsOnly.substring(2, 4)}.' // 60.
+          '${digitsOnly.substring(4, 6)}.' // 52.
+          '${digitsOnly.substring(6, 8)}.' // 02.
+          '${digitsOnly.substring(8)}'; // 25
+    }
+
+    // Retourne le numéro original si le format n'est pas reconnu
+    return rawNumber;
+  }
+}
+
+class MyShimmerCircleAvatar extends StatelessWidget {
+  const MyShimmerCircleAvatar({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CircleAvatar(
+        child: Shimmer.fromColors(
+      baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      highlightColor: Theme.of(context).colorScheme.primary,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+        ),
+      ),
+    ));
+  }
 }
 
 void _showSignalementDialog(BuildContext context, String numeroRecherche,
@@ -1351,9 +1683,10 @@ void _showSignalementDialog(BuildContext context, String numeroRecherche,
                                   errorListener: (error) =>
                                       debugPrint("Image error"),
                                 )
-                              : FileImage(File(provider.getLogoOperateur(
-                                  provider.detecterOperateur(
-                                      numeroRecherche)))) as ImageProvider,
+                              : AssetImage(
+                                  provider.getLogoOperateur(provider
+                                      .detecterOperateur(numeroRecherche)),
+                                ),
                           fit: BoxFit.contain,
                         ),
                 ),
