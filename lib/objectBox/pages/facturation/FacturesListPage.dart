@@ -1,14 +1,12 @@
-import 'package:calendar_timeline/calendar_timeline.dart';
+// import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
-import 'package:kenzy/objectBox/classeObjectBox.dart';
-import 'package:kenzy/objectBox/pages/addProduct.dart';
 import 'package:provider/provider.dart';
+import 'package:string_extensions/string_extensions.dart';
+
 import '../../Entity.dart';
 import '../../MyProviders.dart';
-import 'package:flutter/services.dart';
-
 import '../FactureListScreen.dart';
 import 'FacturePage.dart';
 
@@ -280,7 +278,7 @@ class _FacturesListPageState extends State<FacturesListPage> {
                                 DateFormat('EEE dd MMM yyyy HH:mm', 'fr')
                                     .format(
                                         DateTime.parse(facture.date.toString()))
-                                    .capitalize(),
+                                    .capitalize,
                                 //'${facture.date}',
                                 style: TextStyle(
                                   fontSize: 12,

@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:ui';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:kenzy/Oauth/Ogoogle/googleSignInProvider.dart';
+import 'package:kenzy/checkit/AuthProvider.dart';
 
 class VerifyEmailPage extends StatefulWidget {
   const VerifyEmailPage({
@@ -82,7 +83,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
               actions: [
                 IconButton(
                     onPressed: () async {
-                      await googleSignInProvider().logouta();
+                      await AuthService().handleSignOut2();
                     },
                     icon: Icon(
                       Icons.logout,

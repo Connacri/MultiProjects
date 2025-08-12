@@ -1,128 +1,102 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:provider/provider.dart';
 
-class googleSignInProvider extends ChangeNotifier {
-  final googleSignIn = GoogleSignIn();
+import '../../checkit/AuthProvider.dart';
 
-  GoogleSignInAccount? _user;
-
-  GoogleSignInAccount get user => _user!;
+class SignInDemo extends StatelessWidget {
+  const SignInDemo({super.key});
 
   @override
-  void dispose() {
-    googleLogin();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Google Sign In'),
+      ),
+      body: ConstrainedBox(
+        constraints: const BoxConstraints.expand(),
+        child: Consumer<AuthService>(
+          builder: (context, authNotifier, child) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: <Widget>[
+                if (authNotifier.currentUser != null)
+                  ..._buildAuthenticatedWidgets(context, authNotifier)
+                else
+                  ..._buildUnauthenticatedWidgets(context, authNotifier),
+                if (authNotifier.errorMessage.isNotEmpty)
+                  Text(authNotifier.errorMessage),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 
-  Future googleLogin() async {
-    try {
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return;
-      _user = googleUser;
-      final googleAuth = await googleUser.authentication;
-
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      print(credential);
-      final userGoo =
-          await FirebaseAuth.instance.signInWithCredential(credential);
-      print(userGoo);
-      checkIfDocExists(userGoo.user!.uid);
-      notifyListeners();
-    } catch (e) {
-      print(e.toString());
-    }
+  List<Widget> _buildAuthenticatedWidgets(
+      BuildContext context, AuthService authNotifier) {
+    final GoogleSignInAccount user = authNotifier.currentUser!;
+    return <Widget>[
+      ListTile(
+        leading: GoogleUserCircleAvatar(
+          identity: user,
+        ),
+        title: Text(user.displayName ?? ''),
+        subtitle: Text(user.email),
+      ),
+      const Text('Signed in successfully.'),
+      if (authNotifier.isAuthorized) ...<Widget>[
+        if (authNotifier.contactText.isNotEmpty) Text(authNotifier.contactText),
+        ElevatedButton(
+          child: const Text('REFRESH'),
+          onPressed: () => authNotifier.handleGetContact(user),
+        ),
+        if (authNotifier.serverAuthCode.isEmpty)
+          ElevatedButton(
+            child: const Text('REQUEST SERVER CODE'),
+            onPressed: authNotifier.handleGetAuthCode,
+          )
+        else
+          Text('Server auth code:\n${authNotifier.serverAuthCode}'),
+      ] else ...<Widget>[
+        const Text('Authorization needed to read your contacts.'),
+        ElevatedButton(
+          onPressed: authNotifier.handleAuthorizeScopes,
+          child: const Text('REQUEST PERMISSIONS'),
+        ),
+      ],
+      ElevatedButton(
+        onPressed: authNotifier.handleSignOut,
+        child: const Text('SIGN OUT'),
+      ),
+    ];
   }
-  // Future googleLogin() async {
-  //   try {
-  //     final googleUser = await googleSignIn.signIn();
-  //     if (googleUser == null) return;
-  //     _user = googleUser;
-  //     final googleAuth = await googleUser.authentication;
-  //
-  //     final credential = GoogleAuthProvider.credential(
-  //       accessToken: googleAuth.accessToken,
-  //       idToken: googleAuth.idToken,
-  //     );
-  //     print(credential);
-  //
-  //     final userGoo =
-  //         await FirebaseAuth.instance.signInWithCredential(credential);
-  //     // final userGoo = FirebaseAuth.instance.currentUser;
-  //
-  //     checkIfDocExists(userGoo.user!.uid);
-  //     notifyListeners();
-  //   } catch (e) {
-  //     print(e.toString());
-  //   }
-  // }
 
-  // Future logouta() async {
-  //   await googleSignIn.disconnect();
-  //   await FirebaseAuth.instance.signOut();
-  // }
-  Future logouta() async {
-    await googleSignIn.disconnect();
-    await FirebaseAuth.instance.signOut();
-    _user = null;
-    notifyListeners();
+  List<Widget> _buildUnauthenticatedWidgets(
+      BuildContext context, AuthService authNotifier) {
+    return <Widget>[
+      const Text('You are not currently signed in.'),
+      if (GoogleSignIn.instance.supportsAuthenticate())
+        ElevatedButton(
+          onPressed: () async {
+            try {
+              await GoogleSignIn.instance.authenticate();
+            } catch (error) {
+              authNotifier.errorMessage1 = error.toString();
+              authNotifier.notifyListeners();
+            }
+          },
+          child: const Text('SIGN IN'),
+        )
+      else ...<Widget>[
+        if (kIsWeb)
+          const SizedBox.shrink()
+        else
+          const Text(
+              'This platform does not have a known authentication method')
+      ]
+    ];
   }
-}
-
-Future<bool> checkIfDocExists(String uid) async {
-  try {
-    final userGoo = FirebaseAuth.instance.currentUser;
-    var collectionRef = FirebaseFirestore.instance.collection('Users');
-    var doc = await collectionRef.doc(uid).get();
-    print(doc.exists);
-    doc.exists ? updateUserDoc(userGoo!) : setUserDoc(userGoo!);
-    return doc.exists;
-  } catch (e) {
-    throw e;
-  }
-}
-
-Future setUserDoc(User userGoo) async {
-  CollectionReference userRef = FirebaseFirestore.instance.collection('Users');
-
-  String userID = userGoo.uid;
-  String? userEmail = userGoo.email;
-  String? userAvatar = userGoo.photoURL;
-  String? userDisplayName = userGoo.displayName;
-  //String? userPhone = userGoo.phoneNumber;
-  //int? phone = int.parse(userPhone!);
-  String? userRole = 'public';
-  bool userState = true;
-
-  userRef.doc(userGoo.uid).set({
-    'lastActive': Timestamp.now(),
-    'id': userID,
-    'phone': 0, // attention hna
-    'email': userEmail,
-    'avatar': userAvatar,
-    'timeline': userAvatar,
-    'createdAt': Timestamp.now(),
-    'displayName': userDisplayName,
-    'state': userState,
-    'role': userRole,
-    'plan': 'free',
-    'coins': 0.0,
-    'levelUser': 'begin',
-    'stars': 0.0,
-    'userItemsNbr': 0,
-  }, SetOptions(merge: true));
-}
-
-Future updateUserDoc(User userGoo) async {
-  CollectionReference userRef = FirebaseFirestore.instance.collection('Users');
-
-  userRef.doc(userGoo.uid).update(
-    {
-      'lastActive': Timestamp.now(),
-    },
-  );
 }

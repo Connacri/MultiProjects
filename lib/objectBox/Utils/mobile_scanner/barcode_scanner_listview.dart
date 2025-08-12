@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
 import 'scanner_button_widgets.dart';
 import 'scanner_error_widget.dart';
 
@@ -58,7 +59,7 @@ class _BarcodeScannerListViewState extends State<BarcodeScannerListView> {
         children: [
           MobileScanner(
             controller: controller,
-            errorBuilder: (context, error, child) {
+            errorBuilder: (context, error) {
               return ScannerErrorWidget(error: error);
             },
             fit: BoxFit.contain,

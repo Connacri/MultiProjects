@@ -1,9 +1,7 @@
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:kenzy/objectBox/pages/ClientListScreen.dart';
 import 'package:kenzy/objectBox/pages/FournisseurListScreen.dart';
 import 'package:kenzy/objectBox/tests/cruds.dart';
@@ -11,14 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../Entity.dart';
-
 import '../MyProviders.dart';
 import '../Utils/My_widgets.dart';
-import '../tests/hotel2.dart';
-import '../tests/hotelScreen.dart';
-import '../tests/hotelScreenFiable.dart';
-import 'ProduitListScreen.dart';
-import 'facturation/FacturePage.dart';
 import 'facturation/textfacture.dart';
 
 //////////////////////////////////////////////////test//////////////////////////////

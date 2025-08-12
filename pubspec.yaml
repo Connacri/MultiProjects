@@ -3,7 +3,7 @@ description: "A new Check-it project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.0+1
+version: 1.0.7+7
 
 environment:
   sdk: ^3.5.0
@@ -13,98 +13,95 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  cloud_firestore: ^5.6.6
-  firebase_messaging: ^15.2.5
-  firebase_database: ^11.3.5
-  firebase_core: ^3.13.0
-  firebase_auth: ^5.5.2
-  firebase_storage: any
-  firebase_in_app_messaging: ^0.8.1+5
+  cloud_firestore: ^6.0.0
+  firebase_messaging: ^16.0.0
+  firebase_database: ^12.0.0
+  firebase_in_app_messaging: ^0.9.0
   firebase_analytics: any
-  google_sign_in: ^6.3.0
+  google_sign_in: ^7.1.1
   #  firedart: ^0.9.8
   cached_network_image: ^3.4.1
-  supabase_flutter: ^2.8.4
+  supabase_flutter: ^2.9.1
 
-  lottie: ^3.2.0
-  provider: ^6.1.2
+  lottie: ^3.3.1
+  provider: ^6.1.5
   fluttertoast: ^8.2.12
-  font_awesome_flutter: ^10.8.0
+  font_awesome_flutter: ^10.9.0
 
-  shared_preferences: ^2.5.2
+  shared_preferences: ^2.5.3
   avatar_glow: ^3.0.1
-  url_launcher: ^6.3.1
-  carousel_slider: ^5.0.0
+  url_launcher: ^6.3.2
+  carousel_slider: ^5.1.1
   image_picker: ^1.1.2
   intl_phone_field: ^3.2.0
-  intl: ^0.19.0
-  mobile_scanner: ^6.0.6
+  intl: ^0.20.2
+  mobile_scanner: ^7.0.1
   ticket_widget: ^1.0.2
   readmore: ^3.0.0
-  dart_date: ^1.4.0
+  dart_date: ^1.5.3
   flutter_staggered_grid_view: ^0.7.0
   #  calendar_timeline: ^1.0.5
   shimmer: ^3.0.0
-  rename: ^3.0.2
-  marqueer: ^2.0.1
+  rename: ^3.1.0
+  marqueer: ^2.1.0
   screenshot: ^3.0.0
   email_validator: ^3.0.0
   flutter_islamic_icons: ^1.0.2
   #  horizontal_calendar: any
-  geocoding: ^3.0.0
-  map_launcher: ^3.5.0
+  geocoding: ^4.0.0
+  map_launcher: ^4.0.0
   open_location_picker: ^1.1.0
-  jiffy: ^6.3.2
-  google_fonts: ^6.2.1
+  jiffy: ^6.4.3
+  google_fonts: ^6.3.0
   googleapis_auth:
-  path: ^1.9.0
+  path: ^1.9.1
   timelines: ^0.1.0
   animated_flip_counter: ^0.3.4
-  pretty_qr_code: ^3.3.0
-  http: ^1.3.0
-  decimal: ^3.0.2
-  openfoodfacts: ^3.19.0
+  pretty_qr_code: ^3.5.0
+  http: ^1.5.0
+  decimal: ^3.2.4
+  openfoodfacts: ^3.24.0
   #  video_player: ^2.9.2
-  chewie: ^1.10.0
+  chewie: ^1.12.1
   flutter_easyloading: ^3.0.5
-  wakelock_plus: ^1.2.10
+  wakelock_plus: ^1.3.2
   faker: ^2.2.0
-  timeago: ^3.7.0
-  objectbox: ^4.1.0
-  objectbox_flutter_libs: ^4.1.0
-  network_info_plus: ^6.1.3
-  multicast_dns: ^0.3.2+8
-  percent_indicator: ^4.2.4
+  timeago: ^3.7.1
+  objectbox: ^4.3.0
+  objectbox_flutter_libs: ^4.3.0
+  network_info_plus: ^6.1.4
+  multicast_dns: ^0.3.3
+  percent_indicator: ^4.2.5
   icons_plus: ^5.0.0
-  feedback: ^3.1.0
-  win32: ^5.10.1
-  msix: ^3.16.8
-  device_info_plus: ^11.3.0
+  feedback: ^3.2.0
+  win32: ^5.14.0
+  msix: ^3.16.12
+  device_info_plus: ^11.5.0
   pincode_input_fields: ^1.0.3
-  syncfusion_flutter_barcodes: ^28.2.5
-
+  syncfusion_flutter_barcodes: ^30.2.4
+  linked_scroll_controller: ^0.2.0
   #  excel: ^4.0.6
-  country_flags: ^3.2.0
-  google_mobile_ads: ^5.3.1
-  permission_handler: ^11.3.1
-  file_picker: ^9.0.0
-  vibration: ^3.1.2
+  country_flags: ^3.3.0
+  google_mobile_ads: ^6.0.0
+  permission_handler: ^12.0.1
+  file_picker: ^10.3.0
+  vibration: ^3.1.3
   #  window_manager: ^0.4.2
-  string_extensions: ^0.7.3
+  string_extensions: ^0.7.4
   #  fluent_ui: ^4.10.0
-  #  firebase_auth: ^5.3.4
-  calendar_timeline: ^1.1.3
+  firebase_auth: ^6.0.1
+  #  calendar_timeline: ^1.1.3
   flutter_slidable: ^4.0.0
-  connectivity_plus: ^6.1.3
+  connectivity_plus: ^6.1.5
   #  media_kit: ^1.1.11 # Primary package.
   #  media_kit_video: ^1.2.5 # For video rendering.
   #  media_kit_libs_video: ^1.0.5 # Native video dependencies.
   #  media_kit_libs_audio: ^1.0.5 # Native audio dependencies.
   flutter_avif: ^3.0.0
-  youtube_player_flutter: ^9.1.1
-  webfeed_plus: ^1.1.2
-  rename_app: ^1.6.2
-  call_log: ^5.0.5
+  youtube_player_flutter: ^9.1.2
+  #  webfeed_plus: ^1.1.2
+  rename_app: ^1.6.5
+  call_log: ^6.0.0
 
 
 
@@ -113,8 +110,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_launcher_icons: ^0.14.3
-  objectbox_generator: ^4.1.0
+  flutter_launcher_icons: ^0.14.4
+  objectbox_generator: ^4.3.0
   build_runner: ^2.4.15
   flutter_native_splash: ^2.4.6
 
@@ -142,17 +139,16 @@ flutter_icons:
 flutter_native_splash:
   # Configuration Android
   android: true
-  background_image: assets/splash_logo.png
+  background_image: assets/icon/splash3.png
   android_12:
-    image: assets/splash_logo.png
-    icon_background_color: "#FFFFFF"
+    image: assets/icon/splash3.png
+    icon_background_color: "#2C2C2C"
+
 
   # Configuration iOS
   ios: true
-  image: assets/splash_logo.png
-  color: "#42a5f5"
-
-
+  image: assets/icon/splash3.png
+  color: "#2C2C2C"
 
 flutter:
 

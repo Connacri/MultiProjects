@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:http/http.dart' as http;
-import 'package:kenzy/objectBox/pages/ProduitListScreen.dart';
-import 'package:marqueer/marqueer.dart';
-import 'package:calendar_timeline/calendar_timeline.dart';
+
+// import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -13,12 +12,16 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:kenzy/objectBox/Entity.dart';
+import 'package:kenzy/objectBox/pages/ProduitListScreen.dart';
 import 'package:lottie/lottie.dart';
+import 'package:marqueer/marqueer.dart';
 import 'package:provider/provider.dart';
+import 'package:string_extensions/string_extensions.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:syncfusion_flutter_barcodes/barcodes.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:webfeed_plus/domain/rss_feed.dart';
+
+// import 'package:webfeed_plus/domain/rss_feed.dart';
 import '../../MyProviders.dart';
 import '../../Utils/mobile_scanner/barcode_scanner_window.dart';
 import '../../firebase/AddCarouselButton.dart';
@@ -26,7 +29,6 @@ import '../../firebase/ItemsCarousel.dart';
 import '../ClientListScreen.dart';
 import '../addProduct.dart';
 import 'providers.dart';
-import 'package:html/parser.dart' show parse;
 
 ///23/02/2025 16:45///
 class FacturationPageUI extends StatelessWidget {
@@ -42,7 +44,7 @@ class FacturationPageUI extends StatelessWidget {
             ),
             Spacer(),
             Text(
-              '${intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr').format(DateTime.now()).capitalize()}',
+              '${intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr').format(DateTime.now()).capitalize}',
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 15),
             ),
@@ -139,8 +141,8 @@ class _FactureDetailState extends State<FactureDetail> {
   void initState() {
     super.initState();
 
-    _marqueeDataStream =
-        RssService.fetchMarqueeData('https://www.echoroukonline.com/feed');
+    // _marqueeDataStream =
+    //     RssService.fetchMarqueeData('https://www.echoroukonline.com/feed');
   }
 
   @override
@@ -458,37 +460,37 @@ class _FactureDetailState extends State<FactureDetail> {
                           SizedBox(
                             width: 15,
                           ),
-                          Expanded(
-                            child: StreamBuilder<List<MarqueeData>>(
-                              stream: _marqueeDataStream,
-                              initialData: const [],
-                              builder: (context, snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return const Center(
-                                      child: CircularProgressIndicator());
-                                }
-                                if (snapshot.hasError) {
-                                  return
-                                      // IconButton(
-                                      //   onPressed: () => _initializeMarqueeData(),
-                                      //   icon: Icon(Icons.refresh));
-                                      Center(
-                                          child: FittedBox(
-                                              child: Text(
-                                                  'Erreur: ${snapshot.error}')));
-                                }
-                                if (!snapshot.hasData ||
-                                    snapshot.data!.isEmpty) {
-                                  return const Center(
-                                      child: Icon(Icons.error_outline));
-                                }
-                                return MarqueeWidget(
-                                    marqueeData: snapshot.data!,
-                                    controller: _controller);
-                              },
-                            ),
-                          ),
+                          // Expanded(
+                          //   child: StreamBuilder<List<MarqueeData>>(
+                          //     stream: _marqueeDataStream,
+                          //     initialData: const [],
+                          //     builder: (context, snapshot) {
+                          //       if (snapshot.connectionState ==
+                          //           ConnectionState.waiting) {
+                          //         return const Center(
+                          //             child: CircularProgressIndicator());
+                          //       }
+                          //       if (snapshot.hasError) {
+                          //         return
+                          //             // IconButton(
+                          //             //   onPressed: () => _initializeMarqueeData(),
+                          //             //   icon: Icon(Icons.refresh));
+                          //             Center(
+                          //                 child: FittedBox(
+                          //                     child: Text(
+                          //                         'Erreur: ${snapshot.error}')));
+                          //       }
+                          //       if (!snapshot.hasData ||
+                          //           snapshot.data!.isEmpty) {
+                          //         return const Center(
+                          //             child: Icon(Icons.error_outline));
+                          //       }
+                          //       return MarqueeWidget(
+                          //           marqueeData: snapshot.data!,
+                          //           controller: _controller);
+                          //     },
+                          //   ),
+                          // ),
                         ],
                       ),
                       Row(
@@ -1512,7 +1514,7 @@ class _FactureListState extends State<FactureList> {
                                           'EEE dd MMM yyyy  -  HH:mm', 'fr')
                                       .format(DateTime.parse(
                                           facture.date.toString()))
-                                      .capitalize(),
+                                      .capitalize,
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w300,
@@ -2027,7 +2029,7 @@ class ClientInfos extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Client: ${client.nom.capitalize()}',
+                            'Client: ${client.nom.capitalize}',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontSize: 18),
                           ),
@@ -2037,7 +2039,7 @@ class ClientInfos extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            'Adresse: ${client.adresse.capitalize()}',
+                            'Adresse: ${client.adresse.capitalize}',
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
@@ -2154,7 +2156,7 @@ class TotalDetail extends StatelessWidget {
                 facture != null
                     ? intl.DateFormat('EEE dd MMM yyyy - HH:mm', 'fr')
                         .format(facture!.date)
-                        .capitalize()
+                        .capitalize
                     : '',
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontSize: 15),
@@ -3520,49 +3522,6 @@ class _AddMarqueeDialogState extends State<AddMarqueeDialog> {
     _imageUrlController.dispose();
     _webUrlController.dispose();
     super.dispose();
-  }
-}
-
-class RssService {
-  static Stream<List<MarqueeData>> fetchMarqueeData(String url) async* {
-    while (true) {
-      try {
-        final response = await http.get(Uri.parse(url));
-
-        if (response.statusCode == 200) {
-          final feed = RssFeed.parse(response.body);
-          final data = feed.items!.map((item) {
-            final document = parse(item.description ?? '');
-            final imgElement = document.querySelector('img');
-            final imageUrl = imgElement?.attributes['src'] ?? '';
-
-            final priceMatch =
-                RegExp(r'(\d+,\d+|\d+) DZD').firstMatch(item.description ?? '');
-            final prix = priceMatch != null
-                ? double.tryParse(priceMatch.group(1)!.replaceAll(',', '.')) ??
-                    0.0
-                : 0.0;
-
-            return MarqueeData(
-              text: item.title ?? 'Sans titre',
-              prix: prix,
-              imageUrl: imageUrl,
-              webUrl: item.link ?? '',
-              created_at: DateTime.now(),
-            );
-          }).toList();
-
-          yield data; // Émettre les nouvelles données
-        } else {
-          yield []; // Retourner une liste vide en cas d'échec
-        }
-      } catch (e) {
-        yield []; // Gérer l'erreur et continuer le stream
-      }
-
-      await Future.delayed(
-          Duration(minutes: 5)); // Rafraîchissement toutes les 5 minutes
-    }
   }
 }
 

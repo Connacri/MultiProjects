@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.wallet.dz.kenzy">
+    package="com.check.it">
     <!-- Provide required visibility configuration for API level 30 and above -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -9,20 +9,12 @@
         android:name="android.hardware.camera"
         required="false"
         tools:ignore="MissingPrefix" />
+
     <uses-permission android:name="android.permission.FLASHLIGHT" />
-    <!-- Required to provide the web interface -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Required to run keep-alive service when targeting API 28 or higher -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!-- When targeting API level 33 or higher to post the initial Admin notification -->
-    <!--    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>-->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-    <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.WRITE_CALL_LOG" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
 

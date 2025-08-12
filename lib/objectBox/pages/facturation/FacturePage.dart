@@ -1,20 +1,9 @@
-import 'package:calendar_timeline/calendar_timeline.dart';
+// import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:objectbox/src/relations/to_many.dart';
 import 'package:provider/provider.dart';
+
 import '../../Entity.dart';
 import '../../MyProviders.dart';
-import '../../Utils/mobile_scanner/barcode_scanner_simple.dart';
-import '../ClientListScreen.dart';
-import '../FactureListScreen.dart';
-import '../ProduitListScreen.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart';
-import '../addProduct.dart';
-import 'package:syncfusion_flutter_barcodes/barcodes.dart';
-
 import 'uiPos_Widgets.dart';
 
 class FacturePage extends StatefulWidget {

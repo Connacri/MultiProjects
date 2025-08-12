@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,10 +8,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
+
 import '../../checkit/HomePage.dart';
 import '../../checkit/home.dart';
 import '../../checkit/providerF.dart';
 import '../tests/hotelScreen.dart';
+import '../tests/hotelScreenFiable.dart';
 
 class MyApp_image_picker extends StatelessWidget {
   const MyApp_image_picker({super.key});
@@ -629,6 +632,198 @@ class ReservationNavigationButtons extends StatelessWidget {
           pricePerNight: 150.0,
           status: "Checked In",
         ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "101",
+          startDate: DateTime(2024, 1, 5),
+          endDate: DateTime(2024, 1, 9),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "102",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "103",
+          startDate: DateTime(2024, 2, 1),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "104",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "105",
+          startDate: DateTime(2024, 1, 2),
+          endDate: DateTime(2024, 1, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "108",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "101",
+          startDate: DateTime(2024, 1, 5),
+          endDate: DateTime(2024, 1, 9),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "102",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "103",
+          startDate: DateTime(2024, 2, 1),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "104",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "105",
+          startDate: DateTime(2024, 1, 2),
+          endDate: DateTime(2024, 1, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "108",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "101",
+          startDate: DateTime(2024, 1, 5),
+          endDate: DateTime(2024, 1, 9),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "102",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "103",
+          startDate: DateTime(2024, 2, 1),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "104",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "105",
+          startDate: DateTime(2024, 1, 2),
+          endDate: DateTime(2024, 1, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "108",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "101",
+          startDate: DateTime(2024, 1, 5),
+          endDate: DateTime(2024, 1, 9),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "102",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "103",
+          startDate: DateTime(2024, 2, 1),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "104",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
+        Reservation(
+          clientName: "John Doe",
+          roomName: "105",
+          startDate: DateTime(2024, 1, 2),
+          endDate: DateTime(2024, 1, 5),
+          pricePerNight: 100.0,
+          status: "Confirmed",
+        ),
+        Reservation(
+          clientName: "Jane Smith",
+          roomName: "108",
+          startDate: DateTime(2024, 2, 4),
+          endDate: DateTime(2024, 2, 5),
+          pricePerNight: 150.0,
+          status: "Checked In",
+        ),
       ];
 
   @override
@@ -636,41 +831,34 @@ class ReservationNavigationButtons extends StatelessWidget {
     return ListView(
       shrinkWrap: true,
       children: [
-        // Row(
-        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //   children: [
-        //      ElevatedButton(
-        //         onPressed: () {
-        //           Navigator.of(context).push(MaterialPageRoute(
-        //             builder: (ctx) => HotelReservationChart(
-        //               fromDate: DateTime(2024, 1, 1),
-        //               toDate: DateTime(2024, 12, 31),
-        //               roomNames: roomNumbers,
-        //               reservations: sampleReservations,
-        //             ),
-        //           ));
-        //         },
-        //         child: Text('Hotel'),
-        //       ),
-        //
-        //     SizedBox(width: 10),
-        //      ElevatedButton(
-        //         onPressed: () {
-        //           Navigator.of(context).push(MaterialPageRoute(
-        //             builder: (ctx) => CalendarTableWithDragging(
-        //               fromDate: DateTime.now(),
-        //               toDate: DateTime.now().add(Duration(days: 30)),
-        //               roomNames: roomNumbers,
-        //               reservations: sampleReservations,
-        //             ),
-        //           ));
-        //         },
-        //         child: Text('Hotel Fiable'),
-        //       ),
-        //
-        //   ],
-        // ),
-        // SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (ctx) => HotelReservationChart(
+                    fromDate: DateTime(2024, 1, 1),
+                    toDate: DateTime(2024, 12, 31),
+                    roomNames: roomNumbers,
+                    reservations: sampleReservations,
+                  ),
+                ));
+              },
+              child: Text('Hotel'),
+            ),
+            SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (ctx) => HomeScreen(),
+                ));
+              },
+              child: Text('Hotel Fiable'),
+            ),
+          ],
+        ),
+        SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -959,36 +1147,34 @@ class _AnimatedLongTextFieldState extends State<AnimatedLongTextField>
   @override
   Widget build(BuildContext context) {
     return FadeTransition(
-        opacity: _animation,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextFormField(
-            key: widget.fieldKey,
-            controller: widget.controller,
-            decoration: InputDecoration(
-              labelText: widget.labelText,
-              alignLabelWithHint: true,
-              hintText: 'Entrez un texte long ici...',
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              contentPadding: EdgeInsets.all(15),
-            ),
-            textInputAction: TextInputAction.newline,
-            inputFormatters: widget.inputFormatters,
-            validator: widget.validator,
-            onChanged: _validatePhoneNumber,
-            textAlign: TextAlign.start,
-            keyboardType: TextInputType.multiline,
-            maxLines: 5,
-            // permet une hauteur dynamique selon le contenu
-            minLines: 5,
-            // pour afficher directement plusieurs lignes
-            expands:
-                false, // false pour ne pas forcer à remplir tout l'espace parent
+      opacity: _animation,
+      child: TextFormField(
+        key: widget.fieldKey,
+        controller: widget.controller,
+        decoration: InputDecoration(
+          labelText: widget.labelText,
+          alignLabelWithHint: true,
+          hintText: 'Entrez un texte long ici...',
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide.none,
           ),
-        ));
+          filled: true,
+          contentPadding: EdgeInsets.all(15),
+        ),
+        textInputAction: TextInputAction.newline,
+        inputFormatters: widget.inputFormatters,
+        validator: widget.validator,
+        onChanged: _validatePhoneNumber,
+        textAlign: TextAlign.start,
+        keyboardType: TextInputType.multiline,
+        maxLines: 5,
+        // permet une hauteur dynamique selon le contenu
+        minLines: 5,
+        // pour afficher directement plusieurs lignes
+        expands:
+            false, // false pour ne pas forcer à remplir tout l'espace parent
+      ),
+    );
   }
 }

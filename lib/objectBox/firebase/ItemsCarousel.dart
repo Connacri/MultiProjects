@@ -1,15 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:ffi';
-import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:kenzy/objectBox/itemDetail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+
 import 'AddCarouselButton.dart';
 
 // Widget principal pour afficher le carousel

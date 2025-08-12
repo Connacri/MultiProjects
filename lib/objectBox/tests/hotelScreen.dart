@@ -1,7 +1,6 @@
 import 'dart:math';
-import 'package:flutter/gestures.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class Reservation {
   final String clientName;
@@ -17,7 +16,7 @@ class Reservation {
     required this.startDate,
     required this.endDate,
     this.pricePerNight = 0.0,
-    this.status = "Confirmed",
+    this.status = "Confirmée",
   });
 }
 
@@ -27,7 +26,8 @@ class HotelReservationChart extends StatefulWidget {
   final List<Reservation> reservations;
   final List<String> roomNames;
 
-  HotelReservationChart({
+  const HotelReservationChart({
+    super.key,
     required this.fromDate,
     required this.toDate,
     required this.reservations,
@@ -35,383 +35,209 @@ class HotelReservationChart extends StatefulWidget {
   });
 
   @override
-  _HotelReservationChartState createState() => _HotelReservationChartState();
+  State<HotelReservationChart> createState() => _HotelReservationChartState();
 }
 
 class _HotelReservationChartState extends State<HotelReservationChart> {
   final ScrollController _horizontalController = ScrollController();
   final ScrollController _verticalController = ScrollController();
-  final ScrollController _headerHorizontalController = ScrollController();
-  final ScrollController _roomNamesVerticalController = ScrollController();
   final double dayWidth = 40.0;
-  final double roomHeight = 30.0;
-  final double roomNameWidth = 80.0;
-  bool _isDragging = false;
+  final double roomHeight = 36.0;
+  final double roomNameWidth = 100.0;
   Offset? _lastPosition;
-
-  @override
-  void initState() {
-    super.initState();
-    _headerHorizontalController.addListener(_syncScrollControllers);
-    _roomNamesVerticalController.addListener(_syncScrollControllers);
-  }
+  bool _isDragging = false;
 
   @override
   void dispose() {
-    _headerHorizontalController.removeListener(_syncScrollControllers);
-    _roomNamesVerticalController.removeListener(_syncScrollControllers);
     _horizontalController.dispose();
     _verticalController.dispose();
-    _headerHorizontalController.dispose();
-    _roomNamesVerticalController.dispose();
     super.dispose();
   }
 
-  void _syncScrollControllers() {
-    if (_headerHorizontalController.hasClients) {
-      _horizontalController.jumpTo(_headerHorizontalController.offset);
-    }
-    if (_roomNamesVerticalController.hasClients) {
-      _verticalController.jumpTo(_roomNamesVerticalController.offset);
-    }
+  int get totalDays => widget.toDate.difference(widget.fromDate).inDays + 1;
+
+  double calculateLeftOffset(DateTime startDate) {
+    return max(0, startDate.difference(widget.fromDate).inDays) * dayWidth;
   }
 
-  int get viewRange =>
-      calculateNumberOfDaysBetween(widget.fromDate, widget.toDate);
-
-  void _handleDragStart(Offset position) {
-    _isDragging = true;
-    _lastPosition = position;
+  double calculateBarWidth(DateTime start, DateTime end) {
+    DateTime effectiveStart =
+        start.isBefore(widget.fromDate) ? widget.fromDate : start;
+    DateTime effectiveEnd = end.isAfter(widget.toDate) ? widget.toDate : end;
+    return (effectiveEnd.difference(effectiveStart).inDays + 1) * dayWidth;
   }
 
-  void _handleDragEnd(Offset position) {
-    _isDragging = false;
-    _lastPosition = null;
+  Color _generateColor() {
+    final r = Random();
+    return Color.fromRGBO(r.nextInt(200), r.nextInt(200), r.nextInt(200), 0.8);
   }
 
-  void _handleDragUpdate(Offset position) {
-    if (!_isDragging || _lastPosition == null) return;
-
-    final double dx = position.dx - _lastPosition!.dx;
-    final double dy = position.dy - _lastPosition!.dy;
-
-    if (_horizontalController.hasClients) {
-      _horizontalController.jumpTo(
-        (_horizontalController.offset - dx).clamp(
-          0.0,
-          _horizontalController.position.maxScrollExtent,
-        ),
-      );
+  void _handlePointer(PointerEvent e, String type) {
+    if (type == 'down') {
+      _isDragging = true;
+      _lastPosition = e.position;
+    } else if (type == 'up') {
+      _isDragging = false;
+      _lastPosition = null;
+    } else if (type == 'move' && _isDragging && _lastPosition != null) {
+      final dx = e.position.dx - _lastPosition!.dx;
+      final dy = e.position.dy - _lastPosition!.dy;
+      _horizontalController.jumpTo((_horizontalController.offset + dx)
+          .clamp(0.0, _horizontalController.position.maxScrollExtent));
+      _verticalController.jumpTo((_verticalController.offset + dy)
+          .clamp(0.0, _verticalController.position.maxScrollExtent));
+      _lastPosition = e.position;
     }
-
-    if (_verticalController.hasClients) {
-      _verticalController.jumpTo(
-        (_verticalController.offset - dy).clamp(
-          0.0,
-          _verticalController.position.maxScrollExtent,
-        ),
-      );
-    }
-
-    _lastPosition = position;
   }
 
   @override
   Widget build(BuildContext context) {
-    final double totalWidth = dayWidth * viewRange + roomNameWidth;
-
     return Scaffold(
-      appBar: AppBar(title: Text('Réservations')),
+      appBar: AppBar(title: const Text('Réservations')),
       body: MouseRegion(
         cursor:
             _isDragging ? SystemMouseCursors.grabbing : SystemMouseCursors.grab,
         child: Listener(
-          onPointerDown: (event) => _handleDragStart(event.position),
-          onPointerUp: (event) => _handleDragEnd(event.position),
-          onPointerMove: (event) => _handleDragUpdate(event.position),
+          onPointerDown: (e) => _handlePointer(e, 'down'),
+          onPointerUp: (e) => _handlePointer(e, 'up'),
+          onPointerMove: (e) => _handlePointer(e, 'move'),
           child: Column(
-            children: [
-              // En-tête avec scroll horizontal synchronisé
-              SingleChildScrollView(
-                controller: _headerHorizontalController,
-                scrollDirection: Axis.horizontal,
-                child: Container(
-                  height: 80,
-                  width: totalWidth,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: roomNameWidth,
-                        color: Colors.grey.shade200,
-                        child: Center(
-                          child: Text(
-                            "Chambres",
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        width: totalWidth - roomNameWidth,
-                        color: Colors.grey.shade200,
-                        child: Column(
-                          children: [
-                            buildMonthRow(),
-                            buildDayRow(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Zone principale
-              Expanded(
-                child: Row(
-                  children: [
-                    // Colonne des noms de chambres avec scroll vertical synchronisé
-                    SingleChildScrollView(
-                      controller: _roomNamesVerticalController,
-                      child: Container(
-                        width: roomNameWidth,
-                        child: Column(
-                          children: widget.roomNames
-                              .map((roomName) => Container(
-                                    height: roomHeight,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      border: Border.all(
-                                          color: Colors.grey.shade300),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        roomName,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ))
-                              .toList(),
-                        ),
-                      ),
-                    ),
-                    // Zone des réservations avec scroll horizontal et vertical synchronisé
-                    Expanded(
-                      child: SingleChildScrollView(
-                        controller: _roomNamesVerticalController,
-                        // Synchronisation verticale
-                        scrollDirection: Axis.horizontal,
-                        child: SingleChildScrollView(
-                          controller: _headerHorizontalController,
-                          // Synchronisation horizontale
-                          scrollDirection: Axis.horizontal,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: widget.roomNames.map((roomName) {
-                              List<Reservation> roomReservations = widget
-                                  .reservations
-                                  .where((r) => r.roomName == roomName)
-                                  .toList();
-                              return buildRoomRow(roomReservations);
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            children: [_buildHeader(), Expanded(child: _buildBody())],
           ),
         ),
       ),
     );
   }
 
-  int calculateNumberOfDaysBetween(DateTime from, DateTime to) {
-    return to.difference(from).inDays + 1;
-  }
-
-  double calculateDistanceToLeftBorder(DateTime startDate) {
-    if (startDate.isBefore(widget.fromDate)) {
-      return 0;
-    } else {
-      return startDate.difference(widget.fromDate).inDays * dayWidth;
-    }
-  }
-
-  double calculateBarWidth(DateTime startDate, DateTime endDate) {
-    if (startDate.isBefore(widget.fromDate) &&
-        endDate.isBefore(widget.fromDate)) {
-      return 0;
-    } else if (startDate.isBefore(widget.fromDate)) {
-      return (endDate.difference(widget.fromDate).inDays + 1) * dayWidth;
-    } else if (endDate.isAfter(widget.toDate)) {
-      return (widget.toDate.difference(startDate).inDays + 1) * dayWidth;
-    } else {
-      return (endDate.difference(startDate).inDays + 1) * dayWidth;
-    }
-  }
-
-  Color randomColorGenerator() {
-    var random = Random();
-    return Color.fromRGBO(
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
-      0.75,
-    );
-  }
-
-  Widget buildMonthRow() {
-    // Définir la plage des mois et leur largeur
-    List<Widget> months = [];
-    List<int> daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    int startMonth = 1; // Exemple : Janvier
-    int startYear = 2024; // Exemple : Année de départ
-    int displayedDays = 90; // Par exemple : 90 jours visibles
-    int currentDay = 1;
-
-    for (int i = 0; i < daysInMonth.length; i++) {
-      int monthDays = daysInMonth[i];
-      String monthName = "${_getMonthName(startMonth + i)} $startYear";
-
-      // Vérifier combien de jours du mois sont visibles dans la plage
-      int remainingDays = displayedDays - currentDay + 1;
-      int visibleDaysInMonth =
-          remainingDays < monthDays ? remainingDays : monthDays;
-
-      // Si aucun jour visible dans ce mois, arrêter
-      if (visibleDaysInMonth <= 0) break;
-
-      // Ajouter le conteneur pour le mois
-      months.add(Container(
-        width: visibleDaysInMonth * dayWidth,
-        height: 40,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Center(
-          child: Text(
-            monthName,
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
-      ));
-
-      // Mettre à jour le compteur de jours affichés
-      currentDay += visibleDaysInMonth;
-    }
-
-    return Row(children: months);
-  }
-
-  Widget buildDayRow() {
-    List<Widget> days = [];
-    DateTime currentDate = widget.fromDate;
-
-    while (!currentDate.isAfter(widget.toDate)) {
-      days.add(Container(
-        width: dayWidth,
-        height: 40,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade300),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "${currentDate.day}",
-                style: TextStyle(fontSize: 12),
-              ),
-              Text(
-                _getDayName(currentDate.weekday),
-                style: TextStyle(fontSize: 10, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ));
-      currentDate = currentDate.add(Duration(days: 1));
-    }
-
-    return Row(children: days);
-  }
-
-  Widget buildRoomRow(List<Reservation> roomReservations) {
-    return Container(
-      height: roomHeight,
-      child: Stack(
+  Widget _buildHeader() {
+    return SizedBox(
+      height: 60,
+      child: Row(
         children: [
-          Row(
-            children: List.generate(
-              viewRange,
-              (index) => Container(
-                width: dayWidth,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                ),
+          Container(
+            width: roomNameWidth,
+            color: Colors.grey.shade200,
+            alignment: Alignment.center,
+            child: const Text("Chambre",
+                style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              controller: _horizontalController,
+              child: Row(
+                children: List.generate(totalDays, (index) {
+                  final date = widget.fromDate.add(Duration(days: index));
+                  return Container(
+                    width: dayWidth,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      color: date.weekday == DateTime.sunday
+                          ? Colors.red.shade50
+                          : Colors.grey.shade100,
+                    ),
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('${date.day}/${date.month}',
+                            style: const TextStyle(fontSize: 11)),
+                        Text(_getDayShort(date.weekday),
+                            style: const TextStyle(fontSize: 10)),
+                      ],
+                    ),
+                  );
+                }),
               ),
             ),
-          ),
-          ...roomReservations.map((reservation) {
-            double leftOffset =
-                calculateDistanceToLeftBorder(reservation.startDate);
-            double width =
-                calculateBarWidth(reservation.startDate, reservation.endDate);
-
-            return Positioned(
-              left: leftOffset,
-              top: 5,
-              child: Container(
-                width: width,
-                height: roomHeight - 10,
-                decoration: BoxDecoration(
-                  color: randomColorGenerator(),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Tooltip(
-                  message: "${reservation.clientName} (${reservation.status})\n"
-                      "Du: ${reservation.startDate.day}/${reservation.startDate.month}/${reservation.startDate.year}\n"
-                      "Au: ${reservation.endDate.day}/${reservation.endDate.month}/${reservation.endDate.year}\n"
-                      "\$${reservation.pricePerNight.toStringAsFixed(2)}/nuit",
-                  child: Center(
-                    child: Text(
-                      reservation.clientName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+          )
         ],
       ),
     );
   }
 
-  String _getMonthName(int month) {
-    const monthNames = [
-      "Janvier",
-      "Février",
-      "Mars",
-      "Avril",
-      "Mai",
-      "Juin",
-      "Juillet",
-      "Août",
-      "Septembre",
-      "Octobre",
-      "Novembre",
-      "Décembre"
-    ];
-    return monthNames[month - 1];
+  Widget _buildBody() {
+    return Row(
+      children: [
+        SingleChildScrollView(
+          controller: _verticalController,
+          child: Column(
+            children: widget.roomNames
+                .map((room) => Container(
+                      width: roomNameWidth,
+                      height: roomHeight,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        color: Colors.grey.shade100,
+                      ),
+                      child: Text(room,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ))
+                .toList(),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _horizontalController,
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              controller: ScrollController(),
+              // New controller for vertical scrolling in the body
+              scrollDirection: Axis.vertical,
+              child: Column(
+                children: widget.roomNames.map((room) {
+                  final roomRes = widget.reservations
+                      .where((r) => r.roomName == room)
+                      .toList();
+                  return Stack(
+                    children: [
+                      Row(
+                        children: List.generate(
+                            totalDays,
+                            (_) => Container(
+                                width: dayWidth,
+                                height: roomHeight,
+                                decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: Colors.grey.shade200)))),
+                      ),
+                      ...roomRes.map((res) => Positioned(
+                            left: calculateLeftOffset(res.startDate),
+                            top: 4,
+                            child: Tooltip(
+                              message:
+                                  '${res.clientName} (${res.status})\nDu ${res.startDate.day}/${res.startDate.month} au ${res.endDate.day}/${res.endDate.month}\n${res.pricePerNight.toStringAsFixed(2)} DA/nuit',
+                              child: Container(
+                                width: calculateBarWidth(
+                                    res.startDate, res.endDate),
+                                height: roomHeight - 8,
+                                decoration: BoxDecoration(
+                                    color: _generateColor(),
+                                    borderRadius: BorderRadius.circular(6)),
+                                alignment: Alignment.center,
+                                child: Text(res.clientName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontSize: 10, color: Colors.white)),
+                              ),
+                            ),
+                          ))
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  String _getDayName(int weekday) {
-    const dayNames = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
-    return dayNames[weekday - 1];
+  String _getDayShort(int weekday) {
+    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    return days[(weekday - 1) % 7];
   }
 }

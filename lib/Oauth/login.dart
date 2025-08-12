@@ -1,7 +1,5 @@
 import 'dart:ui';
 
-import 'reset_password.dart';
-import 'verifi_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,11 +7,10 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:lottie/lottie.dart';
-import 'package:provider/provider.dart';
-import 'AuthPage.dart';
+
 import 'Ogoogle/googleSignInProvider.dart';
 import 'SignUpWidget.dart';
+import 'reset_password.dart';
 
 class LoginWidget extends StatefulWidget {
   // const login({Key? key}) : super(key: key);
@@ -273,16 +270,10 @@ class _LoginWidgetState extends State<LoginWidget> {
                                             fontSize: 24, color: Colors.white),
                                       ),
                                       onPressed: () async {
-                                        final provider = await Provider.of<
-                                                googleSignInProvider>(context,
-                                            listen: false);
-
-                                        //  if (user != null) {
-                                        provider.googleLogin().whenComplete(
-                                              () => Navigator.of(context)
-                                                  .popUntil((route) =>
-                                                      route.isCurrent),
-                                            );
+                                        Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                                builder: (ctx) =>
+                                                    SignInDemo()));
                                       },
                                     ), // Google
                                   ],
@@ -517,15 +508,8 @@ class googleButtonAuth extends StatelessWidget {
                     style: TextStyle(fontSize: 24, color: Colors.white),
                   ),
                   onPressed: () async {
-                    final provider = await Provider.of<googleSignInProvider>(
-                        context,
-                        listen: false);
-
-                    //  if (user != null) {
-                    provider.googleLogin().whenComplete(
-                          () => Navigator.of(context)
-                              .popUntil((route) => route.isCurrent),
-                        );
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (ctx) => SignInDemo()));
                   },
                 ), // Google
               ],

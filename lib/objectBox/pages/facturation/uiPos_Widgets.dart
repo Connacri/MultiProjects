@@ -1,7 +1,8 @@
-import 'package:calendar_timeline/calendar_timeline.dart';
+// import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:string_extensions/string_extensions.dart';
 import 'package:syncfusion_flutter_barcodes/barcodes.dart';
 
 import '../../../objectbox.g.dart';
@@ -66,7 +67,7 @@ class _ClientInfoState extends State<ClientInfo> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Client: ${client.nom.capitalize()}',
+                                  'Client: ${client.nom.capitalize}',
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(fontSize: 18),
                                 ),
@@ -75,7 +76,7 @@ class _ClientInfoState extends State<ClientInfo> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  'Adresse: ${client.adresse.capitalize()}',
+                                  'Adresse: ${client.adresse.capitalize}',
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(

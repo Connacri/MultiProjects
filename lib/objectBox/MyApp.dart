@@ -1,44 +1,36 @@
 import 'dart:async';
+import 'dart:io' show Platform;
+import 'dart:io';
 import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kenzy/objectBox/pages/home_Carousel.dart';
-import 'package:kenzy/objectBox/tests/hotelScreen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../MyListLotties.dart';
 import '../checkit/HomePage.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
-import '../main.dart';
-import '../objectBox/pages/addProduct.dart';
 import '../objectBox/pages/ClientListScreen.dart';
+import '../objectBox/pages/addProduct.dart';
 import '../objectBox/tests/cruds.dart' as cruds;
-import '../../MyListLotties.dart';
-import '../objectbox.g.dart';
-
-import '../vids/VideoPlayerScreen.dart';
 import 'Entity.dart';
 import 'FuturisticConnectionUI.dart';
 import 'MyProviders.dart';
 import 'Utils/My_widgets.dart';
 import 'Utils/excel.dart';
-import 'Utils/supabase_sync.dart';
-import 'Utils/winMobile.dart';
 import 'classeObjectBox.dart';
 import 'hash.dart';
 import 'pages/FournisseurListScreen.dart';
-import 'package:flutter/foundation.dart';
-import 'dart:io' show Platform;
-import 'dart:io';
 import 'pages/ProduitListScreen.dart';
 import 'pages/facturation/FacturePage.dart';
 import 'pages/facturation/FacturesListPage.dart';
 import 'pages/invoice/FacturationPageUI.dart';
-
 import 'pages/invoice/providers.dart';
-import 'tests/hotelScreenFiable.dart';
 
 class MyMain extends StatelessWidget {
   @override
@@ -1270,7 +1262,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
           return SafeArea(
             child: Scaffold(
               appBar: AppBar(
-                title: Text('POS Desktop'),
+                title: Text('POS Desktop.'),
                 actions: [
                   ConnectionStatusIndicator(),
                   // WinMobile(),

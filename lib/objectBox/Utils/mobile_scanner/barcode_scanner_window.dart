@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
 import 'scanned_barcode_label.dart';
 import 'scanner_error_widget.dart';
 
@@ -51,7 +52,7 @@ class _BarcodeScannerWithScanWindowState
               controller.stop();
               Navigator.of(context).pop(scannedCode);
             }
-         
+
             return CustomPaint(
               painter: BarcodeOverlay(
                 barcodeCorners: scannedBarcode.corners,
@@ -103,7 +104,7 @@ class _BarcodeScannerWithScanWindowState
             fit: BoxFit.contain,
             scanWindow: scanWindow,
             controller: controller,
-            errorBuilder: (context, error, child) {
+            errorBuilder: (context, error) {
               return ScannerErrorWidget(error: error);
             },
           ),

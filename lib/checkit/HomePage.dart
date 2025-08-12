@@ -1,9 +1,10 @@
 import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -15,7 +16,9 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
+
 import '../MyListLotties.dart';
+import '../Oauth/Ogoogle/googleSignInProvider.dart';
 import '../objectBox/Utils/My_widgets.dart';
 import 'AuthProvider.dart';
 import 'EnhancedCallScreen.dart';
@@ -46,7 +49,7 @@ class _HomePage3State extends State<HomePage3> {
   bool _isAd1Ready = false;
   bool _isAd2Ready = false;
   String adUnitId1 = 'ca-app-pub-2282149611905342/7655852483';
-  String adUnitId2 = 'ca-app-pub-2282149611905342/4286974188';
+  String adUnitId2 = 'ca-app-pub-2282149611905342/7243723285';
 
   static final AdRequest request = AdRequest(
     keywords: <String>[
@@ -118,10 +121,12 @@ class _HomePage3State extends State<HomePage3> {
         _user = user;
       });
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SignalementProviderSupabase>(context, listen: false)
-          .chargerSignalements(_user!.uid);
-    });
+    _user != null
+        ? WidgetsBinding.instance.addPostFrameCallback((_) {
+            Provider.of<SignalementProviderSupabase>(context, listen: false)
+                .chargerSignalements(_user!.uid);
+          })
+        : null;
     if (Platform.isAndroid)
       BannerAd(
         adUnitId: AdHelper.bannerAdUnitId,
@@ -365,39 +370,13 @@ class _HomePage3State extends State<HomePage3> {
     'Ignorance des consignes de sécurité',
   ];
 
-  void _handleSignOut() async {
-    // _showReadyInterstitialAd(onAdClosed: () async {
-    //   await _authService.signOut();
-    //   setState(() {
-    //     _user = null;
-    //   });
-    // });
-    // Vérifiez si une publicité interstitielle est prête
-    if (_isInterstitialAdReady) {
-      _showReadyInterstitialAd(
-        onAdClosed: () async {
-          // Redirection après la fermeture de la publicité
-          await _authService.signOut();
-          setState(() {
-            _user = null;
-          });
-        },
-      );
-    } else {
-      await _authService.signOut();
-      setState(() {
-        _user = null;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<SignalementProviderSupabase>(context);
     return Scaffold(
       resizeToAvoidBottomInset: true, // important !
       appBar: AppBar(
-        leading: _user != null
+        leading: _user?.displayName != null
             ? Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: InkWell(
@@ -446,17 +425,38 @@ class _HomePage3State extends State<HomePage3> {
           ),
         ),
         actions: [
+          _user == null
+              ? SizedBox.shrink()
+              : IconButton(
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => EnhancedCallScreen())),
+                  icon: Icon(
+                    Icons.phone,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  style: IconButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50.0),
+                    ),
+                    // padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  ),
+                ),
           _user == null || _user!.email != 'forslog@gmail.com'
               ? SizedBox.shrink()
               : IconButton.outlined(
                   onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (ctx) => LottieListPage())),
                   icon: Icon(Icons.animation)),
-          if (_user != null)
-            IconButton(
-              icon: Icon(Icons.logout),
-              onPressed: _handleSignOut,
-            ),
+          // if (_user != null)
+          //   IconButton(
+          //     icon: Icon(Icons.logout),
+          //     onPressed: _handleSignOut,
+          //   ),
+          SizedBox(
+            width: 5,
+          )
         ],
       ),
       body: SingleChildScrollView(
@@ -520,11 +520,11 @@ class _HomePage3State extends State<HomePage3> {
                   _showSignalBtn
                       ? SizedBox.shrink()
                       : _showDetail
-                          ? Row(
-                              children: [
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left: 8),
+                          ? Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 8, 0, 0),
+                              child: Row(
+                                children: [
+                                  Expanded(
                                     child: DropdownButtonFormField<String>(
                                       isExpanded: true,
                                       decoration: InputDecoration(
@@ -561,20 +561,22 @@ class _HomePage3State extends State<HomePage3> {
                                       },
                                     ),
                                   ),
-                                ),
-                                IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _showDetail = !_showDetail;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _showDetail ? FontAwesomeIcons.plus : null,
-                                    size: 17,
+                                  IconButton(
+                                    onPressed: () {
+                                      setState(() {
+                                        _showDetail = !_showDetail;
+                                      });
+                                    },
+                                    icon: Icon(
+                                      _showDetail
+                                          ? FontAwesomeIcons.plus
+                                          : null,
+                                      size: 17,
+                                    ),
                                   ),
-                                ),
-                                //child: Text(_showDetail ? "Ajouter Motif" : 'Reduire')),
-                              ],
+                                  //child: Text(_showDetail ? "Ajouter Motif" : 'Reduire')),
+                                ],
+                              ),
                             )
                           : SizedBox.shrink(),
                   _showSignalBtn
@@ -582,7 +584,7 @@ class _HomePage3State extends State<HomePage3> {
                       : _showDetail
                           ? SizedBox.shrink()
                           : Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              //  crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
                                   child: AnimatedLongTextField(
@@ -770,6 +772,9 @@ class _HomePage3State extends State<HomePage3> {
                             child: Lottie.asset('assets/lotties/1 (26).json'),
                           ),
                         ),
+                  SizedBox(
+                    height: 100,
+                  ),
                   _user == null
                       ? SizedBox.shrink()
                       : ElevatedButton.icon(
@@ -866,7 +871,7 @@ class _googleBtnState extends State<googleBtn> {
           .from('signalements')
           .delete()
           .eq('numero', numero)
-          .eq('signalePar', _user!.uid);
+          .eq('user', _user!.uid);
 
       setState(() {
         _reportedNumbers.removeWhere((item) => item['numero'] == numero);
@@ -881,32 +886,11 @@ class _googleBtnState extends State<googleBtn> {
       await su.Supabase.instance.client
           .from('signalements')
           .delete()
-          .eq('signalePar', _user!.uid);
+          .eq('user', _user!.uid);
 
       setState(() => _reportedNumbers.clear());
     } catch (e) {
       print('Erreur suppression totale: ${e.toString()}');
-    }
-  }
-
-  Future<void> _handleSignIn() async {
-    setState(() => isLoading = true);
-
-    try {
-      User? user = await _authService.signInWithGoogle();
-      if (user != null) {
-        // Recharge les données utilisateur
-        Provider.of<SignalementProviderSupabase>(context, listen: false)
-            .chargerSignalements(user.uid);
-
-        Navigator.pushReplacement(
-          // Force le rafraîchissement
-          context,
-          MaterialPageRoute(builder: (ctx) => HomePage3()),
-        );
-      }
-    } finally {
-      setState(() => isLoading = false);
     }
   }
 
@@ -916,7 +900,7 @@ class _googleBtnState extends State<googleBtn> {
     try {
       // On attend que les deux futures se terminent : la déconnexion + le délai
       await Future.wait([
-        _authService.signOut(),
+        _authService.handleSignOut2(),
         Future.delayed(const Duration(seconds: 2)), // 👈 délai imposé
       ]);
 
@@ -1010,7 +994,8 @@ class _googleBtnState extends State<googleBtn> {
                 'Google',
                 style: TextStyle(fontSize: 24, color: Colors.white),
               ),
-              onPressed: _handleSignIn,
+              onPressed: () => Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (ctx) => SignInDemo())),
             ),
             Spacer()
           ],
@@ -1203,7 +1188,8 @@ class _googleBtnState extends State<googleBtn> {
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: TextButton(
-                          onPressed: () => _deleteAllReportedNumbers(),
+                          onPressed: () => confirmDeleteAll(context),
+                          // onPressed: () => _deleteAllReportedNumbers(),
                           child: Text(
                             'Delete All',
                             textAlign: TextAlign.end,
@@ -1304,8 +1290,9 @@ class _googleBtnState extends State<googleBtn> {
                             size: 23,
                             color: Colors.red,
                           ),
-                          onPressed: () =>
-                              _deleteReportedNumber(reportedNumber['numero']),
+                          onPressed: () => confirmDeleteNumero(
+                              context, reportedNumber['numero']),
+                          //    _deleteReportedNumber(reportedNumber['numero']),
                         ),
                       ),
                     ),
@@ -1571,30 +1558,30 @@ class _googleBtnState extends State<googleBtn> {
             child: const Text('Annuler'),
             onPressed: () => Navigator.pop(context),
           ),
-          TextButton(
-            child: const Text('Confirmer'),
-            onPressed: () async {
-              Navigator.pop(dialogContext);
-
-              final success = await _authService.deleteUserAccountPermanently();
-
-              if (mounted) {
-                if (success) {
-                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                      SnackBar(content: Text('Compte supprimé avec succès')));
-
-                  Navigator.pushAndRemoveUntil(
-                    scaffoldContext,
-                    MaterialPageRoute(builder: (_) => HomePage3()),
-                    (route) => false,
-                  );
-                } else {
-                  ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-                      SnackBar(content: Text('Échec de la suppression')));
-                }
-              }
-            },
-          ),
+          // TextButton(
+          //   child: const Text('Confirmer'),
+          //   onPressed: () async {
+          //     Navigator.pop(dialogContext);
+          //
+          //     final success = await _authService.deleteUserAccountPermanently();
+          //
+          //     if (mounted) {
+          //       if (success) {
+          //         ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+          //             SnackBar(content: Text('Compte supprimé avec succès')));
+          //
+          //         Navigator.pushAndRemoveUntil(
+          //           scaffoldContext,
+          //           MaterialPageRoute(builder: (_) => HomePage3()),
+          //           (route) => false,
+          //         );
+          //       } else {
+          //         ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+          //             SnackBar(content: Text('Échec de la suppression')));
+          //       }
+          //     }
+          //   },
+          // ),
         ],
       ),
     );
@@ -1615,6 +1602,53 @@ class _googleBtnState extends State<googleBtn> {
 
     // Retourne le numéro original si le format n'est pas reconnu
     return rawNumber;
+  }
+
+  void confirmDeleteAll(BuildContext context) {
+    showConfirmationDialog(
+      context: context,
+      title: 'Supprimer tous les signalements',
+      content: 'Cette action supprimera tous les numéros signalés. Continuer ?',
+      onConfirm: _deleteAllReportedNumbers,
+    );
+  }
+
+  void confirmDeleteNumero(BuildContext context, String numero) {
+    showConfirmationDialog(
+      context: context,
+      title: 'Confirmer la suppression',
+      content: 'Voulez-vous vraiment supprimer ce numéro signalé ?',
+      onConfirm: () => _deleteReportedNumber(numero),
+    );
+  }
+
+  Future<void> showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required VoidCallback onConfirm,
+  }) async {
+    return showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: [
+          TextButton(
+            child: const Text('Annuler'),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Supprimer'),
+            onPressed: () {
+              Navigator.of(ctx).pop(); // Ferme la boîte de dialogue
+              onConfirm(); // Appelle la fonction de suppression
+            },
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+
 import 'scanned_barcode_label.dart';
 import 'scanner_button_widgets.dart';
 import 'scanner_error_widget.dart';
@@ -38,7 +39,7 @@ class _BarcodeScannerWithOverlayState extends State<BarcodeScannerWithOverlay> {
               fit: BoxFit.contain,
               controller: controller,
               scanWindow: scanWindow,
-              errorBuilder: (context, error, child) {
+              errorBuilder: (context, error) {
                 return ScannerErrorWidget(error: error);
               },
               overlayBuilder: (context, constraints) {

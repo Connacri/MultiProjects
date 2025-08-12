@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart' as fi;
 import 'package:flutter/material.dart';
 import 'package:call_log/call_log.dart';
 import 'package:intl/intl.dart';
+import 'package:kenzy/checkit/providerF.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -18,7 +21,7 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
   final TextEditingController _searchController = TextEditingController();
   final Map<String, bool> _loadingStates = {};
   final int _pageSize = 20;
-
+  fi.User? _user;
   List<CallLogEntry> _calls = [];
   Set<String> _reportedNumbers = {};
   List<String> _cachedNumbers = [];
@@ -31,6 +34,7 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
   @override
   void initState() {
     super.initState();
+    _user = fi.FirebaseAuth.instance.currentUser;
     _initialize();
   }
 
@@ -44,7 +48,7 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
   Future<void> _initialize() async {
     await _checkPermissions();
     if (_permissionGranted) {
-      await _loadCache();
+      // await _loadCache();
       await _fetchReportedNumbers(); // New method
       _loadCallLog();
     }
@@ -62,12 +66,6 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
     } catch (e) {
       _showError('Erreur de permissions: ${e.toString()}');
     }
-  }
-
-  Future<void> _loadCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    _cachedNumbers = prefs.getStringList('reported_cache') ?? [];
-    _reportedNumbers = _cachedNumbers.toSet();
   }
 
   Future<void> _updateCache(String number) async {
@@ -121,26 +119,12 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
     }).toList();
   }
 
-  Future<void> _checkNumber(String number) async {
-    if (number.isEmpty || _cachedNumbers.contains(number)) return;
-
-    setState(() => _loadingStates[number] = true);
-
-    try {
-      final response =
-          await _supabase.from('signalements').select().eq('numero', number);
-
-      if (response.isNotEmpty) {
-        setState(() => _reportedNumbers.add(number));
-        _updateCache(number);
-      }
-    } finally {
-      setState(() => _loadingStates.remove(number));
-    }
-  }
-
-  Future<void> _reportNumber(String number) async {
-    if (number.isEmpty || _reportedNumbers.contains(number)) return;
+  Future<void> _reportNumber(String normalizedNumber) async {
+    final number =
+        Provider.of<SignalementProviderSupabase>(context, listen: false)
+            .normalizeAndValidateAlgerianPhone(normalizedNumber);
+    print(number);
+    if (number!.isEmpty || _reportedNumbers.contains(number)) return;
 
     setState(() => _loadingStates[number] = true);
 
@@ -150,7 +134,8 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
         'motif': 'Spam', // Valeur par défaut
         'gravite': 1, // Valeur par défaut
         'date': DateTime.now().toIso8601String(),
-        'signalePar': _supabase.auth.currentUser?.id,
+        'signalePar': '${_user!.displayName ?? "Utilisateur"}',
+        'user': _user!.uid,
       });
 
       setState(() {
@@ -166,6 +151,39 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
       setState(() => _loadingStates.remove(number));
     }
   }
+
+  // Future<void> _reportNumber(String number) async {
+  //   // Normaliser et valider le numéro
+  //   final normalizedNumber =
+  //       Provider.of<SignalementProviderSupabase>(context, listen: false)
+  //           .normalizeAndValidateAlgerianPhone(number);
+  //   if (normalizedNumber == null || _reportedNumbers.contains(normalizedNumber))
+  //     return;
+  //
+  //   setState(() => _loadingStates[normalizedNumber] = true);
+  //
+  //   try {
+  //     await _supabase.from('signalements').insert({
+  //       'numero': normalizedNumber,
+  //       'motif': 'Spam', // Valeur par défaut
+  //       'gravite': 1, // Valeur par défaut
+  //       'date': DateTime.now().toIso8601String(),
+  //       'signalePar': '${_user!.displayName ?? "Utilisateur"}',
+  //       'user': _user!.uid,
+  //     });
+  //
+  //     setState(() {
+  //       _reportedNumbers.add(normalizedNumber);
+  //       _cachedNumbers.add(normalizedNumber);
+  //     });
+  //
+  //     _updateCache(normalizedNumber);
+  //   } catch (e) {
+  //     _showError('Erreur: ${e.toString()}');
+  //   } finally {
+  //     setState(() => _loadingStates.remove(normalizedNumber));
+  //   }
+  // }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -229,7 +247,83 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
                       ? _buildLoadMoreButton()
                       : const SizedBox.shrink();
                 }
+                print('Numero de : ${_calls[index].number}');
                 return _buildCallItem(_calls[index]);
+              },
+            ),
+    );
+  }
+
+  Widget _buildCallItem(CallLogEntry entry) {
+    final number = entry.number ?? 'Inconnu';
+    //WidgetsBinding.instance.addPostFrameCallback((_) => _checkNumber(number));
+    final normalizedNumber =
+        Provider.of<SignalementProviderSupabase>(context, listen: false)
+            .normalizeAndValidateAlgerianPhone(number);
+    return ListTile(
+      leading: const Icon(Icons.phone),
+      //  leading: buildCallTypeIcon(_getCallType(entry.callType)),
+
+      title: Text('${entry.name ?? 'Inconnu'}'),
+
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                number,
+                style: TextStyle(fontSize: 18),
+              ),
+              SizedBox(
+                width: 5,
+              ),
+              buildCallTypeIcon(_getCallType(entry.callType)),
+            ],
+          ),
+          Text('Type: ${_getCallType(entry.callType)}'),
+          Text('Date: ${_formatDate(entry.timestamp)}'),
+        ],
+      ),
+      trailing: _loadingStates[normalizedNumber] ?? false
+          ? const CircularProgressIndicator(strokeWidth: 2)
+          : IconButton(
+              icon: Icon(
+                _reportedNumbers.contains(normalizedNumber)
+                    ? Icons.block
+                    : Icons.report,
+                color: _reportedNumbers.contains(normalizedNumber)
+                    ? Colors.red
+                    : Colors.grey,
+              ),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Confirmeation du Signale'),
+                    content: Text(
+                      _reportedNumbers.contains(normalizedNumber)
+                          ? 'Ce numéro a déjà été signalé.'
+                          : 'Voulez-vous vraiment signaler ce numéro ?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        // Ferme la boîte
+                        child: const Text('Annuler'),
+                      ),
+                      _reportedNumbers.contains(normalizedNumber)
+                          ? SizedBox.shrink()
+                          : TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Ferme la boîte
+                                _reportNumber(normalizedNumber!);
+                              },
+                              child: const Text('Confirmer'),
+                            ),
+                    ],
+                  ),
+                );
               },
             ),
     );
@@ -263,34 +357,6 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
     );
   }
 
-  Widget _buildCallItem(CallLogEntry entry) {
-    final number = entry.number ?? 'Inconnu';
-    //WidgetsBinding.instance.addPostFrameCallback((_) => _checkNumber(number));
-
-    return ListTile(
-      leading: const Icon(Icons.phone),
-      title: Text(number),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Type: ${_getCallType(entry.callType)}'),
-          Text('Date: ${_formatDate(entry.timestamp)}'),
-        ],
-      ),
-      trailing: _loadingStates[number] ?? false
-          ? const CircularProgressIndicator(strokeWidth: 2)
-          : IconButton(
-              icon: Icon(
-                _reportedNumbers.contains(number) ? Icons.block : Icons.report,
-                color: _reportedNumbers.contains(number)
-                    ? Colors.red
-                    : Colors.grey,
-              ),
-              onPressed: () => _reportNumber(number),
-            ),
-    );
-  }
-
   String _getCallType(CallType? type) {
     switch (type) {
       case CallType.incoming:
@@ -301,6 +367,21 @@ class _EnhancedCallScreenState extends State<EnhancedCallScreen> {
         return 'Manqué';
       default:
         return 'Inconnu';
+    }
+  }
+
+  Widget buildCallTypeIcon(String callType) {
+    switch (callType.toLowerCase()) {
+      case 'entrant':
+        return const Icon(Icons.call_received, color: Colors.green);
+      case 'sortant':
+        return const Icon(Icons.call_made, color: Colors.blue);
+      case 'manqué':
+        return const Icon(Icons.call_missed, color: Colors.red);
+      case 'bloqué':
+        return const Icon(Icons.block, color: Colors.black54);
+      default:
+        return const Icon(Icons.help_outline, color: Colors.grey);
     }
   }
 

@@ -92,7 +92,7 @@ BEGIN
             VALUE "CompanyName", "com.wallet.dz" "\0"
             VALUE "FileDescription", "kenzy" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "kenzy" "\0"
+            VALUE "InternalName", "com.check.it" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.wallet.dz. All rights reserved." "\0"
             VALUE "OriginalFilename", "kenzy.exe" "\0"
             VALUE "ProductName", "kenzy" "\0"

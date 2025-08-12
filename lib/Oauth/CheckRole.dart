@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kenzy/checkit/HomePage.dart';
-import 'package:provider/provider.dart';
-import 'Ogoogle/googleSignInProvider.dart';
 
 class CheckRole extends StatelessWidget {
   final String documentId;
@@ -69,10 +66,7 @@ class CheckRole extends StatelessWidget {
                       ),
                       onPressed: () async {
                         FirebaseAuth.instance.signOut();
-                        final provider = Provider.of<googleSignInProvider>(
-                            context,
-                            listen: false);
-                        await provider.logouta();
+
                         // Navigator.of(context).pop();
                         // Navigator.pop(context, true);
                       },
