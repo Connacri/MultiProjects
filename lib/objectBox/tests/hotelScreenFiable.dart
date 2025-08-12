@@ -1061,9 +1061,19 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
       final visibleStart =
           monthStart.isBefore(days.first) ? days.first : monthStart;
       final visibleEnd = monthEnd.isAfter(days.last) ? days.last : monthEnd;
-      final visibleDays = visibleEnd.difference(visibleStart).inDays + 1;
 
-      final monthName = DateFormat('MMMM yyyy', 'fr_FR').format(monthStart);
+      // Chercher les index (comparer day/month/year)
+      final startIndex = days.indexWhere((d) =>
+          d.year == visibleStart.year &&
+          d.month == visibleStart.month &&
+          d.day == visibleStart.day);
+      final endIndex = days.lastIndexWhere((d) =>
+          d.year == visibleEnd.year &&
+          d.month == visibleEnd.month &&
+          d.day == visibleEnd.day);
+
+      final visibleDays =
+          (startIndex >= 0 && endIndex >= 0) ? (endIndex - startIndex + 1) : 0;
 
       widgets.add(Container(
         width: visibleDays * dayWidth,
@@ -1074,7 +1084,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
           color: Colors.grey.shade100,
         ),
         child: Text(
-          monthName.toUpperCase(),
+          DateFormat('MMMM yyyy', 'fr_FR').format(monthStart).toUpperCase(),
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ));
@@ -1083,25 +1093,6 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
     }
 
     return widgets;
-  }
-
-  List<Widget> _buildDynamicMonthWidgets(DateTime start, DateTime end) {
-    final months = <Widget>[];
-    DateTime current = DateTime(start.year, start.month);
-    while (current.isBefore(end) || current.isAtSameMomentAs(end)) {
-      final daysInMonth = DateUtils.getDaysInMonth(current.year, current.month);
-      final width = daysInMonth * dayWidth;
-      months.add(Container(
-        width: width,
-        alignment: Alignment.center,
-        child: Text(
-          DateFormat('MMMM yyyy', 'fr_FR').format(current).toUpperCase(),
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-      ));
-      current = DateTime(current.year, current.month + 1);
-    }
-    return months;
   }
 
   String _shortDayName(int weekday) {
