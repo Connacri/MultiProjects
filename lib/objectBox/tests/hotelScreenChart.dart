@@ -588,18 +588,6 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                                                     height: 1.2,
                                                   ),
                                                 ),
-                                                Text(
-                                                  res.pricePerNight.toString() +
-                                                      '0 DZD/Night',
-                                                  style: TextStyle(
-                                                    color: Colors.white
-                                                        .withOpacity(0.9),
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w500,
-                                                    height: 1.2,
-                                                  ),
-                                                ),
-                                                SizedBox(),
                                               ],
                                             )
                                           ],
