@@ -490,10 +490,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "76529fbae4cdf9c23d297230f7d5cecf5ec81c8ae11126b6e1d44d69c3c121f3"
+      sha256: ef7d2a085c1b1d69d17b6842d0734aad90156de08df6bd3c12496d0bd6ddf8e2
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.0"
+    version: "10.3.1"
   file_selector_linux:
     dependency: transitive
     description:
@@ -2123,18 +2123,18 @@ packages:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_barcodes
-      sha256: "2981a204157b607a7020d04b9c28becacaf3e2df78cd15f952bef9d878190881"
+      sha256: "15e3ecc7075afa112aa837c581a33f28bf5541ba73d7b9bff4622bd55a1e4ca9"
       url: "https://pub.dev"
     source: hosted
-    version: "30.2.4"
+    version: "30.2.5"
   syncfusion_flutter_core:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "9d6b7722331e8c84e837d852da03f3735bf436fe6ebf2acc3455a2a21a0d47ff"
+      sha256: ce02ce65f51db8e29edc9d2225872d927e001bd2b13c2490d176563bbb046fc7
       url: "https://pub.dev"
     source: hosted
-    version: "30.2.4"
+    version: "30.2.5"
   synchronized:
     dependency: transitive
     description:
