@@ -77,7 +77,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ClientProvider(objectBox)),
         ChangeNotifierProvider(create: (_) => AdProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-//////////////////////////////////////////////////////////////////
+        //////////////////////////////////////////////////////////////////
         ChangeNotifierProvider(create: (_) => ConnectionStatusProvider()),
         ChangeNotifierProvider(create: (_) => FacturationProvider()),
         ChangeNotifierProvider(create: (_) => EditableFieldProvider()),
@@ -87,6 +87,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => SignalementProviderSupabase(),
         ),
+        //////////////////////////////////////////////////////////////////
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(

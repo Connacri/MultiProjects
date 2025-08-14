@@ -1,11 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+class Reservation {
+  final String clientName;
+  final String roomName;
+  final DateTime startDate;
+  final DateTime endDate;
+  final double pricePerNight;
+  final String status;
+
+  Reservation({
+    required this.clientName,
+    required this.roomName,
+    required this.startDate,
+    required this.endDate,
+    required this.pricePerNight,
+    required this.status,
+  });
+}
+
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final from = DateTime.now();
-    final to = from.add(const Duration(days: 60));
+    final from = DateTime.now().subtract(const Duration(days: 180));
+    final to = DateTime.now().add(const Duration(days: 180));
+    // 1 an après
     final rooms = ["101", "102", "103", "104", "105", "108"];
 
     // Mise à jour des dates des réservations pour 2025
@@ -117,7 +136,10 @@ class HomeScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Demo: Planning Hôtel')),
+      appBar: AppBar(
+        title: const Text('Demo: Planning Hôtel'),
+        actions: [],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Column(
@@ -135,24 +157,6 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class Reservation {
-  final String clientName;
-  final String roomName;
-  final DateTime startDate;
-  final DateTime endDate;
-  final double pricePerNight;
-  final String status;
-
-  Reservation({
-    required this.clientName,
-    required this.roomName,
-    required this.startDate,
-    required this.endDate,
-    required this.pricePerNight,
-    required this.status,
-  });
 }
 
 class CalendarTableWithDragging extends StatefulWidget {
@@ -194,6 +198,10 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
     _horizontalController.addListener(_onBodyScroll);
     _roomsController.addListener(_onRoomsScroll);
     _verticalController.addListener(_onBodyVerticalScroll);
+    // Centrer sur la date actuelle après la construction
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _centerOnToday();
+    });
   }
 
   @override
@@ -207,6 +215,38 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
     _roomsController.dispose();
     _verticalController.dispose();
     super.dispose();
+  }
+
+  void _centerOnToday() {
+    final today = DateTime.now();
+    final todayIndex = _allDays.indexWhere((date) =>
+        date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day);
+
+    if (todayIndex != -1) {
+      final targetOffset = (todayIndex * dayWidth) -
+          (MediaQuery.of(context).size.width / 2) +
+          60;
+      final maxOffset = (_allDays.length * dayWidth) -
+          MediaQuery.of(context).size.width +
+          120;
+      final clampedOffset =
+          targetOffset.clamp(0.0, maxOffset.clamp(0.0, double.infinity));
+
+      if (_horizontalController.hasClients && _headerController.hasClients) {
+        _horizontalController.animateTo(
+          clampedOffset,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+        _headerController.animateTo(
+          clampedOffset,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
   }
 
   void _onHeaderScroll() {
@@ -315,12 +355,43 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
             left: 120,
             right: 0,
             height: rowHeight / 2,
-            child: SingleChildScrollView(
+            child: ListView.builder(
               controller: _headerController,
               scrollDirection: Axis.horizontal,
-              child: Row(children: _buildDayWidgets(days)),
+              itemCount: days.length,
+              itemExtent: dayWidth,
+              // Largeur fixe pour chaque jour
+              itemBuilder: (context, index) {
+                final d = days[index];
+                return Container(
+                  width: dayWidth,
+                  height: rowHeight / 2,
+                  decoration: BoxDecoration(
+                    border:
+                        Border(right: BorderSide(color: Colors.grey.shade300)),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _shortDayName(d.weekday),
+                        style:
+                            const TextStyle(fontSize: 17, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${d.day}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
+
+          // Ligne des jours (nouveau HorizontalCalendar)
 
           // Colonne des chambres (fixe à gauche, scrollable verticalement)
           Positioned(
@@ -653,10 +724,10 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
           'Chambre: ${res.roomName}\n${DateFormat('dd/MM/yyyy').format(res.startDate)} - ${DateFormat('dd/MM/yyyy').format(res.endDate)}',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Fermer'),
-          ),
+          // TextButton(
+          //   onPressed: () => Navigator.of(context).pop(),
+          //   child: const Text('Fermer'),
+          // ),
         ],
       ),
     );

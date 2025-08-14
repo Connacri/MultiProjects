@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math';
+
+import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:faker/faker.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 import '../../objectbox.g.dart';
 import 'Entity.dart';
 import 'classeObjectBox.dart';
-import 'package:objectbox/objectbox.dart';
-import 'dart:isolate';
 
 class ThemeProvider with ChangeNotifier {
   // Par défaut, le thème est clair
