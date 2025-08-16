@@ -1,30 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 
+import '../MyProviders.dart';
 import 'hotelScreen.dart';
+// Import du RoomProvider
+// import '../providers/room_provider.dart'; // Ajustez le chemin selon votre structure
 
-class HomeScreenv3 extends StatefulWidget {
-  const HomeScreenv3({super.key});
+// ==================== UI: HomeScreenv4 ====================
+
+class HomeScreenv4 extends StatefulWidget {
+  const HomeScreenv4({super.key});
 
   @override
-  State<HomeScreenv3> createState() => _HomeScreenv3State();
+  State<HomeScreenv4> createState() => _HomeScreenv4State();
 }
 
-class _HomeScreenv3State extends State<HomeScreenv3> {
-  List<String> rooms = [];
-
+class _HomeScreenv4State extends State<HomeScreenv4> {
   @override
   void initState() {
     super.initState();
-    _loadRoomsFromPrefs();
-  }
-
-  Future<void> _loadRoomsFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedRooms = prefs.getStringList('saved_rooms');
-    setState(() {
-      rooms = savedRooms ?? [];
+    // Charger les données au démarrage
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<RoomProvider>().loadRoomsFromBox();
     });
   }
 
@@ -33,7 +31,7 @@ class _HomeScreenv3State extends State<HomeScreenv3> {
     final from = DateTime.now().subtract(const Duration(days: 180));
     final to = DateTime.now().add(const Duration(days: 180));
 
-    // Données de test
+    // Données de test - remplacez par les vraies réservations du provider
     final sampleReservations = <Reservation>[
       Reservation(
         clientName: "Mohamed Amine",
@@ -82,36 +80,42 @@ class _HomeScreenv3State extends State<HomeScreenv3> {
         title: const Text('Planning Hôtel'),
         actions: [
           IconButton(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => RoomGeneratorDialog(
-                    onRoomsGenerated: (generatedRooms) async {
-                      // Recharger les chambres depuis les préférences
-                      await _loadRoomsFromPrefs();
-                      setState(() {});
-                    },
-                  ),
-                );
-              },
-              icon: Icon(Icons.room_preferences_outlined)),
-          SizedBox(
-            width: 100,
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (dialogContext) => RoomGeneratorDialog(
+                  roomProvider:
+                      context.read<RoomProvider>(), // Passer le provider
+                  onRoomsGenerated: (generatedRooms) {
+                    // La sauvegarde est maintenant gérée dans le dialog
+                    print('Chambres générées: ${generatedRooms.length}');
+                  },
+                ),
+              );
+            },
+            icon: const Icon(Icons.room_preferences_outlined),
           ),
+          const SizedBox(width: 100),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: CalendarTableWithDragging(
-          fromDate: from,
-          toDate: to,
-          roomNames: rooms,
-          reservations: sampleReservations,
+        child: Consumer<RoomProvider>(
+          builder: (context, roomProvider, child) {
+            return CalendarTableWithDragging(
+              fromDate: from,
+              toDate: to,
+              roomNames: roomProvider.rooms,
+              reservations: sampleReservations,
+            );
+          },
         ),
       ),
     );
   }
 }
+
+// ==================== UI: CalendarTableWithDragging (inchangé) ====================
 
 class CalendarTableWithDragging extends StatefulWidget {
   final DateTime fromDate;
@@ -236,8 +240,8 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
       if (!_horizontalController.hasClients || !_headerController.hasClients)
         return;
 
-      final viewportWidth = MediaQuery.of(context).size.width -
-          120; // 120 = largeur colonne chambres
+      final viewportWidth =
+          MediaQuery.of(context).size.width - 120; // 120 = colonne chambres
       final target = todayIndex * dayWidth - (viewportWidth - dayWidth) / 2;
 
       final maxExtent = _horizontalController.position.maxScrollExtent;
@@ -302,7 +306,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
             ),
           ),
 
-          // HEADER (mois + jours) dans UN SEUL scroll horizontal synchronisé
+          // HEADER (mois + jours)
           Positioned(
             top: 0,
             left: 120,
@@ -318,12 +322,10 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                   children: [
                     Column(
                       children: [
-                        // Ligne des mois
                         SizedBox(
                           height: rowHeight / 2,
                           child: Row(children: _buildMonthWidgets(days)),
                         ),
-                        // Ligne des jours
                         SizedBox(
                           height: rowHeight / 2,
                           child: Row(
@@ -351,10 +353,8 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                                       ),
                                     ),
                                     const SizedBox(height: 2),
-                                    Text(
-                                      '${d.day}',
-                                      style: const TextStyle(fontSize: 13),
-                                    ),
+                                    Text('${d.day}',
+                                        style: const TextStyle(fontSize: 13)),
                                   ],
                                 ),
                               );
@@ -364,7 +364,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                       ],
                     ),
 
-                    // Trait vertical vert pour aujourd'hui (sur le header)
+                    // Trait vertical vert pour aujourd'hui
                     Positioned(
                       left: todayIndex * dayWidth,
                       top: 0,
@@ -378,7 +378,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
             ),
           ),
 
-          // Colonne des chambres (fixe à gauche, scrollable verticalement) - ListView.builder
+          // Colonne des chambres
           Positioned(
             top: rowHeight,
             left: 0,
@@ -408,7 +408,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
             ),
           ),
 
-          // Grille principale (scrollable sur les deux axes)
+          // Grille principale
           Positioned(
             top: rowHeight,
             left: 120,
@@ -424,7 +424,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                   height: rooms.length * rowHeight,
                   child: Stack(
                     children: [
-                      // Colonne verte (background léger) pour le jour actuel
+                      // Colonne du jour courant
                       Positioned(
                         left: todayIndex * dayWidth,
                         top: 0,
@@ -435,8 +435,6 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                               Container(color: Colors.green.withOpacity(0.08)),
                         ),
                       ),
-
-                      // Ligne verticale accent verte au milieu du jour
                       Positioned(
                         left: todayIndex * dayWidth,
                         top: 0,
@@ -446,7 +444,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                             child: Container(color: Colors.green)),
                       ),
 
-                      // Grille de base : lignes x jours
+                      // Grille de base
                       Column(
                         children: List.generate(rooms.length, (row) {
                           return Row(
@@ -480,7 +478,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                         }),
                       ),
 
-                      // Superposition des réservations
+                      // Réservations
                       ...widget.reservations.map((res) {
                         final rowIndex = rooms.indexOf(res.roomName);
                         if (rowIndex == -1) return const SizedBox.shrink();
@@ -528,6 +526,9 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
     DateTime cursor = DateTime(days.first.year, days.first.month, 1);
     final end = days.last;
 
+    bool _isSameDay(DateTime a, DateTime b) =>
+        a.year == b.year && a.month == b.month && a.day == b.day;
+
     while (cursor.isBefore(end.add(const Duration(days: 1)))) {
       final monthStart = DateTime(cursor.year, cursor.month, 1);
       final monthEnd = DateTime(cursor.year, cursor.month + 1, 0);
@@ -565,6 +566,8 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
   }
 }
 
+// ==================== Carte Réservation (inchangée) ====================
+
 class _ReservationCard extends StatelessWidget {
   final Color color;
   final Reservation res;
@@ -586,7 +589,7 @@ class _ReservationCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             boxShadow: const [
               BoxShadow(
-                  color: Colors.black12, blurRadius: 6, offset: Offset(0, 3)),
+                  color: Colors.black12, blurRadius: 6, offset: Offset(0, 3))
             ],
             border: Border.all(color: Colors.white24),
           ),
@@ -609,17 +612,14 @@ class _ReservationCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      res.clientName,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 1.1,
-                      ),
-                    ),
+                    Text(res.clientName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            height: 1.1)),
                     const SizedBox(height: 2),
                     Row(
                       children: [
@@ -637,21 +637,17 @@ class _ReservationCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      '${res.pricePerNight.toStringAsFixed(0)} DZD/nuit',
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600),
-                    ),
+                    Text('${res.pricePerNight.toStringAsFixed(0)} DZD/nuit',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600)),
                     const SizedBox(width: 8),
-                    Text(
-                      res.status,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600),
-                    ),
+                    Text(res.status,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -674,20 +670,23 @@ class _ReservationCard extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fermer'),
-          ),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer')),
         ],
       ),
     );
   }
 }
 
+// ==================== Dialog Générateur (utilise le RoomProvider) ====================
+
 class RoomGeneratorDialog extends StatefulWidget {
+  final RoomProvider roomProvider;
   final Function(List<String>) onRoomsGenerated;
 
   const RoomGeneratorDialog({
     Key? key,
+    required this.roomProvider,
     required this.onRoomsGenerated,
   }) : super(key: key);
 
@@ -711,77 +710,39 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
     _floorsController.text = '3';
     _firstRoomController.text = '01';
     _lastRoomController.text = '08';
-    _loadRoomsFromPrefs();
-  }
-
-  Future<void> _loadRoomsFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedRooms = prefs.getStringList('saved_rooms') ?? [];
-    setState(() {
-      _generatedRooms = savedRooms;
-      _showPreview = savedRooms.isNotEmpty;
-    });
-  }
-
-  Future<void> _saveRoomsToPrefs(List<String> rooms) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('saved_rooms', rooms);
   }
 
   void _generateRooms() {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      // Nettoyer et valider les entrées
-      final String floorsText = _floorsController.text.trim();
-      final String firstRoomText = _firstRoomController.text.trim();
-      final String lastRoomText = _lastRoomController.text.trim();
+      final floors = int.parse(_floorsController.text.trim());
+      final firstRoom = int.parse(_firstRoomController.text.trim());
+      final lastRoom = int.parse(_lastRoomController.text.trim());
 
-      if (floorsText.isEmpty || firstRoomText.isEmpty || lastRoomText.isEmpty) {
-        _showErrorDialog('Veuillez remplir tous les champs obligatoires.');
-        return;
-      }
-
-      final int floors = int.parse(floorsText);
-      final int firstRoom = int.parse(firstRoomText);
-      final int lastRoom = int.parse(lastRoomText);
-
-      if (firstRoom > lastRoom) {
-        _showErrorDialog(
-            'Le premier numéro de chambre doit être inférieur ou égal au dernier.');
-        return;
-      }
-
-      final String excludeText = _excludeRoomsController.text.trim();
-      final Set<String> excludeRooms = {};
-
+      final excludeText = _excludeRoomsController.text.trim();
+      final excludeRooms = <String>{};
       if (excludeText.isNotEmpty) {
-        excludeText.split(',').forEach((room) {
-          final trimmed = room.trim();
-          if (trimmed.isNotEmpty) {
-            excludeRooms.add(trimmed);
-          }
-        });
-      }
-
-      final List<String> rooms = [];
-      for (int floor = 1; floor <= floors; floor++) {
-        for (int roomNum = firstRoom; roomNum <= lastRoom; roomNum++) {
-          final roomNumber = '$floor${roomNum.toString().padLeft(2, '0')}';
-          if (!excludeRooms.contains(roomNumber)) {
-            rooms.add(roomNumber);
-          }
+        for (final r in excludeText.split(',')) {
+          final t = r.trim();
+          if (t.isNotEmpty) excludeRooms.add(t);
         }
       }
+
+      // Utilisation de la méthode du RoomProvider
+      final rooms = widget.roomProvider.generateRoomsList(
+        floors: floors,
+        firstRoom: firstRoom,
+        lastRoom: lastRoom,
+        excludeRooms: excludeRooms,
+      );
 
       setState(() {
         _generatedRooms = rooms;
         _showPreview = true;
       });
     } catch (e) {
-      print('Erreur lors de la génération des chambres: $e');
-      _showErrorDialog(
-          'Erreur lors de la génération des chambres. Vérifiez que tous les champs numériques contiennent bien des nombres valides.');
+      _showErrorDialog('Erreur lors de la génération des chambres: $e');
     }
   }
 
@@ -793,9 +754,8 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'))
         ],
       ),
     );
@@ -804,10 +764,8 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text(
-        'Générateur de Chambres',
-        style: TextStyle(fontWeight: FontWeight.bold),
-      ),
+      title: const Text('Générateur de Chambres',
+          style: TextStyle(fontWeight: FontWeight.bold)),
       content: SizedBox(
         width: MediaQuery.of(context).size.width * 0.8,
         child: Form(
@@ -872,33 +830,41 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Annuler'),
-        ),
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler')),
         ElevatedButton.icon(
           onPressed: _generatedRooms.isEmpty
               ? null
               : () async {
                   try {
-                    await _saveRoomsToPrefs(_generatedRooms);
+                    await widget.roomProvider.saveRoomsToBox(_generatedRooms);
+
                     widget.onRoomsGenerated(_generatedRooms);
                     Navigator.of(context).pop();
+
+                    // Message de succès
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                             '${_generatedRooms.length} chambres générées avec succès!'),
                         backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 3),
                       ),
                     );
                   } catch (e) {
                     print('Erreur lors de la sauvegarde: $e');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content:
-                            Text('Erreur lors de la sauvegarde des chambres'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              'Erreur lors de la sauvegarde des chambres: $e'),
+                          backgroundColor: Colors.red,
+                          duration: const Duration(seconds: 5),
+                        ),
+                      );
+                    }
+                    // On peut choisir de fermer quand même le dialog ou pas
+                    // Navigator.of(context).pop();
                   }
                 },
           icon: const Icon(Icons.check),
@@ -926,21 +892,11 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
       ),
       keyboardType: TextInputType.number,
       validator: (value) {
-        if (value == null || value.trim().isEmpty) {
+        if (value == null || value.trim().isEmpty)
           return 'Veuillez entrer une valeur';
-        }
-
-        final cleanValue = value.trim();
-        final number = int.tryParse(cleanValue);
-
-        if (number == null) {
-          return 'Veuillez entrer un nombre valide';
-        }
-
-        if (number < min || number > max) {
-          return 'Entre $min et $max';
-        }
-
+        final number = int.tryParse(value.trim());
+        if (number == null) return 'Veuillez entrer un nombre valide';
+        if (number < min || number > max) return 'Entre $min et $max';
         return null;
       },
     );
@@ -953,13 +909,11 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
         const Divider(),
         const SizedBox(height: 10),
         Row(
-          children: [
-            const Icon(Icons.preview, color: Colors.orange),
-            const SizedBox(width: 8),
-            Text(
-              'Prévisualisation (${_generatedRooms.length} chambres)',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
+          children: const [
+            Icon(Icons.preview, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Prévisualisation',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         const SizedBox(height: 10),
@@ -985,11 +939,9 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.blue.shade300),
                       ),
-                      child: Text(
-                        room,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w500, fontSize: 12),
-                      ),
+                      child: Text(room,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w500, fontSize: 12)),
                     ),
                   )
                   .toList(),
@@ -1011,10 +963,15 @@ class _RoomGeneratorDialogState extends State<RoomGeneratorDialog> {
 }
 
 void showRoomGeneratorDialog(
-    BuildContext context, Function(List<String>) onRoomsGenerated) {
+  BuildContext context,
+  RoomProvider roomProvider,
+  Function(List<String>) onRoomsGenerated,
+) {
   showDialog(
     context: context,
-    builder: (context) =>
-        RoomGeneratorDialog(onRoomsGenerated: onRoomsGenerated),
+    builder: (context) => RoomGeneratorDialog(
+      roomProvider: roomProvider,
+      onRoomsGenerated: onRoomsGenerated,
+    ),
   );
 }

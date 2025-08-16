@@ -1,15 +1,14 @@
 import 'dart:io';
-import 'dart:isolate';
+import 'dart:math' show Random;
 import 'dart:math';
+
 import 'package:faker/faker.dart';
-import 'package:flutter/material.dart';
-import 'package:objectbox/objectbox.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import '../objectBox/Entity.dart';
 import '../objectbox.g.dart';
-import 'dart:math' show Random;
-import 'package:permission_handler/permission_handler.dart';
 
 class ObjectBox {
   late final Store store;
@@ -23,6 +22,8 @@ class ObjectBox {
   late final Box<Client> clientBox;
   late final Box<DeletedProduct> deletedProduct;
   late final Box<Annonces> annonces;
+  late final Box<RoomEntity> roomEntity;
+  late final Box<ReservationEntity> reservationEntity;
   Admin? admin; // Admin optionnel
 
   static final ObjectBox _singleton = ObjectBox._internal();
@@ -47,6 +48,8 @@ class ObjectBox {
       clientBox = Box<Client>(store);
       deletedProduct = Box<DeletedProduct>(store);
       annonces = Box<Annonces>(store);
+      roomEntity = Box<RoomEntity>(store);
+      reservationEntity = Box<ReservationEntity>(store);
 
       // Démarre Admin si disponible et vérifie son statut
       if (Admin.isAvailable()) {

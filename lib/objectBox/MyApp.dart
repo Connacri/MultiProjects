@@ -88,6 +88,9 @@ class MyApp9 extends StatelessWidget {
           create: (_) => SignalementProviderSupabase(),
         ),
         //////////////////////////////////////////////////////////////////
+        ChangeNotifierProvider(
+          create: (_) => RoomProvider(objectBox),
+        ),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(

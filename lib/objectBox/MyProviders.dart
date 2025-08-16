@@ -1391,3 +1391,454 @@ class CrudProvider with ChangeNotifier {
     loadCruds();
   }
 }
+
+class RoomProvider with ChangeNotifier {
+  final ObjectBox _objectBox;
+  List<String> _rooms = [];
+  List<Client> _clients = [];
+  List<ReservationEntity> _reservations = [];
+
+  // Getters
+  List<String> get rooms => _rooms;
+
+  List<Client> get clients => _clients;
+
+  List<ReservationEntity> get reservations => _reservations;
+
+  int get roomCount => _rooms.length;
+
+  int get clientCount => _clients.length;
+
+  int get reservationCount => _reservations.length;
+
+  RoomProvider(this._objectBox) {
+    _initializeData();
+  }
+
+  // Initialisation des données
+  void _initializeData() {
+    loadRoomsFromBox();
+    getClientsFromBox();
+    loadReservationsFromBox();
+  }
+
+  // === GESTION DES CHAMBRES (Accès direct à la box) ===
+
+  Future<void> loadRoomsFromBox() async {
+    try {
+      print('RoomProvider: Chargement des chambres depuis ObjectBox...');
+
+      // Accès direct à la box sans repository
+      final roomBox = _objectBox.roomEntity;
+      final query = roomBox.query().order(RoomEntity_.code).build();
+
+      try {
+        final roomEntities = query.find();
+        final loaded = roomEntities.map((entity) => entity.code).toList();
+        print('RoomProvider: ${loaded.length} chambres chargées');
+
+        _rooms = loaded;
+        notifyListeners();
+      } finally {
+        query.close();
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des chambres: $e');
+      _rooms = [];
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> saveRoomsToBox(List<String> generated) async {
+    try {
+      print('RoomProvider: Sauvegarde de ${generated.length} chambres...');
+
+      // Nettoyage & normalisation
+      final normalized = generated
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+
+      // Accès direct à la box
+      final roomBox = _objectBox.roomEntity;
+      roomBox.removeAll(); // reset atomique
+      roomBox.putMany(normalized.map((c) => RoomEntity(code: c)).toList());
+
+      print('RoomProvider: Chambres sauvegardées avec succès');
+
+      // Rafraîchir les données locales
+      await loadRoomsFromBox();
+    } catch (e) {
+      print('Erreur lors de la sauvegarde des chambres: $e');
+
+      // En cas d'erreur, au moins mettre à jour l'interface utilisateur
+      _rooms = generated;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  List<String> generateRoomsList({
+    required int floors,
+    required int firstRoom,
+    required int lastRoom,
+    Set<String> excludeRooms = const {},
+  }) {
+    if (firstRoom > lastRoom) {
+      throw ArgumentError(
+          'Le premier numéro de chambre doit être ≤ au dernier.');
+    }
+
+    final rooms = <String>[];
+    for (int floor = 1; floor <= floors; floor++) {
+      for (int roomNum = firstRoom; roomNum <= lastRoom; roomNum++) {
+        final code = '$floor${roomNum.toString().padLeft(2, '0')}';
+        if (!excludeRooms.contains(code)) {
+          rooms.add(code);
+        }
+      }
+    }
+    return rooms;
+  }
+
+  Future<void> addRoom(String roomCode) async {
+    try {
+      final normalizedCode = roomCode.trim();
+      if (normalizedCode.isEmpty) return;
+
+      final roomBox = _objectBox.roomEntity;
+
+      // Vérifier si la chambre existe déjà
+      final existing =
+          roomBox.query(RoomEntity_.code.equals(normalizedCode)).build();
+      try {
+        if (existing.find().isEmpty) {
+          roomBox.put(RoomEntity(code: normalizedCode));
+          await loadRoomsFromBox();
+        }
+      } finally {
+        existing.close();
+      }
+    } catch (e) {
+      print('Erreur lors de l\'ajout de la chambre: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteRoom(String roomCode) async {
+    try {
+      final roomBox = _objectBox.roomEntity;
+      final query =
+          roomBox.query(RoomEntity_.code.equals(roomCode.trim())).build();
+
+      try {
+        final rooms = query.find();
+        for (final room in rooms) {
+          roomBox.remove(room.id);
+        }
+        await loadRoomsFromBox();
+      } finally {
+        query.close();
+      }
+    } catch (e) {
+      print('Erreur lors de la suppression de la chambre: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAllRooms() async {
+    try {
+      final roomBox = _objectBox.roomEntity;
+      roomBox.removeAll();
+      await loadRoomsFromBox();
+    } catch (e) {
+      print('Erreur lors de la suppression de toutes les chambres: $e');
+      rethrow;
+    }
+  }
+
+  // === GESTION DES CLIENTS (inchangée) ===
+
+  void getClientsFromBox() {
+    try {
+      final box = _objectBox.clientBox;
+      _clients = box.getAll();
+      notifyListeners();
+    } catch (e) {
+      print('Erreur lors du chargement des clients: $e');
+      _clients = [];
+      notifyListeners();
+    }
+  }
+
+  Future<void> addClient(Client client) async {
+    try {
+      _objectBox.clientBox.put(client);
+      getClientsFromBox();
+    } catch (e) {
+      print('Erreur lors de l\'ajout du client: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateClient(Client client) async {
+    try {
+      _objectBox.clientBox.put(client);
+      getClientsFromBox();
+    } catch (e) {
+      print('Erreur lors de la mise à jour du client: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteClient(Client client) async {
+    try {
+      _objectBox.clientBox.remove(client.id);
+      getClientsFromBox();
+    } catch (e) {
+      print('Erreur lors de la suppression du client: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAllClients() async {
+    try {
+      final box = _objectBox.clientBox;
+      box.removeAll();
+      getClientsFromBox();
+    } catch (e) {
+      print('Erreur lors de la suppression de tous les clients: $e');
+      rethrow;
+    }
+  }
+
+  List<Document> getFacturesForClient(Client client) {
+    try {
+      final facturesQuery = _objectBox.factureBox
+          .query(Document_.client.equals(client.id))
+          .build();
+      final factures = facturesQuery.find();
+      facturesQuery.close();
+      return factures;
+    } catch (e) {
+      print('Erreur lors de la récupération des factures: $e');
+      return [];
+    }
+  }
+
+  // === MÉTHODES UTILITAIRES ===
+
+  bool hasRoom(String roomCode) {
+    return _rooms.contains(roomCode);
+  }
+
+  Client? getClientById(int clientId) {
+    try {
+      return _clients.firstWhere((client) => client.id == clientId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+// Méthode corrigée pour rechercher les clients par nom dans les réservations
+  List<ReservationEntity> searchClients(String query) {
+    if (query.isEmpty) return _reservations;
+    final lowerQuery = query.toLowerCase();
+    return _reservations.where((reservation) {
+      return reservation.clientName.toLowerCase().contains(lowerQuery);
+    }).toList();
+  }
+
+  Future<void> refreshAll() async {
+    await Future.wait([
+      loadRoomsFromBox(),
+      loadReservationsFromBox(),
+      Future.sync(() => getClientsFromBox()),
+    ]);
+  }
+
+  // === GESTION DES RÉSERVATIONS ===
+
+  Future<void> loadReservationsFromBox() async {
+    try {
+      print('RoomProvider: Chargement des réservations depuis ObjectBox...');
+
+      final reservationBox = _objectBox.reservationEntity;
+      final query = reservationBox
+          .query()
+          .order(ReservationEntity_.startDate, flags: Order.descending)
+          .build();
+
+      try {
+        final reservationEntities = query.find();
+        print(
+            'RoomProvider: ${reservationEntities.length} réservations chargées');
+
+        _reservations = reservationEntities;
+        notifyListeners();
+      } finally {
+        query.close();
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des réservations: $e');
+      _reservations = [];
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> addReservation(ReservationEntity reservation) async {
+    try {
+      final reservationBox = _objectBox.reservationEntity;
+      reservationBox.put(reservation);
+      await loadReservationsFromBox();
+    } catch (e) {
+      print('Erreur lors de l\'ajout de la réservation: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateReservation(ReservationEntity reservation) async {
+    try {
+      final reservationBox = _objectBox.reservationEntity;
+      reservationBox.put(reservation);
+      await loadReservationsFromBox();
+    } catch (e) {
+      print('Erreur lors de la mise à jour de la réservation: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteReservation(int reservationId) async {
+    try {
+      final reservationBox = _objectBox.reservationEntity;
+      reservationBox.remove(reservationId);
+      await loadReservationsFromBox();
+    } catch (e) {
+      print('Erreur lors de la suppression de la réservation: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAllReservations() async {
+    try {
+      final reservationBox = _objectBox.reservationEntity;
+      reservationBox.removeAll();
+      await loadReservationsFromBox();
+    } catch (e) {
+      print('Erreur lors de la suppression de toutes les réservations: $e');
+      rethrow;
+    }
+  }
+
+  // Méthodes utilitaires pour les réservations
+
+  /// Récupère les réservations pour une chambre donnée
+  List<ReservationEntity> getReservationsForRoom(String roomCode) {
+    return _reservations
+        .where((reservation) => reservation.roomName == roomCode)
+        .toList();
+  }
+
+  /// Récupère les réservations pour un client donné
+  List<ReservationEntity> getReservationsForClient(String clientName) {
+    return _reservations
+        .where((reservation) => reservation.clientName == clientName)
+        .toList();
+  }
+
+  /// Récupère les réservations actives (en cours)
+  List<ReservationEntity> getActiveReservations() {
+    final now = DateTime.now();
+    return _reservations.where((reservation) {
+      return reservation.startDate.isBefore(now) &&
+          reservation.endDate.isAfter(now) &&
+          reservation.status.toLowerCase() == 'active';
+    }).toList();
+  }
+
+  /// Récupère les réservations futures
+  List<ReservationEntity> getFutureReservations() {
+    final now = DateTime.now();
+    return _reservations.where((reservation) {
+      return reservation.startDate.isAfter(now);
+    }).toList();
+  }
+
+  /// Récupère les réservations passées
+  List<ReservationEntity> getPastReservations() {
+    final now = DateTime.now();
+    return _reservations.where((reservation) {
+      return reservation.endDate.isBefore(now);
+    }).toList();
+  }
+
+  /// Vérifie si une chambre est disponible pour une période donnée
+  bool isRoomAvailable(String roomCode, DateTime startDate, DateTime endDate,
+      {int? excludeReservationId}) {
+    final roomReservations = getReservationsForRoom(roomCode);
+
+    for (final reservation in roomReservations) {
+      // Exclure la réservation si on la modifie
+      if (excludeReservationId != null &&
+          reservation.id == excludeReservationId) {
+        continue;
+      }
+
+      // Vérifier les chevauchements de dates
+      if (reservation.status.toLowerCase() != 'cancelled') {
+        final reservationStart = reservation.startDate;
+        final reservationEnd = reservation.endDate;
+
+        // Chevauchement si :
+        // - La nouvelle réservation commence avant que l'existante se termine ET
+        // - La nouvelle réservation se termine après que l'existante commence
+        if (startDate.isBefore(reservationEnd) &&
+            endDate.isAfter(reservationStart)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /// Calcule le revenu total pour une période donnée
+  double getRevenueForPeriod(DateTime startDate, DateTime endDate) {
+    double totalRevenue = 0.0;
+
+    for (final reservation in _reservations) {
+      if (reservation.status.toLowerCase() != 'cancelled' &&
+          reservation.startDate.isBefore(endDate) &&
+          reservation.endDate.isAfter(startDate)) {
+        // Calculer le nombre de nuits dans la période demandée
+        final overlapStart = reservation.startDate.isAfter(startDate)
+            ? reservation.startDate
+            : startDate;
+        final overlapEnd = reservation.endDate.isBefore(endDate)
+            ? reservation.endDate
+            : endDate;
+
+        if (overlapStart.isBefore(overlapEnd)) {
+          final nights = overlapEnd.difference(overlapStart).inDays;
+          totalRevenue += reservation.pricePerNight * nights;
+        }
+      }
+    }
+
+    return totalRevenue;
+  }
+
+  /// Recherche des réservations par nom de client
+  List<ReservationEntity> searchReservationsByClient(String query) {
+    if (query.trim().isEmpty) return _reservations;
+
+    final lowerQuery = query.toLowerCase();
+    return _reservations.where((reservation) {
+      return reservation.clientName.toLowerCase().contains(lowerQuery);
+    }).toList();
+  }
+}

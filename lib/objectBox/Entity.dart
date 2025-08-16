@@ -531,3 +531,37 @@ class Annonces {
     required this.categorie,
   });
 }
+
+@Entity()
+class RoomEntity {
+  @Id()
+  int id = 0;
+
+  /// Code de chambre (ex: "101", "205", etc.)
+  @Index() // pour un tri/filtre rapide
+  String code;
+
+  RoomEntity({required this.code});
+}
+
+@Entity()
+class ReservationEntity {
+  @Id()
+  int id;
+  String clientName;
+  String roomName;
+  DateTime startDate;
+  DateTime endDate;
+  double pricePerNight;
+  String status;
+
+  ReservationEntity({
+    this.id = 0,
+    required this.clientName,
+    required this.roomName,
+    required this.startDate,
+    required this.endDate,
+    required this.pricePerNight,
+    required this.status,
+  });
+}
