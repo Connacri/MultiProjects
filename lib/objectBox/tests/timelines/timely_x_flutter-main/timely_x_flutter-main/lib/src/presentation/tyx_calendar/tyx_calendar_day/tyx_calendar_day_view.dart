@@ -1,0 +1,65 @@
+import 'package:flutter/material.dart';
+import 'package:kenzy/objectBox/tests/timelines/timely_x_flutter-main/timely_x_flutter-main/lib/src/presentation/tyx_calendar/tyx_calendar_day/tyx_calendar_day_view_large.dart';
+import 'package:kenzy/objectBox/tests/timelines/timely_x_flutter-main/timely_x_flutter-main/lib/src/presentation/tyx_calendar/tyx_calendar_day/tyx_calendar_day_view_small.dart';
+
+import '../../../../timely_x.dart';
+import '../../../models/tyx_calendar_border.dart';
+
+class TyxCalendarDayView<T extends TyxEvent> extends StatefulWidget {
+  const TyxCalendarDayView({
+    super.key,
+    required this.option,
+    this.onEventTapped,
+    this.onDateChanged,
+    this.onViewChanged,
+    required this.view,
+    this.onBorderChanged,
+    this.onRightClick,
+    this.events,
+  });
+  final TyxCalendarOption<T> option;
+  final List<T>? events;
+
+  final Function(T)? onEventTapped;
+  final Function(DateTime date)? onDateChanged;
+  final Function(TyxView view)? onViewChanged;
+  final TyxView view;
+  final Function(TyxCalendarBorder border)? onBorderChanged;
+  final OnRightClick? onRightClick;
+
+  @override
+  State<TyxCalendarDayView<T>> createState() => _TyxCalendarDayViewState<T>();
+}
+
+class _TyxCalendarDayViewState<T extends TyxEvent>
+    extends State<TyxCalendarDayView<T>> {
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        bool isLargeScreen = constraints.maxWidth > 600;
+        return isLargeScreen
+            ? TyxCalendarDayViewLarge(
+                option: widget.option,
+                onEventTapped: widget.onEventTapped,
+                onDateChanged: widget.onDateChanged,
+                onViewChanged: widget.onViewChanged,
+                view: widget.view,
+                onBorderChanged: widget.onBorderChanged,
+                onRightClick: widget.onRightClick,
+                events: widget.events,
+              )
+            : TyxCalendarDayViewSmall(
+                option: widget.option,
+                onEventTapped: widget.onEventTapped,
+                onDateChanged: widget.onDateChanged,
+                onViewChanged: widget.onViewChanged,
+                view: widget.view,
+                onBorderChanged: widget.onBorderChanged,
+                onRightClick: widget.onRightClick,
+                events: widget.events,
+              );
+      },
+    );
+  }
+}

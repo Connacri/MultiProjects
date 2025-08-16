@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../MyProviders.dart';
 import 'hotelScreen.dart';
+
 // Import du RoomProvider
 // import '../providers/room_provider.dart'; // Ajustez le chemin selon votre structure
 
@@ -20,7 +21,6 @@ class _HomeScreenv4State extends State<HomeScreenv4> {
   @override
   void initState() {
     super.initState();
-    // Charger les données au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RoomProvider>().loadRoomsFromBox();
     });
@@ -32,49 +32,49 @@ class _HomeScreenv4State extends State<HomeScreenv4> {
     final to = DateTime.now().add(const Duration(days: 180));
 
     // Données de test - remplacez par les vraies réservations du provider
-    final sampleReservations = <Reservation>[
-      Reservation(
-        clientName: "Mohamed Amine",
-        roomName: "103",
-        startDate: DateTime(2025, 8, 14),
-        endDate: DateTime(2025, 8, 18),
-        pricePerNight: 120.0,
-        status: "Confirmée",
-      ),
-      Reservation(
-        clientName: "Sarah Benali",
-        roomName: "104",
-        startDate: DateTime(2025, 8, 15),
-        endDate: DateTime(2025, 8, 20),
-        pricePerNight: 180.0,
-        status: "Arrivée",
-      ),
-      Reservation(
-        clientName: "Karim Boudjema",
-        roomName: "105",
-        startDate: DateTime(2025, 8, 16),
-        endDate: DateTime(2025, 8, 22),
-        pricePerNight: 200.0,
-        status: "Confirmée",
-      ),
-      Reservation(
-        clientName: "Leila Hadjadj",
-        roomName: "101",
-        startDate: DateTime(2025, 8, 17),
-        endDate: DateTime(2025, 8, 25),
-        pricePerNight: 150.0,
-        status: "En attente",
-      ),
-      Reservation(
-        clientName: "Hicham Rahmani",
-        roomName: "108",
-        startDate: DateTime(2025, 9, 15),
-        endDate: DateTime(2025, 9, 22),
-        pricePerNight: 150.0,
-        status: "Confirmée",
-      ),
-    ];
-
+    // final sampleReservations = <Reservation>[
+    //   Reservation(
+    //     clientName: "Mohamed Amine",
+    //     roomName: "103",
+    //     startDate: DateTime(2025, 8, 14),
+    //     endDate: DateTime(2025, 8, 18),
+    //     pricePerNight: 120.0,
+    //     status: "Confirmée",
+    //   ),
+    //   Reservation(
+    //     clientName: "Sarah Benali",
+    //     roomName: "104",
+    //     startDate: DateTime(2025, 8, 15),
+    //     endDate: DateTime(2025, 8, 20),
+    //     pricePerNight: 180.0,
+    //     status: "Arrivée",
+    //   ),
+    //   Reservation(
+    //     clientName: "Karim Boudjema",
+    //     roomName: "105",
+    //     startDate: DateTime(2025, 8, 16),
+    //     endDate: DateTime(2025, 8, 22),
+    //     pricePerNight: 200.0,
+    //     status: "Confirmée",
+    //   ),
+    //   Reservation(
+    //     clientName: "Leila Hadjadj",
+    //     roomName: "101",
+    //     startDate: DateTime(2025, 8, 17),
+    //     endDate: DateTime(2025, 8, 25),
+    //     pricePerNight: 150.0,
+    //     status: "En attente",
+    //   ),
+    //   Reservation(
+    //     clientName: "Hicham Rahmani",
+    //     roomName: "108",
+    //     startDate: DateTime(2025, 9, 15),
+    //     endDate: DateTime(2025, 9, 22),
+    //     pricePerNight: 150.0,
+    //     status: "Confirmée",
+    //   ),
+    // ];
+    final sampleReservations = <Reservation>[];
     return Scaffold(
       appBar: AppBar(
         title: const Text('Planning Hôtel'),

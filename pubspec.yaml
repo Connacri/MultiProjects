@@ -100,7 +100,14 @@ dependencies:
   #  webfeed_plus: ^1.1.2
   rename_app: ^1.6.5
   call_log: ^6.0.0
-
+  easy_date_timeline: ^2.0.9
+  multi_view_calendar: ^1.0.2
+  calendar_planner_view: ^0.3.3
+  table_calendar: ^3.2.0
+  flutter_hooks: ^0.21.3
+  flutter_bloc: ^9.1.1
+  gradient_borders: ^1.0.1
+  plugin_platform_interface: ^2.1.8
 
 
 

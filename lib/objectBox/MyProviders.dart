@@ -5,7 +5,6 @@ import 'dart:math';
 
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../../objectbox.g.dart';
@@ -1395,19 +1394,15 @@ class CrudProvider with ChangeNotifier {
 class RoomProvider with ChangeNotifier {
   final ObjectBox _objectBox;
   List<String> _rooms = [];
-  List<Client> _clients = [];
+
   List<ReservationEntity> _reservations = [];
 
   // Getters
   List<String> get rooms => _rooms;
 
-  List<Client> get clients => _clients;
-
   List<ReservationEntity> get reservations => _reservations;
 
   int get roomCount => _rooms.length;
-
-  int get clientCount => _clients.length;
 
   int get reservationCount => _reservations.length;
 
@@ -1418,7 +1413,7 @@ class RoomProvider with ChangeNotifier {
   // Initialisation des données
   void _initializeData() {
     loadRoomsFromBox();
-    getClientsFromBox();
+
     loadReservationsFromBox();
   }
 
@@ -1427,20 +1422,17 @@ class RoomProvider with ChangeNotifier {
   Future<void> loadRoomsFromBox() async {
     try {
       print('RoomProvider: Chargement des chambres depuis ObjectBox...');
-
-      // Accès direct à la box sans repository
       final roomBox = _objectBox.roomEntity;
-      final query = roomBox.query().order(RoomEntity_.code).build();
 
-      try {
-        final roomEntities = query.find();
-        final loaded = roomEntities.map((entity) => entity.code).toList();
-        print('RoomProvider: ${loaded.length} chambres chargées');
+      final loaded = roomBox.getAll().map((r) => r.code).toList()..sort();
 
+      print('RoomProvider: ${loaded.length} chambres chargées');
+      _rooms = loaded;
+
+      // Ne pas notifier si rien n’a changé
+      if (!listEquals(rooms, loaded)) {
         _rooms = loaded;
         notifyListeners();
-      } finally {
-        query.close();
       }
     } catch (e) {
       print('Erreur lors du chargement des chambres: $e');
@@ -1560,87 +1552,10 @@ class RoomProvider with ChangeNotifier {
     }
   }
 
-  // === GESTION DES CLIENTS (inchangée) ===
-
-  void getClientsFromBox() {
-    try {
-      final box = _objectBox.clientBox;
-      _clients = box.getAll();
-      notifyListeners();
-    } catch (e) {
-      print('Erreur lors du chargement des clients: $e');
-      _clients = [];
-      notifyListeners();
-    }
-  }
-
-  Future<void> addClient(Client client) async {
-    try {
-      _objectBox.clientBox.put(client);
-      getClientsFromBox();
-    } catch (e) {
-      print('Erreur lors de l\'ajout du client: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> updateClient(Client client) async {
-    try {
-      _objectBox.clientBox.put(client);
-      getClientsFromBox();
-    } catch (e) {
-      print('Erreur lors de la mise à jour du client: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> deleteClient(Client client) async {
-    try {
-      _objectBox.clientBox.remove(client.id);
-      getClientsFromBox();
-    } catch (e) {
-      print('Erreur lors de la suppression du client: $e');
-      rethrow;
-    }
-  }
-
-  Future<void> deleteAllClients() async {
-    try {
-      final box = _objectBox.clientBox;
-      box.removeAll();
-      getClientsFromBox();
-    } catch (e) {
-      print('Erreur lors de la suppression de tous les clients: $e');
-      rethrow;
-    }
-  }
-
-  List<Document> getFacturesForClient(Client client) {
-    try {
-      final facturesQuery = _objectBox.factureBox
-          .query(Document_.client.equals(client.id))
-          .build();
-      final factures = facturesQuery.find();
-      facturesQuery.close();
-      return factures;
-    } catch (e) {
-      print('Erreur lors de la récupération des factures: $e');
-      return [];
-    }
-  }
-
   // === MÉTHODES UTILITAIRES ===
 
   bool hasRoom(String roomCode) {
     return _rooms.contains(roomCode);
-  }
-
-  Client? getClientById(int clientId) {
-    try {
-      return _clients.firstWhere((client) => client.id == clientId);
-    } catch (e) {
-      return null;
-    }
   }
 
 // Méthode corrigée pour rechercher les clients par nom dans les réservations
@@ -1650,14 +1565,6 @@ class RoomProvider with ChangeNotifier {
     return _reservations.where((reservation) {
       return reservation.clientName.toLowerCase().contains(lowerQuery);
     }).toList();
-  }
-
-  Future<void> refreshAll() async {
-    await Future.wait([
-      loadRoomsFromBox(),
-      loadReservationsFromBox(),
-      Future.sync(() => getClientsFromBox()),
-    ]);
   }
 
   // === GESTION DES RÉSERVATIONS ===

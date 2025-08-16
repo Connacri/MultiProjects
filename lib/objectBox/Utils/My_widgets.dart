@@ -15,7 +15,7 @@ import '../../checkit/home.dart';
 import '../../checkit/providerF.dart';
 import '../tests/HomeScreenv3.dart';
 import '../tests/hotelScreen.dart';
-import '../tests/hotelScreenChart.dart' hide Reservation;
+import '../tests/timelines/timely_x_flutter-main/timely_x_flutter-main/example/lib/home_screen.dart';
 
 class MyApp_image_picker extends StatelessWidget {
   const MyApp_image_picker({super.key});
@@ -849,64 +849,7 @@ class ReservationNavigationButtons extends StatelessWidget {
               },
               child: Text('Hotel'),
             ),
-            SizedBox(width: 10),
-            ElevatedButton(
-              style: ButtonStyle(
-                textStyle: WidgetStateProperty.all(
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                backgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.pressed)) return Colors.green;
-                  return Colors.blue;
-                }),
-                foregroundColor: WidgetStateProperty.all(Colors.white),
-                overlayColor: WidgetStateProperty.all(Colors.black12),
-                shadowColor: WidgetStateProperty.all(Colors.black),
-                surfaceTintColor: WidgetStateProperty.all(Colors.white),
-                elevation: WidgetStateProperty.all(6.0),
-                padding: WidgetStateProperty.all(
-                  EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                minimumSize: WidgetStateProperty.all(Size(100, 40)),
-                fixedSize: WidgetStateProperty.all(Size(150, 50)),
-                maximumSize: WidgetStateProperty.all(Size(200, 60)),
-                iconColor: WidgetStateProperty.all(Colors.yellow),
-                iconSize: WidgetStateProperty.all(24.0),
-                iconAlignment: IconAlignment.start,
-                // side: WidgetStateProperty.all(
-                //   BorderSide(color: Colors.red, width: 2),
-                // ),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
-                visualDensity: VisualDensity.adaptivePlatformDensity,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                animationDuration: Duration(milliseconds: 300),
-                enableFeedback: true,
-                alignment: Alignment.center,
-                splashFactory: InkRipple.splashFactory,
-                // backgroundBuilder: (context, states, child) {
-                //   return Container(
-                //     decoration: BoxDecoration(
-                //       gradient: LinearGradient(
-                //         colors: [Colors.blue, Colors.purple],
-                //       ),
-                //     ),
-                //     child: child,
-                //   );
-                // },
-                foregroundBuilder: (context, states, child) {
-                  return Icon(Icons.star, color: Colors.white);
-                },
-              ),
-              onPressed: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (ctx) => HomeScreen()));
-              },
-              child: Text('Hotel Screen'),
-            ),
+
             SizedBox(width: 10),
 
             ElevatedButton(
@@ -1027,15 +970,16 @@ class ReservationNavigationButtons extends StatelessWidget {
               child: Text('Hotel V3'),
             ),
             SizedBox(width: 10),
+
             ElevatedButton(
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
               ),
               onPressed: () {
                 Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (ctx) => HomeScreen()));
+                    .push(MaterialPageRoute(builder: (ctx) => HomeScreenX()));
               },
-              child: Text('Hotel Fiable 2'),
+              child: Text('HomeScreenX'),
             ),
 
             // SizedBox(width: 10),

@@ -19,13 +19,16 @@ class Reservation {
   });
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreenTimely extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final from = DateTime.now().subtract(const Duration(days: 180));
     final to = DateTime.now().add(const Duration(days: 180));
     // 1 an après
-    final rooms = ["101", "102", "103", "104", "105", "108"];
+    final rooms = List.generate(
+        80,
+        (i) => (101 + i)
+            .toString()); // ["101", "102", "103", "104", "105", "108"];
 
     // Mise à jour des dates des réservations pour 2025
     final sampleReservations = [
