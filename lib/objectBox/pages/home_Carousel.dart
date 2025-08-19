@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kenzy/objectBox/pages/ClientListScreen.dart';
 import 'package:kenzy/objectBox/pages/FournisseurListScreen.dart';
 import 'package:kenzy/objectBox/tests/cruds.dart';
@@ -262,8 +263,14 @@ class _CarouselExampleState extends State<CarouselExample> {
           const SizedBox(height: 10),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: ReservationNavigationButtons(
-              roomNumbers: ['101', '102', '103', '104', '105', '108'],
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (ctx) => ReservationNavigationButtons(
+                  roomNumbers: ['101', '102', '103', '104', '105', '108'],
+                ),
+              )),
+              label: Text('Hotel Screen'),
+              icon: Icon(FontAwesomeIcons.hotel),
             ),
           ),
           const Padding(

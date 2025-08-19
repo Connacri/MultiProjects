@@ -400,6 +400,26 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 appBar: AppBar(
                   title: Text('POS'),
                   actions: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton.icon(
+                        onPressed: () =>
+                            Navigator.of(context).push(MaterialPageRoute(
+                          builder: (ctx) => ReservationNavigationButtons(
+                            roomNumbers: [
+                              '101',
+                              '102',
+                              '103',
+                              '104',
+                              '105',
+                              '108'
+                            ],
+                          ),
+                        )),
+                        label: Text('Hotel'),
+                        icon: Icon(FontAwesomeIcons.hotel),
+                      ),
+                    ),
                     ConnectionStatusIndicator(),
                     // Platform.isAndroid || Platform.isIOS
                     //     ? SizedBox.shrink()
@@ -1268,6 +1288,26 @@ class _adaptiveHomeState extends State<adaptiveHome> {
               appBar: AppBar(
                 title: Text('POS Desktop.'),
                 actions: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () =>
+                          Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => ReservationNavigationButtons(
+                          roomNumbers: [
+                            '101',
+                            '102',
+                            '103',
+                            '104',
+                            '105',
+                            '108'
+                          ],
+                        ),
+                      )),
+                      label: Text('Hotel Screen'),
+                      icon: Icon(FontAwesomeIcons.hotel),
+                    ),
+                  ),
                   ConnectionStatusIndicator(),
                   // WinMobile(),
                   Padding(
@@ -1661,12 +1701,25 @@ class _adaptiveHomeState extends State<adaptiveHome> {
             ),
           ),
           const SizedBox(height: 20),
+
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: ReservationNavigationButtons(
-              roomNumbers: ['101', '102', '103', '104', '105', '108'],
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (ctx) => ReservationNavigationButtons(
+                  roomNumbers: ['101', '102', '103', '104', '105', '108'],
+                ),
+              )),
+              label: Text('Hotel Screen'),
+              icon: Icon(FontAwesomeIcons.hotel),
             ),
           ),
+          // Padding(
+          //   padding: const EdgeInsets.all(8.0),
+          //   child: ReservationNavigationButtons(
+          //     roomNumbers: ['101', '102', '103', '104', '105', '108'],
+          //   ),
+          // ),
 
           // Padding(
           //   padding: const EdgeInsets.all(28.0),

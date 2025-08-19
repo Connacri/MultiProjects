@@ -5,7 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:kenzy/objectBox/tests/flutter_fixed_code.dart';
+import 'package:kenzy/objectBox/tests/flutter_fixed_code.dart'
+    hide CalendarTableWithDragging;
 import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
@@ -15,6 +16,8 @@ import '../../checkit/home.dart';
 import '../../checkit/providerF.dart';
 import '../tests/HomeScreenv3.dart';
 import '../tests/hotelScreen.dart';
+import '../tests/timelines/HotelRoomTimelineScreen.dart' as t;
+import '../tests/timelines/Tinder-clone-main/Tinder-clone-main/lib/main.dart';
 import '../tests/timelines/timely_x_flutter-main/timely_x_flutter-main/example/lib/home_screen.dart';
 
 class MyApp_image_picker extends StatelessWidget {
@@ -830,213 +833,262 @@ class ReservationNavigationButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      shrinkWrap: true,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Scaffold(
+      appBar: AppBar(),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 58.0),
+        child: ListView(
+          shrinkWrap: true,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (ctx) => HotelReservationChart(
-                    fromDate: DateTime(2025, 1, 1),
-                    toDate: DateTime(2025, 12, 31),
-                    roomNames: roomNumbers,
-                    reservations: sampleReservations,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => HotelReservationChart(
+                        fromDate: DateTime(2025, 1, 1),
+                        toDate: DateTime(2025, 12, 31),
+                        roomNames: roomNumbers,
+                        reservations: sampleReservations,
+                      ),
+                    ));
+                  },
+                  child: Text('Hotel'),
+                ),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.all(
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed))
+                        return Colors.yellow;
+                      return Colors.deepPurple;
+                    }),
+                    foregroundColor: WidgetStateProperty.all(Colors.white),
+                    overlayColor: WidgetStateProperty.all(Colors.black12),
+                    shadowColor: WidgetStateProperty.all(Colors.black),
+                    surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                    elevation: WidgetStateProperty.all(6.0),
+                    padding: WidgetStateProperty.all(
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    minimumSize: WidgetStateProperty.all(Size(100, 40)),
+                    fixedSize: WidgetStateProperty.all(Size(150, 50)),
+                    maximumSize: WidgetStateProperty.all(Size(200, 60)),
+                    iconColor: WidgetStateProperty.all(Colors.yellow),
+                    iconSize: WidgetStateProperty.all(24.0),
+                    iconAlignment: IconAlignment.start,
+                    // side: WidgetStateProperty.all(
+                    //   BorderSide(color: Colors.red, width: 2),
+                    // ),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    mouseCursor:
+                        WidgetStateProperty.all(SystemMouseCursors.click),
+                    visualDensity: VisualDensity.adaptivePlatformDensity,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    animationDuration: Duration(milliseconds: 300),
+                    enableFeedback: true,
+                    alignment: Alignment.center,
+                    splashFactory: InkRipple.splashFactory,
+                    // backgroundBuilder: (context, states, child) {
+                    //   return Container(
+                    //     decoration: BoxDecoration(
+                    //       gradient: LinearGradient(
+                    //         colors: [Colors.blue, Colors.purple],
+                    //       ),
+                    //     ),
+                    //     child: child,
+                    //   );
+                    // },
+                    foregroundBuilder: (context, states, child) {
+                      return Icon(Icons.star, color: Colors.white);
+                    },
                   ),
-                ));
-              },
-              child: Text('Hotel'),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (ctx) => HomeScreenv3()));
+                  },
+                  child: Text('Hotel V3'),
+                ),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.all(
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      if (states.contains(WidgetState.pressed))
+                        return Colors.lightGreenAccent;
+                      return Colors.teal;
+                    }),
+                    foregroundColor: WidgetStateProperty.all(Colors.white),
+                    overlayColor: WidgetStateProperty.all(Colors.black12),
+                    shadowColor: WidgetStateProperty.all(Colors.black),
+                    surfaceTintColor: WidgetStateProperty.all(Colors.white),
+                    elevation: WidgetStateProperty.all(6.0),
+                    padding: WidgetStateProperty.all(
+                      EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    minimumSize: WidgetStateProperty.all(Size(100, 40)),
+                    fixedSize: WidgetStateProperty.all(Size(150, 50)),
+                    maximumSize: WidgetStateProperty.all(Size(200, 60)),
+                    iconColor: WidgetStateProperty.all(Colors.yellow),
+                    iconSize: WidgetStateProperty.all(24.0),
+                    iconAlignment: IconAlignment.start,
+                    // side: WidgetStateProperty.all(
+                    //   BorderSide(color: Colors.red, width: 2),
+                    // ),
+                    shape: WidgetStateProperty.all(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    mouseCursor:
+                        WidgetStateProperty.all(SystemMouseCursors.click),
+                    visualDensity: VisualDensity.adaptivePlatformDensity,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    animationDuration: Duration(milliseconds: 300),
+                    enableFeedback: true,
+                    alignment: Alignment.center,
+                    splashFactory: InkRipple.splashFactory,
+                    // backgroundBuilder: (context, states, child) {
+                    //   return Container(
+                    //     decoration: BoxDecoration(
+                    //       gradient: LinearGradient(
+                    //         colors: [Colors.blue, Colors.purple],
+                    //       ),
+                    //     ),
+                    //     child: child,
+                    //   );
+                    // },
+                    foregroundBuilder: (context, states, child) {
+                      return Icon(Icons.star, color: Colors.white);
+                    },
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (ctx) => HomeScreenv4()));
+                  },
+                  child: Text('Hotel V3'),
+                ),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(Colors.blue),
+                    foregroundColor:
+                        WidgetStateProperty.all<Color>(Colors.white),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => MyApp_TinderClone()));
+                  },
+                  child: Text('Tinder Clone'),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => CalendarTableWithDragging(
+                        fromDate: DateTime.now(),
+                        toDate: DateTime.now().add(Duration(days: 30)),
+                        // roomNames: roomNumbers,
+                        roomNames:
+                            List.generate(30, (index) => 'Room ${index + 1}'),
+                        reservations: sampleReservations,
+                      ),
+                    ));
+                  },
+                  child: Text('Hotel Fiable'),
+                ),
+              ],
             ),
-
-            SizedBox(width: 10),
-
-            ElevatedButton(
-              style: ButtonStyle(
-                textStyle: WidgetStateProperty.all(
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(Colors.blue),
+                    foregroundColor:
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (ctx) => HomeScreenX()));
+                  },
+                  child: Text('HomeScreenX'),
                 ),
-                backgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.pressed))
-                    return Colors.yellow;
-                  return Colors.deepPurple;
-                }),
-                foregroundColor: WidgetStateProperty.all(Colors.white),
-                overlayColor: WidgetStateProperty.all(Colors.black12),
-                shadowColor: WidgetStateProperty.all(Colors.black),
-                surfaceTintColor: WidgetStateProperty.all(Colors.white),
-                elevation: WidgetStateProperty.all(6.0),
-                padding: WidgetStateProperty.all(
-                  EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(Colors.blue),
+                    foregroundColor:
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => t.HotelRoomTimelineScreen()));
+                  },
+                  child: Text('HotelRoomTimelineScreen'),
                 ),
-                minimumSize: WidgetStateProperty.all(Size(100, 40)),
-                fixedSize: WidgetStateProperty.all(Size(150, 50)),
-                maximumSize: WidgetStateProperty.all(Size(200, 60)),
-                iconColor: WidgetStateProperty.all(Colors.yellow),
-                iconSize: WidgetStateProperty.all(24.0),
-                iconAlignment: IconAlignment.start,
-                // side: WidgetStateProperty.all(
-                //   BorderSide(color: Colors.red, width: 2),
-                // ),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(Colors.blue),
+                    foregroundColor:
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => t.HotelRoomTimelineInfiniteScreen()));
+                  },
+                  child: Text('HotelRoomTimelineInfiniteScreen'),
                 ),
-                mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
-                visualDensity: VisualDensity.adaptivePlatformDensity,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                animationDuration: Duration(milliseconds: 300),
-                enableFeedback: true,
-                alignment: Alignment.center,
-                splashFactory: InkRipple.splashFactory,
-                // backgroundBuilder: (context, states, child) {
-                //   return Container(
-                //     decoration: BoxDecoration(
-                //       gradient: LinearGradient(
-                //         colors: [Colors.blue, Colors.purple],
-                //       ),
-                //     ),
-                //     child: child,
-                //   );
-                // },
-                foregroundBuilder: (context, states, child) {
-                  return Icon(Icons.star, color: Colors.white);
-                },
-              ),
-              onPressed: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (ctx) => HomeScreenv3()));
-              },
-              child: Text('Hotel V3'),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(Colors.blue),
+                    foregroundColor:
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => t.HotelRoomTimelineScreen2()));
+                  },
+                  child: Text('HotelRoomTimelineScreen2'),
+                ),
+              ],
             ),
-            SizedBox(width: 10),
-            ElevatedButton(
-              style: ButtonStyle(
-                textStyle: WidgetStateProperty.all(
-                  TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => SignalHomePage_Firebase(),
+                    ));
+                  },
+                  child: Text('Sheckit Firebase'),
                 ),
-                backgroundColor: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.pressed))
-                    return Colors.lightGreenAccent;
-                  return Colors.teal;
-                }),
-                foregroundColor: WidgetStateProperty.all(Colors.white),
-                overlayColor: WidgetStateProperty.all(Colors.black12),
-                shadowColor: WidgetStateProperty.all(Colors.black),
-                surfaceTintColor: WidgetStateProperty.all(Colors.white),
-                elevation: WidgetStateProperty.all(6.0),
-                padding: WidgetStateProperty.all(
-                  EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => HomePage3(),
+                    ));
+                  },
+                  child: Text('HomePage3'),
                 ),
-                minimumSize: WidgetStateProperty.all(Size(100, 40)),
-                fixedSize: WidgetStateProperty.all(Size(150, 50)),
-                maximumSize: WidgetStateProperty.all(Size(200, 60)),
-                iconColor: WidgetStateProperty.all(Colors.yellow),
-                iconSize: WidgetStateProperty.all(24.0),
-                iconAlignment: IconAlignment.start,
-                // side: WidgetStateProperty.all(
-                //   BorderSide(color: Colors.red, width: 2),
-                // ),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                mouseCursor: WidgetStateProperty.all(SystemMouseCursors.click),
-                visualDensity: VisualDensity.adaptivePlatformDensity,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                animationDuration: Duration(milliseconds: 300),
-                enableFeedback: true,
-                alignment: Alignment.center,
-                splashFactory: InkRipple.splashFactory,
-                // backgroundBuilder: (context, states, child) {
-                //   return Container(
-                //     decoration: BoxDecoration(
-                //       gradient: LinearGradient(
-                //         colors: [Colors.blue, Colors.purple],
-                //       ),
-                //     ),
-                //     child: child,
-                //   );
-                // },
-                foregroundBuilder: (context, states, child) {
-                  return Icon(Icons.star, color: Colors.white);
-                },
-              ),
-              onPressed: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (ctx) => HomeScreenv4()));
-              },
-              child: Text('Hotel V3'),
+              ],
             ),
-            SizedBox(width: 10),
-
-            ElevatedButton(
-              style: ButtonStyle(
-                backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-              ),
-              onPressed: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (ctx) => HomeScreenX()));
-              },
-              child: Text('HomeScreenX'),
-            ),
-
-            // SizedBox(width: 10),
-            // ElevatedButton(
-            //   onPressed: () {
-            //     Navigator.of(context).push(MaterialPageRoute(
-            //       builder: (ctx) => CalendarTableWithDragging(
-            //         fromDate: DateTime.now(),
-            //         toDate: DateTime.now().add(Duration(days: 30)),
-            //         // roomNames: roomNumbers,
-            //         roomNames:
-            //             List.generate(30, (index) => 'Room ${index + 1}'),
-            //         reservations: sampleReservations,
-            //       ),
-            //     ));
-            //   },
-            //   child: Text('Hotel Fiable'),
-            // ),
           ],
         ),
-        SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (ctx) => SignalHomePage_Firebase(),
-                ));
-              },
-              child: Text('Sheckit Firebase'),
-            ),
-            SizedBox(width: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (ctx) => HomePage3(),
-                ));
-              },
-              child: Text('HomePage3'),
-            ),
-          ],
-        ),
-        SizedBox(
-          height: 20,
-        ),
-        // ElevatedButton(
-        //   onPressed: () {
-        //     Navigator.of(context).push(MaterialPageRoute(
-        //       builder: (ctx) => MainSignal(),
-        //     ));
-        //   },
-        //   child: Text('MainSignal'),
-        // ),
-
-        SizedBox(height: 10),
-      ],
+      ),
     );
   }
 }

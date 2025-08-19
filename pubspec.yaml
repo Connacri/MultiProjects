@@ -24,7 +24,7 @@ dependencies:
   supabase_flutter: ^2.9.1
 
   lottie: ^3.3.1
-  provider: ^6.1.5
+  provider: ^6.1.5+1
   fluttertoast: ^8.2.12
   font_awesome_flutter: ^10.9.0
 
@@ -32,7 +32,7 @@ dependencies:
   avatar_glow: ^3.0.1
   url_launcher: ^6.3.2
   carousel_slider: ^5.1.1
-  image_picker: ^1.1.2
+  image_picker: ^1.2.0
   intl_phone_field: ^3.2.0
   intl: ^0.20.2
   mobile_scanner: ^7.0.1
@@ -76,7 +76,7 @@ dependencies:
   msix: ^3.16.12
   device_info_plus: ^11.5.0
   pincode_input_fields: ^1.0.3
-  syncfusion_flutter_barcodes: ^30.2.5
+  syncfusion_flutter_barcodes: ^30.2.6
   linked_scroll_controller: ^0.2.0
   #  excel: ^4.0.6
   country_flags: ^3.3.0
@@ -104,10 +104,14 @@ dependencies:
   multi_view_calendar: ^1.0.2
   calendar_planner_view: ^0.3.3
   table_calendar: ^3.2.0
-  flutter_hooks: ^0.21.3
+  flutter_hooks: ^0.21.3+1
   flutter_bloc: ^9.1.1
   gradient_borders: ^1.0.1
   plugin_platform_interface: ^2.1.8
+  smooth_page_indicator: ^1.2.1
+  flutter_card_swiper: ^7.0.2
+  dynamic_flutter_form: ^1.0.2
+  syncfusion_flutter_calendar: ^30.2.6
 
 
 
@@ -181,6 +185,11 @@ flutter:
 
   assets:
     - assets/
+    - assets/100.png
+    - assets/101.png
+    - assets/star.png
+    - assets/location.png
+    - assets/heart.png
     - assets/lotties/
     - assets/images/ic_launcher/1024.png
     - assets/images/744878.png
