@@ -18,6 +18,7 @@ import '../tests/HomeScreenv3.dart';
 import '../tests/hotelScreen.dart';
 import '../tests/timelines/HotelRoomTimelineScreen.dart' as t;
 import '../tests/timelines/Tinder-clone-main/Tinder-clone-main/lib/main.dart';
+import '../tests/timelines/mistral/claude.dart';
 import '../tests/timelines/timely_x_flutter-main/timely_x_flutter-main/example/lib/home_screen.dart';
 
 class MyApp_image_picker extends StatelessWidget {
@@ -1060,6 +1061,19 @@ class ReservationNavigationButtons extends StatelessWidget {
                         builder: (ctx) => t.HotelRoomTimelineScreen2()));
                   },
                   child: Text('HotelRoomTimelineScreen2'),
+                ),
+                ElevatedButton(
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all<Color>(Colors.blue),
+                    foregroundColor:
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => Hotel_Management()));
+                  },
+                  child: Text('Hotel_Management'),
                 ),
               ],
             ),
