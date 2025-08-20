@@ -92,7 +92,7 @@ class HotelReservationDataSource extends CalendarDataSource {
     final reservation = appointments![index] as Reservation;
     final totalPrice = reservation.pricePerNight *
         reservation.endDate.difference(reservation.startDate).inDays;
-    return '${reservation.clientName}\n€${totalPrice.toStringAsFixed(0)}\n${reservation.status}';
+    return '${reservation.clientName}\nNuitée : ${reservation.pricePerNight.toStringAsFixed(2)} DZD = Total : ${totalPrice.toStringAsFixed(2)} DZD \nStatus : ${reservation.status}';
   }
 
   @override
@@ -289,20 +289,25 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
       controller: _calendarController,
       view: _currentView,
       dataSource: _dataSource,
-      allowViewNavigation: true,
+      allowViewNavigation: false,
       allowDragAndDrop: false,
       allowAppointmentResize: false,
       showDatePickerButton: true,
       showTodayButton: true,
       todayHighlightColor: Colors.deepPurple,
+      todayTextStyle: TextStyle(
+        color: Colors.red,
+        fontWeight: FontWeight.bold,
+      ),
       firstDayOfWeek: 1,
       timeSlotViewSettings: TimeSlotViewSettings(
         timeInterval: Duration(days: 1),
         startHour: 0,
         endHour: 24,
         timeIntervalWidth: 42,
-        // timeIntervalHeight: 60,
-        timeTextStyle: TextStyle(fontSize: 10),
+        timeIntervalHeight: 10,
+        timelineAppointmentHeight: 45,
+        timeTextStyle: TextStyle(fontSize: 14),
       ),
       resourceViewSettings: ResourceViewSettings(
         visibleResourceCount: _calculateVisibleRooms(),
@@ -313,13 +318,14 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
         ),
         showAvatar: false,
       ),
-      //appointmentBuilder: _appointmentBuilder,
+
       onTap: _onCalendarTap,
       onLongPress: _onCalendarLongPress,
       headerStyle: CalendarHeaderStyle(
         backgroundColor: Colors.deepPurple,
-        textStyle: TextStyle(color: Colors.white, fontSize: 18),
+        textStyle: TextStyle(color: Colors.white, fontSize: 20),
       ),
+      //appointmentBuilder: _appointmentBuilder,
       // monthViewSettings: MonthViewSettings(
       //   dayFormat: 'dd',
       //   showAgenda: true,
@@ -392,68 +398,67 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
     );
   }
 
-  Widget _appointmentBuilder(
-      BuildContext context, CalendarAppointmentDetails details) {
-    if (details.appointments.isEmpty) return Container();
-
-    final reservation = details.appointments.first as Reservation;
-    final nights = reservation.endDate.difference(reservation.startDate).inDays;
-    final totalPrice = reservation.pricePerNight * nights;
-
-    return Container(
-      width: details.bounds.width,
-      height: details.bounds.height,
-      decoration: BoxDecoration(
-        color: _getRandomColorForReservation(reservation.clientName.hashCode),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.white, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Text(
-              reservation.clientName,
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              '€${totalPrice.toStringAsFixed(0)}',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              reservation.status,
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Widget _appointmentBuilder(
+  //     BuildContext context, CalendarAppointmentDetails details) {
+  //   if (details.appointments.isEmpty) return Container();
+  //   final reservation = details.appointments.first as Reservation;
+  //   final nights = reservation.endDate.difference(reservation.startDate).inDays;
+  //   final totalPrice = reservation.pricePerNight * nights;
+  //
+  //   return Container(
+  //     width: details.bounds.width,
+  //     height: details.bounds.height, // Utilisez toute la hauteur disponible
+  //     decoration: BoxDecoration(
+  //       color: _getRandomColorForReservation(reservation.clientName.hashCode),
+  //       borderRadius: BorderRadius.circular(4),
+  //       border: Border.all(color: Colors.white, width: 1),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.1),
+  //           blurRadius: 2,
+  //           offset: Offset(0, 1),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Padding(
+  //       padding: EdgeInsets.all(6),
+  //       child: Row(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //         children: [
+  //           Text(
+  //             reservation.clientName,
+  //             style: TextStyle(
+  //               color: Colors.white,
+  //               fontWeight: FontWeight.bold,
+  //               fontSize: 13,
+  //             ),
+  //             maxLines: 1,
+  //             overflow: TextOverflow.ellipsis,
+  //           ),
+  //           Text(
+  //             '€${totalPrice.toStringAsFixed(0)}',
+  //             style: TextStyle(
+  //               color: Colors.white,
+  //               fontSize: 12,
+  //               fontWeight: FontWeight.w600,
+  //             ),
+  //           ),
+  //           Text(
+  //             reservation.status,
+  //             style: TextStyle(
+  //               color: Colors.white70,
+  //               fontSize: 11,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //             maxLines: 1,
+  //             overflow: TextOverflow.ellipsis,
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 
   String _formatDate(DateTime date) {
     return DateFormat('dd/MM/yyyy', 'fr_FR').format(date);
@@ -1156,17 +1161,17 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
       // Générer 1 à 3 réservations par chambre
       final reservationCount = random.nextInt(3) + 1;
 
+      // On part d'une date de base (par ex. 30 jours avant aujourd'hui)
       DateTime currentDate = DateTime.now().subtract(Duration(days: 30));
 
       for (int j = 0; j < reservationCount; j++) {
         // Durée de séjour entre 1 et 20 nuits
         final nights = random.nextInt(20) + 1;
 
-        // Date de début aléatoire dans les 60 prochains jours
-        final startDate = currentDate.add(Duration(
-          days: random.nextInt(60) + (j * 25), // Éviter les chevauchements
-        ));
-
+        // La prochaine réservation commence après la fin de la précédente,
+        // avec un "gap" aléatoire de 1 à 10 jours entre les réservations
+        final startDate =
+            currentDate.add(Duration(days: random.nextInt(10) + 1));
         final endDate = startDate.add(Duration(days: nights));
 
         reservations.add(Reservation(
@@ -1178,6 +1183,9 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
           // ±25€
           status: statuses[random.nextInt(statuses.length)],
         ));
+
+        // Mettre à jour la base pour la prochaine réservation
+        currentDate = endDate;
       }
     }
 
