@@ -666,69 +666,177 @@ final _entities = <obx_int.ModelEntity>[
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[]),
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(19, 7366099552629879297),
-      name: 'ReservationEntity',
-      lastPropertyId: const obx_int.IdUid(7, 6898087251775363697),
+      id: const obx_int.IdUid(22, 4405813060867310126),
+      name: 'Reservation',
+      lastPropertyId: const obx_int.IdUid(12, 2374839585227326155),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 6825031182422464461),
+            id: const obx_int.IdUid(1, 1242301058089560553),
             name: 'id',
             type: 6,
             flags: 1),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 7836562129924348765),
-            name: 'clientName',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 7971951893807814),
-            name: 'roomName',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 5838025469781252560),
-            name: 'startDate',
-            type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 7826982540024954097),
-            name: 'endDate',
-            type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 8034372973365024384),
+            id: const obx_int.IdUid(6, 9106126505446500084),
             name: 'pricePerNight',
             type: 8,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 6898087251775363697),
+            id: const obx_int.IdUid(7, 8094705632954396714),
+            name: 'status',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(8, 4207049100248279198),
+            name: 'roomId',
+            type: 11,
+            flags: 520,
+            indexId: const obx_int.IdUid(42, 5139934148839172087),
+            relationTarget: 'Room'),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(9, 4994120001457133647),
+            name: 'receptionistId',
+            type: 11,
+            flags: 520,
+            indexId: const obx_int.IdUid(43, 8837918613306508000),
+            relationTarget: 'Employee'),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(10, 6953480594541438406),
+            name: 'from',
+            type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 7709745214526133608),
+            name: 'to',
+            type: 10,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[
+        obx_int.ModelRelation(
+            id: const obx_int.IdUid(3, 2939760587369873645),
+            name: 'guests',
+            targetId: const obx_int.IdUid(26, 8000924420460436742))
+      ],
+      backlinks: <obx_int.ModelBacklink>[]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(23, 7337300309619921213),
+      name: 'Room',
+      lastPropertyId: const obx_int.IdUid(6, 3970828812228493853),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 637049683963529414),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 6116319056575073965),
+            name: 'code',
+            type: 9,
+            flags: 2048,
+            indexId: const obx_int.IdUid(38, 1512712429349035826)),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 6747344798108479986),
+            name: 'type',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 8619126654721394380),
+            name: 'capacity',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 5119024284031250428),
+            name: 'basePrice',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 3970828812228493853),
             name: 'status',
             type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
-      backlinks: <obx_int.ModelBacklink>[]),
+      backlinks: <obx_int.ModelBacklink>[
+        obx_int.ModelBacklink(
+            name: 'reservations', srcEntity: 'Reservation', srcField: 'room')
+      ]),
   obx_int.ModelEntity(
-      id: const obx_int.IdUid(21, 3239230063137108967),
-      name: 'RoomEntity',
-      lastPropertyId: const obx_int.IdUid(2, 3819961798200255032),
+      id: const obx_int.IdUid(25, 6525685758623725352),
+      name: 'Employee',
+      lastPropertyId: const obx_int.IdUid(5, 3864379051465094285),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(1, 4859254936278751635),
+            id: const obx_int.IdUid(1, 6826609570519850791),
             name: 'id',
             type: 6,
             flags: 1),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 3819961798200255032),
-            name: 'code',
+            id: const obx_int.IdUid(2, 7749131471151429248),
+            name: 'fullName',
             type: 9,
-            flags: 2048,
-            indexId: const obx_int.IdUid(37, 8100675110331042403))
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 5038317782540214290),
+            name: 'phoneNumber',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 8292504175695973705),
+            name: 'email',
+            type: 9,
+            flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
-      backlinks: <obx_int.ModelBacklink>[])
+      backlinks: <obx_int.ModelBacklink>[
+        obx_int.ModelBacklink(
+            name: 'reservations',
+            srcEntity: 'Reservation',
+            srcField: 'receptionist')
+      ]),
+  obx_int.ModelEntity(
+      id: const obx_int.IdUid(26, 8000924420460436742),
+      name: 'Guest',
+      lastPropertyId: const obx_int.IdUid(6, 7286398386806383933),
+      flags: 0,
+      properties: <obx_int.ModelProperty>[
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(1, 4458209531626236505),
+            name: 'id',
+            type: 6,
+            flags: 1),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(2, 8876339502661643564),
+            name: 'fullName',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(3, 8517011698045308518),
+            name: 'phoneNumber',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(4, 8095325002963241056),
+            name: 'email',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(5, 1532627139958349817),
+            name: 'idCardNumber',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 7286398386806383933),
+            name: 'nationality',
+            type: 9,
+            flags: 0)
+      ],
+      relations: <obx_int.ModelRelation>[],
+      backlinks: <obx_int.ModelBacklink>[
+        obx_int.ModelBacklink(
+            name: 'reservations', srcEntity: 'Reservation', srcField: 'guests')
+      ])
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -766,9 +874,9 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(21, 3239230063137108967),
-      lastIndexId: const obx_int.IdUid(37, 8100675110331042403),
-      lastRelationId: const obx_int.IdUid(2, 4545419348761092860),
+      lastEntityId: const obx_int.IdUid(28, 2846533385157794616),
+      lastIndexId: const obx_int.IdUid(47, 5709087898541937546),
+      lastRelationId: const obx_int.IdUid(3, 2939760587369873645),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [
         6647246884597588827,
@@ -779,12 +887,19 @@ obx_int.ModelDefinition getObjectBoxModel() {
         4744970031487691026,
         1300875806629673682,
         8965560015567899383,
-        4850868634972025342
+        4850868634972025342,
+        7366099552629879297,
+        3239230063137108967,
+        4752590594422759574,
+        2330214959262864934,
+        2846533385157794616
       ],
       retiredIndexUids: const [
         7680843215305245682,
         720122404314208774,
-        1359581493053979498
+        1359581493053979498,
+        5586704641728874986,
+        5709087898541937546
       ],
       retiredPropertyUids: const [
         8976483595831028651,
@@ -878,7 +993,33 @@ obx_int.ModelDefinition getObjectBoxModel() {
         3785325347410985566,
         9028789358391785377,
         3329218410267964700,
-        480484820511362762
+        480484820511362762,
+        6825031182422464461,
+        7836562129924348765,
+        7971951893807814,
+        5838025469781252560,
+        7826982540024954097,
+        8034372973365024384,
+        6898087251775363697,
+        4859254936278751635,
+        3819961798200255032,
+        8473856199391043692,
+        7801409612634167699,
+        5392463383619933493,
+        5187555661795072970,
+        5064643126212306431,
+        1982638660542653469,
+        1929859960092883896,
+        6999117705742170446,
+        8767292972074301570,
+        7217215717936015206,
+        5619313648446334712,
+        2128364980205261936,
+        3864379051465094285,
+        8101665827835091034,
+        2370683961364380821,
+        2486568139009562406,
+        2374839585227326155
       ],
       retiredRelationUids: const [2832941486252609678, 4545419348761092860],
       modelVersion: 5,
@@ -1570,70 +1711,79 @@ obx_int.ModelDefinition getObjectBoxModel() {
 
           return object;
         }),
-    ReservationEntity: obx_int.EntityDefinition<ReservationEntity>(
+    Reservation: obx_int.EntityDefinition<Reservation>(
         model: _entities[10],
-        toOneRelations: (ReservationEntity object) => [],
-        toManyRelations: (ReservationEntity object) => {},
-        getId: (ReservationEntity object) => object.id,
-        setId: (ReservationEntity object, int id) {
+        toOneRelations: (Reservation object) =>
+            [object.room, object.receptionist],
+        toManyRelations: (Reservation object) =>
+            {obx_int.RelInfo<Reservation>.toMany(3, object.id): object.guests},
+        getId: (Reservation object) => object.id,
+        setId: (Reservation object, int id) {
           object.id = id;
         },
-        objectToFB: (ReservationEntity object, fb.Builder fbb) {
-          final clientNameOffset = fbb.writeString(object.clientName);
-          final roomNameOffset = fbb.writeString(object.roomName);
+        objectToFB: (Reservation object, fb.Builder fbb) {
           final statusOffset = fbb.writeString(object.status);
-          fbb.startTable(8);
+          fbb.startTable(13);
           fbb.addInt64(0, object.id);
-          fbb.addOffset(1, clientNameOffset);
-          fbb.addOffset(2, roomNameOffset);
-          fbb.addInt64(3, object.startDate.millisecondsSinceEpoch);
-          fbb.addInt64(4, object.endDate.millisecondsSinceEpoch);
           fbb.addFloat64(5, object.pricePerNight);
           fbb.addOffset(6, statusOffset);
+          fbb.addInt64(7, object.room.targetId);
+          fbb.addInt64(8, object.receptionist.targetId);
+          fbb.addInt64(9, object.from.millisecondsSinceEpoch);
+          fbb.addInt64(10, object.to.millisecondsSinceEpoch);
           fbb.finish(fbb.endTable());
           return object.id;
         },
         objectFromFB: (obx.Store store, ByteData fbData) {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
-          final idParam =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-          final clientNameParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 6, '');
-          final roomNameParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 8, '');
-          final startDateParam = DateTime.fromMillisecondsSinceEpoch(
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0));
-          final endDateParam = DateTime.fromMillisecondsSinceEpoch(
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0));
+          final fromParam = DateTime.fromMillisecondsSinceEpoch(
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 22, 0));
+          final toParam = DateTime.fromMillisecondsSinceEpoch(
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0));
           final pricePerNightParam =
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
           final statusParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 16, '');
-          final object = ReservationEntity(
-              id: idParam,
-              clientName: clientNameParam,
-              roomName: roomNameParam,
-              startDate: startDateParam,
-              endDate: endDateParam,
+          final object = Reservation(
+              from: fromParam,
+              to: toParam,
               pricePerNight: pricePerNightParam,
-              status: statusParam);
-
+              status: statusParam)
+            ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          object.room.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 18, 0);
+          object.room.attach(store);
+          object.receptionist.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 20, 0);
+          object.receptionist.attach(store);
+          obx_int.InternalToManyAccess.setRelInfo<Reservation>(object.guests,
+              store, obx_int.RelInfo<Reservation>.toMany(3, object.id));
           return object;
         }),
-    RoomEntity: obx_int.EntityDefinition<RoomEntity>(
+    Room: obx_int.EntityDefinition<Room>(
         model: _entities[11],
-        toOneRelations: (RoomEntity object) => [],
-        toManyRelations: (RoomEntity object) => {},
-        getId: (RoomEntity object) => object.id,
-        setId: (RoomEntity object, int id) {
+        toOneRelations: (Room object) => [],
+        toManyRelations: (Room object) => {
+              obx_int.RelInfo<Reservation>.toOneBacklink(
+                      8, object.id, (Reservation srcObject) => srcObject.room):
+                  object.reservations
+            },
+        getId: (Room object) => object.id,
+        setId: (Room object, int id) {
           object.id = id;
         },
-        objectToFB: (RoomEntity object, fb.Builder fbb) {
+        objectToFB: (Room object, fb.Builder fbb) {
           final codeOffset = fbb.writeString(object.code);
-          fbb.startTable(3);
+          final typeOffset = fbb.writeString(object.type);
+          final statusOffset = fbb.writeString(object.status);
+          fbb.startTable(7);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, codeOffset);
+          fbb.addOffset(2, typeOffset);
+          fbb.addInt64(3, object.capacity);
+          fbb.addFloat64(4, object.basePrice);
+          fbb.addOffset(5, statusOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -1642,9 +1792,126 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final rootOffset = buffer.derefObject(0);
           final codeParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 6, '');
-          final object = RoomEntity(code: codeParam)
+          final typeParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 8, '');
+          final capacityParam =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0);
+          final basePriceParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 12, 0);
+          final statusParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 14, '');
+          final object = Room(
+              code: codeParam,
+              type: typeParam,
+              capacity: capacityParam,
+              basePrice: basePriceParam,
+              status: statusParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-
+          obx_int.InternalToManyAccess.setRelInfo<Room>(
+              object.reservations,
+              store,
+              obx_int.RelInfo<Reservation>.toOneBacklink(
+                  8, object.id, (Reservation srcObject) => srcObject.room));
+          return object;
+        }),
+    Employee: obx_int.EntityDefinition<Employee>(
+        model: _entities[12],
+        toOneRelations: (Employee object) => [],
+        toManyRelations: (Employee object) => {
+              obx_int.RelInfo<Reservation>.toOneBacklink(9, object.id,
+                      (Reservation srcObject) => srcObject.receptionist):
+                  object.reservations
+            },
+        getId: (Employee object) => object.id,
+        setId: (Employee object, int id) {
+          object.id = id;
+        },
+        objectToFB: (Employee object, fb.Builder fbb) {
+          final fullNameOffset = fbb.writeString(object.fullName);
+          final phoneNumberOffset = fbb.writeString(object.phoneNumber);
+          final emailOffset = fbb.writeString(object.email);
+          fbb.startTable(6);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, fullNameOffset);
+          fbb.addOffset(2, phoneNumberOffset);
+          fbb.addOffset(3, emailOffset);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final fullNameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final phoneNumberParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 8, '');
+          final emailParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 10, '');
+          final object = Employee(
+              fullName: fullNameParam,
+              phoneNumber: phoneNumberParam,
+              email: emailParam)
+            ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          obx_int.InternalToManyAccess.setRelInfo<Employee>(
+              object.reservations,
+              store,
+              obx_int.RelInfo<Reservation>.toOneBacklink(9, object.id,
+                  (Reservation srcObject) => srcObject.receptionist));
+          return object;
+        }),
+    Guest: obx_int.EntityDefinition<Guest>(
+        model: _entities[13],
+        toOneRelations: (Guest object) => [],
+        toManyRelations: (Guest object) => {
+              obx_int.RelInfo<Reservation>.toManyBacklink(3, object.id):
+                  object.reservations
+            },
+        getId: (Guest object) => object.id,
+        setId: (Guest object, int id) {
+          object.id = id;
+        },
+        objectToFB: (Guest object, fb.Builder fbb) {
+          final fullNameOffset = fbb.writeString(object.fullName);
+          final phoneNumberOffset = fbb.writeString(object.phoneNumber);
+          final emailOffset = fbb.writeString(object.email);
+          final idCardNumberOffset = fbb.writeString(object.idCardNumber);
+          final nationalityOffset = fbb.writeString(object.nationality);
+          fbb.startTable(7);
+          fbb.addInt64(0, object.id);
+          fbb.addOffset(1, fullNameOffset);
+          fbb.addOffset(2, phoneNumberOffset);
+          fbb.addOffset(3, emailOffset);
+          fbb.addOffset(4, idCardNumberOffset);
+          fbb.addOffset(5, nationalityOffset);
+          fbb.finish(fbb.endTable());
+          return object.id;
+        },
+        objectFromFB: (obx.Store store, ByteData fbData) {
+          final buffer = fb.BufferContext(fbData);
+          final rootOffset = buffer.derefObject(0);
+          final fullNameParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 6, '');
+          final phoneNumberParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 8, '');
+          final emailParam = const fb.StringReader(asciiOptimization: true)
+              .vTableGet(buffer, rootOffset, 10, '');
+          final idCardNumberParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 12, '');
+          final nationalityParam =
+              const fb.StringReader(asciiOptimization: true)
+                  .vTableGet(buffer, rootOffset, 14, '');
+          final object = Guest(
+              fullName: fullNameParam,
+              phoneNumber: phoneNumberParam,
+              email: emailParam,
+              idCardNumber: idCardNumberParam,
+              nationality: nationalityParam)
+            ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          obx_int.InternalToManyAccess.setRelInfo<Guest>(object.reservations,
+              store, obx_int.RelInfo<Reservation>.toManyBacklink(3, object.id));
           return object;
         })
   };
@@ -2097,44 +2364,117 @@ class Annonces_ {
       obx.QueryStringProperty<Annonces>(_entities[9].properties[4]);
 }
 
-/// [ReservationEntity] entity fields to define ObjectBox queries.
-class ReservationEntity_ {
-  /// See [ReservationEntity.id].
+/// [Reservation] entity fields to define ObjectBox queries.
+class Reservation_ {
+  /// See [Reservation.id].
   static final id =
-      obx.QueryIntegerProperty<ReservationEntity>(_entities[10].properties[0]);
+      obx.QueryIntegerProperty<Reservation>(_entities[10].properties[0]);
 
-  /// See [ReservationEntity.clientName].
-  static final clientName =
-      obx.QueryStringProperty<ReservationEntity>(_entities[10].properties[1]);
-
-  /// See [ReservationEntity.roomName].
-  static final roomName =
-      obx.QueryStringProperty<ReservationEntity>(_entities[10].properties[2]);
-
-  /// See [ReservationEntity.startDate].
-  static final startDate =
-      obx.QueryDateProperty<ReservationEntity>(_entities[10].properties[3]);
-
-  /// See [ReservationEntity.endDate].
-  static final endDate =
-      obx.QueryDateProperty<ReservationEntity>(_entities[10].properties[4]);
-
-  /// See [ReservationEntity.pricePerNight].
+  /// See [Reservation.pricePerNight].
   static final pricePerNight =
-      obx.QueryDoubleProperty<ReservationEntity>(_entities[10].properties[5]);
+      obx.QueryDoubleProperty<Reservation>(_entities[10].properties[1]);
 
-  /// See [ReservationEntity.status].
+  /// See [Reservation.status].
   static final status =
-      obx.QueryStringProperty<ReservationEntity>(_entities[10].properties[6]);
+      obx.QueryStringProperty<Reservation>(_entities[10].properties[2]);
+
+  /// See [Reservation.room].
+  static final room =
+      obx.QueryRelationToOne<Reservation, Room>(_entities[10].properties[3]);
+
+  /// See [Reservation.receptionist].
+  static final receptionist = obx.QueryRelationToOne<Reservation, Employee>(
+      _entities[10].properties[4]);
+
+  /// See [Reservation.from].
+  static final from =
+      obx.QueryDateProperty<Reservation>(_entities[10].properties[5]);
+
+  /// See [Reservation.to].
+  static final to =
+      obx.QueryDateProperty<Reservation>(_entities[10].properties[6]);
+
+  /// see [Reservation.guests]
+  static final guests =
+      obx.QueryRelationToMany<Reservation, Guest>(_entities[10].relations[0]);
 }
 
-/// [RoomEntity] entity fields to define ObjectBox queries.
-class RoomEntity_ {
-  /// See [RoomEntity.id].
-  static final id =
-      obx.QueryIntegerProperty<RoomEntity>(_entities[11].properties[0]);
+/// [Room] entity fields to define ObjectBox queries.
+class Room_ {
+  /// See [Room.id].
+  static final id = obx.QueryIntegerProperty<Room>(_entities[11].properties[0]);
 
-  /// See [RoomEntity.code].
+  /// See [Room.code].
   static final code =
-      obx.QueryStringProperty<RoomEntity>(_entities[11].properties[1]);
+      obx.QueryStringProperty<Room>(_entities[11].properties[1]);
+
+  /// See [Room.type].
+  static final type =
+      obx.QueryStringProperty<Room>(_entities[11].properties[2]);
+
+  /// See [Room.capacity].
+  static final capacity =
+      obx.QueryIntegerProperty<Room>(_entities[11].properties[3]);
+
+  /// See [Room.basePrice].
+  static final basePrice =
+      obx.QueryDoubleProperty<Room>(_entities[11].properties[4]);
+
+  /// See [Room.status].
+  static final status =
+      obx.QueryStringProperty<Room>(_entities[11].properties[5]);
+
+  /// see [Room.reservations]
+  static final reservations =
+      obx.QueryBacklinkToMany<Reservation, Room>(Reservation_.room);
+}
+
+/// [Employee] entity fields to define ObjectBox queries.
+class Employee_ {
+  /// See [Employee.id].
+  static final id =
+      obx.QueryIntegerProperty<Employee>(_entities[12].properties[0]);
+
+  /// See [Employee.fullName].
+  static final fullName =
+      obx.QueryStringProperty<Employee>(_entities[12].properties[1]);
+
+  /// See [Employee.phoneNumber].
+  static final phoneNumber =
+      obx.QueryStringProperty<Employee>(_entities[12].properties[2]);
+
+  /// See [Employee.email].
+  static final email =
+      obx.QueryStringProperty<Employee>(_entities[12].properties[3]);
+
+  /// see [Employee.reservations]
+  static final reservations =
+      obx.QueryBacklinkToMany<Reservation, Employee>(Reservation_.receptionist);
+}
+
+/// [Guest] entity fields to define ObjectBox queries.
+class Guest_ {
+  /// See [Guest.id].
+  static final id =
+      obx.QueryIntegerProperty<Guest>(_entities[13].properties[0]);
+
+  /// See [Guest.fullName].
+  static final fullName =
+      obx.QueryStringProperty<Guest>(_entities[13].properties[1]);
+
+  /// See [Guest.phoneNumber].
+  static final phoneNumber =
+      obx.QueryStringProperty<Guest>(_entities[13].properties[2]);
+
+  /// See [Guest.email].
+  static final email =
+      obx.QueryStringProperty<Guest>(_entities[13].properties[3]);
+
+  /// See [Guest.idCardNumber].
+  static final idCardNumber =
+      obx.QueryStringProperty<Guest>(_entities[13].properties[4]);
+
+  /// See [Guest.nationality].
+  static final nationality =
+      obx.QueryStringProperty<Guest>(_entities[13].properties[5]);
 }

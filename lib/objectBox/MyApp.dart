@@ -8,6 +8,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kenzy/objectBox/pages/home_Carousel.dart';
+import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -89,7 +90,7 @@ class MyApp9 extends StatelessWidget {
         ),
         //////////////////////////////////////////////////////////////////
         ChangeNotifierProvider(
-          create: (_) => RoomProvider(objectBox),
+          create: (context) => HotelProvider(),
         ),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {

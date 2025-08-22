@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../hotelScreen.dart';
+import 'home_Hotel.dart';
 
 // ========================= MODÈLE CHAMBRE =========================
 
@@ -201,29 +202,100 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text(_currentHotel?.name ?? 'Gestion Hôtel'),
-      backgroundColor: Colors.deepPurple,
-      foregroundColor: Colors.white,
+      //  automaticallyImplyLeading: false,
+      titleSpacing: 0,
+      elevation: 8,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.deepPurple.shade700, Colors.purpleAccent.shade200],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      ),
+      title: Row(
+        children: [
+          const SizedBox(width: 16),
+          Icon(Icons.hotel_rounded, color: Colors.white, size: 28),
+          const SizedBox(width: 10),
+          Text(
+            _currentHotel?.name ?? "Gestion Hôtel",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+              color: Colors.white,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
       actions: [
         IconButton(
-          icon: Icon(Icons.today),
-          onPressed: () => _calendarController.displayDate = DateTime.now(),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => ReservationPage())),
+            icon: Icon(Icons.hotel)),
+        // Bouton "Aujourd'hui"
+        Tooltip(
+          message: "Aller à aujourd'hui",
+          child: IconButton(
+            icon: Icon(Icons.today_rounded),
+            onPressed: () => _calendarController.displayDate = DateTime.now(),
+          ),
         ),
-        IconButton(
-          icon: Icon(Icons.hotel_outlined),
-          onPressed: _showHotelCreationDialog,
+
+        // Bouton ajouter/modifier hôtel
+        Tooltip(
+          message: "Créer / Modifier un hôtel",
+          child: IconButton(
+            icon: Icon(Icons.add_business_rounded),
+            onPressed: _showHotelCreationDialog,
+          ),
         ),
+
+        // Menu vue calendrier
         PopupMenuButton<CalendarView>(
-          icon: Icon(Icons.view_list),
+          tooltip: "Changer la vue du calendrier",
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: Colors.white,
+          icon: Icon(Icons.view_week_rounded, color: Colors.white),
           onSelected: (view) => setState(() => _currentView = view),
           itemBuilder: (context) => [
-            PopupMenuItem(value: CalendarView.timelineDay, child: Text('Jour')),
             PopupMenuItem(
-                value: CalendarView.timelineWeek, child: Text('Semaine')),
+              value: CalendarView.timelineDay,
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_view_day, color: Colors.deepPurple),
+                  SizedBox(width: 8),
+                  Text('Jour'),
+                ],
+              ),
+            ),
             PopupMenuItem(
-                value: CalendarView.timelineMonth, child: Text('Mois')),
+              value: CalendarView.timelineWeek,
+              child: Row(
+                children: [
+                  Icon(Icons.view_week, color: Colors.deepPurple),
+                  SizedBox(width: 8),
+                  Text('Semaine'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: CalendarView.timelineMonth,
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_month, color: Colors.deepPurple),
+                  SizedBox(width: 8),
+                  Text('Mois'),
+                ],
+              ),
+            ),
           ],
         ),
+        const SizedBox(width: 8),
       ],
     );
   }
@@ -232,56 +304,183 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
     if (_currentHotel == null) return SizedBox.shrink();
 
     return Container(
-      padding: EdgeInsets.all(16),
-      color: Colors.blue.shade50,
-      child: Row(
-        children: [
-          Icon(Icons.hotel, color: Colors.deepPurple),
-          SizedBox(width: 8),
-          Text(
-            '${_currentHotel!.name} - ${_currentHotel!.rooms.length} chambres',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [Colors.deepPurple.shade50, Colors.purple.shade50],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: Offset(0, 4),
           ),
-          Spacer(),
-          Text('${_currentHotel!.totalFloors} étages'),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Icône hôtel stylisée
+            CircleAvatar(
+              backgroundColor: Colors.deepPurple.withOpacity(0.1),
+              radius: 24,
+              child:
+                  Icon(Icons.hotel_rounded, color: Colors.deepPurple, size: 28),
+            ),
+
+            const SizedBox(width: 16),
+
+            // Infos texte
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _currentHotel!.name,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.meeting_room_rounded,
+                          size: 18, color: Colors.deepPurple),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${_currentHotel!.rooms.length} chambres",
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.grey.shade700),
+                      ),
+                      const SizedBox(width: 16),
+                      Icon(Icons.layers_rounded,
+                          size: 18, color: Colors.deepPurple),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${_currentHotel!.totalFloors} étages",
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.grey.shade700),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Bouton d’édition rapide
+            IconButton(
+              icon: Icon(Icons.edit_rounded, color: Colors.deepPurple),
+              tooltip: "Modifier l'hôtel",
+              onPressed: _showHotelCreationDialog,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildRoomStatusLegend() {
+    final legendItems = [
+      {
+        "color": Colors.white,
+        "label": "Libre",
+        "icon": Icons.bed_outlined,
+        "iconColor": Colors.grey.shade600,
+      },
+      {
+        "color": Colors.green.shade100,
+        "label": "Occupée",
+        "icon": Icons.bed_rounded,
+        "iconColor": Colors.green.shade700,
+      },
+      {
+        "color": Colors.blue.shade100,
+        "label": "En attente",
+        "icon": Icons.schedule_rounded,
+        "iconColor": Colors.blue.shade700,
+      },
+    ];
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 16,
+        runSpacing: 8,
+        children: legendItems.map((item) {
+          return _buildLegendItem(
+            item["color"] as Color,
+            item["label"] as String,
+            item["icon"] as IconData,
+            item["iconColor"] as Color,
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(
+      Color bgColor, String label, IconData icon, Color iconColor) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: iconColor.withOpacity(0.3)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildLegendItem(Colors.white, 'Libre', Icons.bed_outlined),
-          _buildLegendItem(Colors.green.shade100, 'Occupée', Icons.bed),
-          _buildLegendItem(Colors.blue.shade100, 'En attente', Icons.schedule),
+          CircleAvatar(
+            radius: 14,
+            backgroundColor: iconColor.withOpacity(0.15),
+            child: Icon(icon, color: iconColor, size: 18),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLegendItem(Color color, String label, IconData icon) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: color,
-            border: Border.all(color: Colors.grey),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Icon(icon, size: 12),
-        ),
-        SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12)),
-      ],
-    );
-  }
+  // Widget _buildLegendItem(Color color, String label, IconData icon) {
+  //   return Row(
+  //     mainAxisSize: MainAxisSize.min,
+  //     children: [
+  //       Container(
+  //         width: 20,
+  //         height: 20,
+  //         decoration: BoxDecoration(
+  //           color: color,
+  //           border: Border.all(color: Colors.grey),
+  //           borderRadius: BorderRadius.circular(4),
+  //         ),
+  //         child: Icon(icon, size: 12),
+  //       ),
+  //       SizedBox(width: 4),
+  //       Text(label, style: TextStyle(fontSize: 12)),
+  //     ],
+  //   );
+  // }
 
   Widget _buildCalendar() {
     final today = DateTime.now();
@@ -294,11 +493,14 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
       allowAppointmentResize: false,
       showDatePickerButton: true,
       showTodayButton: true,
-      todayHighlightColor: Colors.deepPurple,
+      // todayHighlightColor: //Colors.transparent,
+      //     Colors.deepPurple,
+
       todayTextStyle: TextStyle(
         color: Colors.red,
         fontWeight: FontWeight.bold,
       ),
+
       firstDayOfWeek: 1,
       timeSlotViewSettings: TimeSlotViewSettings(
         timeInterval: Duration(days: 1),
@@ -306,12 +508,12 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
         endHour: 24,
         timeIntervalWidth: 42,
         timeIntervalHeight: 10,
-        timelineAppointmentHeight: 45,
+        timelineAppointmentHeight: 30,
         timeTextStyle: TextStyle(fontSize: 14),
       ),
       resourceViewSettings: ResourceViewSettings(
         visibleResourceCount: _calculateVisibleRooms(),
-        size: 75,
+        size: 60,
         displayNameTextStyle: TextStyle(
           fontWeight: FontWeight.w500,
           fontSize: 18,
@@ -325,7 +527,8 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
         backgroundColor: Colors.deepPurple,
         textStyle: TextStyle(color: Colors.white, fontSize: 20),
       ),
-      //appointmentBuilder: _appointmentBuilder,
+
+      appointmentBuilder: _appointmentBuilder,
       // monthViewSettings: MonthViewSettings(
       //   dayFormat: 'dd',
       //   showAgenda: true,
@@ -398,67 +601,92 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
     );
   }
 
-  // Widget _appointmentBuilder(
-  //     BuildContext context, CalendarAppointmentDetails details) {
-  //   if (details.appointments.isEmpty) return Container();
-  //   final reservation = details.appointments.first as Reservation;
-  //   final nights = reservation.endDate.difference(reservation.startDate).inDays;
-  //   final totalPrice = reservation.pricePerNight * nights;
-  //
-  //   return Container(
-  //     width: details.bounds.width,
-  //     height: details.bounds.height, // Utilisez toute la hauteur disponible
-  //     decoration: BoxDecoration(
-  //       color: _getRandomColorForReservation(reservation.clientName.hashCode),
-  //       borderRadius: BorderRadius.circular(4),
-  //       border: Border.all(color: Colors.white, width: 1),
-  //       boxShadow: [
-  //         BoxShadow(
-  //           color: Colors.black.withOpacity(0.1),
-  //           blurRadius: 2,
-  //           offset: Offset(0, 1),
-  //         ),
-  //       ],
-  //     ),
-  //     child: Padding(
-  //       padding: EdgeInsets.all(6),
-  //       child: Row(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //         children: [
-  //           Text(
-  //             reservation.clientName,
-  //             style: TextStyle(
-  //               color: Colors.white,
-  //               fontWeight: FontWeight.bold,
-  //               fontSize: 13,
-  //             ),
-  //             maxLines: 1,
-  //             overflow: TextOverflow.ellipsis,
-  //           ),
-  //           Text(
-  //             '€${totalPrice.toStringAsFixed(0)}',
-  //             style: TextStyle(
-  //               color: Colors.white,
-  //               fontSize: 12,
-  //               fontWeight: FontWeight.w600,
-  //             ),
-  //           ),
-  //           Text(
-  //             reservation.status,
-  //             style: TextStyle(
-  //               color: Colors.white70,
-  //               fontSize: 11,
-  //               fontWeight: FontWeight.w500,
-  //             ),
-  //             maxLines: 1,
-  //             overflow: TextOverflow.ellipsis,
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _appointmentBuilder(
+      BuildContext context, CalendarAppointmentDetails details) {
+    if (details.appointments.isEmpty) return Container();
+    final reservation = details.appointments.first as Reservation;
+    final nights = reservation.endDate.difference(reservation.startDate).inDays;
+    final totalPrice = reservation.pricePerNight * nights;
+
+    return Container(
+      width: details.bounds.width,
+      height: details.bounds.height,
+      // Utilisez toute la hauteur disponible
+
+      // decoration: BoxDecoration(
+      //   color: _getRandomColorForReservation(reservation.clientName.hashCode),
+      //   borderRadius: BorderRadius.circular(14),
+      //   border: Border.all(color: Colors.white, width: 1),
+      //   boxShadow: [
+      //     BoxShadow(
+      //       color: Colors.black.withOpacity(0.1),
+      //       blurRadius: 2,
+      //       offset: Offset(0, 1),
+      //     ),
+      //   ],
+      // ),
+      decoration: BoxDecoration(
+        color: _getRandomColorForReservation(reservation.clientName.hashCode)
+            .withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Text(
+        reservation.clientName,
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      // child:  Row(
+      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //   children: [
+      //     Text(
+      //       reservation.clientName,
+      //       style: TextStyle(
+      //         color: Colors.white,
+      //         fontWeight: FontWeight.bold,
+      //         fontSize: 13,
+      //       ),
+      //       maxLines: 1,
+      //       overflow: TextOverflow.ellipsis,
+      //     ),
+      //     Row(
+      //       children: [
+      //         Text(
+      //           '${totalPrice.toStringAsFixed(2)} DZD',
+      //           style: TextStyle(
+      //             color: Colors.white,
+      //             fontSize: 12,
+      //             fontWeight: FontWeight.w600,
+      //           ),
+      //         ),
+      //         Text(
+      //           reservation.status,
+      //           style: TextStyle(
+      //             color: Colors.white70,
+      //             fontSize: 11,
+      //             fontWeight: FontWeight.w500,
+      //           ),
+      //           maxLines: 1,
+      //           overflow: TextOverflow.ellipsis,
+      //         ),
+      //       ],
+      //     ),
+      //   ],
+      // ),
+    );
+  }
 
   String _formatDate(DateTime date) {
     return DateFormat('dd/MM/yyyy', 'fr_FR').format(date);
@@ -1002,36 +1230,394 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
     }
   }
 
-  void _showReservationDetails(Reservation reservation) {
+  void _showReservationDetails1(Reservation reservation) {
     final nights = reservation.endDate.difference(reservation.startDate).inDays;
     final totalPrice = reservation.pricePerNight * nights;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Détails de la réservation'),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDetailRow('Client', reservation.clientName),
-            _buildDetailRow('Chambre', reservation.roomName),
-            _buildDetailRow('Arrivée', _formatDate(reservation.startDate)),
-            _buildDetailRow('Départ', _formatDate(reservation.endDate)),
-            _buildDetailRow('Nuitées', '$nights nuit(s)'),
-            _buildDetailRow('Prix/nuit',
-                '€${reservation.pricePerNight.toStringAsFixed(2)}'),
-            _buildDetailRow('Prix total', '€${totalPrice.toStringAsFixed(2)}'),
-            _buildDetailRow('Statut', reservation.status),
-          ],
+        insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: FittedBox(
+          child: Text(
+            'Réservation Détail\n${reservation.clientName}\nChambre ${reservation.roomName}',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // En-tête avec le nom du client et de la chambre
+                _buildHeaderSection(
+                    reservation.clientName, reservation.roomName),
+                SizedBox(height: 16),
+                // Timeline du séjour
+                _buildReservationTimeline(
+                    reservation.startDate, reservation.endDate, nights),
+                SizedBox(height: 16),
+                // Détails tarifaires
+                _buildPricingSection(
+                    nights, reservation.pricePerNight, totalPrice),
+                SizedBox(height: 16),
+                // Statut de la réservation
+                _buildStatusSection(reservation.status),
+              ]),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Fermer'),
+            child: Text(
+              'Fermer',
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showReservationDetails(Reservation reservation) {
+    final nights = reservation.endDate.difference(reservation.startDate).inDays;
+    final totalPrice = reservation.pricePerNight * nights;
+
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SizedBox(
+          width: 350,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ==== HEADER violet comme l’image ====
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                  child: Text(
+                    'Réservation Détail',
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColorDark,
+                    ),
+                  ),
+                ),
+
+                // ==== CONTENU ====
+                // Padding(
+                //   padding: const EdgeInsets.all(16.0),
+                //   child: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       _buildDetailRow("Client", reservation.clientName),
+                //       _buildDetailRow("Chambre", reservation.roomName),
+                //       SizedBox(height: 12),
+                //       _buildDetailRow("Arrivée",
+                //           "${reservation.startDate.toLocal()}".split(' ')[0]),
+                //       _buildDetailRow("Départ",
+                //           "${reservation.endDate.toLocal()}".split(' ')[0]),
+                //       _buildDetailRow("Nuitées", "$nights nuit(s)"),
+                //       Divider(),
+                //       _buildDetailRow("Prix/nuit",
+                //           "${reservation.pricePerNight.toStringAsFixed(2)} DZD"),
+                //       _buildDetailRow(
+                //         "Total",
+                //         "${totalPrice.toStringAsFixed(2)} DZD",
+                //         isHighlighted: true,
+                //       ),
+                //       SizedBox(height: 12),
+                //       _buildStatusSection(reservation.status),
+                //     ],
+                //   ),
+                // ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // En-tête avec le nom du client et de la chambre
+                        _buildHeaderSection(
+                            reservation.clientName, reservation.roomName),
+                        SizedBox(height: 16),
+                        // Timeline du séjour
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                          child: _buildReservationTimeline(
+                              reservation.startDate,
+                              reservation.endDate,
+                              nights),
+                        ),
+                        SizedBox(height: 16),
+                        // Détails tarifaires
+                        _buildPricingSection(
+                            nights, reservation.pricePerNight, totalPrice),
+                        SizedBox(height: 16),
+                        // Statut de la réservation
+                        _buildStatusSection(reservation.status),
+                      ]),
+                ),
+                //==== FOOTER style coupon vert ====
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade400,
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      Text(
+                        "🎉 Félicitations ${reservation.clientName} 🎉",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Vous avez réservez",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      SizedBox(height: 8),
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "ROOM-${reservation.roomName.toUpperCase()}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+// Section pour l'en-tête (client et chambre)
+  Widget _buildHeaderSection(String clientName, String roomName) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow('Client', clientName, isHeader: true),
+            SizedBox(height: 8),
+            _buildDetailRow('Chambre', roomName, isHeader: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+// Section pour les détails tarifaires
+  Widget _buildPricingSection(
+      int nights, double pricePerNight, double totalPrice) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDetailRow('Nuitées', '$nights nuit(s)',
+                icon: Icons.bedtime_outlined),
+            _buildDetailRow(
+              'Prix/nuit',
+              '${pricePerNight.toStringAsFixed(2)} DZD',
+              icon: Icons.attach_money_rounded,
+            ),
+            Divider(),
+            _buildDetailRow(
+              'Prix total',
+              '${totalPrice.toStringAsFixed(2)} DZD',
+              isHighlighted: true,
+              icon: Icons.money_rounded,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// Section pour le statut
+  Widget _buildStatusSection(String status) {
+    Color statusColor;
+    IconData statusIcon;
+
+    switch (status.toLowerCase()) {
+      case 'confirmé':
+        statusColor = Colors.green;
+        statusIcon = Icons.check_circle_rounded;
+        break;
+      case 'annulé':
+        statusColor = Colors.red;
+        statusIcon = Icons.cancel_rounded;
+        break;
+      case 'en attente':
+        statusColor = Colors.orange;
+        statusIcon = Icons.hourglass_empty_rounded;
+        break;
+      default:
+        statusColor = Colors.grey;
+        statusIcon = Icons.help_outline_rounded;
+    }
+
+    return Row(
+      children: [
+        Icon(statusIcon, color: statusColor),
+        SizedBox(width: 8),
+        Text(
+          'Statut: ',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        Text(
+          status,
+          style: TextStyle(
+            color: statusColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+// Ligne de détail générique
+  Widget _buildDetailRow(String label, String value,
+      {bool isHeader = false, bool isHighlighted = false, IconData? icon}) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (icon != null)
+            Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Icon(icon, size: 20, color: Colors.grey.shade600),
+            ),
+          SizedBox(
+            width: isHeader ? 80 : 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: isHeader ? FontWeight.bold : FontWeight.w500,
+                fontSize: isHeader ? 16 : 14,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+                fontSize: isHighlighted ? 16 : 14,
+                color: isHighlighted ? Theme.of(context).primaryColor : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// Timeline du séjour (inchangée mais intégrée dans le nouveau design)
+  Widget _buildReservationTimeline(DateTime start, DateTime end, int nights) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Durée du séjour $nights Nuitées",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            // Check-in
+            Column(
+              children: [
+                Icon(Icons.login_rounded,
+                    color: Colors.green.shade700, size: 28),
+                SizedBox(height: 6),
+                Text(
+                  _formatDate(start),
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  "Arrivée",
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+            // Ligne de progression
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 8),
+                height: 2,
+                color: Colors.grey.shade400,
+              ),
+            ),
+            // Check-out
+            Column(
+              children: [
+                Icon(Icons.logout_rounded,
+                    color: Colors.red.shade700, size: 28),
+                SizedBox(height: 6),
+                Text(
+                  _formatDate(end),
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  "Départ",
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1076,25 +1662,6 @@ class _Hotel_ManagementState extends State<Hotel_Management> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(child: Text(value)),
-        ],
       ),
     );
   }

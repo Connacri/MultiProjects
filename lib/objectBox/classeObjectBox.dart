@@ -22,8 +22,10 @@ class ObjectBox {
   late final Box<Client> clientBox;
   late final Box<DeletedProduct> deletedProduct;
   late final Box<Annonces> annonces;
-  late final Box<RoomEntity> roomEntity;
-  late final Box<ReservationEntity> reservationEntity;
+  late final Box<Room> roomBox;
+  late final Box<Reservation> reservationBox;
+  late final Box<Guest> guestBox;
+  late final Box<Employee> employeeBox;
   Admin? admin; // Admin optionnel
 
   static final ObjectBox _singleton = ObjectBox._internal();
@@ -48,8 +50,10 @@ class ObjectBox {
       clientBox = Box<Client>(store);
       deletedProduct = Box<DeletedProduct>(store);
       annonces = Box<Annonces>(store);
-      roomEntity = Box<RoomEntity>(store);
-      reservationEntity = Box<ReservationEntity>(store);
+      roomBox = Box<Room>(store);
+      reservationBox = Box<Reservation>(store);
+      guestBox = Box<Guest>(store);
+      employeeBox = Box<Employee>(store);
 
       // Démarre Admin si disponible et vérifie son statut
       if (Admin.isAvailable()) {

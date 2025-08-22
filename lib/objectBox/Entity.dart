@@ -532,36 +532,179 @@ class Annonces {
   });
 }
 
+/// ==================== ROOM ====================
 @Entity()
-class RoomEntity {
+class Room {
   @Id()
   int id = 0;
 
-  /// Code de chambre (ex: "101", "205", etc.)
-  @Index() // pour un tri/filtre rapide
+  @Index()
   String code;
+  String type;
+  int capacity;
+  double basePrice;
+  String status;
 
-  RoomEntity({required this.code});
+  @Backlink('room')
+  final reservations = ToMany<Reservation>();
+
+  Room({
+    required this.code,
+    required this.type,
+    required this.capacity,
+    required this.basePrice,
+    this.status = "Libre",
+  });
+
+  /// ---- Factory ----
+  factory Room.fromMap(Map<String, dynamic> map) {
+    return Room(
+      code: map['code'] ?? '',
+      type: map['type'] ?? 'Single',
+      capacity: map['capacity'] ?? 1,
+      basePrice: (map['basePrice'] ?? 0).toDouble(),
+      status: map['status'] ?? 'Libre',
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'code': code,
+      'type': type,
+      'capacity': capacity,
+      'basePrice': basePrice,
+      'status': status,
+    };
+  }
 }
 
+/// ==================== GUEST ====================
 @Entity()
-class ReservationEntity {
+class Guest {
   @Id()
-  int id;
-  String clientName;
-  String roomName;
-  DateTime startDate;
-  DateTime endDate;
+  int id = 0;
+
+  String fullName;
+  String phoneNumber;
+  String email;
+  String idCardNumber;
+  String nationality;
+
+  // Relation Many-to-Many avec Reservation
+  @Backlink('guests')
+  final reservations = ToMany<Reservation>();
+
+  Guest({
+    required this.fullName,
+    required this.phoneNumber,
+    required this.email,
+    required this.idCardNumber,
+    required this.nationality,
+  });
+
+  /// ---- Factory ----
+  factory Guest.fromMap(Map<String, dynamic> map) {
+    return Guest(
+      fullName: map['fullName'] ?? '',
+      phoneNumber: map['phoneNumber'] ?? '',
+      email: map['email'] ?? '',
+      idCardNumber: map['idCardNumber'] ?? '',
+      nationality: map['nationality'] ?? '',
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'email': email,
+      'idCardNumber': idCardNumber,
+      'nationality': nationality,
+    };
+  }
+}
+
+/// ==================== RESERVATION ====================
+@Entity()
+class Reservation {
+  @Id()
+  int id = 0;
+
+  final room = ToOne<Room>();
+  final receptionist = ToOne<Employee>();
+
+  // Relation Many-to-Many avec Guest
+  final guests = ToMany<Guest>();
+
+  DateTime from;
+  DateTime to;
   double pricePerNight;
   String status;
 
-  ReservationEntity({
-    this.id = 0,
-    required this.clientName,
-    required this.roomName,
-    required this.startDate,
-    required this.endDate,
+  Reservation({
+    required this.from,
+    required this.to,
     required this.pricePerNight,
-    required this.status,
+    this.status = "Confirmée",
   });
+
+  /// ---- Factory ----
+  factory Reservation.fromMap(Map<String, dynamic> map) {
+    return Reservation(
+      from: DateTime.parse(map['from']),
+      to: DateTime.parse(map['to']),
+      pricePerNight: (map['pricePerNight'] ?? 0).toDouble(),
+      status: map['status'] ?? 'Confirmée',
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'from': from.toIso8601String(),
+      'to': to.toIso8601String(),
+      'pricePerNight': pricePerNight,
+      'status': status,
+      'roomId': room.targetId,
+      'receptionistId': receptionist.targetId,
+    };
+  }
+}
+
+@Entity()
+class Employee {
+  @Id()
+  int id = 0;
+
+  String fullName;
+  String phoneNumber;
+  String email;
+
+  @Backlink('receptionist')
+  final reservations = ToMany<Reservation>();
+
+  Employee({
+    required this.fullName,
+    required this.phoneNumber,
+    required this.email,
+  });
+
+  factory Employee.fromMap(Map<String, dynamic> map) {
+    return Employee(
+      fullName: map['fullName'] ?? '',
+      phoneNumber: map['phoneNumber'] ?? '',
+      email: map['email'] ?? '',
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'email': email,
+    };
+  }
 }
