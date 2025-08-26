@@ -3,6 +3,7 @@ import 'dart:math' show Random;
 import 'dart:math';
 
 import 'package:faker/faker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -26,6 +27,8 @@ class ObjectBox {
   late final Box<Reservation> reservationBox;
   late final Box<Guest> guestBox;
   late final Box<Employee> employeeBox;
+  late final Box<Hotel> hotelBox;
+
   Admin? admin; // Admin optionnel
 
   static final ObjectBox _singleton = ObjectBox._internal();
@@ -38,8 +41,11 @@ class ObjectBox {
 
   Future<void> init() async {
     final dir = await getApplicationDocumentsDirectory();
-    if (!Store.isOpen('${dir.path}/objectbox')) {
-      store = await openStore(directory: '${dir.path}/objectbox');
+    final dbPath = '${dir.path}/objectbox';
+
+    // ✅ CORRECTION 1: Vérifiez si le store est déjà ouvert
+    if (!Store.isOpen(dbPath)) {
+      store = await openStore(directory: dbPath);
       userBox = Box<User>(store);
       crudBox = Box<Crud>(store);
       produitBox = Box<Produit>(store);
@@ -54,24 +60,93 @@ class ObjectBox {
       reservationBox = Box<Reservation>(store);
       guestBox = Box<Guest>(store);
       employeeBox = Box<Employee>(store);
+      hotelBox = Box<Hotel>(store);
 
-      // Démarre Admin si disponible et vérifie son statut
-      if (Admin.isAvailable()) {
-        admin = Admin(store);
-        print(
-            'Admin a démarré avec succès et est accessible à http://127.0.0.1:8090');
-      } else {
-        print('Admin n\'est pas disponible.');
+      // ✅ CORRECTION 2: Initialisez Admin correctement
+      await _initializeAdmin();
+    }
+  }
+
+// ✅ CORRECTION 3: Méthode séparée pour Admin avec gestion d'erreurs
+  Future<void> _initializeAdmin() async {
+    if (kDebugMode) {
+      try {
+        // Vérifiez si Admin est disponible sur cette plateforme
+        if (Admin.isAvailable()) {
+          admin = Admin(store);
+          print('🚀 ObjectBox Admin démarré avec succès !');
+          print('🌐 Admin URL sera affiché ci-dessous :');
+
+          // ✅ CORRECTION 4: Attendez un peu pour que l'URL soit générée
+          await Future.delayed(Duration(milliseconds: 500));
+        } else {
+          print('⚠️ ObjectBox Admin non disponible sur cette plateforme');
+          print('💡 Utilisez Docker comme alternative');
+        }
+      } catch (e) {
+        print('❌ Erreur lors de l\'initialisation d\'Admin : $e');
+        print('💡 Vérifiez votre configuration ObjectBox');
+        admin = null;
       }
     }
   }
 
+  // ✅ CORRECTION 5: Méthode améliorée pour vérifier Admin
   bool isAdminAvailable() {
-    return admin != null; // Retourne vrai si Admin est initialisé
+    return admin != null && kDebugMode;
+  }
+
+  // ✅ CORRECTION 6: Méthode pour obtenir l'URL Admin
+  String? getAdminUrl() {
+    if (admin != null) {
+      try {
+        // L'URL est généralement sur le port 8090 par défaut
+        return 'http://127.0.0.1:8090';
+      } catch (e) {
+        print('Erreur lors de la récupération de l\'URL Admin : $e');
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // ✅ CORRECTION 7: Nettoyage propre
+  Future<void> dispose() async {
+    try {
+      // Fermez Admin en premier
+      if (admin != null) {
+        admin!.close();
+        admin = null;
+        print('🔒 ObjectBox Admin fermé');
+      }
+
+      // Puis fermez le store
+      store.close();
+      print('🔒 ObjectBox Store fermé');
+    } catch (e) {
+      print('Erreur lors de la fermeture : $e');
+    }
+  }
+
+  // ✅ BONUS: Méthode pour redémarrer Admin si nécessaire
+  Future<void> restartAdmin() async {
+    if (kDebugMode) {
+      try {
+        // Fermez l'admin existant
+        if (admin != null) {
+          admin!.close();
+          admin = null;
+        }
+
+        // Redémarrez
+        await _initializeAdmin();
+      } catch (e) {
+        print('Erreur lors du redémarrage d\'Admin : $e');
+      }
+    }
   }
 
   void close() {
-    admin?.close(); // Ferme Admin si initialisé
     store.close();
   }
 

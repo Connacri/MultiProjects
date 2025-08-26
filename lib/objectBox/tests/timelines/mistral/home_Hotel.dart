@@ -113,7 +113,7 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
               DropdownButtonFormField<int>(
                 decoration: const InputDecoration(labelText: "Chambre"),
                 value: _selectedRoom?.id,
-                items: hotelProvider.rooms.map((room) {
+                items: hotelProvider.hotels.first.rooms.map((room) {
                   return DropdownMenuItem<int>(
                     value: room.id,
                     child: Text("${room.code} - ${room.type}"),
@@ -248,11 +248,12 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
                     );
 
                     hotelProvider.addReservation(
-                      newReservation,
-                      _selectedRoom!,
-                      _selectedEmployee!,
-                      _selectedGuests,
-                    );
+                        room: _selectedRoom!,
+                        receptionist: _selectedEmployee!,
+                        guests: _selectedGuests,
+                        from: _fromDate!,
+                        to: _toDate!,
+                        pricePerNight: _pricePerNight);
                     Navigator.pop(context);
                   }
                 },
@@ -568,3 +569,386 @@ class _AddEmployeeDialogState extends State<AddEmployeeDialog> {
     super.dispose();
   }
 }
+
+class HotelListPage extends StatelessWidget {
+  const HotelListPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Liste des Hôtels")),
+      body: Consumer<HotelProvider>(
+        builder: (context, provider, _) {
+          final hotels = provider.hotels;
+
+          if (hotels.isEmpty) {
+            return const Center(
+              child: Text("Aucun hôtel trouvé"),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: hotels.length,
+            itemBuilder: (context, index) {
+              final hotel = hotels[index];
+              return Card(
+                margin: const EdgeInsets.all(8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 3,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    child: Text(hotel.id.toString()),
+                  ),
+                  title: Text(hotel.name),
+                  subtitle: Text(
+                      "${hotel.floors} Etages(s) • ${hotel.roomsPerFloor} chambre(s)/Etage • ${hotel.rooms.length} chambre(s) - Evite ${hotel.avoidedNumbers}"),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      provider.deleteHotel(hotel.id);
+                    },
+                  ),
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (ctx) => HotelDetail(currentHotel: hotel)));
+                  },
+                ),
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 👉 bouton pour ajouter un hôtel
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
+
+class HotelDetail extends StatelessWidget {
+  final Hotel currentHotel;
+
+  const HotelDetail({
+    super.key,
+    required this.currentHotel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Column(
+        children: [
+          RoomsChipsWidget(hotel: currentHotel),
+          DetailedRoomsChipsWidget(hotel: currentHotel)
+        ],
+      ),
+    );
+  }
+}
+
+class RoomsChipsWidget extends StatelessWidget {
+  final Hotel hotel;
+
+  const RoomsChipsWidget({
+    Key? key,
+    required this.hotel,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HotelProvider>(
+      builder: (context, provider, child) {
+        final rooms = provider.getRoomsForHotel(hotel);
+
+        if (rooms.isEmpty) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Aucune chambre créée pour cet hôtel',
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Chambres créées',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Chip(
+                      label: Text('${rooms.length} chambres'),
+                      backgroundColor: Colors.blue.shade100,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: rooms.map((room) {
+                    return _buildRoomChip(room);
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRoomChip(Room room) {
+    Color chipColor;
+    Color textColor;
+    IconData statusIcon;
+
+    // Définir la couleur et l'icône selon le statut
+    switch (room.status.toLowerCase()) {
+      case 'available':
+        chipColor = Colors.green.shade100;
+        textColor = Colors.green.shade800;
+        statusIcon = Icons.check_circle;
+        break;
+      case 'occupied':
+        chipColor = Colors.red.shade100;
+        textColor = Colors.red.shade800;
+        statusIcon = Icons.person;
+        break;
+      case 'maintenance':
+        chipColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade800;
+        statusIcon = Icons.build;
+        break;
+      case 'cleaning':
+        chipColor = Colors.blue.shade100;
+        textColor = Colors.blue.shade800;
+        statusIcon = Icons.cleaning_services;
+        break;
+      default:
+        chipColor = Colors.grey.shade100;
+        textColor = Colors.grey.shade800;
+        statusIcon = Icons.hotel;
+    }
+
+    return Chip(
+      avatar: Icon(
+        statusIcon,
+        size: 16,
+        color: textColor,
+      ),
+      label: Text(
+        room.code,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      backgroundColor: chipColor,
+      side: BorderSide(
+        color: textColor.withOpacity(0.3),
+        width: 1,
+      ),
+    );
+  }
+}
+
+// Widget alternatif avec plus d'informations
+class DetailedRoomsChipsWidget extends StatelessWidget {
+  final Hotel hotel;
+
+  const DetailedRoomsChipsWidget({
+    Key? key,
+    required this.hotel,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HotelProvider>(
+      builder: (context, provider, child) {
+        final rooms = provider.getRoomsForHotel(hotel);
+
+        if (rooms.isEmpty) {
+          return const Card(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Aucune chambre créée pour cet hôtel',
+                style: TextStyle(
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          );
+        }
+
+        // Grouper les chambres par étage
+        final roomsByFloor = <int, List<Room>>{};
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Chambres par étage',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Chip(
+                      label: Text('${rooms.length} chambres'),
+                      backgroundColor: Colors.blue.shade100,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ...roomsByFloor.entries.map((entry) {
+                  final floor = entry.key;
+                  final floorRooms = entry.value;
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Étage $floor',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6.0,
+                          runSpacing: 4.0,
+                          children: floorRooms.map((room) {
+                            return _buildDetailedRoomChip(room);
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailedRoomChip(Room room) {
+    Color chipColor;
+    Color textColor;
+    IconData statusIcon;
+
+    switch (room.status.toLowerCase()) {
+      case 'available':
+        chipColor = Colors.green.shade100;
+        textColor = Colors.green.shade800;
+        statusIcon = Icons.check_circle;
+        break;
+      case 'occupied':
+        chipColor = Colors.red.shade100;
+        textColor = Colors.red.shade800;
+        statusIcon = Icons.person;
+        break;
+      case 'maintenance':
+        chipColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade800;
+        statusIcon = Icons.build;
+        break;
+      case 'cleaning':
+        chipColor = Colors.blue.shade100;
+        textColor = Colors.blue.shade800;
+        statusIcon = Icons.cleaning_services;
+        break;
+      default:
+        chipColor = Colors.grey.shade100;
+        textColor = Colors.grey.shade800;
+        statusIcon = Icons.hotel;
+    }
+
+    return Tooltip(
+      message:
+          'Chambre ${room.code}\nPrix: ${room.basePrice!.toStringAsFixed(0)}€\nStatut: ${room.status}',
+      child: Chip(
+        avatar: Icon(
+          statusIcon,
+          size: 14,
+          color: textColor,
+        ),
+        label: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              room.code,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+            Text(
+              '${room.basePrice!.toStringAsFixed(0)}€',
+              style: TextStyle(
+                color: textColor.withOpacity(0.7),
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: chipColor,
+        side: BorderSide(
+          color: textColor.withOpacity(0.3),
+          width: 1,
+        ),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
+// Utilisation dans votre page :
+/*
+// Widget simple
+RoomsChipsWidget(hotel: currentHotel)
+
+// Widget détaillé avec prix et groupement par étage
+DetailedRoomsChipsWidget(hotel: currentHotel)
+*/

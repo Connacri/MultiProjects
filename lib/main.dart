@@ -1,21 +1,21 @@
 import 'dart:async';
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
-import 'firebase_options.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import 'dart:io';
+
+import 'firebase_options.dart';
 import 'objectBox/MyApp.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'objectBox/classeObjectBox.dart';
 
 ///gere les gestu
 class CustomScrollBehavior extends MaterialScrollBehavior {
@@ -42,6 +42,7 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 // const apiKey = "AIzaSyCUqIwqieBQxsqzXnWKISJSw52XLbJxWKk";
 // const projectId = "walletdz-d12e0";
 //late ObjectBox objectbox;
+
 Future<void> main() async {
   // Initialisation de Flutter
   //WidgetsFlutterBinding.ensureInitialized();
@@ -182,6 +183,8 @@ Future<void> main() async {
   // SystemChrome.setEnabledSystemUIMode(
   //     SystemUiMode.edgeToEdge, //.immersiveSticky,
   //     overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+  // Initialisez ObjectBox
+  await ObjectBox().init();
   runApp(
     MyApp(
         // objectBox: objectBox,

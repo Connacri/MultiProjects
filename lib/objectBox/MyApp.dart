@@ -13,7 +13,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
-import '../checkit/HomePage.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import '../objectBox/pages/ClientListScreen.dart';
@@ -32,6 +31,7 @@ import 'pages/facturation/FacturePage.dart';
 import 'pages/facturation/FacturesListPage.dart';
 import 'pages/invoice/FacturationPageUI.dart';
 import 'pages/invoice/providers.dart';
+import 'tests/timelines/mistral/claude.dart';
 
 class MyMain extends StatelessWidget {
   @override
@@ -89,69 +89,79 @@ class MyApp9 extends StatelessWidget {
           create: (_) => SignalementProviderSupabase(),
         ),
         //////////////////////////////////////////////////////////////////
+        // ChangeNotifierProvider(
+        //   create: (context) => HotelStructureProvider(),
+        // ),
+        // ChangeNotifierProvider(
+        //   create: (_) => HotelManagementProvider(objectBox), // <= injection ici
+        // ),
+        // ChangeNotifierProvider(
+        //   create: (context) => ReservationProvider(objectBox),
+        // ),
         ChangeNotifierProvider(
-          create: (context) => HotelProvider(),
+          create: (context) => HotelProvider(objectBox),
         ),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'POS',
-          theme: ThemeData(
-            fontFamily: 'oswald',
-            brightness: Brightness.light,
-            primarySwatch: Colors.blue,
-            chipTheme: ChipThemeData(
-              backgroundColor: Colors.grey[300]!,
-              labelStyle: TextStyle(fontFamily: 'oswald'),
+            title: 'POS',
+            theme: ThemeData(
+              fontFamily: 'oswald',
+              brightness: Brightness.light,
+              primarySwatch: Colors.blue,
+              chipTheme: ChipThemeData(
+                backgroundColor: Colors.grey[300]!,
+                labelStyle: TextStyle(fontFamily: 'oswald'),
+              ),
+              textTheme: TextTheme(
+                bodyMedium: TextStyle(color: Colors.black),
+                // Texte par défaut en noir
+                bodyLarge: TextStyle(color: Colors.black),
+                // Texte plus grand en noir
+                bodySmall: TextStyle(color: Colors.black),
+                // Texte plus petit en noir
+                titleMedium: TextStyle(color: Colors.black),
+                // Titres en noir
+                titleLarge: TextStyle(color: Colors.black),
+                // Titres plus grands en noir
+                labelLarge: TextStyle(color: Colors.black), // Labels en noir
+              ),
             ),
-            textTheme: TextTheme(
-              bodyMedium: TextStyle(color: Colors.black),
-              // Texte par défaut en noir
-              bodyLarge: TextStyle(color: Colors.black),
-              // Texte plus grand en noir
-              bodySmall: TextStyle(color: Colors.black),
-              // Texte plus petit en noir
-              titleMedium: TextStyle(color: Colors.black),
-              // Titres en noir
-              titleLarge: TextStyle(color: Colors.black),
-              // Titres plus grands en noir
-              labelLarge: TextStyle(color: Colors.black), // Labels en noir
+            darkTheme: ThemeData(
+              fontFamily: 'oswald',
+              brightness: Brightness.dark,
+              primaryColor: Colors.blueGrey,
+              chipTheme: ChipThemeData(
+                backgroundColor: Colors.grey[800]!,
+                labelStyle: TextStyle(fontFamily: 'oswald'),
+              ),
+              textTheme: TextTheme(
+                bodyMedium: TextStyle(color: Colors.white),
+                // Texte en blanc pour le mode sombre
+                bodyLarge: TextStyle(color: Colors.white),
+                bodySmall: TextStyle(color: Colors.white),
+                titleMedium: TextStyle(color: Colors.white),
+                titleLarge: TextStyle(color: Colors.white),
+                labelLarge: TextStyle(color: Colors.white),
+              ),
             ),
-          ),
+            themeMode:
+                themeProvider.isDarkTheme ? ThemeMode.dark : ThemeMode.light,
 
-          darkTheme: ThemeData(
-            fontFamily: 'oswald',
-            brightness: Brightness.dark,
-            primaryColor: Colors.blueGrey,
-            chipTheme: ChipThemeData(
-              backgroundColor: Colors.grey[800]!,
-              labelStyle: TextStyle(fontFamily: 'oswald'),
-            ),
-            textTheme: TextTheme(
-              bodyMedium: TextStyle(color: Colors.white),
-              // Texte en blanc pour le mode sombre
-              bodyLarge: TextStyle(color: Colors.white),
-              bodySmall: TextStyle(color: Colors.white),
-              titleMedium: TextStyle(color: Colors.white),
-              titleLarge: TextStyle(color: Colors.white),
-              labelLarge: TextStyle(color: Colors.white),
-            ),
-          ),
-          themeMode:
-              themeProvider.isDarkTheme ? ThemeMode.dark : ThemeMode.light,
-
-          //darkTheme: ThemeData.dark(),
-          // home: Scaffold(body: FactureList()),
-          /// hada houwa tali         // home: /*showPlatform*/ adaptiveHome(
-          //   objectBox: objectBox,
-          // ),
-          //   home: FacturationPageUI(),
-          home: Platform.isAndroid || Platform.isIOS
-              ? HomePage3()
-              : /*showPlatform*/ adaptiveHome(
-                  objectBox: objectBox,
-                ),
-        );
+            //darkTheme: ThemeData.dark(),
+            // home: Scaffold(body: FactureList()),
+            /// hada houwa tali         // home: /*showPlatform*/ adaptiveHome(
+            //   objectBox: objectBox,
+            // ),
+            //   home: FacturationPageUI(),
+            home: Platform.isAndroid || Platform.isIOS
+                ? Hotel_Management() //HomePage3()
+                : /*showPlatform*/
+                Hotel_Management() //
+            // adaptiveHome(
+            //         objectBox: objectBox,
+            //       ),
+            );
       }),
     );
   }

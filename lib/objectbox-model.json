@@ -718,7 +718,7 @@
     },
     {
       "id": "23:7337300309619921213",
-      "lastPropertyId": "6:3970828812228493853",
+      "lastPropertyId": "7:8623170392646704505",
       "name": "Room",
       "properties": [
         {
@@ -753,6 +753,14 @@
           "id": "6:3970828812228493853",
           "name": "status",
           "type": 9
+        },
+        {
+          "id": "7:8623170392646704505",
+          "name": "hotelId",
+          "type": 11,
+          "flags": 520,
+          "indexId": "48:6647289054193467337",
+          "relationTarget": "Hotel"
         }
       ],
       "relations": []
@@ -824,10 +832,44 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "29:6276934219192680664",
+      "lastPropertyId": "5:1851608130218872598",
+      "name": "Hotel",
+      "properties": [
+        {
+          "id": "1:4218070294234456234",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5524436409225457701",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:7469800429925950739",
+          "name": "floors",
+          "type": 6
+        },
+        {
+          "id": "4:1952149702277239994",
+          "name": "roomsPerFloor",
+          "type": 6
+        },
+        {
+          "id": "5:1851608130218872598",
+          "name": "avoidedNumbers",
+          "type": 9
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "28:2846533385157794616",
-  "lastIndexId": "47:5709087898541937546",
+  "lastEntityId": "29:6276934219192680664",
+  "lastIndexId": "48:6647289054193467337",
   "lastRelationId": "3:2939760587369873645",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

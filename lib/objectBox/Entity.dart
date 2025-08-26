@@ -532,7 +532,40 @@ class Annonces {
   });
 }
 
-/// ==================== ROOM ====================
+/// ==================== Hotel & ROOM ====================
+@Entity()
+class Hotel {
+  @Id()
+  int id = 0;
+
+  String name;
+  int floors;
+  int roomsPerFloor;
+  String avoidedNumbers; // Stockage des numéros évités comme string
+
+  // Backlink vers les chambres de l'hôtel
+  @Backlink('hotel')
+  final rooms = ToMany<Room>();
+
+  Hotel({
+    required this.name,
+    required this.floors,
+    required this.roomsPerFloor,
+    this.avoidedNumbers = '',
+  });
+
+  // Helper pour récupérer la liste des numéros évités
+  List<String> get avoidedNumbersList {
+    if (avoidedNumbers.isEmpty) return [];
+    return avoidedNumbers.split(',').map((e) => e.trim()).toList();
+  }
+
+  // Helper pour définir les numéros évités
+  void setAvoidedNumbers(List<String> numbers) {
+    avoidedNumbers = numbers.join(',');
+  }
+}
+
 @Entity()
 class Room {
   @Id()
@@ -540,19 +573,20 @@ class Room {
 
   @Index()
   String code;
-  String type;
-  int capacity;
-  double basePrice;
+  String? type;
+  int? capacity;
+  double? basePrice;
   String status;
 
   @Backlink('room')
   final reservations = ToMany<Reservation>();
+  final hotel = ToOne<Hotel>();
 
   Room({
     required this.code,
-    required this.type,
-    required this.capacity,
-    required this.basePrice,
+    this.type,
+    this.capacity,
+    this.basePrice,
     this.status = "Libre",
   });
 
@@ -579,6 +613,12 @@ class Room {
   }
 }
 
+enum RoomState {
+  empty, // Blanche - aucune réservation
+  occupied, // Verte - occupée aujourd'hui
+  waitingGuest, // Bleue - libre aujourd'hui mais réservation future
+}
+
 /// ==================== GUEST ====================
 @Entity()
 class Guest {
@@ -587,9 +627,9 @@ class Guest {
 
   String fullName;
   String phoneNumber;
-  String email;
+  String? email;
   String idCardNumber;
-  String nationality;
+  String? nationality;
 
   // Relation Many-to-Many avec Reservation
   @Backlink('guests')
@@ -598,9 +638,9 @@ class Guest {
   Guest({
     required this.fullName,
     required this.phoneNumber,
-    required this.email,
+    this.email,
     required this.idCardNumber,
-    required this.nationality,
+    this.nationality,
   });
 
   /// ---- Factory ----
@@ -680,7 +720,7 @@ class Employee {
 
   String fullName;
   String phoneNumber;
-  String email;
+  String? email;
 
   @Backlink('receptionist')
   final reservations = ToMany<Reservation>();
@@ -688,7 +728,7 @@ class Employee {
   Employee({
     required this.fullName,
     required this.phoneNumber,
-    required this.email,
+    this.email,
   });
 
   factory Employee.fromMap(Map<String, dynamic> map) {
