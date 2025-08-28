@@ -128,7 +128,56 @@ class HotelManagementState extends State<Hotel_Management> {
               //   ),
               // ),
               _buildHotelInfo(),
-              _buildRoomStatusLegend(),
+              Row(
+                children: [
+                  Expanded(
+                    // ou Flexible
+                    child: _buildRoomStatusLegend(),
+                  ),
+                  FilledButton.icon(
+                    onPressed: _showEditOptions,
+                    icon: const Icon(
+                      Icons.list,
+                      // Icône "outlined" pour un look plus épuré
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                    label: const Text(
+                      'Lists',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.deepPurple.shade400,
+                      // Couleur principale du thème
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            12), // Coins arrondis pour un style moderne
+                      ),
+                      elevation: 3,
+                      // Ombre légère pour le relief
+                      shadowColor: Colors.deepPurple.shade200,
+                      // Ombre colorée subtile
+                      textStyle: const TextStyle(
+                        fontFamily: 'OSWALD',
+                        fontWeight: FontWeight.w600,
+                      ),
+                      visualDensity: VisualDensity.standard,
+                      // Densité adaptée
+                      minimumSize: const Size(120,
+                          40), // Taille minimale pour un bouton confortable
+                    ),
+                  ),
+                  SizedBox(
+                    width: 50,
+                  )
+                ],
+              ),
               Expanded(child: _buildCalendar(provider)),
             ],
           );
@@ -145,11 +194,6 @@ class HotelManagementState extends State<Hotel_Management> {
         _currentHotel!.rooms.expand((room) => room.reservations).toList(),
         _currentHotel!.rooms.toList());
 
-    print('Nombre de réservations: ${reservations.length}');
-    for (final res in reservations) {
-      print(
-          'Réservation ID: ${res.id}, Du: ${res.from}, Au: ${res.to}, Statut: ${res.status}');
-    }
     return SfCalendar(
       controller: _calendarController,
       view: _currentView,
@@ -923,20 +967,6 @@ class HotelManagementState extends State<Hotel_Management> {
     return Container(
       width: details.bounds.width,
       height: details.bounds.height,
-      // Utilisez toute la hauteur disponible
-
-      // decoration: BoxDecoration(
-      //   color: _getRandomColorForReservation(reservation.clientName.hashCode),
-      //   borderRadius: BorderRadius.circular(14),
-      //   border: Border.all(color: Colors.white, width: 1),
-      //   boxShadow: [
-      //     BoxShadow(
-      //       color: Colors.black.withOpacity(0.1),
-      //       blurRadius: 2,
-      //       offset: Offset(0, 1),
-      //     ),
-      //   ],
-      // ),
       decoration: BoxDecoration(
         color: _getRandomColorForReservation(reservation.guests.hashCode)
             .withOpacity(0.9),
@@ -950,54 +980,136 @@ class HotelManagementState extends State<Hotel_Management> {
         ],
       ),
       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      // child: Text(
-      //   reservation.guests.map((g) => g.fullName).join(", "),
-      //   style: TextStyle(
-      //     color: Colors.white,
-      //     fontWeight: FontWeight.bold,
-      //     fontSize: 13,
-      //   ),
-      //   maxLines: 1,
-      //   overflow: TextOverflow.ellipsis,
-      // ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            reservation.guests.map((g) => g.fullName).join(", "),
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
+          // Partie gauche: noms des invités
+          Expanded(
+            child: Text(
+              reservation.guests.map((g) => g.fullName).join(", "),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
-          Row(
-            children: [
-              Text(
-                '${totalPrice.toStringAsFixed(2)} DZD',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+          SizedBox(width: 8),
+          // Partie droite: prix et statut
+          Flexible(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Flexible(
+                  child: Text(
+                    '${totalPrice.toStringAsFixed(2)} DZD',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              Text(
-                reservation.status,
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    reservation.status,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
+    //   Container(
+    //   width: details.bounds.width,
+    //   height: details.bounds.height,
+    //   // Utilisez toute la hauteur disponible
+    //
+    //   // decoration: BoxDecoration(
+    //   //   color: _getRandomColorForReservation(reservation.clientName.hashCode),
+    //   //   borderRadius: BorderRadius.circular(14),
+    //   //   border: Border.all(color: Colors.white, width: 1),
+    //   //   boxShadow: [
+    //   //     BoxShadow(
+    //   //       color: Colors.black.withOpacity(0.1),
+    //   //       blurRadius: 2,
+    //   //       offset: Offset(0, 1),
+    //   //     ),
+    //   //   ],
+    //   // ),
+    //   decoration: BoxDecoration(
+    //     color: _getRandomColorForReservation(reservation.guests.hashCode)
+    //         .withOpacity(0.9),
+    //     borderRadius: BorderRadius.circular(12),
+    //     boxShadow: [
+    //       BoxShadow(
+    //         color: Colors.black.withOpacity(0.1),
+    //         blurRadius: 4,
+    //         offset: Offset(0, 2),
+    //       ),
+    //     ],
+    //   ),
+    //   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    //   // child: Text(
+    //   //   reservation.guests.map((g) => g.fullName).join(", "),
+    //   //   style: TextStyle(
+    //   //     color: Colors.white,
+    //   //     fontWeight: FontWeight.bold,
+    //   //     fontSize: 13,
+    //   //   ),
+    //   //   maxLines: 1,
+    //   //   overflow: TextOverflow.ellipsis,
+    //   // ),
+    //   child: Row(
+    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    //     children: [
+    //       Text(
+    //         reservation.guests.map((g) => g.fullName).join(", "),
+    //         style: TextStyle(
+    //           color: Colors.white,
+    //           fontWeight: FontWeight.bold,
+    //           fontSize: 13,
+    //         ),
+    //         maxLines: 1,
+    //         overflow: TextOverflow.ellipsis,
+    //       ),
+    //       Row(
+    //         children: [
+    //           Text(
+    //             '${totalPrice.toStringAsFixed(2)} DZD',
+    //             style: TextStyle(
+    //               color: Colors.white,
+    //               fontSize: 12,
+    //               fontWeight: FontWeight.w600,
+    //             ),
+    //           ),
+    //           Text(
+    //             reservation.status,
+    //             style: TextStyle(
+    //               color: Colors.white70,
+    //               fontSize: 11,
+    //               fontWeight: FontWeight.w500,
+    //             ),
+    //             maxLines: 1,
+    //             overflow: TextOverflow.ellipsis,
+    //           ),
+    //         ],
+    //       ),
+    //     ],
+    //   ),
+    // );
   }
 
   String _formatDate(DateTime date) {
@@ -1005,23 +1117,11 @@ class HotelManagementState extends State<Hotel_Management> {
   }
 
   Widget _buildFloatingActionButtons() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        FloatingActionButton(
-          heroTag: "add",
-          onPressed: _showAddReservationDialog,
-          backgroundColor: Colors.green,
-          child: Icon(Icons.add, color: Colors.white),
-        ),
-        SizedBox(height: 10),
-        FloatingActionButton(
-          heroTag: "edit",
-          onPressed: () => _showEditOptions(),
-          backgroundColor: Colors.orange,
-          child: Icon(Icons.edit, color: Colors.white),
-        ),
-      ],
+    return FloatingActionButton(
+      heroTag: "add",
+      onPressed: _showAddReservationDialog,
+      backgroundColor: Colors.green,
+      child: Icon(Icons.add, color: Colors.white),
     );
   }
 
@@ -1108,175 +1208,35 @@ class HotelManagementState extends State<Hotel_Management> {
 
   void _showAddReservationDialog(
       [Room? preselectedRoom, DateTime? preselectedDate]) {
-    final clientNameController = TextEditingController();
-    final priceController = TextEditingController();
-
-    Room selectedRoom = preselectedRoom ?? _currentHotel!.rooms.first;
-    DateTime from = preselectedDate ?? DateTime.now();
-    DateTime to = from.add(Duration(days: 1));
-    String selectedStatus = "Confirmée";
-
-    final statuses = ["Confirmée", "En attente", "Arrivé", "Parti", "Annulée"];
+    final provider = Provider.of<HotelProvider>(context, listen: false);
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text('Nouvelle Réservation'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: clientNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nom du client',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<Room>(
-                  value: selectedRoom,
-                  decoration: InputDecoration(
-                    labelText: 'Chambre',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _currentHotel!.rooms
-                      .map(
-                        (room) => DropdownMenuItem(
-                          value: room,
-                          child: Text('Chambre ${room.code}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setDialogState(() => selectedRoom = value!),
-                ),
-                SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: from,
-                            firstDate:
-                                DateTime.now().subtract(Duration(days: 30)),
-                            lastDate: DateTime.now().add(Duration(days: 365)),
-                          );
-                          if (date != null) {
-                            setDialogState(() {
-                              from = date;
-                              to = from.add(Duration(days: 1));
-                            });
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('Arrivée: ${_formatDate(from)}'),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: to,
-                            firstDate: from.add(Duration(days: 1)),
-                            lastDate: from.add(Duration(days: 365)),
-                          );
-                          if (date != null) {
-                            setDialogState(() => to = date);
-                          }
-                        },
-                        child: Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('Départ: ${_formatDate(to)}'),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Prix par nuit (€)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedStatus,
-                  decoration: InputDecoration(
-                    labelText: 'Statut',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: statuses
-                      .map(
-                        (status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setDialogState(() => selectedStatus = value!),
-                ),
-              ],
-            ),
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8),
+          child: ReservationDialogContent(
+            preselectedRoom: preselectedRoom,
+            preselectedDate: preselectedDate,
+            currentHotel: _currentHotel!,
+            provider: provider,
+            parentContext: context,
+            // Passer le contexte parent pour SnackBar
+            onReservationAdded: () {
+              // Rafraîchir le calendrier
+              setState(() {
+                _dataSource = HotelReservationDataSource(
+                    _currentHotel!.rooms
+                        .expand((room) => room.reservations)
+                        .toList(),
+                    _currentHotel!.rooms.toList());
+              });
+            },
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final reservation = Reservation(
-                  from: from,
-                  to: to,
-                  pricePerNight: double.tryParse(priceController.text) ?? 0.0,
-                  status: selectedStatus,
-                );
-
-                // Associer la chambre
-                reservation.room.target = selectedRoom;
-
-                // Créer un Guest avec le nom saisi
-                if (clientNameController.text.isNotEmpty) {
-                  reservation.guests.add(Guest(
-                      fullName: clientNameController.text,
-                      phoneNumber: '',
-                      email: '',
-                      idCardNumber: '',
-                      nationality: ''));
-                }
-
-                setState(() {
-                  _reservations.add(reservation);
-                  _updateRoomStates();
-                  _dataSource = HotelReservationDataSource(
-                      _reservations, _currentHotel!.rooms.toList());
-                });
-
-                Navigator.pop(context);
-              },
-              child: Text('Ajouter'),
-            ),
-          ],
         ),
       ),
     );
@@ -1295,7 +1255,7 @@ class HotelManagementState extends State<Hotel_Management> {
               title: Text('Modifier une réservation'),
               onTap: () {
                 Navigator.pop(context);
-                _showReservationList(isEdit: true);
+                showReservationList(isEdit: true);
               },
             ),
             ListTile(
@@ -1303,7 +1263,7 @@ class HotelManagementState extends State<Hotel_Management> {
               title: Text('Supprimer une réservation'),
               onTap: () {
                 Navigator.pop(context);
-                _showReservationList(isDelete: true);
+                showReservationList(isDelete: true);
               },
             ),
           ],
@@ -1312,7 +1272,12 @@ class HotelManagementState extends State<Hotel_Management> {
     );
   }
 
-  void _showReservationList({bool isEdit = false, bool isDelete = false}) {
+  void showReservationList({bool isEdit = false, bool isDelete = false}) {
+    final provider = Provider.of<HotelProvider>(context, listen: false);
+    final reservations = isEdit
+        ? provider.reservations
+        : provider.reservations.where((r) => r.status != 'Annulée').toList();
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1322,241 +1287,198 @@ class HotelManagementState extends State<Hotel_Management> {
         content: Container(
           width: double.maxFinite,
           height: 300,
-          child: ListView.builder(
-            itemCount: _reservations.length,
-            itemBuilder: (context, index) {
-              final reservation = _reservations[index];
-              return ListTile(
-                title: Text(
-                  reservation.guests.map((g) => g.fullName).join(", "),
+          child: reservations.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Aucune réservation disponible',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: reservations.length,
+                  itemBuilder: (context, index) {
+                    final reservation = reservations[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getStatusColor(reservation.status),
+                        child: Text(
+                          reservation.room.target?.code ?? 'N/A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        // Utilisation de la méthode du provider pour obtenir le nom du client principal
+                        reservation.guests.map((g) => g.fullName).join(", "),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            // Utilisation de la méthode du provider pour obtenir le nom de la chambre
+                            '${provider.getRoomNameForReservation(reservation)} - ${_formatDate(reservation.from)} → ${_formatDate(reservation.to)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          Text(
+                            'Statut: ${reservation.status}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _getStatusColor(reservation.status),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Icon(
+                        isDelete ? Icons.delete : Icons.edit,
+                        color: isDelete ? Colors.red : Colors.blue,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        if (isDelete) {
+                          confirmDeleteReservation(reservation);
+                        } else {
+                          showEditReservationDialog(reservation);
+                        }
+                      },
+                    );
+                  },
                 ),
-                subtitle: Text(
-                    '${reservation.room} - ${_formatDate(reservation.from)}'),
-                trailing: Icon(
-                  isDelete ? Icons.delete : Icons.edit,
-                  color: isDelete ? Colors.red : Colors.blue,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  if (isDelete) {
-                    _confirmDeleteReservation(index);
-                  } else {
-                    _showEditReservationDialog(index);
-                  }
-                },
-              );
-            },
-          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Fermer'),
+            child: const Text('Fermer'),
           ),
         ],
       ),
     );
   }
 
-  void _showEditReservationDialog(int index) {
-    final reservation = _reservations[index];
+// Méthode helper pour obtenir la couleur selon le statut
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Confirmée':
+        return Colors.green;
+      case 'En cours':
+        return Colors.blue;
+      case 'Terminée':
+        return Colors.grey;
+      case 'Annulée':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
 
-    final clientNameController = TextEditingController(
-      text: reservation.guests.map((g) => g.fullName).join(", "),
-    );
-    final priceController =
-        TextEditingController(text: reservation.pricePerNight.toString());
-
-    Room? selectedRoom = reservation.room.target;
-    DateTime from = reservation.from;
-    DateTime to = reservation.to;
-    String selectedStatus = reservation.status;
-
-    final statuses = ["Confirmée", "En attente", "Arrivé", "Parti", "Annulée"];
+// Méthode de confirmation de suppression corrigée
+  void confirmDeleteReservation(Reservation reservation) {
+    // Obtenir le provider une fois avant d'ouvrir le dialog
+    final provider = Provider.of<HotelProvider>(context, listen: false);
+    final clientName = provider.getPrimaryGuestName(reservation);
+    final roomName = provider.getRoomNameForReservation(reservation);
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Modifier la réservation'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: clientNameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom du client',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<Room>(
-                  value: selectedRoom,
-                  decoration: const InputDecoration(
-                    labelText: 'Chambre',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _currentHotel!.rooms
-                      .map(
-                        (room) => DropdownMenuItem(
-                          value: room,
-                          child: Text('Chambre ${room.code}'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setDialogState(() => selectedRoom = value),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: from,
-                            firstDate: DateTime.now()
-                                .subtract(const Duration(days: 30)),
-                            lastDate:
-                                DateTime.now().add(const Duration(days: 365)),
-                          );
-                          if (date != null) {
-                            setDialogState(() => from = date);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('Arrivée: ${_formatDate(from)}'),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: to,
-                            firstDate: from.add(const Duration(days: 1)),
-                            lastDate: from.add(const Duration(days: 365)),
-                          );
-                          if (date != null) {
-                            setDialogState(() => to = date);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text('Départ: ${_formatDate(to)}'),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Prix par nuit (€)',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  value: selectedStatus,
-                  decoration: const InputDecoration(
-                    labelText: 'Statut',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: statuses
-                      .map(
-                        (status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) =>
-                      setDialogState(() => selectedStatus = value!),
-                ),
-              ],
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+                'Êtes-vous sûr de vouloir supprimer cette réservation ?'),
+            const SizedBox(height: 16),
+            Text(
+              'Client: $clientName',
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
+            Text(
+              'Chambre: $roomName',
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  reservation.from = from;
-                  reservation.to = to;
-                  reservation.pricePerNight =
-                      double.tryParse(priceController.text) ?? 0.0;
-                  reservation.status = selectedStatus;
-
-                  if (selectedRoom != null) {
-                    reservation.room.target = selectedRoom;
-                  }
-
-                  reservation.guests.clear();
-                  if (clientNameController.text.isNotEmpty) {
-                    reservation.guests.add(Guest(
-                        fullName: clientNameController.text,
-                        phoneNumber: '',
-                        email: '',
-                        idCardNumber: '',
-                        nationality: ''));
-                  }
-
-                  _updateRoomStates();
-                  _dataSource = HotelReservationDataSource(
-                      _reservations, _currentHotel!.rooms);
-                });
-
-                Navigator.pop(context);
-              },
-              child: const Text('Modifier'),
+            Text(
+              'Période: ${_formatDate(reservation.from)} → ${_formatDate(reservation.to)}',
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final success = await provider.deleteReservation(reservation.id);
+
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Réservation supprimée avec succès'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Erreur lors de la suppression'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
       ),
     );
   }
 
-  void _confirmDeleteReservation(int index) {
-    final reservation = _reservations[index];
+// 1. Méthode pour afficher le dialogue d'édition (version corrigée)
+  void showEditReservationDialog(Reservation reservation) {
+    final provider = Provider.of<HotelProvider>(context, listen: false);
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirmer la suppression'),
-        content: Text(
-            'Êtes-vous sûr de vouloir supprimer la réservation de ${reservation.guests.map((g) => g.fullName).join(", ")} ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Annuler'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              _deleteReservation(index);
-              Navigator.pop(context);
+      barrierDismissible: false,
+      builder: (dialogContext) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.8),
+          child: ReservationDialogContent(
+            preselectedRoom: reservation.room.target,
+            preselectedDate: reservation.from,
+            currentHotel: _currentHotel!,
+            provider: provider,
+            parentContext: context,
+            isEditing: true,
+            // Nouveau paramètre
+            existingReservation: reservation,
+            // Nouveau paramètre
+            onReservationAdded: () {
+              // Rafraîchir le calendrier après modification
+              setState(() {
+                _dataSource = HotelReservationDataSource(
+                    _currentHotel!.rooms
+                        .expand((room) => room.reservations)
+                        .toList(),
+                    _currentHotel!.rooms.toList());
+              });
             },
-            child: Text('Supprimer', style: TextStyle(color: Colors.white)),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1938,8 +1860,7 @@ class HotelManagementState extends State<Hotel_Management> {
               title: Text('Modifier'),
               onTap: () {
                 Navigator.pop(context);
-                final index = _reservations.indexOf(reservation);
-                if (index != -1) _showEditReservationDialog(index);
+                showEditReservationDialog(reservation);
               },
             ),
             ListTile(
@@ -1947,214 +1868,13 @@ class HotelManagementState extends State<Hotel_Management> {
               title: Text('Supprimer'),
               onTap: () {
                 Navigator.pop(context);
-                final index = _reservations.indexOf(reservation);
-                if (index != -1) _confirmDeleteReservation(index);
+                confirmDeleteReservation(reservation);
               },
             ),
           ],
         ),
       ),
     );
-  }
-
-  // ========================= MÉTHODES DE DONNÉES =========================
-
-  void _updateRoomStates() {
-    if (_currentHotel == null) return;
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    for (final room in _currentHotel!.rooms) {
-      // Trouver les réservations pour cette chambre
-      final roomReservations = _reservations
-          .where(
-            (r) => r.room.target?.code == room.code && r.status != "Annulée",
-          )
-          .toList();
-
-      // Vérifier si occupée aujourd'hui
-      final isOccupiedToday = roomReservations.any(
-        (r) =>
-            r.from.isBefore(today.add(const Duration(days: 1))) &&
-            r.to.isAfter(today),
-      );
-
-      if (isOccupiedToday) {
-        // ✅ Convert enum to string and use correct property name
-        room.status =
-            RoomState.occupied.name; // or RoomState.occupied.toString()
-      } else {
-        // Vérifier s'il y a une réservation future
-        final hasFutureReservation =
-            roomReservations.any((r) => r.from.isAfter(today));
-
-        if (hasFutureReservation) {
-          // ✅ Use 'status' instead of 'currentState'
-          room.status = RoomState.waitingGuest.name;
-        } else {
-          room.status = RoomState.empty.name;
-        }
-      }
-    }
-  }
-
-  void _addReservation(
-    List<Guest> guests,
-    Room room,
-    DateTime from,
-    DateTime to,
-    double pricePerNight,
-    String status,
-  ) {
-    if (guests.isEmpty) return;
-
-    if (_hasConflict(room, from, to)) {
-      final nextAvailable = _findNextAvailableDate(room, from);
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Conflit de réservation'),
-          content: Text(
-            'Cette chambre est déjà réservée pour cette période.\n'
-            'Prochaine date disponible : ${_formatDate(nextAvailable ?? to)}',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      final reservation = Reservation(
-        from: from,
-        to: to,
-        pricePerNight: pricePerNight,
-        status: status,
-      );
-
-      // lier la chambre
-      reservation.room.target = room;
-
-      // lier les invités
-      reservation.guests.addAll(guests);
-
-      _reservations.add(reservation);
-      _updateRoomStates();
-      _dataSource =
-          HotelReservationDataSource(_reservations, _currentHotel!.rooms);
-    });
-  }
-
-  bool _hasConflict(Room room, DateTime from, DateTime to,
-      [int? excludeIndex]) {
-    return _reservations.asMap().entries.any((entry) {
-      final i = entry.key;
-      final existing = entry.value;
-
-      if (excludeIndex != null && i == excludeIndex) return false;
-      if (existing.room.target?.code != room.code ||
-          existing.status == "Annulée") {
-        return false;
-      }
-      return from.isBefore(existing.to) && to.isAfter(existing.from);
-    });
-  }
-
-  DateTime? _findNextAvailableDate(Room room, DateTime from) {
-    final roomReservations = _reservations
-        .where(
-          (r) => r.room.target?.code == room.code && r.status != "Annulée",
-        )
-        .toList()
-      ..sort((a, b) => a.from.compareTo(b.from));
-
-    DateTime currentDate = from;
-    for (final reservation in roomReservations) {
-      if (currentDate.isBefore(reservation.from)) {
-        return currentDate;
-      }
-      currentDate = reservation.to;
-    }
-    return currentDate;
-  }
-
-  void _editReservation(
-    int index,
-    List<Guest> guests,
-    Room room,
-    DateTime from,
-    DateTime to,
-    double pricePerNight,
-    String status,
-  ) {
-    if (guests.isEmpty || index < 0 || index >= _reservations.length) return;
-
-    final hasConflict = _reservations.asMap().entries.any((entry) {
-      final i = entry.key;
-      final existing = entry.value;
-
-      if (i == index ||
-          existing.room.target?.code != room.code ||
-          existing.status == "Annulée") {
-        return false;
-      }
-      return (from.isBefore(existing.to) && to.isAfter(existing.from));
-    });
-
-    if (hasConflict) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Conflit de réservation'),
-          content: const Text(
-              'Une autre réservation existe déjà pour cette chambre sur cette période.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      final reservation = Reservation(
-        from: from,
-        to: to,
-        pricePerNight: pricePerNight,
-        status: status,
-      );
-
-      // lier la chambre
-      reservation.room.target = room;
-
-      // lier les invités
-      reservation.guests.addAll(guests);
-
-      _reservations[index] = reservation;
-      _updateRoomStates();
-      _dataSource =
-          HotelReservationDataSource(_reservations, _currentHotel!.rooms);
-    });
-  }
-
-  void _deleteReservation(int index) {
-    if (index < 0 || index >= _reservations.length) return;
-
-    setState(() {
-      _reservations.removeAt(index);
-      _updateRoomStates();
-      _dataSource =
-          HotelReservationDataSource(_reservations, _currentHotel!.rooms);
-    });
   }
 
   // ========================= UTILITAIRES =========================
@@ -2185,5 +1905,815 @@ class HotelManagementState extends State<Hotel_Management> {
       Colors.deepPurple,
     ];
     return colors[seed.abs() % colors.length];
+  }
+}
+
+// 2. Version modifiée de ReservationDialogContent pour supporter l'édition
+class ReservationDialogContent extends StatefulWidget {
+  final Room? preselectedRoom;
+  final DateTime? preselectedDate;
+  final Hotel currentHotel;
+  final HotelProvider provider;
+  final BuildContext parentContext;
+  final VoidCallback onReservationAdded;
+  final bool isEditing; // Nouveau paramètre
+  final Reservation? existingReservation; // Nouveau paramètre
+
+  const ReservationDialogContent({
+    Key? key,
+    this.preselectedRoom,
+    this.preselectedDate,
+    required this.currentHotel,
+    required this.provider,
+    required this.parentContext,
+    required this.onReservationAdded,
+    this.isEditing = false, // Valeur par défaut
+    this.existingReservation, // Peut être null pour nouveaux
+  }) : super(key: key);
+
+  @override
+  State<ReservationDialogContent> createState() =>
+      _ReservationDialogContentState();
+}
+
+class _ReservationDialogContentState extends State<ReservationDialogContent> {
+  final _formKey = GlobalKey<FormState>();
+  final _guestController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _idCardController = TextEditingController();
+  final _priceController = TextEditingController();
+
+  Room? _selectedRoom;
+  Employee? _selectedEmployee;
+  List<Guest> _selectedGuests = [];
+  DateTime? _fromDate;
+  DateTime? _toDate;
+  String _status = "Confirmée";
+  bool _isLoading = false;
+
+  final List<String> _statuses = [
+    "Confirmée",
+    "En attente",
+    "Arrivé",
+    "Parti",
+    "Annulée"
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.isEditing && widget.existingReservation != null) {
+      // Mode édition - pré-remplir avec les données existantes
+      _initializeForEdit();
+    } else {
+      // Mode création - utiliser les valeurs par défaut
+      _initializeForNew();
+    }
+  }
+
+  void _initializeForEdit() {
+    final reservation = widget.existingReservation!;
+
+    // Trouver la chambre correspondante dans la liste des chambres de l'hôtel
+    // pour éviter les problèmes de référence d'objet ObjectBox
+    final roomId = reservation.room.target?.id;
+    _selectedRoom = roomId != null
+        ? widget.currentHotel.rooms
+            .cast<Room?>()
+            .firstWhere((room) => room?.id == roomId, orElse: () => null)
+        : null;
+
+    // Même logique pour l'employé
+    final employeeId = reservation.receptionist.target?.id;
+    _selectedEmployee = employeeId != null
+        ? widget.provider.employees
+            .cast<Employee?>()
+            .firstWhere((emp) => emp?.id == employeeId, orElse: () => null)
+        : null;
+
+    _selectedGuests = reservation.guests.toList();
+    _fromDate = reservation.from;
+    _toDate = reservation.to;
+    _status = reservation.status;
+    _priceController.text = reservation.pricePerNight.toString();
+  }
+
+  void _initializeForNew() {
+    _selectedRoom = widget.preselectedRoom;
+    _fromDate = widget.preselectedDate ?? DateTime.now();
+    _toDate = _fromDate!.add(Duration(days: 1));
+  }
+
+  @override
+  void dispose() {
+    _guestController.dispose();
+    _phoneController.dispose();
+    _idCardController.dispose();
+    _priceController.dispose();
+    super.dispose();
+  }
+
+  void _addGuest() {
+    if (_guestController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
+        _idCardController.text.trim().isEmpty) {
+      _showSnackBar('Veuillez remplir tous les champs du client',
+          isError: true);
+      return;
+    }
+
+    final trimmedName = _guestController.text.trim();
+
+    // Vérifier si le client existe déjà
+    if (_selectedGuests.any(
+        (guest) => guest.fullName.toLowerCase() == trimmedName.toLowerCase())) {
+      _showSnackBar('Ce client est déjà ajouté', isError: true);
+      return;
+    }
+
+    final newGuest = Guest(
+      fullName: trimmedName,
+      phoneNumber: _phoneController.text.trim(),
+      idCardNumber: _idCardController.text.trim(),
+    );
+
+    setState(() {
+      _selectedGuests.add(newGuest);
+      _guestController.clear();
+      _phoneController.clear();
+      _idCardController.clear();
+    });
+
+    _showSnackBar('Client ajouté avec succès');
+  }
+
+  void _removeGuest(Guest guest) {
+    setState(() {
+      _selectedGuests.remove(guest);
+    });
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  Future<void> _saveReservation() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Ajouter le client en cours si les champs sont remplis
+    if (_guestController.text.trim().isNotEmpty) {
+      _addGuest();
+    }
+
+    if (_selectedRoom == null ||
+        _selectedEmployee == null ||
+        _fromDate == null ||
+        _toDate == null ||
+        _selectedGuests.isEmpty ||
+        _priceController.text.trim().isEmpty) {
+      _showSnackBar('Veuillez remplir tous les champs obligatoires',
+          isError: true);
+      return;
+    }
+
+    if (_fromDate!.isAfter(_toDate!) || _fromDate!.isAtSameMomentAs(_toDate!)) {
+      _showSnackBar('La date de départ doit être après la date d\'arrivée',
+          isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (widget.isEditing && widget.existingReservation != null) {
+        // Mode édition - mettre à jour toutes les propriétés directement
+        final reservation = widget.existingReservation!;
+
+        // Mettre à jour toutes les propriétés
+        reservation.receptionist.target = _selectedEmployee;
+        reservation.pricePerNight = double.parse(_priceController.text);
+        reservation.status = _status;
+
+        // Gérer les clients - d'abord sauvegarder les nouveaux clients
+        for (final guest in _selectedGuests) {
+          if (guest.id == 0) {
+            // Nouveau client
+            await widget.provider.addGuest(guest);
+          }
+        }
+
+        // Mettre à jour la liste des clients
+        reservation.guests.clear();
+        reservation.guests.addAll(_selectedGuests);
+
+        // Maintenant faire la mise à jour avec vérification de disponibilité
+        final result = await widget.provider.updateReservation(
+          reservation,
+          newRoom: _selectedRoom,
+          newFrom: _fromDate,
+          newTo: _toDate,
+        );
+
+        if (result.isSuccess) {
+          widget.onReservationAdded();
+          Navigator.pop(context);
+          _showSnackBar('Réservation modifiée avec succès');
+        } else if (result.conflict != null) {
+          _showConflictDialog(result.conflict!);
+        } else {
+          _showSnackBar(result.error ?? 'Erreur lors de la modification',
+              isError: true);
+        }
+      } else {
+        // Mode création - sauvegarder d'abord les nouveaux clients
+        for (final guest in _selectedGuests) {
+          if (guest.id == 0) {
+            // Nouveau client
+            await widget.provider.addGuest(guest);
+          }
+        }
+
+        final result = await widget.provider.addReservation(
+          room: _selectedRoom!,
+          receptionist: _selectedEmployee!,
+          guests: _selectedGuests,
+          from: _fromDate!,
+          to: _toDate!,
+          pricePerNight: double.parse(_priceController.text),
+          status: _status,
+        );
+
+        if (result.isSuccess) {
+          widget.onReservationAdded();
+          Navigator.pop(context);
+          _showSnackBar('Réservation créée avec succès');
+        } else if (result.conflict != null) {
+          _showConflictDialog(result.conflict!);
+        } else {
+          _showSnackBar(result.error ?? 'Erreur lors de la création',
+              isError: true);
+        }
+      }
+    } catch (e) {
+      _showSnackBar('Erreur lors de l\'opération: $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showConflictDialog(ReservationConflict conflict) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Conflit de réservation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                'La chambre ${conflict.room.code} est déjà réservée pour cette période.'),
+            SizedBox(height: 16),
+            Text('Réservations en conflit:'),
+            ...conflict.conflictingReservations.map((res) => Padding(
+                  padding: EdgeInsets.only(left: 8, top: 4),
+                  child: Text(
+                      '• ${_formatDate(res.from)} → ${_formatDate(res.to)}'),
+                )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Forcer la réservation malgré le conflit
+              _saveWithForce();
+            },
+            child: Text('Forcer quand même'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveWithForce() async {
+    setState(() => _isLoading = true);
+
+    try {
+      if (widget.isEditing && widget.existingReservation != null) {
+        // Sauvegarder d'abord les nouveaux clients
+        for (final guest in _selectedGuests) {
+          if (guest.id == 0) {
+            await widget.provider.addGuest(guest);
+          }
+        }
+
+        final result = await widget.provider.updateReservation(
+          widget.existingReservation!,
+          newRoom: _selectedRoom,
+          newFrom: _fromDate,
+          newTo: _toDate,
+          forceOverride: true,
+        );
+
+        if (result.isSuccess) {
+          widget.onReservationAdded();
+          Navigator.pop(context);
+          _showSnackBar('Réservation modifiée avec succès (forcée)');
+        }
+      } else {
+        // Sauvegarder d'abord les nouveaux clients
+        for (final guest in _selectedGuests) {
+          if (guest.id == 0) {
+            await widget.provider.addGuest(guest);
+          }
+        }
+
+        final result = await widget.provider.addReservation(
+          room: _selectedRoom!,
+          receptionist: _selectedEmployee!,
+          guests: _selectedGuests,
+          from: _fromDate!,
+          to: _toDate!,
+          pricePerNight: double.parse(_priceController.text),
+          status: _status,
+          forceOverride: true,
+        );
+
+        if (result.isSuccess) {
+          widget.onReservationAdded();
+          Navigator.pop(context);
+          _showSnackBar('Réservation créée avec succès (forcée)');
+        }
+      }
+    } catch (e) {
+      _showSnackBar('Erreur lors de l\'opération forcée: $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header - Titre dynamique selon le mode
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.hotel, color: Colors.white, size: 28),
+              SizedBox(width: 12),
+              Text(
+                widget.isEditing
+                    ? 'Modifier la réservation'
+                    : 'Nouvelle Réservation',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Spacer(),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.close, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+
+        // Content - Même contenu que votre formulaire existant mais avec les données pré-remplies
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Chambre et Employé
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<Room>(
+                          value: _selectedRoom,
+                          decoration: InputDecoration(
+                            labelText: 'Chambre *',
+                            prefixIcon: Icon(Icons.room),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: widget.currentHotel.rooms.map((room) {
+                            return DropdownMenuItem(
+                              value: room,
+                              child: Text('${room.code} - ${room.type}'),
+                            );
+                          }).toList(),
+                          onChanged: (room) =>
+                              setState(() => _selectedRoom = room),
+                          validator: (value) =>
+                              value == null ? 'Choisissez une chambre' : null,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<int>(
+                          value: _selectedEmployee?.id,
+                          decoration: InputDecoration(
+                            labelText: 'Réceptionniste *',
+                            prefixIcon: Icon(Icons.person),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: widget.provider.employees.map((emp) {
+                            return DropdownMenuItem<int>(
+                              value: emp.id,
+                              // Utilisez l'ID comme valeur unique
+                              child: Text(emp.fullName),
+                            );
+                          }).toList(),
+                          onChanged: (int? empId) {
+                            setState(() {
+                              _selectedEmployee = widget.provider.employees
+                                  .firstWhere((emp) => emp.id == empId);
+                            });
+                          },
+                          validator: (value) => value == null
+                              ? 'Choisissez un réceptionniste'
+                              : null,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Section Clients
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Informations Client',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 16),
+                          TextFormField(
+                            controller: _guestController,
+                            decoration: InputDecoration(
+                              labelText: 'Nom complet',
+                              prefixIcon: Icon(Icons.person_outline),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: InputDecoration(
+                              labelText: 'Téléphone',
+                              prefixIcon: Icon(Icons.phone),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            keyboardType: TextInputType.phone,
+                          ),
+                          SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _idCardController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Carte d\'identité',
+                                    prefixIcon: Icon(Icons.credit_card),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                onPressed: _addGuest,
+                                icon: Icon(Icons.add),
+                                label: Text('Ajouter'),
+                                style: ElevatedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_selectedGuests.isNotEmpty) ...[
+                            SizedBox(height: 16),
+                            Text('Clients ajoutés:',
+                                style: TextStyle(fontWeight: FontWeight.w500)),
+                            SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: _selectedGuests.map((guest) {
+                                return Chip(
+                                  avatar: const CircleAvatar(
+                                    backgroundColor: Colors.deepPurple,
+                                    // Couleur cohérente avec le thème
+                                    child: Icon(Icons.person,
+                                        size: 16, color: Colors.white),
+                                  ),
+
+                                  label: Text(
+                                    guest.fullName,
+                                    style: TextStyle(
+                                      fontFamily: 'OSWALD',
+                                      // Police cohérente avec le thème
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface, // Couleur adaptée au thème
+                                    ),
+                                  ),
+                                  deleteIcon: Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .error, // Couleur d'erreur du thème
+                                  ),
+                                  onDeleted: () => _removeGuest(guest),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                        8), // Coins arrondis pour un style moderne
+                                  ),
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
+                                  // Fond adapté au thème
+                                  side: BorderSide(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant, // Bordure subtile
+                                    width: 1,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  // Taille optimisée
+                                  visualDensity: VisualDensity
+                                      .compact, // Densité visuelle compacte
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 24),
+
+                  // Dates
+                  Row(
+                    children: [
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _fromDate ?? DateTime.now(),
+                              firstDate:
+                                  DateTime.now().subtract(Duration(days: 30)),
+                              lastDate: DateTime.now().add(Duration(days: 365)),
+                            );
+                            if (date != null) {
+                              setState(() {
+                                _fromDate = date;
+                                if (_toDate != null &&
+                                    _toDate!.isBefore(
+                                        date.add(Duration(days: 1)))) {
+                                  _toDate = date.add(Duration(days: 1));
+                                }
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Arrivée *',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey[600])),
+                                SizedBox(height: 4),
+                                Text(
+                                  _fromDate != null
+                                      ? _formatDate(_fromDate!)
+                                      : 'Sélectionner',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: _toDate ??
+                                  (_fromDate?.add(Duration(days: 1)) ??
+                                      DateTime.now().add(Duration(days: 1))),
+                              firstDate: _fromDate?.add(Duration(days: 1)) ??
+                                  DateTime.now(),
+                              lastDate: DateTime.now().add(Duration(days: 365)),
+                            );
+                            if (date != null) {
+                              setState(() => _toDate = date);
+                            }
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Départ *',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey[600])),
+                                SizedBox(height: 4),
+                                Text(
+                                  _toDate != null
+                                      ? _formatDate(_toDate!)
+                                      : 'Sélectionner',
+                                  style: TextStyle(fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // Prix et Statut
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _priceController,
+                          decoration: InputDecoration(
+                            labelText: 'Prix par nuit (DZD) *',
+                            prefixIcon: Icon(Icons.attach_money),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return 'Prix requis';
+                            if (double.tryParse(value) == null)
+                              return 'Prix invalide';
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _status,
+                          decoration: InputDecoration(
+                            labelText: 'Statut',
+                            prefixIcon: Icon(Icons.info_outline),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: _statuses.map((status) {
+                            return DropdownMenuItem(
+                              value: status,
+                              child: Text(status),
+                            );
+                          }).toList(),
+                          onChanged: (status) =>
+                              setState(() => _status = status!),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Footer - Bouton dynamique selon le mode
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  child: Text('Annuler'),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _saveReservation,
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(widget.isEditing
+                          ? 'Modifier la réservation'
+                          : 'Créer la réservation'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

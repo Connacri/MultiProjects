@@ -4,400 +4,6 @@ import '../../../../objectbox.g.dart';
 import '../../../Entity.dart';
 import '../../../classeObjectBox.dart';
 
-//
-// class HotelStructureProvider with ChangeNotifier {
-//   final ObjectBox _objectBox = ObjectBox();
-//
-//   // Collections locales en mémoire
-//   List<Room> _rooms = [];
-//   List<Reservation> _reservations = [];
-//   List<Guest> _guests = [];
-//   List<Employee> _employees = [];
-//
-//   // Getters
-//   List<Room> get rooms => _rooms;
-//
-//   List<Reservation> get reservations => _reservations;
-//
-//   List<Guest> get guests => _guests;
-//
-//   List<Employee> get employees => _employees;
-//
-//   // Constructeur avec initialisation
-//   HotelStructureProvider() {
-//     _initializeData();
-//   }
-//
-// // Méthode d'initialisation des données
-//   Future<void> _initializeData() async {
-//     try {
-//       // Chargement depuis ObjectBox
-//       await loadData();
-//
-//       // // Si pas de données, créer des données par défaut (optionnel)
-//       // if (_rooms.isEmpty && _employees.isEmpty) {
-//       //   await _createDefaultData();
-//       // }
-//
-//       notifyListeners();
-//     } catch (e) {
-//       print('Erreur lors de l\'initialisation des données: $e');
-//     }
-//   }
-//
-//   Hotel? _currentHotel;
-//
-//   Hotel? get currentHotel => _currentHotel;
-//
-//   /// === INITIALISATION ===
-//   Future<void> loadData() async {
-//     _rooms = _objectBox.roomBox.getAll();
-//     _reservations = _objectBox.reservationBox.getAll();
-//
-//     _guests = _objectBox.guestBox.getAll();
-//     _employees = _objectBox.employeeBox.getAll();
-//     notifyListeners();
-//   }
-//
-// // Créer des données par défaut (optionnel pour le développement)
-//   Future<void> _createDefaultData() async {
-//     try {
-//       // Créer quelques chambres par défaut
-//       final defaultRooms = [
-//         Room(
-//           code: "101",
-//           type: "Single",
-//           capacity: 1,
-//           basePrice: 8000,
-//         ),
-//         Room(
-//           code: "102",
-//           type: "Double",
-//           capacity: 2,
-//           basePrice: 12000,
-//         ),
-//         Room(
-//           code: "201",
-//           type: "Suite",
-//           capacity: 4,
-//           basePrice: 20000,
-//         ),
-//       ];
-//
-//       // Créer quelques employés par défaut
-//       final defaultEmployees = [
-//         Employee(
-//           fullName: "Ahmed Benali",
-//           phoneNumber: "0555123456",
-//           email: "ahmed@hotel.dz",
-//         ),
-//         Employee(
-//           fullName: "Fatima Khedri",
-//           phoneNumber: "0666789012",
-//           email: "fatima@hotel.dz",
-//         ),
-//       ];
-//
-//       print('Données par défaut créées');
-//     } catch (e) {
-//       print('Erreur lors de la création des données par défaut: $e');
-//     }
-//   }
-//
-//   // Méthode pour rafraîchir les données manuellement
-//   Future<void> refreshData() async {
-//     await loadData();
-//     notifyListeners();
-//   }
-//
-//   // ======================
-//   //        ROOMS
-//   // ======================
-//
-//   void addRoom(Room room) {
-//     _objectBox.roomBox.put(room);
-//     loadData();
-//   }
-//
-//   void updateRoom(Room room) {
-//     _objectBox.roomBox.put(room, mode: PutMode.update);
-//     loadData();
-//   }
-//
-//   void deleteRoom(int id) {
-//     _objectBox.roomBox.remove(id);
-//     loadData();
-//   }
-//
-//   // ======================
-//   //        GUESTS
-//   // ======================
-//
-//   void addGuest(Guest guest) {
-//     _objectBox.guestBox.put(guest);
-//     loadData();
-//   }
-//
-//   void updateGuest(Guest guest) {
-//     _objectBox.guestBox.put(guest, mode: PutMode.update);
-//     loadData();
-//   }
-//
-//   void deleteGuest(int id) {
-//     _objectBox.guestBox.remove(id);
-//     loadData();
-//   }
-//
-//   // ======================
-//   //      EMPLOYEES
-//   // ======================
-//
-//   void addEmployee(Employee employee) {
-//     _objectBox.employeeBox.put(employee);
-//     loadData();
-//   }
-//
-//   void updateEmployee(Employee employee) {
-//     _objectBox.employeeBox.put(employee, mode: PutMode.update);
-//     loadData();
-//   }
-//
-//   void deleteEmployee(int id) {
-//     _objectBox.employeeBox.remove(id);
-//     loadData();
-//   }
-//
-//   // ======================
-//   //    RESERVATIONS
-//   // ======================
-//
-//   void addReservation(Reservation reservation, Room room, Employee employee,
-//       List<Guest> guests) {
-//     reservation.room.target = room;
-//     reservation.receptionist.target = employee;
-//     reservation.guests.addAll(guests);
-//
-//     _objectBox.reservationBox.put(reservation);
-//     loadData();
-//   }
-//
-//   void updateReservation(Reservation reservation) {
-//     _objectBox.reservationBox.put(reservation, mode: PutMode.update);
-//     loadData();
-//   }
-//
-//   void deleteReservation(int id) {
-//     _objectBox.reservationBox.remove(id);
-//     loadData();
-//   }
-//
-//   // ======================
-//   //   RECHERCHES UTILES
-//   // ======================
-//
-//   List<Reservation> getReservationsByRoom(Room room) {
-//     return _objectBox.reservationBox
-//         .query(Reservation_.room.equals(room.id))
-//         .build()
-//         .find();
-//   }
-//
-//   List<Reservation> getReservationsByGuest(Guest guest) {
-//     return guest.reservations; // grâce au Many-to-Many
-//   }
-//
-//   List<Reservation> getReservationsByEmployee(Employee employee) {
-//     return employee.reservations;
-//   }
-// }
-//
-// class HotelManagementProvider with ChangeNotifier {
-//   final ObjectBox objectBox;
-//   late final Box<Hotel> hotelBox;
-//   late final Box<Room> roomBox;
-//
-//   List<Hotel> _hotels = [];
-//   bool _isFirstLaunch = true;
-//
-//   List<Hotel> get hotels => _hotels;
-//
-//   bool get isFirstLaunch => _isFirstLaunch;
-//
-//   HotelManagementProvider(this.objectBox) {
-//     hotelBox = objectBox.store.box<Hotel>();
-//     roomBox = objectBox.store.box<Room>();
-//     checkFirstLaunch();
-//   }
-//
-//   void checkFirstLaunch() {
-//     final existing = hotelBox.getAll();
-//     if (existing.isEmpty) {
-//       _isFirstLaunch = true;
-//       _hotels = [];
-//     } else {
-//       _isFirstLaunch = false;
-//       _hotels = existing;
-//     }
-//     notifyListeners();
-//   }
-//
-//   void addHotel(Hotel hotel) {
-//     final id = hotelBox.put(hotel);
-//     hotel.id = id;
-//     _hotels = hotelBox.getAll(); // Recharger la liste
-//     _isFirstLaunch = false;
-//     notifyListeners();
-//   }
-//
-//   void addRoomsToHotel(Hotel hotel, List<Room> rooms) {
-//     // Sauvegarder toutes les chambres
-//     for (final room in rooms) {
-//       room.hotel.target = hotel;
-//       roomBox.put(room);
-//     }
-//
-//     // Recharger les hôtels pour mettre à jour les relations
-//     _hotels = hotelBox.getAll();
-//     notifyListeners();
-//   }
-//
-//   void updateHotel(Hotel hotel) {
-//     hotelBox.put(hotel);
-//     _hotels = hotelBox.getAll();
-//     notifyListeners();
-//   }
-//
-//   void deleteHotel(int id) {
-//     hotelBox.remove(id);
-//     _hotels = hotelBox.getAll();
-//     notifyListeners();
-//   }
-//
-//   // void deleteHotel(int id) {
-//   //   // Supprimer d'abord toutes les chambres de cet hôtel
-//   //   final hotel = hotelBox.get(id);
-//   //   if (hotel != null) {
-//   //     final roomsToDelete = hotel.rooms.toList();
-//   //     for (final room in roomsToDelete) {
-//   //       roomBox.remove(room.id);
-//   //     }
-//   //   }
-//   //
-//   //   // Supprimer l'hôtel
-//   //   hotelBox.remove(id);
-//   //   _hotels = hotelBox.getAll();
-//   //
-//   //   // Si on supprime le dernier hôtel, redevenir en mode "first launch"
-//   //   if (_hotels.isEmpty) {
-//   //     _isFirstLaunch = true;
-//   //   }
-//   //   notifyListeners();
-//   // }
-//
-//   void loadHotels() {
-//     _hotels = hotelBox.getAll();
-//     notifyListeners();
-//   }
-//
-//   void updateRoomStatus(Room room, String newStatus) {
-//     room.status = newStatus;
-//     roomBox.put(room);
-//     notifyListeners();
-//   }
-//
-//   List<Room> getRoomsForHotel(Hotel hotel) {
-//     return hotel.rooms.toList();
-//   }
-//
-//   Room? getRoomByCode(String code) {
-//     final query = roomBox.query(Room_.code.equals(code)).build();
-//     final result = query.findFirst();
-//     query.close();
-//     return result;
-//   }
-// }
-//
-// class ReservationProvider with ChangeNotifier {
-//   final ObjectBox _objectBox;
-//   List<Reservation> _reservations = [];
-//
-//   ReservationProvider(this._objectBox) {
-//     _loadReservations();
-//   }
-//
-//   List<Reservation> get reservations => _reservations;
-//
-//   Future<void> _loadReservations() async {
-//     _reservations = _objectBox.reservationBox.getAll();
-//     notifyListeners();
-//   }
-//
-//   Future<int> addReservation({
-//     required Room room,
-//     required Employee receptionist,
-//     required List<Guest> guests,
-//     required DateTime from,
-//     required DateTime to,
-//     required double pricePerNight,
-//     String status = "Confirmée",
-//   }) async {
-//     final reservation = Reservation(
-//       from: from,
-//       to: to,
-//       pricePerNight: pricePerNight,
-//       status: status,
-//     );
-//
-//     reservation.room.target = room;
-//     reservation.receptionist.target = receptionist;
-//     reservation.guests.addAll(guests);
-//
-//     final id = _objectBox.reservationBox.put(reservation);
-//     await _loadReservations();
-//     return id;
-//   }
-//
-//   Future<bool> deleteReservation(int id) async {
-//     final success = _objectBox.reservationBox.remove(id);
-//     if (success) {
-//       await _loadReservations();
-//     }
-//     return success;
-//   }
-//
-//   Future<void> updateReservation(Reservation reservation) async {
-//     _objectBox.reservationBox.put(reservation);
-//     await _loadReservations();
-//   }
-//
-//   List<Reservation> getReservationsByRoom(Room room) {
-//     final query = _objectBox.reservationBox
-//         .query(Reservation_.room.equals(room.id))
-//         .build();
-//     final results = query.find();
-//     query.close();
-//     return results;
-//   }
-//
-//   List<Reservation> getReservationsInPeriod(DateTime start, DateTime end) {
-//     return _reservations.where((reservation) {
-//       return reservation.from.isBefore(end) && reservation.to.isAfter(start);
-//     }).toList();
-//   }
-//
-//   // Méthode utilitaire pour récupérer le nom de la chambre
-//   String getRoomNameForReservation(Reservation reservation) {
-//     return reservation.room.target?.code ?? 'Chambre inconnue';
-//   }
-//
-//   // Méthode utilitaire pour récupérer le nom du client principal
-//   String getPrimaryGuestName(Reservation reservation) {
-//     return reservation.guests.isNotEmpty
-//         ? reservation.guests.first.fullName
-//         : 'Aucun client';
-//   }
-// }
-
 // ============================================================================
 // PROVIDER DE BASE - Gestion commune des opérations CRUD
 // ============================================================================
@@ -578,7 +184,434 @@ class HotelProvider with ChangeNotifier {
   }
 
   // ============================================================================
-  // GESTION DES HÔTELS
+  // MÉTHODES DE VÉRIFICATION DE DISPONIBILITÉ
+  // ============================================================================
+
+  /// Vérifie si une chambre est disponible pour une période donnée
+  bool isRoomAvailable(Room room, DateTime from, DateTime to,
+      {Reservation? excludeReservation}) {
+    // Normaliser les dates (ignorer les heures/minutes/secondes)
+    final fromDate = DateTime(from.year, from.month, from.day);
+    final toDate = DateTime(to.year, to.month, to.day);
+
+    // Vérifier que les dates sont valides
+    if (fromDate.isAfter(toDate) || fromDate.isAtSameMomentAs(toDate)) {
+      return false;
+    }
+
+    // Obtenir toutes les réservations pour cette chambre
+    final roomReservations = getReservationsByRoom(room)
+        .where((res) => res.status == 'Confirmée' || res.status == 'En cours')
+        .toList();
+
+    // Exclure une réservation spécifique (utile pour les mises à jour)
+    if (excludeReservation != null) {
+      roomReservations.removeWhere((res) => res.id == excludeReservation.id);
+    }
+
+    // Vérifier les chevauchements
+    for (final reservation in roomReservations) {
+      final existingFrom = DateTime(
+          reservation.from.year, reservation.from.month, reservation.from.day);
+      final existingTo = DateTime(
+          reservation.to.year, reservation.to.month, reservation.to.day);
+
+      // Vérification du chevauchement
+      // Deux périodes se chevauchent si :
+      // - La nouvelle période commence avant la fin de l'existante ET
+      // - La nouvelle période se termine après le début de l'existante
+      if (fromDate.isBefore(existingTo) && toDate.isAfter(existingFrom)) {
+        return false; // Il y a un chevauchement
+      }
+    }
+
+    return true;
+  }
+
+  /// Obtient la liste des chambres disponibles pour une période donnée
+  List<Room> getAvailableRoomsForPeriod(DateTime from, DateTime to,
+      {String? roomType}) {
+    return _rooms.where((room) {
+      // Filtrer par type si spécifié
+      if (roomType != null && room.type != roomType) {
+        return false;
+      }
+
+      // Vérifier si la chambre est dans un état disponible
+      if (room.status != 'Disponible') {
+        return false;
+      }
+
+      // Vérifier la disponibilité pour la période
+      return isRoomAvailable(room, from, to);
+    }).toList();
+  }
+
+  /// Vérifie s'il y a des conflits de réservation pour une période
+  ReservationConflict? checkReservationConflict(
+      Room room, DateTime from, DateTime to,
+      {Reservation? excludeReservation}) {
+    if (isRoomAvailable(room, from, to,
+        excludeReservation: excludeReservation)) {
+      return null;
+    }
+
+    final conflictingReservations = getReservationsByRoom(room)
+        .where((res) => res.status == 'Confirmée' || res.status == 'En cours')
+        .where((res) =>
+            excludeReservation == null || res.id != excludeReservation.id)
+        .where((res) {
+      final fromDate = DateTime(from.year, from.month, from.day);
+      final toDate = DateTime(to.year, to.month, to.day);
+      final existingFrom =
+          DateTime(res.from.year, res.from.month, res.from.day);
+      final existingTo = DateTime(res.to.year, res.to.month, res.to.day);
+
+      return fromDate.isBefore(existingTo) && toDate.isAfter(existingFrom);
+    }).toList();
+
+    return ReservationConflict(
+      room: room,
+      requestedFrom: from,
+      requestedTo: to,
+      conflictingReservations: conflictingReservations,
+    );
+  }
+
+  // ============================================================================
+  // GESTION DES RÉSERVATIONS (AMÉLIORÉE)
+  // ============================================================================
+
+  /// Ajoute une réservation avec vérification de disponibilité
+  Future<ReservationResult> addReservation({
+    required Room room,
+    required Employee receptionist,
+    required List<Guest> guests,
+    required DateTime from,
+    required DateTime to,
+    required double pricePerNight,
+    String status = "Confirmée",
+    bool forceOverride = false,
+  }) async {
+    try {
+      // Vérification de base
+      if (guests.isEmpty) {
+        return ReservationResult.error('Au moins un client doit être spécifié');
+      }
+
+      final fromDate = DateTime(from.year, from.month, from.day);
+      final toDate = DateTime(to.year, to.month, to.day);
+
+      if (fromDate.isAfter(toDate) || fromDate.isAtSameMomentAs(toDate)) {
+        return ReservationResult.error(
+            'La date de début doit être antérieure à la date de fin');
+      }
+
+      // Vérifier la disponibilité si ce n'est pas forcé
+      if (!forceOverride) {
+        final conflict = checkReservationConflict(room, from, to);
+        if (conflict != null) {
+          return ReservationResult.conflict(conflict);
+        }
+      }
+
+      // Créer la réservation
+      final reservation = Reservation(
+        from: from,
+        to: to,
+        pricePerNight: pricePerNight,
+        status: status,
+      );
+
+      reservation.room.target = room;
+      reservation.receptionist.target = receptionist;
+      reservation.guests.addAll(guests);
+
+      final id = _reservationBox.put(reservation);
+      await _loadAllData();
+      notifyListeners();
+
+      return ReservationResult.success(id);
+    } catch (e) {
+      debugPrint('Erreur lors de l\'ajout de la réservation: $e');
+      return ReservationResult.error('Erreur lors de l\'ajout: $e');
+    }
+  }
+
+  /// Met à jour une réservation avec vérification de disponibilité
+// Ajoutez cette méthode corrigée dans votre HotelProvider
+
+  /// Met à jour une réservation avec vérification de disponibilité
+  Future<ReservationResult> updateReservation(
+    Reservation reservation, {
+    Room? newRoom,
+    DateTime? newFrom,
+    DateTime? newTo,
+    bool forceOverride = false,
+  }) async {
+    try {
+      final roomToCheck = newRoom ?? reservation.room.target!;
+      final fromToCheck = newFrom ?? reservation.from;
+      final toToCheck = newTo ?? reservation.to;
+
+      // Vérifier la disponibilité si ce n'est pas forcé
+      if (!forceOverride) {
+        final conflict = checkReservationConflict(
+            roomToCheck, fromToCheck, toToCheck,
+            excludeReservation: reservation);
+        if (conflict != null) {
+          return ReservationResult.conflict(conflict);
+        }
+      }
+
+      // Appliquer les modifications
+      if (newRoom != null) reservation.room.target = newRoom;
+      if (newFrom != null) reservation.from = newFrom;
+      if (newTo != null) reservation.to = newTo;
+
+      // IMPORTANT : Utiliser PutMode.update ET s'assurer que l'ID existe
+      if (reservation.id != 0) {
+        _reservationBox.put(reservation, mode: PutMode.update);
+      } else {
+        // Si l'ID est 0, c'est un problème - forcer la création d'un nouvel ID
+        final newId = _reservationBox.put(reservation);
+        reservation.id = newId;
+      }
+
+      await _loadAllData();
+      notifyListeners();
+
+      return ReservationResult.success(reservation.id);
+    } catch (e) {
+      debugPrint('Erreur lors de la mise à jour de la réservation: $e');
+      return ReservationResult.error('Erreur lors de la mise à jour: $e');
+    }
+  }
+
+// Alternative plus sûre : créer une méthode updateReservationComplete
+  Future<ReservationResult> updateReservationComplete({
+    required Reservation reservation,
+    Room? newRoom,
+    Employee? newReceptionist,
+    List<Guest>? newGuests,
+    DateTime? newFrom,
+    DateTime? newTo,
+    double? newPricePerNight,
+    String? newStatus,
+    bool forceOverride = false,
+  }) async {
+    try {
+      final roomToCheck = newRoom ?? reservation.room.target!;
+      final fromToCheck = newFrom ?? reservation.from;
+      final toToCheck = newTo ?? reservation.to;
+
+      // Vérifier la disponibilité si ce n'est pas forcé
+      if (!forceOverride) {
+        final conflict = checkReservationConflict(
+            roomToCheck, fromToCheck, toToCheck,
+            excludeReservation: reservation);
+        if (conflict != null) {
+          return ReservationResult.conflict(conflict);
+        }
+      }
+
+      // S'assurer que tous les guests ont des IDs
+      if (newGuests != null) {
+        for (final guest in newGuests) {
+          if (guest.id == 0) {
+            final guestId = _guestBox.put(guest);
+            guest.id = guestId;
+          }
+        }
+      }
+
+      // Appliquer toutes les modifications
+      if (newRoom != null) reservation.room.target = newRoom;
+      if (newReceptionist != null)
+        reservation.receptionist.target = newReceptionist;
+      if (newFrom != null) reservation.from = newFrom;
+      if (newTo != null) reservation.to = newTo;
+      if (newPricePerNight != null)
+        reservation.pricePerNight = newPricePerNight;
+      if (newStatus != null) reservation.status = newStatus;
+
+      if (newGuests != null) {
+        reservation.guests.clear();
+        reservation.guests.addAll(newGuests);
+      }
+
+      // Sauvegarder avec vérification de l'ID
+      if (reservation.id != 0) {
+        _reservationBox.put(reservation, mode: PutMode.update);
+      } else {
+        final newId = _reservationBox.put(reservation);
+        reservation.id = newId;
+      }
+
+      await _loadAllData();
+      notifyListeners();
+
+      return ReservationResult.success(reservation.id);
+    } catch (e) {
+      debugPrint(
+          'Erreur lors de la mise à jour complète de la réservation: $e');
+      return ReservationResult.error('Erreur lors de la mise à jour: $e');
+    }
+  }
+
+  // ============================================================================
+  // MÉTHODES UTILITAIRES POUR L'UI
+  // ============================================================================
+
+  /// Obtient le taux d'occupation pour une période donnée
+  double getOccupancyRateForPeriod(DateTime from, DateTime to) {
+    if (_rooms.isEmpty) return 0.0;
+
+    final totalRooms = _rooms.length;
+    final occupiedRooms =
+        _rooms.where((room) => !isRoomAvailable(room, from, to)).length;
+
+    return (occupiedRooms / totalRooms) * 100;
+  }
+
+  /// Obtient les suggestions de chambres alternatives en cas de conflit
+  List<Room> getAlternativeRooms(String roomType, DateTime from, DateTime to,
+      {int maxSuggestions = 5}) {
+    return getAvailableRoomsForPeriod(from, to, roomType: roomType)
+        .take(maxSuggestions)
+        .toList();
+  }
+
+  /// Obtient le calendrier d'occupation d'une chambre
+  Map<DateTime, ReservationStatus> getRoomCalendar(
+      Room room, DateTime startMonth, DateTime endMonth) {
+    final calendar = <DateTime, ReservationStatus>{};
+    final roomReservations = getReservationsByRoom(room);
+
+    var currentDate = DateTime(startMonth.year, startMonth.month, 1);
+    final lastDay = DateTime(endMonth.year, endMonth.month + 1, 0);
+
+    while (currentDate.isBefore(lastDay) ||
+        currentDate.isAtSameMomentAs(lastDay)) {
+      calendar[currentDate] = ReservationStatus.available;
+
+      // Vérifier si cette date est occupée
+      for (final reservation in roomReservations) {
+        if (reservation.status != 'Confirmée' &&
+            reservation.status != 'En cours') continue;
+
+        final resFrom = DateTime(reservation.from.year, reservation.from.month,
+            reservation.from.day);
+        final resTo = DateTime(
+            reservation.to.year, reservation.to.month, reservation.to.day);
+
+        if ((currentDate.isAfter(resFrom) ||
+                currentDate.isAtSameMomentAs(resFrom)) &&
+            currentDate.isBefore(resTo)) {
+          calendar[currentDate] = ReservationStatus.occupied;
+          break;
+        }
+      }
+
+      currentDate = currentDate.add(const Duration(days: 1));
+    }
+
+    return calendar;
+  }
+
+  // ============================================================================
+  // MÉTHODES DE RECHERCHE ET ANALYSE (CONSERVÉES)
+  // ============================================================================
+
+  List<Reservation> getReservationsByRoom(Room room) {
+    try {
+      final query =
+          _reservationBox.query(Reservation_.room.equals(room.id)).build();
+      final results = query.find();
+      query.close();
+      return results;
+    } catch (e) {
+      debugPrint('Erreur lors de la recherche de réservations par chambre: $e');
+      return [];
+    }
+  }
+
+  List<Reservation> getReservationsByGuest(Guest guest) {
+    return guest.reservations.toList();
+  }
+
+  List<Reservation> getReservationsByEmployee(Employee employee) {
+    return employee.reservations.toList();
+  }
+
+  List<Reservation> getReservationsInPeriod(DateTime start, DateTime end) {
+    return _reservations.where((reservation) {
+      return reservation.from.isBefore(end) && reservation.to.isAfter(start);
+    }).toList();
+  }
+
+  List<Reservation> getTodayCheckIns() {
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _reservations.where((reservation) {
+      return reservation.from.isAfter(startOfDay) &&
+          reservation.from.isBefore(endOfDay) &&
+          (reservation.status == 'Confirmée' ||
+              reservation.status == 'En cours');
+    }).toList();
+  }
+
+  List<Reservation> getTodayCheckOuts() {
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
+    return _reservations.where((reservation) {
+      return reservation.to.isAfter(startOfDay) &&
+          reservation.to.isBefore(endOfDay) &&
+          (reservation.status == 'Confirmée' ||
+              reservation.status == 'En cours');
+    }).toList();
+  }
+
+  // ============================================================================
+  // MÉTHODES UTILITAIRES (CONSERVÉES)
+  // ============================================================================
+
+  String getRoomNameForReservation(Reservation reservation) {
+    return reservation.room.target?.code ?? 'Chambre inconnue';
+  }
+
+  String getPrimaryGuestName(Reservation reservation) {
+    return reservation.guests.isNotEmpty
+        ? reservation.guests.first.fullName
+        : 'Aucun client';
+  }
+
+  double calculateTotalPrice(Reservation reservation) {
+    final nights = reservation.to.difference(reservation.from).inDays;
+    return reservation.pricePerNight * nights;
+  }
+
+  int getOccupancyRate() {
+    if (_rooms.isEmpty) return 0;
+    final occupiedRooms =
+        _rooms.where((room) => room.status == 'Occupée').length;
+    return ((occupiedRooms / _rooms.length) * 100).round();
+  }
+
+  Map<String, int> getRoomTypeStatistics() {
+    final Map<String, int> stats = {};
+    for (final room in _rooms) {
+      stats[room.type!] = (stats[room.type] ?? 0) + 1;
+    }
+    return stats;
+  }
+
+  // ============================================================================
+  // GESTION DES HÔTELS, CHAMBRES, CLIENTS, EMPLOYÉS (CONSERVÉES)
   // ============================================================================
 
   Future<int> addHotel(Hotel hotel) async {
@@ -628,10 +661,6 @@ class HotelProvider with ChangeNotifier {
     _currentHotel = hotel;
     notifyListeners();
   }
-
-  // ============================================================================
-  // GESTION DES CHAMBRES
-  // ============================================================================
 
   Future<int> addRoom(Room room) async {
     try {
@@ -711,23 +740,6 @@ class HotelProvider with ChangeNotifier {
     return hotel.rooms.toList();
   }
 
-  List<Room> getAvailableRoomsForPeriod(DateTime from, DateTime to) {
-    final conflictingReservations = getReservationsInPeriod(from, to);
-    final occupiedRoomIds = conflictingReservations
-        .map((res) => res.room.target?.id)
-        .where((id) => id != null)
-        .toSet();
-
-    return _rooms
-        .where((room) =>
-            !occupiedRoomIds.contains(room.id) && room.status == 'Disponible')
-        .toList();
-  }
-
-  // ============================================================================
-  // GESTION DES CLIENTS
-  // ============================================================================
-
   Future<int> addGuest(Guest guest) async {
     try {
       final id = _guestBox.put(guest);
@@ -765,10 +777,6 @@ class HotelProvider with ChangeNotifier {
       return false;
     }
   }
-
-  // ============================================================================
-  // GESTION DES EMPLOYÉS
-  // ============================================================================
 
   Future<int> addEmployee(Employee employee) async {
     try {
@@ -808,53 +816,7 @@ class HotelProvider with ChangeNotifier {
     }
   }
 
-  // ============================================================================
-  // GESTION DES RÉSERVATIONS
-  // ============================================================================
-
-  Future<int> addReservation({
-    required Room room,
-    required Employee receptionist,
-    required List<Guest> guests,
-    required DateTime from,
-    required DateTime to,
-    required double pricePerNight,
-    String status = "Confirmée",
-  }) async {
-    try {
-      final reservation = Reservation(
-        from: from,
-        to: to,
-        pricePerNight: pricePerNight,
-        status: status,
-      );
-
-      reservation.room.target = room;
-      reservation.receptionist.target = receptionist;
-      reservation.guests.addAll(guests);
-
-      final id = _reservationBox.put(reservation);
-      await _loadAllData();
-      notifyListeners();
-      return id;
-    } catch (e) {
-      debugPrint('Erreur lors de l\'ajout de la réservation: $e');
-      rethrow;
-    }
-  }
-
-  Future<bool> updateReservation(Reservation reservation) async {
-    try {
-      _reservationBox.put(reservation, mode: PutMode.update);
-      await _loadAllData();
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('Erreur lors de la mise à jour de la réservation: $e');
-      return false;
-    }
-  }
-
+  // Ancienne méthode de suppression de réservation
   Future<bool> deleteReservation(int id) async {
     try {
       final success = _reservationBox.remove(id);
@@ -870,93 +832,6 @@ class HotelProvider with ChangeNotifier {
   }
 
   // ============================================================================
-  // MÉTHODES DE RECHERCHE ET ANALYSE
-  // ============================================================================
-
-  List<Reservation> getReservationsByRoom(Room room) {
-    try {
-      final query =
-          _reservationBox.query(Reservation_.room.equals(room.id)).build();
-      final results = query.find();
-      query.close();
-      return results;
-    } catch (e) {
-      debugPrint('Erreur lors de la recherche de réservations par chambre: $e');
-      return [];
-    }
-  }
-
-  List<Reservation> getReservationsByGuest(Guest guest) {
-    return guest.reservations.toList();
-  }
-
-  List<Reservation> getReservationsByEmployee(Employee employee) {
-    return employee.reservations.toList();
-  }
-
-  List<Reservation> getReservationsInPeriod(DateTime start, DateTime end) {
-    return _reservations.where((reservation) {
-      return reservation.from.isBefore(end) && reservation.to.isAfter(start);
-    }).toList();
-  }
-
-  List<Reservation> getTodayCheckIns() {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    return _reservations.where((reservation) {
-      return reservation.from.isAfter(startOfDay) &&
-          reservation.from.isBefore(endOfDay);
-    }).toList();
-  }
-
-  List<Reservation> getTodayCheckOuts() {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    return _reservations.where((reservation) {
-      return reservation.to.isAfter(startOfDay) &&
-          reservation.to.isBefore(endOfDay);
-    }).toList();
-  }
-
-  // ============================================================================
-  // MÉTHODES UTILITAIRES
-  // ============================================================================
-
-  String getRoomNameForReservation(Reservation reservation) {
-    return reservation.room.target?.code ?? 'Chambre inconnue';
-  }
-
-  String getPrimaryGuestName(Reservation reservation) {
-    return reservation.guests.isNotEmpty
-        ? reservation.guests.first.fullName
-        : 'Aucun client';
-  }
-
-  double calculateTotalPrice(Reservation reservation) {
-    final nights = reservation.to.difference(reservation.from).inDays;
-    return reservation.pricePerNight * nights;
-  }
-
-  int getOccupancyRate() {
-    if (_rooms.isEmpty) return 0;
-    final occupiedRooms =
-        _rooms.where((room) => room.status == 'Occupée').length;
-    return ((occupiedRooms / _rooms.length) * 100).round();
-  }
-
-  Map<String, int> getRoomTypeStatistics() {
-    final Map<String, int> stats = {};
-    for (final room in _rooms) {
-      stats[room.type!] = (stats[room.type] ?? 0) + 1;
-    }
-    return stats;
-  }
-
-  // ============================================================================
   // MÉTHODES DE DÉVELOPPEMENT (À SUPPRIMER EN PRODUCTION)
   // ============================================================================
 
@@ -964,14 +839,12 @@ class HotelProvider with ChangeNotifier {
     if (_rooms.isNotEmpty || _employees.isNotEmpty) return;
 
     try {
-      // Créer des chambres par défaut
       final defaultRooms = [
         Room(code: "101", type: "Single", capacity: 1, basePrice: 8000),
         Room(code: "102", type: "Double", capacity: 2, basePrice: 12000),
         Room(code: "201", type: "Suite", capacity: 4, basePrice: 20000),
       ];
 
-      // Créer des employés par défaut
       final defaultEmployees = [
         Employee(
           fullName: "Ahmed Benali",
@@ -985,7 +858,6 @@ class HotelProvider with ChangeNotifier {
         ),
       ];
 
-      // Sauvegarder les données
       for (final room in defaultRooms) {
         await addRoom(room);
       }
@@ -999,4 +871,59 @@ class HotelProvider with ChangeNotifier {
       debugPrint('Erreur lors de la création des données par défaut: $e');
     }
   }
+}
+
+// ============================================================================
+// CLASSES D'AIDE
+// ============================================================================
+
+class ReservationResult {
+  final bool isSuccess;
+  final int? reservationId;
+  final String? error;
+  final ReservationConflict? conflict;
+
+  ReservationResult._({
+    required this.isSuccess,
+    this.reservationId,
+    this.error,
+    this.conflict,
+  });
+
+  factory ReservationResult.success(int id) => ReservationResult._(
+        isSuccess: true,
+        reservationId: id,
+      );
+
+  factory ReservationResult.error(String message) => ReservationResult._(
+        isSuccess: false,
+        error: message,
+      );
+
+  factory ReservationResult.conflict(ReservationConflict conflict) =>
+      ReservationResult._(
+        isSuccess: false,
+        conflict: conflict,
+      );
+}
+
+class ReservationConflict {
+  final Room room;
+  final DateTime requestedFrom;
+  final DateTime requestedTo;
+  final List<Reservation> conflictingReservations;
+
+  ReservationConflict({
+    required this.room,
+    required this.requestedFrom,
+    required this.requestedTo,
+    required this.conflictingReservations,
+  });
+}
+
+enum ReservationStatus {
+  available,
+  occupied,
+  maintenance,
+  blocked,
 }
