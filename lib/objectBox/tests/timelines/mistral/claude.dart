@@ -222,7 +222,7 @@ class HotelManagementState extends State<Hotel_Management> {
         timeTextStyle: TextStyle(fontSize: 14),
       ),
       resourceViewSettings: ResourceViewSettings(
-        visibleResourceCount: _calculateVisibleRooms(),
+        visibleResourceCount: 10, //_calculateVisibleRooms(),
         size: 60,
         displayNameTextStyle: TextStyle(
           fontWeight: FontWeight.w500,
