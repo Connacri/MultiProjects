@@ -514,10 +514,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: ef7d2a085c1b1d69d17b6842d0734aad90156de08df6bd3c12496d0bd6ddf8e2
+      sha256: e7e16c9d15c36330b94ca0e2ad8cb61f93cd5282d0158c09805aed13b5452f22
       url: "https://pub.dev"
     source: hosted
-    version: "10.3.1"
+    version: "10.3.2"
   file_selector_linux:
     dependency: transitive
     description:
@@ -924,10 +924,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_slidable
-      sha256: ab7dbb16f783307c9d7762ede2593ce32c220ba2ba0fd540a3db8e9a3acba71a
+      sha256: e6bd17290cf0d011f9ed66c74d4159b8fe3b3050afedac0f11fab1ba8687e710
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.0"
+    version: "4.0.1"
   flutter_spinkit:
     dependency: transitive
     description:
@@ -2235,34 +2235,34 @@ packages:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_calendar
-      sha256: "818315ede529831f04e067ce8e2a64d17fd442a4945d8f37b83142e46ddbf8cd"
+      sha256: "8e8a4eef01d6a82ae2c17e76d497ff289ded274de014c9f471ffabc12d1e2e71"
       url: "https://pub.dev"
     source: hosted
-    version: "30.2.6"
+    version: "30.2.7"
   syncfusion_flutter_core:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "6b8b8cb5b4647e6a5858d47fceda9b7e5a9a2be57cff28120acb65edbd92a48c"
+      sha256: bfd026c0f9822b49ff26fed11cd3334519acb6a6ad4b0c81d9cd18df6af1c4c0
       url: "https://pub.dev"
     source: hosted
-    version: "30.2.6"
+    version: "30.2.7"
   syncfusion_flutter_datepicker:
     dependency: transitive
     description:
       name: syncfusion_flutter_datepicker
-      sha256: "873038041c87626bb0d1ea40ab43e881d18781120a4d11922d9a69efc9147a5b"
+      sha256: b5f35cc808e91b229d41613efe71dadab1549a35bfd493f922fc06ccc2fe908c
       url: "https://pub.dev"
     source: hosted
-    version: "30.2.6"
+    version: "30.2.7"
   syncfusion_localizations:
     dependency: transitive
     description:
       name: syncfusion_localizations
-      sha256: e277b07b1e6cad2b9e500c541492160d677d0f18d18097f9132f77ff869a58b6
+      sha256: bb32b07879b4c1dee5d4c8ad1c57343a4fdae55d65a87f492727c11b68f23164
       url: "https://pub.dev"
     source: hosted
-    version: "30.2.6"
+    version: "30.2.7"
   synchronized:
     dependency: transitive
     description:

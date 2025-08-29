@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/deepseekHotel.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
@@ -1951,6 +1952,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   String _status = "Confirmée";
   bool _isLoading = false;
 
+  // Variables pour l'édition de client
+  bool _isEditingGuest = false;
+  Guest? _guestBeingEdited;
+  int? _editingGuestIndex;
+
   final List<String> _statuses = [
     "Confirmée",
     "En attente",
@@ -2025,27 +2031,34 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     final trimmedName = _guestController.text.trim();
 
-    // Vérifier si le client existe déjà
-    if (_selectedGuests.any(
-        (guest) => guest.fullName.toLowerCase() == trimmedName.toLowerCase())) {
+    // Vérifier si le client existe déjà (seulement pour l'ajout, pas l'édition)
+    if (!_isEditingGuest &&
+        _selectedGuests.any((guest) =>
+            guest.fullName.toLowerCase() == trimmedName.toLowerCase())) {
       _showSnackBar('Ce client est déjà ajouté', isError: true);
       return;
     }
 
-    final newGuest = Guest(
-      fullName: trimmedName,
-      phoneNumber: _phoneController.text.trim(),
-      idCardNumber: _idCardController.text.trim(),
-    );
+    if (_isEditingGuest) {
+      // Mode édition - utiliser la méthode de sauvegarde
+      _saveGuestEdit();
+    } else {
+      // Mode ajout - créer un nouveau client
+      final newGuest = Guest(
+        fullName: trimmedName,
+        phoneNumber: _phoneController.text.trim(),
+        idCardNumber: _idCardController.text.trim(),
+      );
 
-    setState(() {
-      _selectedGuests.add(newGuest);
-      _guestController.clear();
-      _phoneController.clear();
-      _idCardController.clear();
-    });
+      setState(() {
+        _selectedGuests.add(newGuest);
+        _guestController.clear();
+        _phoneController.clear();
+        _idCardController.clear();
+      });
 
-    _showSnackBar('Client ajouté avec succès');
+      _showSnackBar('Client ajouté avec succès');
+    }
   }
 
   void _removeGuest(Guest guest) {
@@ -2063,6 +2076,102 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
+  }
+
+  void _handleKeyPress(KeyEvent event) {
+    // Détecter la touche Entrée
+    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
+      if (_guestController.text.trim().isNotEmpty ||
+          _phoneController.text.trim().isNotEmpty ||
+          _idCardController.text.trim().isNotEmpty) {
+        _addGuest();
+      }
+    }
+  }
+
+  void _editGuest(Guest guest, int index) {
+    setState(() {
+      _isEditingGuest = true;
+      _guestBeingEdited = guest;
+      _editingGuestIndex = index;
+
+      // Pré-remplir les champs avec les données du client
+      _guestController.text = guest.fullName;
+      _phoneController.text = guest.phoneNumber ?? '';
+      _idCardController.text = guest.idCardNumber ?? '';
+    });
+  }
+
+  void _cancelGuestEdit() {
+    setState(() {
+      _isEditingGuest = false;
+      _guestBeingEdited = null;
+      _editingGuestIndex = null;
+
+      // Vider les champs
+      _guestController.clear();
+      _phoneController.clear();
+      _idCardController.clear();
+    });
+  }
+
+  void _saveGuestEdit() async {
+    if (_guestController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
+        _idCardController.text.trim().isEmpty) {
+      _showSnackBar('Veuillez remplir tous les champs du client',
+          isError: true);
+      return;
+    }
+
+    final trimmedName = _guestController.text.trim();
+
+    // Vérifier si le nom existe déjà (sauf pour le client en cours d'édition)
+    bool nameExists = false;
+    for (int i = 0; i < _selectedGuests.length; i++) {
+      if (i != _editingGuestIndex &&
+          _selectedGuests[i].fullName.toLowerCase() ==
+              trimmedName.toLowerCase()) {
+        nameExists = true;
+        break;
+      }
+    }
+
+    if (nameExists) {
+      _showSnackBar('Ce nom de client existe déjà', isError: true);
+      return;
+    }
+
+    try {
+      // Mettre à jour le client existant
+      final guestToUpdate = _selectedGuests[_editingGuestIndex!];
+      guestToUpdate.fullName = trimmedName;
+      guestToUpdate.phoneNumber = _phoneController.text.trim();
+      guestToUpdate.idCardNumber = _idCardController.text.trim();
+
+      // Sauvegarder dans ObjectBox si le client a un ID (existe déjà dans la DB)
+      if (guestToUpdate.id != 0) {
+        await widget.provider.updateGuest(guestToUpdate);
+      }
+      // Si l'ID est 0, c'est un nouveau client qui sera sauvegardé lors de la sauvegarde de la réservation
+
+      setState(() {
+        // Réinitialiser l'état d'édition
+        _isEditingGuest = false;
+        _guestBeingEdited = null;
+        _editingGuestIndex = null;
+
+        // Vider les champs
+        _guestController.clear();
+        _phoneController.clear();
+        _idCardController.clear();
+      });
+
+      _showSnackBar('Client modifié avec succès');
+    } catch (e) {
+      _showSnackBar('Erreur lors de la modification du client: $e',
+          isError: true);
+    }
   }
 
   Future<void> _saveReservation() async {
@@ -2102,11 +2211,14 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         reservation.pricePerNight = double.parse(_priceController.text);
         reservation.status = _status;
 
-        // Gérer les clients - d'abord sauvegarder les nouveaux clients
+        // Gérer les clients - sauvegarder nouveaux et mis à jour
         for (final guest in _selectedGuests) {
           if (guest.id == 0) {
             // Nouveau client
             await widget.provider.addGuest(guest);
+          } else {
+            // Client existant - s'assurer qu'il est à jour dans ObjectBox
+            await widget.provider.updateGuest(guest);
           }
         }
 
@@ -2133,11 +2245,14 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               isError: true);
         }
       } else {
-        // Mode création - sauvegarder d'abord les nouveaux clients
+        // Sauvegarder nouveaux et clients mis à jour
         for (final guest in _selectedGuests) {
           if (guest.id == 0) {
             // Nouveau client
             await widget.provider.addGuest(guest);
+          } else {
+            // Client existant - s'assurer qu'il est à jour dans ObjectBox
+            await widget.provider.updateGuest(guest);
           }
         }
 
@@ -2275,6 +2390,25 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        double w = constraints.maxWidth;
+
+        if (w < 600) {
+          // 📱 Mobile
+          return buildForm();
+        } else if (w < 1200) {
+          // 💻 Tablette
+          return buildForm2();
+        } else {
+          // 🖥️ Desktop
+          return buildForm2();
+        }
+      },
+    );
+  }
+
+  Column buildForm() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2336,7 +2470,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           items: widget.currentHotel.rooms.map((room) {
                             return DropdownMenuItem(
                               value: room,
-                              child: Text('${room.code} - ${room.type}'),
+                              child: Text('${room.code} ${room.type ?? ''}'),
                             );
                           }).toList(),
                           onChanged: (room) =>
@@ -2380,6 +2514,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   SizedBox(height: 24),
 
                   // Section Clients
+                  // Section Clients
                   Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(
@@ -2389,63 +2524,106 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Informations Client',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                          SizedBox(
+                            height: 30,
+                            child: Row(
+                              children: [
+                                Text(
+                                  _isEditingGuest
+                                      ? 'Modifier Client'
+                                      : 'Informations Client',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                if (_isEditingGuest) ...[
+                                  Spacer(),
+                                  TextButton(
+                                    onPressed: _cancelGuestEdit,
+                                    child: Text(
+                                      'Annuler',
+                                      style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                           SizedBox(height: 16),
-                          TextFormField(
-                            controller: _guestController,
-                            decoration: InputDecoration(
-                              labelText: 'Nom complet',
-                              prefixIcon: Icon(Icons.person_outline),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 12),
-                          TextFormField(
-                            controller: _phoneController,
-                            decoration: InputDecoration(
-                              labelText: 'Téléphone',
-                              prefixIcon: Icon(Icons.phone),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            keyboardType: TextInputType.phone,
-                          ),
-                          SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _idCardController,
+                          KeyboardListener(
+                            focusNode: FocusNode(),
+                            onKeyEvent: _handleKeyPress,
+                            child: Column(
+                              children: [
+                                TextFormField(
+                                  controller: _guestController,
                                   decoration: InputDecoration(
-                                    labelText: 'Carte d\'identité',
-                                    prefixIcon: Icon(Icons.credit_card),
+                                    labelText: 'Nom complet',
+                                    prefixIcon: Icon(Icons.person_outline),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
+                                  onFieldSubmitted: (_) => _addGuest(),
                                 ),
-                              ),
-                              SizedBox(width: 12),
-                              ElevatedButton.icon(
-                                onPressed: _addGuest,
-                                icon: Icon(Icons.add),
-                                label: Text('Ajouter'),
-                                style: ElevatedButton.styleFrom(
-                                  padding: EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
+                                SizedBox(height: 12),
+                                TextFormField(
+                                  controller: _phoneController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Téléphone',
+                                    prefixIcon: Icon(Icons.phone),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
                                   ),
+                                  keyboardType: TextInputType.phone,
+                                  onFieldSubmitted: (_) => _addGuest(),
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        controller: _idCardController,
+                                        decoration: InputDecoration(
+                                          labelText: 'Carte d\'identité',
+                                          prefixIcon: Icon(Icons.credit_card),
+                                          border: OutlineInputBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                        ),
+                                        onFieldSubmitted: (_) => _addGuest(),
+                                      ),
+                                    ),
+                                    SizedBox(width: 12),
+                                    ElevatedButton.icon(
+                                      onPressed: _addGuest,
+                                      icon: Icon(_isEditingGuest
+                                          ? Icons.save
+                                          : Icons.add),
+                                      label: Text(_isEditingGuest
+                                          ? 'Sauvegarder'
+                                          : 'Ajouter'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _isEditingGuest
+                                            ? Colors.orange
+                                            : null,
+                                        foregroundColor: _isEditingGuest
+                                            ? Colors.white
+                                            : null,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                           if (_selectedGuests.isNotEmpty) ...[
                             SizedBox(height: 16),
@@ -2455,55 +2633,67 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 4,
-                              children: _selectedGuests.map((guest) {
-                                return Chip(
-                                  avatar: const CircleAvatar(
-                                    backgroundColor: Colors.deepPurple,
-                                    // Couleur cohérente avec le thème
-                                    child: Icon(Icons.person,
-                                        size: 16, color: Colors.white),
-                                  ),
+                              children:
+                                  _selectedGuests.asMap().entries.map((entry) {
+                                final int index = entry.key;
+                                final Guest guest = entry.value;
+                                final bool isBeingEdited = _isEditingGuest &&
+                                    _editingGuestIndex == index;
 
-                                  label: Text(
-                                    guest.fullName,
-                                    style: TextStyle(
-                                      fontFamily: 'OSWALD',
-                                      // Police cohérente avec le thème
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface, // Couleur adaptée au thème
+                                return InkWell(
+                                  onTap: () => _editGuest(guest, index),
+                                  onDoubleTap: () => _cancelGuestEdit(),
+                                  child: Chip(
+                                    avatar: CircleAvatar(
+                                      backgroundColor: isBeingEdited
+                                          ? Colors.orange
+                                          : Colors.deepPurple,
+                                      child: Icon(
+                                        isBeingEdited
+                                            ? Icons.edit
+                                            : Icons.person,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
                                     ),
+                                    label: Text(
+                                      guest.fullName,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                    ),
+                                    deleteIcon: Icon(
+                                      Icons.close,
+                                      size: 18,
+                                      color:
+                                          Theme.of(context).colorScheme.error,
+                                    ),
+                                    onDeleted: () => _removeGuest(guest),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    backgroundColor: isBeingEdited
+                                        ? Colors.orange.withOpacity(0.1)
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                    // side: BorderSide(
+                                    //   color: isBeingEdited
+                                    //       ? Colors.orange
+                                    //       : Theme.of(context)
+                                    //           .colorScheme
+                                    //           .outlineVariant,
+                                    //   width: isBeingEdited ? 2 : 1,
+                                    // ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
                                   ),
-                                  deleteIcon: Icon(
-                                    Icons.close,
-                                    size: 18,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .error, // Couleur d'erreur du thème
-                                  ),
-                                  onDeleted: () => _removeGuest(guest),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                        8), // Coins arrondis pour un style moderne
-                                  ),
-                                  backgroundColor: Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
-                                  // Fond adapté au thème
-                                  side: BorderSide(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outlineVariant, // Bordure subtile
-                                    width: 1,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  // Taille optimisée
-                                  visualDensity: VisualDensity
-                                      .compact, // Densité visuelle compacte
                                 );
                               }).toList(),
                             ),
@@ -2654,6 +2844,556 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Footer - Bouton dynamique selon le mode
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(16),
+              bottomRight: Radius.circular(16),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _isLoading ? null : () => Navigator.pop(context),
+                  child: Text('Annuler'),
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _saveReservation,
+                  child: _isLoading
+                      ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(widget.isEditing
+                          ? 'Modifier la réservation'
+                          : 'Créer la réservation'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Column buildForm2() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Header - Titre dynamique selon le mode
+        Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.hotel, color: Colors.white, size: 28),
+              SizedBox(width: 12),
+              Text(
+                widget.isEditing
+                    ? 'Modifier la réservation'
+                    : 'Nouvelle Réservation',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Spacer(),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.close, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+
+        // Content - Fixed layout structure
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left Column - Chambre et Employé + Section Clients
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Chambre et Employé Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<Room>(
+                                value: _selectedRoom,
+                                decoration: InputDecoration(
+                                  labelText: 'Chambre *',
+                                  prefixIcon: Icon(Icons.room),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                items: widget.currentHotel.rooms.map((room) {
+                                  return DropdownMenuItem(
+                                    value: room,
+                                    child:
+                                        Text('${room.code} ${room.type ?? ''}'),
+                                  );
+                                }).toList(),
+                                onChanged: (room) =>
+                                    setState(() => _selectedRoom = room),
+                                validator: (value) => value == null
+                                    ? 'Choisissez une chambre'
+                                    : null,
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<int>(
+                                value: _selectedEmployee?.id,
+                                decoration: InputDecoration(
+                                  labelText: 'Réceptionniste *',
+                                  prefixIcon: Icon(Icons.person),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                items: widget.provider.employees.map((emp) {
+                                  return DropdownMenuItem<int>(
+                                    value: emp.id,
+                                    child: Text(emp.fullName),
+                                  );
+                                }).toList(),
+                                onChanged: (int? empId) {
+                                  setState(() {
+                                    _selectedEmployee = widget
+                                        .provider.employees
+                                        .firstWhere((emp) => emp.id == empId);
+                                  });
+                                },
+                                validator: (value) => value == null
+                                    ? 'Choisissez un réceptionniste'
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 16),
+                        // Dates Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: _fromDate ?? DateTime.now(),
+                                    firstDate: DateTime.now()
+                                        .subtract(Duration(days: 30)),
+                                    lastDate:
+                                        DateTime.now().add(Duration(days: 365)),
+                                  );
+                                  if (date != null) {
+                                    setState(() {
+                                      _fromDate = date;
+                                      if (_toDate != null &&
+                                          _toDate!.isBefore(
+                                              date.add(Duration(days: 1)))) {
+                                        _toDate = date.add(Duration(days: 1));
+                                      }
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Arrivée *',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600])),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        _fromDate != null
+                                            ? _formatDate(_fromDate!)
+                                            : 'Sélectionner',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: InkWell(
+                                onTap: () async {
+                                  final date = await showDatePicker(
+                                    context: context,
+                                    initialDate: _toDate ??
+                                        (_fromDate?.add(Duration(days: 1)) ??
+                                            DateTime.now()
+                                                .add(Duration(days: 1))),
+                                    firstDate:
+                                        _fromDate?.add(Duration(days: 1)) ??
+                                            DateTime.now(),
+                                    lastDate:
+                                        DateTime.now().add(Duration(days: 365)),
+                                  );
+                                  if (date != null) {
+                                    setState(() => _toDate = date);
+                                  }
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Départ *',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey[600])),
+                                      SizedBox(height: 4),
+                                      Text(
+                                        _toDate != null
+                                            ? _formatDate(_toDate!)
+                                            : 'Sélectionner',
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        SizedBox(height: 16),
+
+                        // Prix et Statut Row
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _priceController,
+                                decoration: InputDecoration(
+                                  labelText: 'Prix par nuit (DZD) *',
+                                  prefixIcon: Icon(Icons.attach_money),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty)
+                                    return 'Prix requis';
+                                  if (double.tryParse(value) == null)
+                                    return 'Prix invalide';
+                                  return null;
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: _status,
+                                decoration: InputDecoration(
+                                  labelText: 'Statut',
+                                  prefixIcon: Icon(Icons.info_outline),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                items: _statuses.map((status) {
+                                  return DropdownMenuItem(
+                                    value: status,
+                                    child: Text(
+                                      status,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (status) =>
+                                    setState(() => _status = status!),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(width: 16),
+
+                  // Right Column - Dates and Price/Status
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Section Clients - Fixed height to prevent layout issues
+                        Container(
+                          height: 400, // Fixed height instead of Expanded
+                          child: Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    height: 30,
+                                    child: Row(
+                                      children: [
+                                        Text(
+                                          _isEditingGuest
+                                              ? 'Modifier Client'
+                                              : 'Informations Client',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        if (_isEditingGuest) ...[
+                                          Spacer(),
+                                          TextButton(
+                                            onPressed: _cancelGuestEdit,
+                                            child: Text(
+                                              'Annuler',
+                                              style: TextStyle(
+                                                  color: Colors.grey[600]),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 16),
+                                  KeyboardListener(
+                                    focusNode: FocusNode(),
+                                    onKeyEvent: _handleKeyPress,
+                                    child: Column(
+                                      children: [
+                                        TextFormField(
+                                          controller: _guestController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Nom complet',
+                                            prefixIcon:
+                                                Icon(Icons.person_outline),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onFieldSubmitted: (_) => _addGuest(),
+                                        ),
+                                        SizedBox(height: 12),
+                                        TextFormField(
+                                          controller: _phoneController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Téléphone',
+                                            prefixIcon: Icon(Icons.phone),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          keyboardType: TextInputType.phone,
+                                          onFieldSubmitted: (_) => _addGuest(),
+                                        ),
+                                        SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                controller: _idCardController,
+                                                decoration: InputDecoration(
+                                                  labelText:
+                                                      'Carte d\'identité',
+                                                  prefixIcon:
+                                                      Icon(Icons.credit_card),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                  ),
+                                                ),
+                                                onFieldSubmitted: (_) =>
+                                                    _addGuest(),
+                                              ),
+                                            ),
+                                            SizedBox(width: 12),
+                                            ElevatedButton.icon(
+                                              onPressed: _addGuest,
+                                              icon: Icon(_isEditingGuest
+                                                  ? Icons.save
+                                                  : Icons.add),
+                                              label: Text(_isEditingGuest
+                                                  ? 'Sauvegarder'
+                                                  : 'Ajouter'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: _isEditingGuest
+                                                    ? Colors.orange
+                                                    : null,
+                                                foregroundColor: _isEditingGuest
+                                                    ? Colors.white
+                                                    : null,
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (_selectedGuests.isNotEmpty) ...[
+                                    SizedBox(height: 16),
+                                    Text('Clients ajoutés:',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w500)),
+                                    SizedBox(height: 8),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        child: Wrap(
+                                          spacing: 8,
+                                          runSpacing: 4,
+                                          children: _selectedGuests
+                                              .asMap()
+                                              .entries
+                                              .map((entry) {
+                                            final int index = entry.key;
+                                            final Guest guest = entry.value;
+                                            final bool isBeingEdited =
+                                                _isEditingGuest &&
+                                                    _editingGuestIndex == index;
+
+                                            return InkWell(
+                                              onTap: () =>
+                                                  _editGuest(guest, index),
+                                              onDoubleTap: () =>
+                                                  _cancelGuestEdit(),
+                                              child: Chip(
+                                                avatar: CircleAvatar(
+                                                  backgroundColor: isBeingEdited
+                                                      ? Colors.orange
+                                                      : Colors.deepPurple,
+                                                  child: Icon(
+                                                    isBeingEdited
+                                                        ? Icons.edit
+                                                        : Icons.person,
+                                                    size: 16,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                                label: Text(
+                                                  guest.fullName,
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface,
+                                                  ),
+                                                ),
+                                                deleteIcon: Icon(
+                                                  Icons.close,
+                                                  size: 18,
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .error,
+                                                ),
+                                                onDeleted: () =>
+                                                    _removeGuest(guest),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                backgroundColor: isBeingEdited
+                                                    ? Colors.orange
+                                                        .withOpacity(0.1)
+                                                    : Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceContainerHighest,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4),
+                                                materialTapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

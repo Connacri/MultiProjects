@@ -1,5 +1,5 @@
 name: kenzy
-description: "A new Check-it project."
+description: "A new Wallet DZ project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -82,14 +82,14 @@ dependencies:
   country_flags: ^3.3.0
   google_mobile_ads: ^6.0.0
   permission_handler: ^12.0.1
-  file_picker: ^10.3.1
+  file_picker: ^10.3.2
   vibration: ^3.1.3
   #  window_manager: ^0.4.2
   string_extensions: ^0.7.4
   #  fluent_ui: ^4.10.0
   firebase_auth: ^6.0.1
   #  calendar_timeline: ^1.1.3
-  flutter_slidable: ^4.0.0
+  flutter_slidable: ^4.0.1
   connectivity_plus: ^6.1.5
   #  media_kit: ^1.1.11 # Primary package.
   #  media_kit_video: ^1.2.5 # For video rendering.
@@ -111,10 +111,7 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   flutter_card_swiper: ^7.0.2
   dynamic_flutter_form: ^1.0.2
-  syncfusion_flutter_calendar: ^30.2.6
-
-
-
+  syncfusion_flutter_calendar: ^30.2.7
 
 dev_dependencies:
   flutter_test:
