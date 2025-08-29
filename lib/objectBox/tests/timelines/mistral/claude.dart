@@ -3,14 +3,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:kenzy/objectBox/tests/timelines/mistral/deepseekHotel.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../Entity.dart';
+import 'HotelDataInitializer.dart';
+import 'claude_crud.dart';
 import 'home_Hotel.dart';
-import 'mistralAncien.dart' show Hotel_ManagementA;
 
 class HotelReservationDataSource extends CalendarDataSource {
   HotelReservationDataSource(List<Reservation> reservations, List<Room> rooms) {
@@ -104,6 +104,7 @@ class HotelManagementState extends State<Hotel_Management> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
+      drawer: const AppDrawer(),
       body: Consumer<HotelProvider>(
         builder: (context, provider, _) {
           // Si c'est le premier lancement, afficher le formulaire de création
@@ -129,7 +130,7 @@ class HotelManagementState extends State<Hotel_Management> {
               //   ),
               // ),
               _buildHotelInfo(),
-              Row(
+              Wrap(
                 children: [
                   Expanded(
                     // ou Flexible
@@ -174,9 +175,23 @@ class HotelManagementState extends State<Hotel_Management> {
                           40), // Taille minimale pour un bouton confortable
                     ),
                   ),
-                  SizedBox(
-                    width: 50,
-                  )
+                  ElevatedButton(
+                    onPressed: () async {
+                      final hotelProvider = context.read<HotelProvider>();
+                      final initializer = HotelDataInitializer(hotelProvider);
+
+                      await initializer.initializeAllDefaultData();
+                    },
+                    child: const Text("Initialiser les données"),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final hotelProvider = context.read<HotelProvider>();
+                      await hotelProvider.clearAllTestData();
+                    },
+                    child: const Text("♻️ Reset & Re-init Data"),
+                  ),
                 ],
               ),
               Expanded(child: _buildCalendar(provider)),
@@ -343,43 +358,22 @@ class HotelManagementState extends State<Hotel_Management> {
         ],
       ),
       actions: [
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => deepseek()));
+        ElevatedButton(
+          onPressed: () async {
+            final hotelProvider = context.read<HotelProvider>();
+            final initializer = HotelDataInitializer(hotelProvider);
+
+            await initializer.initializeAllDefaultData();
           },
-          label: Text('deepseek'),
-          icon: Icon(Icons.radio_button_off_rounded),
+          child: const Text("Initialiser les données"),
         ),
         const SizedBox(width: 8),
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => Hotel_Management()));
+        ElevatedButton(
+          onPressed: () async {
+            final hotelProvider = context.read<HotelProvider>();
+            await hotelProvider.clearAllTestData();
           },
-          label: Text('Hotel_Management'),
-          icon: Icon(Icons.radio_button_off_rounded),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => Hotel_ManagementA()));
-          },
-          label: Text('Hotel_ManagementA'),
-          icon: Icon(Icons.add_circle),
+          child: const Text("♻️ Reset & Re-init Data"),
         ),
         IconButton(
           onPressed: () {
@@ -2455,33 +2449,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Chambre et Employé
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<Room>(
-                          value: _selectedRoom,
-                          decoration: InputDecoration(
-                            labelText: 'Chambre *',
-                            prefixIcon: Icon(Icons.room),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          items: widget.currentHotel.rooms.map((room) {
-                            return DropdownMenuItem(
-                              value: room,
-                              child: Text('${room.code} ${room.type ?? ''}'),
-                            );
-                          }).toList(),
-                          onChanged: (room) =>
-                              setState(() => _selectedRoom = room),
-                          validator: (value) =>
-                              value == null ? 'Choisissez une chambre' : null,
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: DropdownButtonFormField<int>(
+                  SizedBox(
+                    height: 120,
+                    child: Column(
+                      children: [
+                        DropdownButtonFormField<int>(
+                          isExpanded: true,
+                          isDense: true,
                           value: _selectedEmployee?.id,
                           decoration: InputDecoration(
                             labelText: 'Réceptionniste *',
@@ -2507,8 +2481,34 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                               ? 'Choisissez un réceptionniste'
                               : null,
                         ),
-                      ),
-                    ],
+                        Spacer(),
+                        DropdownButtonFormField<Room>(
+                          isExpanded: true,
+                          isDense: true,
+                          value: _selectedRoom,
+                          decoration: InputDecoration(
+                            labelText: 'Chambre *',
+                            prefixIcon: Icon(Icons.room),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          items: widget.currentHotel.rooms.map((room) {
+                            final categoryName =
+                                widget.provider.getRoomCategoryName(room);
+                            return DropdownMenuItem(
+                              value: room,
+                              child: Text(
+                                  '${room.code} $categoryName ${room.type ?? ''}'),
+                            );
+                          }).toList(),
+                          onChanged: (room) =>
+                              setState(() => _selectedRoom = room),
+                          validator: (value) =>
+                              value == null ? 'Choisissez une chambre' : null,
+                        ),
+                      ],
+                    ),
                   ),
 
                   SizedBox(height: 24),
@@ -2825,6 +2825,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       SizedBox(width: 16),
                       Expanded(
                         child: DropdownButtonFormField<String>(
+                          isExpanded: true,
+                          isDense: true,
                           value: _status,
                           decoration: InputDecoration(
                             labelText: 'Statut',
@@ -2907,6 +2909,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
+  /// Retourne le nom de la catégorie d'une chambre
+  String getRoomCategoryName(Room room) {
+    return room.category.target?.name ?? 'Aucune catégorie';
+  }
+
   Column buildForm2() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -2951,7 +2958,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             child: Form(
               key: _formKey,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Left Column - Chambre et Employé + Section Clients
                   Expanded(
@@ -2963,6 +2970,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           children: [
                             Expanded(
                               child: DropdownButtonFormField<Room>(
+                                isExpanded: true,
+                                isDense: true,
                                 value: _selectedRoom,
                                 decoration: InputDecoration(
                                   labelText: 'Chambre *',
@@ -2972,10 +2981,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                   ),
                                 ),
                                 items: widget.currentHotel.rooms.map((room) {
+                                  final categoryName =
+                                      widget.provider.getRoomCategoryName(room);
                                   return DropdownMenuItem(
                                     value: room,
-                                    child:
-                                        Text('${room.code} ${room.type ?? ''}'),
+                                    child: Text(
+                                        '${room.code} $categoryName ${room.type ?? ''}'),
                                   );
                                 }).toList(),
                                 onChanged: (room) =>
@@ -2999,6 +3010,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                 items: widget.provider.employees.map((emp) {
                                   return DropdownMenuItem<int>(
                                     value: emp.id,
+                                    // Utilisez l'ID comme valeur unique
                                     child: Text(emp.fullName),
                                   );
                                 }).toList(),
@@ -3184,7 +3196,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       children: [
                         // Section Clients - Fixed height to prevent layout issues
                         Container(
-                          height: 400, // Fixed height instead of Expanded
+                          height: 350, // Fixed height instead of Expanded
                           child: Card(
                             elevation: 2,
                             shape: RoundedRectangleBorder(
@@ -3200,8 +3212,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                       children: [
                                         Text(
                                           _isEditingGuest
-                                              ? 'Modifier Client'
-                                              : 'Informations Client',
+                                              ? 'Modifier Client (Guest)'
+                                              : 'Informations Client (Guest)',
                                           style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold),

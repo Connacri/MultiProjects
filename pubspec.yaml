@@ -1,5 +1,5 @@
 name: kenzy
-description: "A new Wallet DZ project."
+description: "A new Hötel DZ project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -113,6 +113,9 @@ dependencies:
   dynamic_flutter_form: ^1.0.2
   syncfusion_flutter_calendar: ^30.2.7
 
+
+
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -120,6 +123,8 @@ dev_dependencies:
   objectbox_generator: ^4.3.0
   build_runner: ^2.4.15
   flutter_native_splash: ^2.4.6
+
+
 
 flutter_icons:
   android: true

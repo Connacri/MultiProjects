@@ -1,4 +1,4 @@
-package com.wallet.dz.kenzy;
+package com.hotel.dz;
 
 import io.flutter.embedding.android.FlutterActivity;
 

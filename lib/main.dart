@@ -344,6 +344,12 @@ class _MyAppState extends State<MyApp> {
           textTheme: TextTheme(
             bodyLarge: TextStyle(color: Colors.black87),
           ),
+          chipTheme: ChipThemeData(
+            backgroundColor: Colors.black87, // fond foncé
+            labelStyle: const TextStyle(color: Colors.white), // texte clair
+            shape: StadiumBorder(), // arrondi moderne
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          ),
         ),
         locale: const Locale('fr', 'CA'),
 
@@ -356,6 +362,12 @@ class _MyAppState extends State<MyApp> {
           primaryColor: Colors.blueGrey,
           textTheme: TextTheme(
             bodyLarge: TextStyle(color: Colors.white),
+          ),
+          chipTheme: ChipThemeData(
+            backgroundColor: Colors.white, // fond clair
+            labelStyle: const TextStyle(color: Colors.black87), // texte foncé
+            shape: StadiumBorder(),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           ),
         ),
         home: //LicenseCheckScreen(),
