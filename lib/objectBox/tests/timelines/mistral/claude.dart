@@ -3,14 +3,14 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:kenzy/objectBox/tests/timelines/mistral/deepseekHotel.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../Entity.dart';
+import 'HotelDataInitializer.dart';
+import 'claude_crud.dart';
 import 'home_Hotel.dart';
-import 'mistralAncien.dart' show Hotel_ManagementA;
 
 class HotelReservationDataSource extends CalendarDataSource {
   HotelReservationDataSource(List<Reservation> reservations, List<Room> rooms) {
@@ -104,6 +104,7 @@ class HotelManagementState extends State<Hotel_Management> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
+      drawer: const AppDrawer(),
       body: Consumer<HotelProvider>(
         builder: (context, provider, _) {
           // Si c'est le premier lancement, afficher le formulaire de création
@@ -343,44 +344,24 @@ class HotelManagementState extends State<Hotel_Management> {
         ],
       ),
       actions: [
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => deepseek()));
+        ElevatedButton(
+          onPressed: () async {
+            final hotelProvider = context.read<HotelProvider>();
+            final initializer = HotelDataInitializer(hotelProvider);
+
+            await initializer.initializeAllDefaultData();
           },
-          label: Text('deepseek'),
-          icon: Icon(Icons.radio_button_off_rounded),
+          child: const Text("Initialiser les données"),
         ),
         const SizedBox(width: 8),
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => Hotel_Management()));
+        ElevatedButton(
+          onPressed: () async {
+            final hotelProvider = context.read<HotelProvider>();
+            await hotelProvider.clearAllTestData();
           },
-          label: Text('Hotel_Management'),
-          icon: Icon(Icons.radio_button_off_rounded),
+          child: const Text("♻️ Reset & Re-init Data"),
         ),
-        const SizedBox(width: 8),
-        ElevatedButton.icon(
-          style: ButtonStyle(
-            backgroundColor: WidgetStateProperty.all<Color>(Colors.blue),
-            foregroundColor: WidgetStateProperty.all<Color>(Colors.white),
-          ),
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => Hotel_ManagementA()));
-          },
-          label: Text('Hotel_ManagementA'),
-          icon: Icon(Icons.add_circle),
-        ),
+
         IconButton(
           onPressed: () {
             Navigator.of(context)
@@ -2468,9 +2449,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             ),
                           ),
                           items: widget.currentHotel.rooms.map((room) {
+                            final categoryName =
+                                widget.provider.getRoomCategoryName(room);
                             return DropdownMenuItem(
                               value: room,
-                              child: Text('${room.code} ${room.type ?? ''}'),
+                              child: Text(
+                                  '${room.code} $categoryName ${room.type ?? ''}'),
                             );
                           }).toList(),
                           onChanged: (room) =>
@@ -2907,6 +2891,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
+  /// Retourne le nom de la catégorie d'une chambre
+  String getRoomCategoryName(Room room) {
+    return room.category.target?.name ?? 'Aucune catégorie';
+  }
+
   Column buildForm2() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -2951,7 +2940,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             child: Form(
               key: _formKey,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Left Column - Chambre et Employé + Section Clients
                   Expanded(
@@ -2972,10 +2961,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                   ),
                                 ),
                                 items: widget.currentHotel.rooms.map((room) {
+                                  final categoryName =
+                                      widget.provider.getRoomCategoryName(room);
                                   return DropdownMenuItem(
                                     value: room,
-                                    child:
-                                        Text('${room.code} ${room.type ?? ''}'),
+                                    child: Text(
+                                        '${room.code} $categoryName ${room.type ?? ''}'),
                                   );
                                 }).toList(),
                                 onChanged: (room) =>
@@ -2999,6 +2990,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                 items: widget.provider.employees.map((emp) {
                                   return DropdownMenuItem<int>(
                                     value: emp.id,
+                                    // Utilisez l'ID comme valeur unique
                                     child: Text(emp.fullName),
                                   );
                                 }).toList(),
@@ -3184,7 +3176,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       children: [
                         // Section Clients - Fixed height to prevent layout issues
                         Container(
-                          height: 400, // Fixed height instead of Expanded
+                          height: 350, // Fixed height instead of Expanded
                           child: Card(
                             elevation: 2,
                             shape: RoundedRectangleBorder(
@@ -3200,8 +3192,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                       children: [
                                         Text(
                                           _isEditingGuest
-                                              ? 'Modifier Client'
-                                              : 'Informations Client',
+                                              ? 'Modifier Client (Guest)'
+                                              : 'Informations Client (Guest)',
                                           style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold),

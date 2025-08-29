@@ -149,6 +149,11 @@ class HotelProvider with ChangeNotifier {
     _reservationBox = _objectBox.store.box<Reservation>();
     _guestBox = _objectBox.store.box<Guest>();
     _employeeBox = _objectBox.store.box<Employee>();
+    // Ajoute ces lignes :
+    _roomCategoryBox = _objectBox.store.box<RoomCategory>();
+    _boardBasisBox = _objectBox.store.box<BoardBasis>();
+    _extraServiceBox = _objectBox.store.box<ExtraService>();
+    _seasonalPricingBox = _objectBox.store.box<SeasonalPricing>();
   }
 
   Future<void> _initialize() async {
@@ -172,6 +177,23 @@ class HotelProvider with ChangeNotifier {
     _reservations = _reservationBox.getAll();
     _guests = _guestBox.getAll();
     _employees = _employeeBox.getAll();
+
+    // Ajoute ces lignes pour charger les données manquantes
+    _roomCategories = _roomCategoryBox.getAll();
+    _boardBasis = _boardBasisBox.getAll();
+    _extraServices = _extraServiceBox.getAll();
+    _seasonalPricing = _seasonalPricingBox.getAll();
+
+    debugPrint('Données chargées :');
+    debugPrint('- Hôtels : ${_hotels.length}');
+    debugPrint('- Chambres : ${_rooms.length}');
+    debugPrint('- Réservations : ${_reservations.length}');
+    debugPrint('- Clients : ${_guests.length}');
+    debugPrint('- Employés : ${_employees.length}');
+    debugPrint('- Catégories de chambres : ${_roomCategories.length}');
+    debugPrint('- Plans de pension : ${_boardBasis.length}');
+    debugPrint('- Services supplémentaires : ${_extraServices.length}');
+    debugPrint('- Tarifications saisonnières : ${_seasonalPricing.length}');
   }
 
   void _checkFirstLaunch() {
@@ -674,6 +696,21 @@ class HotelProvider with ChangeNotifier {
     }
   }
 
+  /// Assigne une catégorie à une chambre
+  Future<bool> assignCategoryToRoom(Room room, RoomCategory category) async {
+    try {
+      room.category.target = category;
+      await _roomBox.put(room, mode: PutMode.update);
+      await _loadAllData(); // Rafraîchir les données
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint(
+          "Erreur lors de l'assignation de la catégorie à la chambre: $e");
+      return false;
+    }
+  }
+
   Future<void> addRoomsToHotel(Hotel hotel, List<Room> rooms) async {
     try {
       for (final room in rooms) {
@@ -835,7 +872,14 @@ class HotelProvider with ChangeNotifier {
   // MÉTHODES DE DÉVELOPPEMENT (À SUPPRIMER EN PRODUCTION)
   // ============================================================================
 
+  // ============================================================================
+// MÉTHODES DE DÉVELOPPEMENT (À SUPPRIMER EN PRODUCTION)
+// ============================================================================
+
+  /// Crée des données simples par défaut (rooms & employees) uniquement si nécessaire.
+  /// Utilise les méthodes addRoom / addEmployee existantes pour assurer la consistance.
   Future<void> createDefaultData() async {
+    // Si déjà initialisé, ne rien faire
     if (_rooms.isNotEmpty || _employees.isNotEmpty) return;
 
     try {
@@ -858,18 +902,321 @@ class HotelProvider with ChangeNotifier {
         ),
       ];
 
-      for (final room in defaultRooms) {
-        await addRoom(room);
+      // Ajout en batch si la box est disponible (plus performant)
+      if (_roomBox != null) {
+        // Evite les doublons sur code
+        final existingCodes = _roomBox.getAll().map((r) => r.code).toSet();
+        for (final room in defaultRooms) {
+          if (!existingCodes.contains(room.code)) {
+            _roomBox.put(room);
+          }
+        }
+      } else {
+        for (final room in defaultRooms) {
+          await addRoom(room);
+        }
       }
 
-      for (final employee in defaultEmployees) {
-        await addEmployee(employee);
+      if (_employeeBox != null) {
+        final existingEmployeePhones =
+            _employeeBox.getAll().map((e) => e.phoneNumber).toSet();
+        for (final emp in defaultEmployees) {
+          if (!existingEmployeePhones.contains(emp.phoneNumber)) {
+            _employeeBox.put(emp);
+          }
+        }
+      } else {
+        for (final emp in defaultEmployees) {
+          await addEmployee(emp);
+        }
       }
+
+      // Recharger toutes les données une seule fois
+      await _loadAllData();
+      notifyListeners();
 
       debugPrint('Données par défaut créées avec succès');
     } catch (e) {
       debugPrint('Erreur lors de la création des données par défaut: $e');
     }
+  }
+
+  // ------------------- ROOM CATEGORY -------------------
+
+  // ============================================================================
+  // GESTION DES ROOM CATEGORIES
+  // ============================================================================
+  late final Box<RoomCategory> _roomCategoryBox;
+  List<RoomCategory> _roomCategories = [];
+
+  List<RoomCategory> get roomCategories => _roomCategories;
+
+  Future<int> addRoomCategory(RoomCategory category) async {
+    try {
+      // Protection contre doublons par code
+      final existing = _roomCategoryBox
+          .query(RoomCategory_.code.equals(category.code))
+          .build()
+          .findFirst();
+      if (existing != null) {
+        // Si existant, on met à jour son contenu (mais on garde son id)
+        category.id = existing.id;
+        _roomCategoryBox.put(category, mode: PutMode.update);
+        await _loadAllData();
+        notifyListeners();
+        return category.id;
+      }
+
+      final id = _roomCategoryBox.put(category);
+      await _loadAllData();
+      notifyListeners();
+      return id;
+    } catch (e) {
+      debugPrint("Erreur lors de l'ajout de la RoomCategory: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> updateRoomCategory(RoomCategory category) async {
+    try {
+      _roomCategoryBox.put(category, mode: PutMode.update);
+      await _loadAllData();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Erreur lors de la mise à jour de la RoomCategory: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteRoomCategory(int id) async {
+    try {
+      final success = _roomCategoryBox.remove(id);
+      if (success) {
+        await _loadAllData();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      debugPrint("Erreur lors de la suppression de la RoomCategory: $e");
+      return false;
+    }
+  }
+
+  Future<List<RoomCategory>> getRoomCategories() async {
+    try {
+      return _roomCategoryBox.getAll();
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération des RoomCategories: $e");
+      return [];
+    }
+  }
+
+// ------------------- BOARD BASIS -------------------
+
+  // ============================================================================
+  // GESTION DES BOARD BASIS
+  // ============================================================================
+  late final Box<BoardBasis> _boardBasisBox;
+  List<BoardBasis> _boardBasis = [];
+
+  List<BoardBasis> get boardBasis => _boardBasis;
+
+  Future<int> addBoardBasis(BoardBasis boardBasis) async {
+    try {
+      final id = _boardBasisBox.put(boardBasis);
+      await _loadAllData();
+      notifyListeners();
+      return id;
+    } catch (e) {
+      debugPrint("Erreur lors de l'ajout du BoardBasis: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> updateBoardBasis(BoardBasis basis) async {
+    try {
+      _boardBasisBox.put(basis, mode: PutMode.update);
+      await _loadAllData();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Erreur lors de la mise à jour du BoardBasis: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteBoardBasis(int id) async {
+    try {
+      final success = _boardBasisBox.remove(id);
+      if (success) {
+        await _loadAllData();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      debugPrint("Erreur lors de la suppression du BoardBasis: $e");
+      return false;
+    }
+  }
+
+  Future<List<BoardBasis>> getBoardBasis() async {
+    try {
+      return _boardBasisBox.getAll();
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération des BoardBasis: $e");
+      return [];
+    }
+  }
+
+// ------------------- EXTRA SERVICE -------------------
+
+  // ============================================================================
+  // GESTION DES EXTRA SERVICES
+  // ============================================================================
+  late final Box<ExtraService> _extraServiceBox;
+  List<ExtraService> _extraServices = [];
+
+  List<ExtraService> get extraServices => _extraServices;
+
+  Future<int> addExtraService(ExtraService extraService) async {
+    try {
+      // Evite doublon sur code
+      final existing = _extraServiceBox
+          .query(ExtraService_.code.equals(extraService.code))
+          .build()
+          .findFirst();
+      if (existing != null) {
+        extraService.id = existing.id;
+        _extraServiceBox.put(extraService, mode: PutMode.update);
+        await _loadAllData();
+        notifyListeners();
+        return extraService.id;
+      }
+
+      final id = _extraServiceBox.put(extraService);
+      await _loadAllData();
+      notifyListeners();
+      return id;
+    } catch (e) {
+      debugPrint("Erreur lors de l'ajout de l'ExtraService: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> updateExtraService(ExtraService service) async {
+    try {
+      _extraServiceBox.put(service, mode: PutMode.update);
+      await _loadAllData();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Erreur lors de la mise à jour de l'ExtraService: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteExtraService(int id) async {
+    try {
+      final success = _extraServiceBox.remove(id);
+      if (success) {
+        await _loadAllData();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      debugPrint("Erreur lors de la suppression de l'ExtraService: $e");
+      return false;
+    }
+  }
+
+  Future<List<ExtraService>> getExtraServices() async {
+    try {
+      return _extraServiceBox.getAll();
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération des ExtraServices: $e");
+      return [];
+    }
+  }
+
+// ------------------- SEASONAL PRICING -------------------
+
+  // ============================================================================
+  // GESTION DES SEASONAL PRICING
+  // ============================================================================
+  late final Box<SeasonalPricing> _seasonalPricingBox;
+  List<SeasonalPricing> _seasonalPricing = [];
+
+  List<SeasonalPricing> get seasonalPricing => _seasonalPricing;
+
+  Future<int> addSeasonalPricing(SeasonalPricing pricing) async {
+    try {
+      final id = _seasonalPricingBox.put(pricing);
+      await _loadAllData();
+      notifyListeners();
+      return id;
+    } catch (e) {
+      debugPrint("Erreur lors de l'ajout du SeasonalPricing: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> updateSeasonalPricing(SeasonalPricing pricing) async {
+    try {
+      _seasonalPricingBox.put(pricing, mode: PutMode.update);
+      await _loadAllData();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Erreur lors de la mise à jour du SeasonalPricing: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteSeasonalPricing(int id) async {
+    try {
+      final success = _seasonalPricingBox.remove(id);
+      if (success) {
+        await _loadAllData();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      debugPrint("Erreur lors de la suppression du SeasonalPricing: $e");
+      return false;
+    }
+  }
+
+  Future<List<SeasonalPricing>> getSeasonalPricing() async {
+    try {
+      return _seasonalPricingBox.getAll();
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération des SeasonalPricing: $e");
+      return [];
+    }
+  }
+
+  /// Retourne le nom de la catégorie d'une chambre
+  String getRoomCategoryName(Room room) {
+    return room.category.target?.name ?? 'Aucune catégorie';
+  }
+}
+
+extension HotelProviderAdmin on HotelProvider {
+  /// Supprime toutes les données liées aux entités principales
+  Future<void> clearAllTestData() async {
+    // Supprime toutes les entités
+    _objectBox.store.box<Hotel>().removeAll();
+    _objectBox.store.box<Room>().removeAll();
+    _objectBox.store.box<RoomCategory>().removeAll();
+    _objectBox.store.box<BoardBasis>().removeAll();
+    _objectBox.store.box<ExtraService>().removeAll();
+    _objectBox.store.box<SeasonalPricing>().removeAll();
+    _objectBox.store.box<Reservation>().removeAll();
+    _objectBox.store.box<Client>().removeAll();
+    _objectBox.store.box<Employee>().removeAll();
+
+    notifyListeners();
   }
 }
 

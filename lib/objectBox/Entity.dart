@@ -573,10 +573,13 @@ class Room {
 
   @Index()
   String code;
-  String? type;
-  int? capacity;
-  double? basePrice;
+  String? type; // Peut être remplacé par category.name
+  int? capacity; // Peut être remplacé par category.capacity
+  double? basePrice; // Peut être remplacé par category.basePrice
   String status;
+
+  // NOUVELLE RELATION
+  final category = ToOne<RoomCategory>();
 
   @Backlink('room')
   final reservations = ToMany<Reservation>();
@@ -590,26 +593,11 @@ class Room {
     this.status = "Libre",
   });
 
-  /// ---- Factory ----
-  factory Room.fromMap(Map<String, dynamic> map) {
-    return Room(
-      code: map['code'] ?? '',
-      type: map['type'] ?? 'Single',
-      capacity: map['capacity'] ?? 1,
-      basePrice: (map['basePrice'] ?? 0).toDouble(),
-      status: map['status'] ?? 'Libre',
-    )..id = map['id'] ?? 0;
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'code': code,
-      'type': type,
-      'capacity': capacity,
-      'basePrice': basePrice,
-      'status': status,
-    };
+  // Helper pour obtenir le prix effectif selon la catégorie et la saison
+  double getEffectivePrice(DateTime date) {
+    final categoryPrice = category.target?.basePrice ?? basePrice ?? 0.0;
+    // Ici vous pourriez ajouter la logique de calcul saisonnier
+    return categoryPrice;
   }
 }
 
@@ -617,6 +605,275 @@ enum RoomState {
   empty, // Blanche - aucune réservation
   occupied, // Verte - occupée aujourd'hui
   waitingGuest, // Bleue - libre aujourd'hui mais réservation future
+}
+
+/// ==================== ROOM CATEGORY ====================
+@Entity()
+class RoomCategory {
+  @Id()
+  int id = 0;
+
+  String name; // "Deluxe Sea View", "Standard Twin", "Junior Suite"
+  String code; // "DLXSV", "STDTW", "JRSUI" - pour les systèmes
+  String description;
+
+  // Caractéristiques principales
+  String bedType; // "Single", "Double", "Twin", "King", "Queen"
+  int capacity; // Nombre de personnes
+  String standing; // "Economy", "Standard", "Superior", "Deluxe", "Suite"
+  String? viewType; // "Sea", "Pool", "Garden", "Mountain", "City", "Courtyard"
+
+  // Équipements inclus
+  String amenities; // JSON string des équipements
+  double basePrice; // Prix de base par nuit
+
+  // Paramètres de tarification
+  double
+      seasonMultiplier; // Multiplicateur saison (1.0 = normal, 1.5 = haute saison)
+  double weekendMultiplier; // Multiplicateur week-end
+  bool allowsExtraBed; // Peut-on ajouter un lit supplémentaire
+  double extraBedPrice; // Prix du lit supplémentaire
+
+  // État
+  bool isActive; // Actif ou non
+  int sortOrder; // Ordre d'affichage
+
+  // Relations
+  @Backlink('category')
+  final rooms = ToMany<Room>();
+
+  RoomCategory({
+    required this.name,
+    required this.code,
+    required this.description,
+    required this.bedType,
+    required this.capacity,
+    required this.standing,
+    this.viewType,
+    this.amenities = '[]',
+    required this.basePrice,
+    this.seasonMultiplier = 1.0,
+    this.weekendMultiplier = 1.0,
+    this.allowsExtraBed = false,
+    this.extraBedPrice = 0.0,
+    this.isActive = true,
+    this.sortOrder = 0,
+  });
+
+  // Helper pour récupérer les équipements
+  List<String> get amenitiesList {
+    try {
+      // Simuler le parsing JSON - en réalité vous utiliseriez dart:convert
+      if (amenities.isEmpty || amenities == '[]') return [];
+      return amenities
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll('"', '')
+          .split(',')
+          .map((e) => e.trim())
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Helper pour définir les équipements
+  void setAmenities(List<String> items) {
+    amenities = '["${items.join('", "')}"]';
+  }
+}
+
+/// ==================== BOARD BASIS (Plans de pension) ====================
+@Entity()
+class BoardBasis {
+  @Id()
+  int id = 0;
+
+  String name; // "Bed & Breakfast", "Half Board", "All Inclusive"
+  String code; // "BB", "HB", "AI"
+  String description;
+
+  // Détails des repas inclus
+  bool includesBreakfast;
+  bool includesLunch;
+  bool includesDinner;
+  bool includesSnacks;
+  bool includesDrinks;
+  bool includesAlcoholicDrinks;
+  bool includesRoomService;
+  bool includesMinibar;
+
+  // Tarification
+  double pricePerPerson; // Prix par personne par nuit
+  double childDiscount; // Réduction enfant (0.0 à 1.0)
+
+  // Paramètres
+  bool isActive;
+  int sortOrder;
+  String? notes; // Notes spéciales (horaires, restrictions)
+
+  BoardBasis({
+    required this.name,
+    required this.code,
+    required this.description,
+    this.includesBreakfast = false,
+    this.includesLunch = false,
+    this.includesDinner = false,
+    this.includesSnacks = false,
+    this.includesDrinks = false,
+    this.includesAlcoholicDrinks = false,
+    this.includesRoomService = false,
+    this.includesMinibar = false,
+    required this.pricePerPerson,
+    this.childDiscount = 0.0,
+    this.isActive = true,
+    this.sortOrder = 0,
+    this.notes,
+  });
+
+  // Helper pour obtenir un résumé des inclusions
+  String get inclusionsSummary {
+    List<String> inclusions = [];
+    if (includesBreakfast) inclusions.add('Petit déjeuner');
+    if (includesLunch) inclusions.add('Déjeuner');
+    if (includesDinner) inclusions.add('Dîner');
+    if (includesSnacks) inclusions.add('Snacks');
+    if (includesDrinks) inclusions.add('Boissons');
+    if (includesAlcoholicDrinks) inclusions.add('Boissons alcoolisées');
+    if (includesRoomService) inclusions.add('Room service');
+    if (includesMinibar) inclusions.add('Minibar');
+
+    return inclusions.join(', ');
+  }
+}
+
+/// ==================== EXTRAS & OPTIONS ====================
+@Entity()
+class ExtraService {
+  @Id()
+  int id = 0;
+
+  String name; // "Transfert aéroport", "Massage", "Lit bébé"
+  String code; // "AIRPORT", "SPA_MASSAGE", "BABY_BED"
+  String description;
+  String category; // "Transport", "Spa", "Room", "Food", "Activity", "Package"
+
+  // Tarification
+  double price;
+  String pricingUnit; // "per_item", "per_person", "per_night", "per_stay"
+  bool isPercentage; // Si c'est un pourcentage du prix de chambre
+
+  // Disponibilité
+  bool requiresAdvanceBooking;
+  int advanceHours; // Heures à l'avance requises
+  int maxQuantity; // Quantité maximum (0 = illimité)
+  bool isActive;
+
+  // Paramètres
+  int sortOrder;
+  String? notes;
+  bool isPackage; // Si c'est un package (combinaison de services)
+  String? packageIncludes; // JSON des services inclus dans le package
+
+  ExtraService({
+    required this.name,
+    required this.code,
+    required this.description,
+    required this.category,
+    required this.price,
+    this.pricingUnit = 'per_item',
+    this.isPercentage = false,
+    this.requiresAdvanceBooking = false,
+    this.advanceHours = 0,
+    this.maxQuantity = 0,
+    this.isActive = true,
+    this.sortOrder = 0,
+    this.notes,
+    this.isPackage = false,
+    this.packageIncludes,
+  });
+
+  // Helper pour le calcul du prix
+  double calculatePrice(
+      int quantity, double roomPrice, int nights, int persons) {
+    double basePrice = isPercentage ? roomPrice * (price / 100) : price;
+
+    switch (pricingUnit) {
+      case 'per_person':
+        return basePrice * persons * quantity;
+      case 'per_night':
+        return basePrice * nights * quantity;
+      case 'per_stay':
+        return basePrice * quantity;
+      default: // per_item
+        return basePrice * quantity;
+    }
+  }
+}
+
+/// ==================== RESERVATION EXTRA (Junction table) ====================
+@Entity()
+class ReservationExtra {
+  @Id()
+  int id = 0;
+
+  final reservation = ToOne<Reservation>();
+  final extraService = ToOne<ExtraService>();
+
+  int quantity;
+  double unitPrice; // Prix au moment de la réservation
+  double totalPrice; // Prix total calculé
+  String status; // "Pending", "Confirmed", "Cancelled", "Completed"
+  DateTime? scheduledDate; // Date programmée pour le service
+  String? notes;
+
+  ReservationExtra({
+    this.quantity = 1,
+    required this.unitPrice,
+    required this.totalPrice,
+    this.status = 'Pending',
+    this.scheduledDate,
+    this.notes,
+  });
+}
+
+/// ==================== SEASONAL PRICING ====================
+@Entity()
+class SeasonalPricing {
+  @Id()
+  int id = 0;
+
+  String name; // "Haute saison été", "Basse saison hiver"
+  DateTime startDate;
+  DateTime endDate;
+  double multiplier; // Multiplicateur de prix (1.0 = normal, 1.5 = +50%)
+
+  // Application
+  String
+      applicationType; // "all_categories", "specific_categories", "specific_rooms"
+  String targetIds; // JSON array des IDs concernés
+
+  bool isActive;
+  int priority; // Pour résoudre les conflits de périodes
+  String? description;
+
+  SeasonalPricing({
+    required this.name,
+    required this.startDate,
+    required this.endDate,
+    required this.multiplier,
+    this.applicationType = 'all_categories',
+    this.targetIds = '[]',
+    this.isActive = true,
+    this.priority = 0,
+    this.description,
+  });
+
+  // Vérifier si une date est dans cette saison
+  bool isDateInSeason(DateTime date) {
+    return date.isAfter(startDate.subtract(Duration(days: 1))) &&
+        date.isBefore(endDate.add(Duration(days: 1)));
+  }
 }
 
 /// ==================== GUEST ====================
@@ -674,42 +931,35 @@ class Reservation {
 
   final room = ToOne<Room>();
   final receptionist = ToOne<Employee>();
-
-  // Relation Many-to-Many avec Guest
   final guests = ToMany<Guest>();
+
+  // NOUVELLES RELATIONS
+  final boardBasis = ToOne<BoardBasis>();
+  @Backlink('reservation')
+  final extras = ToMany<ReservationExtra>();
 
   DateTime from;
   DateTime to;
   double pricePerNight;
+  double boardBasisPrice; // Prix du plan de pension
+  double extrasTotal; // Total des extras
   String status;
 
   Reservation({
     required this.from,
     required this.to,
     required this.pricePerNight,
+    this.boardBasisPrice = 0.0,
+    this.extrasTotal = 0.0,
     this.status = "Confirmée",
   });
 
-  /// ---- Factory ----
-  factory Reservation.fromMap(Map<String, dynamic> map) {
-    return Reservation(
-      from: DateTime.parse(map['from']),
-      to: DateTime.parse(map['to']),
-      pricePerNight: (map['pricePerNight'] ?? 0).toDouble(),
-      status: map['status'] ?? 'Confirmée',
-    )..id = map['id'] ?? 0;
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'from': from.toIso8601String(),
-      'to': to.toIso8601String(),
-      'pricePerNight': pricePerNight,
-      'status': status,
-      'roomId': room.targetId,
-      'receptionistId': receptionist.targetId,
-    };
+  // Helper pour calculer le prix total
+  double get totalPrice {
+    final nights = to.difference(from).inDays;
+    final roomTotal = pricePerNight * nights;
+    final boardTotal = boardBasisPrice * guests.length * nights;
+    return roomTotal + boardTotal + extrasTotal;
   }
 }
 
