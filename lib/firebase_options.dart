@@ -41,61 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCUqIwqieBQxsqzXnWKISJSw52XLbJxWKk',
-    appId: '1:330293988254:web:9d7fdff13400352b41648f',
-    messagingSenderId: '330293988254',
-    projectId: 'walletdz-d12e0',
-    authDomain: 'walletdz-d12e0.firebaseapp.com',
-    databaseURL: 'https://walletdz-d12e0-default-rtdb.firebaseio.com',
-    storageBucket: 'walletdz-d12e0.appspot.com',
-    measurementId: 'G-5H93D9Z5ZH',
+    apiKey: 'AIzaSyD-3n3_btslk-L9hnXmi5ZaZPFNWb9V7pw',
+    appId: '1:536701149573:web:028c8807abb30fa11924ec',
+    messagingSenderId: '536701149573',
+    projectId: 'hotel-f84db',
+    authDomain: 'hotel-f84db.firebaseapp.com',
+    storageBucket: 'hotel-f84db.firebasestorage.app',
+    measurementId: 'G-PKJVN71LT5',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBeLnEzq0iSZjfx0R-pgu6cs89Ooyfozq0',
-    appId: '1:330293988254:android:0562d6c8bd50fd4141648f',
-    messagingSenderId: '330293988254',
-    projectId: 'walletdz-d12e0',
-    databaseURL: 'https://walletdz-d12e0-default-rtdb.firebaseio.com',
-    storageBucket: 'walletdz-d12e0.appspot.com',
+    apiKey: 'AIzaSyBygH4-4mmUJe-6UL7iExAPxNwiVv3WIlA',
+    appId: '1:536701149573:android:6e3f7c230003d4321924ec',
+    messagingSenderId: '536701149573',
+    projectId: 'hotel-f84db',
+    storageBucket: 'hotel-f84db.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAie3hehD-yr_4tOGx0u94JjZL-i16-ROA',
-    appId: '1:330293988254:ios:b4dc0ca5e254c5bc41648f',
-    messagingSenderId: '330293988254',
-    projectId: 'walletdz-d12e0',
-    databaseURL: 'https://walletdz-d12e0-default-rtdb.firebaseio.com',
-    storageBucket: 'walletdz-d12e0.appspot.com',
-    androidClientId:
-        '330293988254-5p93m05gsefgb03j1mrkjrup8ul6nk84.apps.googleusercontent.com',
-    iosClientId:
-        '330293988254-h6me1one0u8rl1r1o8uam3rco5d7200f.apps.googleusercontent.com',
-    iosBundleId: 'com.wallet.dz.kenzy',
+    apiKey: 'AIzaSyCOq4jkgM-GgtG-X8v6XYLZxDTn_tmL0o4',
+    appId: '1:536701149573:ios:22251491404dd1711924ec',
+    messagingSenderId: '536701149573',
+    projectId: 'hotel-f84db',
+    storageBucket: 'hotel-f84db.firebasestorage.app',
+    iosBundleId: 'com.hotel.dz',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAie3hehD-yr_4tOGx0u94JjZL-i16-ROA',
-    appId: '1:330293988254:ios:b4dc0ca5e254c5bc41648f',
-    messagingSenderId: '330293988254',
-    projectId: 'walletdz-d12e0',
-    databaseURL: 'https://walletdz-d12e0-default-rtdb.firebaseio.com',
-    storageBucket: 'walletdz-d12e0.appspot.com',
-    androidClientId:
-        '330293988254-5p93m05gsefgb03j1mrkjrup8ul6nk84.apps.googleusercontent.com',
-    iosClientId:
-        '330293988254-h6me1one0u8rl1r1o8uam3rco5d7200f.apps.googleusercontent.com',
-    iosBundleId: 'com.wallet.dz.kenzy',
+    apiKey: 'AIzaSyCOq4jkgM-GgtG-X8v6XYLZxDTn_tmL0o4',
+    appId: '1:536701149573:ios:22251491404dd1711924ec',
+    messagingSenderId: '536701149573',
+    projectId: 'hotel-f84db',
+    storageBucket: 'hotel-f84db.firebasestorage.app',
+    iosBundleId: 'com.hotel.dz',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCUqIwqieBQxsqzXnWKISJSw52XLbJxWKk',
-    appId: '1:330293988254:web:d1670132490207fa41648f',
-    messagingSenderId: '330293988254',
-    projectId: 'walletdz-d12e0',
-    authDomain: 'walletdz-d12e0.firebaseapp.com',
-    databaseURL: 'https://walletdz-d12e0-default-rtdb.firebaseio.com',
-    storageBucket: 'walletdz-d12e0.appspot.com',
-    measurementId: 'G-1JCVX0JJCZ',
+    apiKey: 'AIzaSyD-3n3_btslk-L9hnXmi5ZaZPFNWb9V7pw',
+    appId: '1:536701149573:web:6934771adcb3a53f1924ec',
+    messagingSenderId: '536701149573',
+    projectId: 'hotel-f84db',
+    authDomain: 'hotel-f84db.firebaseapp.com',
+    storageBucket: 'hotel-f84db.firebasestorage.app',
+    measurementId: 'G-ZG3HR845KN',
   );
+
 }

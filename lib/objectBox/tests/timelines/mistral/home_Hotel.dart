@@ -14,14 +14,12 @@ class ReservationPage extends StatelessWidget {
         title: const Text("Gestion des Réservations"),
         actions: [
           IconButton(
-              onPressed: () =>
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => EmployeesPage())),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => EmployeesPage())),
               icon: Icon(Icons.person_2)),
           IconButton(
-              onPressed: () =>
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => RoomsPage())),
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => RoomsPage())),
               icon: Icon(Icons.meeting_room_outlined)),
           SizedBox(
             width: 50,
@@ -42,7 +40,7 @@ class ReservationPage extends StatelessWidget {
               final reservation = reservations[index];
               final room = reservation.room.target;
               final guests =
-              reservation.guests.map((g) => g.fullName).join(", ");
+                  reservation.guests.map((g) => g.fullName).join(", ");
               final employee = reservation.receptionist.target;
 
               return Card(
@@ -50,11 +48,10 @@ class ReservationPage extends StatelessWidget {
                 child: ListTile(
                   title: Text("Chambre: ${room?.code ?? 'N/A'}"),
                   subtitle: Text(
-                    "Du ${reservation.from.toLocal()} au ${reservation.to
-                        .toLocal()}\n"
-                        "Clients: $guests\n"
-                        "Receptionniste: ${employee?.fullName ?? 'N/A'}\n"
-                        "Prix/Nuit: ${reservation.pricePerNight} DA",
+                    "Du ${reservation.from.toLocal()} au ${reservation.to.toLocal()}\n"
+                    "Clients: $guests\n"
+                    "Receptionniste: ${employee?.fullName ?? 'N/A'}\n"
+                    "Prix/Nuit: ${reservation.pricePerNight} DA",
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
@@ -130,7 +127,7 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
                   });
                 },
                 validator: (value) =>
-                value == null ? "Choisissez une chambre" : null,
+                    value == null ? "Choisissez une chambre" : null,
               ),
 
               // Sélection Réceptionniste - Using IDs to avoid duplicate object issues
@@ -147,12 +144,12 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
                   setState(() {
                     _selectedEmployee = empId != null
                         ? hotelProvider.employees
-                        .firstWhere((e) => e.id == empId)
+                            .firstWhere((e) => e.id == empId)
                         : null;
                   });
                 },
                 validator: (value) =>
-                value == null ? "Choisissez un réceptionniste" : null,
+                    value == null ? "Choisissez un réceptionniste" : null,
               ),
 
               // Sélection Clients
@@ -234,9 +231,7 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
               ElevatedButton(
                 onPressed: () {
                   // Vérifier s'il y a du texte non ajouté dans le TextFormField
-                  if (_guestController.text
-                      .trim()
-                      .isNotEmpty) {
+                  if (_guestController.text.trim().isNotEmpty) {
                     _addGuest(_guestController.text.trim());
                   }
 
@@ -272,22 +267,19 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
   }
 
   void _addGuest(String guestName) {
-    if (guestName
-        .trim()
-        .isEmpty) return;
+    if (guestName.trim().isEmpty) return;
 
     final trimmedName = guestName.trim();
 
     // Vérifier si le client existe déjà dans la liste
     final existingGuest = _selectedGuests.firstWhere(
-          (guest) => guest.fullName.toLowerCase() == trimmedName.toLowerCase(),
-      orElse: () =>
-          Guest(
-              fullName: '',
-              phoneNumber: '',
-              email: '',
-              idCardNumber: '',
-              nationality: ''),
+      (guest) => guest.fullName.toLowerCase() == trimmedName.toLowerCase(),
+      orElse: () => Guest(
+          fullName: '',
+          phoneNumber: '',
+          email: '',
+          idCardNumber: '',
+          nationality: ''),
     );
 
     if (existingGuest.fullName.isEmpty) {
@@ -342,8 +334,7 @@ class RoomsPage extends StatelessWidget {
                 child: ListTile(
                   title: Text("${room.code} - ${room.type}"),
                   subtitle: Text(
-                      "Capacité: ${room.capacity}, Prix: ${room
-                          .basePrice} DA, Statut: ${room.status}"),
+                      "Capacité: ${room.capacity}, Prix: ${room.basePrice} DA, Statut: ${room.status}"),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => provider.deleteRoom(room.id),
@@ -475,7 +466,7 @@ class EmployeesPage extends StatelessWidget {
                 child: ListTile(
                   title: Text(emp.fullName),
                   subtitle:
-                  Text("Tel: ${emp.phoneNumber}\nEmail: ${emp.email}"),
+                      Text("Tel: ${emp.phoneNumber}\nEmail: ${emp.email}"),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => provider.deleteEmployee(emp.id),
@@ -612,9 +603,7 @@ class HotelListPage extends StatelessWidget {
                   ),
                   title: Text(hotel.name),
                   subtitle: Text(
-                      "${hotel.floors} Etages(s) • ${hotel
-                          .roomsPerFloor} chambre(s)/Etage • ${hotel.rooms
-                          .length} chambre(s) - Evite ${hotel.avoidedNumbers}"),
+                      "${hotel.floors} Etages(s) • ${hotel.roomsPerFloor} chambre(s)/Etage • ${hotel.rooms.length} chambre(s) - Evite ${hotel.avoidedNumbers}"),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () {
@@ -653,11 +642,13 @@ class HotelDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: Column(
-        children: [
-          RoomsChipsWidget(hotel: currentHotel),
-          DetailedRoomsChipsWidget(hotel: currentHotel)
-        ],
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            RoomsChipsWidget(hotel: currentHotel),
+            DetailedRoomsChipsWidget(hotel: currentHotel)
+          ],
+        ),
       ),
     );
   }
@@ -703,13 +694,9 @@ class RoomsChipsWidget extends StatelessWidget {
                   children: [
                     Text(
                       'Chambres créées',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     Chip(
                       label: Text('${rooms.length} chambres'),
@@ -836,13 +823,9 @@ class DetailedRoomsChipsWidget extends StatelessWidget {
                   children: [
                     Text(
                       'Chambres par étage',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                     Chip(
                       label: Text('${rooms.length} chambres'),
@@ -925,8 +908,7 @@ class DetailedRoomsChipsWidget extends StatelessWidget {
 
     return Tooltip(
       message:
-      'Chambre ${room.code}\nPrix: ${room.basePrice!.toStringAsFixed(
-          0)}€\nStatut: ${room.status}',
+          'Chambre ${room.code}\nPrix: ${room.basePrice!.toStringAsFixed(0)}€\nStatut: ${room.status}',
       child: Chip(
         avatar: Icon(
           statusIcon,

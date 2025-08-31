@@ -270,8 +270,8 @@ class HotelProvider with ChangeNotifier {
   }
 
   /// Vérifie s'il y a des conflits de réservation pour une période
-  ReservationConflict? checkReservationConflict(Room room, DateTime from,
-      DateTime to,
+  ReservationConflict? checkReservationConflict(
+      Room room, DateTime from, DateTime to,
       {Reservation? excludeReservation}) {
     if (isRoomAvailable(room, from, to,
         excludeReservation: excludeReservation)) {
@@ -281,12 +281,12 @@ class HotelProvider with ChangeNotifier {
     final conflictingReservations = getReservationsByRoom(room)
         .where((res) => res.status == 'Confirmée' || res.status == 'En cours')
         .where((res) =>
-    excludeReservation == null || res.id != excludeReservation.id)
+            excludeReservation == null || res.id != excludeReservation.id)
         .where((res) {
       final fromDate = DateTime(from.year, from.month, from.day);
       final toDate = DateTime(to.year, to.month, to.day);
       final existingFrom =
-      DateTime(res.from.year, res.from.month, res.from.day);
+          DateTime(res.from.year, res.from.month, res.from.day);
       final existingTo = DateTime(res.to.year, res.to.month, res.to.day);
 
       return fromDate.isBefore(existingTo) && toDate.isAfter(existingFrom);
@@ -364,7 +364,8 @@ class HotelProvider with ChangeNotifier {
 // Ajoutez cette méthode corrigée dans votre HotelProvider
 
   /// Met à jour une réservation avec vérification de disponibilité
-  Future<ReservationResult> updateReservation(Reservation reservation, {
+  Future<ReservationResult> updateReservation(
+    Reservation reservation, {
     Room? newRoom,
     DateTime? newFrom,
     DateTime? newTo,
@@ -490,9 +491,7 @@ class HotelProvider with ChangeNotifier {
 
     final totalRooms = _rooms.length;
     final occupiedRooms =
-        _rooms
-            .where((room) => !isRoomAvailable(room, from, to))
-            .length;
+        _rooms.where((room) => !isRoomAvailable(room, from, to)).length;
 
     return (occupiedRooms / totalRooms) * 100;
   }
@@ -506,8 +505,8 @@ class HotelProvider with ChangeNotifier {
   }
 
   /// Obtient le calendrier d'occupation d'une chambre
-  Map<DateTime, ReservationStatus> getRoomCalendar(Room room,
-      DateTime startMonth, DateTime endMonth) {
+  Map<DateTime, ReservationStatus> getRoomCalendar(
+      Room room, DateTime startMonth, DateTime endMonth) {
     final calendar = <DateTime, ReservationStatus>{};
     final roomReservations = getReservationsByRoom(room);
 
@@ -529,7 +528,7 @@ class HotelProvider with ChangeNotifier {
             reservation.to.year, reservation.to.month, reservation.to.day);
 
         if ((currentDate.isAfter(resFrom) ||
-            currentDate.isAtSameMomentAs(resFrom)) &&
+                currentDate.isAtSameMomentAs(resFrom)) &&
             currentDate.isBefore(resTo)) {
           calendar[currentDate] = ReservationStatus.occupied;
           break;
@@ -549,7 +548,7 @@ class HotelProvider with ChangeNotifier {
   List<Reservation> getReservationsByRoom(Room room) {
     try {
       final query =
-      _reservationBox.query(Reservation_.room.equals(room.id)).build();
+          _reservationBox.query(Reservation_.room.equals(room.id)).build();
       final results = query.find();
       query.close();
       return results;
@@ -614,18 +613,14 @@ class HotelProvider with ChangeNotifier {
   }
 
   double calculateTotalPrice(Reservation reservation) {
-    final nights = reservation.to
-        .difference(reservation.from)
-        .inDays;
+    final nights = reservation.to.difference(reservation.from).inDays;
     return reservation.pricePerNight * nights;
   }
 
   int getOccupancyRate() {
     if (_rooms.isEmpty) return 0;
     final occupiedRooms =
-        _rooms
-            .where((room) => room.status == 'Occupée')
-            .length;
+        _rooms.where((room) => room.status == 'Occupée').length;
     return ((occupiedRooms / _rooms.length) * 100).round();
   }
 
@@ -924,7 +919,7 @@ class HotelProvider with ChangeNotifier {
 
       if (_employeeBox != null) {
         final existingEmployeePhones =
-        _employeeBox.getAll().map((e) => e.phoneNumber).toSet();
+            _employeeBox.getAll().map((e) => e.phoneNumber).toSet();
         for (final emp in defaultEmployees) {
           if (!existingEmployeePhones.contains(emp.phoneNumber)) {
             _employeeBox.put(emp);
@@ -1219,6 +1214,7 @@ extension HotelProviderAdmin on HotelProvider {
     _objectBox.store.box<SeasonalPricing>().removeAll();
     _objectBox.store.box<Reservation>().removeAll();
     _objectBox.store.box<Client>().removeAll();
+    _objectBox.store.box<Guest>().removeAll();
     _objectBox.store.box<Employee>().removeAll();
 
     notifyListeners();
@@ -1242,14 +1238,12 @@ class ReservationResult {
     this.conflict,
   });
 
-  factory ReservationResult.success(int id) =>
-      ReservationResult._(
+  factory ReservationResult.success(int id) => ReservationResult._(
         isSuccess: true,
         reservationId: id,
       );
 
-  factory ReservationResult.error(String message) =>
-      ReservationResult._(
+  factory ReservationResult.error(String message) => ReservationResult._(
         isSuccess: false,
         error: message,
       );

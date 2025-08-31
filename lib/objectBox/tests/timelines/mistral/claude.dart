@@ -131,11 +131,10 @@ class HotelManagementState extends State<Hotel_Management> {
               // ),
               _buildHotelInfo(),
               Wrap(
+                spacing: 16,
+                runSpacing: 8,
                 children: [
-                  Expanded(
-                    // ou Flexible
-                    child: _buildRoomStatusLegend(),
-                  ),
+                  _buildRoomStatusLegend(),
                   FilledButton.icon(
                     onPressed: _showEditOptions,
                     icon: const Icon(
@@ -193,6 +192,9 @@ class HotelManagementState extends State<Hotel_Management> {
                     child: const Text("♻️ Reset & Re-init Data"),
                   ),
                 ],
+              ),
+              SizedBox(
+                height: 16,
               ),
               Expanded(child: _buildCalendar(provider)),
             ],
@@ -358,23 +360,6 @@ class HotelManagementState extends State<Hotel_Management> {
         ],
       ),
       actions: [
-        ElevatedButton(
-          onPressed: () async {
-            final hotelProvider = context.read<HotelProvider>();
-            final initializer = HotelDataInitializer(hotelProvider);
-
-            await initializer.initializeAllDefaultData();
-          },
-          child: const Text("Initialiser les données"),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: () async {
-            final hotelProvider = context.read<HotelProvider>();
-            await hotelProvider.clearAllTestData();
-          },
-          child: const Text("♻️ Reset & Re-init Data"),
-        ),
         IconButton(
           onPressed: () {
             Navigator.of(context)
@@ -387,13 +372,13 @@ class HotelManagementState extends State<Hotel_Management> {
                 MaterialPageRoute(builder: (context) => ReservationPage())),
             icon: Icon(Icons.hotel)),
         // Bouton "Aujourd'hui"
-        Tooltip(
-          message: "Aller à aujourd'hui",
-          child: IconButton(
-            icon: Icon(Icons.today_rounded),
-            onPressed: () => _calendarController.displayDate = DateTime.now(),
-          ),
-        ),
+        // Tooltip(
+        //   message: "Aller à aujourd'hui",
+        //   child: IconButton(
+        //     icon: Icon(Icons.today_rounded),
+        //     onPressed: () => _calendarController.displayDate = DateTime.now(),
+        //   ),
+        // ),
         const SizedBox(width: 8),
         // Bouton ajouter/modifier hôtel
         Tooltip(
@@ -446,7 +431,6 @@ class HotelManagementState extends State<Hotel_Management> {
             ),
           ],
         ),
-        const SizedBox(width: 40),
       ],
     );
   }
