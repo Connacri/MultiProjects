@@ -733,17 +733,26 @@ class BoardBasis {
 
   // Helper pour obtenir un résumé des inclusions
   String get inclusionsSummary {
-    List<String> inclusions = [];
-    if (includesBreakfast) inclusions.add('Petit déjeuner');
-    if (includesLunch) inclusions.add('Déjeuner');
-    if (includesDinner) inclusions.add('Dîner');
-    if (includesSnacks) inclusions.add('Snacks');
-    if (includesDrinks) inclusions.add('Boissons');
-    if (includesAlcoholicDrinks) inclusions.add('Boissons alcoolisées');
-    if (includesRoomService) inclusions.add('Room service');
-    if (includesMinibar) inclusions.add('Minibar');
+    final inclusions = <String>[];
 
-    return inclusions.join(', ');
+    final inclusionMap = {
+      includesBreakfast: 'Petit déjeuner',
+      includesLunch: 'Déjeuner',
+      includesDinner: 'Dîner',
+      includesSnacks: 'Snacks',
+      includesDrinks: 'Boissons',
+      includesAlcoholicDrinks: 'Boissons alcoolisées',
+      includesRoomService: 'Room service',
+      includesMinibar: 'Minibar',
+    };
+
+    inclusions.addAll(inclusionMap.entries
+        .where((entry) => entry.key)
+        .map((entry) => entry.value));
+
+    if (inclusions.isEmpty) return 'Aucun service inclus';
+    if (inclusions.length <= 2) return inclusions.join(', ');
+    return '${inclusions.take(2).join(', ')} (+${inclusions.length - 2} autres)';
   }
 }
 
@@ -796,17 +805,17 @@ class ExtraService {
   // Helper pour le calcul du prix
   double calculatePrice(
       int quantity, double roomPrice, int nights, int persons) {
-    double basePrice = isPercentage ? roomPrice * (price / 100) : price;
-
     switch (pricingUnit) {
       case 'per_person':
-        return basePrice * persons * quantity;
+        return price * quantity * persons;
       case 'per_night':
-        return basePrice * nights * quantity;
+        return price * quantity * nights;
       case 'per_stay':
-        return basePrice * quantity;
-      default: // per_item
-        return basePrice * quantity;
+        return price * quantity;
+      case 'percentage_room':
+        return (price / 100) * roomPrice * quantity;
+      default:
+        return price * quantity;
     }
   }
 }
@@ -924,6 +933,46 @@ class Guest {
 }
 
 /// ==================== RESERVATION ====================
+// @Entity()
+// class Reservation {
+//   @Id()
+//   int id = 0;
+//
+//   final room = ToOne<Room>();
+//   final receptionist = ToOne<Employee>();
+//   final guests = ToMany<Guest>();
+//
+//   // NOUVELLES RELATIONS
+//   final boardBasis = ToOne<BoardBasis>();
+//   @Backlink('reservation')
+//   final extras = ToMany<ReservationExtra>();
+//
+//   DateTime from;
+//   DateTime to;
+//   double pricePerNight;
+//   double boardBasisPrice; // Prix du plan de pension
+//   double extrasTotal; // Total des extras
+//   String status;
+//
+//   Reservation({
+//     required this.from,
+//     required this.to,
+//     required this.pricePerNight,
+//     this.boardBasisPrice = 0.0,
+//     this.extrasTotal = 0.0,
+//     this.status = "Confirmée",
+//   });
+//
+//   // Helper pour calculer le prix total
+//   double get totalPrice {
+//     final nights = to.difference(from).inDays;
+//     final roomTotal = pricePerNight * nights;
+//     final boardTotal = boardBasisPrice * guests.length * nights;
+//     return roomTotal + boardTotal + extrasTotal;
+//   }
+// }
+
+/// ==================== RESERVATION CORRIGÉE ====================
 @Entity()
 class Reservation {
   @Id()
@@ -941,25 +990,85 @@ class Reservation {
   DateTime from;
   DateTime to;
   double pricePerNight;
-  double boardBasisPrice; // Prix du plan de pension
-  double extrasTotal; // Total des extras
   String status;
+
+  // Champs calculés optionnels pour optimisation (peuvent être supprimés)
+  double? cachedBoardBasisPrice; // Cache du prix du plan de pension
+  double? cachedExtrasTotal; // Cache du total des extras
 
   Reservation({
     required this.from,
     required this.to,
     required this.pricePerNight,
-    this.boardBasisPrice = 0.0,
-    this.extrasTotal = 0.0,
     this.status = "Confirmée",
+    this.cachedBoardBasisPrice,
+    this.cachedExtrasTotal,
   });
+
+  // Calculer le prix du plan de pension en temps réel
+  double get boardBasisPrice {
+    if (cachedBoardBasisPrice != null) return cachedBoardBasisPrice!;
+
+    final boardBasisTarget = boardBasis.target;
+    if (boardBasisTarget == null) return 0.0;
+
+    final nights = to.difference(from).inDays;
+    final persons = guests.length;
+    return boardBasisTarget.pricePerPerson * persons * nights;
+  }
+
+  // Calculer le total des extras en temps réel
+  double get extrasTotal {
+    if (cachedExtrasTotal != null) return cachedExtrasTotal!;
+
+    return extras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
+  }
 
   // Helper pour calculer le prix total
   double get totalPrice {
     final nights = to.difference(from).inDays;
     final roomTotal = pricePerNight * nights;
-    final boardTotal = boardBasisPrice * guests.length * nights;
+    final boardTotal = boardBasisPrice;
     return roomTotal + boardTotal + extrasTotal;
+  }
+
+  // Méthodes utilitaires
+  int get numberOfNights => to.difference(from).inDays;
+
+  int get numberOfGuests => guests.length;
+
+  // Vérifier si la réservation est active
+  bool get isActive => status != "Annulée" && status != "Parti";
+
+  // Vérifier si le client est arrivé
+  bool get hasArrived => status == "Arrivé" || status == "Parti";
+
+  // Obtenir le prix moyen par personne par nuit
+  double get averagePricePerPersonPerNight {
+    final persons = numberOfGuests;
+    final nights = numberOfNights;
+    if (persons == 0 || nights == 0) return 0.0;
+    return totalPrice / (persons * nights);
+  }
+
+  // Méthode pour rafraîchir les caches (à appeler après modification des extras/board basis)
+  void refreshCaches() {
+    cachedBoardBasisPrice = null;
+    cachedExtrasTotal = null;
+  }
+
+  // Validation de la réservation
+  bool get isValid {
+    return from.isBefore(to) &&
+        pricePerNight > 0 &&
+        room.target != null &&
+        receptionist.target != null &&
+        guests.isNotEmpty;
+  }
+
+  @override
+  String toString() {
+    return 'Reservation{id: $id, room: ${room.target?.code}, from: $from, to: $to, status: $status, total: ${totalPrice.toStringAsFixed(2)} DZD}';
   }
 }
 

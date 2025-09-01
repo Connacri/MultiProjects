@@ -668,7 +668,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(22, 4405813060867310126),
       name: 'Reservation',
-      lastPropertyId: const obx_int.IdUid(15, 6978719131581766950),
+      lastPropertyId: const obx_int.IdUid(17, 8865500647796199066),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -718,13 +718,13 @@ final _entities = <obx_int.ModelEntity>[
             indexId: const obx_int.IdUid(49, 2870925328515029735),
             relationTarget: 'BoardBasis'),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(14, 6865609035624207843),
-            name: 'boardBasisPrice',
+            id: const obx_int.IdUid(16, 4710393012455644419),
+            name: 'cachedBoardBasisPrice',
             type: 8,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(15, 6978719131581766950),
-            name: 'extrasTotal',
+            id: const obx_int.IdUid(17, 8865500647796199066),
+            name: 'cachedExtrasTotal',
             type: 8,
             flags: 0)
       ],
@@ -1484,7 +1484,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         8101665827835091034,
         2370683961364380821,
         2486568139009562406,
-        2374839585227326155
+        2374839585227326155,
+        6865609035624207843,
+        6978719131581766950
       ],
       retiredRelationUids: const [2832941486252609678, 4545419348761092860],
       modelVersion: 5,
@@ -2192,7 +2194,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (Reservation object, fb.Builder fbb) {
           final statusOffset = fbb.writeString(object.status);
-          fbb.startTable(16);
+          fbb.startTable(18);
           fbb.addInt64(0, object.id);
           fbb.addFloat64(5, object.pricePerNight);
           fbb.addOffset(6, statusOffset);
@@ -2201,8 +2203,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addInt64(9, object.from.millisecondsSinceEpoch);
           fbb.addInt64(10, object.to.millisecondsSinceEpoch);
           fbb.addInt64(12, object.boardBasis.targetId);
-          fbb.addFloat64(13, object.boardBasisPrice);
-          fbb.addFloat64(14, object.extrasTotal);
+          fbb.addFloat64(15, object.cachedBoardBasisPrice);
+          fbb.addFloat64(16, object.cachedExtrasTotal);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2215,19 +2217,19 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0));
           final pricePerNightParam =
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
-          final boardBasisPriceParam =
-              const fb.Float64Reader().vTableGet(buffer, rootOffset, 30, 0);
-          final extrasTotalParam =
-              const fb.Float64Reader().vTableGet(buffer, rootOffset, 32, 0);
           final statusParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 16, '');
+          final cachedBoardBasisPriceParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 34);
+          final cachedExtrasTotalParam = const fb.Float64Reader()
+              .vTableGetNullable(buffer, rootOffset, 36);
           final object = Reservation(
               from: fromParam,
               to: toParam,
               pricePerNight: pricePerNightParam,
-              boardBasisPrice: boardBasisPriceParam,
-              extrasTotal: extrasTotalParam,
-              status: statusParam)
+              status: statusParam,
+              cachedBoardBasisPrice: cachedBoardBasisPriceParam,
+              cachedExtrasTotal: cachedExtrasTotalParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           object.room.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 18, 0);
@@ -3359,12 +3361,12 @@ class Reservation_ {
   static final boardBasis = obx.QueryRelationToOne<Reservation, BoardBasis>(
       _entities[10].properties[7]);
 
-  /// See [Reservation.boardBasisPrice].
-  static final boardBasisPrice =
+  /// See [Reservation.cachedBoardBasisPrice].
+  static final cachedBoardBasisPrice =
       obx.QueryDoubleProperty<Reservation>(_entities[10].properties[8]);
 
-  /// See [Reservation.extrasTotal].
-  static final extrasTotal =
+  /// See [Reservation.cachedExtrasTotal].
+  static final cachedExtrasTotal =
       obx.QueryDoubleProperty<Reservation>(_entities[10].properties[9]);
 
   /// see [Reservation.guests]

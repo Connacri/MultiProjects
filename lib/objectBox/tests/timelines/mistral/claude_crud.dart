@@ -373,55 +373,55 @@ class _RoomCategoryFormScreenState extends State<RoomCategoryFormScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    _formKey.currentState!.save();
-                    final provider =
-                        Provider.of<HotelProvider>(context, listen: false);
-                    final category = RoomCategory(
-                      name: _name,
-                      code: _code,
-                      description: _description,
-                      bedType: _bedType,
-                      capacity: _capacity,
-                      standing: _standing,
-                      basePrice: _basePrice,
-                      allowsExtraBed: _allowsExtraBed,
-                      extraBedPrice: _extraBedPrice ?? 0.0,
-                    )
-                      ..id = widget.category?.id ??
-                          0 // Définir id après la création
-                      // ..amenities = widget.category?.amenities ?? '[]'
-                      ..setAmenities(_selectedAmenities) // Utiliser le helper
-                      ..seasonMultiplier =
-                          widget.category?.seasonMultiplier ?? 1.0
-                      ..weekendMultiplier =
-                          widget.category?.weekendMultiplier ?? 1.0
-                      ..isActive = widget.category?.isActive ?? true
-                      ..sortOrder = widget.category?.sortOrder ?? 0;
-
-                    if (widget.category == null) {
-                      await provider.addRoomCategory(category);
-                    } else {
-                      await provider.updateRoomCategory(category);
-                    }
-                    if (mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            widget.category == null
-                                ? 'Catégorie ajoutée avec succès.'
-                                : 'Catégorie mise à jour avec succès.',
-                          ),
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text('Enregistrer'),
-              ),
+              // ElevatedButton(
+              //   onPressed: () async {
+              //     if (_formKey.currentState!.validate()) {
+              //       _formKey.currentState!.save();
+              //       final provider =
+              //           Provider.of<HotelProvider>(context, listen: false);
+              //       final category = RoomCategory(
+              //         name: _name,
+              //         code: _code,
+              //         description: _description,
+              //         bedType: _bedType,
+              //         capacity: _capacity,
+              //         standing: _standing,
+              //         basePrice: _basePrice,
+              //         allowsExtraBed: _allowsExtraBed,
+              //         extraBedPrice: _extraBedPrice ?? 0.0,
+              //       )
+              //         ..id = widget.category?.id ??
+              //             0 // Définir id après la création
+              //         // ..amenities = widget.category?.amenities ?? '[]'
+              //         ..setAmenities(_selectedAmenities) // Utiliser le helper
+              //         ..seasonMultiplier =
+              //             widget.category?.seasonMultiplier ?? 1.0
+              //         ..weekendMultiplier =
+              //             widget.category?.weekendMultiplier ?? 1.0
+              //         ..isActive = widget.category?.isActive ?? true
+              //         ..sortOrder = widget.category?.sortOrder ?? 0;
+              //
+              //       if (widget.category == null) {
+              //         await provider.addRoomCategory(category);
+              //       } else {
+              //         await provider.updateRoomCategory(category);
+              //       }
+              //       if (mounted) {
+              //         Navigator.pop(context);
+              //         ScaffoldMessenger.of(context).showSnackBar(
+              //           SnackBar(
+              //             content: Text(
+              //               widget.category == null
+              //                   ? 'Catégorie ajoutée avec succès.'
+              //                   : 'Catégorie mise à jour avec succès.',
+              //             ),
+              //           ),
+              //         );
+              //       }
+              //     }
+              //   },
+              //   child: const Text('Enregistrer'),
+              // ),
               // ... autres champs du formulaire
               const Divider(),
               const Text(
@@ -1850,6 +1850,8 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
               const SizedBox(height: 20),
 
               // Enregistrer
+              // Dans RoomFormScreen, remplacez la méthode onPressed du bouton Enregistrer :
+
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
@@ -1857,26 +1859,54 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                     final provider =
                         Provider.of<HotelProvider>(context, listen: false);
 
-                    final room = Room(
-                      code: _code,
-                      type: _type,
-                      capacity: _capacity,
-                      basePrice: _basePrice,
-                      status: _status,
-                    )
-                      ..id = widget.room?.id ?? 0
-                      ..category.target =
-                          _selectedCategory; // ✅ assigner catégorie
+                    Room room;
 
                     if (widget.room == null) {
-                      final roomId = await provider.addRoom(room);
+                      // Création d'une nouvelle chambre
+                      room = Room(
+                        code: _code,
+                        type: _type,
+                        capacity: _capacity,
+                        basePrice: _basePrice,
+                        status: _status,
+                      );
+
+                      // Assigner la catégorie si sélectionnée
                       if (_selectedCategory != null) {
-                        final newRoom =
-                            provider.rooms.firstWhere((r) => r.id == roomId);
-                        newRoom.category.target = _selectedCategory;
-                        await provider.updateRoom(newRoom);
+                        room.category.target = _selectedCategory;
                       }
+
+                      // IMPORTANT: Assigner à l'hôtel courant si disponible
+                      if (provider.currentHotel != null) {
+                        room.hotel.target = provider.currentHotel;
+                      } else if (provider.hotels.isNotEmpty) {
+                        room.hotel.target = provider.hotels.first;
+                      }
+
+                      await provider.addRoom(room);
                     } else {
+                      // Modification d'une chambre existante
+                      room = widget.room!;
+
+                      // CRITIQUE : Préserver TOUTES les relations existantes
+                      final existingHotel = room.hotel.target;
+                      final existingReservations = room.reservations.toList();
+
+                      // Mettre à jour les propriétés
+                      room.code = _code;
+                      room.type = _type;
+                      room.capacity = _capacity;
+                      room.basePrice = _basePrice;
+                      room.status = _status;
+
+                      // Réassigner les relations préservées
+                      room.hotel.target = existingHotel;
+                      room.category.target = _selectedCategory;
+
+                      // Restaurer les réservations (important pour ObjectBox)
+                      room.reservations.clear();
+                      room.reservations.addAll(existingReservations);
+
                       await provider.updateRoom(room);
                     }
 

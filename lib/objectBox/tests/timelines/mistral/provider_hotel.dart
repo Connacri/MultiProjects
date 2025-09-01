@@ -725,14 +725,58 @@ class HotelProvider with ChangeNotifier {
     }
   }
 
+// Dans HotelProvider, remplacez la méthode updateRoom :
+
   Future<bool> updateRoom(Room room) async {
     try {
+      // Vérification critique : s'assurer que l'ID existe
+      if (room.id == 0) {
+        debugPrint('ERREUR: Tentative de mise à jour d\'une chambre sans ID');
+        return false;
+      }
+
+      // Vérifier que la chambre existe dans la base
+      final existingRoom = _roomBox.get(room.id);
+      if (existingRoom == null) {
+        debugPrint('ERREUR: Chambre avec ID ${room.id} introuvable');
+        return false;
+      }
+
+      // Debug : vérifier les relations avant sauvegarde
+      debugPrint('Mise à jour chambre ${room.code}:');
+      debugPrint('- ID: ${room.id}');
+      debugPrint('- Hôtel lié: ${room.hotel.target?.name ?? "AUCUN"}');
+      debugPrint('- Catégorie: ${room.category.target?.name ?? "AUCUNE"}');
+      debugPrint('- Réservations: ${room.reservations.length}');
+
+      // S'assurer que la relation hotel est préservée
+      if (room.hotel.target == null && existingRoom.hotel.target != null) {
+        debugPrint('ATTENTION: Restauration de la relation hotel manquante');
+        room.hotel.target = existingRoom.hotel.target;
+      }
+
+      // Sauvegarder avec mode update explicite
       _roomBox.put(room, mode: PutMode.update);
+
+      // Recharger et vérifier
       await _loadAllData();
-      notifyListeners();
-      return true;
+
+      // Vérification post-mise à jour
+      final updatedRoom = _roomBox.get(room.id);
+      if (updatedRoom != null) {
+        debugPrint('✅ Chambre mise à jour avec succès');
+        debugPrint(
+            '- Hôtel après MAJ: ${updatedRoom.hotel.target?.name ?? "AUCUN"}');
+        notifyListeners();
+        return true;
+      } else {
+        debugPrint(
+            '❌ Échec de la mise à jour - chambre introuvable après sauvegarde');
+        return false;
+      }
     } catch (e) {
-      debugPrint('Erreur lors de la mise à jour de la chambre: $e');
+      debugPrint('❌ Erreur lors de la mise à jour de la chambre: $e');
+      debugPrint('Stack trace: ${StackTrace.current}');
       return false;
     }
   }
@@ -1199,6 +1243,16 @@ class HotelProvider with ChangeNotifier {
   /// Retourne le nom de la catégorie d'une chambre
   String getRoomCategoryName(Room room) {
     return room.category.target?.name ?? 'Aucune catégorie';
+  }
+
+  // Retourne la liste des BoardBasis
+  List<BoardBasis> getBoardBasisList() {
+    return _boardBasis.where((bb) => bb.isActive).toList();
+  }
+
+  /// Retourne la liste des ExtraServices
+  List<ExtraService> getExtraServicesList() {
+    return _extraServices.where((es) => es.isActive).toList();
   }
 }
 
