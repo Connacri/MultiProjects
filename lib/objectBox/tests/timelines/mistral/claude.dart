@@ -1326,30 +1326,34 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.8),
-          child: ReservationDialogContent(
-            preselectedRoom: preselectedRoom,
-            preselectedDate: preselectedDate,
-            currentHotel: _currentHotel!,
-            provider: provider,
-            parentContext: context,
-            // Passer le contexte parent pour SnackBar
-            onReservationAdded: () {
-              // Rafraîchir le calendrier
-              setState(() {
-                _dataSource = HotelReservationDataSource(
-                    _currentHotel!.rooms
-                        .expand((room) => room.reservations)
-                        .toList(),
-                    _currentHotel!.rooms.toList());
-              });
-            },
-            seasonalPricings: provider.getSeasonalPricings(),
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: context.read<HotelProvider>(),
+        child: Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8),
+            child: ReservationDialogContent(
+              preselectedRoom: preselectedRoom,
+              preselectedDate: preselectedDate,
+              currentHotel: _currentHotel!,
+              provider: provider,
+              parentContext: context,
+              // Passer le contexte parent pour SnackBar
+              onReservationAdded: () {
+                // Rafraîchir le calendrier
+                setState(() {
+                  _dataSource = HotelReservationDataSource(
+                      _currentHotel!.rooms
+                          .expand((room) => room.reservations)
+                          .toList(),
+                      _currentHotel!.rooms.toList());
+                });
+              },
+              seasonalPricings: provider.getSeasonalPricings(),
+            ),
           ),
         ),
       ),
@@ -1565,33 +1569,37 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.8),
-          child: ReservationDialogContent(
-            preselectedRoom: reservation.room.target,
-            preselectedDate: reservation.from,
-            currentHotel: _currentHotel!,
-            provider: provider,
-            parentContext: context,
-            isEditing: true,
-            // Nouveau paramètre
-            existingReservation: reservation,
-            // Nouveau paramètre
-            onReservationAdded: () {
-              // Rafraîchir le calendrier après modification
-              setState(() {
-                _dataSource = HotelReservationDataSource(
-                    _currentHotel!.rooms
-                        .expand((room) => room.reservations)
-                        .toList(),
-                    _currentHotel!.rooms.toList());
-              });
-            },
-            seasonalPricings: provider.getSeasonalPricings(),
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: context.read<HotelProvider>(),
+        child: Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8),
+            child: ReservationDialogContent(
+              preselectedRoom: reservation.room.target,
+              preselectedDate: reservation.from,
+              currentHotel: _currentHotel!,
+              provider: provider,
+              parentContext: context,
+              isEditing: true,
+              // Nouveau paramètre
+              existingReservation: reservation,
+              // Nouveau paramètre
+              onReservationAdded: () {
+                // Rafraîchir le calendrier après modification
+                setState(() {
+                  _dataSource = HotelReservationDataSource(
+                      _currentHotel!.rooms
+                          .expand((room) => room.reservations)
+                          .toList(),
+                      _currentHotel!.rooms.toList());
+                });
+              },
+              seasonalPricings: provider.getSeasonalPricings(),
+            ),
           ),
         ),
       ),
@@ -2060,6 +2068,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   final _idCardController = TextEditingController();
   final _priceController = TextEditingController();
 
+  SeasonalPricing? _selectedSeasonalPricing;
   Room? _selectedRoom;
   Employee? _selectedEmployee;
   List<Guest> _selectedGuests = [];
@@ -2092,7 +2101,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   @override
   void initState() {
     super.initState();
-    _seasonalPricings = widget.seasonalPricings;
+    _seasonalPricings = widget.seasonalPricings; // <- comme tu l'as demandé
+    _preselectSeasonalByToday();
     if (widget.isEditing && widget.existingReservation != null) {
       _initializeForEdit();
     } else {
@@ -2107,6 +2117,25 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         });
       }
     });
+  }
+
+  void _preselectSeasonalByToday() {
+    final now = DateTime.now();
+
+    if (_seasonalPricings.isEmpty) {
+      _selectedSeasonalPricing = null;
+      _seasonalMultiplier = 1.0;
+      return;
+    }
+
+    // orElse doit retourner un SeasonalPricing non-null
+    final selected = _seasonalPricings.firstWhere(
+      (s) => s.isActive && s.isDateInSeason(now),
+      orElse: () => _seasonalPricings.first,
+    );
+
+    _selectedSeasonalPricing = selected;
+    _seasonalMultiplier = selected.multiplier;
   }
 
   void _initializeForEdit() {
@@ -2333,7 +2362,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
         if (w < 600) {
           return _buildMobileForm();
-        } else if (w < 1200) {
+        } else if (w < 900) {
           return _buildTabletForm();
         } else {
           return _buildDesktopForm();
@@ -2379,19 +2408,99 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       // Right Column
                       Expanded(
                         flex: 2,
+                        child: Column(children: [
+                          _buildExtraServicesSection(),
+                          SizedBox(height: 16),
+                          // _buildSeasonalPricingSection2(),
+                          SeasonalPricingDropdown()
+                        ]),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16),
+                  // CORRECTION: Placer la section saisonnière ici
+                  _buildPricingSummary(context),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _buildFooter(),
+      ],
+    );
+  }
+
+  Widget _buildMobileForm() {
+    return Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _buildBasicInfoSection(),
+                  SizedBox(height: 16),
+                  _buildBoardBasisSection(),
+                  SizedBox(height: 16),
+                  _buildGuestsSection(),
+                  SizedBox(height: 16),
+                  _buildExtraServicesSection(),
+                  SizedBox(height: 16),
+                  SeasonalPricingDropdown(),
+                  SizedBox(height: 16),
+                  _buildPricingSummary(context),
+                ],
+              ),
+            ),
+          ),
+        ),
+        _buildFooter(),
+      ],
+    );
+  }
+
+  Widget _buildTabletForm() {
+    return Column(
+      children: [
+        _buildHeader(),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
                         child: Column(
                           children: [
-                            _buildExtraServicesSection(),
+                            _buildBasicInfoSection(),
                             SizedBox(height: 16),
-                            _buildPricingSummary(),
+                            _buildBoardBasisSection(),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            _buildGuestsSection(),
+                            SizedBox(height: 16),
+                            _buildExtraServicesSection(),
                           ],
                         ),
                       ),
                     ],
                   ),
                   SizedBox(height: 16),
-                  // CORRECTION: Placer la section saisonnière ici
-                  _buildSeasonalPricingSection(),
+                  SeasonalPricingDropdown(),
+                  SizedBox(height: 16),
+                  _buildPricingSummary(context),
                 ],
               ),
             ),
@@ -2413,29 +2522,109 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         ),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(Icons.hotel, color: Colors.white, size: 28),
-          SizedBox(width: 12),
-          Flexible(
-            // Utilise Flexible pour le texte
-            child: Text(
-              widget.isEditing
-                  ? 'Modifier la réservation'
-                  : 'Nouvelle Réservation',
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
+          Expanded(
+            child: Row(
+              children: [
+                Icon(Icons.hotel, color: Colors.white, size: 28),
+                SizedBox(width: 12),
+                Flexible(
+                  // Utilise Flexible pour le texte
+                  child: Text(
+                    widget.isEditing
+                        ? 'Modifier la réservation'
+                        : 'Nouvelle Réservation',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Spacer(),
           IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(Icons.close, color: Colors.white),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPricingSummary(BuildContext context) {
+    if (_fromDate == null || _toDate == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: const Text(
+            'Sélectionnez les dates pour voir le récapitulatif des prix',
+          ),
+        ),
+      );
+    }
+
+    final nights = _toDate!.difference(_fromDate!).inDays;
+    final persons = _selectedGuests.length;
+    final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
+
+    // 🔥 Récupère la tarification saisonnière sélectionnée depuis le provider
+    final seasonal = context.watch<HotelProvider>().selectedSeasonalPricing;
+    final seasonalMultiplier = seasonal?.multiplier ?? 1.0;
+
+    final roomPrice = baseRoomPrice * seasonalMultiplier;
+    final roomTotal = roomPrice * nights;
+
+    double boardBasisTotal = 0.0;
+    if (_selectedBoardBasis != null) {
+      boardBasisTotal = _selectedBoardBasis!.pricePerPerson * persons * nights;
+    }
+
+    double extrasTotal =
+        _selectedExtras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
+    double grandTotal = roomTotal + boardBasisTotal + extrasTotal;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Récapitulatif des prix',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildPriceRow(
+              'Chambre ($nights nuits)',
+              '${roomTotal.toStringAsFixed(2)} DZD',
+            ),
+            if (seasonalMultiplier != 1.0)
+              _buildPriceRow(
+                'Multiplicateur saisonnier (x${seasonalMultiplier.toStringAsFixed(2)})',
+                '',
+              ),
+            if (_selectedBoardBasis != null)
+              _buildPriceRow(
+                '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
+                '${boardBasisTotal.toStringAsFixed(2)} DZD',
+              ),
+            if (_selectedExtras.isNotEmpty)
+              _buildPriceRow(
+                'Services supplémentaires',
+                '${extrasTotal.toStringAsFixed(2)} DZD',
+              ),
+            const Divider(),
+            _buildPriceRow(
+              'Total général',
+              '${grandTotal.toStringAsFixed(2)} DZD',
+              isTotal: true,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2781,68 +2970,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
-  Widget _buildPricingSummary() {
-    if (_fromDate == null || _toDate == null) {
-      return Card(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(
-              'Sélectionnez les dates pour voir le récapitulatif des prix'),
-        ),
-      );
-    }
-
-    final nights = _toDate!.difference(_fromDate!).inDays;
-    final persons = _selectedGuests.length;
-    final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
-    final roomPrice = baseRoomPrice * _seasonalMultiplier;
-    final roomTotal = roomPrice * nights;
-
-    double boardBasisTotal = 0.0;
-    if (_selectedBoardBasis != null) {
-      boardBasisTotal = _selectedBoardBasis!.pricePerPerson * persons * nights;
-    }
-
-    double extrasTotal =
-        _selectedExtras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
-    double grandTotal = roomTotal + boardBasisTotal + extrasTotal;
-
-    return Card(
-      child: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Récapitulatif des prix',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
-            _buildPriceRow('Chambre ($nights nuits)',
-                '${roomTotal.toStringAsFixed(2)} DZD'),
-            if (_seasonalMultiplier != 1.0)
-              _buildPriceRow(
-                'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
-                '',
-              ),
-            if (_selectedBoardBasis != null)
-              _buildPriceRow(
-                '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
-                '${boardBasisTotal.toStringAsFixed(2)} DZD',
-              ),
-            if (_selectedExtras.isNotEmpty)
-              _buildPriceRow('Services supplémentaires',
-                  '${extrasTotal.toStringAsFixed(2)} DZD'),
-            Divider(),
-            _buildPriceRow(
-              'Total général',
-              '${grandTotal.toStringAsFixed(2)} DZD',
-              isTotal: true,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildPriceRow(String label, String amount, {bool isTotal = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4),
@@ -3003,8 +3130,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
-// CORRECTION 6: Améliorer _buildSeasonalPricingSection pour s'afficher même sans dates
-  Widget _buildSeasonalPricingSection() {
+  Widget _buildSeasonalPricingSectionm() {
     if (_seasonalPricings.isEmpty) {
       return Container();
     }
@@ -3146,6 +3272,253 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSeasonalPricingSection23() {
+    // Liste à afficher selon le contexte
+    final List<SeasonalPricing> toShow = _fromDate == null || _toDate == null
+        ? _seasonalPricings.where((s) => s.isActive).toList()
+        : _seasonalPricings.where((s) {
+            if (!s.isActive) return false;
+            for (DateTime d = _fromDate!;
+                d.isBefore(_toDate!.add(const Duration(days: 1)));
+                d = d.add(const Duration(days: 1))) {
+              if (s.isDateInSeason(d)) return true;
+            }
+            return false;
+          }).toList();
+
+    if (toShow.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _fromDate == null || _toDate == null
+                ? 'Aucun tarif saisonnier disponible'
+                : 'Aucun tarif saisonnier applicable pour ces dates',
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Tarifs saisonniers',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            ...toShow.map((seasonal) {
+              final isSelected = _selectedSeasonalPricing?.id == seasonal.id;
+              return InkWell(
+                onTap: () {
+                  setState(() {
+                    _selectedSeasonalPricing = isSelected ? null : seasonal;
+                    _seasonalMultiplier =
+                        _selectedSeasonalPricing?.multiplier ?? 1.0;
+                  });
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected ? Colors.green.shade50 : Colors.grey.shade50,
+                    border: Border.all(
+                      color: isSelected ? Colors.green : Colors.grey.shade300,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isSelected
+                            ? Icons.radio_button_on
+                            : Icons.radio_button_off,
+                        color: isSelected ? Colors.green : Colors.grey,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              seasonal.name,
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                            Text(
+                              '${_formatDate(seasonal.startDate)} – ${_formatDate(seasonal.endDate)}',
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '× ${seasonal.multiplier}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.green : Colors.deepPurple,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeasonalPricingSection24() {
+    return Column(
+      children: _seasonalPricings.map((seasonal) {
+        final isSelected = _selectedSeasonalPricing?.id == seasonal.id;
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _selectedSeasonalPricing = isSelected ? null : seasonal;
+              _seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.green.shade50 : Colors.grey.shade50,
+              border: Border.all(
+                color: isSelected ? Colors.green : Colors.grey.shade300,
+                width: isSelected ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? Icons.radio_button_on : Icons.radio_button_off,
+                  color: isSelected ? Colors.green : Colors.grey,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(seasonal.name,
+                          style: TextStyle(
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          )),
+                      Text(
+                        '${_formatDate(seasonal.startDate)} – ${_formatDate(seasonal.endDate)}',
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '× ${seasonal.multiplier}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.green : Colors.deepPurple,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildSeasonalPricingSection2() {
+    // Filtrage (garde ta logique actuelle)
+    final toShow = _fromDate == null || _toDate == null
+        ? _seasonalPricings.where((s) => s.isActive).toList()
+        : _seasonalPricings.where((s) {
+            if (!s.isActive) return false;
+            for (DateTime d = _fromDate!;
+                d.isBefore(_toDate!.add(const Duration(days: 1)));
+                d = d.add(const Duration(days: 1))) {
+              if (s.isDateInSeason(d)) return true;
+            }
+            return false;
+          }).toList();
+
+    if (toShow.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _fromDate == null || _toDate == null
+                ? 'Aucun tarif saisonnier disponible'
+                : 'Aucun tarif saisonnier applicable pour ces dates',
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
+        ),
+      );
+    }
+
+    // Garantit que la valeur est dans la liste des items
+    final currentValue = (_selectedSeasonalPricing != null &&
+            toShow.any((s) => s.id == _selectedSeasonalPricing!.id))
+        ? _selectedSeasonalPricing
+        : toShow.first; // fallback sûr
+
+    return DropdownButtonFormField<SeasonalPricing>(
+      isExpanded: true,
+      value: currentValue,
+      decoration: InputDecoration(
+        labelText: 'Tarif saisonnier',
+        prefixIcon: const Icon(Icons.event),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      items: toShow.map((seasonal) {
+        return DropdownMenuItem<SeasonalPricing>(
+          value: seasonal,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(seasonal.name,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text(
+                      '${_formatDate(seasonal.startDate)} – ${_formatDate(seasonal.endDate)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+              Text('× ${seasonal.multiplier}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.deepPurple)),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (SeasonalPricing? newValue) {
+        setState(() {
+          _selectedSeasonalPricing = newValue;
+          _seasonalMultiplier = newValue?.multiplier ?? 1.0;
+        });
+      },
     );
   }
 
@@ -3404,83 +3777,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _guestBeingEdited = null;
   }
 
-  Widget _buildMobileForm() {
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  _buildBasicInfoSection(),
-                  SizedBox(height: 16),
-                  _buildBoardBasisSection(),
-                  SizedBox(height: 16),
-                  _buildGuestsSection(),
-                  SizedBox(height: 16),
-                  _buildExtraServicesSection(),
-                  SizedBox(height: 16),
-                  _buildPricingSummary(),
-                ],
-              ),
-            ),
-          ),
-        ),
-        _buildFooter(),
-      ],
-    );
-  }
-
-  Widget _buildTabletForm() {
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _buildBasicInfoSection(),
-                            SizedBox(height: 16),
-                            _buildBoardBasisSection(),
-                          ],
-                        ),
-                      ),
-                      SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _buildGuestsSection(),
-                            SizedBox(height: 16),
-                            _buildExtraServicesSection(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 16),
-                  _buildPricingSummary(),
-                ],
-              ),
-            ),
-          ),
-        ),
-        _buildFooter(),
-      ],
-    );
-  }
-
   // ============================================================================
 // 5. CORRECTION - _saveReservation() complète
 // ============================================================================
@@ -3681,6 +3977,39 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _idCardController.dispose();
     _priceController.dispose();
     super.dispose();
+  }
+}
+
+class SeasonalPricingDropdown extends StatelessWidget {
+  const SeasonalPricingDropdown({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HotelProvider>(
+      builder: (context, provider, child) {
+        final seasonalPricings = provider.seasonalPricing;
+        final selected = provider.selectedSeasonalPricing;
+
+        return DropdownButtonFormField<SeasonalPricing>(
+          value: selected,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: "Tarif saisonnier",
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            prefixIcon: const Icon(Icons.calendar_today),
+          ),
+          items: seasonalPricings.map((sp) {
+            return DropdownMenuItem<SeasonalPricing>(
+              value: sp,
+              child: Text("${sp.name} - ${sp.multiplier}x"),
+            );
+          }).toList(),
+          onChanged: (newValue) {
+            provider.setSelectedSeasonalPricing(newValue);
+          },
+        );
+      },
+    );
   }
 }
 

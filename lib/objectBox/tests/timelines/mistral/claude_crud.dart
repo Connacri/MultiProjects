@@ -1523,8 +1523,15 @@ class AppDrawer extends StatelessWidget {
             decoration: BoxDecoration(color: Colors.blue),
             child: Column(
               children: [
-                Text('Hôtel ${currentHotel!.name.toUpperCase()}',
-                    style: TextStyle(color: Colors.white, fontSize: 24)),
+                currentHotel == null
+                    ? Text('HÔTEL',
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 24))
+                    : Text(
+                        currentHotel!.name.toUpperCase(),
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 24),
+                      ),
                 currentHotel == null
                     ? SizedBox.shrink()
                     : Row(
@@ -1692,7 +1699,7 @@ class RoomListScreen extends StatelessWidget {
                     ],
                   ),
                   trailing: Text(
-                    '${room.category.target!.basePrice!.toStringAsFixed(2)} DA',
+                    '${room.category.target!.basePrice.toStringAsFixed(2)} DA',
                     style: TextStyle(fontSize: 20),
                   ),
                 ),

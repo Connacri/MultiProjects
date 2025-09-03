@@ -1341,6 +1341,20 @@ class HotelProvider with ChangeNotifier {
   List<ExtraService> getExtraServicesList() {
     return _extraServices.where((es) => es.isActive).toList();
   }
+
+  SeasonalPricing? _selectedSeasonalPricing;
+
+  SeasonalPricing? get selectedSeasonalPricing => _selectedSeasonalPricing;
+
+  void setSeasonalPricings(List<SeasonalPricing> list) {
+    _seasonalPricing = list;
+    notifyListeners();
+  }
+
+  void setSelectedSeasonalPricing(SeasonalPricing? pricing) {
+    _selectedSeasonalPricing = pricing;
+    notifyListeners();
+  }
 }
 
 extension HotelProviderAdmin on HotelProvider {
