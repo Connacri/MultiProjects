@@ -668,7 +668,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(22, 4405813060867310126),
       name: 'Reservation',
-      lastPropertyId: const obx_int.IdUid(17, 8865500647796199066),
+      lastPropertyId: const obx_int.IdUid(32, 3092973566861730351),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -676,11 +676,6 @@ final _entities = <obx_int.ModelEntity>[
             name: 'id',
             type: 6,
             flags: 1),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 9106126505446500084),
-            name: 'pricePerNight',
-            type: 8,
-            flags: 0),
         obx_int.ModelProperty(
             id: const obx_int.IdUid(7, 8094705632954396714),
             name: 'status',
@@ -694,23 +689,6 @@ final _entities = <obx_int.ModelEntity>[
             indexId: const obx_int.IdUid(42, 5139934148839172087),
             relationTarget: 'Room'),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(9, 4994120001457133647),
-            name: 'receptionistId',
-            type: 11,
-            flags: 520,
-            indexId: const obx_int.IdUid(43, 8837918613306508000),
-            relationTarget: 'Employee'),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(10, 6953480594541438406),
-            name: 'from',
-            type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(11, 7709745214526133608),
-            name: 'to',
-            type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(13, 6141768167787054189),
             name: 'boardBasisId',
             type: 11,
@@ -718,19 +696,41 @@ final _entities = <obx_int.ModelEntity>[
             indexId: const obx_int.IdUid(49, 2870925328515029735),
             relationTarget: 'BoardBasis'),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(16, 4710393012455644419),
+            id: const obx_int.IdUid(27, 2070806968783296453),
+            name: 'receptionistId',
+            type: 11,
+            flags: 520,
+            indexId: const obx_int.IdUid(73, 5379984811269586421),
+            relationTarget: 'Employee'),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(28, 1023067695828263888),
+            name: 'from',
+            type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(29, 7799290966463506762),
+            name: 'to',
+            type: 10,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(30, 6944122415397417690),
+            name: 'pricePerNight',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(31, 5122105286008898270),
             name: 'cachedBoardBasisPrice',
             type: 8,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(17, 8865500647796199066),
+            id: const obx_int.IdUid(32, 3092973566861730351),
             name: 'cachedExtrasTotal',
             type: 8,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[
         obx_int.ModelRelation(
-            id: const obx_int.IdUid(3, 2939760587369873645),
+            id: const obx_int.IdUid(5, 6501254024098551487),
             name: 'guests',
             targetId: const obx_int.IdUid(26, 8000924420460436742))
       ],
@@ -743,7 +743,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(23, 7337300309619921213),
       name: 'Room',
-      lastPropertyId: const obx_int.IdUid(8, 524088588929358564),
+      lastPropertyId: const obx_int.IdUid(14, 3736744018751654018),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -758,26 +758,6 @@ final _entities = <obx_int.ModelEntity>[
             flags: 2048,
             indexId: const obx_int.IdUid(38, 1512712429349035826)),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 6747344798108479986),
-            name: 'type',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(4, 8619126654721394380),
-            name: 'capacity',
-            type: 6,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 5119024284031250428),
-            name: 'basePrice',
-            type: 8,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 3970828812228493853),
-            name: 'status',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(7, 8623170392646704505),
             name: 'hotelId',
             type: 11,
@@ -790,7 +770,12 @@ final _entities = <obx_int.ModelEntity>[
             type: 11,
             flags: 520,
             indexId: const obx_int.IdUid(52, 7673993612212876620),
-            relationTarget: 'RoomCategory')
+            relationTarget: 'RoomCategory'),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 3736744018751654018),
+            name: 'status',
+            type: 9,
+            flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[
@@ -800,7 +785,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(25, 6525685758623725352),
       name: 'Employee',
-      lastPropertyId: const obx_int.IdUid(5, 3864379051465094285),
+      lastPropertyId: const obx_int.IdUid(11, 7669064762153100021),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -809,11 +794,6 @@ final _entities = <obx_int.ModelEntity>[
             type: 6,
             flags: 1),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 7749131471151429248),
-            name: 'fullName',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(3, 5038317782540214290),
             name: 'phoneNumber',
             type: 9,
@@ -821,6 +801,11 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(4, 8292504175695973705),
             name: 'email',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 7669064762153100021),
+            name: 'fullName',
             type: 9,
             flags: 0)
       ],
@@ -834,7 +819,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(26, 8000924420460436742),
       name: 'Guest',
-      lastPropertyId: const obx_int.IdUid(6, 7286398386806383933),
+      lastPropertyId: const obx_int.IdUid(13, 5580332256023722647),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -842,11 +827,6 @@ final _entities = <obx_int.ModelEntity>[
             name: 'id',
             type: 6,
             flags: 1),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(2, 8876339502661643564),
-            name: 'fullName',
-            type: 9,
-            flags: 0),
         obx_int.ModelProperty(
             id: const obx_int.IdUid(3, 8517011698045308518),
             name: 'phoneNumber',
@@ -865,6 +845,11 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(6, 7286398386806383933),
             name: 'nationality',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(13, 5580332256023722647),
+            name: 'fullName',
             type: 9,
             flags: 0)
       ],
@@ -913,7 +898,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(30, 7290228926903551263),
       name: 'BoardBasis',
-      lastPropertyId: const obx_int.IdUid(17, 5004752143751814683),
+      lastPropertyId: const obx_int.IdUid(25, 1881526249683023702),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -935,46 +920,6 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(4, 3029038983868230196),
             name: 'description',
             type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 3636620339386423012),
-            name: 'includesBreakfast',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 3567298765032709809),
-            name: 'includesLunch',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 5417507809529304096),
-            name: 'includesDinner',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(8, 6396157916307560307),
-            name: 'includesSnacks',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(9, 272846343231001751),
-            name: 'includesDrinks',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(10, 7564205403150408118),
-            name: 'includesAlcoholicDrinks',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(11, 107272166621834262),
-            name: 'includesRoomService',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(12, 1638713618045098226),
-            name: 'includesMinibar',
-            type: 1,
             flags: 0),
         obx_int.ModelProperty(
             id: const obx_int.IdUid(13, 2631356797616963865),
@@ -1000,6 +945,46 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(17, 5004752143751814683),
             name: 'notes',
             type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 2327737323758570364),
+            name: 'includesBreakfast',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 7691692283537146121),
+            name: 'includesLunch',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(20, 2618229742866877205),
+            name: 'includesDinner',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(21, 8570504991409972520),
+            name: 'includesSnacks',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(22, 4224115378409199462),
+            name: 'includesDrinks',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(23, 4537694869296161529),
+            name: 'includesAlcoholicDrinks',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(24, 7327972696543202091),
+            name: 'includesRoomService',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(25, 1881526249683023702),
+            name: 'includesMinibar',
+            type: 1,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -1007,7 +992,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(31, 8720453165107695461),
       name: 'ExtraService',
-      lastPropertyId: const obx_int.IdUid(16, 5734347136120605212),
+      lastPropertyId: const obx_int.IdUid(24, 7777161809952552651),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -1021,18 +1006,8 @@ final _entities = <obx_int.ModelEntity>[
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(3, 3107561907592152248),
-            name: 'code',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(4, 6472625101402773330),
             name: 'description',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 7811084294830313697),
-            name: 'category',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
@@ -1051,21 +1026,6 @@ final _entities = <obx_int.ModelEntity>[
             type: 1,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(9, 6249389163818889916),
-            name: 'requiresAdvanceBooking',
-            type: 1,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(10, 2423941153392271550),
-            name: 'advanceHours',
-            type: 6,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(11, 3479634760684101076),
-            name: 'maxQuantity',
-            type: 6,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(12, 7809698357657561823),
             name: 'isActive',
             type: 1,
@@ -1076,17 +1036,42 @@ final _entities = <obx_int.ModelEntity>[
             type: 6,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(14, 4605848210148641345),
+            id: const obx_int.IdUid(17, 3432572492641074152),
+            name: 'code',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 2445824044549859156),
+            name: 'category',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 4811490492090793475),
+            name: 'requiresAdvanceBooking',
+            type: 1,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(20, 1991078110101956090),
+            name: 'advanceHours',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(21, 7054511939413990442),
+            name: 'maxQuantity',
+            type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(22, 5785115311409483258),
             name: 'notes',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(15, 2545789517890032395),
+            id: const obx_int.IdUid(23, 4748113468767234976),
             name: 'isPackage',
             type: 1,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(16, 5734347136120605212),
+            id: const obx_int.IdUid(24, 7777161809952552651),
             name: 'packageIncludes',
             type: 9,
             flags: 0)
@@ -1096,7 +1081,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(32, 3615433433326310219),
       name: 'ReservationExtra',
-      lastPropertyId: const obx_int.IdUid(9, 3788314108711866989),
+      lastPropertyId: const obx_int.IdUid(13, 7492550311388921760),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -1129,24 +1114,24 @@ final _entities = <obx_int.ModelEntity>[
             type: 8,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 1939222553205241978),
+            id: const obx_int.IdUid(9, 3788314108711866989),
+            name: 'notes',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(11, 3274800292343061622),
             name: 'totalPrice',
             type: 8,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 616810425885007797),
+            id: const obx_int.IdUid(12, 5849130501860966931),
             name: 'status',
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(8, 6945043534110964214),
+            id: const obx_int.IdUid(13, 7492550311388921760),
             name: 'scheduledDate',
             type: 10,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(9, 3788314108711866989),
-            name: 'notes',
-            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -1154,7 +1139,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(33, 9080334102041473885),
       name: 'RoomCategory',
-      lastPropertyId: const obx_int.IdUid(16, 5502208330901818712),
+      lastPropertyId: const obx_int.IdUid(20, 7646756539935645075),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -1178,29 +1163,9 @@ final _entities = <obx_int.ModelEntity>[
             type: 9,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 2444120869615204042),
-            name: 'bedType',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(6, 1567277605713817372),
             name: 'capacity',
             type: 6,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 2557076069156625607),
-            name: 'standing',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(8, 6520148835985721245),
-            name: 'viewType',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(9, 143004645354607772),
-            name: 'amenities',
-            type: 9,
             flags: 0),
         obx_int.ModelProperty(
             id: const obx_int.IdUid(10, 2452253208877716589),
@@ -1236,6 +1201,26 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(16, 5502208330901818712),
             name: 'sortOrder',
             type: 6,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(17, 6680911196620139151),
+            name: 'bedType',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(18, 2095742824792551267),
+            name: 'standing',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(19, 9214872896429457316),
+            name: 'viewType',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(20, 7646756539935645075),
+            name: 'amenities',
+            type: 9,
             flags: 0)
       ],
       relations: <obx_int.ModelRelation>[],
@@ -1246,7 +1231,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(34, 637841729528048361),
       name: 'SeasonalPricing',
-      lastPropertyId: const obx_int.IdUid(10, 6857763841208440508),
+      lastPropertyId: const obx_int.IdUid(16, 8639205115021756438),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -1270,21 +1255,6 @@ final _entities = <obx_int.ModelEntity>[
             type: 10,
             flags: 0),
         obx_int.ModelProperty(
-            id: const obx_int.IdUid(5, 1985756463491080397),
-            name: 'multiplier',
-            type: 8,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(6, 7348710715121060365),
-            name: 'applicationType',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
-            id: const obx_int.IdUid(7, 4230119978967319087),
-            name: 'targetIds',
-            type: 9,
-            flags: 0),
-        obx_int.ModelProperty(
             id: const obx_int.IdUid(8, 6774078347196111807),
             name: 'isActive',
             type: 1,
@@ -1297,6 +1267,21 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(10, 6857763841208440508),
             name: 'description',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(14, 189160434603562783),
+            name: 'multiplier',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(15, 4549856139048882366),
+            name: 'applicationType',
+            type: 9,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(16, 8639205115021756438),
+            name: 'targetIds',
             type: 9,
             flags: 0)
       ],
@@ -1339,9 +1324,9 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(34, 637841729528048361),
-      lastIndexId: const obx_int.IdUid(52, 7673993612212876620),
-      lastRelationId: const obx_int.IdUid(3, 2939760587369873645),
+      lastEntityId: const obx_int.IdUid(43, 6119221834068341217),
+      lastIndexId: const obx_int.IdUid(73, 5379984811269586421),
+      lastRelationId: const obx_int.IdUid(5, 6501254024098551487),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [
         6647246884597588827,
@@ -1357,14 +1342,31 @@ obx_int.ModelDefinition getObjectBoxModel() {
         3239230063137108967,
         4752590594422759574,
         2330214959262864934,
-        2846533385157794616
+        2846533385157794616,
+        1806878392961662062,
+        4048437021561499443,
+        4488590875437013143,
+        4531466892237195894,
+        4160428654019956543,
+        4060395522626165643,
+        2717543384485050169,
+        5529961723732993923,
+        6119221834068341217
       ],
       retiredIndexUids: const [
         7680843215305245682,
         720122404314208774,
         1359581493053979498,
         5586704641728874986,
-        5709087898541937546
+        5709087898541937546,
+        8837918613306508000,
+        8975580035132150145,
+        3282428703595065053,
+        981589897560461191,
+        2417887039904989190,
+        1604604727978599251,
+        464814572941631309,
+        374051867334777197
       ],
       retiredPropertyUids: const [
         8976483595831028651,
@@ -1486,9 +1488,119 @@ obx_int.ModelDefinition getObjectBoxModel() {
         2486568139009562406,
         2374839585227326155,
         6865609035624207843,
-        6978719131581766950
+        6978719131581766950,
+        3636620339386423012,
+        3567298765032709809,
+        5417507809529304096,
+        6396157916307560307,
+        272846343231001751,
+        7564205403150408118,
+        107272166621834262,
+        1638713618045098226,
+        7749131471151429248,
+        3107561907592152248,
+        7811084294830313697,
+        6249389163818889916,
+        2423941153392271550,
+        3479634760684101076,
+        4605848210148641345,
+        2545789517890032395,
+        5734347136120605212,
+        8876339502661643564,
+        9106126505446500084,
+        4994120001457133647,
+        6953480594541438406,
+        7709745214526133608,
+        4710393012455644419,
+        8865500647796199066,
+        1939222553205241978,
+        616810425885007797,
+        6945043534110964214,
+        6747344798108479986,
+        8619126654721394380,
+        5119024284031250428,
+        3970828812228493853,
+        2444120869615204042,
+        2557076069156625607,
+        6520148835985721245,
+        143004645354607772,
+        1985756463491080397,
+        7348710715121060365,
+        4230119978967319087,
+        4361382848967768370,
+        1216113560227718132,
+        6539158913829458445,
+        2004715201507779744,
+        5250278558857446708,
+        1365839414049970905,
+        844017942704688296,
+        8864157181284120525,
+        5394094041029593760,
+        2756868877764009154,
+        677444861852313351,
+        7775076242762558278,
+        83130231198060975,
+        682155080228933285,
+        2823255215377136409,
+        6427387201832427819,
+        8811467909449411937,
+        801392555056476780,
+        1237972878263061882,
+        7180852619957135269,
+        5211695606340916837,
+        5960985498408022442,
+        4134663841472574896,
+        6685337339402010492,
+        6109106234072733022,
+        436907946961534106,
+        5885615847098317641,
+        3520583005040795193,
+        1513433256256529277,
+        439213328244616332,
+        1395535329751381554,
+        7626605289243868513,
+        768664685249195402,
+        1728389781645832893,
+        1531868594075702926,
+        3657577393839920908,
+        962876697588346043,
+        1504673429139993182,
+        8002978936373940261,
+        2178273122015494966,
+        5373310603832160681,
+        2075862164259437856,
+        7153419538209140690,
+        8850617197858899233,
+        7076741074656889893,
+        8456196557027803894,
+        6306299392600280219,
+        1571500476598249551,
+        1676526636870640741,
+        2526497660800829701,
+        6892122844718649563,
+        3695625130191720705,
+        1252068720994956193,
+        8381120643630933834,
+        8660233173710677972,
+        8297705663541101231,
+        8813107963892295377,
+        9003163705216900747,
+        488135407398772758,
+        97647871029222672,
+        8296711131194581079,
+        8587139427014815110,
+        4515261093255493091,
+        8792455056654444544,
+        5172980220661294888,
+        8100719055238053942,
+        7609468699421722439
       ],
-      retiredRelationUids: const [2832941486252609678, 4545419348761092860],
+      retiredRelationUids: const [
+        2832941486252609678,
+        4545419348761092860,
+        2939760587369873645,
+        975144785684751343
+      ],
       modelVersion: 5,
       modelVersionParserMinimum: 5,
       version: 1);
@@ -2181,9 +2293,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
     Reservation: obx_int.EntityDefinition<Reservation>(
         model: _entities[10],
         toOneRelations: (Reservation object) =>
-            [object.room, object.receptionist, object.boardBasis],
+            [object.room, object.boardBasis, object.receptionist],
         toManyRelations: (Reservation object) => {
-              obx_int.RelInfo<Reservation>.toMany(3, object.id): object.guests,
+              obx_int.RelInfo<Reservation>.toMany(5, object.id): object.guests,
               obx_int.RelInfo<ReservationExtra>.toOneBacklink(2, object.id,
                       (ReservationExtra srcObject) => srcObject.reservation):
                   object.extras
@@ -2194,17 +2306,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (Reservation object, fb.Builder fbb) {
           final statusOffset = fbb.writeString(object.status);
-          fbb.startTable(18);
+          fbb.startTable(33);
           fbb.addInt64(0, object.id);
-          fbb.addFloat64(5, object.pricePerNight);
           fbb.addOffset(6, statusOffset);
           fbb.addInt64(7, object.room.targetId);
-          fbb.addInt64(8, object.receptionist.targetId);
-          fbb.addInt64(9, object.from.millisecondsSinceEpoch);
-          fbb.addInt64(10, object.to.millisecondsSinceEpoch);
           fbb.addInt64(12, object.boardBasis.targetId);
-          fbb.addFloat64(15, object.cachedBoardBasisPrice);
-          fbb.addFloat64(16, object.cachedExtrasTotal);
+          fbb.addInt64(26, object.receptionist.targetId);
+          fbb.addInt64(27, object.from.millisecondsSinceEpoch);
+          fbb.addInt64(28, object.to.millisecondsSinceEpoch);
+          fbb.addFloat64(29, object.pricePerNight);
+          fbb.addFloat64(30, object.cachedBoardBasisPrice);
+          fbb.addFloat64(31, object.cachedExtrasTotal);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2212,17 +2324,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
           final fromParam = DateTime.fromMillisecondsSinceEpoch(
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 22, 0));
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 58, 0));
           final toParam = DateTime.fromMillisecondsSinceEpoch(
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0));
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 60, 0));
           final pricePerNightParam =
-              const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 62, 0);
           final statusParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 16, '');
           final cachedBoardBasisPriceParam = const fb.Float64Reader()
-              .vTableGetNullable(buffer, rootOffset, 34);
+              .vTableGetNullable(buffer, rootOffset, 64);
           final cachedExtrasTotalParam = const fb.Float64Reader()
-              .vTableGetNullable(buffer, rootOffset, 36);
+              .vTableGetNullable(buffer, rootOffset, 66);
           final object = Reservation(
               from: fromParam,
               to: toParam,
@@ -2234,14 +2346,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           object.room.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 18, 0);
           object.room.attach(store);
-          object.receptionist.targetId =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 20, 0);
-          object.receptionist.attach(store);
           object.boardBasis.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 28, 0);
           object.boardBasis.attach(store);
+          object.receptionist.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 56, 0);
+          object.receptionist.attach(store);
           obx_int.InternalToManyAccess.setRelInfo<Reservation>(object.guests,
-              store, obx_int.RelInfo<Reservation>.toMany(3, object.id));
+              store, obx_int.RelInfo<Reservation>.toMany(5, object.id));
           obx_int.InternalToManyAccess.setRelInfo<Reservation>(
               object.extras,
               store,
@@ -2263,18 +2375,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (Room object, fb.Builder fbb) {
           final codeOffset = fbb.writeString(object.code);
-          final typeOffset =
-              object.type == null ? null : fbb.writeString(object.type!);
           final statusOffset = fbb.writeString(object.status);
-          fbb.startTable(9);
+          fbb.startTable(15);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, codeOffset);
-          fbb.addOffset(2, typeOffset);
-          fbb.addInt64(3, object.capacity);
-          fbb.addFloat64(4, object.basePrice);
-          fbb.addOffset(5, statusOffset);
           fbb.addInt64(6, object.hotel.targetId);
           fbb.addInt64(7, object.category.targetId);
+          fbb.addOffset(13, statusOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2283,20 +2390,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final rootOffset = buffer.derefObject(0);
           final codeParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 6, '');
-          final typeParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGetNullable(buffer, rootOffset, 8);
-          final capacityParam =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 10);
-          final basePriceParam = const fb.Float64Reader()
-              .vTableGetNullable(buffer, rootOffset, 12);
           final statusParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 14, '');
-          final object = Room(
-              code: codeParam,
-              type: typeParam,
-              capacity: capacityParam,
-              basePrice: basePriceParam,
-              status: statusParam)
+              .vTableGet(buffer, rootOffset, 30, '');
+          final object = Room(code: codeParam, status: statusParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           object.hotel.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0);
@@ -2315,7 +2411,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         model: _entities[12],
         toOneRelations: (Employee object) => [],
         toManyRelations: (Employee object) => {
-              obx_int.RelInfo<Reservation>.toOneBacklink(9, object.id,
+              obx_int.RelInfo<Reservation>.toOneBacklink(27, object.id,
                       (Reservation srcObject) => srcObject.receptionist):
                   object.reservations
             },
@@ -2324,15 +2420,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
           object.id = id;
         },
         objectToFB: (Employee object, fb.Builder fbb) {
-          final fullNameOffset = fbb.writeString(object.fullName);
           final phoneNumberOffset = fbb.writeString(object.phoneNumber);
           final emailOffset =
               object.email == null ? null : fbb.writeString(object.email!);
-          fbb.startTable(6);
+          final fullNameOffset = fbb.writeString(object.fullName);
+          fbb.startTable(12);
           fbb.addInt64(0, object.id);
-          fbb.addOffset(1, fullNameOffset);
           fbb.addOffset(2, phoneNumberOffset);
           fbb.addOffset(3, emailOffset);
+          fbb.addOffset(10, fullNameOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2340,7 +2436,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
           final fullNameParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 6, '');
+              .vTableGet(buffer, rootOffset, 24, '');
           final phoneNumberParam =
               const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, '');
@@ -2354,7 +2450,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           obx_int.InternalToManyAccess.setRelInfo<Employee>(
               object.reservations,
               store,
-              obx_int.RelInfo<Reservation>.toOneBacklink(9, object.id,
+              obx_int.RelInfo<Reservation>.toOneBacklink(27, object.id,
                   (Reservation srcObject) => srcObject.receptionist));
           return object;
         }),
@@ -2362,7 +2458,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         model: _entities[13],
         toOneRelations: (Guest object) => [],
         toManyRelations: (Guest object) => {
-              obx_int.RelInfo<Reservation>.toManyBacklink(3, object.id):
+              obx_int.RelInfo<Reservation>.toManyBacklink(5, object.id):
                   object.reservations
             },
         getId: (Guest object) => object.id,
@@ -2370,7 +2466,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
           object.id = id;
         },
         objectToFB: (Guest object, fb.Builder fbb) {
-          final fullNameOffset = fbb.writeString(object.fullName);
           final phoneNumberOffset = fbb.writeString(object.phoneNumber);
           final emailOffset =
               object.email == null ? null : fbb.writeString(object.email!);
@@ -2378,13 +2473,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final nationalityOffset = object.nationality == null
               ? null
               : fbb.writeString(object.nationality!);
-          fbb.startTable(7);
+          final fullNameOffset = fbb.writeString(object.fullName);
+          fbb.startTable(14);
           fbb.addInt64(0, object.id);
-          fbb.addOffset(1, fullNameOffset);
           fbb.addOffset(2, phoneNumberOffset);
           fbb.addOffset(3, emailOffset);
           fbb.addOffset(4, idCardNumberOffset);
           fbb.addOffset(5, nationalityOffset);
+          fbb.addOffset(12, fullNameOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2392,7 +2488,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
           final fullNameParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 6, '');
+              .vTableGet(buffer, rootOffset, 28, '');
           final phoneNumberParam =
               const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 8, '');
@@ -2412,7 +2508,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
               nationality: nationalityParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           obx_int.InternalToManyAccess.setRelInfo<Guest>(object.reservations,
-              store, obx_int.RelInfo<Reservation>.toManyBacklink(3, object.id));
+              store, obx_int.RelInfo<Reservation>.toManyBacklink(5, object.id));
           return object;
         }),
     Hotel: obx_int.EntityDefinition<Hotel>(
@@ -2478,24 +2574,24 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final descriptionOffset = fbb.writeString(object.description);
           final notesOffset =
               object.notes == null ? null : fbb.writeString(object.notes!);
-          fbb.startTable(18);
+          fbb.startTable(26);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, nameOffset);
           fbb.addOffset(2, codeOffset);
           fbb.addOffset(3, descriptionOffset);
-          fbb.addBool(4, object.includesBreakfast);
-          fbb.addBool(5, object.includesLunch);
-          fbb.addBool(6, object.includesDinner);
-          fbb.addBool(7, object.includesSnacks);
-          fbb.addBool(8, object.includesDrinks);
-          fbb.addBool(9, object.includesAlcoholicDrinks);
-          fbb.addBool(10, object.includesRoomService);
-          fbb.addBool(11, object.includesMinibar);
           fbb.addFloat64(12, object.pricePerPerson);
           fbb.addFloat64(13, object.childDiscount);
           fbb.addBool(14, object.isActive);
           fbb.addInt64(15, object.sortOrder);
           fbb.addOffset(16, notesOffset);
+          fbb.addBool(17, object.includesBreakfast);
+          fbb.addBool(18, object.includesLunch);
+          fbb.addBool(19, object.includesDinner);
+          fbb.addBool(20, object.includesSnacks);
+          fbb.addBool(21, object.includesDrinks);
+          fbb.addBool(22, object.includesAlcoholicDrinks);
+          fbb.addBool(23, object.includesRoomService);
+          fbb.addBool(24, object.includesMinibar);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2510,21 +2606,21 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 10, '');
           final includesBreakfastParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 12, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 38, false);
           final includesLunchParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 14, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 40, false);
           final includesDinnerParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 16, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 42, false);
           final includesSnacksParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 18, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 44, false);
           final includesDrinksParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 20, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 46, false);
           final includesAlcoholicDrinksParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 22, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 48, false);
           final includesRoomServiceParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 24, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 50, false);
           final includesMinibarParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 26, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 52, false);
           final pricePerPersonParam =
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 28, 0);
           final childDiscountParam =
@@ -2566,32 +2662,32 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (ExtraService object, fb.Builder fbb) {
           final nameOffset = fbb.writeString(object.name);
-          final codeOffset = fbb.writeString(object.code);
           final descriptionOffset = fbb.writeString(object.description);
-          final categoryOffset = fbb.writeString(object.category);
           final pricingUnitOffset = fbb.writeString(object.pricingUnit);
+          final codeOffset = fbb.writeString(object.code);
+          final categoryOffset = fbb.writeString(object.category);
           final notesOffset =
               object.notes == null ? null : fbb.writeString(object.notes!);
           final packageIncludesOffset = object.packageIncludes == null
               ? null
               : fbb.writeString(object.packageIncludes!);
-          fbb.startTable(17);
+          fbb.startTable(25);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, nameOffset);
-          fbb.addOffset(2, codeOffset);
           fbb.addOffset(3, descriptionOffset);
-          fbb.addOffset(4, categoryOffset);
           fbb.addFloat64(5, object.price);
           fbb.addOffset(6, pricingUnitOffset);
           fbb.addBool(7, object.isPercentage);
-          fbb.addBool(8, object.requiresAdvanceBooking);
-          fbb.addInt64(9, object.advanceHours);
-          fbb.addInt64(10, object.maxQuantity);
           fbb.addBool(11, object.isActive);
           fbb.addInt64(12, object.sortOrder);
-          fbb.addOffset(13, notesOffset);
-          fbb.addBool(14, object.isPackage);
-          fbb.addOffset(15, packageIncludesOffset);
+          fbb.addOffset(16, codeOffset);
+          fbb.addOffset(17, categoryOffset);
+          fbb.addBool(18, object.requiresAdvanceBooking);
+          fbb.addInt64(19, object.advanceHours);
+          fbb.addInt64(20, object.maxQuantity);
+          fbb.addOffset(21, notesOffset);
+          fbb.addBool(22, object.isPackage);
+          fbb.addOffset(23, packageIncludesOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2601,12 +2697,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final nameParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 6, '');
           final codeParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 8, '');
+              .vTableGet(buffer, rootOffset, 36, '');
           final descriptionParam =
               const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 10, '');
           final categoryParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 12, '');
+              .vTableGet(buffer, rootOffset, 38, '');
           final priceParam =
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
           final pricingUnitParam =
@@ -2615,22 +2711,22 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final isPercentageParam =
               const fb.BoolReader().vTableGet(buffer, rootOffset, 18, false);
           final requiresAdvanceBookingParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 20, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 40, false);
           final advanceHoursParam =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 22, 0);
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 42, 0);
           final maxQuantityParam =
-              const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0);
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 44, 0);
           final isActiveParam =
               const fb.BoolReader().vTableGet(buffer, rootOffset, 26, false);
           final sortOrderParam =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 28, 0);
           final notesParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGetNullable(buffer, rootOffset, 30);
+              .vTableGetNullable(buffer, rootOffset, 46);
           final isPackageParam =
-              const fb.BoolReader().vTableGet(buffer, rootOffset, 32, false);
+              const fb.BoolReader().vTableGet(buffer, rootOffset, 48, false);
           final packageIncludesParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGetNullable(buffer, rootOffset, 34);
+                  .vTableGetNullable(buffer, rootOffset, 50);
           final object = ExtraService(
               name: nameParam,
               code: codeParam,
@@ -2661,19 +2757,19 @@ obx_int.ModelDefinition getObjectBoxModel() {
           object.id = id;
         },
         objectToFB: (ReservationExtra object, fb.Builder fbb) {
-          final statusOffset = fbb.writeString(object.status);
           final notesOffset =
               object.notes == null ? null : fbb.writeString(object.notes!);
-          fbb.startTable(10);
+          final statusOffset = fbb.writeString(object.status);
+          fbb.startTable(14);
           fbb.addInt64(0, object.id);
           fbb.addInt64(1, object.reservation.targetId);
           fbb.addInt64(2, object.extraService.targetId);
           fbb.addInt64(3, object.quantity);
           fbb.addFloat64(4, object.unitPrice);
-          fbb.addFloat64(5, object.totalPrice);
-          fbb.addOffset(6, statusOffset);
-          fbb.addInt64(7, object.scheduledDate?.millisecondsSinceEpoch);
           fbb.addOffset(8, notesOffset);
+          fbb.addFloat64(10, object.totalPrice);
+          fbb.addOffset(11, statusOffset);
+          fbb.addInt64(12, object.scheduledDate?.millisecondsSinceEpoch);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2681,15 +2777,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final buffer = fb.BufferContext(fbData);
           final rootOffset = buffer.derefObject(0);
           final scheduledDateValue =
-              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 18);
+              const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 28);
           final quantityParam =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0);
           final unitPriceParam =
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 12, 0);
           final totalPriceParam =
-              const fb.Float64Reader().vTableGet(buffer, rootOffset, 14, 0);
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 24, 0);
           final statusParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 16, '');
+              .vTableGet(buffer, rootOffset, 26, '');
           final scheduledDateParam = scheduledDateValue == null
               ? null
               : DateTime.fromMillisecondsSinceEpoch(scheduledDateValue);
@@ -2733,16 +2829,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
               ? null
               : fbb.writeString(object.viewType!);
           final amenitiesOffset = fbb.writeString(object.amenities);
-          fbb.startTable(17);
+          fbb.startTable(21);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, nameOffset);
           fbb.addOffset(2, codeOffset);
           fbb.addOffset(3, descriptionOffset);
-          fbb.addOffset(4, bedTypeOffset);
           fbb.addInt64(5, object.capacity);
-          fbb.addOffset(6, standingOffset);
-          fbb.addOffset(7, viewTypeOffset);
-          fbb.addOffset(8, amenitiesOffset);
           fbb.addFloat64(9, object.basePrice);
           fbb.addFloat64(10, object.seasonMultiplier);
           fbb.addFloat64(11, object.weekendMultiplier);
@@ -2750,6 +2842,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addFloat64(13, object.extraBedPrice);
           fbb.addBool(14, object.isActive);
           fbb.addInt64(15, object.sortOrder);
+          fbb.addOffset(16, bedTypeOffset);
+          fbb.addOffset(17, standingOffset);
+          fbb.addOffset(18, viewTypeOffset);
+          fbb.addOffset(19, amenitiesOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2764,15 +2860,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.StringReader(asciiOptimization: true)
                   .vTableGet(buffer, rootOffset, 10, '');
           final bedTypeParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 12, '');
+              .vTableGet(buffer, rootOffset, 36, '');
           final capacityParam =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0);
           final standingParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 16, '');
+              .vTableGet(buffer, rootOffset, 38, '');
           final viewTypeParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGetNullable(buffer, rootOffset, 18);
+              .vTableGetNullable(buffer, rootOffset, 40);
           final amenitiesParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 20, '');
+              .vTableGet(buffer, rootOffset, 42, '');
           final basePriceParam =
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 22, 0);
           final seasonMultiplierParam =
@@ -2821,22 +2917,22 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (SeasonalPricing object, fb.Builder fbb) {
           final nameOffset = fbb.writeString(object.name);
-          final applicationTypeOffset = fbb.writeString(object.applicationType);
-          final targetIdsOffset = fbb.writeString(object.targetIds);
           final descriptionOffset = object.description == null
               ? null
               : fbb.writeString(object.description!);
-          fbb.startTable(11);
+          final applicationTypeOffset = fbb.writeString(object.applicationType);
+          final targetIdsOffset = fbb.writeString(object.targetIds);
+          fbb.startTable(17);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, nameOffset);
           fbb.addInt64(2, object.startDate.millisecondsSinceEpoch);
           fbb.addInt64(3, object.endDate.millisecondsSinceEpoch);
-          fbb.addFloat64(4, object.multiplier);
-          fbb.addOffset(5, applicationTypeOffset);
-          fbb.addOffset(6, targetIdsOffset);
           fbb.addBool(7, object.isActive);
           fbb.addInt64(8, object.priority);
           fbb.addOffset(9, descriptionOffset);
+          fbb.addFloat64(13, object.multiplier);
+          fbb.addOffset(14, applicationTypeOffset);
+          fbb.addOffset(15, targetIdsOffset);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2850,12 +2946,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           final endDateParam = DateTime.fromMillisecondsSinceEpoch(
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0));
           final multiplierParam =
-              const fb.Float64Reader().vTableGet(buffer, rootOffset, 12, 0);
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 30, 0);
           final applicationTypeParam =
               const fb.StringReader(asciiOptimization: true)
-                  .vTableGet(buffer, rootOffset, 14, '');
+                  .vTableGet(buffer, rootOffset, 32, '');
           final targetIdsParam = const fb.StringReader(asciiOptimization: true)
-              .vTableGet(buffer, rootOffset, 16, '');
+              .vTableGet(buffer, rootOffset, 34, '');
           final isActiveParam =
               const fb.BoolReader().vTableGet(buffer, rootOffset, 18, false);
           final priorityParam =
@@ -3333,17 +3429,17 @@ class Reservation_ {
   static final id =
       obx.QueryIntegerProperty<Reservation>(_entities[10].properties[0]);
 
-  /// See [Reservation.pricePerNight].
-  static final pricePerNight =
-      obx.QueryDoubleProperty<Reservation>(_entities[10].properties[1]);
-
   /// See [Reservation.status].
   static final status =
-      obx.QueryStringProperty<Reservation>(_entities[10].properties[2]);
+      obx.QueryStringProperty<Reservation>(_entities[10].properties[1]);
 
   /// See [Reservation.room].
   static final room =
-      obx.QueryRelationToOne<Reservation, Room>(_entities[10].properties[3]);
+      obx.QueryRelationToOne<Reservation, Room>(_entities[10].properties[2]);
+
+  /// See [Reservation.boardBasis].
+  static final boardBasis = obx.QueryRelationToOne<Reservation, BoardBasis>(
+      _entities[10].properties[3]);
 
   /// See [Reservation.receptionist].
   static final receptionist = obx.QueryRelationToOne<Reservation, Employee>(
@@ -3357,9 +3453,9 @@ class Reservation_ {
   static final to =
       obx.QueryDateProperty<Reservation>(_entities[10].properties[6]);
 
-  /// See [Reservation.boardBasis].
-  static final boardBasis = obx.QueryRelationToOne<Reservation, BoardBasis>(
-      _entities[10].properties[7]);
+  /// See [Reservation.pricePerNight].
+  static final pricePerNight =
+      obx.QueryDoubleProperty<Reservation>(_entities[10].properties[7]);
 
   /// See [Reservation.cachedBoardBasisPrice].
   static final cachedBoardBasisPrice =
@@ -3387,29 +3483,17 @@ class Room_ {
   static final code =
       obx.QueryStringProperty<Room>(_entities[11].properties[1]);
 
-  /// See [Room.type].
-  static final type =
-      obx.QueryStringProperty<Room>(_entities[11].properties[2]);
-
-  /// See [Room.capacity].
-  static final capacity =
-      obx.QueryIntegerProperty<Room>(_entities[11].properties[3]);
-
-  /// See [Room.basePrice].
-  static final basePrice =
-      obx.QueryDoubleProperty<Room>(_entities[11].properties[4]);
-
-  /// See [Room.status].
-  static final status =
-      obx.QueryStringProperty<Room>(_entities[11].properties[5]);
-
   /// See [Room.hotel].
   static final hotel =
-      obx.QueryRelationToOne<Room, Hotel>(_entities[11].properties[6]);
+      obx.QueryRelationToOne<Room, Hotel>(_entities[11].properties[2]);
 
   /// See [Room.category].
   static final category =
-      obx.QueryRelationToOne<Room, RoomCategory>(_entities[11].properties[7]);
+      obx.QueryRelationToOne<Room, RoomCategory>(_entities[11].properties[3]);
+
+  /// See [Room.status].
+  static final status =
+      obx.QueryStringProperty<Room>(_entities[11].properties[4]);
 
   /// see [Room.reservations]
   static final reservations =
@@ -3422,16 +3506,16 @@ class Employee_ {
   static final id =
       obx.QueryIntegerProperty<Employee>(_entities[12].properties[0]);
 
-  /// See [Employee.fullName].
-  static final fullName =
-      obx.QueryStringProperty<Employee>(_entities[12].properties[1]);
-
   /// See [Employee.phoneNumber].
   static final phoneNumber =
-      obx.QueryStringProperty<Employee>(_entities[12].properties[2]);
+      obx.QueryStringProperty<Employee>(_entities[12].properties[1]);
 
   /// See [Employee.email].
   static final email =
+      obx.QueryStringProperty<Employee>(_entities[12].properties[2]);
+
+  /// See [Employee.fullName].
+  static final fullName =
       obx.QueryStringProperty<Employee>(_entities[12].properties[3]);
 
   /// see [Employee.reservations]
@@ -3445,24 +3529,24 @@ class Guest_ {
   static final id =
       obx.QueryIntegerProperty<Guest>(_entities[13].properties[0]);
 
-  /// See [Guest.fullName].
-  static final fullName =
-      obx.QueryStringProperty<Guest>(_entities[13].properties[1]);
-
   /// See [Guest.phoneNumber].
   static final phoneNumber =
-      obx.QueryStringProperty<Guest>(_entities[13].properties[2]);
+      obx.QueryStringProperty<Guest>(_entities[13].properties[1]);
 
   /// See [Guest.email].
   static final email =
-      obx.QueryStringProperty<Guest>(_entities[13].properties[3]);
+      obx.QueryStringProperty<Guest>(_entities[13].properties[2]);
 
   /// See [Guest.idCardNumber].
   static final idCardNumber =
-      obx.QueryStringProperty<Guest>(_entities[13].properties[4]);
+      obx.QueryStringProperty<Guest>(_entities[13].properties[3]);
 
   /// See [Guest.nationality].
   static final nationality =
+      obx.QueryStringProperty<Guest>(_entities[13].properties[4]);
+
+  /// See [Guest.fullName].
+  static final fullName =
       obx.QueryStringProperty<Guest>(_entities[13].properties[5]);
 }
 
@@ -3510,57 +3594,57 @@ class BoardBasis_ {
   static final description =
       obx.QueryStringProperty<BoardBasis>(_entities[15].properties[3]);
 
-  /// See [BoardBasis.includesBreakfast].
-  static final includesBreakfast =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[4]);
-
-  /// See [BoardBasis.includesLunch].
-  static final includesLunch =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[5]);
-
-  /// See [BoardBasis.includesDinner].
-  static final includesDinner =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[6]);
-
-  /// See [BoardBasis.includesSnacks].
-  static final includesSnacks =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[7]);
-
-  /// See [BoardBasis.includesDrinks].
-  static final includesDrinks =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[8]);
-
-  /// See [BoardBasis.includesAlcoholicDrinks].
-  static final includesAlcoholicDrinks =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[9]);
-
-  /// See [BoardBasis.includesRoomService].
-  static final includesRoomService =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[10]);
-
-  /// See [BoardBasis.includesMinibar].
-  static final includesMinibar =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[11]);
-
   /// See [BoardBasis.pricePerPerson].
   static final pricePerPerson =
-      obx.QueryDoubleProperty<BoardBasis>(_entities[15].properties[12]);
+      obx.QueryDoubleProperty<BoardBasis>(_entities[15].properties[4]);
 
   /// See [BoardBasis.childDiscount].
   static final childDiscount =
-      obx.QueryDoubleProperty<BoardBasis>(_entities[15].properties[13]);
+      obx.QueryDoubleProperty<BoardBasis>(_entities[15].properties[5]);
 
   /// See [BoardBasis.isActive].
   static final isActive =
-      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[14]);
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[6]);
 
   /// See [BoardBasis.sortOrder].
   static final sortOrder =
-      obx.QueryIntegerProperty<BoardBasis>(_entities[15].properties[15]);
+      obx.QueryIntegerProperty<BoardBasis>(_entities[15].properties[7]);
 
   /// See [BoardBasis.notes].
   static final notes =
-      obx.QueryStringProperty<BoardBasis>(_entities[15].properties[16]);
+      obx.QueryStringProperty<BoardBasis>(_entities[15].properties[8]);
+
+  /// See [BoardBasis.includesBreakfast].
+  static final includesBreakfast =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[9]);
+
+  /// See [BoardBasis.includesLunch].
+  static final includesLunch =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[10]);
+
+  /// See [BoardBasis.includesDinner].
+  static final includesDinner =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[11]);
+
+  /// See [BoardBasis.includesSnacks].
+  static final includesSnacks =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[12]);
+
+  /// See [BoardBasis.includesDrinks].
+  static final includesDrinks =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[13]);
+
+  /// See [BoardBasis.includesAlcoholicDrinks].
+  static final includesAlcoholicDrinks =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[14]);
+
+  /// See [BoardBasis.includesRoomService].
+  static final includesRoomService =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[15]);
+
+  /// See [BoardBasis.includesMinibar].
+  static final includesMinibar =
+      obx.QueryBooleanProperty<BoardBasis>(_entities[15].properties[16]);
 }
 
 /// [ExtraService] entity fields to define ObjectBox queries.
@@ -3573,48 +3657,48 @@ class ExtraService_ {
   static final name =
       obx.QueryStringProperty<ExtraService>(_entities[16].properties[1]);
 
-  /// See [ExtraService.code].
-  static final code =
-      obx.QueryStringProperty<ExtraService>(_entities[16].properties[2]);
-
   /// See [ExtraService.description].
   static final description =
-      obx.QueryStringProperty<ExtraService>(_entities[16].properties[3]);
-
-  /// See [ExtraService.category].
-  static final category =
-      obx.QueryStringProperty<ExtraService>(_entities[16].properties[4]);
+      obx.QueryStringProperty<ExtraService>(_entities[16].properties[2]);
 
   /// See [ExtraService.price].
   static final price =
-      obx.QueryDoubleProperty<ExtraService>(_entities[16].properties[5]);
+      obx.QueryDoubleProperty<ExtraService>(_entities[16].properties[3]);
 
   /// See [ExtraService.pricingUnit].
   static final pricingUnit =
-      obx.QueryStringProperty<ExtraService>(_entities[16].properties[6]);
+      obx.QueryStringProperty<ExtraService>(_entities[16].properties[4]);
 
   /// See [ExtraService.isPercentage].
   static final isPercentage =
-      obx.QueryBooleanProperty<ExtraService>(_entities[16].properties[7]);
-
-  /// See [ExtraService.requiresAdvanceBooking].
-  static final requiresAdvanceBooking =
-      obx.QueryBooleanProperty<ExtraService>(_entities[16].properties[8]);
-
-  /// See [ExtraService.advanceHours].
-  static final advanceHours =
-      obx.QueryIntegerProperty<ExtraService>(_entities[16].properties[9]);
-
-  /// See [ExtraService.maxQuantity].
-  static final maxQuantity =
-      obx.QueryIntegerProperty<ExtraService>(_entities[16].properties[10]);
+      obx.QueryBooleanProperty<ExtraService>(_entities[16].properties[5]);
 
   /// See [ExtraService.isActive].
   static final isActive =
-      obx.QueryBooleanProperty<ExtraService>(_entities[16].properties[11]);
+      obx.QueryBooleanProperty<ExtraService>(_entities[16].properties[6]);
 
   /// See [ExtraService.sortOrder].
   static final sortOrder =
+      obx.QueryIntegerProperty<ExtraService>(_entities[16].properties[7]);
+
+  /// See [ExtraService.code].
+  static final code =
+      obx.QueryStringProperty<ExtraService>(_entities[16].properties[8]);
+
+  /// See [ExtraService.category].
+  static final category =
+      obx.QueryStringProperty<ExtraService>(_entities[16].properties[9]);
+
+  /// See [ExtraService.requiresAdvanceBooking].
+  static final requiresAdvanceBooking =
+      obx.QueryBooleanProperty<ExtraService>(_entities[16].properties[10]);
+
+  /// See [ExtraService.advanceHours].
+  static final advanceHours =
+      obx.QueryIntegerProperty<ExtraService>(_entities[16].properties[11]);
+
+  /// See [ExtraService.maxQuantity].
+  static final maxQuantity =
       obx.QueryIntegerProperty<ExtraService>(_entities[16].properties[12]);
 
   /// See [ExtraService.notes].
@@ -3654,21 +3738,21 @@ class ReservationExtra_ {
   static final unitPrice =
       obx.QueryDoubleProperty<ReservationExtra>(_entities[17].properties[4]);
 
+  /// See [ReservationExtra.notes].
+  static final notes =
+      obx.QueryStringProperty<ReservationExtra>(_entities[17].properties[5]);
+
   /// See [ReservationExtra.totalPrice].
   static final totalPrice =
-      obx.QueryDoubleProperty<ReservationExtra>(_entities[17].properties[5]);
+      obx.QueryDoubleProperty<ReservationExtra>(_entities[17].properties[6]);
 
   /// See [ReservationExtra.status].
   static final status =
-      obx.QueryStringProperty<ReservationExtra>(_entities[17].properties[6]);
+      obx.QueryStringProperty<ReservationExtra>(_entities[17].properties[7]);
 
   /// See [ReservationExtra.scheduledDate].
   static final scheduledDate =
-      obx.QueryDateProperty<ReservationExtra>(_entities[17].properties[7]);
-
-  /// See [ReservationExtra.notes].
-  static final notes =
-      obx.QueryStringProperty<ReservationExtra>(_entities[17].properties[8]);
+      obx.QueryDateProperty<ReservationExtra>(_entities[17].properties[8]);
 }
 
 /// [RoomCategory] entity fields to define ObjectBox queries.
@@ -3689,53 +3773,53 @@ class RoomCategory_ {
   static final description =
       obx.QueryStringProperty<RoomCategory>(_entities[18].properties[3]);
 
-  /// See [RoomCategory.bedType].
-  static final bedType =
-      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[4]);
-
   /// See [RoomCategory.capacity].
   static final capacity =
-      obx.QueryIntegerProperty<RoomCategory>(_entities[18].properties[5]);
-
-  /// See [RoomCategory.standing].
-  static final standing =
-      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[6]);
-
-  /// See [RoomCategory.viewType].
-  static final viewType =
-      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[7]);
-
-  /// See [RoomCategory.amenities].
-  static final amenities =
-      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[8]);
+      obx.QueryIntegerProperty<RoomCategory>(_entities[18].properties[4]);
 
   /// See [RoomCategory.basePrice].
   static final basePrice =
-      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[9]);
+      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[5]);
 
   /// See [RoomCategory.seasonMultiplier].
   static final seasonMultiplier =
-      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[10]);
+      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[6]);
 
   /// See [RoomCategory.weekendMultiplier].
   static final weekendMultiplier =
-      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[11]);
+      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[7]);
 
   /// See [RoomCategory.allowsExtraBed].
   static final allowsExtraBed =
-      obx.QueryBooleanProperty<RoomCategory>(_entities[18].properties[12]);
+      obx.QueryBooleanProperty<RoomCategory>(_entities[18].properties[8]);
 
   /// See [RoomCategory.extraBedPrice].
   static final extraBedPrice =
-      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[13]);
+      obx.QueryDoubleProperty<RoomCategory>(_entities[18].properties[9]);
 
   /// See [RoomCategory.isActive].
   static final isActive =
-      obx.QueryBooleanProperty<RoomCategory>(_entities[18].properties[14]);
+      obx.QueryBooleanProperty<RoomCategory>(_entities[18].properties[10]);
 
   /// See [RoomCategory.sortOrder].
   static final sortOrder =
-      obx.QueryIntegerProperty<RoomCategory>(_entities[18].properties[15]);
+      obx.QueryIntegerProperty<RoomCategory>(_entities[18].properties[11]);
+
+  /// See [RoomCategory.bedType].
+  static final bedType =
+      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[12]);
+
+  /// See [RoomCategory.standing].
+  static final standing =
+      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[13]);
+
+  /// See [RoomCategory.viewType].
+  static final viewType =
+      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[14]);
+
+  /// See [RoomCategory.amenities].
+  static final amenities =
+      obx.QueryStringProperty<RoomCategory>(_entities[18].properties[15]);
 
   /// see [RoomCategory.rooms]
   static final rooms =
@@ -3760,27 +3844,27 @@ class SeasonalPricing_ {
   static final endDate =
       obx.QueryDateProperty<SeasonalPricing>(_entities[19].properties[3]);
 
-  /// See [SeasonalPricing.multiplier].
-  static final multiplier =
-      obx.QueryDoubleProperty<SeasonalPricing>(_entities[19].properties[4]);
-
-  /// See [SeasonalPricing.applicationType].
-  static final applicationType =
-      obx.QueryStringProperty<SeasonalPricing>(_entities[19].properties[5]);
-
-  /// See [SeasonalPricing.targetIds].
-  static final targetIds =
-      obx.QueryStringProperty<SeasonalPricing>(_entities[19].properties[6]);
-
   /// See [SeasonalPricing.isActive].
   static final isActive =
-      obx.QueryBooleanProperty<SeasonalPricing>(_entities[19].properties[7]);
+      obx.QueryBooleanProperty<SeasonalPricing>(_entities[19].properties[4]);
 
   /// See [SeasonalPricing.priority].
   static final priority =
-      obx.QueryIntegerProperty<SeasonalPricing>(_entities[19].properties[8]);
+      obx.QueryIntegerProperty<SeasonalPricing>(_entities[19].properties[5]);
 
   /// See [SeasonalPricing.description].
   static final description =
+      obx.QueryStringProperty<SeasonalPricing>(_entities[19].properties[6]);
+
+  /// See [SeasonalPricing.multiplier].
+  static final multiplier =
+      obx.QueryDoubleProperty<SeasonalPricing>(_entities[19].properties[7]);
+
+  /// See [SeasonalPricing.applicationType].
+  static final applicationType =
+      obx.QueryStringProperty<SeasonalPricing>(_entities[19].properties[8]);
+
+  /// See [SeasonalPricing.targetIds].
+  static final targetIds =
       obx.QueryStringProperty<SeasonalPricing>(_entities[19].properties[9]);
 }

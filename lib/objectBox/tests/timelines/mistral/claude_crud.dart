@@ -669,7 +669,7 @@ class _RoomSelectionDialogState extends State<RoomSelectionDialog> {
                       : Text('Cat : ${room.category.target!.name}'),
                 ],
               ),
-              subtitle: Text('Capacité: ${room.capacity}'),
+              subtitle: Text('Capacité: ${room.category.target!.capacity}'),
               value: isSelected,
               onChanged: (value) async {
                 if (value == true) {
@@ -1510,17 +1510,80 @@ class _SeasonalPricingFormScreenState extends State<SeasonalPricingFormScreen> {
 }
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  const AppDrawer({super.key, required this.currentHotel});
+
+  final Hotel? currentHotel;
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
         children: [
-          const DrawerHeader(
+          DrawerHeader(
             decoration: BoxDecoration(color: Colors.blue),
-            child: Text('Gestion Hôtel',
-                style: TextStyle(color: Colors.white, fontSize: 24)),
+            child: Column(
+              children: [
+                Text('Hôtel ${currentHotel!.name.toUpperCase()}',
+                    style: TextStyle(color: Colors.white, fontSize: 24)),
+                currentHotel == null
+                    ? SizedBox.shrink()
+                    : Row(
+                        children: [
+                          // Icône hôtel stylisée
+                          CircleAvatar(
+                            backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                            radius: 24,
+                            child: Icon(Icons.hotel_rounded,
+                                color: Theme.of(context).secondaryHeaderColor,
+                                size: 28),
+                          ),
+
+                          const SizedBox(width: 16),
+
+                          // Infos texte
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.meeting_room_rounded,
+                                        size: 18,
+                                        color: Theme.of(context)
+                                            .secondaryHeaderColor),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "${currentHotel!.rooms.length} chambres",
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Theme.of(context)
+                                            .secondaryHeaderColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Icon(
+                                      Icons.layers_rounded,
+                                      size: 18,
+                                      color: Theme.of(context)
+                                          .secondaryHeaderColor,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "${currentHotel!.floors} étages",
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Theme.of(context)
+                                              .secondaryHeaderColor),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+              ],
+            ),
           ),
           ListTile(
             leading: const Icon(Icons.checkroom_outlined),
@@ -1625,11 +1688,11 @@ class RoomListScreen extends StatelessWidget {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Capacité: ${room.capacity}'),
+                      Text('Capacité: ${room.category.target!.capacity}'),
                     ],
                   ),
                   trailing: Text(
-                    '${room.basePrice!.toStringAsFixed(2)} DA',
+                    '${room.category.target!.basePrice!.toStringAsFixed(2)} DA',
                     style: TextStyle(fontSize: 20),
                   ),
                 ),
@@ -1683,9 +1746,9 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
     super.initState();
     if (widget.room != null) {
       _code = widget.room!.code;
-      _type = widget.room!.type;
-      _capacity = widget.room!.capacity ?? 1;
-      _basePrice = widget.room!.basePrice ?? 0.0;
+      _type = widget.room!.category.target!.bedType;
+      _capacity = widget.room!.category.target!.capacity ?? 1;
+      _basePrice = widget.room!.category.target!.basePrice ?? 0.0;
       _status = widget.room!.status;
       _selectedCategory = widget.room!.category.target;
       _selectedCategoryId = _selectedCategory?.id; // ✅ garder l'id
@@ -1859,51 +1922,45 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                     final provider =
                         Provider.of<HotelProvider>(context, listen: false);
 
+                    if (_selectedCategory == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('Veuillez sélectionner une catégorie')),
+                      );
+                      return;
+                    }
+
                     Room room;
 
                     if (widget.room == null) {
-                      // Création d'une nouvelle chambre
+                      // ✅ Création d'une nouvelle chambre
                       room = Room(
                         code: _code,
-                        type: _type,
-                        capacity: _capacity,
-                        basePrice: _basePrice,
                         status: _status,
                       );
 
-                      // Assigner la catégorie si sélectionnée
-                      if (_selectedCategory != null) {
-                        room.category.target = _selectedCategory;
-                      }
-
-                      // IMPORTANT: Assigner à l'hôtel courant si disponible
-                      if (provider.currentHotel != null) {
-                        room.hotel.target = provider.currentHotel;
-                      } else if (provider.hotels.isNotEmpty) {
-                        room.hotel.target = provider.hotels.first;
-                      }
-
+                      room.category.target = _selectedCategory;
+                      room.hotel.target =
+                          provider.currentHotel ?? provider.hotels.first;
                       await provider.addRoom(room);
                     } else {
-                      // Modification d'une chambre existante
+                      // ✅ Modification d'une chambre existante
                       room = widget.room!;
 
-                      // CRITIQUE : Préserver TOUTES les relations existantes
+                      // Préserver les relations critiques
                       final existingHotel = room.hotel.target;
                       final existingReservations = room.reservations.toList();
 
-                      // Mettre à jour les propriétés
+                      // Mettre à jour uniquement les champs de Room
                       room.code = _code;
-                      room.type = _type;
-                      room.capacity = _capacity;
-                      room.basePrice = _basePrice;
                       room.status = _status;
 
-                      // Réassigner les relations préservées
-                      room.hotel.target = existingHotel;
+                      // Réassigner les relations
                       room.category.target = _selectedCategory;
+                      room.hotel.target = existingHotel;
 
-                      // Restaurer les réservations (important pour ObjectBox)
+                      // Restaurer les réservations
                       room.reservations.clear();
                       room.reservations.addAll(existingReservations);
 
@@ -1925,7 +1982,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                   }
                 },
                 child: const Text('Enregistrer'),
-              ),
+              )
             ],
           ),
         ),

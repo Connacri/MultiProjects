@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../objectbox.g.dart';
 import '../../../Entity.dart';
 import '../../../classeObjectBox.dart';
+import 'claude.dart';
 
-// ============================================================================
-// PROVIDER DE BASE - Gestion commune des opérations CRUD
-// ============================================================================
 abstract class BaseEntityProvider<T> with ChangeNotifier {
   final ObjectBox objectBox;
   late final Box<T> box;
@@ -89,9 +87,6 @@ abstract class BaseEntityProvider<T> with ChangeNotifier {
   }
 }
 
-// ============================================================================
-// PROVIDER PRINCIPAL - Gestion complète de l'hôtel
-// ============================================================================
 class HotelProvider with ChangeNotifier {
   final ObjectBox _objectBox;
 
@@ -183,6 +178,7 @@ class HotelProvider with ChangeNotifier {
     _boardBasis = _boardBasisBox.getAll();
     _extraServices = _extraServiceBox.getAll();
     _seasonalPricing = _seasonalPricingBox.getAll();
+    _seasonalPricing = _seasonalPricingBox.getAll();
 
     debugPrint('Données chargées :');
     debugPrint('- Hôtels : ${_hotels.length}');
@@ -193,6 +189,7 @@ class HotelProvider with ChangeNotifier {
     debugPrint('- Catégories de chambres : ${_roomCategories.length}');
     debugPrint('- Plans de pension : ${_boardBasis.length}');
     debugPrint('- Services supplémentaires : ${_extraServices.length}');
+    debugPrint('- Tarifications saisonnières : ${_seasonalPricing.length}');
     debugPrint('- Tarifications saisonnières : ${_seasonalPricing.length}');
   }
 
@@ -208,6 +205,10 @@ class HotelProvider with ChangeNotifier {
   // ============================================================================
   // MÉTHODES DE VÉRIFICATION DE DISPONIBILITÉ
   // ============================================================================
+  /// Retourne la liste des tarifs saisonniers actifs
+  List<SeasonalPricing> getSeasonalPricings() {
+    return _seasonalPricing.where((sp) => sp.isActive).toList();
+  }
 
   /// Vérifie si une chambre est disponible pour une période donnée
   bool isRoomAvailable(Room room, DateTime from, DateTime to,
@@ -255,7 +256,7 @@ class HotelProvider with ChangeNotifier {
       {String? roomType}) {
     return _rooms.where((room) {
       // Filtrer par type si spécifié
-      if (roomType != null && room.type != roomType) {
+      if (roomType != null && room.category.target!.bedType != roomType) {
         return false;
       }
 
@@ -314,6 +315,8 @@ class HotelProvider with ChangeNotifier {
     required double pricePerNight,
     String status = "Confirmée",
     bool forceOverride = false,
+    BoardBasis? boardBasis,
+    List<ReservationExtraItem>? extras,
   }) async {
     try {
       // Vérification de base
@@ -370,6 +373,8 @@ class HotelProvider with ChangeNotifier {
     DateTime? newFrom,
     DateTime? newTo,
     bool forceOverride = false,
+    BoardBasis? newBoardBasis,
+    List<ReservationExtraItem>? newExtras,
   }) async {
     try {
       final roomToCheck = newRoom ?? reservation.room.target!;
@@ -421,6 +426,8 @@ class HotelProvider with ChangeNotifier {
     double? newPricePerNight,
     String? newStatus,
     bool forceOverride = false,
+    BoardBasis? newBoardBasis,
+    List<ReservationExtraItem>? newExtras,
   }) async {
     try {
       final roomToCheck = newRoom ?? reservation.room.target!;
@@ -627,7 +634,8 @@ class HotelProvider with ChangeNotifier {
   Map<String, int> getRoomTypeStatistics() {
     final Map<String, int> stats = {};
     for (final room in _rooms) {
-      stats[room.type!] = (stats[room.type] ?? 0) + 1;
+      stats[room.category.target!.bedType] =
+          (stats[room.category.target!.bedType] ?? 0) + 1;
     }
     return stats;
   }
@@ -927,10 +935,50 @@ class HotelProvider with ChangeNotifier {
     if (_rooms.isNotEmpty || _employees.isNotEmpty) return;
 
     try {
+      // Créer d'abord les catégories de chambres
+      final defaultCategories = [
+        RoomCategory(
+          name: "Single Standard",
+          code: "SGLSTD",
+          description: "Chambre simple avec lit simple",
+          bedType: "Single",
+          capacity: 1,
+          standing: "Standard",
+          basePrice: 8000,
+          amenities: '["Wi-Fi", "TV", "Climatisation", "Salle de bain privée"]',
+        ),
+        RoomCategory(
+          name: "Double Standard",
+          code: "DBLSTD",
+          description: "Chambre double avec lit double",
+          bedType: "Double",
+          capacity: 2,
+          standing: "Standard",
+          basePrice: 12000,
+          amenities:
+              '["Wi-Fi", "TV", "Climatisation", "Salle de bain privée", "Mini-bar"]',
+        ),
+        RoomCategory(
+          name: "Suite Deluxe",
+          code: "SUITDLX",
+          description: "Suite spacieuse avec vue mer",
+          bedType: "King",
+          capacity: 4,
+          standing: "Deluxe",
+          viewType: "Sea",
+          basePrice: 20000,
+          allowsExtraBed: true,
+          extraBedPrice: 3000,
+          amenities:
+              '["Wi-Fi", "TV 4K", "Climatisation", "Salle de bain privée", "Mini-bar", "Balcon", "Vue mer"]',
+        ),
+      ];
+
+      // Créer les chambres (sans catégorie pour l'instant)
       final defaultRooms = [
-        Room(code: "101", type: "Single", capacity: 1, basePrice: 8000),
-        Room(code: "102", type: "Double", capacity: 2, basePrice: 12000),
-        Room(code: "201", type: "Suite", capacity: 4, basePrice: 20000),
+        Room(code: "101", status: "Libre"),
+        Room(code: "102", status: "Libre"),
+        Room(code: "201", status: "Libre"),
       ];
 
       final defaultEmployees = [
@@ -946,26 +994,64 @@ class HotelProvider with ChangeNotifier {
         ),
       ];
 
-      // Ajout en batch si la box est disponible (plus performant)
+      // Ajouter les catégories en premier (elles ne dépendent de rien)
+      final categoryMap = <String, RoomCategory>{};
+      if (_roomCategoryBox != null) {
+        final existingCategoryCodes =
+            _roomCategoryBox.getAll().map((c) => c.code).toSet();
+        for (final category in defaultCategories) {
+          if (!existingCategoryCodes.contains(category.code)) {
+            final id = _roomCategoryBox.put(category);
+            categoryMap[category.code] = _roomCategoryBox.get(id)!;
+          }
+        }
+      } else {
+        // Utiliser la méthode d'ajout si box non disponible
+        for (final category in defaultCategories) {
+          final id = await addRoomCategory(category);
+          categoryMap[category.code] =
+              (await getRoomCategories()).firstWhere((c) => c.id == id);
+        }
+      }
+
+      // Ajouter les chambres avec leurs catégories
       if (_roomBox != null) {
-        // Evite les doublons sur code
         final existingCodes = _roomBox.getAll().map((r) => r.code).toSet();
+
+        // Assigner les catégories aux chambres
+        defaultRooms[0].category.target = categoryMap["SGLSTD"];
+        defaultRooms[1].category.target = categoryMap["DBLSTD"];
+        defaultRooms[2].category.target = categoryMap["SUITDLX"];
+
         for (final room in defaultRooms) {
           if (!existingCodes.contains(room.code)) {
             _roomBox.put(room);
           }
         }
       } else {
-        for (final room in defaultRooms) {
+        for (int i = 0; i < defaultRooms.length; i++) {
+          final room = defaultRooms[i];
+          switch (i) {
+            case 0:
+              room.category.target = categoryMap["SGLSTD"];
+              break;
+            case 1:
+              room.category.target = categoryMap["DBLSTD"];
+              break;
+            case 2:
+              room.category.target = categoryMap["SUITDLX"];
+              break;
+          }
           await addRoom(room);
         }
       }
 
+      // Ajouter les employés
       if (_employeeBox != null) {
-        final existingEmployeePhones =
+        final existingPhones =
             _employeeBox.getAll().map((e) => e.phoneNumber).toSet();
         for (final emp in defaultEmployees) {
-          if (!existingEmployeePhones.contains(emp.phoneNumber)) {
+          if (!existingPhones.contains(emp.phoneNumber)) {
             _employeeBox.put(emp);
           }
         }
@@ -975,13 +1061,14 @@ class HotelProvider with ChangeNotifier {
         }
       }
 
-      // Recharger toutes les données une seule fois
+      // Recharger toutes les données
       await _loadAllData();
       notifyListeners();
 
       debugPrint('Données par défaut créées avec succès');
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Erreur lors de la création des données par défaut: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
@@ -1274,10 +1361,6 @@ extension HotelProviderAdmin on HotelProvider {
     notifyListeners();
   }
 }
-
-// ============================================================================
-// CLASSES D'AIDE
-// ============================================================================
 
 class ReservationResult {
   final bool isSuccess;

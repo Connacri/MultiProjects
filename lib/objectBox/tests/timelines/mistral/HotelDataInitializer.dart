@@ -66,56 +66,88 @@ class HotelDataInitializer {
     debugPrint('✅ ${hotels.length} hôtels créés avec leurs chambres');
   }
 
-  /// Crée les chambres pour un hôtel donné
   Future<void> createRoomsForHotel(Hotel hotel) async {
     final categories = await hotelProvider.getRoomCategories();
-    if (categories.isEmpty) return;
+    if (categories.isEmpty) {
+      debugPrint('Aucune catégorie de chambre disponible');
+      return;
+    }
 
     final avoidedNumbers = hotel.avoidedNumbersList;
     int roomIndex = 0;
 
-    for (int floor = 1; floor <= hotel.floors; floor++) {
-      for (int roomOnFloor = 1;
-          roomOnFloor <= hotel.roomsPerFloor;
-          roomOnFloor++) {
-        String roomCode = '$floor${roomOnFloor.toString().padLeft(2, '0')}';
+    try {
+      // Charger les chambres existantes une seule fois (optimisation)
+      final existingRooms = await hotelProvider.getRoomsForHotel(hotel);
 
-        // Éviter les numéros interdits
-        if (avoidedNumbers.contains(roomCode)) continue;
+      for (int floor = 1; floor <= hotel.floors; floor++) {
+        for (int roomOnFloor = 1;
+            roomOnFloor <= hotel.roomsPerFloor;
+            roomOnFloor++) {
+          // Construire le code de la chambre (ex: 102, 305)
+          String roomCode = '$floor${roomOnFloor.toString().padLeft(2, '0')}';
 
-        // Assigner une catégorie selon la logique de l'hôtellerie
-        RoomCategory category;
-        if (floor >= hotel.floors - 2) {
-          // Derniers étages = suites et deluxe
-          category = categories.where((c) => c.standing == 'Suite').isNotEmpty
-              ? categories.where((c) => c.standing == 'Suite').first
-              : categories.where((c) => c.standing == 'Deluxe').first;
-        } else if (floor >= hotel.floors ~/ 2) {
-          // Étages moyens/hauts = deluxe
-          category = categories.where((c) => c.standing == 'Deluxe').isNotEmpty
-              ? categories.where((c) => c.standing == 'Deluxe').first
-              : categories.where((c) => c.standing == 'Standard').first;
-        } else if (floor >= 3) {
-          // Étages moyens = standard
-          category = categories.where((c) => c.standing == 'Standard').first;
-        } else {
-          // Premiers étages = economy
-          category = categories.where((c) => c.standing == 'Economy').first;
+          // Vérifier si ce numéro est interdit
+          if (avoidedNumbers.contains(roomCode)) {
+            debugPrint('Chambre $roomCode ignorée (numéro interdit)');
+            continue;
+          }
+
+          // Vérifier si la chambre existe déjà
+          if (existingRooms.any((r) => r.code == roomCode)) {
+            debugPrint('Chambre $roomCode existe déjà pour cet hôtel');
+            continue;
+          }
+
+          // Déterminer le standing selon l'étage
+          String standing;
+          if (floor >= hotel.floors - 1) {
+            standing = 'suite';
+          } else if (floor >= hotel.floors - 3) {
+            standing = 'deluxe';
+          } else if (floor >= 3) {
+            standing = 'standard';
+          } else {
+            standing = 'economy';
+          }
+
+          // Récupérer toutes les catégories de ce standing
+          List<RoomCategory> standingCategories = categories
+              .where((c) => c.standing.toLowerCase() == standing)
+              .toList();
+
+          // Sélectionner une catégorie en alternant selon roomIndex
+          RoomCategory? category;
+          if (standingCategories.isNotEmpty) {
+            category =
+                standingCategories[roomIndex % standingCategories.length];
+          } else {
+            category = categories.last; // fallback
+          }
+
+          // Créer la chambre
+          final room = Room(
+            code: roomCode,
+            status: roomIndex % 5 == 0 ? 'Occupée' : 'Libre',
+          );
+
+          // Associer hôtel et catégorie
+          room.hotel.target = hotel;
+          room.category.target = category;
+
+          // Ajouter la chambre
+          await hotelProvider.addRoom(room);
+          roomIndex++;
+
+          debugPrint(
+              'Chambre $roomCode créée avec la catégorie ${category.name}');
         }
-
-        final room = Room(
-          code: roomCode,
-          type: category.name,
-          capacity: category.capacity,
-          basePrice: category.basePrice,
-          status: roomIndex % 5 == 0 ? 'Occupée' : 'Libre', // 20% occupées
-        );
-
-        room.hotel.target = hotel;
-        room.category.target = category;
-        await hotelProvider.addRoom(room);
-        roomIndex++;
       }
+
+      debugPrint('$roomIndex chambres créées pour l\'hôtel ${hotel.name}');
+    } catch (e, stackTrace) {
+      debugPrint('Erreur lors de la création des chambres: $e');
+      debugPrint('Stack trace: $stackTrace');
     }
   }
 
@@ -1230,7 +1262,7 @@ class HotelDataInitializer {
         guests: [guests[data['guestIndex'] as int]],
         from: data['from'] as DateTime,
         to: data['to'] as DateTime,
-        pricePerNight: availableRoom.basePrice ?? 12000,
+        pricePerNight: availableRoom.category.target!.basePrice ?? 12000,
         status: data['status'] as String,
         forceOverride:
             true, // Pour éviter les conflits lors de l'initialisation

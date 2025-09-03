@@ -116,7 +116,8 @@ class _ReservationFormPageState extends State<ReservationFormPage> {
                 items: hotelProvider.hotels.first.rooms.map((room) {
                   return DropdownMenuItem<int>(
                     value: room.id,
-                    child: Text("${room.code} - ${room.type}"),
+                    child:
+                        Text("${room.code} - ${room.category.target!.bedType}"),
                   );
                 }).toList(),
                 onChanged: (roomId) {
@@ -332,9 +333,10 @@ class RoomsPage extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.all(8),
                 child: ListTile(
-                  title: Text("${room.code} - ${room.type}"),
+                  title:
+                      Text("${room.code} - ${room.category.target!.bedType}"),
                   subtitle: Text(
-                      "Capacité: ${room.capacity}, Prix: ${room.basePrice} DA, Statut: ${room.status}"),
+                      "Capacité: ${room.category.target!.capacity}, Prix: ${room.category.target!.basePrice} DA, Statut: ${room.status}"),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () => provider.deleteRoom(room.id),
@@ -378,6 +380,10 @@ class _AddRoomDialogState extends State<AddRoomDialog> {
   final capacityCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
 
+// Dans votre widget, ajoutez ces variables
+  RoomCategory? _selectedCategory;
+  List<RoomCategory> _availableCategories = [];
+
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -416,20 +422,66 @@ class _AddRoomDialogState extends State<AddRoomDialog> {
           child: const Text("Annuler"),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
             if (_formKey.currentState!.validate()) {
-              final room = Room(
-                code: codeCtrl.text,
-                type: typeCtrl.text.isEmpty ? "Single" : typeCtrl.text,
-                capacity: int.tryParse(capacityCtrl.text) ?? 1,
-                basePrice: double.tryParse(priceCtrl.text) ?? 0,
-              );
-              widget.hotelProvider.addRoom(room);
-              Navigator.pop(context);
+              try {
+                // Récupérer ou créer la catégorie sélectionnée
+                RoomCategory? selectedCategory;
+
+                if (_selectedCategory != null) {
+                  selectedCategory = _selectedCategory;
+                } else {
+                  // Créer une catégorie par défaut si aucune n'est sélectionnée
+                  final categories =
+                      await widget.hotelProvider.getRoomCategories();
+                  selectedCategory = categories.firstWhere(
+                    (c) => c.capacity == (int.tryParse(capacityCtrl.text) ?? 1),
+                    orElse: () => categories.first,
+                  );
+                }
+
+                if (selectedCategory == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('Veuillez sélectionner ou créer une catégorie'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+
+                // Créer la chambre avec les nouveaux champs
+                final room = Room(
+                  code: codeCtrl.text,
+                  status: 'Libre', // Statut par défaut
+                );
+
+                // Associer la catégorie (vous devrez gérer l'hôtel ailleurs)
+                room.category.target = selectedCategory;
+
+                await widget.hotelProvider.addRoom(room);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Chambre ajoutée avec succès'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+
+                Navigator.pop(context);
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Erreur: ${e.toString()}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             }
           },
           child: const Text("Enregistrer"),
-        ),
+        )
       ],
     );
   }
@@ -908,7 +960,7 @@ class DetailedRoomsChipsWidget extends StatelessWidget {
 
     return Tooltip(
       message:
-          'Chambre ${room.code}\nPrix: ${room.basePrice!.toStringAsFixed(0)}€\nStatut: ${room.status}',
+          'Chambre ${room.code}\nPrix: ${room.category.target!.basePrice.toStringAsFixed(0)}€\nStatut: ${room.status}',
       child: Chip(
         avatar: Icon(
           statusIcon,
@@ -927,7 +979,7 @@ class DetailedRoomsChipsWidget extends StatelessWidget {
               ),
             ),
             Text(
-              '${room.basePrice!.toStringAsFixed(0)}€',
+              '${room.category.target!.basePrice.toStringAsFixed(0)}€',
               style: TextStyle(
                 color: textColor.withOpacity(0.7),
                 fontSize: 10,

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
@@ -161,7 +159,9 @@ class HotelManagementState extends State<Hotel_Management> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(
+        currentHotel: _currentHotel,
+      ),
       body: Consumer<HotelProvider>(
         builder: (context, provider, _) {
           // Si c'est le premier lancement, afficher le formulaire de création
@@ -186,73 +186,66 @@ class HotelManagementState extends State<Hotel_Management> {
               //     child: Text(hotels.first.name),
               //   ),
               // ),
-              _buildHotelInfo(),
-              Wrap(
-                spacing: 16,
-                runSpacing: 8,
-                children: [
-                  _buildRoomStatusLegend(),
-                  FilledButton.icon(
-                    onPressed: _showEditOptions,
-                    icon: const Icon(
-                      Icons.list,
-                      // Icône "outlined" pour un look plus épuré
-                      size: 18,
-                      color: Colors.white,
-                    ),
-                    label: const Text(
-                      'Lists',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    style: FilledButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.deepPurple.shade400,
-                      // Couleur principale du thème
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                            12), // Coins arrondis pour un style moderne
-                      ),
-                      elevation: 3,
-                      // Ombre légère pour le relief
-                      shadowColor: Colors.deepPurple.shade200,
-                      // Ombre colorée subtile
-                      textStyle: const TextStyle(
-                        fontFamily: 'OSWALD',
-                        fontWeight: FontWeight.w600,
-                      ),
-                      visualDensity: VisualDensity.standard,
-                      // Densité adaptée
-                      minimumSize: const Size(120,
-                          40), // Taille minimale pour un bouton confortable
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final hotelProvider = context.read<HotelProvider>();
-                      final initializer = HotelDataInitializer(hotelProvider);
-
-                      await initializer.initializeAllDefaultData();
-                    },
-                    child: const Text("Initialiser les données"),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () async {
-                      final hotelProvider = context.read<HotelProvider>();
-                      await hotelProvider.clearAllTestData();
-                    },
-                    child: const Text("♻️ Reset & Re-init Data"),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: 16,
-              ),
+              // _buildHotelInfo(),
+              // Wrap(
+              //   spacing: 16,
+              //   runSpacing: 8,
+              //   children: [
+              //     // _buildRoomStatusLegend(),
+              //     IconButton(
+              //       onPressed: _showEditOptions,
+              //       icon: const Icon(
+              //         Icons.list,
+              //         // Icône "outlined" pour un look plus épuré
+              //
+              //         color: Colors.white,
+              //       ),
+              //       style: FilledButton.styleFrom(
+              //         foregroundColor: Colors.white,
+              //         backgroundColor: Colors.deepPurple.shade400,
+              //         // Couleur principale du thème
+              //         padding: const EdgeInsets.symmetric(
+              //             horizontal: 16, vertical: 12),
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(
+              //               12), // Coins arrondis pour un style moderne
+              //         ),
+              //         elevation: 3,
+              //         // Ombre légère pour le relief
+              //         shadowColor: Colors.deepPurple.shade200,
+              //         // Ombre colorée subtile
+              //         textStyle: const TextStyle(
+              //           fontWeight: FontWeight.w600,
+              //         ),
+              //         visualDensity: VisualDensity.standard,
+              //         // Taille minimale pour un bouton confortable
+              //       ),
+              //     ),
+              //     IconButton(
+              //       onPressed: () async {
+              //         final hotelProvider = context.read<HotelProvider>();
+              //         final initializer = HotelDataInitializer(hotelProvider);
+              //
+              //         await initializer.initializeAllDefaultData();
+              //       },
+              //       icon: Icon(Icons.star),
+              //     ),
+              //
+              //     IconButton(
+              //       onPressed: () async {
+              //         final hotelProvider = context.read<HotelProvider>();
+              //         await hotelProvider.clearAllTestData();
+              //       },
+              //       icon: Icon(
+              //         Icons.clear_all,
+              //         color: Colors.red,
+              //       ),
+              //     ),
+              //   ],
+              // ),
+              // SizedBox(
+              //   height: 16,
+              // ),
               Expanded(child: _buildCalendar(provider)),
             ],
           );
@@ -297,7 +290,7 @@ class HotelManagementState extends State<Hotel_Management> {
         timeTextStyle: TextStyle(fontSize: 14),
       ),
       resourceViewSettings: ResourceViewSettings(
-        visibleResourceCount: 10, //_calculateVisibleRooms(),
+        visibleResourceCount: 15, //_calculateVisibleRooms(),
         size: 60,
         displayNameTextStyle: TextStyle(
           fontWeight: FontWeight.w500,
@@ -388,7 +381,7 @@ class HotelManagementState extends State<Hotel_Management> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      //  automaticallyImplyLeading: false,
+      automaticallyImplyLeading: true,
       titleSpacing: 0,
       elevation: 8,
       flexibleSpace: Container(
@@ -400,94 +393,160 @@ class HotelManagementState extends State<Hotel_Management> {
           ),
         ),
       ),
-      title: Row(
-        children: [
-          const SizedBox(width: 16),
-          Icon(Icons.hotel_rounded, color: Colors.white, size: 28),
-          const SizedBox(width: 10),
-          Text(
-            _currentHotel?.name ?? "Gestion Hôtel",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-              color: Colors.white,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ],
+      title: Text(
+        _currentHotel?.name ?? "Gestion Hôtel",
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 22,
+          color: Colors.white,
+          letterSpacing: 1.2,
+        ),
       ),
       actions: [
-        IconButton(
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (ctx) => HotelListPage()));
-          },
-          icon: Icon(Icons.ac_unit_outlined),
-        ),
-        IconButton(
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (context) => ReservationPage())),
-            icon: Icon(Icons.hotel)),
-        // Bouton "Aujourd'hui"
+        // IconButton(
+        //   onPressed: () {
+        //     Navigator.of(context)
+        //         .push(MaterialPageRoute(builder: (ctx) => HotelListPage()));
+        //   },
+        //   icon: Icon(Icons.ac_unit_outlined),
+        // ),
+        // IconButton(
+        //     onPressed: () => Navigator.push(context,
+        //         MaterialPageRoute(builder: (context) => ReservationPage())),
+        //     icon: Icon(Icons.hotel)),
+        // // Bouton "Aujourd'hui"
+        // // Tooltip(
+        // //   message: "Aller à aujourd'hui",
+        // //   child: IconButton(
+        // //     icon: Icon(Icons.today_rounded),
+        // //     onPressed: () => _calendarController.displayDate = DateTime.now(),
+        // //   ),
+        // // ),
+        // const SizedBox(width: 8),
+        // // Bouton ajouter/modifier hôtel
         // Tooltip(
-        //   message: "Aller à aujourd'hui",
+        //   message: "Créer / Modifier un hôtel",
         //   child: IconButton(
-        //     icon: Icon(Icons.today_rounded),
-        //     onPressed: () => _calendarController.displayDate = DateTime.now(),
+        //     icon: Icon(Icons.add_business_rounded),
+        //     onPressed: _showHotelCreationDialog,
         //   ),
         // ),
-        const SizedBox(width: 8),
-        // Bouton ajouter/modifier hôtel
-        Tooltip(
-          message: "Créer / Modifier un hôtel",
-          child: IconButton(
-            icon: Icon(Icons.add_business_rounded),
-            onPressed: _showHotelCreationDialog,
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Menu vue calendrier
-        PopupMenuButton<CalendarView>(
-          tooltip: "Changer la vue du calendrier",
+        // const SizedBox(width: 8),
+        // // Menu vue calendrier
+        PopupMenuButton<VoidCallback>(
+          tooltip: "Actions rapides",
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           color: Colors.white,
-          icon: Icon(Icons.view_week_rounded, color: Colors.white),
-          onSelected: (view) => setState(() => _currentView = view),
+          icon: Icon(Icons.more_vert, color: Colors.white),
+          onSelected: (action) => action(),
           itemBuilder: (context) => [
             PopupMenuItem(
-              value: CalendarView.timelineDay,
+              value: () => _showEditOptions(),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_view_day, color: Colors.deepPurple),
+                  Icon(Icons.list_alt, color: Colors.deepPurple),
                   SizedBox(width: 8),
-                  Text('Jour'),
+                  Text('Options'),
                 ],
               ),
             ),
             PopupMenuItem(
-              value: CalendarView.timelineWeek,
+              value: () async {
+                final hotelProvider = context.read<HotelProvider>();
+                final initializer = HotelDataInitializer(hotelProvider);
+                await initializer.initializeAllDefaultData();
+              },
               child: Row(
                 children: [
-                  Icon(Icons.view_week, color: Colors.deepPurple),
+                  Icon(Icons.star, color: Colors.amber),
                   SizedBox(width: 8),
-                  Text('Semaine'),
+                  Text('Données par défaut'),
                 ],
               ),
             ),
             PopupMenuItem(
-              value: CalendarView.timelineMonth,
+              value: () async {
+                final hotelProvider = context.read<HotelProvider>();
+                await hotelProvider.clearAllTestData();
+              },
               child: Row(
                 children: [
-                  Icon(Icons.calendar_month, color: Colors.deepPurple),
+                  Icon(Icons.clear_all, color: Colors.red),
                   SizedBox(width: 8),
-                  Text('Mois'),
+                  Text('Vider les données'),
                 ],
               ),
             ),
           ],
         ),
+        PopupMenuButton<String>(
+          tooltip: "Navigation rapide",
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: Colors.white,
+          icon: Container(
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.shade400,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.all(8),
+            child: const Icon(Icons.more_vert, color: Colors.white),
+          ),
+          onSelected: (value) {
+            switch (value) {
+              case 'hotels':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (ctx) => HotelListPage()),
+                );
+                break;
+              case 'reservations':
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ReservationPage()),
+                );
+                break;
+              case 'create':
+                _showHotelCreationDialog();
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'hotels',
+              child: Row(
+                children: const [
+                  Icon(Icons.ac_unit_outlined, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text('Liste des hôtels'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'reservations',
+              child: Row(
+                children: const [
+                  Icon(Icons.hotel, color: Colors.green),
+                  SizedBox(width: 8),
+                  Text('Réservations'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'create',
+              child: Row(
+                children: const [
+                  Icon(Icons.add_business_rounded, color: Colors.deepPurple),
+                  SizedBox(width: 8),
+                  Text('Créer un hôtel'),
+                ],
+              ),
+            ),
+          ],
+        )
       ],
     );
   }
@@ -757,6 +816,7 @@ class HotelManagementState extends State<Hotel_Management> {
                     .map((e) => e.trim())
                     .where((e) => e.isNotEmpty)
                     .toList(),
+                context,
               );
               Navigator.pop(context);
             },
@@ -767,68 +827,84 @@ class HotelManagementState extends State<Hotel_Management> {
     );
   }
 
-  void createHotel(HotelProvider provider, String name, int floors,
-      int roomsPerFloor, List<String> avoidedNumbers) {
-    // Créer l'hôtel
-    final hotel = Hotel(
-      name: name.isNotEmpty ? name : 'Mon Hôtel',
-      floors: floors,
-      roomsPerFloor: roomsPerFloor,
-    );
+  Future<void> createHotel(
+    HotelProvider provider,
+    String name,
+    int floors,
+    int roomsPerFloor,
+    List<String> avoidedNumbers,
+    BuildContext context,
+  ) async {
+    try {
+      // 1. Créer et enregistrer l’hôtel
+      final hotel = Hotel(
+        name: name.isNotEmpty ? name : 'Mon Hôtel',
+        floors: floors,
+        roomsPerFloor: roomsPerFloor,
+        avoidedNumbers: avoidedNumbers.join(','),
+      );
+      final hotelId = await provider.addHotel(hotel);
 
-    // Stocker les numéros évités
-    hotel.avoidedNumbers = avoidedNumbers.join(',');
+      // 2. S’assurer qu’au moins une catégorie existe
+      var categories = await provider.getRoomCategories();
+      RoomCategory defaultCategory;
+      if (categories.isEmpty) {
+        defaultCategory = RoomCategory(
+          name: 'Standard',
+          code: 'STD',
+          description: 'Chambre standard',
+          bedType: 'Double',
+          capacity: 2,
+          standing: 'Standard',
+          basePrice: 120.0,
+        );
+        final categoryId = await provider.addRoomCategory(defaultCategory);
+        defaultCategory.id = categoryId;
+      } else {
+        defaultCategory = categories.firstWhere((c) => c.capacity == 2);
+      }
 
-    // Ajouter l'hôtel au provider d'abord (pour obtenir l'ID)
-    provider.addHotel(hotel);
+      // 3. Générer les chambres et les lier via leurs IDs
+      int createdRooms = 0;
+      for (int floor = 1; floor <= floors; floor++) {
+        for (int roomNum = 1; roomNum <= roomsPerFloor; roomNum++) {
+          final roomCode = '$floor${roomNum.toString().padLeft(2, '0')}';
 
-    // Générer les chambres comme dans votre ancien code
-    final rooms = <Room>[]; // Utiliser Room au lieu de HotelRoom
-
-    for (int floor = 1; floor <= floors; floor++) {
-      for (int roomNum = 1; roomNum <= roomsPerFloor; roomNum++) {
-        final roomNumber =
-            '${floor.toString()}${roomNum.toString().padLeft(2, '0')}';
-
-        // Vérifier si ce numéro doit être évité
-        bool shouldAvoid = false;
-        for (String avoided in avoidedNumbers) {
-          if (avoided.isNotEmpty && roomNumber.contains(avoided)) {
-            shouldAvoid = true;
-            break;
-          }
-        }
-
-        if (!shouldAvoid) {
-          final room = Room(
-            code: roomNumber,
-            // Utiliser 'code' au lieu de 'roomNumber'
-
-            basePrice: 80 + Random().nextDouble() * 120,
-            // Prix entre 80 et 200€
-            status: 'available', // Statut par défaut
+          // ignorer les numéros interdits
+          final shouldAvoid = avoidedNumbers.any(
+            (a) => a.isNotEmpty && roomCode.contains(a),
           );
+          if (shouldAvoid) continue;
 
-          rooms.add(room);
+          final room = Room(code: roomCode, status: 'Libre');
+          room.hotel.targetId = hotelId;
+          room.category.targetId = defaultCategory.id;
+
+          await provider.addRoom(room);
+          createdRooms++;
         }
       }
+
+      // 4. Feedback utilisateur
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Hôtel "$name" créé avec $createdRooms chambres.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la création : $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur : $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-
-    // Ajouter toutes les chambres à l'hôtel en une seule fois
-    provider.addRoomsToHotel(hotel, rooms);
-
-    // Générer les réservations aléatoires si vous avez cette fonctionnalité
-    // final randomReservations = generateRandomReservations(hotel);
-    // for (final reservation in randomReservations) {
-    //   provider.addReservation(reservation);
-    // }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Hôtel "$name" créé avec ${rooms.length} chambres !'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   Widget _buildHotelInfo() {
@@ -1232,6 +1308,7 @@ class HotelManagementState extends State<Hotel_Management> {
                 int.tryParse(floorsController.text) ?? 3,
                 int.tryParse(roomsPerFloorController.text) ?? 10,
                 avoidedController.text.split(',').map((e) => e.trim()).toList(),
+                context,
               );
               Navigator.pop(context);
             },
@@ -1272,6 +1349,7 @@ class HotelManagementState extends State<Hotel_Management> {
                     _currentHotel!.rooms.toList());
               });
             },
+            seasonalPricings: provider.getSeasonalPricings(),
           ),
         ),
       ),
@@ -1513,6 +1591,7 @@ class HotelManagementState extends State<Hotel_Management> {
                     _currentHotel!.rooms.toList());
               });
             },
+            seasonalPricings: provider.getSeasonalPricings(),
           ),
         ),
       ),
@@ -1954,6 +2033,7 @@ class ReservationDialogContent extends StatefulWidget {
   final VoidCallback onReservationAdded;
   final bool isEditing;
   final Reservation? existingReservation;
+  final List<SeasonalPricing> seasonalPricings;
 
   const ReservationDialogContent({
     Key? key,
@@ -1965,6 +2045,7 @@ class ReservationDialogContent extends StatefulWidget {
     required this.onReservationAdded,
     this.isEditing = false,
     this.existingReservation,
+    required this.seasonalPricings,
   }) : super(key: key);
 
   @override
@@ -1989,6 +2070,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
   // NEW: Board Basis and Extra Services
   BoardBasis? _selectedBoardBasis;
+
   List<ReservationExtraItem> _selectedExtras = [];
 
   // Variables pour l'édition de client
@@ -2004,15 +2086,27 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     "Annulée"
   ];
 
+  List<SeasonalPricing> _seasonalPricings = [];
+  double _seasonalMultiplier = 1.0;
+
   @override
   void initState() {
     super.initState();
-
+    _seasonalPricings = widget.seasonalPricings;
     if (widget.isEditing && widget.existingReservation != null) {
       _initializeForEdit();
     } else {
       _initializeForNew();
     }
+    // CORRECTION 1: Calculer le multiplicateur saisonnier dès l'initialisation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_fromDate != null && _toDate != null) {
+        setState(() {
+          _seasonalMultiplier =
+              _calculateSeasonalMultiplier(_fromDate!, _toDate!);
+        });
+      }
+    });
   }
 
   void _initializeForEdit() {
@@ -2038,17 +2132,82 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _status = reservation.status;
     _priceController.text = reservation.pricePerNight.toString();
 
-    // NEW: Initialize Board Basis and Extras if they exist
-    // Note: You'll need to add these fields to your Reservation entity
-    // _selectedBoardBasis = reservation.boardBasis.target;
-    // _selectedExtras = reservation.extras.map((re) =>
-    //   ReservationExtraItem(
-    //     extraService: re.extraService.target!,
-    //     quantity: re.quantity,
-    //     unitPrice: re.unitPrice,
-    //     scheduledDate: re.scheduledDate,
-    //   )
-    // ).toList();
+    // CORRECTION 2: Récupération correcte du BoardBasis
+    // Si votre entité Reservation a un champ boardBasis
+    if (reservation.boardBasis.target != null) {
+      _selectedBoardBasis = reservation.boardBasis.target;
+    } else {
+      // Si pas de relation directe, essayer de retrouver via un ID stocké
+      // Vous devrez adapter selon votre modèle de données
+      // Exemple si vous stockez l'ID du board basis:
+      // final boardBasisId = reservation.boardBasisId;
+      // if (boardBasisId != null) {
+      //   _selectedBoardBasis = widget.provider.getBoardBasisList()
+      //       .firstWhere((bb) => bb.id == boardBasisId, orElse: () => null);
+      // }
+    }
+
+    // CORRECTION 3: Récupération correcte des extras
+    _selectedExtras = reservation.extras
+        .map((re) => ReservationExtraItem(
+              extraService: re.extraService.target!,
+              quantity: re.quantity,
+              unitPrice: re.unitPrice,
+              scheduledDate: re.scheduledDate,
+            ))
+        .toList();
+
+    // CORRECTION 4: Calculer les prix des extras après initialisation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateAllExtraPrices();
+    });
+  }
+
+  // CORRECTION 5: Améliorer le calcul du multiplicateur saisonnier
+  double _calculateSeasonalMultiplier(DateTime from, DateTime to) {
+    if (_seasonalPricings.isEmpty || _selectedRoom == null) return 1.0;
+
+    // Parcourir toutes les périodes saisonnières actives
+    for (final seasonal in _seasonalPricings) {
+      if (!seasonal.isActive) continue;
+
+      // Vérifier si la période de la réservation chevauche la saison
+      bool overlaps = false;
+      for (DateTime date = from;
+          date.isBefore(to.add(Duration(days: 1)));
+          date = date.add(Duration(days: 1))) {
+        if (seasonal.isDateInSeason(date)) {
+          overlaps = true;
+          break;
+        }
+      }
+
+      if (overlaps) {
+        // Vérifier si la saison s'applique à la chambre sélectionnée
+        if (seasonal.applicationType == 'all_categories') {
+          return seasonal.multiplier;
+        } else if (seasonal.applicationType == 'specific_categories') {
+          // CORRECTION: Vérifier la catégorie de la chambre
+          if (_selectedRoom != null && _selectedRoom!.category.target != null) {
+            final roomCategoryId =
+                _selectedRoom!.category.target!.id.toString();
+            if (seasonal.targetIds.contains(roomCategoryId)) {
+              return seasonal.multiplier;
+            }
+          }
+        } else if (seasonal.applicationType == 'specific_rooms') {
+          // CORRECTION: Vérifier la chambre spécifique
+          if (_selectedRoom != null) {
+            final roomId = _selectedRoom!.id.toString();
+            if (seasonal.targetIds.contains(roomId)) {
+              return seasonal.multiplier;
+            }
+          }
+        }
+      }
+    }
+
+    return 1.0;
   }
 
   void _initializeForNew() {
@@ -2113,7 +2272,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     final nights = _toDate!.difference(_fromDate!).inDays;
     final persons = _selectedGuests.length;
-    final roomPrice = double.tryParse(_priceController.text) ?? 0.0;
+    final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
+    final roomPrice = baseRoomPrice * _seasonalMultiplier;
 
     // Base room cost
     double total = roomPrice * nights;
@@ -2129,6 +2289,40 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
 
     return total;
+  }
+
+  double _getSeasonalMultiplier(DateTime from, DateTime to) {
+    // Parcourir toutes les périodes saisonnières actives
+    for (final seasonal in widget.seasonalPricings) {
+      if (!seasonal.isActive) continue;
+
+      // Vérifier si la période de la réservation chevauche la saison
+      bool overlaps = false;
+      for (DateTime date = from;
+          date.isBefore(to.add(Duration(days: 1)));
+          date = date.add(Duration(days: 1))) {
+        if (seasonal.isDateInSeason(date)) {
+          overlaps = true;
+          break;
+        }
+      }
+
+      if (overlaps) {
+        // Vérifier si la saison s'applique à la chambre sélectionnée
+        if (seasonal.applicationType == 'all_categories') {
+          return seasonal.multiplier;
+        } else if (seasonal.applicationType == 'specific_categories') {
+          // Logique pour vérifier si la catégorie de la chambre est concernée
+          // (à implémenter selon votre modèle de données)
+        } else if (seasonal.applicationType == 'specific_rooms') {
+          // Logique pour vérifier si la chambre est concernée
+          // (à implémenter selon votre modèle de données)
+        }
+      }
+    }
+
+    // Si aucune saison ne s'applique, retourner 1.0 (pas de modification)
+    return 1.0;
   }
 
   @override
@@ -2148,62 +2342,61 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
+  // CORRECTION 7: Améliorer _buildDesktopForm pour inclure la section saisonnière
   Widget _buildDesktopForm() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Header
         _buildHeader(),
-
-        // Content
         Expanded(
           child: SingleChildScrollView(
             padding: EdgeInsets.all(20),
             child: Form(
               key: _formKey,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
                 children: [
-                  // Left Column - Basic Info
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      children: [
-                        _buildBasicInfoSection(),
-                        SizedBox(height: 16),
-                        _buildBoardBasisSection(),
-                      ],
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left Column
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          children: [
+                            _buildBasicInfoSection(),
+                            SizedBox(height: 16),
+                            _buildBoardBasisSection(),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      // Middle Column
+                      Expanded(
+                        flex: 2,
+                        child: _buildGuestsSection(),
+                      ),
+                      SizedBox(width: 16),
+                      // Right Column
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          children: [
+                            _buildExtraServicesSection(),
+                            SizedBox(height: 16),
+                            _buildPricingSummary(),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-
-                  SizedBox(width: 16),
-
-                  // Middle Column - Guests
-                  Expanded(
-                    flex: 2,
-                    child: _buildGuestsSection(),
-                  ),
-
-                  SizedBox(width: 16),
-
-                  // Right Column - Extra Services
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      children: [
-                        _buildExtraServicesSection(),
-                        SizedBox(height: 16),
-                        _buildPricingSummary(),
-                      ],
-                    ),
-                  ),
+                  SizedBox(height: 16),
+                  // CORRECTION: Placer la section saisonnière ici
+                  _buildSeasonalPricingSection(),
                 ],
               ),
             ),
           ),
         ),
-
-        // Footer
         _buildFooter(),
       ],
     );
@@ -2260,47 +2453,19 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
             // Room and Employee
             SizedBox(
-              height: 100,
+              height: 160,
               child: Column(
                 children: [
                   Expanded(
-                    child: DropdownButtonFormField<Room>(
-                      isDense: true,
-                      isExpanded: true,
-                      value: _selectedRoom,
-                      decoration: InputDecoration(
-                        labelText: 'Chambre *',
-                        prefixIcon: Icon(Icons.room),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      items: widget.currentHotel.rooms.map((room) {
-                        final categoryName =
-                            widget.provider.getRoomCategoryName(room);
-                        return DropdownMenuItem(
-                          value: room,
-                          child: Text(
-                              '${room.code} $categoryName ${room.type ?? ''}'),
-                        );
-                      }).toList(),
-                      onChanged: (room) => setState(() => _selectedRoom = room),
-                      validator: (value) =>
-                          value == null ? 'Choisissez une chambre' : null,
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  Expanded(
                     child: DropdownButtonFormField<int>(
-                      isDense: true,
                       isExpanded: true,
                       value: _selectedEmployee?.id,
                       decoration: InputDecoration(
                         labelText: 'Réceptionniste *',
                         prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        // border: OutlineInputBorder(
+                        //   borderRadius: BorderRadius.circular(8),
+                        // ),
                       ),
                       items: widget.provider.employees.map((emp) {
                         return DropdownMenuItem<int>(
@@ -2316,6 +2481,41 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       },
                       validator: (value) =>
                           value == null ? 'Choisissez un réceptionniste' : null,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Expanded(
+                    child: DropdownButtonFormField<Room>(
+                      isDense: false,
+                      isExpanded: true,
+                      value: _selectedRoom,
+                      decoration: InputDecoration(
+                        labelText: 'Chambre *',
+                        //prefixIcon: Icon(Icons.bed),
+                        // border: OutlineInputBorder(
+                        //   borderRadius: BorderRadius.circular(8),
+                        // ),
+                      ),
+                      items: widget.currentHotel.rooms.map((room) {
+                        final categoryName =
+                            widget.provider.getRoomCategoryName(room);
+                        return DropdownMenuItem(
+                          value: room,
+                          child: Row(
+                            children: [
+                              Text('${room.code}'),
+                              SizedBox(
+                                width: 8,
+                              ),
+                              Text(
+                                  '$categoryName ${room.category.target!.bedType ?? ''}'),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (room) => setState(() => _selectedRoom = room),
+                      validator: (value) =>
+                          value == null ? 'Choisissez une chambre' : null,
                     ),
                   ),
                 ],
@@ -2353,7 +2553,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
             // Price and Status
             SizedBox(
-              height: 100,
+              height: 200,
               child: Column(
                 children: [
                   Expanded(
@@ -2380,7 +2580,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   SizedBox(height: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      isDense: true,
+                      isDense: false,
                       isExpanded: true,
                       value: _status,
                       decoration: InputDecoration(
@@ -2418,11 +2618,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             Text('Plan de pension',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             SizedBox(height: 16),
-            // Solution 2: Filtrage avancé avec debugging
-            DropdownButtonFormField<BoardBasis>(
+            DropdownButtonFormField<String>(
               isDense: false,
               isExpanded: true,
-              value: _selectedBoardBasis,
+              value: _selectedBoardBasis?.code,
+              // on utilise le code comme valeur
               decoration: InputDecoration(
                 labelText: 'Type de pension',
                 prefixIcon: Icon(Icons.restaurant),
@@ -2437,70 +2637,63 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               ),
               menuMaxHeight: 250,
               items: () {
-                // Debug: vérifier les doublons
+                // Récupérer les BoardBasis actifs
                 final allItems = widget.provider
                     .getBoardBasisList()
                     .where((bb) => bb.isActive)
                     .toList();
-                print('Nombre total d\'items: ${allItems.length}');
 
-                // Créer une Map pour éliminer les doublons par code
+                // Supprimer les doublons par code
                 final uniqueItems = <String, BoardBasis>{};
                 for (final item in allItems) {
-                  if (!uniqueItems.containsKey(item.code)) {
-                    uniqueItems[item.code] = item;
-                  } else {
-                    print('Doublon détecté pour le code: ${item.code}');
-                  }
+                  uniqueItems.putIfAbsent(item.code, () => item);
                 }
 
-                print('Nombre d\'items uniques: ${uniqueItems.length}');
-
-                // Vérifier si _selectedBoardBasis existe dans la liste
-                if (_selectedBoardBasis != null) {
-                  final exists = uniqueItems.values
-                      .any((item) => item.code == _selectedBoardBasis!.code);
-                  if (!exists) {
-                    print(
-                        'ATTENTION: _selectedBoardBasis n\'existe pas dans la liste!');
-                    // Option: réinitialiser la sélection
-                    // _selectedBoardBasis = null;
-                  }
+                // Vérifier que le selected existe encore
+                if (_selectedBoardBasis != null &&
+                    !uniqueItems.containsKey(_selectedBoardBasis!.code)) {
+                  _selectedBoardBasis = null;
                 }
 
+                // Construire la liste des DropdownMenuItem
                 return uniqueItems.values.map((boardBasis) {
-                  return DropdownMenuItem(
-                    value: boardBasis,
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${boardBasis.name} (${boardBasis.code})',
-                            style: TextStyle(fontSize: 14),
-                          ),
+                  return DropdownMenuItem<String>(
+                    value: boardBasis.code, // valeur = code
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${boardBasis.name} (${boardBasis.code})',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        if (boardBasis.inclusionsSummary.isNotEmpty) ...[
                           SizedBox(height: 4),
-                          if (boardBasis.inclusionsSummary.isNotEmpty)
-                            Text(
-                              boardBasis.inclusionsSummary,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          Text(
+                            boardBasis.inclusionsSummary,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[600]),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
-                      ),
+                      ],
                     ),
                   );
                 }).toList();
               }(),
-              onChanged: (boardBasis) {
+              onChanged: (String? selectedCode) {
                 setState(() {
-                  _selectedBoardBasis = boardBasis;
+                  // retrouver l’objet complet
+                  final allItems = widget.provider
+                      .getBoardBasisList()
+                      .where((bb) => bb.isActive)
+                      .toList();
+
+                  _selectedBoardBasis = allItems.firstWhere(
+                    (bb) => bb.code == selectedCode,
+                    orElse: () => null as BoardBasis, // pour éviter le crash
+                  );
                 });
               },
             ),
@@ -2601,7 +2794,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     final nights = _toDate!.difference(_fromDate!).inDays;
     final persons = _selectedGuests.length;
-    final roomPrice = double.tryParse(_priceController.text) ?? 0.0;
+    final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
+    final roomPrice = baseRoomPrice * _seasonalMultiplier;
     final roomTotal = roomPrice * nights;
 
     double boardBasisTotal = 0.0;
@@ -2624,10 +2818,16 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             SizedBox(height: 16),
             _buildPriceRow('Chambre ($nights nuits)',
                 '${roomTotal.toStringAsFixed(2)} DZD'),
+            if (_seasonalMultiplier != 1.0)
+              _buildPriceRow(
+                'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
+                '',
+              ),
             if (_selectedBoardBasis != null)
               _buildPriceRow(
-                  '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
-                  '${boardBasisTotal.toStringAsFixed(2)} DZD'),
+                '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
+                '${boardBasisTotal.toStringAsFixed(2)} DZD',
+              ),
             if (_selectedExtras.isNotEmpty)
               _buildPriceRow('Services supplémentaires',
                   '${extrasTotal.toStringAsFixed(2)} DZD'),
@@ -2770,6 +2970,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         );
         if (selectedDate != null) {
           onDateSelected(selectedDate);
+          // Recalculer le multiplicateur saisonnier
+          if (_fromDate != null && _toDate != null) {
+            setState(() {
+              _seasonalMultiplier =
+                  _calculateSeasonalMultiplier(_fromDate!, _toDate!);
+            });
+          }
         }
       },
       child: FittedBox(
@@ -2791,6 +2998,152 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+// CORRECTION 6: Améliorer _buildSeasonalPricingSection pour s'afficher même sans dates
+  Widget _buildSeasonalPricingSection() {
+    if (_seasonalPricings.isEmpty) {
+      return Container();
+    }
+
+    // Si pas de dates sélectionnées, afficher toutes les saisons actives
+    if (_fromDate == null || _toDate == null) {
+      final activeSeasonalPricings =
+          _seasonalPricings.where((s) => s.isActive).toList();
+
+      if (activeSeasonalPricings.isEmpty) return Container();
+
+      return Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tarifs saisonniers disponibles',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              SizedBox(height: 16),
+              ...activeSeasonalPricings.map((seasonal) {
+                return Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, size: 16),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${seasonal.name} (x${seasonal.multiplier})',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      Text(
+                        '${_formatDate(seasonal.startDate)} - ${_formatDate(seasonal.endDate)}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Avec dates sélectionnées, afficher les saisons applicables
+    final applicableSeasonalPricings = _seasonalPricings.where((seasonal) {
+      if (!seasonal.isActive) return false;
+
+      for (DateTime date = _fromDate!;
+          date.isBefore(_toDate!.add(Duration(days: 1)));
+          date = date.add(Duration(days: 1))) {
+        if (seasonal.isDateInSeason(date)) {
+          return true;
+        }
+      }
+      return false;
+    }).toList();
+
+    if (applicableSeasonalPricings.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Tarifs saisonniers',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              SizedBox(height: 16),
+              Row(
+                children: [
+                  Icon(Icons.info, size: 16, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text(
+                    'Aucun tarif saisonnier applicable pour ces dates',
+                    style: TextStyle(fontSize: 14, color: Colors.blue),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Tarifs saisonniers applicables',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            SizedBox(height: 16),
+            ...applicableSeasonalPricings.map((seasonal) {
+              final isApplied = (_seasonalMultiplier == seasonal.multiplier);
+              return Container(
+                padding: EdgeInsets.all(8),
+                margin: EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: isApplied ? Colors.green.shade50 : null,
+                  border: Border.all(
+                    color: isApplied ? Colors.green : Colors.grey.shade300,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 16,
+                      color: isApplied ? Colors.green : null,
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${seasonal.name} (x${seasonal.multiplier})',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight:
+                              isApplied ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${_formatDate(seasonal.startDate)} - ${_formatDate(seasonal.endDate)}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    if (isApplied) ...[
+                      SizedBox(width: 8),
+                      Icon(Icons.check_circle, color: Colors.green, size: 16),
+                    ],
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
         ),
       ),
     );
@@ -3132,6 +3485,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 // 5. CORRECTION - _saveReservation() complète
 // ============================================================================
 
+  // CORRECTION 8: Améliorer la sauvegarde pour inclure BoardBasis et Extras
   Future<void> _saveReservation() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -3168,7 +3522,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     try {
       final pricePerNight = double.tryParse(_priceController.text) ?? 0.0;
 
-      // S'assurer que tous les clients ont des IDs valides
       for (final guest in _selectedGuests) {
         if (guest.id == 0) {
           final guestId = await widget.provider.addGuest(guest);
@@ -3179,7 +3532,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       ReservationResult result;
 
       if (widget.isEditing && widget.existingReservation != null) {
-        // Mise à jour
+        // CORRECTION: Inclure BoardBasis et Extras dans la mise à jour
         result = await widget.provider.updateReservationComplete(
           reservation: widget.existingReservation!,
           newRoom: _selectedRoom,
@@ -3189,9 +3542,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newTo: _toDate,
           newPricePerNight: pricePerNight,
           newStatus: _status,
+          newBoardBasis: _selectedBoardBasis,
+          // AJOUT
+          newExtras: _selectedExtras, // AJOUT
         );
       } else {
-        // Création
         result = await widget.provider.addReservation(
           room: _selectedRoom!,
           receptionist: _selectedEmployee!,
@@ -3200,6 +3555,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           to: _toDate!,
           pricePerNight: pricePerNight,
           status: _status,
+          boardBasis: _selectedBoardBasis,
+          // AJOUT
+          extras: _selectedExtras, // AJOUT
         );
       }
 

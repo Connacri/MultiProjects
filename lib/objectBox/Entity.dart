@@ -573,9 +573,10 @@ class Room {
 
   @Index()
   String code;
-  String? type; // Peut être remplacé par category.name
-  int? capacity; // Peut être remplacé par category.capacity
-  double? basePrice; // Peut être remplacé par category.basePrice
+
+  // String? type; // Peut être remplacé par category.name
+  // int? capacity; // Peut être remplacé par category.capacity
+  // double? basePrice; // Peut être remplacé par category.basePrice
   String status;
 
   // NOUVELLE RELATION
@@ -587,24 +588,18 @@ class Room {
 
   Room({
     required this.code,
-    this.type,
-    this.capacity,
-    this.basePrice,
+    // this.type,
+    // this.capacity,
+    // this.basePrice,
     this.status = "Libre",
   });
 
-  // Helper pour obtenir le prix effectif selon la catégorie et la saison
-  double getEffectivePrice(DateTime date) {
-    final categoryPrice = category.target?.basePrice ?? basePrice ?? 0.0;
-    // Ici vous pourriez ajouter la logique de calcul saisonnier
-    return categoryPrice;
-  }
-}
-
-enum RoomState {
-  empty, // Blanche - aucune réservation
-  occupied, // Verte - occupée aujourd'hui
-  waitingGuest, // Bleue - libre aujourd'hui mais réservation future
+// Helper pour obtenir le prix effectif selon la catégorie et la saison
+// double getEffectivePrice(DateTime date) {
+//   final categoryPrice = category.target?.basePrice ?? basePrice ?? 0.0;
+//   // Ici vous pourriez ajouter la logique de calcul saisonnier
+//   return categoryPrice;
+// }
 }
 
 /// ==================== ROOM CATEGORY ====================
