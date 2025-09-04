@@ -382,7 +382,6 @@ class HotelManagementState extends State<Hotel_Management> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      automaticallyImplyLeading: true,
       titleSpacing: 0,
       elevation: 8,
       flexibleSpace: Container(
@@ -394,127 +393,15 @@ class HotelManagementState extends State<Hotel_Management> {
           ),
         ),
       ),
-      title: Consumer<HotelProvider>(
-        builder: (_, provider, __) {
-          final list = provider.seasonalPricing;
-          SeasonalPricing? selected = provider.selectedSeasonalPricing;
+      title: LayoutBuilder(
+        builder: (context, constraints) {
+          double w = constraints.maxWidth;
 
-          // ✅ Auto-select saison selon la date courante
-          if (selected == null && list.isNotEmpty) {
-            final now = DateTime.now();
-            try {
-              final found = list.firstWhere(
-                (sp) =>
-                    sp.startDate.isBefore(now) &&
-                    sp.endDate.isAfter(now), // saison active
-              );
-
-              // 🚀 Appel repoussé après la fin du build
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                provider.setSelectedSeasonalPricing(found);
-              });
-
-              selected = found;
-            } catch (e) {
-              // aucune saison ne correspond à la date actuelle
-              selected = null;
-            }
+          if (w < 600) {
+            return _buildAppBarSmall2();
+          } else {
+            return _buildAppBarSmall();
           }
-          final dateFormatter = DateFormat("EEE d MMMM yyyy", "fr_FR");
-          return InkWell(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(16)),
-                  ),
-                  builder: (_) {
-                    return ListView(
-                      children: list.map((sp) {
-                        return ListTile(
-                          leading: const Icon(Icons.calendar_today),
-                          title: Text(sp.name),
-                          subtitle: Text(
-                              "Multiplicateur: ${sp.multiplier}x\n${sp.startDate.toLocal()} → ${sp.endDate.toLocal()}"),
-                          trailing: selected?.id == sp.id
-                              ? const Icon(Icons.check, color: Colors.green)
-                              : null,
-                          onTap: () {
-                            provider.setSelectedSeasonalPricing(sp);
-                            Navigator.pop(context);
-                          },
-                        );
-                      }).toList(),
-                    );
-                  },
-                );
-              },
-              child: SeasonalAppBar()
-
-              // child: Padding(
-              //   padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
-              //   child: Text.rich(
-              //     TextSpan(
-              //       children: [
-              //         TextSpan(
-              //           text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
-              //           style: TextStyle(
-              //             fontSize: 25,
-              //             fontWeight: FontWeight.bold,
-              //             color: Theme.of(context).primaryColorLight,
-              //           ),
-              //         ),
-              //         TextSpan(
-              //           text: selected != null
-              //               ? "${selected.name} - x${selected.multiplier.toStringAsFixed(2)} "
-              //               : "",
-              //           style: TextStyle(
-              //             fontSize: 23,
-              //             fontWeight: FontWeight.w200,
-              //             color: Theme.of(context).primaryColorLight,
-              //           ),
-              //         ),
-              //         TextSpan(
-              //           children: [
-              //             if (selected != null) ...[
-              //               WidgetSpan(
-              //                 child: Icon(Icons.play_arrow,
-              //                     size: 20, color: Colors.greenAccent),
-              //               ),
-              //               TextSpan(
-              //                 text:
-              //                     " ${dateFormatter.format(selected.startDate)}  ",
-              //                 style: TextStyle(
-              //                   fontSize: 18,
-              //                   fontWeight: FontWeight.w400,
-              //                   color: Theme.of(context).primaryColorLight,
-              //                 ),
-              //               ),
-              //               WidgetSpan(
-              //                 child: Icon(Icons.arrow_forward,
-              //                     size: 20, color: Colors.white70),
-              //               ),
-              //               WidgetSpan(
-              //                 child: Icon(Icons.flag,
-              //                     size: 20, color: Colors.redAccent),
-              //               ),
-              //               TextSpan(
-              //                 text: " ${dateFormatter.format(selected.endDate)}",
-              //                 style: TextStyle(
-              //                   fontSize: 18,
-              //                   fontWeight: FontWeight.w400,
-              //                   color: Theme.of(context).primaryColorLight,
-              //                 ),
-              //               ),
-              //             ],
-              //           ],
-              //         )
-              //       ],
-              //     ),
-              //   ),
-              // ),
-              );
         },
       ),
 
@@ -2151,6 +2038,260 @@ class HotelManagementState extends State<Hotel_Management> {
       Colors.deepPurple,
     ];
     return colors[seed.abs() % colors.length];
+  }
+
+  _buildAppBarSmall() {
+    return Consumer<HotelProvider>(
+      builder: (_, provider, __) {
+        final list = provider.seasonalPricing;
+        SeasonalPricing? selected = provider.selectedSeasonalPricing;
+
+        // ✅ Auto-select saison selon la date courante
+        if (selected == null && list.isNotEmpty) {
+          final now = DateTime.now();
+          try {
+            final found = list.firstWhere(
+              (sp) =>
+                  sp.startDate.isBefore(now) &&
+                  sp.endDate.isAfter(now), // saison active
+            );
+
+            // 🚀 Appel repoussé après la fin du build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              provider.setSelectedSeasonalPricing(found);
+            });
+
+            selected = found;
+          } catch (e) {
+            // aucune saison ne correspond à la date actuelle
+            selected = null;
+          }
+        }
+        final dateFormatter = DateFormat("EEE d MMMM yyyy", "fr_FR");
+        return InkWell(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (_) {
+                  return ListView(
+                    children: list.map((sp) {
+                      return ListTile(
+                        leading: const Icon(Icons.calendar_today),
+                        title: Text(sp.name),
+                        subtitle: Text(
+                            "Multiplicateur: ${sp.multiplier}x\n${sp.startDate.toLocal()} → ${sp.endDate.toLocal()}"),
+                        trailing: selected?.id == sp.id
+                            ? const Icon(Icons.check, color: Colors.green)
+                            : null,
+                        onTap: () {
+                          provider.setSelectedSeasonalPricing(sp);
+                          Navigator.pop(context);
+                        },
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+            },
+            child: SeasonalAppBar()
+
+            // child: Padding(
+            //   padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
+            //   child: Text.rich(
+            //     TextSpan(
+            //       children: [
+            //         TextSpan(
+            //           text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
+            //           style: TextStyle(
+            //             fontSize: 25,
+            //             fontWeight: FontWeight.bold,
+            //             color: Theme.of(context).primaryColorLight,
+            //           ),
+            //         ),
+            //         TextSpan(
+            //           text: selected != null
+            //               ? "${selected.name} - x${selected.multiplier.toStringAsFixed(2)} "
+            //               : "",
+            //           style: TextStyle(
+            //             fontSize: 23,
+            //             fontWeight: FontWeight.w200,
+            //             color: Theme.of(context).primaryColorLight,
+            //           ),
+            //         ),
+            //         TextSpan(
+            //           children: [
+            //             if (selected != null) ...[
+            //               WidgetSpan(
+            //                 child: Icon(Icons.play_arrow,
+            //                     size: 20, color: Colors.greenAccent),
+            //               ),
+            //               TextSpan(
+            //                 text:
+            //                     " ${dateFormatter.format(selected.startDate)}  ",
+            //                 style: TextStyle(
+            //                   fontSize: 18,
+            //                   fontWeight: FontWeight.w400,
+            //                   color: Theme.of(context).primaryColorLight,
+            //                 ),
+            //               ),
+            //               WidgetSpan(
+            //                 child: Icon(Icons.arrow_forward,
+            //                     size: 20, color: Colors.white70),
+            //               ),
+            //               WidgetSpan(
+            //                 child: Icon(Icons.flag,
+            //                     size: 20, color: Colors.redAccent),
+            //               ),
+            //               TextSpan(
+            //                 text: " ${dateFormatter.format(selected.endDate)}",
+            //                 style: TextStyle(
+            //                   fontSize: 18,
+            //                   fontWeight: FontWeight.w400,
+            //                   color: Theme.of(context).primaryColorLight,
+            //                 ),
+            //               ),
+            //             ],
+            //           ],
+            //         )
+            //       ],
+            //     ),
+            //   ),
+            // ),
+            );
+      },
+    );
+  }
+
+  _buildAppBarSmall2() {
+    return Consumer<HotelProvider>(
+      builder: (_, provider, __) {
+        final list = provider.seasonalPricing;
+        SeasonalPricing? selected = provider.selectedSeasonalPricing;
+
+        // ✅ Auto-select saison selon la date courante
+        if (selected == null && list.isNotEmpty) {
+          final now = DateTime.now();
+          try {
+            final found = list.firstWhere(
+              (sp) =>
+                  sp.startDate.isBefore(now) &&
+                  sp.endDate.isAfter(now), // saison active
+            );
+
+            // 🚀 Appel repoussé après la fin du build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              provider.setSelectedSeasonalPricing(found);
+            });
+
+            selected = found;
+          } catch (e) {
+            // aucune saison ne correspond à la date actuelle
+            selected = null;
+          }
+        }
+        final dateFormatter = DateFormat("EEE d MMMM yyyy", "fr_FR");
+        return InkWell(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              builder: (_) {
+                return ListView(
+                  children: list.map((sp) {
+                    return ListTile(
+                      leading: const Icon(Icons.calendar_today),
+                      title: Text(sp.name),
+                      subtitle: Text(
+                          "Multiplicateur: ${sp.multiplier}x\n${sp.startDate.toLocal()} → ${sp.endDate.toLocal()}"),
+                      trailing: selected?.id == sp.id
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+                      onTap: () {
+                        provider.setSelectedSeasonalPricing(sp);
+                        Navigator.pop(context);
+                      },
+                    );
+                  }).toList(),
+                );
+              },
+            );
+          },
+          child: Tooltip(
+            message: "${selected!.multiplier}x " +
+                "${selected!.description}" +
+                "\nDu ${dateFormatter.format(selected!.startDate)}" +
+                "\nAu ${dateFormatter.format(selected.endDate)}",
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
+                      style: TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColorLight,
+                      ),
+                    ),
+                    TextSpan(
+                      text:
+                          //  "${selected.name} - "
+                          "x${selected.multiplier.toStringAsFixed(2)} ",
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.w200,
+                        color: Theme.of(context).primaryColorLight,
+                      ),
+                    ),
+                    // TextSpan(
+                    //   children: [
+                    //     if (selected != null) ...[
+                    //       WidgetSpan(
+                    //         child: Icon(Icons.play_arrow,
+                    //             size: 20, color: Colors.greenAccent),
+                    //       ),
+                    //       TextSpan(
+                    //         text:
+                    //             " ${dateFormatter.format(selected.startDate)}  ",
+                    //         style: TextStyle(
+                    //           fontSize: 18,
+                    //           fontWeight: FontWeight.w400,
+                    //           color: Theme.of(context).primaryColorLight,
+                    //         ),
+                    //       ),
+                    //       WidgetSpan(
+                    //         child: Icon(Icons.arrow_forward,
+                    //             size: 20, color: Colors.white70),
+                    //       ),
+                    //       WidgetSpan(
+                    //         child: Icon(Icons.flag,
+                    //             size: 20, color: Colors.redAccent),
+                    //       ),
+                    //       TextSpan(
+                    //         text: " ${dateFormatter.format(selected.endDate)}",
+                    //         style: TextStyle(
+                    //           fontSize: 18,
+                    //           fontWeight: FontWeight.w400,
+                    //           color: Theme.of(context).primaryColorLight,
+                    //         ),
+                    //       ),
+                    //     ],
+                    //   ],
+                    // )
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

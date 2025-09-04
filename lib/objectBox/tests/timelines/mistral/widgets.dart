@@ -13,35 +13,32 @@ class SeasonalAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      title: Consumer<HotelProvider>(
-        builder: (_, provider, __) {
-          final selected = provider.selectedSeasonalPricing;
+    return Consumer<HotelProvider>(
+      builder: (_, provider, __) {
+        final selected = provider.selectedSeasonalPricing;
 
-          if (selected == null) {
-            return const Text(
-              "Aucune saison active",
-              style: TextStyle(color: Colors.white),
-            );
-          }
-
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              /// ---- 1ère Card : période + progression ----
-              _SeasonalDateCard(
-                startDate: selected.startDate,
-                endDate: selected.endDate,
-              ),
-              const SizedBox(width: 8),
-
-              /// ---- 2ème Card : détails saison ----
-              _SeasonalDetailsCard(season: selected),
-            ],
+        if (selected == null) {
+          return const Text(
+            "Aucune saison active",
+            style: TextStyle(color: Colors.white),
           );
-        },
-      ),
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            /// ---- 1ère Card : période + progression ----
+            _SeasonalDateCard(
+              startDate: selected.startDate,
+              endDate: selected.endDate,
+            ),
+            const SizedBox(width: 8),
+
+            /// ---- 2ème Card : détails saison ----
+            _SeasonalDetailsCard(season: selected),
+          ],
+        );
+      },
     );
   }
 }
