@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Entity.dart';
+import 'claude.dart';
 import 'provider_hotel.dart';
 
 class RoomCategoryListScreen extends StatelessWidget {
@@ -1589,6 +1590,7 @@ class AppDrawer extends StatelessWidget {
                           ),
                         ],
                       ),
+                SeasonalPricingDropdown(),
               ],
             ),
           ),

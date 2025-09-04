@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
+import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
@@ -393,15 +394,137 @@ class HotelManagementState extends State<Hotel_Management> {
           ),
         ),
       ),
-      title: Text(
-        _currentHotel?.name ?? "Gestion Hôtel",
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-          color: Colors.white,
-          letterSpacing: 1.2,
-        ),
+      title: Consumer<HotelProvider>(
+        builder: (_, provider, __) {
+          final list = provider.seasonalPricing;
+          SeasonalPricing? selected = provider.selectedSeasonalPricing;
+
+          // ✅ Auto-select saison selon la date courante
+          if (selected == null && list.isNotEmpty) {
+            final now = DateTime.now();
+            try {
+              final found = list.firstWhere(
+                (sp) =>
+                    sp.startDate.isBefore(now) &&
+                    sp.endDate.isAfter(now), // saison active
+              );
+
+              // 🚀 Appel repoussé après la fin du build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                provider.setSelectedSeasonalPricing(found);
+              });
+
+              selected = found;
+            } catch (e) {
+              // aucune saison ne correspond à la date actuelle
+              selected = null;
+            }
+          }
+          final dateFormatter = DateFormat("EEE d MMMM yyyy", "fr_FR");
+          return InkWell(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  builder: (_) {
+                    return ListView(
+                      children: list.map((sp) {
+                        return ListTile(
+                          leading: const Icon(Icons.calendar_today),
+                          title: Text(sp.name),
+                          subtitle: Text(
+                              "Multiplicateur: ${sp.multiplier}x\n${sp.startDate.toLocal()} → ${sp.endDate.toLocal()}"),
+                          trailing: selected?.id == sp.id
+                              ? const Icon(Icons.check, color: Colors.green)
+                              : null,
+                          onTap: () {
+                            provider.setSelectedSeasonalPricing(sp);
+                            Navigator.pop(context);
+                          },
+                        );
+                      }).toList(),
+                    );
+                  },
+                );
+              },
+              child: SeasonalAppBar()
+
+              // child: Padding(
+              //   padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
+              //   child: Text.rich(
+              //     TextSpan(
+              //       children: [
+              //         TextSpan(
+              //           text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
+              //           style: TextStyle(
+              //             fontSize: 25,
+              //             fontWeight: FontWeight.bold,
+              //             color: Theme.of(context).primaryColorLight,
+              //           ),
+              //         ),
+              //         TextSpan(
+              //           text: selected != null
+              //               ? "${selected.name} - x${selected.multiplier.toStringAsFixed(2)} "
+              //               : "",
+              //           style: TextStyle(
+              //             fontSize: 23,
+              //             fontWeight: FontWeight.w200,
+              //             color: Theme.of(context).primaryColorLight,
+              //           ),
+              //         ),
+              //         TextSpan(
+              //           children: [
+              //             if (selected != null) ...[
+              //               WidgetSpan(
+              //                 child: Icon(Icons.play_arrow,
+              //                     size: 20, color: Colors.greenAccent),
+              //               ),
+              //               TextSpan(
+              //                 text:
+              //                     " ${dateFormatter.format(selected.startDate)}  ",
+              //                 style: TextStyle(
+              //                   fontSize: 18,
+              //                   fontWeight: FontWeight.w400,
+              //                   color: Theme.of(context).primaryColorLight,
+              //                 ),
+              //               ),
+              //               WidgetSpan(
+              //                 child: Icon(Icons.arrow_forward,
+              //                     size: 20, color: Colors.white70),
+              //               ),
+              //               WidgetSpan(
+              //                 child: Icon(Icons.flag,
+              //                     size: 20, color: Colors.redAccent),
+              //               ),
+              //               TextSpan(
+              //                 text: " ${dateFormatter.format(selected.endDate)}",
+              //                 style: TextStyle(
+              //                   fontSize: 18,
+              //                   fontWeight: FontWeight.w400,
+              //                   color: Theme.of(context).primaryColorLight,
+              //                 ),
+              //               ),
+              //             ],
+              //           ],
+              //         )
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              );
+        },
       ),
+
+      // style: TextStyle(
+      //     fontWeight: FontWeight.bold,
+      //     fontSize: 22,
+      //     color: Colors.white,
+      //     letterSpacing: 1.2,
+      //   ),
+      //),
       actions: [
         // IconButton(
         //   onPressed: () {
@@ -3986,32 +4109,127 @@ class SeasonalPricingDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<HotelProvider>(
-      builder: (context, provider, child) {
-        final seasonalPricings = provider.seasonalPricing;
+      builder: (_, provider, __) {
+        final list = provider.seasonalPricing;
         final selected = provider.selectedSeasonalPricing;
 
+        // 1. Élimine les doublons de la liste
+        final unique = <int, SeasonalPricing>{};
+        for (final sp in list) {
+          unique.putIfAbsent(sp.id, () => sp);
+        }
+        final uniqueList = unique.values.toList();
+
+        // 2. Cherche la bonne instance dans la liste unique
+        // C'est la correction clé. Au lieu de simplement vérifier si l'ID existe,
+        // nous trouvons l'objet réel dans `uniqueList` qui correspond à l'ID de `selected`.
+        // Cela garantit que l'objet passé à `value` est une instance qui existe dans `items`.
+        SeasonalPricing? validValue;
+        if (selected != null) {
+          try {
+            validValue =
+                uniqueList.firstWhere((item) => item.id == selected.id);
+          } catch (e) {
+            // Si l'élément sélectionné n'est plus dans la liste (par exemple, après un filtre),
+            // la valeur doit être nulle pour éviter une erreur.
+            validValue = null;
+          }
+        }
+
         return DropdownButtonFormField<SeasonalPricing>(
-          value: selected,
+          // Utilise l'instance trouvée dans la liste unique
+          value: validValue,
           isExpanded: true,
           decoration: InputDecoration(
-            labelText: "Tarif saisonnier",
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            labelText: 'Tarif saisonnier',
             prefixIcon: const Icon(Icons.calendar_today),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
           ),
-          items: seasonalPricings.map((sp) {
-            return DropdownMenuItem<SeasonalPricing>(
-              value: sp,
-              child: Text("${sp.name} - ${sp.multiplier}x"),
-            );
-          }).toList(),
-          onChanged: (newValue) {
-            provider.setSelectedSeasonalPricing(newValue);
-          },
+          items: uniqueList
+              .map((sp) => DropdownMenuItem(
+                    value: sp,
+                    child: Text('${sp.name} - ${sp.multiplier}x'),
+                  ))
+              .toList(),
+          onChanged: (v) => provider.setSelectedSeasonalPricing(v),
         );
       },
     );
   }
 }
+// class SeasonalPricingDropdown extends StatelessWidget {
+//   const SeasonalPricingDropdown({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return _buildSeasonalPricingDropdown();
+//
+//     // return Consumer<HotelProvider>(
+//     //   builder: (context, provider, child) {
+//     //     final seasonalPricings = provider.seasonalPricing;
+//     //     final selected = provider.selectedSeasonalPricing;
+//     //
+//     //     return DropdownButtonFormField<SeasonalPricing>(
+//     //       value: selected,
+//     //       isExpanded: true,
+//     //       decoration: InputDecoration(
+//     //         labelText: "Tarif saisonnier",
+//     //         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+//     //         prefixIcon: const Icon(Icons.calendar_today),
+//     //       ),
+//     //       items: seasonalPricings.map((sp) {
+//     //         return DropdownMenuItem<SeasonalPricing>(
+//     //           value: sp,
+//     //           child: Text("${sp.name} - ${sp.multiplier}x"),
+//     //         );
+//     //       }).toList(),
+//     //       onChanged: (newValue) {
+//     //         provider.setSelectedSeasonalPricing(newValue);
+//     //       },
+//     //     );
+//     //   },
+//     // );
+//   }
+//
+//   Widget _buildSeasonalPricingDropdown() {
+//     return Consumer<HotelProvider>(
+//       builder: (context, provider, child) {
+//         final seasonalPricings = provider.seasonalPricing;
+//         final selected = provider.selectedSeasonalPricing;
+//
+//         // 🔥 Élimine les doublons par ID
+//         final uniqueItems = <int, SeasonalPricing>{};
+//         for (final sp in seasonalPricings) {
+//           uniqueItems.putIfAbsent(sp.id, () => sp);
+//         }
+//         final uniqueList = uniqueItems.values.toList();
+//
+//         // 🔥 Vérifie que la valeur est dans la liste
+//         final validValue =
+//             uniqueList.any((e) => e.id == selected?.id) ? selected : null;
+//
+//         return DropdownButtonFormField<SeasonalPricing>(
+//           value: validValue,
+//           isExpanded: true,
+//           decoration: InputDecoration(
+//             labelText: "Tarif saisonnier",
+//             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+//             prefixIcon: const Icon(Icons.calendar_today),
+//           ),
+//           items: uniqueList.map((sp) {
+//             return DropdownMenuItem<SeasonalPricing>(
+//               value: sp,
+//               child: Text("${sp.name} - ${sp.multiplier}x"),
+//             );
+//           }).toList(),
+//           onChanged: (newValue) {
+//             provider.setSelectedSeasonalPricing(newValue);
+//           },
+//         );
+//       },
+//     );
+//   }
+// }
 
 // Helper class for managing extra services in the UI
 class ReservationExtraItem {
