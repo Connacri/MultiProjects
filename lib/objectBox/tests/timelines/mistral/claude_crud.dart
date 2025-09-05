@@ -565,6 +565,16 @@ class BoardBasisListScreen extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ListTile(
+                  // Navigation vers la page de détail au clic sur le ListTile
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            BoardBasisDetailScreen(boardBasis: boardBasis),
+                      ),
+                    );
+                  },
                   title: Text(boardBasis.name),
                   subtitle: Text('${boardBasis.pricePerPerson} DA/pers.'),
                   trailing: Row(
@@ -620,6 +630,164 @@ class BoardBasisListScreen extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class BoardBasisDetailScreen extends StatelessWidget {
+  final BoardBasis boardBasis;
+
+  const BoardBasisDetailScreen({super.key, required this.boardBasis});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(boardBasis.name),
+        actions: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          BoardBasisFormScreen(boardBasis: boardBasis),
+                    ),
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Supprimer'),
+                      content: const Text(
+                          'Voulez-vous vraiment supprimer ce plan ?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Annuler'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Supprimer'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    final provider =
+                        Provider.of<HotelProvider>(context, listen: false);
+                    await provider.deleteBoardBasis(boardBasis.id);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Plan supprimé avec succès.')),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Nom et code
+            Text(
+              boardBasis.name,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Code : ${boardBasis.code}',
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+            const Divider(height: 24),
+
+            // Prix
+            Text(
+              'Prix par personne : ${boardBasis.pricePerPerson} DA/nuit',
+              style: const TextStyle(fontSize: 18),
+            ),
+            if (boardBasis.childDiscount > 0)
+              Text(
+                'Réduction enfant : ${(boardBasis.childDiscount * 100).toStringAsFixed(0)}%',
+                style: const TextStyle(fontSize: 16),
+              ),
+            const Divider(height: 24),
+
+            // Inclusions
+            const Text(
+              'Inclusions :',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInclusionItem(
+                    'Petit déjeuner', boardBasis.includesBreakfast),
+                _buildInclusionItem('Déjeuner', boardBasis.includesLunch),
+                _buildInclusionItem('Dîner', boardBasis.includesDinner),
+                _buildInclusionItem('Snacks', boardBasis.includesSnacks),
+                _buildInclusionItem('Boissons', boardBasis.includesDrinks),
+                _buildInclusionItem(
+                    'Boissons alcoolisées', boardBasis.includesAlcoholicDrinks),
+                _buildInclusionItem(
+                    'Room service', boardBasis.includesRoomService),
+                _buildInclusionItem('Minibar', boardBasis.includesMinibar),
+              ],
+            ),
+            const Divider(height: 24),
+
+            // Notes
+            if (boardBasis.notes != null) ...[
+              const Text(
+                'Notes :',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                boardBasis.notes!,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInclusionItem(String label, bool isIncluded) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            isIncluded ? Icons.check_circle : Icons.cancel,
+            color: isIncluded ? Colors.green : Colors.red,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              decoration: isIncluded ? null : TextDecoration.lineThrough,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -934,6 +1102,14 @@ class ExtraServiceListScreen extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ExtraServiceDetailPage(
+                              extraService: extraService)),
+                    );
+                  },
                   title: Text(extraService.name),
                   subtitle: Text(
                       '${extraService.price} DA • ${extraService.category}'),
@@ -993,6 +1169,450 @@ class ExtraServiceListScreen extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+class ExtraServiceDetailPage extends StatelessWidget {
+  final ReservationExtra? reservationExtra;
+  final ReservationExtraItem? extraItem;
+  final ExtraService? extraService;
+
+  const ExtraServiceDetailPage({
+    Key? key,
+    this.reservationExtra,
+    this.extraItem,
+    this.extraService,
+  }) : super(key: key);
+
+  ExtraService get _extraService {
+    if (extraService != null) {
+      return extraService!;
+    } else if (reservationExtra != null) {
+      return reservationExtra!.extraService.target!;
+    } else if (extraItem != null) {
+      return extraItem!.extraService;
+    }
+    throw Exception(
+        "Ni ExtraService, ni ReservationExtra, ni ReservationExtraItem fourni");
+  }
+
+  int? get _quantity {
+    if (reservationExtra != null) {
+      return reservationExtra!.quantity;
+    } else if (extraItem != null) {
+      return extraItem!.quantity;
+    }
+    return null;
+  }
+
+  double? get _unitPrice {
+    if (reservationExtra != null) {
+      return reservationExtra!.unitPrice;
+    } else if (extraItem != null) {
+      return extraItem!.unitPrice;
+    }
+    return null;
+  }
+
+  double? get _totalPrice {
+    if (reservationExtra != null) {
+      return reservationExtra!.totalPrice;
+    } else if (extraItem != null) {
+      return extraItem!.totalPrice;
+    }
+    return null;
+  }
+
+  DateTime? get _scheduledDate {
+    if (reservationExtra != null) {
+      return reservationExtra!.scheduledDate;
+    } else if (extraItem != null) {
+      return extraItem!.scheduledDate;
+    }
+    return null;
+  }
+
+  String? get _notes {
+    if (reservationExtra != null) {
+      return reservationExtra!.notes;
+    } else if (extraItem != null) {
+      return extraItem!.notes;
+    }
+    return null;
+  }
+
+  String get _status {
+    if (reservationExtra != null) {
+      return reservationExtra!.status;
+    } else if (extraItem != null) {
+      // Si ReservationExtraItem a une propriété différente pour le statut, utilise-la ici
+      // Par exemple : return extraItem!.reservationStatus;
+      // Sinon, retourne une valeur par défaut
+      return 'Confirmed';
+    }
+    return 'Confirmed'; // Valeur par défaut
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final numberFormat = NumberFormat("#,##0.00", "fr_FR");
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                _extraService.name,
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    color:
+                        _getColorForCategory(_extraService.category, context),
+                    child: Center(
+                      child: Icon(
+                        _getIconForCategory(_extraService.category),
+                        size: 80,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Section : Description
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Description',
+                          style: theme.textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          _extraService.description,
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        SizedBox(height: 16),
+                        Divider(),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.code,
+                          label: 'Code',
+                          value: _extraService.code,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                // Section : Tarification
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tarification',
+                          style: theme.textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.attach_money,
+                          label: 'Prix de base',
+                          value:
+                              '${numberFormat.format(_extraService.price ?? 0.0)} DA',
+                        ),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.calculate,
+                          label: 'Unité de tarification',
+                          value: _getPricingUnitText(_extraService.pricingUnit),
+                        ),
+                        if (_extraService.isPercentage)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.percent,
+                            label: 'Pourcentage du prix de la chambre',
+                            value: 'Oui (${_extraService.price}%)',
+                          ),
+                        if (_quantity != null)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.shopping_cart,
+                            label: 'Quantité réservée',
+                            value: _quantity.toString(),
+                          ),
+                        if (_unitPrice != null)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.money,
+                            label: 'Prix unitaire',
+                            value:
+                                '${numberFormat.format(_unitPrice ?? 0.0)} DA',
+                          ),
+                        if (_totalPrice != null)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.money_off,
+                            label: 'Prix total',
+                            value:
+                                '${numberFormat.format(_totalPrice ?? 0.0)} DA',
+                            isHighlighted: true,
+                          ),
+                        if (_extraService.maxQuantity > 0)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.exposure_plus_1,
+                            label: 'Quantité maximale autorisée',
+                            value: _extraService.maxQuantity.toString(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Autres sections...
+                SizedBox(height: 16),
+                if (_quantity != null)
+                  Card(
+                    elevation: 2,
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Détails de la réservation',
+                            style: theme.textTheme.titleLarge!.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.event_note,
+                            label: 'Statut',
+                            value: _getStatusText(_status),
+                            valueColor: _getStatusColor(_status),
+                          ),
+                          if (_scheduledDate != null)
+                            _buildInfoRow(
+                              context,
+                              icon: Icons.calendar_today,
+                              label: 'Date programmée',
+                              value: DateFormat('dd/MM/yyyy – HH:mm')
+                                  .format(_scheduledDate!),
+                            ),
+                          if (_notes != null && _notes!.isNotEmpty)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 16),
+                                Text(
+                                  'Notes spécifiques :',
+                                  style: theme.textTheme.titleSmall!.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Container(
+                                  padding: EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    _notes!,
+                                    style: theme.textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                // ... autres sections
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget pour afficher une ligne d'information
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isHighlighted = false,
+    Color? valueColor,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Theme.of(context).primaryColor),
+          SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(width: 16),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+              color: valueColor ??
+                  (isHighlighted ? Theme.of(context).primaryColor : null),
+              fontSize: isHighlighted ? 16 : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Couleur en fonction de la catégorie
+  Color _getColorForCategory(String category, context) {
+    switch (category.toLowerCase()) {
+      case 'transport':
+        return Colors.blue;
+      case 'spa':
+        return Colors.purple;
+      case 'room':
+        return Colors.orange;
+      case 'food':
+        return Colors.red;
+      case 'activity':
+        return Colors.green;
+      case 'package':
+        return Colors.deepPurple;
+      default:
+        return Theme.of(context).primaryColor;
+    }
+  }
+
+  // Icône en fonction de la catégorie
+  IconData _getIconForCategory(String category) {
+    switch (category.toLowerCase()) {
+      case 'transport':
+        return Icons.directions_car;
+      case 'spa':
+        return Icons.spa;
+      case 'room':
+        return Icons.hotel;
+      case 'food':
+        return Icons.restaurant;
+      case 'activity':
+        return Icons.directions_run;
+      case 'package':
+        return Icons.card_giftcard;
+      default:
+        return Icons.star;
+    }
+  }
+
+  // Texte pour l'unité de tarification
+  String _getPricingUnitText(String unit) {
+    switch (unit) {
+      case 'per_item':
+        return 'Par article';
+      case 'per_person':
+        return 'Par personne';
+      case 'per_night':
+        return 'Par nuit';
+      case 'per_stay':
+        return 'Par séjour';
+      case 'percentage_room':
+        return 'Pourcentage du prix de la chambre';
+      default:
+        return unit;
+    }
+  }
+
+  // Texte pour le statut
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'Pending':
+        return 'En attente';
+      case 'Confirmed':
+        return 'Confirmé';
+      case 'Cancelled':
+        return 'Annulé';
+      case 'Completed':
+        return 'Terminé';
+      default:
+        return status;
+    }
+  }
+
+  // Couleur pour le statut
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Confirmed':
+        return Colors.green;
+      case 'Cancelled':
+        return Colors.red;
+      case 'Completed':
+        return Colors.blue;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  // Formater les services inclus dans un package
+  String _formatPackageIncludes(String packageIncludes) {
+    try {
+      // Simuler le parsing JSON (en réalité, utilisez `dart:convert`)
+      final cleaned = packageIncludes
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll('"', '');
+      if (cleaned.isEmpty) return 'Aucun service inclus';
+      return cleaned.split(',').map((e) => e.trim()).join('\n• ');
+    } catch (e) {
+      return packageIncludes;
+    }
   }
 }
 
@@ -1736,7 +2356,8 @@ class RoomFormScreen extends StatefulWidget {
 class _RoomFormScreenState extends State<RoomFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late String _code;
-  late String? _type;
+  String _type = 'Single'; // Valeur par défaut valide
+
   late int _capacity;
   late double _basePrice;
   late String _status;
@@ -1808,7 +2429,7 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
                           child: Text(type),
                         ))
                     .toList(),
-                onChanged: (value) => setState(() => _type = value),
+                onChanged: (value) => setState(() => _type = value!),
               ),
 
               // Capacité
@@ -2187,412 +2808,5 @@ class _ClientDetailPageState extends State<ClientDetailPage> {
         ),
       ),
     );
-  }
-}
-
-class ExtraServiceDetailPage extends StatelessWidget {
-  final ReservationExtra? reservationExtra;
-  final ReservationExtraItem? extraItem;
-
-  const ExtraServiceDetailPage({
-    Key? key,
-    this.reservationExtra,
-    this.extraItem,
-  }) : super(key: key);
-
-  // Méthode pour obtenir l'ExtraService
-  ExtraService get _extraService {
-    if (reservationExtra != null) {
-      return reservationExtra!.extraService.target!;
-    } else if (extraItem != null) {
-      return extraItem!.extraService;
-    }
-    throw Exception("Ni ReservationExtra ni ReservationExtraItem fourni");
-  }
-
-  // Méthode pour obtenir la quantité
-  int get _quantity {
-    return reservationExtra?.quantity ?? extraItem!.quantity;
-  }
-
-  // Méthode pour obtenir le prix unitaire
-  double get _unitPrice {
-    return reservationExtra?.unitPrice ?? extraItem!.unitPrice;
-  }
-
-  // Méthode pour obtenir le prix total
-  double get _totalPrice {
-    return reservationExtra?.totalPrice ?? extraItem!.totalPrice;
-  }
-
-  // Méthode pour obtenir la date programmée
-  DateTime? get _scheduledDate {
-    return reservationExtra?.scheduledDate ?? extraItem!.scheduledDate;
-  }
-
-  // Méthode pour obtenir les notes
-  String? get _notes {
-    return reservationExtra?.notes ?? extraItem!.notes;
-  }
-
-  // Méthode pour obtenir le statut
-  String get _status {
-    return reservationExtra?.status ?? 'Confirmed'; // Valeur par défaut
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final numberFormat = NumberFormat("#,##0.00", "fr_FR");
-
-    return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 200.0,
-            floating: false,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                _extraService.name,
-                style: TextStyle(color: Colors.white, fontSize: 16),
-              ),
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Container(
-                    color:
-                        _getColorForCategory(_extraService.category, context),
-                    child: Center(
-                      child: Icon(
-                        _getIconForCategory(_extraService.category),
-                        size: 80,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SliverPadding(
-            padding: EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // Section : Description
-                Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Description',
-                          style: theme.textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          _extraService.description,
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                        SizedBox(height: 16),
-                        Divider(),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.code,
-                          label: 'Code',
-                          value: _extraService.code,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-                // Section : Tarification
-                Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Tarification',
-                          style: theme.textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 16),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.attach_money,
-                          label: 'Prix de base',
-                          value:
-                              '${numberFormat.format(_extraService.price)} DA',
-                        ),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.calculate,
-                          label: 'Unité de tarification',
-                          value: _getPricingUnitText(_extraService.pricingUnit),
-                        ),
-                        if (_extraService.isPercentage)
-                          _buildInfoRow(
-                            context,
-                            icon: Icons.percent,
-                            label: 'Pourcentage du prix de la chambre',
-                            value: 'Oui (${_extraService.price}%)',
-                          ),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.shopping_cart,
-                          label: 'Quantité réservée',
-                          value: _quantity.toString(),
-                        ),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.money,
-                          label: 'Prix unitaire',
-                          value: '${numberFormat.format(_unitPrice)} DA',
-                        ),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.money_off,
-                          label: 'Prix total',
-                          value: '${numberFormat.format(_totalPrice)} DA',
-                          isHighlighted: true,
-                        ),
-                        if (_extraService.maxQuantity > 0)
-                          _buildInfoRow(
-                            context,
-                            icon: Icons.exposure_plus_1,
-                            label: 'Quantité maximale autorisée',
-                            value: _extraService.maxQuantity.toString(),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Autres sections...
-                SizedBox(height: 16),
-                Card(
-                  elevation: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Détails de la réservation',
-                          style: theme.textTheme.titleLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 16),
-                        _buildInfoRow(
-                          context,
-                          icon: Icons.event_note,
-                          label: 'Statut',
-                          value: _getStatusText(_status),
-                          valueColor: _getStatusColor(_status),
-                        ),
-                        if (_scheduledDate != null)
-                          _buildInfoRow(
-                            context,
-                            icon: Icons.calendar_today,
-                            label: 'Date programmée',
-                            value: DateFormat('dd/MM/yyyy – HH:mm')
-                                .format(_scheduledDate!),
-                          ),
-                        if (_notes != null && _notes!.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SizedBox(height: 16),
-                              Text(
-                                'Notes spécifiques :',
-                                style: theme.textTheme.titleSmall!.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Container(
-                                padding: EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  _notes!,
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                // ... autres sections
-              ]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Widget pour afficher une ligne d'information
-  Widget _buildInfoRow(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    bool isHighlighted = false,
-    Color? valueColor,
-  }) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: Theme.of(context).primaryColor),
-          SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          SizedBox(width: 16),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-              color: valueColor ??
-                  (isHighlighted ? Theme.of(context).primaryColor : null),
-              fontSize: isHighlighted ? 16 : null,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Couleur en fonction de la catégorie
-  Color _getColorForCategory(String category, context) {
-    switch (category.toLowerCase()) {
-      case 'transport':
-        return Colors.blue;
-      case 'spa':
-        return Colors.purple;
-      case 'room':
-        return Colors.orange;
-      case 'food':
-        return Colors.red;
-      case 'activity':
-        return Colors.green;
-      case 'package':
-        return Colors.deepPurple;
-      default:
-        return Theme.of(context).primaryColor;
-    }
-  }
-
-  // Icône en fonction de la catégorie
-  IconData _getIconForCategory(String category) {
-    switch (category.toLowerCase()) {
-      case 'transport':
-        return Icons.directions_car;
-      case 'spa':
-        return Icons.spa;
-      case 'room':
-        return Icons.hotel;
-      case 'food':
-        return Icons.restaurant;
-      case 'activity':
-        return Icons.directions_run;
-      case 'package':
-        return Icons.card_giftcard;
-      default:
-        return Icons.star;
-    }
-  }
-
-  // Texte pour l'unité de tarification
-  String _getPricingUnitText(String unit) {
-    switch (unit) {
-      case 'per_item':
-        return 'Par article';
-      case 'per_person':
-        return 'Par personne';
-      case 'per_night':
-        return 'Par nuit';
-      case 'per_stay':
-        return 'Par séjour';
-      case 'percentage_room':
-        return 'Pourcentage du prix de la chambre';
-      default:
-        return unit;
-    }
-  }
-
-  // Texte pour le statut
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'Pending':
-        return 'En attente';
-      case 'Confirmed':
-        return 'Confirmé';
-      case 'Cancelled':
-        return 'Annulé';
-      case 'Completed':
-        return 'Terminé';
-      default:
-        return status;
-    }
-  }
-
-  // Couleur pour le statut
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Confirmed':
-        return Colors.green;
-      case 'Cancelled':
-        return Colors.red;
-      case 'Completed':
-        return Colors.blue;
-      default:
-        return Colors.orange;
-    }
-  }
-
-  // Formater les services inclus dans un package
-  String _formatPackageIncludes(String packageIncludes) {
-    try {
-      // Simuler le parsing JSON (en réalité, utilisez `dart:convert`)
-      final cleaned = packageIncludes
-          .replaceAll('[', '')
-          .replaceAll(']', '')
-          .replaceAll('"', '');
-      if (cleaned.isEmpty) return 'Aucun service inclus';
-      return cleaned.split(',').map((e) => e.trim()).join('\n• ');
-    } catch (e) {
-      return packageIncludes;
-    }
   }
 }

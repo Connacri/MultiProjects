@@ -443,6 +443,16 @@ class HotelManagementState extends State<Hotel_Management> {
         // ),
         // const SizedBox(width: 8),
         // // Menu vue calendrier
+
+        IconButton(
+          icon: const Icon(Icons.auto_awesome),
+          onPressed: () async {
+            final provider = Provider.of<HotelProvider>(context, listen: false);
+            await provider.autoSelectSeasonalPricing(_currentHotel!);
+          },
+          tooltip: "Sélectionner la saison actuelle",
+        ),
+
         PopupMenuButton<VoidCallback>(
           tooltip: "Actions rapides",
           shape: RoundedRectangleBorder(
@@ -2058,7 +2068,12 @@ class HotelManagementState extends State<Hotel_Management> {
 
             // 🚀 Appel repoussé après la fin du build
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              provider.setSelectedSeasonalPricing(found);
+              if (_currentHotel != null) {
+                provider.setSelectedSeasonalPricing(_currentHotel!, found);
+              } else {
+                debugPrint(
+                    "⚠️ Pas d'hôtel courant disponible au moment du callback");
+              }
             });
 
             selected = found;
@@ -2087,7 +2102,8 @@ class HotelManagementState extends State<Hotel_Management> {
                             ? const Icon(Icons.check, color: Colors.green)
                             : null,
                         onTap: () {
-                          provider.setSelectedSeasonalPricing(sp);
+                          provider.setSelectedSeasonalPricing(
+                              _currentHotel!, sp);
                           Navigator.pop(context);
                         },
                       );
@@ -2183,7 +2199,7 @@ class HotelManagementState extends State<Hotel_Management> {
 
             // 🚀 Appel repoussé après la fin du build
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              provider.setSelectedSeasonalPricing(found);
+              provider.setSelectedSeasonalPricing(_currentHotel!, found);
             });
 
             selected = found;
@@ -2212,7 +2228,7 @@ class HotelManagementState extends State<Hotel_Management> {
                           ? const Icon(Icons.check, color: Colors.green)
                           : null,
                       onTap: () {
-                        provider.setSelectedSeasonalPricing(sp);
+                        provider.setSelectedSeasonalPricing(_currentHotel!, sp);
                         Navigator.pop(context);
                       },
                     );
@@ -2330,8 +2346,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   final _guestController = TextEditingController();
   final _phoneController = TextEditingController();
   final _idCardController = TextEditingController();
-  final _priceController = TextEditingController();
-
+  TextEditingController _priceController = TextEditingController();
+  bool _isPriceManuallyEdited = false;
   SeasonalPricing? _selectedSeasonalPricing;
   Room? _selectedRoom;
   Employee? _selectedEmployee;
@@ -2384,6 +2400,14 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         });
       }
     });
+    _priceController = TextEditingController();
+    // Initialiser le prix uniquement si nécessaire
+    if (widget.isEditing && widget.existingReservation != null) {
+      _priceController.text =
+          widget.existingReservation!.pricePerNight.toString();
+    } else if (_selectedRoom != null) {
+      _updateRoomPrice(); // Calculer le prix initial
+    }
   }
 
   void _preselectSeasonalByToday() {
@@ -2469,8 +2493,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
   // NOUVEAU: Méthode pour mettre à jour le prix de la chambre
   void _updateRoomPrice() {
-    if (_selectedRoom != null) {
-      final basePrice = _selectedRoom!.category.target?.basePrice ?? 0.0;
+    if (_isPriceManuallyEdited) return; // Ne pas écraser si édité manuellement
+    if (_selectedRoom != null && _selectedRoom!.category.target != null) {
+      final basePrice = _selectedRoom!.category.target!.basePrice;
       final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
       final effectivePrice = basePrice * seasonalMultiplier;
       _priceController.text = effectivePrice.toStringAsFixed(2);
@@ -2937,7 +2962,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           ),
                         );
                       }).toList(),
-                      onChanged: (room) => setState(() => _selectedRoom = room),
+                      onChanged: (room) {
+                        setState(() {
+                          _selectedRoom = room;
+                          _updateRoomPrice(); // Recalculer le prix
+                        });
+                      },
                       validator: (value) =>
                           value == null ? 'Choisissez une chambre' : null,
                     ),
@@ -3003,7 +3033,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                                       : Colors.grey[200],
                                 ),
                                 keyboardType: TextInputType.number,
-                                onChanged: (value) => _updateAllExtraPrices(),
+                                onChanged: (value) {
+                                  _updateAllExtraPrices();
+                                  _isPriceManuallyEdited =
+                                      true; // Marquer comme édité manuellement
+                                },
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return 'Prix requis';
@@ -3834,6 +3868,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         setState(() {
           _selectedSeasonalPricing = newValue;
           _seasonalMultiplier = newValue?.multiplier ?? 1.0;
+          _updateRoomPrice(); // Recalculer le prix
         });
       },
     );
@@ -4194,7 +4229,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       }
 
       ReservationResult result;
-
+      final basePrice = _selectedRoom!.category.target!.basePrice;
+      final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
+      final effectivePrice = basePrice * seasonalMultiplier;
       if (widget.isEditing && widget.existingReservation != null) {
         result = await widget.provider.updateReservationComplete(
           reservation: widget.existingReservation!,
@@ -4203,7 +4240,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newGuests: _selectedGuests,
           newFrom: _fromDate!,
           newTo: _toDate!,
-          newPricePerNight: pricePerNight,
+          newPricePerNight: // effectivePrice,
+              pricePerNight,
           newStatus: _status,
           newBoardBasis: _selectedBoardBasis,
         );
@@ -4214,7 +4252,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           guests: _selectedGuests,
           from: _fromDate!,
           to: _toDate!,
-          pricePerNight: pricePerNight,
+          pricePerNight: //effectivePrice,
+              pricePerNight,
           status: _status,
           boardBasis: _selectedBoardBasis,
         );
@@ -4346,6 +4385,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _phoneController.dispose();
     _idCardController.dispose();
     _priceController.dispose();
+
     super.dispose();
   }
 
@@ -4426,7 +4466,8 @@ class SeasonalPricingDropdown extends StatelessWidget {
                     child: Text('${sp.name} - ${sp.multiplier}x'),
                   ))
               .toList(),
-          onChanged: (v) => provider.setSelectedSeasonalPricing(v),
+          onChanged: (v) =>
+              provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
         );
       },
     );

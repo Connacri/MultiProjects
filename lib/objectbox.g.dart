@@ -861,7 +861,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(29, 6276934219192680664),
       name: 'Hotel',
-      lastPropertyId: const obx_int.IdUid(5, 1851608130218872598),
+      lastPropertyId: const obx_int.IdUid(6, 1926354658288891923),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -888,7 +888,14 @@ final _entities = <obx_int.ModelEntity>[
             id: const obx_int.IdUid(5, 1851608130218872598),
             name: 'avoidedNumbers',
             type: 9,
-            flags: 0)
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(6, 1926354658288891923),
+            name: 'selectedSeasonalPricingId',
+            type: 11,
+            flags: 520,
+            indexId: const obx_int.IdUid(74, 1977960640627402338),
+            relationTarget: 'SeasonalPricing')
       ],
       relations: <obx_int.ModelRelation>[],
       backlinks: <obx_int.ModelBacklink>[
@@ -1325,7 +1332,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
       lastEntityId: const obx_int.IdUid(43, 6119221834068341217),
-      lastIndexId: const obx_int.IdUid(73, 5379984811269586421),
+      lastIndexId: const obx_int.IdUid(74, 1977960640627402338),
       lastRelationId: const obx_int.IdUid(5, 6501254024098551487),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [
@@ -2513,7 +2520,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         }),
     Hotel: obx_int.EntityDefinition<Hotel>(
         model: _entities[14],
-        toOneRelations: (Hotel object) => [],
+        toOneRelations: (Hotel object) => [object.selectedSeasonalPricing],
         toManyRelations: (Hotel object) => {
               obx_int.RelInfo<Room>.toOneBacklink(
                       7, object.id, (Room srcObject) => srcObject.hotel):
@@ -2526,12 +2533,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
         objectToFB: (Hotel object, fb.Builder fbb) {
           final nameOffset = fbb.writeString(object.name);
           final avoidedNumbersOffset = fbb.writeString(object.avoidedNumbers);
-          fbb.startTable(6);
+          fbb.startTable(7);
           fbb.addInt64(0, object.id);
           fbb.addOffset(1, nameOffset);
           fbb.addInt64(2, object.floors);
           fbb.addInt64(3, object.roomsPerFloor);
           fbb.addOffset(4, avoidedNumbersOffset);
+          fbb.addInt64(5, object.selectedSeasonalPricing.targetId);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2553,6 +2561,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
               roomsPerFloor: roomsPerFloorParam,
               avoidedNumbers: avoidedNumbersParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+          object.selectedSeasonalPricing.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0);
+          object.selectedSeasonalPricing.attach(store);
           obx_int.InternalToManyAccess.setRelInfo<Hotel>(
               object.rooms,
               store,
@@ -3571,6 +3582,11 @@ class Hotel_ {
   /// See [Hotel.avoidedNumbers].
   static final avoidedNumbers =
       obx.QueryStringProperty<Hotel>(_entities[14].properties[4]);
+
+  /// See [Hotel.selectedSeasonalPricing].
+  static final selectedSeasonalPricing =
+      obx.QueryRelationToOne<Hotel, SeasonalPricing>(
+          _entities[14].properties[5]);
 
   /// see [Hotel.rooms]
   static final rooms = obx.QueryBacklinkToMany<Room, Hotel>(Room_.hotel);

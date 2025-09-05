@@ -846,7 +846,7 @@
     },
     {
       "id": "29:6276934219192680664",
-      "lastPropertyId": "5:1851608130218872598",
+      "lastPropertyId": "6:1926354658288891923",
       "name": "Hotel",
       "properties": [
         {
@@ -874,6 +874,14 @@
           "id": "5:1851608130218872598",
           "name": "avoidedNumbers",
           "type": 9
+        },
+        {
+          "id": "6:1926354658288891923",
+          "name": "selectedSeasonalPricingId",
+          "type": 11,
+          "flags": 520,
+          "indexId": "74:1977960640627402338",
+          "relationTarget": "SeasonalPricing"
         }
       ],
       "relations": []
@@ -1271,7 +1279,7 @@
     }
   ],
   "lastEntityId": "43:6119221834068341217",
-  "lastIndexId": "73:5379984811269586421",
+  "lastIndexId": "74:1977960640627402338",
   "lastRelationId": "5:6501254024098551487",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

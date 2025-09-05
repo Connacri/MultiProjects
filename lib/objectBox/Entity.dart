@@ -547,6 +547,9 @@ class Hotel {
   @Backlink('hotel')
   final rooms = ToMany<Room>();
 
+  /// Ajout : relation vers SeasonalPricing sélectionné
+  final selectedSeasonalPricing = ToOne<SeasonalPricing>();
+
   Hotel({
     required this.name,
     required this.floors,
@@ -847,18 +850,15 @@ class SeasonalPricing {
   @Id()
   int id = 0;
 
-  String name; // "Haute saison été", "Basse saison hiver"
+  String name;
   DateTime startDate;
   DateTime endDate;
-  double multiplier; // Multiplicateur de prix (1.0 = normal, 1.5 = +50%)
+  double multiplier;
 
-  // Application
-  String
-      applicationType; // "all_categories", "specific_categories", "specific_rooms"
+  String applicationType; // all_categories, specific_categories, specific_rooms
   String targetIds; // JSON array des IDs concernés
-
   bool isActive;
-  int priority; // Pour résoudre les conflits de périodes
+  int priority;
   String? description;
 
   SeasonalPricing({
@@ -873,7 +873,6 @@ class SeasonalPricing {
     this.description,
   });
 
-  // Vérifier si une date est dans cette saison
   bool isDateInSeason(DateTime date) {
     return date.isAfter(startDate.subtract(Duration(days: 1))) &&
         date.isBefore(endDate.add(Duration(days: 1)));

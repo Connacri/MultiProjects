@@ -183,3 +183,46 @@ class _SeasonalDetailsCard extends StatelessWidget {
     );
   }
 }
+
+SeasonStyle getSeasonStyle(SeasonalPricing season) {
+  final name = season.name.toLowerCase();
+  if (name.contains('été') || name.contains('summer')) {
+    return SeasonStyle(
+      icon: Icons.wb_sunny,
+      color: Colors.amber,
+      label: 'Été',
+    );
+  } else if (name.contains('hiver') || name.contains('winter')) {
+    return SeasonStyle(
+      icon: Icons.ac_unit,
+      color: Colors.lightBlue,
+      label: 'Hiver',
+    );
+  } else if (name.contains('printemps') || name.contains('spring')) {
+    return SeasonStyle(
+      icon: Icons.local_florist,
+      color: Colors.lightGreen,
+      label: 'Printemps',
+    );
+  } else if (name.contains('automne') || name.contains('autumn')) {
+    return SeasonStyle(
+      icon: Icons.spa,
+      color: Colors.orange,
+      label: 'Automne',
+    );
+  } else {
+    return SeasonStyle(
+      icon: Icons.calendar_today,
+      color: Colors.grey,
+      label: 'Saison',
+    );
+  }
+}
+
+class SeasonStyle {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  SeasonStyle({required this.icon, required this.color, required this.label});
+}

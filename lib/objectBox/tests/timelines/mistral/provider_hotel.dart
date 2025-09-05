@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../objectbox.g.dart';
 import '../../../Entity.dart';
@@ -97,6 +98,10 @@ class HotelProvider with ChangeNotifier {
   late final Box<Guest> _guestBox;
   late final Box<Employee> _employeeBox;
   late final Box<ReservationExtra> _reservationExtraBox;
+  late final Box<RoomCategory> _roomCategoryBox;
+  late final Box<BoardBasis> _boardBasisBox;
+  late final Box<ExtraService> _extraServiceBox;
+  late final Box<SeasonalPricing> _seasonalPricingBox;
 
   // Collections en mémoire
   List<Hotel> _hotels = [];
@@ -104,11 +109,16 @@ class HotelProvider with ChangeNotifier {
   List<Reservation> _reservations = [];
   List<Guest> _guests = [];
   List<Employee> _employees = [];
+  List<RoomCategory> _roomCategories = [];
+  List<BoardBasis> _boardBasis = [];
+  List<ExtraService> _extraServices = [];
+  List<SeasonalPricing> _seasonalPricing = [];
 
-  // État de l'application
+  // État
   bool _isFirstLaunch = true;
   Hotel? _currentHotel;
   bool _isLoading = false;
+  SeasonalPricing? _selectedSeasonalPricing;
 
   // Getters
   List<Hotel> get hotels => _hotels;
@@ -121,11 +131,21 @@ class HotelProvider with ChangeNotifier {
 
   List<Employee> get employees => _employees;
 
+  List<RoomCategory> get roomCategories => _roomCategories;
+
+  List<BoardBasis> get boardBasis => _boardBasis;
+
+  List<ExtraService> get extraServices => _extraServices;
+
+  List<SeasonalPricing> get seasonalPricing => _seasonalPricing;
+
   bool get isFirstLaunch => _isFirstLaunch;
 
   Hotel? get currentHotel => _currentHotel;
 
   bool get isLoading => _isLoading;
+
+  SeasonalPricing? get selectedSeasonalPricing => _selectedSeasonalPricing;
 
   // Getters de commodité
   List<Room> get availableRooms =>
@@ -147,7 +167,6 @@ class HotelProvider with ChangeNotifier {
     _reservationBox = _objectBox.store.box<Reservation>();
     _guestBox = _objectBox.store.box<Guest>();
     _employeeBox = _objectBox.store.box<Employee>();
-    // Ajoute ces lignes :
     _roomCategoryBox = _objectBox.store.box<RoomCategory>();
     _boardBasisBox = _objectBox.store.box<BoardBasis>();
     _extraServiceBox = _objectBox.store.box<ExtraService>();
@@ -162,6 +181,11 @@ class HotelProvider with ChangeNotifier {
     try {
       await _loadAllData();
       _checkFirstLaunch();
+
+      if (_currentHotel != null) {
+        _selectedSeasonalPricing =
+            _currentHotel!.selectedSeasonalPricing.target;
+      }
     } catch (e) {
       debugPrint('Erreur lors de l\'initialisation: $e');
     } finally {
@@ -176,12 +200,9 @@ class HotelProvider with ChangeNotifier {
     _reservations = _reservationBox.getAll();
     _guests = _guestBox.getAll();
     _employees = _employeeBox.getAll();
-
-    // Ajoute ces lignes pour charger les données manquantes
     _roomCategories = _roomCategoryBox.getAll();
     _boardBasis = _boardBasisBox.getAll();
     _extraServices = _extraServiceBox.getAll();
-    _seasonalPricing = _seasonalPricingBox.getAll();
     _seasonalPricing = _seasonalPricingBox.getAll();
 
     debugPrint('Données chargées :');
@@ -194,7 +215,6 @@ class HotelProvider with ChangeNotifier {
     debugPrint('- Plans de pension : ${_boardBasis.length}');
     debugPrint('- Services supplémentaires : ${_extraServices.length}');
     debugPrint('- Tarifications saisonnières : ${_seasonalPricing.length}');
-    debugPrint('- Tarifications saisonnières : ${_seasonalPricing.length}');
   }
 
   void _checkFirstLaunch() {
@@ -206,9 +226,6 @@ class HotelProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================================================
-  // MÉTHODES DE VÉRIFICATION DE DISPONIBILITÉ
-  // ============================================================================
   /// Retourne la liste des tarifs saisonniers actifs
   List<SeasonalPricing> getSeasonalPricings() {
     return _seasonalPricing.where((sp) => sp.isActive).toList();
@@ -731,6 +748,32 @@ class HotelProvider with ChangeNotifier {
 
   Future<bool> updateRoom(Room room) async {
     try {
+      if (room.id == 0) {
+        debugPrint('ERREUR: Tentative de mise à jour d\'une chambre sans ID');
+        return false;
+      }
+      final existingRoom = _roomBox.get(room.id);
+      if (existingRoom == null) {
+        debugPrint('ERREUR: Chambre avec ID ${room.id} introuvable');
+        return false;
+      }
+      // S'assurer que la relation avec la catégorie est préservée
+      if (room.category.target == null &&
+          existingRoom.category.target != null) {
+        room.category.target = existingRoom.category.target;
+      }
+      _roomBox.put(room, mode: PutMode.update);
+      await _loadAllData();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Erreur lors de la mise à jour de la chambre: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateRoom1(Room room) async {
+    try {
       // Vérification critique : s'assurer que l'ID existe
       if (room.id == 0) {
         debugPrint('ERREUR: Tentative de mise à jour d\'une chambre sans ID');
@@ -1071,10 +1114,6 @@ class HotelProvider with ChangeNotifier {
   // ============================================================================
   // GESTION DES ROOM CATEGORIES
   // ============================================================================
-  late final Box<RoomCategory> _roomCategoryBox;
-  List<RoomCategory> _roomCategories = [];
-
-  List<RoomCategory> get roomCategories => _roomCategories;
 
   Future<int> addRoomCategory(RoomCategory category) async {
     try {
@@ -1142,10 +1181,6 @@ class HotelProvider with ChangeNotifier {
   // ============================================================================
   // GESTION DES BOARD BASIS
   // ============================================================================
-  late final Box<BoardBasis> _boardBasisBox;
-  List<BoardBasis> _boardBasis = [];
-
-  List<BoardBasis> get boardBasis => _boardBasis;
 
   Future<int> addBoardBasis(BoardBasis boardBasis) async {
     try {
@@ -1199,10 +1234,6 @@ class HotelProvider with ChangeNotifier {
   // ============================================================================
   // GESTION DES EXTRA SERVICES
   // ============================================================================
-  late final Box<ExtraService> _extraServiceBox;
-  List<ExtraService> _extraServices = [];
-
-  List<ExtraService> get extraServices => _extraServices;
 
   Future<int> addExtraService(ExtraService extraService) async {
     try {
@@ -1268,11 +1299,20 @@ class HotelProvider with ChangeNotifier {
 
   // ============================================================================
   // GESTION DES SEASONAL PRICING
-  // ============================================================================
-  late final Box<SeasonalPricing> _seasonalPricingBox;
-  List<SeasonalPricing> _seasonalPricing = [];
+  /// Retourne le nom de la catégorie d'une chambre
+  String getRoomCategoryName(Room room) {
+    return room.category.target?.name ?? 'Aucune catégorie';
+  }
 
-  List<SeasonalPricing> get seasonalPricing => _seasonalPricing;
+  // Retourne la liste des BoardBasis
+  List<BoardBasis> getBoardBasisList() {
+    return _boardBasis.where((bb) => bb.isActive).toList();
+  }
+
+  /// Retourne la liste des ExtraServices
+  List<ExtraService> getExtraServicesList() {
+    return _extraServices.where((es) => es.isActive).toList();
+  }
 
   Future<int> addSeasonalPricing(SeasonalPricing pricing) async {
     try {
@@ -1312,42 +1352,73 @@ class HotelProvider with ChangeNotifier {
     }
   }
 
-  Future<List<SeasonalPricing>> getSeasonalPricing() async {
-    try {
-      return _seasonalPricingBox.getAll();
-    } catch (e) {
-      debugPrint("Erreur lors de la récupération des SeasonalPricing: $e");
-      return [];
-    }
-  }
-
-  /// Retourne le nom de la catégorie d'une chambre
-  String getRoomCategoryName(Room room) {
-    return room.category.target?.name ?? 'Aucune catégorie';
-  }
-
-  // Retourne la liste des BoardBasis
-  List<BoardBasis> getBoardBasisList() {
-    return _boardBasis.where((bb) => bb.isActive).toList();
-  }
-
-  /// Retourne la liste des ExtraServices
-  List<ExtraService> getExtraServicesList() {
-    return _extraServices.where((es) => es.isActive).toList();
-  }
-
-  SeasonalPricing? _selectedSeasonalPricing;
-
-  SeasonalPricing? get selectedSeasonalPricing => _selectedSeasonalPricing;
+  // Future<List<SeasonalPricing>> getSeasonalPricing() async {
+  //   try {
+  //     return _seasonalPricingBox.getAll();
+  //   } catch (e) {
+  //     debugPrint("Erreur lors de la récupération des SeasonalPricing: $e");
+  //     return [];
+  //   }
+  // }
 
   void setSeasonalPricings(List<SeasonalPricing> list) {
     _seasonalPricing = list;
     notifyListeners();
   }
 
-  void setSelectedSeasonalPricing(SeasonalPricing? pricing) {
+  void setSelectedSeasonalPricing(Hotel hotel, SeasonalPricing? pricing) {
+    hotel.selectedSeasonalPricing.target = pricing;
+    _hotelBox.put(hotel);
+
     _selectedSeasonalPricing = pricing;
     notifyListeners();
+  }
+
+  Future<void> saveSelectedSeasonalPricingId(int? id) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (id == null) {
+      await prefs.remove('selectedSeasonalPricingId');
+    } else {
+      await prefs.setInt(
+          'selectedSeasonalPricingId', id); // 🔥 setInt au lieu de setString
+    }
+  }
+
+  Future<void> loadSelectedSeasonalPricing() async {
+    final prefs = await SharedPreferences.getInstance();
+    int? id;
+
+    try {
+      id = prefs.getInt('selectedSeasonalPricingId');
+    } catch (e) {
+      debugPrint("⚠️ Clé corrompue dans SharedPreferences: $e");
+      await prefs.remove('selectedSeasonalPricingId');
+      id = null;
+    }
+
+    if (id != null && _seasonalPricingBox.contains(id)) {
+      _selectedSeasonalPricing = _seasonalPricingBox.get(id);
+    } else {
+      _selectedSeasonalPricing = null;
+      await prefs.remove('selectedSeasonalPricingId');
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> autoSelectSeasonalPricing(Hotel hotel) async {
+    final now = DateTime.now();
+
+    final matching = _seasonalPricing.cast<SeasonalPricing?>().firstWhere(
+          (sp) =>
+              sp != null &&
+              sp.isActive &&
+              now.isAfter(sp.startDate) &&
+              now.isBefore(sp.endDate),
+          orElse: () => null,
+        );
+
+    setSelectedSeasonalPricing(hotel, matching);
   }
 }
 
