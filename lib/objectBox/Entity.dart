@@ -927,46 +927,6 @@ class Guest {
   }
 }
 
-/// ==================== RESERVATION ====================
-// @Entity()
-// class Reservation {
-//   @Id()
-//   int id = 0;
-//
-//   final room = ToOne<Room>();
-//   final receptionist = ToOne<Employee>();
-//   final guests = ToMany<Guest>();
-//
-//   // NOUVELLES RELATIONS
-//   final boardBasis = ToOne<BoardBasis>();
-//   @Backlink('reservation')
-//   final extras = ToMany<ReservationExtra>();
-//
-//   DateTime from;
-//   DateTime to;
-//   double pricePerNight;
-//   double boardBasisPrice; // Prix du plan de pension
-//   double extrasTotal; // Total des extras
-//   String status;
-//
-//   Reservation({
-//     required this.from,
-//     required this.to,
-//     required this.pricePerNight,
-//     this.boardBasisPrice = 0.0,
-//     this.extrasTotal = 0.0,
-//     this.status = "Confirmée",
-//   });
-//
-//   // Helper pour calculer le prix total
-//   double get totalPrice {
-//     final nights = to.difference(from).inDays;
-//     final roomTotal = pricePerNight * nights;
-//     final boardTotal = boardBasisPrice * guests.length * nights;
-//     return roomTotal + boardTotal + extrasTotal;
-//   }
-// }
-
 /// ==================== RESERVATION CORRIGÉE ====================
 @Entity()
 class Reservation {

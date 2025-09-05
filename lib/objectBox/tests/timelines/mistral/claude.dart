@@ -43,8 +43,8 @@ class HotelReservationDataSource extends CalendarDataSource {
       return true;
     }).toList();
 
-    debugPrint(
-        'DataSource: ${validReservations.length} réservations valides sur ${reservations.length}');
+    // debugPrint(
+    //     'DataSource: ${validReservations.length} réservations valides sur ${reservations.length}');
 
     appointments = validReservations;
 
@@ -56,7 +56,7 @@ class HotelReservationDataSource extends CalendarDataSource {
             ))
         .toList();
 
-    debugPrint('DataSource: ${resources!.length} ressources (chambres) créées');
+    // debugPrint('DataSource: ${resources!.length} ressources (chambres) créées');
   }
 
   @override
@@ -90,7 +90,7 @@ class HotelReservationDataSource extends CalendarDataSource {
     final totalPrice = reservation.pricePerNight *
         reservation.to.difference(reservation.from).inDays;
 
-    return '$guestName\nNuitée : ${reservation.pricePerNight.toStringAsFixed(2)} DZD\nTotal : ${totalPrice.toStringAsFixed(2)} DZD\nStatus : ${reservation.status}';
+    return '$guestName\nNuitée : ${reservation.pricePerNight.toStringAsFixed(2)} DA\nTotal : ${totalPrice.toStringAsFixed(2)} DA\nStatus : ${reservation.status}';
   }
 
   @override
@@ -1125,7 +1125,7 @@ class HotelManagementState extends State<Hotel_Management> {
               children: [
                 Flexible(
                   child: Text(
-                    '${totalPrice.toStringAsFixed(2)} DZD',
+                    '${totalPrice.toStringAsFixed(2)} DA',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -1210,7 +1210,7 @@ class HotelManagementState extends State<Hotel_Management> {
     //       Row(
     //         children: [
     //           Text(
-    //             '${totalPrice.toStringAsFixed(2)} DZD',
+    //             '${totalPrice.toStringAsFixed(2)} DA',
     //             style: TextStyle(
     //               color: Colors.white,
     //               fontSize: 12,
@@ -1809,13 +1809,13 @@ class HotelManagementState extends State<Hotel_Management> {
                 icon: Icons.bedtime_outlined),
             _buildDetailRow(
               'Prix/nuit',
-              '${pricePerNight.toStringAsFixed(2)} DZD',
+              '${pricePerNight.toStringAsFixed(2)} DA',
               icon: Icons.attach_money_rounded,
             ),
             Divider(),
             _buildDetailRow(
               'Prix total',
-              '${totalPrice.toStringAsFixed(2)} DZD',
+              '${totalPrice.toStringAsFixed(2)} DA',
               isHighlighted: true,
               icon: Icons.money_rounded,
             ),
@@ -2340,10 +2340,10 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   DateTime? _toDate;
   String _status = "Confirmée";
   bool _isLoading = false;
+  bool _isPriceEditable = false; // Nouveau: pour contrôler l'édition du prix
 
-  // NEW: Board Basis and Extra Services
+  // Board Basis and Extra Services
   BoardBasis? _selectedBoardBasis;
-
   List<ReservationExtraItem> _selectedExtras = [];
 
   // Variables pour l'édition de client
@@ -2365,19 +2365,22 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   @override
   void initState() {
     super.initState();
-    _seasonalPricings = widget.seasonalPricings; // <- comme tu l'as demandé
+    _seasonalPricings = widget.seasonalPricings;
     _preselectSeasonalByToday();
+
     if (widget.isEditing && widget.existingReservation != null) {
       _initializeForEdit();
     } else {
       _initializeForNew();
     }
-    // CORRECTION 1: Calculer le multiplicateur saisonnier dès l'initialisation
+
+    // Calculer le multiplicateur saisonnier dès l'initialisation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_fromDate != null && _toDate != null) {
         setState(() {
           _seasonalMultiplier =
               _calculateSeasonalMultiplier(_fromDate!, _toDate!);
+          _updateRoomPrice(); // Nouveau: mettre à jour le prix de la chambre
         });
       }
     });
@@ -2392,7 +2395,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       return;
     }
 
-    // orElse doit retourner un SeasonalPricing non-null
     final selected = _seasonalPricings.firstWhere(
       (s) => s.isActive && s.isDateInSeason(now),
       orElse: () => _seasonalPricings.first,
@@ -2405,6 +2407,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   void _initializeForEdit() {
     final reservation = widget.existingReservation!;
 
+    // Initialisation des objets existants
     final roomId = reservation.room.target?.id;
     _selectedRoom = roomId != null
         ? widget.currentHotel.rooms
@@ -2425,22 +2428,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _status = reservation.status;
     _priceController.text = reservation.pricePerNight.toString();
 
-    // CORRECTION 2: Récupération correcte du BoardBasis
-    // Si votre entité Reservation a un champ boardBasis
+    // CORRECTION: Récupération du BoardBasis
     if (reservation.boardBasis.target != null) {
       _selectedBoardBasis = reservation.boardBasis.target;
-    } else {
-      // Si pas de relation directe, essayer de retrouver via un ID stocké
-      // Vous devrez adapter selon votre modèle de données
-      // Exemple si vous stockez l'ID du board basis:
-      // final boardBasisId = reservation.boardBasisId;
-      // if (boardBasisId != null) {
-      //   _selectedBoardBasis = widget.provider.getBoardBasisList()
-      //       .firstWhere((bb) => bb.id == boardBasisId, orElse: () => null);
-      // }
     }
 
-    // CORRECTION 3: Récupération correcte des extras
+    // CORRECTION: Récupération des extras avec mapping correct
     _selectedExtras = reservation.extras
         .map((re) => ReservationExtraItem(
               extraService: re.extraService.target!,
@@ -2450,51 +2443,75 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             ))
         .toList();
 
-    // CORRECTION 4: Calculer les prix des extras après initialisation
+    // Calculer les prix des extras après initialisation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateAllExtraPrices();
     });
   }
 
-  // CORRECTION 5: Améliorer le calcul du multiplicateur saisonnier
+  void _initializeForNew() {
+    _selectedRoom = widget.preselectedRoom;
+    _fromDate = widget.preselectedDate ?? DateTime.now();
+    _toDate = _fromDate!.add(Duration(days: 1));
+
+    // NOUVEAU: Initialiser le prix de base de la chambre sélectionnée
+    if (_selectedRoom != null) {
+      _updateRoomPrice();
+    }
+
+    // Set default board basis
+    final defaultBoardBasis = widget.provider
+        .getBoardBasisList()
+        .where((bb) => bb.isActive && bb.code == 'BB')
+        .firstOrNull;
+    _selectedBoardBasis = defaultBoardBasis;
+  }
+
+  // NOUVEAU: Méthode pour mettre à jour le prix de la chambre
+  void _updateRoomPrice() {
+    if (_selectedRoom != null) {
+      final basePrice = _selectedRoom!.category.target?.basePrice ?? 0.0;
+      final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
+      final effectivePrice = basePrice * seasonalMultiplier;
+      _priceController.text = effectivePrice.toStringAsFixed(2);
+    }
+  }
+
   double _calculateSeasonalMultiplier(DateTime from, DateTime to) {
     if (_seasonalPricings.isEmpty || _selectedRoom == null) return 1.0;
 
-    // Parcourir toutes les périodes saisonnières actives
-    for (final seasonal in _seasonalPricings) {
-      if (!seasonal.isActive) continue;
-
-      // Vérifier si la période de la réservation chevauche la saison
+    // Utiliser la saison sélectionnée si disponible
+    if (_selectedSeasonalPricing != null &&
+        _selectedSeasonalPricing!.isActive) {
+      // Vérifier si la période chevauche
       bool overlaps = false;
       for (DateTime date = from;
           date.isBefore(to.add(Duration(days: 1)));
           date = date.add(Duration(days: 1))) {
-        if (seasonal.isDateInSeason(date)) {
+        if (_selectedSeasonalPricing!.isDateInSeason(date)) {
           overlaps = true;
           break;
         }
       }
 
       if (overlaps) {
-        // Vérifier si la saison s'applique à la chambre sélectionnée
-        if (seasonal.applicationType == 'all_categories') {
-          return seasonal.multiplier;
-        } else if (seasonal.applicationType == 'specific_categories') {
-          // CORRECTION: Vérifier la catégorie de la chambre
-          if (_selectedRoom != null && _selectedRoom!.category.target != null) {
+        // Vérifier l'applicabilité
+        if (_selectedSeasonalPricing!.applicationType == 'all_categories') {
+          return _selectedSeasonalPricing!.multiplier;
+        } else if (_selectedSeasonalPricing!.applicationType ==
+            'specific_categories') {
+          if (_selectedRoom!.category.target != null) {
             final roomCategoryId =
                 _selectedRoom!.category.target!.id.toString();
-            if (seasonal.targetIds.contains(roomCategoryId)) {
-              return seasonal.multiplier;
+            if (_selectedSeasonalPricing!.targetIds.contains(roomCategoryId)) {
+              return _selectedSeasonalPricing!.multiplier;
             }
           }
-        } else if (seasonal.applicationType == 'specific_rooms') {
-          // CORRECTION: Vérifier la chambre spécifique
-          if (_selectedRoom != null) {
-            final roomId = _selectedRoom!.id.toString();
-            if (seasonal.targetIds.contains(roomId)) {
-              return seasonal.multiplier;
-            }
+        } else if (_selectedSeasonalPricing!.applicationType ==
+            'specific_rooms') {
+          final roomId = _selectedRoom!.id.toString();
+          if (_selectedSeasonalPricing!.targetIds.contains(roomId)) {
+            return _selectedSeasonalPricing!.multiplier;
           }
         }
       }
@@ -2503,32 +2520,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     return 1.0;
   }
 
-  void _initializeForNew() {
-    _selectedRoom = widget.preselectedRoom;
-    _fromDate = widget.preselectedDate ?? DateTime.now();
-    _toDate = _fromDate!.add(Duration(days: 1));
-
-    // Set default board basis if available
-    final defaultBoardBasis = widget.provider
-        .getBoardBasisList()
-        .where((bb) => bb.isActive && bb.code == 'BB')
-        .firstOrNull;
-    _selectedBoardBasis = defaultBoardBasis;
-  }
-
-  // NEW: Add/Remove Extra Services
+  // Add/Remove Extra Services
   void _addExtraService(ExtraService service) {
     final existingIndex = _selectedExtras
         .indexWhere((item) => item.extraService.id == service.id);
 
     if (existingIndex != -1) {
-      // Increment quantity if already exists
       setState(() {
         _selectedExtras[existingIndex].quantity++;
         _updateExtraPrice(_selectedExtras[existingIndex]);
       });
     } else {
-      // Add new extra service
       final extraItem = ReservationExtraItem(
         extraService: service,
         quantity: 1,
@@ -2559,63 +2561,32 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
   }
 
-  // NEW: Calculate total reservation price including board basis and extras
+  // CORRECTION: Calcul du prix total avec saison sélectionnée
   double _calculateTotalPrice() {
     if (_fromDate == null || _toDate == null) return 0.0;
-
     final nights = _toDate!.difference(_fromDate!).inDays;
     final persons = _selectedGuests.length;
     final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
     final roomPrice = baseRoomPrice * _seasonalMultiplier;
-
     // Base room cost
     double total = roomPrice * nights;
-
     // Add board basis cost
     if (_selectedBoardBasis != null) {
       total += _selectedBoardBasis!.pricePerPerson * persons * nights;
     }
-
     // Add extras cost
     for (final extra in _selectedExtras) {
       total += extra.totalPrice;
     }
-
     return total;
   }
 
-  double _getSeasonalMultiplier(DateTime from, DateTime to) {
-    // Parcourir toutes les périodes saisonnières actives
-    for (final seasonal in widget.seasonalPricings) {
-      if (!seasonal.isActive) continue;
-
-      // Vérifier si la période de la réservation chevauche la saison
-      bool overlaps = false;
-      for (DateTime date = from;
-          date.isBefore(to.add(Duration(days: 1)));
-          date = date.add(Duration(days: 1))) {
-        if (seasonal.isDateInSeason(date)) {
-          overlaps = true;
-          break;
-        }
+  void _updateAllExtraPrices() {
+    setState(() {
+      for (final extra in _selectedExtras) {
+        _updateExtraPrice(extra);
       }
-
-      if (overlaps) {
-        // Vérifier si la saison s'applique à la chambre sélectionnée
-        if (seasonal.applicationType == 'all_categories') {
-          return seasonal.multiplier;
-        } else if (seasonal.applicationType == 'specific_categories') {
-          // Logique pour vérifier si la catégorie de la chambre est concernée
-          // (à implémenter selon votre modèle de données)
-        } else if (seasonal.applicationType == 'specific_rooms') {
-          // Logique pour vérifier si la chambre est concernée
-          // (à implémenter selon votre modèle de données)
-        }
-      }
-    }
-
-    // Si aucune saison ne s'applique, retourner 1.0 (pas de modification)
-    return 1.0;
+    });
   }
 
   @override
@@ -2864,7 +2835,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             const SizedBox(height: 16),
             _buildPriceRow(
               'Chambre ($nights nuits)',
-              '${roomTotal.toStringAsFixed(2)} DZD',
+              '${roomTotal.toStringAsFixed(2)} DA',
             ),
             if (seasonalMultiplier != 1.0)
               _buildPriceRow(
@@ -2874,17 +2845,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             if (_selectedBoardBasis != null)
               _buildPriceRow(
                 '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
-                '${boardBasisTotal.toStringAsFixed(2)} DZD',
+                '${boardBasisTotal.toStringAsFixed(2)} DA',
               ),
             if (_selectedExtras.isNotEmpty)
               _buildPriceRow(
                 'Services supplémentaires',
-                '${extrasTotal.toStringAsFixed(2)} DZD',
+                '${extrasTotal.toStringAsFixed(2)} DA',
               ),
             const Divider(),
             _buildPriceRow(
               'Total général',
-              '${grandTotal.toStringAsFixed(2)} DZD',
+              '${grandTotal.toStringAsFixed(2)} DA',
               isTotal: true,
             ),
           ],
@@ -3010,24 +2981,54 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               child: Column(
                 children: [
                   Expanded(
-                    child: TextFormField(
-                      controller: _priceController,
-                      decoration: InputDecoration(
-                        labelText: 'Prix chambre/nuit (DZD) *',
-                        prefixIcon: Icon(Icons.attach_money),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                    child: // Dans _buildBasicInfoSection(), remplacez le TextFormField du prix par :
+                        SizedBox(
+                      height: 70,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: AbsorbPointer(
+                              absorbing: !_isPriceEditable,
+                              child: TextFormField(
+                                controller: _priceController,
+                                decoration: InputDecoration(
+                                  labelText: 'Prix chambre/nuit (DA) *',
+                                  prefixIcon: Icon(Icons.attach_money),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  filled: true,
+                                  fillColor: _isPriceEditable
+                                      ? Colors.white
+                                      : Colors.grey[200],
+                                ),
+                                keyboardType: TextInputType.number,
+                                onChanged: (value) => _updateAllExtraPrices(),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty)
+                                    return 'Prix requis';
+                                  if (double.tryParse(value) == null)
+                                    return 'Prix invalide';
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                                _isPriceEditable ? Icons.check : Icons.edit),
+                            onPressed: () {
+                              setState(() {
+                                _isPriceEditable = !_isPriceEditable;
+                                if (!_isPriceEditable) {
+                                  // Recalculer le prix selon la saison si on quitte le mode édition
+                                  _updateRoomPrice();
+                                }
+                              });
+                            },
+                          ),
+                        ],
                       ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) => _updateAllExtraPrices(),
-                      validator: (value) {
-                        if (value == null || value.isEmpty)
-                          return 'Prix requis';
-                        if (double.tryParse(value) == null)
-                          return 'Prix invalide';
-                        return null;
-                      },
                     ),
                   ),
                   SizedBox(height: 16),
@@ -3083,7 +3084,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 helperText: _selectedBoardBasis != null
-                    ? '${_selectedBoardBasis!.pricePerPerson} DZD/personne/nuit'
+                    ? '${_selectedBoardBasis!.pricePerPerson} DA/personne/nuit'
                     : null,
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -3122,12 +3123,27 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                         ),
                         if (boardBasis.inclusionsSummary.isNotEmpty) ...[
                           SizedBox(height: 4),
-                          Text(
-                            boardBasis.inclusionsSummary,
-                            style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600]),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Text(
+                                boardBasis.inclusionsSummary,
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(
+                                width: 8,
+                              ),
+                              Text(
+                                boardBasis.pricePerPerson.toStringAsFixed(2) +
+                                    '/person',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ],
                       ],
@@ -3194,35 +3210,80 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     return Card(
                       margin: EdgeInsets.only(bottom: 8),
                       child: ListTile(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ExtraServiceDetailPage(
+                                extraItem:
+                                    extra, // Passez directement l'extraItem
+                              ),
+                            ),
+                          );
+                        },
+                        onLongPress: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text("Confirmation"),
+                              content: const Text(
+                                  "Voulez-vous vraiment supprimer ce service ?"),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(false),
+                                  child: const Text("Annuler"),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      Navigator.of(context).pop(true),
+                                  child: const Text("Supprimer"),
+                                ),
+                              ],
+                            ),
+                          );
+
+                          if (confirm == true) {
+                            _removeExtraService(extra);
+                          }
+                        },
                         title: Text(extra.extraService.name),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(extra.extraService.description),
-                            SizedBox(height: 4),
+                            // Text(extra.extraService.description),
+                            // SizedBox(height: 4),
                             Text(
-                              'Quantité: ${extra.quantity} | Prix unitaire: ${extra.unitPrice} DZD',
+                              'Quantité: ${extra.quantity} | Prix unitaire: ${extra.unitPrice} DA',
                               style: TextStyle(fontSize: 12),
                             ),
                           ],
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '${extra.totalPrice.toStringAsFixed(2)} DZD',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => _removeExtraService(extra),
-                              icon: Icon(Icons.delete, color: Colors.red),
-                            ),
-                          ],
+                        trailing: Text(
+                          '${extra.totalPrice.toStringAsFixed(2)} DA',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).primaryColor,
+                          ),
                         ),
+                        //     Row(
+                        //   mainAxisSize: MainAxisSize.min,
+                        //   children: [
+                        //     Text(
+                        //       '${extra.totalPrice.toStringAsFixed(2)} DA',
+                        //       style: TextStyle(
+                        //         fontWeight: FontWeight.bold,
+                        //         color: Theme.of(context).primaryColor,
+                        //       ),
+                        //     ),
+                        //     SizedBox(width: 8),
+                        //     // IconButton(
+                        //     //   onPressed: () => _removeExtraService(extra),
+                        //     //   icon: Icon(Icons.delete, color: Colors.red),
+                        //     // ),
+                        //   ],
+                        // ),
                       ),
                     );
                   },
@@ -3292,7 +3353,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           children: [
                             Text(service.description),
                             Text(
-                              '${service.price} DZD ${_getPricingUnitText(service.pricingUnit)}',
+                              '${service.price} DA ${_getPricingUnitText(service.pricingUnit)}',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Theme.of(context).primaryColor,
@@ -3339,14 +3400,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       default:
         return 'par article';
     }
-  }
-
-  void _updateAllExtraPrices() {
-    setState(() {
-      for (final extra in _selectedExtras) {
-        _updateExtraPrice(extra);
-      }
-    });
   }
 
   Widget _buildDateField(
@@ -3880,6 +3933,14 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     return Card(
                       margin: EdgeInsets.only(bottom: 8),
                       child: ListTile(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ClientDetailPage(guest: guest),
+                            ),
+                          );
+                        },
                         leading: CircleAvatar(
                           child: Text(
                               guest.fullName.substring(0, 1).toUpperCase()),
@@ -3890,23 +3951,71 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           children: [
                             if (guest.phoneNumber.isNotEmpty)
                               Text('Tél: ${guest.phoneNumber}'),
-                            if (guest.idCardNumber.isNotEmpty)
-                              Text('ID: ${guest.idCardNumber}'),
+                            // if (guest.idCardNumber.isNotEmpty)
+                            //   Text('ID: ${guest.idCardNumber}'),
                           ],
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              onPressed: () => _editGuest(index),
-                              icon: Icon(Icons.edit),
+                        onLongPress: () async {
+                          final action = await showDialog<String>(
+                            context: context,
+                            builder: (context) => SimpleDialog(
+                              title: const Text("Choisissez une action"),
+                              children: [
+                                SimpleDialogOption(
+                                  onPressed: () =>
+                                      Navigator.pop(context, "edit"),
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.edit, color: Colors.blue),
+                                      SizedBox(width: 8),
+                                      Text("Éditer"),
+                                    ],
+                                  ),
+                                ),
+                                SimpleDialogOption(
+                                  onPressed: () =>
+                                      Navigator.pop(context, "delete"),
+                                  child: Row(
+                                    children: const [
+                                      Icon(Icons.delete, color: Colors.red),
+                                      SizedBox(width: 8),
+                                      Text("Supprimer"),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              onPressed: () => _removeGuest(index),
-                              icon: Icon(Icons.delete, color: Colors.red),
-                            ),
-                          ],
-                        ),
+                          );
+
+                          if (action == "edit") {
+                            _editGuest(index);
+                          } else if (action == "delete") {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Confirmation"),
+                                content: const Text(
+                                    "Voulez-vous vraiment supprimer ce client ?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: const Text("Annuler"),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text("Supprimer"),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              _removeGuest(index);
+                            }
+                          }
+                        },
                       ),
                     );
                   },
@@ -4048,27 +4157,22 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   // CORRECTION 8: Améliorer la sauvegarde pour inclure BoardBasis et Extras
   Future<void> _saveReservation() async {
     if (!_formKey.currentState!.validate()) return;
-
     if (_selectedRoom == null) {
       _showErrorSnackBar('Veuillez sélectionner une chambre');
       return;
     }
-
     if (_selectedEmployee == null) {
       _showErrorSnackBar('Veuillez sélectionner un réceptionniste');
       return;
     }
-
     if (_selectedGuests.isEmpty) {
       _showErrorSnackBar('Veuillez ajouter au moins un client');
       return;
     }
-
     if (_fromDate == null || _toDate == null) {
       _showErrorSnackBar('Veuillez sélectionner les dates');
       return;
     }
-
     if (_fromDate!.isAfter(_toDate!) || _fromDate!.isAtSameMomentAs(_toDate!)) {
       _showErrorSnackBar(
           'La date d\'arrivée doit être antérieure à la date de départ');
@@ -4092,19 +4196,16 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       ReservationResult result;
 
       if (widget.isEditing && widget.existingReservation != null) {
-        // CORRECTION: Inclure BoardBasis et Extras dans la mise à jour
         result = await widget.provider.updateReservationComplete(
           reservation: widget.existingReservation!,
-          newRoom: _selectedRoom,
-          newReceptionist: _selectedEmployee,
+          newRoom: _selectedRoom!,
+          newReceptionist: _selectedEmployee!,
           newGuests: _selectedGuests,
-          newFrom: _fromDate,
-          newTo: _toDate,
+          newFrom: _fromDate!,
+          newTo: _toDate!,
           newPricePerNight: pricePerNight,
           newStatus: _status,
           newBoardBasis: _selectedBoardBasis,
-          // AJOUT
-          newExtras: _selectedExtras, // AJOUT
         );
       } else {
         result = await widget.provider.addReservation(
@@ -4116,15 +4217,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           pricePerNight: pricePerNight,
           status: _status,
           boardBasis: _selectedBoardBasis,
-          // AJOUT
-          extras: _selectedExtras, // AJOUT
         );
       }
 
-      if (result.isSuccess) {
+      if (result.isSuccess && result.id != null) {
+        // Sauvegarder les extras si nécessaire
+        if (_selectedExtras.isNotEmpty) {
+          await _saveReservationExtras(result.id!);
+        }
+
         widget.onReservationAdded();
         Navigator.pop(context);
-
         ScaffoldMessenger.of(widget.parentContext).showSnackBar(
           SnackBar(
             content: Text(widget.isEditing
@@ -4137,6 +4240,48 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         _showConflictDialog(result.conflict!);
       } else {
         _showErrorSnackBar(result.error ?? 'Erreur inconnue');
+      }
+    } catch (e) {
+      _showErrorSnackBar('Erreur: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveReservationForced() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final pricePerNight = double.tryParse(_priceController.text) ?? 0.0;
+      final result = await widget.provider.addReservation(
+        room: _selectedRoom!,
+        receptionist: _selectedEmployee!,
+        guests: _selectedGuests,
+        from: _fromDate!,
+        to: _toDate!,
+        pricePerNight: pricePerNight,
+        status: _status,
+        boardBasis: _selectedBoardBasis,
+        forceOverride: true,
+      );
+
+      if (result.isSuccess && result.id != null) {
+        if (_selectedExtras.isNotEmpty) {
+          await _saveReservationExtras(result.id!);
+        }
+
+        widget.onReservationAdded();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(
+            content: Text('Réservation forcée créée avec succès'),
+            backgroundColor: Colors.orange,
+          ),
+        );
       }
     } catch (e) {
       _showErrorSnackBar('Erreur: $e');
@@ -4191,45 +4336,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
-  Future<void> _saveReservationForced() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final pricePerNight = double.tryParse(_priceController.text) ?? 0.0;
-
-      final result = await widget.provider.addReservation(
-        room: _selectedRoom!,
-        receptionist: _selectedEmployee!,
-        guests: _selectedGuests,
-        from: _fromDate!,
-        to: _toDate!,
-        pricePerNight: pricePerNight,
-        status: _status,
-        forceOverride: true, // Forcer malgré les conflits
-      );
-
-      if (result.isSuccess) {
-        widget.onReservationAdded();
-        Navigator.pop(context);
-
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-          SnackBar(
-            content: Text('Réservation forcée créée avec succès'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      _showErrorSnackBar('Erreur: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
@@ -4241,6 +4347,34 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _idCardController.dispose();
     _priceController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveReservationExtras(int reservationId) async {
+    try {
+      // Récupérer la réservation nouvellement créée/mise à jour
+      final reservation =
+          widget.provider.reservations.firstWhere((r) => r.id == reservationId);
+
+      // Sauvegarder chaque extra
+      for (final extraItem in _selectedExtras) {
+        final extra = ReservationExtra(
+          quantity: extraItem.quantity,
+          unitPrice: extraItem.unitPrice,
+          totalPrice: extraItem.totalPrice,
+          status: 'Confirmed',
+          scheduledDate: extraItem.scheduledDate,
+        );
+        extra.reservation.target = reservation;
+        extra.extraService.target = extraItem.extraService;
+
+        // Sauvegarder dans ObjectBox
+        await widget.provider.reservationExtraBox.put(extra);
+      }
+    } catch (e) {
+      debugPrint('Erreur lors de la sauvegarde des extras: $e');
+      _showErrorSnackBar(
+          'Erreur lors de la sauvegarde des services supplémentaires');
+    }
   }
 }
 
@@ -5293,7 +5427,7 @@ class ReservationExtraItem {
 //                         child: TextFormField(
 //                           controller: _priceController,
 //                           decoration: InputDecoration(
-//                             labelText: 'Prix par nuit (DZD) *',
+//                             labelText: 'Prix par nuit (DA) *',
 //                             prefixIcon: Icon(Icons.attach_money),
 //                             border: OutlineInputBorder(
 //                               borderRadius: BorderRadius.circular(8),
@@ -5628,7 +5762,7 @@ class ReservationExtraItem {
 //                               child: TextFormField(
 //                                 controller: _priceController,
 //                                 decoration: InputDecoration(
-//                                   labelText: 'Prix par nuit (DZD) *',
+//                                   labelText: 'Prix par nuit (DA) *',
 //                                   prefixIcon: Icon(Icons.attach_money),
 //                                   border: OutlineInputBorder(
 //                                     borderRadius: BorderRadius.circular(8),

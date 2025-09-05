@@ -96,6 +96,7 @@ class HotelProvider with ChangeNotifier {
   late final Box<Reservation> _reservationBox;
   late final Box<Guest> _guestBox;
   late final Box<Employee> _employeeBox;
+  late final Box<ReservationExtra> _reservationExtraBox;
 
   // Collections en mémoire
   List<Hotel> _hotels = [];
@@ -133,6 +134,8 @@ class HotelProvider with ChangeNotifier {
   List<Reservation> get activeReservations =>
       _reservations.where((res) => res.status == 'Confirmée').toList();
 
+  Box<ReservationExtra> get reservationExtraBox => _reservationExtraBox;
+
   HotelProvider(this._objectBox) {
     _initializeBoxes();
     _initialize();
@@ -149,6 +152,7 @@ class HotelProvider with ChangeNotifier {
     _boardBasisBox = _objectBox.store.box<BoardBasis>();
     _extraServiceBox = _objectBox.store.box<ExtraService>();
     _seasonalPricingBox = _objectBox.store.box<SeasonalPricing>();
+    _reservationExtraBox = _objectBox.store.box<ReservationExtra>();
   }
 
   Future<void> _initialize() async {
@@ -312,50 +316,47 @@ class HotelProvider with ChangeNotifier {
     required List<Guest> guests,
     required DateTime from,
     required DateTime to,
-    required double pricePerNight,
+    required double pricePerNight, // Prix final (déjà calculé avec saison)
     String status = "Confirmée",
     bool forceOverride = false,
     BoardBasis? boardBasis,
     List<ReservationExtraItem>? extras,
   }) async {
     try {
-      // Vérification de base
       if (guests.isEmpty) {
         return ReservationResult.error('Au moins un client doit être spécifié');
       }
-
       final fromDate = DateTime(from.year, from.month, from.day);
       final toDate = DateTime(to.year, to.month, to.day);
-
       if (fromDate.isAfter(toDate) || fromDate.isAtSameMomentAs(toDate)) {
         return ReservationResult.error(
             'La date de début doit être antérieure à la date de fin');
       }
-
-      // Vérifier la disponibilité si ce n'est pas forcé
       if (!forceOverride) {
         final conflict = checkReservationConflict(room, from, to);
         if (conflict != null) {
           return ReservationResult.conflict(conflict);
         }
       }
-
-      // Créer la réservation
+      // Créer la réservation avec le prix final (déjà calculé avec saison)
       final reservation = Reservation(
         from: from,
         to: to,
         pricePerNight: pricePerNight,
         status: status,
       );
-
       reservation.room.target = room;
       reservation.receptionist.target = receptionist;
       reservation.guests.addAll(guests);
-
+      if (boardBasis != null) {
+        reservation.boardBasis.target = boardBasis;
+      }
+      if (extras != null) {
+        // Ajouter les extras via une méthode dédiée si nécessaire
+      }
       final id = _reservationBox.put(reservation);
       await _loadAllData();
       notifyListeners();
-
       return ReservationResult.success(id);
     } catch (e) {
       debugPrint('Erreur lors de l\'ajout de la réservation: $e');
@@ -375,6 +376,8 @@ class HotelProvider with ChangeNotifier {
     bool forceOverride = false,
     BoardBasis? newBoardBasis,
     List<ReservationExtraItem>? newExtras,
+    SeasonalPricing? newSeasonalPricing,
+    double? newSeasonalMultiplier,
   }) async {
     try {
       final roomToCheck = newRoom ?? reservation.room.target!;
@@ -423,7 +426,7 @@ class HotelProvider with ChangeNotifier {
     List<Guest>? newGuests,
     DateTime? newFrom,
     DateTime? newTo,
-    double? newPricePerNight,
+    double? newPricePerNight, // Prix final (déjà calculé avec saison)
     String? newStatus,
     bool forceOverride = false,
     BoardBasis? newBoardBasis,
@@ -433,8 +436,6 @@ class HotelProvider with ChangeNotifier {
       final roomToCheck = newRoom ?? reservation.room.target!;
       final fromToCheck = newFrom ?? reservation.from;
       final toToCheck = newTo ?? reservation.to;
-
-      // Vérifier la disponibilité si ce n'est pas forcé
       if (!forceOverride) {
         final conflict = checkReservationConflict(
             roomToCheck, fromToCheck, toToCheck,
@@ -443,8 +444,6 @@ class HotelProvider with ChangeNotifier {
           return ReservationResult.conflict(conflict);
         }
       }
-
-      // S'assurer que tous les guests ont des IDs
       if (newGuests != null) {
         for (final guest in newGuests) {
           if (guest.id == 0) {
@@ -453,8 +452,6 @@ class HotelProvider with ChangeNotifier {
           }
         }
       }
-
-      // Appliquer toutes les modifications
       if (newRoom != null) reservation.room.target = newRoom;
       if (newReceptionist != null)
         reservation.receptionist.target = newReceptionist;
@@ -463,27 +460,24 @@ class HotelProvider with ChangeNotifier {
       if (newPricePerNight != null)
         reservation.pricePerNight = newPricePerNight;
       if (newStatus != null) reservation.status = newStatus;
-
       if (newGuests != null) {
         reservation.guests.clear();
         reservation.guests.addAll(newGuests);
       }
-
-      // Sauvegarder avec vérification de l'ID
+      if (newBoardBasis != null) {
+        reservation.boardBasis.target = newBoardBasis;
+      }
       if (reservation.id != 0) {
         _reservationBox.put(reservation, mode: PutMode.update);
       } else {
         final newId = _reservationBox.put(reservation);
         reservation.id = newId;
       }
-
       await _loadAllData();
       notifyListeners();
-
       return ReservationResult.success(reservation.id);
     } catch (e) {
-      debugPrint(
-          'Erreur lors de la mise à jour complète de la réservation: $e');
+      debugPrint('Erreur lors de la mise à jour de la réservation: $e');
       return ReservationResult.error('Erreur lors de la mise à jour: $e');
     }
   }
@@ -1378,32 +1372,24 @@ extension HotelProviderAdmin on HotelProvider {
 
 class ReservationResult {
   final bool isSuccess;
-  final int? reservationId;
+  final int? id; // ID de la réservation en cas de succès
   final String? error;
   final ReservationConflict? conflict;
 
-  ReservationResult._({
-    required this.isSuccess,
-    this.reservationId,
-    this.error,
-    this.conflict,
-  });
+  ReservationResult.success(this.id)
+      : isSuccess = true,
+        error = null,
+        conflict = null;
 
-  factory ReservationResult.success(int id) => ReservationResult._(
-        isSuccess: true,
-        reservationId: id,
-      );
+  ReservationResult.error(this.error)
+      : isSuccess = false,
+        id = null,
+        conflict = null;
 
-  factory ReservationResult.error(String message) => ReservationResult._(
-        isSuccess: false,
-        error: message,
-      );
-
-  factory ReservationResult.conflict(ReservationConflict conflict) =>
-      ReservationResult._(
-        isSuccess: false,
-        conflict: conflict,
-      );
+  ReservationResult.conflict(this.conflict)
+      : isSuccess = false,
+        id = null,
+        error = null;
 }
 
 class ReservationConflict {

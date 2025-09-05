@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Entity.dart';
@@ -1997,5 +1998,601 @@ class _RoomFormScreenState extends State<RoomFormScreen> {
         ),
       ),
     );
+  }
+}
+
+class ClientDetailPage extends StatefulWidget {
+  final Guest guest;
+
+  const ClientDetailPage({super.key, required this.guest});
+
+  @override
+  State<ClientDetailPage> createState() => _ClientDetailPageState();
+}
+
+class _ClientDetailPageState extends State<ClientDetailPage> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          // ---- SliverAppBar moderne ----
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: 220,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(widget.guest.fullName,
+                  style: const TextStyle(fontSize: 18)),
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.indigo, Colors.blueAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.white,
+                    child: Text(
+                      widget.guest.fullName.substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                          fontSize: 40, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ---- Corps avec slider ----
+          SliverFillRemaining(
+            child: Column(
+              children: [
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() => _currentPage = index);
+                    },
+                    children: [
+                      _buildInfoCard(),
+                      _buildReservationsCard(),
+                      _buildStatsCard(),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // ---- Indicateur de page ----
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    3,
+                    (index) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentPage == index ? 20 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _currentPage == index
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ---- Carte Infos personnelles ----
+  Widget _buildInfoCard() {
+    return _buildBaseCard(
+      title: "Informations personnelles",
+      children: [
+        ListTile(
+          leading: const Icon(Icons.phone, color: Colors.green),
+          title: Text(widget.guest.phoneNumber),
+        ),
+        if (widget.guest.email != null && widget.guest.email!.isNotEmpty)
+          ListTile(
+            leading: const Icon(Icons.email, color: Colors.blue),
+            title: Text(widget.guest.email!),
+          ),
+        ListTile(
+          leading: const Icon(Icons.badge, color: Colors.orange),
+          title: Text("ID: ${widget.guest.idCardNumber}"),
+        ),
+        if (widget.guest.nationality != null &&
+            widget.guest.nationality!.isNotEmpty)
+          ListTile(
+            leading: const Icon(Icons.flag, color: Colors.red),
+            title: Text(widget.guest.nationality!),
+          ),
+      ],
+    );
+  }
+
+  /// ---- Carte Réservations ----
+  Widget _buildReservationsCard() {
+    return _buildBaseCard(
+      title: "Réservations",
+      children: [
+        if (widget.guest.reservations.isEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text("Aucune réservation trouvée."),
+          )
+        else
+          ...widget.guest.reservations.map(
+            (res) => ListTile(
+              leading: const Icon(Icons.hotel, color: Colors.purple),
+              title: Text("Réservation #${res.id}"),
+              subtitle: Text("Du ${res.from} au ${res.to}"),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// ---- Carte Statistiques ----
+  Widget _buildStatsCard() {
+    return _buildBaseCard(
+      title: "Statistiques",
+      children: const [
+        ListTile(
+          leading: Icon(Icons.star, color: Colors.amber),
+          title: Text("Séjours : 12"),
+        ),
+        ListTile(
+          leading: Icon(Icons.attach_money, color: Colors.green),
+          title: Text("Total dépensé : 120.000 DA"),
+        ),
+      ],
+    );
+  }
+
+  /// ---- Template de carte ----
+  Widget _buildBaseCard(
+      {required String title, required List<Widget> children}) {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Divider(),
+            Expanded(
+              child: ListView(children: children),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExtraServiceDetailPage extends StatelessWidget {
+  final ReservationExtra? reservationExtra;
+  final ReservationExtraItem? extraItem;
+
+  const ExtraServiceDetailPage({
+    Key? key,
+    this.reservationExtra,
+    this.extraItem,
+  }) : super(key: key);
+
+  // Méthode pour obtenir l'ExtraService
+  ExtraService get _extraService {
+    if (reservationExtra != null) {
+      return reservationExtra!.extraService.target!;
+    } else if (extraItem != null) {
+      return extraItem!.extraService;
+    }
+    throw Exception("Ni ReservationExtra ni ReservationExtraItem fourni");
+  }
+
+  // Méthode pour obtenir la quantité
+  int get _quantity {
+    return reservationExtra?.quantity ?? extraItem!.quantity;
+  }
+
+  // Méthode pour obtenir le prix unitaire
+  double get _unitPrice {
+    return reservationExtra?.unitPrice ?? extraItem!.unitPrice;
+  }
+
+  // Méthode pour obtenir le prix total
+  double get _totalPrice {
+    return reservationExtra?.totalPrice ?? extraItem!.totalPrice;
+  }
+
+  // Méthode pour obtenir la date programmée
+  DateTime? get _scheduledDate {
+    return reservationExtra?.scheduledDate ?? extraItem!.scheduledDate;
+  }
+
+  // Méthode pour obtenir les notes
+  String? get _notes {
+    return reservationExtra?.notes ?? extraItem!.notes;
+  }
+
+  // Méthode pour obtenir le statut
+  String get _status {
+    return reservationExtra?.status ?? 'Confirmed'; // Valeur par défaut
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final numberFormat = NumberFormat("#,##0.00", "fr_FR");
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 200.0,
+            floating: false,
+            pinned: true,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                _extraService.name,
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    color:
+                        _getColorForCategory(_extraService.category, context),
+                    child: Center(
+                      child: Icon(
+                        _getIconForCategory(_extraService.category),
+                        size: 80,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Section : Description
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Description',
+                          style: theme.textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          _extraService.description,
+                          style: theme.textTheme.bodyLarge,
+                        ),
+                        SizedBox(height: 16),
+                        Divider(),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.code,
+                          label: 'Code',
+                          value: _extraService.code,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 16),
+                // Section : Tarification
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Tarification',
+                          style: theme.textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.attach_money,
+                          label: 'Prix de base',
+                          value:
+                              '${numberFormat.format(_extraService.price)} DA',
+                        ),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.calculate,
+                          label: 'Unité de tarification',
+                          value: _getPricingUnitText(_extraService.pricingUnit),
+                        ),
+                        if (_extraService.isPercentage)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.percent,
+                            label: 'Pourcentage du prix de la chambre',
+                            value: 'Oui (${_extraService.price}%)',
+                          ),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.shopping_cart,
+                          label: 'Quantité réservée',
+                          value: _quantity.toString(),
+                        ),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.money,
+                          label: 'Prix unitaire',
+                          value: '${numberFormat.format(_unitPrice)} DA',
+                        ),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.money_off,
+                          label: 'Prix total',
+                          value: '${numberFormat.format(_totalPrice)} DA',
+                          isHighlighted: true,
+                        ),
+                        if (_extraService.maxQuantity > 0)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.exposure_plus_1,
+                            label: 'Quantité maximale autorisée',
+                            value: _extraService.maxQuantity.toString(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Autres sections...
+                SizedBox(height: 16),
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Détails de la réservation',
+                          style: theme.textTheme.titleLarge!.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        _buildInfoRow(
+                          context,
+                          icon: Icons.event_note,
+                          label: 'Statut',
+                          value: _getStatusText(_status),
+                          valueColor: _getStatusColor(_status),
+                        ),
+                        if (_scheduledDate != null)
+                          _buildInfoRow(
+                            context,
+                            icon: Icons.calendar_today,
+                            label: 'Date programmée',
+                            value: DateFormat('dd/MM/yyyy – HH:mm')
+                                .format(_scheduledDate!),
+                          ),
+                        if (_notes != null && _notes!.isNotEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(height: 16),
+                              Text(
+                                'Notes spécifiques :',
+                                style: theme.textTheme.titleSmall!.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Container(
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  _notes!,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // ... autres sections
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget pour afficher une ligne d'information
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    bool isHighlighted = false,
+    Color? valueColor,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Theme.of(context).primaryColor),
+          SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(width: 16),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+              color: valueColor ??
+                  (isHighlighted ? Theme.of(context).primaryColor : null),
+              fontSize: isHighlighted ? 16 : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Couleur en fonction de la catégorie
+  Color _getColorForCategory(String category, context) {
+    switch (category.toLowerCase()) {
+      case 'transport':
+        return Colors.blue;
+      case 'spa':
+        return Colors.purple;
+      case 'room':
+        return Colors.orange;
+      case 'food':
+        return Colors.red;
+      case 'activity':
+        return Colors.green;
+      case 'package':
+        return Colors.deepPurple;
+      default:
+        return Theme.of(context).primaryColor;
+    }
+  }
+
+  // Icône en fonction de la catégorie
+  IconData _getIconForCategory(String category) {
+    switch (category.toLowerCase()) {
+      case 'transport':
+        return Icons.directions_car;
+      case 'spa':
+        return Icons.spa;
+      case 'room':
+        return Icons.hotel;
+      case 'food':
+        return Icons.restaurant;
+      case 'activity':
+        return Icons.directions_run;
+      case 'package':
+        return Icons.card_giftcard;
+      default:
+        return Icons.star;
+    }
+  }
+
+  // Texte pour l'unité de tarification
+  String _getPricingUnitText(String unit) {
+    switch (unit) {
+      case 'per_item':
+        return 'Par article';
+      case 'per_person':
+        return 'Par personne';
+      case 'per_night':
+        return 'Par nuit';
+      case 'per_stay':
+        return 'Par séjour';
+      case 'percentage_room':
+        return 'Pourcentage du prix de la chambre';
+      default:
+        return unit;
+    }
+  }
+
+  // Texte pour le statut
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'Pending':
+        return 'En attente';
+      case 'Confirmed':
+        return 'Confirmé';
+      case 'Cancelled':
+        return 'Annulé';
+      case 'Completed':
+        return 'Terminé';
+      default:
+        return status;
+    }
+  }
+
+  // Couleur pour le statut
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Confirmed':
+        return Colors.green;
+      case 'Cancelled':
+        return Colors.red;
+      case 'Completed':
+        return Colors.blue;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  // Formater les services inclus dans un package
+  String _formatPackageIncludes(String packageIncludes) {
+    try {
+      // Simuler le parsing JSON (en réalité, utilisez `dart:convert`)
+      final cleaned = packageIncludes
+          .replaceAll('[', '')
+          .replaceAll(']', '')
+          .replaceAll('"', '');
+      if (cleaned.isEmpty) return 'Aucun service inclus';
+      return cleaned.split(',').map((e) => e.trim()).join('\n• ');
+    } catch (e) {
+      return packageIncludes;
+    }
   }
 }
