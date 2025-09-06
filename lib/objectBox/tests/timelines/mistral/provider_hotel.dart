@@ -333,11 +333,14 @@ class HotelProvider with ChangeNotifier {
     required List<Guest> guests,
     required DateTime from,
     required DateTime to,
-    required double pricePerNight, // Prix final (déjà calculé avec saison)
+    required double pricePerNight,
     String status = "Confirmée",
     bool forceOverride = false,
     BoardBasis? boardBasis,
     List<ReservationExtraItem>? extras,
+    // AJOUTER CES PARAMÈTRES
+    double discountPercent = 0.0,
+    double discountAmount = 0.0,
   }) async {
     try {
       if (guests.isEmpty) {
@@ -355,13 +358,17 @@ class HotelProvider with ChangeNotifier {
           return ReservationResult.conflict(conflict);
         }
       }
-      // Créer la réservation avec le prix final (déjà calculé avec saison)
+
+      // MODIFIER LA CRÉATION POUR INCLURE LES RÉDUCTIONS
       final reservation = Reservation(
         from: from,
         to: to,
         pricePerNight: pricePerNight,
         status: status,
+        discountPercent: discountPercent,
+        discountAmount: discountAmount,
       );
+
       reservation.room.target = room;
       reservation.receptionist.target = receptionist;
       reservation.guests.addAll(guests);
@@ -443,11 +450,14 @@ class HotelProvider with ChangeNotifier {
     List<Guest>? newGuests,
     DateTime? newFrom,
     DateTime? newTo,
-    double? newPricePerNight, // Prix final (déjà calculé avec saison)
+    double? newPricePerNight,
     String? newStatus,
     bool forceOverride = false,
     BoardBasis? newBoardBasis,
     List<ReservationExtraItem>? newExtras,
+    // AJOUTER CES PARAMÈTRES
+    double? newDiscountPercent,
+    double? newDiscountAmount,
   }) async {
     try {
       final roomToCheck = newRoom ?? reservation.room.target!;
@@ -477,6 +487,13 @@ class HotelProvider with ChangeNotifier {
       if (newPricePerNight != null)
         reservation.pricePerNight = newPricePerNight;
       if (newStatus != null) reservation.status = newStatus;
+
+      // AJOUTER CES LIGNES
+      if (newDiscountPercent != null)
+        reservation.discountPercent = newDiscountPercent;
+      if (newDiscountAmount != null)
+        reservation.discountAmount = newDiscountAmount;
+
       if (newGuests != null) {
         reservation.guests.clear();
         reservation.guests.addAll(newGuests);
@@ -1371,6 +1388,7 @@ class HotelProvider with ChangeNotifier {
     _hotelBox.put(hotel);
 
     _selectedSeasonalPricing = pricing;
+
     notifyListeners();
   }
 

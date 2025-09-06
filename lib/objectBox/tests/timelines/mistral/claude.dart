@@ -2378,6 +2378,18 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   List<SeasonalPricing> _seasonalPricings = [];
   double _seasonalMultiplier = 1.0;
 
+// Ajouter après les contrôleurs existants
+  final _discountPercentController = TextEditingController();
+  final _discountAmountController = TextEditingController();
+
+// Ajouter les variables pour la réduction
+  double _discountPercent = 0.0;
+  double _discountAmount = 0.0;
+  String _discountType = 'percentage'; // 'percentage' ou 'amount'
+  String _discountAppliedTo =
+      'total'; // 'room', 'board', 'extras', 'total', 'specific'
+  List<String> _selectedDiscountItems = [];
+
   @override
   void initState() {
     super.initState();
@@ -2408,6 +2420,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     } else if (_selectedRoom != null) {
       _updateRoomPrice(); // Calculer le prix initial
     }
+    // Ajouter dans initState() après l'initialisation des autres contrôleurs
+    _discountPercentController.text = "0";
+    _discountAmountController.text = "0";
+
+    if (widget.isEditing && widget.existingReservation != null) {
+      // Après l'initialisation du prix
+      _discountPercent = widget.existingReservation!.discountPercent;
+      _discountAmount = widget.existingReservation!.discountAmount;
+      _discountPercentController.text = _discountPercent.toString();
+      _discountAmountController.text = _discountAmount.toString();
+    }
   }
 
   void _preselectSeasonalByToday() {
@@ -2430,7 +2453,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
   void _initializeForEdit() {
     final reservation = widget.existingReservation!;
-
+// Ajouter après l'initialisation du prix
+    _discountPercent = reservation.discountPercent;
+    _discountAmount = reservation.discountAmount;
+    _discountPercentController.text = _discountPercent.toString();
+    _discountAmountController.text = _discountAmount.toString();
     // Initialisation des objets existants
     final roomId = reservation.room.target?.id;
     _selectedRoom = roomId != null
@@ -2492,15 +2519,15 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   }
 
   // NOUVEAU: Méthode pour mettre à jour le prix de la chambre
-  void _updateRoomPrice() {
-    if (_isPriceManuallyEdited) return; // Ne pas écraser si édité manuellement
-    if (_selectedRoom != null && _selectedRoom!.category.target != null) {
-      final basePrice = _selectedRoom!.category.target!.basePrice;
-      final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
-      final effectivePrice = basePrice * seasonalMultiplier;
-      _priceController.text = effectivePrice.toStringAsFixed(2);
-    }
-  }
+  // void _updateRoomPrice() {
+  //   if (_isPriceManuallyEdited) return; // Ne pas écraser si édité manuellement
+  //   if (_selectedRoom != null && _selectedRoom!.category.target != null) {
+  //     final basePrice = _selectedRoom!.category.target!.basePrice;
+  //     final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
+  //     final effectivePrice = basePrice * seasonalMultiplier;
+  //     _priceController.text = effectivePrice.toStringAsFixed(2);
+  //   }
+  // }
 
   double _calculateSeasonalMultiplier(DateTime from, DateTime to) {
     if (_seasonalPricings.isEmpty || _selectedRoom == null) return 1.0;
@@ -2586,25 +2613,25 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
   }
 
-  // CORRECTION: Calcul du prix total avec saison sélectionnée
-  double _calculateTotalPrice() {
-    if (_fromDate == null || _toDate == null) return 0.0;
-    final nights = _toDate!.difference(_fromDate!).inDays;
-    final persons = _selectedGuests.length;
-    final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
-    final roomPrice = baseRoomPrice * _seasonalMultiplier;
-    // Base room cost
-    double total = roomPrice * nights;
-    // Add board basis cost
-    if (_selectedBoardBasis != null) {
-      total += _selectedBoardBasis!.pricePerPerson * persons * nights;
-    }
-    // Add extras cost
-    for (final extra in _selectedExtras) {
-      total += extra.totalPrice;
-    }
-    return total;
-  }
+  // // CORRECTION: Calcul du prix total avec saison sélectionnée
+  // double _calculateTotalPrice() {
+  //   if (_fromDate == null || _toDate == null) return 0.0;
+  //   final nights = _toDate!.difference(_fromDate!).inDays;
+  //   final persons = _selectedGuests.length;
+  //   final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
+  //   final roomPrice = baseRoomPrice * _seasonalMultiplier;
+  //   // Base room cost
+  //   double total = roomPrice * nights;
+  //   // Add board basis cost
+  //   if (_selectedBoardBasis != null) {
+  //     total += _selectedBoardBasis!.pricePerPerson * persons * nights;
+  //   }
+  //   // Add extras cost
+  //   for (final extra in _selectedExtras) {
+  //     total += extra.totalPrice;
+  //   }
+  //   return total;
+  // }
 
   void _updateAllExtraPrices() {
     setState(() {
@@ -2672,7 +2699,30 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           _buildExtraServicesSection(),
                           SizedBox(height: 16),
                           // _buildSeasonalPricingSection2(),
-                          SeasonalPricingDropdown()
+                          // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
+// Remplacer SeasonalPricingDropdown() par :
+                          SeasonalPricingDropdown(
+                            selectedValue: _selectedSeasonalPricing,
+                            customSeasonalPricings: _seasonalPricings,
+                            useLocalState: true,
+                            // onChanged: (SeasonalPricing? newValue) {
+                            //   setState(() {
+                            //     _selectedSeasonalPricing = newValue;
+                            //     _seasonalMultiplier =
+                            //         newValue?.multiplier ?? 1.0;
+                            //
+                            //     // Mettre à jour le prix si pas édité manuellement
+                            //     if (!_isPriceManuallyEdited) {
+                            //       _updateRoomPrice();
+                            //     }
+                            //
+                            //     _updateAllExtraPrices();
+                            //   });
+                            // },
+                            onChanged:
+                                _onSeasonalPricingChanged, // Utiliser le nouveau callback
+                          ),
+                          _buildDiscountSection(),
                         ]),
                       ),
                     ],
@@ -2709,7 +2759,28 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   SizedBox(height: 16),
                   _buildExtraServicesSection(),
                   SizedBox(height: 16),
-                  SeasonalPricingDropdown(),
+                  // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
+// Remplacer SeasonalPricingDropdown() par :
+                  SeasonalPricingDropdown(
+                    selectedValue: _selectedSeasonalPricing,
+                    customSeasonalPricings: _seasonalPricings,
+                    useLocalState: true,
+                    onChanged: (SeasonalPricing? newValue) {
+                      setState(() {
+                        _selectedSeasonalPricing = newValue;
+                        _seasonalMultiplier = newValue?.multiplier ?? 1.0;
+
+                        // Mettre à jour le prix si pas édité manuellement
+                        if (!_isPriceManuallyEdited) {
+                          _updateRoomPrice();
+                        }
+
+                        _updateAllExtraPrices();
+                      });
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  _buildDiscountSection(),
                   SizedBox(height: 16),
                   _buildPricingSummary(context),
                 ],
@@ -2758,9 +2829,30 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     ],
                   ),
                   SizedBox(height: 16),
-                  SeasonalPricingDropdown(),
+                  // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
+// Remplacer SeasonalPricingDropdown() par :
+                  SeasonalPricingDropdown(
+                    selectedValue: _selectedSeasonalPricing,
+                    customSeasonalPricings: _seasonalPricings,
+                    useLocalState: true,
+                    onChanged: (SeasonalPricing? newValue) {
+                      setState(() {
+                        _selectedSeasonalPricing = newValue;
+                        _seasonalMultiplier = newValue?.multiplier ?? 1.0;
+
+                        // Mettre à jour le prix si pas édité manuellement
+                        if (!_isPriceManuallyEdited) {
+                          _updateRoomPrice();
+                        }
+
+                        _updateAllExtraPrices();
+                      });
+                    },
+                  ),
                   SizedBox(height: 16),
                   _buildPricingSummary(context),
+                  _buildDiscountSection(),
+                  SizedBox(height: 16),
                 ],
               ),
             ),
@@ -2815,6 +2907,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
+  // 1. CORRECTION: Utiliser _calculateTotalPrice() dans _buildPricingSummary
   Widget _buildPricingSummary(BuildContext context) {
     if (_fromDate == null || _toDate == null) {
       return Card(
@@ -2829,14 +2922,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     final nights = _toDate!.difference(_fromDate!).inDays;
     final persons = _selectedGuests.length;
-    final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
 
-    // 🔥 Récupère la tarification saisonnière sélectionnée depuis le provider
-    final seasonal = context.watch<HotelProvider>().selectedSeasonalPricing;
-    final seasonalMultiplier = seasonal?.multiplier ?? 1.0;
+    // UTILISER _calculateTotalPrice() au lieu de recalculer ici
+    final grandTotal = _calculateTotalPrice();
 
-    final roomPrice = baseRoomPrice * seasonalMultiplier;
-    final roomTotal = roomPrice * nights;
+    // Calcul des sous-totaux pour l'affichage
+    final roomPricePerNight = _getEffectiveRoomPrice();
+    final roomTotal = roomPricePerNight * nights;
 
     double boardBasisTotal = 0.0;
     if (_selectedBoardBasis != null) {
@@ -2845,7 +2937,43 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     double extrasTotal =
         _selectedExtras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
-    double grandTotal = roomTotal + boardBasisTotal + extrasTotal;
+
+    // Calculer les réductions appliquées
+    double roomDiscount = 0.0;
+    double boardDiscount = 0.0;
+    double extrasDiscount = 0.0;
+    double totalDiscount = 0.0;
+
+    switch (_discountAppliedTo) {
+      case 'room':
+        roomDiscount = _calculateDiscount(roomTotal);
+        break;
+      case 'board':
+        boardDiscount = _calculateDiscount(boardBasisTotal);
+        break;
+      case 'extras':
+        extrasDiscount = _calculateDiscount(extrasTotal);
+        break;
+      case 'total':
+        totalDiscount =
+            _calculateDiscount(roomTotal + boardBasisTotal + extrasTotal);
+        break;
+      case 'specific':
+        if (_selectedDiscountItems.contains('room')) {
+          roomDiscount = _calculateDiscount(roomTotal);
+        }
+        if (_selectedDiscountItems.contains('board')) {
+          boardDiscount = _calculateDiscount(boardBasisTotal);
+        }
+        for (int i = 0; i < _selectedExtras.length; i++) {
+          final extra = _selectedExtras[i];
+          if (_selectedDiscountItems
+              .contains('extra_${extra.extraService.id}')) {
+            extrasDiscount += _calculateDiscount(extra.totalPrice);
+          }
+        }
+        break;
+    }
 
     return Card(
       child: Padding(
@@ -2858,25 +2986,62 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
+
+            // Chambre
             _buildPriceRow(
               'Chambre ($nights nuits)',
               '${roomTotal.toStringAsFixed(2)} DA',
             ),
-            if (seasonalMultiplier != 1.0)
+            if (roomDiscount > 0)
               _buildPriceRow(
-                'Multiplicateur saisonnier (x${seasonalMultiplier.toStringAsFixed(2)})',
+                'Réduction chambre',
+                '-${roomDiscount.toStringAsFixed(2)} DA',
+                isDiscount: true,
+              ),
+
+            // Multiplicateur saisonnier
+            if (_seasonalMultiplier != 1.0)
+              _buildPriceRow(
+                'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
                 '',
               ),
-            if (_selectedBoardBasis != null)
+
+            // Plan de pension
+            if (_selectedBoardBasis != null) ...[
               _buildPriceRow(
                 '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
                 '${boardBasisTotal.toStringAsFixed(2)} DA',
               ),
-            if (_selectedExtras.isNotEmpty)
+              if (boardDiscount > 0)
+                _buildPriceRow(
+                  'Réduction pension',
+                  '-${boardDiscount.toStringAsFixed(2)} DA',
+                  isDiscount: true,
+                ),
+            ],
+
+            // Services supplémentaires
+            if (_selectedExtras.isNotEmpty) ...[
               _buildPriceRow(
                 'Services supplémentaires',
                 '${extrasTotal.toStringAsFixed(2)} DA',
               ),
+              if (extrasDiscount > 0)
+                _buildPriceRow(
+                  'Réduction services',
+                  '-${extrasDiscount.toStringAsFixed(2)} DA',
+                  isDiscount: true,
+                ),
+            ],
+
+            // Réduction totale
+            if (totalDiscount > 0)
+              _buildPriceRow(
+                'Réduction totale',
+                '-${totalDiscount.toStringAsFixed(2)} DA',
+                isDiscount: true,
+              ),
+
             const Divider(),
             _buildPriceRow(
               'Total général',
@@ -3012,60 +3177,83 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 children: [
                   Expanded(
                     child: // Dans _buildBasicInfoSection(), remplacez le TextFormField du prix par :
+                        // Remplacer le champ prix par :
                         SizedBox(
-                      height: 70,
-                      child: Row(
+                      height: 150,
+                      child: // Remplacer le champ prix dans _buildBasicInfoSection par :
+                          Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: AbsorbPointer(
-                              absorbing: !_isPriceEditable,
-                              child: TextFormField(
-                                controller: _priceController,
-                                decoration: InputDecoration(
-                                  labelText: 'Prix chambre/nuit (DA) *',
-                                  prefixIcon: Icon(Icons.attach_money),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  filled: true,
-                                  fillColor: _isPriceEditable
-                                      ? Colors.white
-                                      : Colors.grey[200],
-                                ),
-                                keyboardType: TextInputType.number,
-                                onChanged: (value) {
-                                  _updateAllExtraPrices();
-                                  _isPriceManuallyEdited =
-                                      true; // Marquer comme édité manuellement
-                                },
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return 'Prix requis';
-                                  if (double.tryParse(value) == null)
-                                    return 'Prix invalide';
-                                  return null;
-                                },
+                          // Affichage du prix de base de la chambre
+                          if (_selectedRoom?.category.target != null)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
                               ),
                             ),
+
+                          // Champ prix per night reservation
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _priceController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Prix réservation/nuit (DA)',
+                                    hintText: _selectedRoom?.category.target !=
+                                            null
+                                        ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
+                                        : 'Entrer le prix',
+                                    prefixIcon: Icon(Icons.attach_money),
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  keyboardType: TextInputType.number,
+                                  onChanged: (value) {
+                                    _isPriceManuallyEdited = value.isNotEmpty;
+                                    _updateAllExtraPrices();
+                                    setState(
+                                        () {}); // Pour rafraîchir les totaux
+                                  },
+                                  validator: (value) {
+                                    // Permettre vide si on a une chambre sélectionnée
+                                    if ((value == null || value.isEmpty) &&
+                                        _selectedRoom?.category.target !=
+                                            null) {
+                                      return null; // Prix auto sera utilisé
+                                    }
+                                    if (value == null || value.isEmpty)
+                                      return 'Prix requis';
+                                    if (double.tryParse(value) == null)
+                                      return 'Prix invalide';
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                          IconButton(
-                            icon: Icon(
-                                _isPriceEditable ? Icons.check : Icons.edit),
-                            onPressed: () {
-                              setState(() {
-                                _isPriceEditable = !_isPriceEditable;
-                                if (!_isPriceEditable) {
-                                  // Recalculer le prix selon la saison si on quitte le mode édition
-                                  _updateRoomPrice();
-                                }
-                              });
-                            },
-                          ),
+                          _buildPriceFieldImproved(),
+                          // Affichage du prix effectif avec saison
+                          if (_selectedSeasonalPricing != null &&
+                              _seasonalMultiplier != 1.0)
+                            Padding(
+                              padding: EdgeInsets.only(top: 4),
+                              child: Text(
+                                'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)} DA/nuit',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue[600],
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: 8),
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       isDense: false,
@@ -3094,6 +3282,161 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         ),
       ),
     );
+  }
+
+  // double _getEffectiveRoomPrice() {
+  //   if (_priceController.text.isNotEmpty) {
+  //     // Prix manuel saisi
+  //     return (double.tryParse(_priceController.text) ?? 0.0) *
+  //         _seasonalMultiplier;
+  //   } else if (_selectedRoom?.category.target != null) {
+  //     // Prix automatique basé sur la catégorie
+  //     return _selectedRoom!.category.target!.basePrice * _seasonalMultiplier;
+  //   }
+  //   return 0.0;
+  // }
+
+  Widget _buildDiscountSection() {
+    return Card(
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text('Réductions',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Spacer(),
+                IconButton(
+                  onPressed: _showDiscountDialog,
+                  icon: Icon(Icons.percent),
+                  tooltip: 'Configurer la réduction',
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            if (_discountPercent > 0 || _discountAmount > 0) ...[
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.shade50,
+                  border: Border.all(color: Colors.orange),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_discountPercent > 0)
+                      Text(
+                          'Réduction: ${_discountPercent.toStringAsFixed(1)}%'),
+                    if (_discountAmount > 0)
+                      Text(
+                          'Montant fixe: ${_discountAmount.toStringAsFixed(2)} DA'),
+                    Text(
+                      'Appliqué sur: ${_getDiscountAppliedToLabel()}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+              ),
+            ] else
+              Center(
+                child: Text(
+                  'Aucune réduction appliquée',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getDiscountAppliedToLabel() {
+    switch (_discountAppliedTo) {
+      case 'room':
+        return 'Chambre uniquement';
+      case 'board':
+        return 'Plan de pension uniquement';
+      case 'extras':
+        return 'Services supplémentaires uniquement';
+      case 'total':
+        return 'Total général';
+      case 'specific':
+        return 'Éléments sélectionnés';
+      default:
+        return 'Non défini';
+    }
+  }
+
+  double _calculateTotalPrice() {
+    if (_fromDate == null || _toDate == null) return 0.0;
+    final nights = _toDate!.difference(_fromDate!).inDays;
+    final persons = _selectedGuests.length;
+
+    // Utiliser le prix effectif (auto ou manuel)
+    final roomPricePerNight = _getEffectiveRoomPrice();
+    double roomTotal = roomPricePerNight * nights;
+
+    double boardBasisTotal = 0.0;
+    if (_selectedBoardBasis != null) {
+      boardBasisTotal = _selectedBoardBasis!.pricePerPerson * persons * nights;
+    }
+
+    double extrasTotal =
+        _selectedExtras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
+
+    // Appliquer la réduction INSTANTANÉMENT selon la sélection
+    double finalRoomTotal = roomTotal;
+    double finalBoardTotal = boardBasisTotal;
+    double finalExtrasTotal = extrasTotal;
+
+    switch (_discountAppliedTo) {
+      case 'room':
+        finalRoomTotal = roomTotal - _calculateDiscount(roomTotal);
+        break;
+      case 'board':
+        finalBoardTotal = boardBasisTotal - _calculateDiscount(boardBasisTotal);
+        break;
+      case 'extras':
+        finalExtrasTotal = extrasTotal - _calculateDiscount(extrasTotal);
+        break;
+      case 'specific':
+        if (_selectedDiscountItems.contains('room')) {
+          finalRoomTotal = roomTotal - _calculateDiscount(roomTotal);
+        }
+        if (_selectedDiscountItems.contains('board')) {
+          finalBoardTotal =
+              boardBasisTotal - _calculateDiscount(boardBasisTotal);
+        }
+        // Pour chaque extra sélectionné
+        for (int i = 0; i < _selectedExtras.length; i++) {
+          final extra = _selectedExtras[i];
+          if (_selectedDiscountItems
+              .contains('extra_${extra.extraService.id}')) {
+            final reduction = _calculateDiscount(extra.totalPrice);
+            finalExtrasTotal -= reduction;
+          }
+        }
+        break;
+      case 'total':
+        final subtotal = roomTotal + boardBasisTotal + extrasTotal;
+        final totalReduction = _calculateDiscount(subtotal);
+        return (subtotal - totalReduction).clamp(0, double.infinity);
+    }
+
+    return (finalRoomTotal + finalBoardTotal + finalExtrasTotal)
+        .clamp(0, double.infinity);
+  }
+
+  double _calculateDiscount(double baseAmount) {
+    if (_discountType == 'percentage') {
+      return baseAmount * (_discountPercent / 100);
+    } else {
+      return _discountAmount;
+    }
   }
 
   Widget _buildBoardBasisSection() {
@@ -3329,7 +3672,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
-  Widget _buildPriceRow(String label, String amount, {bool isTotal = false}) {
+  // 2. CORRECTION: Améliorer _buildPriceRow pour supporter les réductions
+  Widget _buildPriceRow(String label, String amount,
+      {bool isTotal = false, bool isDiscount = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -3341,6 +3686,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               style: TextStyle(
                 fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
                 fontSize: isTotal ? 16 : 14,
+                color: isDiscount ? Colors.red : null,
               ),
             ),
           ),
@@ -3349,12 +3695,120 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: isTotal ? 16 : 14,
-              color: isTotal ? Theme.of(context).primaryColor : null,
+              color: isTotal
+                  ? Theme.of(context).primaryColor
+                  : isDiscount
+                      ? Colors.red
+                      : null,
             ),
           ),
         ],
       ),
     );
+  }
+
+// 3. CORRECTION: Améliorer le champ prix avec prix automatique
+  Widget _buildPriceFieldImproved() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Affichage du prix de base de la chambre
+        if (_selectedRoom?.category.target != null) ...[
+          Padding(
+            padding: EdgeInsets.only(bottom: 4),
+            child: Text(
+              'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ),
+          // Affichage du prix avec saison si applicable
+          if (_selectedSeasonalPricing != null && _seasonalMultiplier != 1.0)
+            Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text(
+                'Prix avec saison (x${_seasonalMultiplier.toStringAsFixed(2)}): ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA/nuit',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.blue[600],
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+        ],
+
+        // Champ de saisie du prix
+        TextFormField(
+          controller: _priceController,
+          decoration: InputDecoration(
+            labelText: 'Prix réservation/nuit (DA)',
+            hintText: _selectedRoom?.category.target != null
+                ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
+                : 'Entrer le prix',
+            prefixIcon: Icon(Icons.attach_money),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            helperText: 'Laissez vide pour utiliser le prix automatique',
+          ),
+          keyboardType: TextInputType.number,
+          onChanged: (value) {
+            setState(() {
+              _isPriceManuallyEdited = value.isNotEmpty;
+              _updateAllExtraPrices();
+            });
+          },
+          validator: (value) {
+            // Permettre vide si on a une chambre sélectionnée (prix auto)
+            if ((value == null || value.isEmpty) &&
+                _selectedRoom?.category.target != null) {
+              return null;
+            }
+            if (value == null || value.isEmpty) return 'Prix requis';
+            if (double.tryParse(value) == null) return 'Prix invalide';
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+// 4. CORRECTION: Améliorer _getEffectiveRoomPrice pour gérer prix auto
+  double _getEffectiveRoomPrice() {
+    if (_priceController.text.isNotEmpty && _isPriceManuallyEdited) {
+      // Prix manuel saisi - appliquer le multiplicateur saisonnier
+      return (double.tryParse(_priceController.text) ?? 0.0) *
+          _seasonalMultiplier;
+    } else if (_selectedRoom?.category.target != null) {
+      // Prix automatique basé sur la catégorie avec multiplicateur saisonnier
+      return _selectedRoom!.category.target!.basePrice * _seasonalMultiplier;
+    }
+    return 0.0;
+  }
+
+// 5. CORRECTION: Callback pour mise à jour automatique des totaux lors du changement de saison
+  void _onSeasonalPricingChanged(SeasonalPricing? newValue) {
+    setState(() {
+      _selectedSeasonalPricing = newValue;
+      _seasonalMultiplier = newValue?.multiplier ?? 1.0;
+
+      // Mettre à jour le prix si pas édité manuellement
+      if (!_isPriceManuallyEdited && _selectedRoom?.category.target != null) {
+        _updateRoomPrice();
+      }
+
+      // Recalculer tous les prix des extras
+      _updateAllExtraPrices();
+
+      // Forcer la mise à jour de l'affichage (les totaux se mettront à jour automatiquement)
+    });
+  }
+
+// 6. CORRECTION: Améliorer _updateRoomPrice pour gérer le prix automatique
+  void _updateRoomPrice() {
+    if (_isPriceManuallyEdited) return; // Ne pas écraser si édité manuellement
+
+    if (_selectedRoom != null && _selectedRoom!.category.target != null) {
+      final basePrice = _selectedRoom!.category.target!.basePrice;
+      // NE PAS appliquer le multiplicateur ici car il sera appliqué dans _getEffectiveRoomPrice
+      _priceController.text = basePrice.toStringAsFixed(2);
+    }
   }
 
   void _showExtraServicesDialog() {
@@ -4219,8 +4673,26 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     });
 
     try {
-      final pricePerNight = double.tryParse(_priceController.text) ?? 0.0;
+      // Dans _saveReservation, remplacer :
+      // final pricePerNight = double.tryParse(_priceController.text) ?? 0.0;
 
+// Par :
+//       final pricePerNight = _priceController.text.isNotEmpty
+//           ? (double.tryParse(_priceController.text) ?? 0.0)
+//           : (_selectedRoom?.category.target?.basePrice ?? 0.0);
+      // Calculer le prix effectif à utiliser pour la sauvegarde
+      double priceToSave;
+
+      if (_priceController.text.isNotEmpty && _isPriceManuallyEdited) {
+        // Prix manuel saisi
+        priceToSave = double.tryParse(_priceController.text) ?? 0.0;
+      } else if (_selectedRoom?.category.target != null) {
+        // Prix automatique basé sur la catégorie + saison
+        priceToSave =
+            _selectedRoom!.category.target!.basePrice * _seasonalMultiplier;
+      } else {
+        priceToSave = 0.0;
+      }
       for (final guest in _selectedGuests) {
         if (guest.id == 0) {
           final guestId = await widget.provider.addGuest(guest);
@@ -4241,9 +4713,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newFrom: _fromDate!,
           newTo: _toDate!,
           newPricePerNight: // effectivePrice,
-              pricePerNight,
+              priceToSave,
+          //  pricePerNight,
           newStatus: _status,
           newBoardBasis: _selectedBoardBasis,
+          newDiscountPercent: _discountPercent,
+          newDiscountAmount: _discountAmount,
         );
       } else {
         result = await widget.provider.addReservation(
@@ -4253,9 +4728,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           from: _fromDate!,
           to: _toDate!,
           pricePerNight: //effectivePrice,
-              pricePerNight,
+              priceToSave,
+          //     pricePerNight,
           status: _status,
           boardBasis: _selectedBoardBasis,
+          discountPercent: _discountPercent,
+          discountAmount: _discountAmount,
         );
       }
 
@@ -4306,6 +4784,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         status: _status,
         boardBasis: _selectedBoardBasis,
         forceOverride: true,
+        discountPercent: _discountPercent,
+        discountAmount: _discountAmount,
       );
 
       if (result.isSuccess && result.id != null) {
@@ -4329,6 +4809,19 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         _isLoading = false;
       });
     }
+  }
+
+// 8. CORRECTION: Remplacer dans _buildBasicInfoSection le champ prix par:
+  Widget _buildPriceSection() {
+    return _buildPriceFieldImproved();
+  }
+
+// 9. CORRECTION: Mise à jour automatique lors du changement de réduction
+  void _onDiscountChanged() {
+    setState(() {
+      // Forcer la mise à jour de l'affichage
+      // _calculateTotalPrice() sera automatiquement appelé dans _buildPricingSummary
+    });
   }
 
   void _showErrorSnackBar(String message) {
@@ -4385,7 +4878,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _phoneController.dispose();
     _idCardController.dispose();
     _priceController.dispose();
-
+    _discountPercentController.dispose();
+    _discountAmountController.dispose();
     super.dispose();
   }
 
@@ -4416,10 +4910,280 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           'Erreur lors de la sauvegarde des services supplémentaires');
     }
   }
+
+  void _showDiscountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Dialog(
+          child: Container(
+            width: 600,
+            height: 700,
+            padding: EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Configuration de la réduction',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                SizedBox(height: 16),
+
+                // Type de réduction
+                Text('Type de réduction:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: Text('Pourcentage'),
+                        value: 'percentage',
+                        groupValue: _discountType,
+                        onChanged: (value) =>
+                            setDialogState(() => _discountType = value!),
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<String>(
+                        title: Text('Montant fixe'),
+                        value: 'amount',
+                        groupValue: _discountType,
+                        onChanged: (value) =>
+                            setDialogState(() => _discountType = value!),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 16),
+
+                // Valeur de la réduction
+                if (_discountType == 'percentage')
+                  TextFormField(
+                    controller: _discountPercentController,
+                    decoration: InputDecoration(
+                      labelText: 'Pourcentage de réduction (%)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => setDialogState(() {
+                      _discountPercent = double.tryParse(value) ?? 0.0;
+                      _discountAmount = 0.0;
+                      _discountAmountController.text = "0";
+                    }),
+                  )
+                else
+                  TextFormField(
+                    controller: _discountAmountController,
+                    decoration: InputDecoration(
+                      labelText: 'Montant de réduction (DA)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => setDialogState(() {
+                      _discountAmount = double.tryParse(value) ?? 0.0;
+                      _discountPercent = 0.0;
+                      _discountPercentController.text = "0";
+                    }),
+                  ),
+
+                SizedBox(height: 16),
+
+                // Application de la réduction
+                Text('Appliquer la réduction sur:',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        RadioListTile<String>(
+                          title: Text('Chambre uniquement'),
+                          value: 'room',
+                          groupValue: _discountAppliedTo,
+                          onChanged: (value) =>
+                              setDialogState(() => _discountAppliedTo = value!),
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Plan de pension uniquement'),
+                          value: 'board',
+                          groupValue: _discountAppliedTo,
+                          onChanged: (value) =>
+                              setDialogState(() => _discountAppliedTo = value!),
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Services supplémentaires uniquement'),
+                          value: 'extras',
+                          groupValue: _discountAppliedTo,
+                          onChanged: (value) =>
+                              setDialogState(() => _discountAppliedTo = value!),
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Total général'),
+                          value: 'total',
+                          groupValue: _discountAppliedTo,
+                          onChanged: (value) =>
+                              setDialogState(() => _discountAppliedTo = value!),
+                        ),
+                        RadioListTile<String>(
+                          title: Text('Éléments spécifiques'),
+                          value: 'specific',
+                          groupValue: _discountAppliedTo,
+                          onChanged: (value) =>
+                              setDialogState(() => _discountAppliedTo = value!),
+                        ),
+
+                        // Sélection spécifique si nécessaire
+                        if (_discountAppliedTo == 'specific') ...[
+                          Divider(),
+                          Text('Sélectionnez les éléments:',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+
+                          // Chambre
+                          if (_selectedRoom != null)
+                            CheckboxListTile(
+                              title: Text('Chambre (${_selectedRoom!.code})'),
+                              subtitle: Text(
+                                  'Prix: ${(double.tryParse(_priceController.text) ?? 0.0 * _seasonalMultiplier).toStringAsFixed(2)} DA/nuit'),
+                              value: _selectedDiscountItems.contains('room'),
+                              onChanged: (bool? value) => setDialogState(() {
+                                if (value == true) {
+                                  _selectedDiscountItems.add('room');
+                                } else {
+                                  _selectedDiscountItems.remove('room');
+                                }
+                              }),
+                            ),
+
+                          // Plan de pension
+                          if (_selectedBoardBasis != null)
+                            CheckboxListTile(
+                              title: Text(
+                                  'Plan de pension (${_selectedBoardBasis!.name})'),
+                              subtitle: Text(
+                                  'Prix: ${_selectedBoardBasis!.pricePerPerson.toStringAsFixed(2)} DA/personne/nuit'),
+                              value: _selectedDiscountItems.contains('board'),
+                              onChanged: (bool? value) => setDialogState(() {
+                                if (value == true) {
+                                  _selectedDiscountItems.add('board');
+                                } else {
+                                  _selectedDiscountItems.remove('board');
+                                }
+                              }),
+                            ),
+
+                          // Services supplémentaires
+                          ..._selectedExtras.map((extra) {
+                            final itemId = 'extra_${extra.extraService.id}';
+                            return CheckboxListTile(
+                              title: Text(extra.extraService.name),
+                              subtitle: Text(
+                                  'Prix total: ${extra.totalPrice.toStringAsFixed(2)} DA'),
+                              value: _selectedDiscountItems.contains(itemId),
+                              onChanged: (bool? value) => setDialogState(() {
+                                if (value == true) {
+                                  _selectedDiscountItems.add(itemId);
+                                } else {
+                                  _selectedDiscountItems.remove(itemId);
+                                }
+                              }),
+                            );
+                          }).toList(),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(height: 16),
+
+                // Aperçu de la réduction
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    border: Border.all(color: Colors.blue.shade200),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Aperçu:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(_getDiscountPreview()),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: 16),
+
+                // Boutons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        // Réinitialiser
+                        setDialogState(() {
+                          _discountPercent = 0.0;
+                          _discountAmount = 0.0;
+                          _discountPercentController.text = "0";
+                          _discountAmountController.text = "0";
+                          _discountAppliedTo = 'total';
+                          _selectedDiscountItems.clear();
+                        });
+                      },
+                      child: Text('Réinitialiser'),
+                    ),
+                    SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Annuler'),
+                    ),
+                    SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        _onDiscountChanged();
+                        Navigator.pop(context);
+                      },
+                      child: Text('Appliquer'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getDiscountPreview() {
+    if (_discountPercent == 0 && _discountAmount == 0) {
+      return 'Aucune réduction configurée';
+    }
+
+    String discountText = _discountType == 'percentage'
+        ? '${_discountPercent.toStringAsFixed(1)}%'
+        : '${_discountAmount.toStringAsFixed(2)} DA';
+
+    String appliedText = _getDiscountAppliedToLabel();
+
+    return 'Réduction de $discountText appliquée sur: $appliedText';
+  }
 }
 
 class SeasonalPricingDropdown extends StatelessWidget {
-  const SeasonalPricingDropdown({super.key});
+  final SeasonalPricing? selectedValue;
+  final Function(SeasonalPricing?)? onChanged;
+  final List<SeasonalPricing>? customSeasonalPricings;
+  final bool useLocalState;
+
+  const SeasonalPricingDropdown({
+    super.key,
+    this.selectedValue,
+    this.onChanged,
+    this.customSeasonalPricings,
+    this.useLocalState = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -4466,8 +5230,17 @@ class SeasonalPricingDropdown extends StatelessWidget {
                     child: Text('${sp.name} - ${sp.multiplier}x'),
                   ))
               .toList(),
-          onChanged: (v) =>
-              provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
+          // onChanged: (v) =>
+          //     provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
+          onChanged: (SeasonalPricing? v) {
+            if (onChanged != null) {
+              // Utiliser le callback personnalisé
+              onChanged!(v);
+            } else {
+              // Comportement par défaut
+              provider.setSelectedSeasonalPricing(provider.currentHotel!, v);
+            }
+          },
         );
       },
     );

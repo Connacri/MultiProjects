@@ -668,7 +668,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(22, 4405813060867310126),
       name: 'Reservation',
-      lastPropertyId: const obx_int.IdUid(32, 3092973566861730351),
+      lastPropertyId: const obx_int.IdUid(34, 693625170472915462),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -725,6 +725,16 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(32, 3092973566861730351),
             name: 'cachedExtrasTotal',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(33, 50080880719226551),
+            name: 'discountPercent',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(34, 693625170472915462),
+            name: 'discountAmount',
             type: 8,
             flags: 0)
       ],
@@ -2313,7 +2323,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (Reservation object, fb.Builder fbb) {
           final statusOffset = fbb.writeString(object.status);
-          fbb.startTable(33);
+          fbb.startTable(35);
           fbb.addInt64(0, object.id);
           fbb.addOffset(6, statusOffset);
           fbb.addInt64(7, object.room.targetId);
@@ -2324,6 +2334,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addFloat64(29, object.pricePerNight);
           fbb.addFloat64(30, object.cachedBoardBasisPrice);
           fbb.addFloat64(31, object.cachedExtrasTotal);
+          fbb.addFloat64(32, object.discountPercent);
+          fbb.addFloat64(33, object.discountAmount);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2338,6 +2350,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
               const fb.Float64Reader().vTableGet(buffer, rootOffset, 62, 0);
           final statusParam = const fb.StringReader(asciiOptimization: true)
               .vTableGet(buffer, rootOffset, 16, '');
+          final discountPercentParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 68, 0);
+          final discountAmountParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 70, 0);
           final cachedBoardBasisPriceParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 64);
           final cachedExtrasTotalParam = const fb.Float64Reader()
@@ -2347,6 +2363,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               to: toParam,
               pricePerNight: pricePerNightParam,
               status: statusParam,
+              discountPercent: discountPercentParam,
+              discountAmount: discountAmountParam,
               cachedBoardBasisPrice: cachedBoardBasisPriceParam,
               cachedExtrasTotal: cachedExtrasTotalParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
@@ -3475,6 +3493,14 @@ class Reservation_ {
   /// See [Reservation.cachedExtrasTotal].
   static final cachedExtrasTotal =
       obx.QueryDoubleProperty<Reservation>(_entities[10].properties[9]);
+
+  /// See [Reservation.discountPercent].
+  static final discountPercent =
+      obx.QueryDoubleProperty<Reservation>(_entities[10].properties[10]);
+
+  /// See [Reservation.discountAmount].
+  static final discountAmount =
+      obx.QueryDoubleProperty<Reservation>(_entities[10].properties[11]);
 
   /// see [Reservation.guests]
   static final guests =

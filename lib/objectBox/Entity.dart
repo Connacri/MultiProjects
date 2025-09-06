@@ -946,44 +946,50 @@ class Reservation {
   double pricePerNight;
   String status;
 
-  // Champs calculés optionnels pour optimisation (peuvent être supprimés)
-  double? cachedBoardBasisPrice; // Cache du prix du plan de pension
-  double? cachedExtrasTotal; // Cache du total des extras
+  // 🚀 Ajout pour gestion des réductions
+  double discountPercent; // ex: 10 = 10%
+  double discountAmount; // ex: 2000 DZD
+
+  // Champs calculés optionnels
+  double? cachedBoardBasisPrice;
+  double? cachedExtrasTotal;
 
   Reservation({
     required this.from,
     required this.to,
     required this.pricePerNight,
     this.status = "Confirmée",
+    this.discountPercent = 0.0,
+    this.discountAmount = 0.0,
     this.cachedBoardBasisPrice,
     this.cachedExtrasTotal,
   });
 
-  // Calculer le prix du plan de pension en temps réel
+  // Prix du plan de pension
   double get boardBasisPrice {
     if (cachedBoardBasisPrice != null) return cachedBoardBasisPrice!;
-
     final boardBasisTarget = boardBasis.target;
     if (boardBasisTarget == null) return 0.0;
-
     final nights = to.difference(from).inDays;
     final persons = guests.length;
     return boardBasisTarget.pricePerPerson * persons * nights;
   }
 
-  // Calculer le total des extras en temps réel
+  // Total extras
   double get extrasTotal {
     if (cachedExtrasTotal != null) return cachedExtrasTotal!;
-
     return extras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
   }
 
-  // Helper pour calculer le prix total
+  // ✅ Total avec réduction appliquée
   double get totalPrice {
     final nights = to.difference(from).inDays;
     final roomTotal = pricePerNight * nights;
     final boardTotal = boardBasisPrice;
-    return roomTotal + boardTotal + extrasTotal;
+    final subtotal = roomTotal + boardTotal + extrasTotal;
+
+    final reduction = (subtotal * (discountPercent / 100)) + discountAmount;
+    return (subtotal - reduction).clamp(0, double.infinity);
   }
 
   // Méthodes utilitaires
@@ -991,13 +997,10 @@ class Reservation {
 
   int get numberOfGuests => guests.length;
 
-  // Vérifier si la réservation est active
   bool get isActive => status != "Annulée" && status != "Parti";
 
-  // Vérifier si le client est arrivé
   bool get hasArrived => status == "Arrivé" || status == "Parti";
 
-  // Obtenir le prix moyen par personne par nuit
   double get averagePricePerPersonPerNight {
     final persons = numberOfGuests;
     final nights = numberOfNights;
@@ -1005,13 +1008,11 @@ class Reservation {
     return totalPrice / (persons * nights);
   }
 
-  // Méthode pour rafraîchir les caches (à appeler après modification des extras/board basis)
   void refreshCaches() {
     cachedBoardBasisPrice = null;
     cachedExtrasTotal = null;
   }
 
-  // Validation de la réservation
   bool get isValid {
     return from.isBefore(to) &&
         pricePerNight > 0 &&
@@ -1022,7 +1023,7 @@ class Reservation {
 
   @override
   String toString() {
-    return 'Reservation{id: $id, room: ${room.target?.code}, from: $from, to: $to, status: $status, total: ${totalPrice.toStringAsFixed(2)} DZD}';
+    return 'Reservation{id: $id, room: ${room.target?.code}, from: $from, to: $to, status: $status, total: ${totalPrice.toStringAsFixed(2)} DZD, discount: ${discountPercent}% + ${discountAmount} DZD}';
   }
 }
 

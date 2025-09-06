@@ -662,7 +662,7 @@
     },
     {
       "id": "22:4405813060867310126",
-      "lastPropertyId": "32:3092973566861730351",
+      "lastPropertyId": "34:693625170472915462",
       "name": "Reservation",
       "properties": [
         {
@@ -723,6 +723,16 @@
         {
           "id": "32:3092973566861730351",
           "name": "cachedExtrasTotal",
+          "type": 8
+        },
+        {
+          "id": "33:50080880719226551",
+          "name": "discountPercent",
+          "type": 8
+        },
+        {
+          "id": "34:693625170472915462",
+          "name": "discountAmount",
           "type": 8
         }
       ],
