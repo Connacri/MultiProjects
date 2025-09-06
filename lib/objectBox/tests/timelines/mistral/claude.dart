@@ -2513,7 +2513,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     // Set default board basis
     final defaultBoardBasis = widget.provider
         .getBoardBasisList()
-        .where((bb) => bb.isActive && bb.code == 'BB')
+        .where((bb) => bb.isActive && bb.code == 'RO')
         .firstOrNull;
     _selectedBoardBasis = defaultBoardBasis;
   }
@@ -3105,7 +3105,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       value: _selectedRoom,
                       decoration: InputDecoration(
                         labelText: 'Chambre *',
-                        //prefixIcon: Icon(Icons.bed),
+                        // prefixIcon: Icon(Icons.bed),
                         // border: OutlineInputBorder(
                         //   borderRadius: BorderRadius.circular(8),
                         // ),
@@ -3118,11 +3118,16 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           child: Row(
                             children: [
                               Text('${room.code}'),
-                              SizedBox(
-                                width: 8,
+                              const SizedBox(width: 8),
+                              // 👉 le texte peut s'adapter
+                              Expanded(
+                                child: Text(
+                                  '$categoryName ${room.category.target!.bedType ?? ''}',
+                                  overflow: TextOverflow.ellipsis,
+                                  // coupe avec "..."
+                                  maxLines: 1, // une seule ligne
+                                ),
                               ),
-                              Text(
-                                  '$categoryName ${room.category.target!.bedType ?? ''}'),
                             ],
                           ),
                         );
@@ -3136,7 +3141,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       validator: (value) =>
                           value == null ? 'Choisissez une chambre' : null,
                     ),
-                  ),
+                  )
                 ],
               ),
             ),
@@ -3170,131 +3175,101 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
             SizedBox(height: 16),
 
-            // Price and Status
-            SizedBox(
-              height: 200,
+            // ================= Price & Status Section =================
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: // Dans _buildBasicInfoSection(), remplacez le TextFormField du prix par :
-                        // Remplacer le champ prix par :
-                        SizedBox(
-                      height: 150,
-                      child: // Remplacer le champ prix dans _buildBasicInfoSection par :
-                          Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Affichage du prix de base de la chambre
-                          if (_selectedRoom?.category.target != null)
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 8),
-                              child: Text(
-                                'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600]),
-                              ),
-                            ),
-
-                          // Champ prix per night reservation
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _priceController,
-                                  decoration: InputDecoration(
-                                    labelText: 'Prix réservation/nuit (DA)',
-                                    hintText: _selectedRoom?.category.target !=
-                                            null
-                                        ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
-                                        : 'Entrer le prix',
-                                    prefixIcon: Icon(Icons.attach_money),
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  onChanged: (value) {
-                                    _isPriceManuallyEdited = value.isNotEmpty;
-                                    _updateAllExtraPrices();
-                                    setState(
-                                        () {}); // Pour rafraîchir les totaux
-                                  },
-                                  validator: (value) {
-                                    // Permettre vide si on a une chambre sélectionnée
-                                    if ((value == null || value.isEmpty) &&
-                                        _selectedRoom?.category.target !=
-                                            null) {
-                                      return null; // Prix auto sera utilisé
-                                    }
-                                    if (value == null || value.isEmpty)
-                                      return 'Prix requis';
-                                    if (double.tryParse(value) == null)
-                                      return 'Prix invalide';
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          _buildPriceFieldImproved(),
-                          // Affichage du prix effectif avec saison
-                          if (_selectedSeasonalPricing != null &&
-                              _seasonalMultiplier != 1.0)
-                            Padding(
-                              padding: EdgeInsets.only(top: 4),
-                              child: Text(
-                                'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)} DA/nuit',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.blue[600],
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                        ],
+                  // Prix de base de la chambre
+                  if (_selectedRoom?.category.target != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
+                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                       ),
                     ),
+
+                  // Champ prix par nuit réservation
+                  TextFormField(
+                    controller: _priceController,
+                    decoration: InputDecoration(
+                      labelText: 'Prix réservation/nuit (DA)',
+                      hintText: _selectedRoom?.category.target != null
+                          ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
+                          : 'Entrer le prix',
+                      prefixIcon: const Icon(Icons.attach_money),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      _isPriceManuallyEdited = value.isNotEmpty;
+                      _updateAllExtraPrices();
+                      setState(() {}); // refresh totaux
+                    },
+                    validator: (value) {
+                      if ((value == null || value.isEmpty) &&
+                          _selectedRoom?.category.target != null) {
+                        return null; // prix auto utilisé
+                      }
+                      if (value == null || value.isEmpty) return 'Prix requis';
+                      if (double.tryParse(value) == null)
+                        return 'Prix invalide';
+                      return null;
+                    },
                   ),
-                  SizedBox(height: 8),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      isDense: false,
-                      isExpanded: true,
-                      value: _status,
-                      decoration: InputDecoration(
-                        labelText: 'Statut',
-                        prefixIcon: Icon(Icons.info_outline),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+
+                  const SizedBox(height: 8),
+
+                  // Champs supplémentaires (prix amélioré)
+                  _buildPriceFieldImproved(),
+
+                  // Affichage du prix effectif avec saison
+                  if (_selectedSeasonalPricing != null &&
+                      _seasonalMultiplier != 1.0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6, bottom: 12),
+                      child: Text(
+                        'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)} DA/nuit',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      items: _statuses.map((status) {
-                        return DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        );
-                      }).toList(),
-                      onChanged: (status) => setState(() => _status = status!),
                     ),
+
+                  // Dropdown Statut
+                  DropdownButtonFormField<String>(
+                    isDense: true,
+                    isExpanded: true,
+                    value: _status,
+                    decoration: InputDecoration(
+                      labelText: 'Statut',
+                      prefixIcon: const Icon(Icons.info_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    items: _statuses.map((status) {
+                      return DropdownMenuItem(
+                        value: status,
+                        child: Text(status),
+                      );
+                    }).toList(),
+                    onChanged: (status) => setState(() => _status = status!),
                   ),
                 ],
               ),
-            ),
+            )
           ],
         ),
       ),
     );
   }
-
-  // double _getEffectiveRoomPrice() {
-  //   if (_priceController.text.isNotEmpty) {
-  //     // Prix manuel saisi
-  //     return (double.tryParse(_priceController.text) ?? 0.0) *
-  //         _seasonalMultiplier;
-  //   } else if (_selectedRoom?.category.target != null) {
-  //     // Prix automatique basé sur la catégorie
-  //     return _selectedRoom!.category.target!.basePrice * _seasonalMultiplier;
-  //   }
-  //   return 0.0;
-  // }
 
   Widget _buildDiscountSection() {
     return Card(
@@ -3453,7 +3428,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               isDense: false,
               isExpanded: true,
               value: _selectedBoardBasis?.code,
-              // on utilise le code comme valeur
               decoration: InputDecoration(
                 labelText: 'Type de pension',
                 prefixIcon: Icon(Icons.restaurant),
@@ -3468,57 +3442,49 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               ),
               menuMaxHeight: 250,
               items: () {
-                // Récupérer les BoardBasis actifs
                 final allItems = widget.provider
                     .getBoardBasisList()
                     .where((bb) => bb.isActive)
                     .toList();
 
-                // Supprimer les doublons par code
                 final uniqueItems = <String, BoardBasis>{};
                 for (final item in allItems) {
                   uniqueItems.putIfAbsent(item.code, () => item);
                 }
 
-                // Vérifier que le selected existe encore
+                // Si le selected n'existe plus, on remet à null
                 if (_selectedBoardBasis != null &&
                     !uniqueItems.containsKey(_selectedBoardBasis!.code)) {
                   _selectedBoardBasis = null;
                 }
 
-                // Construire la liste des DropdownMenuItem
                 return uniqueItems.values.map((boardBasis) {
                   return DropdownMenuItem<String>(
-                    value: boardBasis.code, // valeur = code
+                    value: boardBasis.code,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '${boardBasis.name} (${boardBasis.code})',
-                          style: TextStyle(fontSize: 14),
-                        ),
+                        Text('${boardBasis.name} (${boardBasis.code})',
+                            style: TextStyle(fontSize: 14)),
                         if (boardBasis.inclusionsSummary.isNotEmpty) ...[
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Row(
                             children: [
+                              Expanded(
+                                child: Text(
+                                  boardBasis.inclusionsSummary,
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey[600]),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
                               Text(
-                                boardBasis.inclusionsSummary,
+                                '${boardBasis.pricePerPerson.toStringAsFixed(2)}/person',
                                 style: TextStyle(
                                     fontSize: 12, color: Colors.grey[600]),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(
-                                width: 8,
-                              ),
-                              Text(
-                                boardBasis.pricePerPerson.toStringAsFixed(2) +
-                                    '/person',
-                                style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600]),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -3530,16 +3496,16 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               }(),
               onChanged: (String? selectedCode) {
                 setState(() {
-                  // retrouver l’objet complet
                   final allItems = widget.provider
                       .getBoardBasisList()
                       .where((bb) => bb.isActive)
                       .toList();
 
-                  _selectedBoardBasis = allItems.firstWhere(
-                    (bb) => bb.code == selectedCode,
-                    orElse: () => null as BoardBasis, // pour éviter le crash
-                  );
+                  // méthode sûre : retourne null si pas trouvé
+                  final matches =
+                      allItems.where((bb) => bb.code == selectedCode);
+                  _selectedBoardBasis =
+                      matches.isNotEmpty ? matches.first : null;
                 });
               },
             ),
