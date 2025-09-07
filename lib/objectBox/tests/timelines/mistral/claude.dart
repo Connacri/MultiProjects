@@ -1137,7 +1137,7 @@ class HotelManagementState extends State<Hotel_Management> {
               children: [
                 Flexible(
                   child: Text(
-                    '${totalPrice.toStringAsFixed(2)} DA',
+                    '${totalPrice.toStringAsFixed(2)}',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 12,
@@ -1222,7 +1222,7 @@ class HotelManagementState extends State<Hotel_Management> {
     //       Row(
     //         children: [
     //           Text(
-    //             '${totalPrice.toStringAsFixed(2)} DA',
+    //             '${totalPrice.toStringAsFixed(2)}',
     //             style: TextStyle(
     //               color: Colors.white,
     //               fontSize: 12,
@@ -1822,14 +1822,14 @@ class HotelManagementState extends State<Hotel_Management> {
             _buildDetailRow('Nuitées', '$nights nuit(s)',
                 icon: Icons.bedtime_outlined),
             _buildDetailRow(
-              'Prix/nuit',
-              '${pricePerNight.toStringAsFixed(2)} DA',
+              'Prix/nuitée',
+              '${pricePerNight.toStringAsFixed(2)}',
               icon: Icons.attach_money_rounded,
             ),
             Divider(),
             _buildDetailRow(
               'Prix total',
-              '${totalPrice.toStringAsFixed(2)} DA',
+              '${totalPrice.toStringAsFixed(2)}',
               isHighlighted: true,
               icon: Icons.money_rounded,
             ),
@@ -2721,7 +2721,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   ),
                   SizedBox(height: 16),
                   // CORRECTION: Placer la section saisonnière ici
-                  _buildPricingSummary(context),
+                  _buildPricingSummary700(context),
                 ],
               ),
             ),
@@ -2774,7 +2774,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   SizedBox(height: 16),
                   _buildDiscountSection(),
                   SizedBox(height: 16),
-                  _buildPricingSummary(context),
+                  _buildPricingSummary600(context),
                 ],
               ),
             ),
@@ -2842,7 +2842,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     },
                   ),
                   SizedBox(height: 16),
-                  _buildPricingSummary(context),
+                  _buildPricingSummary700(context),
                   _buildDiscountSection(),
                   SizedBox(height: 16),
                 ],
@@ -2900,7 +2900,160 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   }
 
   // 1. CORRECTION: Utiliser _calculateTotalPrice() dans _buildPricingSummary
-  Widget _buildPricingSummary(BuildContext context) {
+  Widget _buildPricingSummary700(BuildContext context) {
+    if (_fromDate == null || _toDate == null) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: const Text(
+            'Sélectionnez les dates pour voir le récapitulatif des prix',
+          ),
+        ),
+      );
+    }
+
+    final nights = _toDate!.difference(_fromDate!).inDays;
+    final persons = _selectedGuests.length;
+
+    // UTILISER _calculateTotalPrice() au lieu de recalculer ici
+    final grandTotal = _calculateTotalPrice();
+
+    // Calcul des sous-totaux pour l'affichage
+    final roomPricePerNight = _getEffectiveRoomPrice();
+    final roomTotal = roomPricePerNight * nights;
+
+    double boardBasisTotal = 0.0;
+    if (_selectedBoardBasis != null) {
+      boardBasisTotal = _selectedBoardBasis!.pricePerPerson * persons * nights;
+    }
+
+    double extrasTotal =
+        _selectedExtras.fold(0.0, (sum, extra) => sum + extra.totalPrice);
+
+    // Calculer les réductions appliquées
+    double roomDiscount = 0.0;
+    double boardDiscount = 0.0;
+    double extrasDiscount = 0.0;
+    double totalDiscount = 0.0;
+
+    switch (_discountAppliedTo) {
+      case 'room':
+        roomDiscount = _calculateDiscount(roomTotal);
+        break;
+      case 'board':
+        boardDiscount = _calculateDiscount(boardBasisTotal);
+        break;
+      case 'extras':
+        extrasDiscount = _calculateDiscount(extrasTotal);
+        break;
+      case 'total':
+        totalDiscount =
+            _calculateDiscount(roomTotal + boardBasisTotal + extrasTotal);
+        break;
+      case 'specific':
+        if (_selectedDiscountItems.contains('room')) {
+          roomDiscount = _calculateDiscount(roomTotal);
+        }
+        if (_selectedDiscountItems.contains('board')) {
+          boardDiscount = _calculateDiscount(boardBasisTotal);
+        }
+        for (int i = 0; i < _selectedExtras.length; i++) {
+          final extra = _selectedExtras[i];
+          if (_selectedDiscountItems
+              .contains('extra_${extra.extraService.id}')) {
+            extrasDiscount += _calculateDiscount(extra.totalPrice);
+          }
+        }
+        break;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Récapitulatif des prix',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+
+            // Chambre
+            _buildPriceRow600(
+              '$nights Nuitée(s)                 ',
+              '${roomTotal.toStringAsFixed(2)}',
+            ),
+            if (roomDiscount > 0)
+              _buildPriceRow600(
+                'Réduction chambre',
+                '-${roomDiscount.toStringAsFixed(2)}',
+                isDiscount: true,
+              ),
+
+            // Multiplicateur saisonnier
+            if (_seasonalMultiplier != 1.0)
+              Container(
+                color: Colors.deepPurple.shade100,
+                child: _buildPriceRow600(
+                  'Saison Indice ${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%',
+                  '${(roomTotal - (roomTotal / _seasonalMultiplier)).toStringAsFixed(2)}',
+                ),
+              ),
+
+            // Plan de pension
+            if (_selectedBoardBasis != null) ...[
+              _buildPriceRow600(
+                '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
+                '${boardBasisTotal.toStringAsFixed(2)}',
+              ),
+              if (boardDiscount > 0)
+                _buildPriceRow600(
+                  'Réduction pension',
+                  '-${boardDiscount.toStringAsFixed(2)}',
+                  isDiscount: true,
+                ),
+            ],
+
+            // Services supplémentaires
+            if (_selectedExtras.isNotEmpty) ...[
+              _buildPriceRow600(
+                'Services supplémentaires',
+                '${extrasTotal.toStringAsFixed(2)}',
+              ),
+              if (extrasDiscount > 0)
+                _buildPriceRow600(
+                  'Réduction services',
+                  '-${extrasDiscount.toStringAsFixed(2)}',
+                  isDiscount: true,
+                ),
+            ],
+
+            // Réduction totale
+            if (totalDiscount > 0)
+              _buildPriceRow600(
+                'Réduction totale',
+                '-${totalDiscount.toStringAsFixed(2)}',
+                isDiscount: true,
+              ),
+            const Divider(),
+            _buildPriceRow600(
+              'Total général',
+              '${(extrasDiscount + roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)}',
+              isTotal: true,
+            ),
+            const Divider(),
+            _buildPriceRow2600(
+              'Net à Payer',
+              '${grandTotal.toStringAsFixed(2)}',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPricingSummary600(BuildContext context) {
     if (_fromDate == null || _toDate == null) {
       return Card(
         child: Padding(
@@ -2981,13 +3134,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
             // Chambre
             _buildPriceRow(
-              'Chambre ($nights nuits)',
-              '${roomTotal.toStringAsFixed(2)} DA',
+              '$nights Nuitée(s)                 ',
+              '${roomTotal.toStringAsFixed(2)}',
             ),
             if (roomDiscount > 0)
               _buildPriceRow(
                 'Réduction chambre',
-                '-${roomDiscount.toStringAsFixed(2)} DA',
+                '-${roomDiscount.toStringAsFixed(2)}',
                 isDiscount: true,
               ),
 
@@ -2996,8 +3149,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               Container(
                 color: Colors.deepPurple.shade100,
                 child: _buildPriceRow(
-                  'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
-                  '${(roomTotal - (roomTotal / _seasonalMultiplier)).toStringAsFixed(2)} DA',
+                  'Saison Indice ${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%',
+                  '${(roomTotal - (roomTotal / _seasonalMultiplier)).toStringAsFixed(2)}',
                 ),
               ),
 
@@ -3005,12 +3158,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             if (_selectedBoardBasis != null) ...[
               _buildPriceRow(
                 '${_selectedBoardBasis!.name} ($persons personnes, $nights nuits)',
-                '${boardBasisTotal.toStringAsFixed(2)} DA',
+                '${boardBasisTotal.toStringAsFixed(2)}',
               ),
               if (boardDiscount > 0)
                 _buildPriceRow(
                   'Réduction pension',
-                  '-${boardDiscount.toStringAsFixed(2)} DA',
+                  '-${boardDiscount.toStringAsFixed(2)}',
                   isDiscount: true,
                 ),
             ],
@@ -3019,12 +3172,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             if (_selectedExtras.isNotEmpty) ...[
               _buildPriceRow(
                 'Services supplémentaires',
-                '${extrasTotal.toStringAsFixed(2)} DA',
+                '${extrasTotal.toStringAsFixed(2)}',
               ),
               if (extrasDiscount > 0)
                 _buildPriceRow(
                   'Réduction services',
-                  '-${extrasDiscount.toStringAsFixed(2)} DA',
+                  '-${extrasDiscount.toStringAsFixed(2)}',
                   isDiscount: true,
                 ),
             ],
@@ -3033,19 +3186,19 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             if (totalDiscount > 0)
               _buildPriceRow(
                 'Réduction totale',
-                '-${totalDiscount.toStringAsFixed(2)} DA',
+                '-${totalDiscount.toStringAsFixed(2)}',
                 isDiscount: true,
               ),
             const Divider(),
             _buildPriceRow(
               'Total général',
-              '${(extrasDiscount + roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)} DA',
+              '${(extrasDiscount + roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)}',
               isTotal: true,
             ),
             const Divider(),
             _buildPriceRow2(
-              'Net a Payer',
-              '${grandTotal.toStringAsFixed(2)} DA',
+              'Net à Payer',
+              '${grandTotal.toStringAsFixed(2)}',
             ),
           ],
         ),
@@ -3189,7 +3342,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   //   Padding(
                   //     padding: const EdgeInsets.only(bottom: 8),
                   //     child: Text(
-                  //       'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
+                  //       'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} /nuit',
                   //       style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                   //     ),
                   //   ),
@@ -3237,7 +3390,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   //   Padding(
                   //     padding: const EdgeInsets.only(top: 6, bottom: 12),
                   //     child: Text(
-                  //       'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)} DA/nuit',
+                  //       'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)}/nuitée',
                   //       style: TextStyle(
                   //         fontSize: 13,
                   //         color: Colors.blue[700],
@@ -3312,7 +3465,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           'Réduction: ${_discountPercent.toStringAsFixed(1)}%'),
                     if (_discountAmount > 0)
                       Text(
-                          'Montant fixe: ${_discountAmount.toStringAsFixed(2)} DA'),
+                          'Montant fixe: ${_discountAmount.toStringAsFixed(2)}'),
                     Text(
                       'Appliqué sur: ${_getDiscountAppliedToLabel()}',
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
@@ -3450,7 +3603,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 helperText: _selectedBoardBasis != null
-                    ? '${_selectedBoardBasis!.pricePerPerson} DA/personne/nuitée'
+                    ? '${_selectedBoardBasis!.pricePerPerson}/personne/nuitée'
                     : null,
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -3535,14 +3688,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       child: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                Text('Services supplémentaires',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                Spacer(),
+                Expanded(
+                  child: FittedBox(
+                    child: Text('Services supplémentaires',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+                  ),
+                ),
                 IconButton(
                   onPressed: _showExtraServicesDialog,
                   icon: Icon(Icons.add_circle),
@@ -3621,7 +3777,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                               style: TextStyle(fontSize: 15),
                             ),
                             Text(
-                              '${extra.totalPrice.toStringAsFixed(2)} DA',
+                              '${extra.totalPrice.toStringAsFixed(2)}',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
@@ -3636,7 +3792,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       //   mainAxisSize: MainAxisSize.min,
                       //   children: [
                       //     Text(
-                      //       '${extra.totalPrice.toStringAsFixed(2)} DA',
+                      //       '${extra.totalPrice.toStringAsFixed(2)}',
                       //       style: TextStyle(
                       //         fontWeight: FontWeight.bold,
                       //         color: Theme.of(context).primaryColor,
@@ -3668,14 +3824,19 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
-                fontSize: isTotal ? 16 : 14,
-                color: isDiscount ? Colors.red : null,
+            child: FittedBox(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                  fontSize: isTotal ? 16 : 14,
+                  color: isDiscount ? Colors.red : null,
+                ),
               ),
             ),
+          ),
+          SizedBox(
+            width: 16,
           ),
           Text(
             amount,
@@ -3695,6 +3856,83 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   }
 
   Widget _buildPriceRow2(String label, String amount) {
+    return Card(
+      color: Theme.of(context).primaryColor,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 600) {
+            // Version desktop / tablette large
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w300,
+                      fontSize: 25,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 16,
+                  ),
+                  FittedBox(
+                    child: Text(
+                      amount,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 25,
+                        color: Theme.of(context).colorScheme.onTertiary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Version mobile (<600px)
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              // occupe toute la largeur
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: FittedBox(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w300,
+                        fontSize: 25,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: FittedBox(
+                    child: Text(
+                      amount,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 25,
+                        color: Theme.of(context).colorScheme.onTertiary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildPriceRow600(String label, String amount,
+      {bool isTotal = false, bool isDiscount = false}) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -3704,23 +3942,102 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             child: Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                color: Theme.of(context).primaryColor,
+                fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+                fontSize: isTotal ? 16 : 14,
+                color: isDiscount ? Colors.red : null,
               ),
             ),
           ),
-          FittedBox(
-            child: Text(
-              amount,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 25,
-                color: Colors.green,
-              ),
+          SizedBox(
+            width: 16,
+          ),
+          Text(
+            amount,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: isTotal ? 16 : 14,
+              color: isTotal
+                  ? Theme.of(context).primaryColor
+                  : isDiscount
+                      ? Colors.red
+                      : null,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPriceRow2600(String label, String amount) {
+    return Card(
+      color: Theme.of(context).primaryColor,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 600) {
+            // Version desktop / tablette large
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w300,
+                      fontSize: 25,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                  SizedBox(
+                    width: 16,
+                  ),
+                  Text(
+                    amount,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 25,
+                      color: Theme.of(context).colorScheme.onTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Version mobile (<600px)
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              // occupe toute la largeur
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: FittedBox(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w300,
+                        fontSize: 25,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: FittedBox(
+                    child: Text(
+                      amount,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w400,
+                        fontSize: 25,
+                        color: Theme.of(context).colorScheme.onTertiary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }
@@ -3738,7 +4055,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             child: Padding(
               padding: EdgeInsets.only(bottom: 4),
               child: Text(
-                'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuitée',
+                'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)}/nuitée',
                 style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey[600],
@@ -3752,7 +4069,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               child: Padding(
                 padding: EdgeInsets.only(bottom: 16),
                 child: Text(
-                  'Prix de saison (${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%): ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA/nuitée',
+                  'Prix de saison (${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%): ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)}/nuitée',
                   style: TextStyle(
                       fontSize: 16,
                       color: Colors.blue[600],
@@ -3768,7 +4085,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           decoration: InputDecoration(
             labelText: 'Prix réservation/nuit (DA)',
             hintText: _selectedRoom?.category.target != null
-                ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
+                ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)})'
                 : 'Entrer le prix',
             prefixIcon: Icon(Icons.attach_money),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -3849,7 +4166,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Ajouter des services supplémentaires',
+              Text('Ajouter Des Services Supplémentaires'.capitalize,
+                  textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               SizedBox(height: 16),
               Expanded(
@@ -3862,11 +4180,29 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
                     return Card(
                       child: ListTile(
-                        title: Text(service.name),
+                        onLongPress: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => ExtraServiceDetailPage(
+                                    extraService: service)),
+                          );
+                        },
+                        onTap: () {
+                          _addExtraService(service);
+                          Navigator.pop(context);
+                        },
+                        title: Text(
+                          service.name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(service.description),
+                            Text(
+                              service.description,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             Text(
                               '${service.price} DA ${_getPricingUnitText(service.pricingUnit)}',
                               style: TextStyle(
@@ -3875,13 +4211,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                               ),
                             ),
                           ],
-                        ),
-                        trailing: ElevatedButton(
-                          onPressed: () {
-                            _addExtraService(service);
-                            Navigator.pop(context);
-                          },
-                          child: Text('Ajouter'),
                         ),
                       ),
                     );
@@ -5129,41 +5458,92 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => Dialog(
           child: Container(
-            width: 600,
+            width: 700,
             height: 700,
             padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Configuration de la réduction',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                FittedBox(
+                  child: Text('Configuration de la réduction',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
                 SizedBox(height: 16),
 
                 // Type de réduction
-                Text('Type de réduction:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: RadioListTile<String>(
-                        title: Text('Pourcentage'),
-                        value: 'percentage',
-                        groupValue: _discountType,
-                        onChanged: (value) =>
-                            setDialogState(() => _discountType = value!),
-                      ),
-                    ),
-                    Expanded(
-                      child: RadioListTile<String>(
-                        title: Text('Montant fixe'),
-                        value: 'amount',
-                        groupValue: _discountType,
-                        onChanged: (value) =>
-                            setDialogState(() => _discountType = value!),
-                      ),
+                    Text('Type de réduction:',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    TextButton(
+                      onPressed: () {
+                        // Réinitialiser
+                        setDialogState(() {
+                          _discountPercent = 0.0;
+                          _discountAmount = 0.0;
+                          _discountPercentController.text = "0";
+                          _discountAmountController.text = "0";
+                          _discountAppliedTo = 'total';
+                          _selectedDiscountItems.clear();
+                        });
+                      },
+                      child: Text('Tout Réinitialiser',
+                          style: TextStyle(fontSize: 12, color: Colors.red)),
                     ),
                   ],
+                ),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth > 600) {
+                      // Version desktop / tablette large
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Text('Pourcentage'),
+                              value: 'percentage',
+                              groupValue: _discountType,
+                              onChanged: (value) =>
+                                  setDialogState(() => _discountType = value!),
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Text('Montant fixe'),
+                              value: 'amount',
+                              groupValue: _discountType,
+                              onChanged: (value) =>
+                                  setDialogState(() => _discountType = value!),
+                            ),
+                          ),
+                        ],
+                      );
+                    } else {
+                      // Version mobile (<600px)
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        // adapte la hauteur à son contenu
+                        children: [
+                          RadioListTile<String>(
+                            title: const Text('Pourcentage'),
+                            value: 'percentage',
+                            groupValue: _discountType,
+                            onChanged: (value) =>
+                                setDialogState(() => _discountType = value!),
+                          ),
+                          RadioListTile<String>(
+                            title: const Text('Montant fixe'),
+                            value: 'amount',
+                            groupValue: _discountType,
+                            onChanged: (value) =>
+                                setDialogState(() => _discountType = value!),
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
 
                 SizedBox(height: 16),
@@ -5206,23 +5586,28 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         RadioListTile<String>(
-                          title: Text('Chambre uniquement'),
+                          title: Text('Chambre'),
                           value: 'room',
                           groupValue: _discountAppliedTo,
                           onChanged: (value) =>
                               setDialogState(() => _discountAppliedTo = value!),
                         ),
                         RadioListTile<String>(
-                          title: Text('Plan de pension uniquement'),
+                          title: Text(
+                            'Pension',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           value: 'board',
                           groupValue: _discountAppliedTo,
                           onChanged: (value) =>
                               setDialogState(() => _discountAppliedTo = value!),
                         ),
                         RadioListTile<String>(
-                          title: Text('Services supplémentaires uniquement'),
+                          title: Text('Services Supplément'),
                           value: 'extras',
                           groupValue: _discountAppliedTo,
                           onChanged: (value) =>
@@ -5254,7 +5639,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             CheckboxListTile(
                               title: Text('Chambre (${_selectedRoom!.code})'),
                               subtitle: Text(
-                                  'Prix: ${(double.tryParse(_priceController.text) ?? 0.0 * _seasonalMultiplier).toStringAsFixed(2)} DA/nuit'),
+                                  'Prix: ${(double.tryParse(_priceController.text) ?? 0.0 * _seasonalMultiplier).toStringAsFixed(2)}/nuit'),
                               value: _selectedDiscountItems.contains('room'),
                               onChanged: (bool? value) => setDialogState(() {
                                 if (value == true) {
@@ -5271,7 +5656,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                               title: Text(
                                   'Plan de pension (${_selectedBoardBasis!.name})'),
                               subtitle: Text(
-                                  'Prix: ${_selectedBoardBasis!.pricePerPerson.toStringAsFixed(2)} DA/personne/nuit'),
+                                  'Prix: ${_selectedBoardBasis!.pricePerPerson.toStringAsFixed(2)}/personne/nuit'),
                               value: _selectedDiscountItems.contains('board'),
                               onChanged: (bool? value) => setDialogState(() {
                                 if (value == true) {
@@ -5288,7 +5673,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             return CheckboxListTile(
                               title: Text(extra.extraService.name),
                               subtitle: Text(
-                                  'Prix total: ${extra.totalPrice.toStringAsFixed(2)} DA'),
+                                  'Prix total: ${extra.totalPrice.toStringAsFixed(2)}'),
                               value: _selectedDiscountItems.contains(itemId),
                               onChanged: (bool? value) => setDialogState(() {
                                 if (value == true) {
@@ -5324,28 +5709,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     ],
                   ),
                 ),
-
-                SizedBox(height: 16),
-
+                SizedBox(
+                  height: 16,
+                ),
                 // Boutons
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
-                      onPressed: () {
-                        // Réinitialiser
-                        setDialogState(() {
-                          _discountPercent = 0.0;
-                          _discountAmount = 0.0;
-                          _discountPercentController.text = "0";
-                          _discountAmountController.text = "0";
-                          _discountAppliedTo = 'total';
-                          _selectedDiscountItems.clear();
-                        });
-                      },
-                      child: Text('Réinitialiser'),
-                    ),
-                    SizedBox(width: 8),
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: Text('Annuler'),
@@ -5375,7 +5745,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     String discountText = _discountType == 'percentage'
         ? '${_discountPercent.toStringAsFixed(1)}%'
-        : '${_discountAmount.toStringAsFixed(2)} DA';
+        : '${_discountAmount.toStringAsFixed(2)}';
 
     String appliedText = _getDiscountAppliedToLabel();
 
