@@ -1352,7 +1352,9 @@ class HotelManagementState extends State<Hotel_Management> {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
+            width: MediaQuery.of(context).size.width < 600
+                ? MediaQuery.of(context).size.width
+                : MediaQuery.of(context).size.width * 0.8,
             constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8),
             child: ReservationDialogContent(
@@ -2697,30 +2699,34 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                         flex: 2,
                         child: Column(children: [
                           _buildExtraServicesSection(),
-                          SizedBox(height: 16),
+
                           // _buildSeasonalPricingSection2(),
                           // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
-// Remplacer SeasonalPricingDropdown() par :
-                          SeasonalPricingDropdown(
-                            selectedValue: _selectedSeasonalPricing,
-                            customSeasonalPricings: _seasonalPricings,
-                            useLocalState: true,
-                            // onChanged: (SeasonalPricing? newValue) {
-                            //   setState(() {
-                            //     _selectedSeasonalPricing = newValue;
-                            //     _seasonalMultiplier =
-                            //         newValue?.multiplier ?? 1.0;
-                            //
-                            //     // Mettre à jour le prix si pas édité manuellement
-                            //     if (!_isPriceManuallyEdited) {
-                            //       _updateRoomPrice();
-                            //     }
-                            //
-                            //     _updateAllExtraPrices();
-                            //   });
-                            // },
-                            onChanged:
-                                _onSeasonalPricingChanged, // Utiliser le nouveau callback
+                          // Remplacer SeasonalPricingDropdown() par :
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 16),
+                            child: SeasonalPricingDropdown(
+                              selectedValue: _selectedSeasonalPricing,
+                              customSeasonalPricings: _seasonalPricings,
+                              useLocalState: true,
+                              // onChanged: (SeasonalPricing? newValue) {
+                              //   setState(() {
+                              //     _selectedSeasonalPricing = newValue;
+                              //     _seasonalMultiplier =
+                              //         newValue?.multiplier ?? 1.0;
+                              //
+                              //     // Mettre à jour le prix si pas édité manuellement
+                              //     if (!_isPriceManuallyEdited) {
+                              //       _updateRoomPrice();
+                              //     }
+                              //
+                              //     _updateAllExtraPrices();
+                              //   });
+                              // },
+                              onChanged:
+                                  _onSeasonalPricingChanged, // Utiliser le nouveau callback
+                            ),
                           ),
                           _buildDiscountSection(),
                         ]),
@@ -3001,9 +3007,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
             // Multiplicateur saisonnier
             if (_seasonalMultiplier != 1.0)
-              _buildPriceRow(
-                'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
-                '',
+              Container(
+                color: Colors.red.shade200,
+                child: _buildPriceRow(
+                  'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
+                  '${(roomTotal - (roomTotal / _seasonalMultiplier)).toStringAsFixed(2)} DA',
+                ),
               ),
 
             // Plan de pension
