@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:string_extensions/string_extensions.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../Entity.dart';
@@ -3035,12 +3036,16 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 '-${totalDiscount.toStringAsFixed(2)} DA',
                 isDiscount: true,
               ),
-
             const Divider(),
             _buildPriceRow(
               'Total général',
-              '${grandTotal.toStringAsFixed(2)} DA',
+              '${(extrasDiscount + roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)} DA',
               isTotal: true,
+            ),
+            const Divider(),
+            _buildPriceRow2(
+              'Net a Payer',
+              '${grandTotal.toStringAsFixed(2)} DA',
             ),
           ],
         ),
@@ -3419,9 +3424,20 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Plan de pension',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Flexible(
+              fit: FlexFit.loose,
+              child: Row(
+                children: [
+                  Icon(Icons.restaurant),
+                  SizedBox(width: 8),
+                  Text('Plan de pension',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
             SizedBox(height: 16),
             DropdownButtonFormField<String>(
               isDense: false,
@@ -3429,12 +3445,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               value: _selectedBoardBasis?.code,
               decoration: InputDecoration(
                 labelText: 'Type de pension',
-                prefixIcon: Icon(Icons.restaurant),
+                // prefixIcon: Icon(Icons.restaurant),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 helperText: _selectedBoardBasis != null
-                    ? '${_selectedBoardBasis!.pricePerPerson} DA/personne/nuit'
+                    ? '${_selectedBoardBasis!.pricePerPerson} DA/personne/nuitée'
                     : null,
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -3537,60 +3553,65 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             SizedBox(height: 16),
             if (_selectedExtras.isEmpty)
               Center(
-                child: Text(
-                  'Aucun service supplémentaire sélectionné',
-                  style: TextStyle(color: Colors.grey[600]),
+                child: FittedBox(
+                  child: Text(
+                    'Aucun service supplémentaire sélectionné',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                 ),
               )
             else
-              Container(
-                height: 300,
-                child: ListView.builder(
-                  itemCount: _selectedExtras.length,
-                  itemBuilder: (context, index) {
-                    final extra = _selectedExtras[index];
-                    return Card(
-                      margin: EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ExtraServiceDetailPage(
-                                extraItem:
-                                    extra, // Passez directement l'extraItem
+              ListView.builder(
+                shrinkWrap: true,
+                // prend juste la hauteur nécessaire
+                physics: NeverScrollableScrollPhysics(),
+                // désactive le scroll interne
+                itemCount: _selectedExtras.length,
+                itemBuilder: (context, index) {
+                  final extra = _selectedExtras[index];
+                  return Card(
+                    margin: EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ExtraServiceDetailPage(
+                              extraItem:
+                                  extra, // Passez directement l'extraItem
+                            ),
+                          ),
+                        );
+                      },
+                      onLongPress: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Confirmation"),
+                            content: const Text(
+                                "Voulez-vous vraiment supprimer ce service ?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text("Annuler"),
                               ),
-                            ),
-                          );
-                        },
-                        onLongPress: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text("Confirmation"),
-                              content: const Text(
-                                  "Voulez-vous vraiment supprimer ce service ?"),
-                              actions: [
-                                TextButton(
-                                  onPressed: () =>
-                                      Navigator.of(context).pop(false),
-                                  child: const Text("Annuler"),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      Navigator.of(context).pop(true),
-                                  child: const Text("Supprimer"),
-                                ),
-                              ],
-                            ),
-                          );
+                              ElevatedButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text("Supprimer"),
+                              ),
+                            ],
+                          ),
+                        );
 
-                          if (confirm == true) {
-                            _removeExtraService(extra);
-                          }
-                        },
-                        title: Text(extra.extraService.name),
-                        subtitle: Row(
+                        if (confirm == true) {
+                          _removeExtraService(extra);
+                        }
+                      },
+                      title: FittedBox(child: Text(extra.extraService.name)),
+                      subtitle: FittedBox(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // Text(extra.extraService.description),
@@ -3609,28 +3630,28 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             ),
                           ],
                         ),
-
-                        //     Row(
-                        //   mainAxisSize: MainAxisSize.min,
-                        //   children: [
-                        //     Text(
-                        //       '${extra.totalPrice.toStringAsFixed(2)} DA',
-                        //       style: TextStyle(
-                        //         fontWeight: FontWeight.bold,
-                        //         color: Theme.of(context).primaryColor,
-                        //       ),
-                        //     ),
-                        //     SizedBox(width: 8),
-                        //     // IconButton(
-                        //     //   onPressed: () => _removeExtraService(extra),
-                        //     //   icon: Icon(Icons.delete, color: Colors.red),
-                        //     // ),
-                        //   ],
-                        // ),
                       ),
-                    );
-                  },
-                ),
+
+                      //     Row(
+                      //   mainAxisSize: MainAxisSize.min,
+                      //   children: [
+                      //     Text(
+                      //       '${extra.totalPrice.toStringAsFixed(2)} DA',
+                      //       style: TextStyle(
+                      //         fontWeight: FontWeight.bold,
+                      //         color: Theme.of(context).primaryColor,
+                      //       ),
+                      //     ),
+                      //     SizedBox(width: 8),
+                      //     // IconButton(
+                      //     //   onPressed: () => _removeExtraService(extra),
+                      //     //   icon: Icon(Icons.delete, color: Colors.red),
+                      //     // ),
+                      //   ],
+                      // ),
+                    ),
+                  );
+                },
               ),
           ],
         ),
@@ -3673,6 +3694,37 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
+  Widget _buildPriceRow2(String label, String amount) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          ),
+          FittedBox(
+            child: Text(
+              amount,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 25,
+                color: Colors.green,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 // 3. CORRECTION: Améliorer le champ prix avec prix automatique
   Widget _buildPriceFieldImproved() {
     final String aug = _seasonalMultiplier > 0 ? 'Augmente de ' : 'Diminue de ';
@@ -3687,7 +3739,10 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               padding: EdgeInsets.only(bottom: 4),
               child: Text(
                 'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuitée',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w400),
               ),
             ),
           ),
@@ -3701,7 +3756,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   style: TextStyle(
                       fontSize: 16,
                       color: Colors.blue[600],
-                      fontWeight: FontWeight.bold),
+                      fontWeight: FontWeight.w400),
                 ),
               ),
             ),
@@ -4409,16 +4464,125 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 ),
               )
             else
-              Container(
-                height: 300,
-                child: ListView.builder(
-                  itemCount: _selectedGuests.length,
-                  itemBuilder: (context, index) {
-                    final guest = _selectedGuests[index];
-                    return Card(
-                      margin: EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        onTap: () {
+              // ListView.builder(
+              //   shrinkWrap: true,
+              //   physics: NeverScrollableScrollPhysics(),
+              //   itemCount: _selectedGuests.length,
+              //   itemBuilder: (context, index) {
+              //     final guest = _selectedGuests[index];
+              //     return Card(
+              //       margin: EdgeInsets.only(bottom: 8),
+              //       child: ListTile(
+              //         onTap: () {
+              //           Navigator.push(
+              //             context,
+              //             MaterialPageRoute(
+              //               builder: (_) => ClientDetailPage(guest: guest),
+              //             ),
+              //           );
+              //         },
+              //         leading: CircleAvatar(
+              //           child:
+              //               Text(guest.fullName.substring(0, 1).toUpperCase()),
+              //         ),
+              //         title: Text(guest.fullName),
+              //         subtitle: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             if (guest.phoneNumber.isNotEmpty)
+              //               Text('Tél: ${guest.phoneNumber}'),
+              //             // if (guest.idCardNumber.isNotEmpty)
+              //             //   Text('ID: ${guest.idCardNumber}'),
+              //           ],
+              //         ),
+              //         onLongPress: () async {
+              //           final action = await showDialog<String>(
+              //             context: context,
+              //             builder: (context) => SimpleDialog(
+              //               title: const Text("Choisissez une action"),
+              //               children: [
+              //                 SimpleDialogOption(
+              //                   onPressed: () => Navigator.pop(context, "edit"),
+              //                   child: Row(
+              //                     children: const [
+              //                       Icon(Icons.edit, color: Colors.blue),
+              //                       SizedBox(width: 8),
+              //                       Text("Éditer"),
+              //                     ],
+              //                   ),
+              //                 ),
+              //                 SimpleDialogOption(
+              //                   onPressed: () =>
+              //                       Navigator.pop(context, "delete"),
+              //                   child: Row(
+              //                     children: const [
+              //                       Icon(Icons.delete, color: Colors.red),
+              //                       SizedBox(width: 8),
+              //                       Text("Supprimer"),
+              //                     ],
+              //                   ),
+              //                 ),
+              //               ],
+              //             ),
+              //           );
+              //
+              //           if (action == "edit") {
+              //             _editGuest(index);
+              //           } else if (action == "delete") {
+              //             final confirm = await showDialog<bool>(
+              //               context: context,
+              //               builder: (context) => AlertDialog(
+              //                 title: const Text("Confirmation"),
+              //                 content: const Text(
+              //                     "Voulez-vous vraiment supprimer ce client ?"),
+              //                 actions: [
+              //                   TextButton(
+              //                     onPressed: () =>
+              //                         Navigator.of(context).pop(false),
+              //                     child: const Text("Annuler"),
+              //                   ),
+              //                   ElevatedButton(
+              //                     onPressed: () =>
+              //                         Navigator.of(context).pop(true),
+              //                     child: const Text("Supprimer"),
+              //                   ),
+              //                 ],
+              //               ),
+              //             );
+              //
+              //             if (confirm == true) {
+              //               _removeGuest(index);
+              //             }
+              //           }
+              //         },
+              //       ),
+              //     );
+              //   },
+              // ),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: List.generate(_selectedGuests.length, (index) {
+                  final guest = _selectedGuests[index];
+
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InputChip(
+                        avatar: CircleAvatar(
+                          backgroundColor: Colors.blue.shade100,
+                          child: Text(
+                            guest.fullName.substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                                color: Colors.blue, fontSize: 12),
+                          ),
+                        ),
+                        label: Text(
+                          guest.fullName.capitalize,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        backgroundColor: Colors.deepPurpleAccent,
+                        onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -4426,21 +4590,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             ),
                           );
                         },
-                        leading: CircleAvatar(
-                          child: Text(
-                              guest.fullName.substring(0, 1).toUpperCase()),
-                        ),
-                        title: Text(guest.fullName),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (guest.phoneNumber.isNotEmpty)
-                              Text('Tél: ${guest.phoneNumber}'),
-                            // if (guest.idCardNumber.isNotEmpty)
-                            //   Text('ID: ${guest.idCardNumber}'),
-                          ],
-                        ),
-                        onLongPress: () async {
+                        onDeleted: () async {
                           final action = await showDialog<String>(
                             context: context,
                             builder: (context) => SimpleDialog(
@@ -4501,11 +4651,77 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                             }
                           }
                         },
+                        deleteIcon: const Icon(
+                          Icons.delete,
+                        ),
                       ),
-                    );
-                  },
-                ),
-              ),
+                      // IconButton(
+                      //   icon: const Icon(Icons.edit, color: Colors.blue),
+                      //   onPressed: () async {
+                      //     final action = await showDialog<String>(
+                      //       context: context,
+                      //       builder: (context) => SimpleDialog(
+                      //         title: const Text("Choisissez une action"),
+                      //         children: [
+                      //           SimpleDialogOption(
+                      //             onPressed: () => Navigator.pop(context, "edit"),
+                      //             child: Row(
+                      //               children: const [
+                      //                 Icon(Icons.edit, color: Colors.blue),
+                      //                 SizedBox(width: 8),
+                      //                 Text("Éditer"),
+                      //               ],
+                      //             ),
+                      //           ),
+                      //           SimpleDialogOption(
+                      //             onPressed: () =>
+                      //                 Navigator.pop(context, "delete"),
+                      //             child: Row(
+                      //               children: const [
+                      //                 Icon(Icons.delete, color: Colors.red),
+                      //                 SizedBox(width: 8),
+                      //                 Text("Supprimer"),
+                      //               ],
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     );
+                      //
+                      //     if (action == "edit") {
+                      //       _editGuest(index);
+                      //     } else if (action == "delete") {
+                      //       final confirm = await showDialog<bool>(
+                      //         context: context,
+                      //         builder: (context) => AlertDialog(
+                      //           title: const Text("Confirmation"),
+                      //           content: const Text(
+                      //               "Voulez-vous vraiment supprimer ce client ?"),
+                      //           actions: [
+                      //             TextButton(
+                      //               onPressed: () =>
+                      //                   Navigator.of(context).pop(false),
+                      //               child: const Text("Annuler"),
+                      //             ),
+                      //             ElevatedButton(
+                      //               onPressed: () =>
+                      //                   Navigator.of(context).pop(true),
+                      //               child: const Text("Supprimer"),
+                      //             ),
+                      //           ],
+                      //         ),
+                      //       );
+                      //
+                      //       if (confirm == true) {
+                      //         _removeGuest(index);
+                      //       }
+                      //     }
+                      //   },
+                      // ),
+                    ],
+                  );
+                }),
+              )
           ],
         ),
       ),
@@ -5211,32 +5427,36 @@ class SeasonalPricingDropdown extends StatelessWidget {
           }
         }
 
-        return DropdownButtonFormField<SeasonalPricing>(
-          // Utilise l'instance trouvée dans la liste unique
-          value: validValue,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: 'Tarif saisonnier',
-            prefixIcon: const Icon(Icons.calendar_today),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: DropdownButtonFormField<SeasonalPricing>(
+            // Utilise l'instance trouvée dans la liste unique
+            value: validValue,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: 'Tarif saisonnier',
+              prefixIcon: const Icon(Icons.calendar_today),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            items: uniqueList
+                .map((sp) => DropdownMenuItem(
+                      value: sp,
+                      child: Text('${sp.name} - ${sp.multiplier}x'),
+                    ))
+                .toList(),
+            // onChanged: (v) =>
+            //     provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
+            onChanged: (SeasonalPricing? v) {
+              if (onChanged != null) {
+                // Utiliser le callback personnalisé
+                onChanged!(v);
+              } else {
+                // Comportement par défaut
+                provider.setSelectedSeasonalPricing(provider.currentHotel!, v);
+              }
+            },
           ),
-          items: uniqueList
-              .map((sp) => DropdownMenuItem(
-                    value: sp,
-                    child: Text('${sp.name} - ${sp.multiplier}x'),
-                  ))
-              .toList(),
-          // onChanged: (v) =>
-          //     provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
-          onChanged: (SeasonalPricing? v) {
-            if (onChanged != null) {
-              // Utiliser le callback personnalisé
-              onChanged!(v);
-            } else {
-              // Comportement par défaut
-              provider.setSelectedSeasonalPricing(provider.currentHotel!, v);
-            }
-          },
         );
       },
     );
