@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
@@ -1356,7 +1357,7 @@ class HotelManagementState extends State<Hotel_Management> {
                 ? MediaQuery.of(context).size.width
                 : MediaQuery.of(context).size.width * 0.8,
             constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.8),
+                maxHeight: MediaQuery.of(context).size.height * 0.9),
             child: ReservationDialogContent(
               preselectedRoom: preselectedRoom,
               preselectedDate: preselectedDate,
@@ -2615,26 +2616,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
   }
 
-  // // CORRECTION: Calcul du prix total avec saison sélectionnée
-  // double _calculateTotalPrice() {
-  //   if (_fromDate == null || _toDate == null) return 0.0;
-  //   final nights = _toDate!.difference(_fromDate!).inDays;
-  //   final persons = _selectedGuests.length;
-  //   final baseRoomPrice = double.tryParse(_priceController.text) ?? 0.0;
-  //   final roomPrice = baseRoomPrice * _seasonalMultiplier;
-  //   // Base room cost
-  //   double total = roomPrice * nights;
-  //   // Add board basis cost
-  //   if (_selectedBoardBasis != null) {
-  //     total += _selectedBoardBasis!.pricePerPerson * persons * nights;
-  //   }
-  //   // Add extras cost
-  //   for (final extra in _selectedExtras) {
-  //     total += extra.totalPrice;
-  //   }
-  //   return total;
-  // }
-
   void _updateAllExtraPrices() {
     setState(() {
       for (final extra in _selectedExtras) {
@@ -2683,7 +2664,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           children: [
                             _buildBasicInfoSection(),
                             SizedBox(height: 16),
-                            _buildBoardBasisSection(),
                           ],
                         ),
                       ),
@@ -2691,7 +2671,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       // Middle Column
                       Expanded(
                         flex: 2,
-                        child: _buildGuestsSection(),
+                        child: Column(
+                          children: [
+                            _buildBoardBasisSection(),
+                            _buildGuestsSection(),
+                          ],
+                        ),
                       ),
                       SizedBox(width: 16),
                       // Right Column
@@ -3008,7 +2993,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             // Multiplicateur saisonnier
             if (_seasonalMultiplier != 1.0)
               Container(
-                color: Colors.red.shade200,
+                color: Colors.deepPurple.shade100,
                 child: _buildPriceRow(
                   'Multiplicateur saisonnier (x${_seasonalMultiplier.toStringAsFixed(2)})',
                   '${(roomTotal - (roomTotal / _seasonalMultiplier)).toStringAsFixed(2)} DA',
@@ -3161,7 +3146,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             Row(
               children: [
                 Expanded(
-                    child: _buildDateField('Arrivée *', _fromDate, (date) {
+                    child: _buildDateField(
+                        FontAwesomeIcons.planeArrival, '  Arrivée', _fromDate,
+                        (date) {
                   setState(() {
                     _fromDate = date;
                     if (_toDate != null &&
@@ -3170,15 +3157,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     }
                     _updateAllExtraPrices();
                   });
-                })),
+                }, true)),
                 SizedBox(width: 16),
                 Expanded(
-                    child: _buildDateField('Départ *', _toDate, (date) {
+                    child: _buildDateField(
+                        FontAwesomeIcons.planeDeparture, '  Départ', _toDate,
+                        (date) {
                   setState(() {
                     _toDate = date;
                     _updateAllExtraPrices();
                   });
-                })),
+                }, false)),
               ],
             ),
 
@@ -3191,65 +3180,66 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Prix de base de la chambre
-                  if (_selectedRoom?.category.target != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                      ),
-                    ),
+                  // if (_selectedRoom?.category.target != null)
+                  //   Padding(
+                  //     padding: const EdgeInsets.only(bottom: 8),
+                  //     child: Text(
+                  //       'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
+                  //       style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  //     ),
+                  //   ),
 
                   // Champ prix par nuit réservation
-                  TextFormField(
-                    controller: _priceController,
-                    decoration: InputDecoration(
-                      labelText: 'Prix réservation/nuit (DA)',
-                      hintText: _selectedRoom?.category.target != null
-                          ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
-                          : 'Entrer le prix',
-                      prefixIcon: const Icon(Icons.attach_money),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) {
-                      _isPriceManuallyEdited = value.isNotEmpty;
-                      _updateAllExtraPrices();
-                      setState(() {}); // refresh totaux
-                    },
-                    validator: (value) {
-                      if ((value == null || value.isEmpty) &&
-                          _selectedRoom?.category.target != null) {
-                        return null; // prix auto utilisé
-                      }
-                      if (value == null || value.isEmpty) return 'Prix requis';
-                      if (double.tryParse(value) == null)
-                        return 'Prix invalide';
-                      return null;
-                    },
-                  ),
+                  // TextFormField(
+                  //   controller: _priceController,
+                  //   decoration: InputDecoration(
+                  //     labelText: 'Prix réservation/nuit (DA)',
+                  //     hintText: _selectedRoom?.category.target != null
+                  //         ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
+                  //         : 'Entrer le prix',
+                  //     prefixIcon: const Icon(Icons.attach_money),
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(10),
+                  //     ),
+                  //   ),
+                  //   keyboardType: TextInputType.number,
+                  //   onChanged: (value) {
+                  //     _isPriceManuallyEdited = value.isNotEmpty;
+                  //     _updateAllExtraPrices();
+                  //     setState(() {}); // refresh totaux
+                  //   },
+                  //   validator: (value) {
+                  //     if ((value == null || value.isEmpty) &&
+                  //         _selectedRoom?.category.target != null) {
+                  //       return null; // prix auto utilisé
+                  //     }
+                  //     if (value == null || value.isEmpty) return 'Prix requis';
+                  //     if (double.tryParse(value) == null)
+                  //       return 'Prix invalide';
+                  //     return null;
+                  //   },
+                  // ),
 
                   const SizedBox(height: 8),
 
                   // Champs supplémentaires (prix amélioré)
-                  _buildPriceFieldImproved(),
-
+                  // _buildPriceFieldImproved(),
+                  _buildPriceSection(),
+                  const SizedBox(height: 32),
                   // Affichage du prix effectif avec saison
-                  if (_selectedSeasonalPricing != null &&
-                      _seasonalMultiplier != 1.0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 12),
-                      child: Text(
-                        'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)} DA/nuit',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue[700],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                  // if (_selectedSeasonalPricing != null &&
+                  //     _seasonalMultiplier != 1.0)
+                  //   Padding(
+                  //     padding: const EdgeInsets.only(top: 6, bottom: 12),
+                  //     child: Text(
+                  //       'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)} DA/nuit',
+                  //       style: TextStyle(
+                  //         fontSize: 13,
+                  //         color: Colors.blue[700],
+                  //         fontWeight: FontWeight.w600,
+                  //       ),
+                  //     ),
+                  //   ),
 
                   // Dropdown Statut
                   DropdownButtonFormField<String>(
@@ -3533,9 +3523,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           children: [
             Row(
               children: [
-                Text('Services supp',
+                Text('Services supplémentaires',
                     style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                 Spacer(),
                 IconButton(
                   onPressed: _showExtraServicesDialog,
@@ -3600,25 +3590,26 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           }
                         },
                         title: Text(extra.extraService.name),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        subtitle: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // Text(extra.extraService.description),
                             // SizedBox(height: 4),
                             Text(
-                              'Quantité: ${extra.quantity} | Prix unitaire: ${extra.unitPrice} DA',
-                              style: TextStyle(fontSize: 12),
+                              'Qtt: ${extra.quantity} | PU: ${extra.unitPrice} = ',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                            Text(
+                              '${extra.totalPrice.toStringAsFixed(2)} DA',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
                             ),
                           ],
                         ),
-                        trailing: Text(
-                          '${extra.totalPrice.toStringAsFixed(2)} DA',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).primaryColor,
-                          ),
-                        ),
+
                         //     Row(
                         //   mainAxisSize: MainAxisSize.min,
                         //   children: [
@@ -3684,28 +3675,34 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
 // 3. CORRECTION: Améliorer le champ prix avec prix automatique
   Widget _buildPriceFieldImproved() {
+    final String aug = _seasonalMultiplier > 0 ? 'Augmente de ' : 'Diminue de ';
+    final String sign = _seasonalMultiplier > 0 ? '+' : '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Affichage du prix de base de la chambre
         if (_selectedRoom?.category.target != null) ...[
-          Padding(
-            padding: EdgeInsets.only(bottom: 4),
-            child: Text(
-              'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuit',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          FittedBox(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: Text(
+                'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} DA/nuitée',
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              ),
             ),
           ),
           // Affichage du prix avec saison si applicable
           if (_selectedSeasonalPricing != null && _seasonalMultiplier != 1.0)
-            Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: Text(
-                'Prix avec saison (x${_seasonalMultiplier.toStringAsFixed(2)}): ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA/nuit',
-                style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.blue[600],
-                    fontWeight: FontWeight.bold),
+            FittedBox(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Text(
+                  'Prix de saison (${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%): ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA/nuitée',
+                  style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blue[600],
+                      fontWeight: FontWeight.bold),
+                ),
               ),
             ),
         ],
@@ -3865,8 +3862,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
   }
 
-  Widget _buildDateField(
-      String label, DateTime? date, Function(DateTime) onDateSelected) {
+  Widget _buildDateField(icon, String label, DateTime? date,
+      Function(DateTime) onDateSelected, bool departarrive) {
     return InkWell(
       onTap: () async {
         final selectedDate = await showDatePicker(
@@ -3896,8 +3893,32 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              // Text(label,
+              //     style: TextStyle(
+              //         fontSize: 16,
+              //         color:
+              //             departarrive ? Colors.green[600] : Colors.red[600])),
+              RichText(
+                text: TextSpan(
+                  style: TextStyle(
+                      color: departarrive ? Colors.green[600] : Colors.red[600],
+                      fontSize: 16),
+                  children: [
+                    WidgetSpan(
+                      child: Icon(
+                        icon,
+                        size: 16,
+                        color:
+                            departarrive ? Colors.green[600] : Colors.red[600],
+                      ),
+                      alignment: PlaceholderAlignment.middle,
+                    ),
+                    TextSpan(
+                        text: label, style: TextStyle(fontFamily: 'oswald')),
+                  ],
+                ),
+              ),
+
               SizedBox(height: 4),
               Text(
                 date != null ? _formatDate(date) : 'Sélectionner',
