@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../objectbox.g.dart';
 import '../../../Entity.dart';
@@ -174,6 +173,7 @@ class HotelProvider with ChangeNotifier {
     _reservationExtraBox = _objectBox.store.box<ReservationExtra>();
   }
 
+// Remplacer aussi votre méthode _initialize() par ceci :
   Future<void> _initialize() async {
     _isLoading = true;
     notifyListeners();
@@ -182,9 +182,14 @@ class HotelProvider with ChangeNotifier {
       await _loadAllData();
       _checkFirstLaunch();
 
+      // Sélectionner automatiquement l'hôtel courant (premier hôtel s'il existe)
+      if (_hotels.isNotEmpty && _currentHotel == null) {
+        _currentHotel = _hotels.first;
+      }
+
       if (_currentHotel != null) {
-        _selectedSeasonalPricing =
-            _currentHotel!.selectedSeasonalPricing.target;
+        // Initialiser la tarification saisonnière pour cet hôtel
+        await autoSelectSeasonalPricing(_currentHotel!);
       }
     } catch (e) {
       debugPrint('Erreur lors de l\'initialisation: $e');
@@ -229,6 +234,104 @@ class HotelProvider with ChangeNotifier {
   /// Retourne la liste des tarifs saisonniers actifs
   List<SeasonalPricing> getSeasonalPricings() {
     return _seasonalPricing.where((sp) => sp.isActive).toList();
+  }
+
+  /// Force la re-sélection automatique de la tarification saisonnière
+  Future<void> refreshSeasonalPricing() async {
+    if (_currentHotel != null) {
+      // Réinitialiser la sélection pour forcer une nouvelle évaluation
+      _currentHotel!.selectedSeasonalPricing.target = null;
+      _hotelBox.put(_currentHotel!);
+
+      // Nouvelle sélection automatique
+      final SeasonalPricing? selected =
+          await autoSelectSeasonalPricing(_currentHotel!);
+
+      _selectedSeasonalPricing = selected;
+      notifyListeners();
+    }
+  }
+
+  Future<int> addSeasonalPricing(SeasonalPricing pricing) async {
+    try {
+      final id = _seasonalPricingBox.put(pricing);
+      await _loadAllData();
+      notifyListeners();
+      return id;
+    } catch (e) {
+      debugPrint("Erreur lors de l'ajout du SeasonalPricing: $e");
+      rethrow;
+    }
+  }
+
+  Future<bool> updateSeasonalPricing(SeasonalPricing pricing) async {
+    try {
+      _seasonalPricingBox.put(pricing, mode: PutMode.update);
+      await _loadAllData();
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint("Erreur lors de la mise à jour du SeasonalPricing: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteSeasonalPricing(int id) async {
+    try {
+      final success = _seasonalPricingBox.remove(id);
+      if (success) {
+        await _loadAllData();
+        notifyListeners();
+      }
+      return success;
+    } catch (e) {
+      debugPrint("Erreur lors de la suppression du SeasonalPricing: $e");
+      return false;
+    }
+  }
+
+  void setSeasonalPricings(List<SeasonalPricing> list) {
+    _seasonalPricing = list;
+    notifyListeners();
+  }
+
+  Future<void> setSelectedSeasonalPricing(
+    Hotel hotel,
+    SeasonalPricing newValue, {
+    bool autoSave = true,
+  }) async {
+    hotel.selectedSeasonalPricing.target = newValue;
+    _hotelBox.put(hotel);
+    _selectedSeasonalPricing = newValue;
+
+    // Pas besoin d'une fonction externe
+    // la sauvegarde est déjà faite via _hotelBox.put(hotel);
+
+    notifyListeners();
+  }
+
+  Future<SeasonalPricing?> autoSelectSeasonalPricing(Hotel hotel) async {
+    // Si un tarif saisonnier est déjà sélectionné
+    if (hotel.selectedSeasonalPricing.target != null) {
+      _selectedSeasonalPricing = hotel.selectedSeasonalPricing.target;
+      return _selectedSeasonalPricing;
+    }
+
+    final now = DateTime.now();
+
+    // Chercher un tarif actif correspondant à la date du jour
+    final SeasonalPricing? matching = _seasonalPricing
+        .where((sp) => sp.isActive && sp.isDateInSeason(now))
+        .firstOrNull;
+
+    if (matching != null) {
+      setSelectedSeasonalPricing(hotel, matching);
+      return matching;
+    }
+
+    // Aucun tarif trouvé → on retourne null
+    _selectedSeasonalPricing = null;
+    return null;
   }
 
   /// Vérifie si une chambre est disponible pour une période donnée
@@ -1329,114 +1432,6 @@ class HotelProvider with ChangeNotifier {
   /// Retourne la liste des ExtraServices
   List<ExtraService> getExtraServicesList() {
     return _extraServices.where((es) => es.isActive).toList();
-  }
-
-  Future<int> addSeasonalPricing(SeasonalPricing pricing) async {
-    try {
-      final id = _seasonalPricingBox.put(pricing);
-      await _loadAllData();
-      notifyListeners();
-      return id;
-    } catch (e) {
-      debugPrint("Erreur lors de l'ajout du SeasonalPricing: $e");
-      rethrow;
-    }
-  }
-
-  Future<bool> updateSeasonalPricing(SeasonalPricing pricing) async {
-    try {
-      _seasonalPricingBox.put(pricing, mode: PutMode.update);
-      await _loadAllData();
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint("Erreur lors de la mise à jour du SeasonalPricing: $e");
-      return false;
-    }
-  }
-
-  Future<bool> deleteSeasonalPricing(int id) async {
-    try {
-      final success = _seasonalPricingBox.remove(id);
-      if (success) {
-        await _loadAllData();
-        notifyListeners();
-      }
-      return success;
-    } catch (e) {
-      debugPrint("Erreur lors de la suppression du SeasonalPricing: $e");
-      return false;
-    }
-  }
-
-  // Future<List<SeasonalPricing>> getSeasonalPricing() async {
-  //   try {
-  //     return _seasonalPricingBox.getAll();
-  //   } catch (e) {
-  //     debugPrint("Erreur lors de la récupération des SeasonalPricing: $e");
-  //     return [];
-  //   }
-  // }
-
-  void setSeasonalPricings(List<SeasonalPricing> list) {
-    _seasonalPricing = list;
-    notifyListeners();
-  }
-
-  void setSelectedSeasonalPricing(Hotel hotel, SeasonalPricing? pricing) {
-    hotel.selectedSeasonalPricing.target = pricing;
-    _hotelBox.put(hotel);
-
-    _selectedSeasonalPricing = pricing;
-
-    notifyListeners();
-  }
-
-  Future<void> saveSelectedSeasonalPricingId(int? id) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (id == null) {
-      await prefs.remove('selectedSeasonalPricingId');
-    } else {
-      await prefs.setInt(
-          'selectedSeasonalPricingId', id); // 🔥 setInt au lieu de setString
-    }
-  }
-
-  Future<void> loadSelectedSeasonalPricing() async {
-    final prefs = await SharedPreferences.getInstance();
-    int? id;
-
-    try {
-      id = prefs.getInt('selectedSeasonalPricingId');
-    } catch (e) {
-      debugPrint("⚠️ Clé corrompue dans SharedPreferences: $e");
-      await prefs.remove('selectedSeasonalPricingId');
-      id = null;
-    }
-
-    if (id != null && _seasonalPricingBox.contains(id)) {
-      _selectedSeasonalPricing = _seasonalPricingBox.get(id);
-    } else {
-      _selectedSeasonalPricing = null;
-      await prefs.remove('selectedSeasonalPricingId');
-    }
-
-    notifyListeners();
-  }
-
-  Future<void> autoSelectSeasonalPricing(Hotel hotel) async {
-    final now = DateTime.now();
-
-    final matching = _seasonalPricing.cast<SeasonalPricing?>().firstWhere(
-          (sp) =>
-              sp != null &&
-              sp.isActive &&
-              now.isAfter(sp.startDate) &&
-              now.isBefore(sp.endDate),
-          orElse: () => null,
-        );
-
-    setSelectedSeasonalPricing(hotel, matching);
   }
 }
 

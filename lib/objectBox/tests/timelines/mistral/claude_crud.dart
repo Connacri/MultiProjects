@@ -2142,7 +2142,7 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
+            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
             child: Column(
               children: [
                 currentHotel == null
@@ -2158,16 +2158,7 @@ class AppDrawer extends StatelessWidget {
                     ? SizedBox.shrink()
                     : Row(
                         children: [
-                          // Icône hôtel stylisée
-                          CircleAvatar(
-                            backgroundColor: Colors.deepPurple.withOpacity(0.1),
-                            radius: 24,
-                            child: Icon(Icons.hotel_rounded,
-                                color: Theme.of(context).secondaryHeaderColor,
-                                size: 28),
-                          ),
-
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 20),
 
                           // Infos texte
                           Expanded(
@@ -2177,14 +2168,14 @@ class AppDrawer extends StatelessWidget {
                                 Row(
                                   children: [
                                     Icon(Icons.meeting_room_rounded,
-                                        size: 18,
+                                        size: 14,
                                         color: Theme.of(context)
                                             .secondaryHeaderColor),
                                     const SizedBox(width: 4),
                                     Text(
                                       "${currentHotel!.rooms.length} chambres",
                                       style: TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 12,
                                         color: Theme.of(context)
                                             .secondaryHeaderColor,
                                       ),
@@ -2192,7 +2183,7 @@ class AppDrawer extends StatelessWidget {
                                     const SizedBox(width: 16),
                                     Icon(
                                       Icons.layers_rounded,
-                                      size: 18,
+                                      size: 14,
                                       color: Theme.of(context)
                                           .secondaryHeaderColor,
                                     ),
@@ -2200,7 +2191,7 @@ class AppDrawer extends StatelessWidget {
                                     Text(
                                       "${currentHotel!.floors} étages",
                                       style: TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 12,
                                           color: Theme.of(context)
                                               .secondaryHeaderColor),
                                     ),
@@ -2211,6 +2202,7 @@ class AppDrawer extends StatelessWidget {
                           ),
                         ],
                       ),
+                Spacer(),
                 SeasonalPricingDropdown(),
               ],
             ),

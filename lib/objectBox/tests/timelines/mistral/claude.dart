@@ -446,14 +446,14 @@ class HotelManagementState extends State<Hotel_Management> {
         // const SizedBox(width: 8),
         // // Menu vue calendrier
 
-        IconButton(
-          icon: const Icon(Icons.auto_awesome),
-          onPressed: () async {
-            final provider = Provider.of<HotelProvider>(context, listen: false);
-            await provider.autoSelectSeasonalPricing(_currentHotel!);
-          },
-          tooltip: "Sélectionner la saison actuelle",
-        ),
+        // IconButton(
+        //   icon: const Icon(Icons.auto_awesome),
+        //   onPressed: () async {
+        //     final provider = Provider.of<HotelProvider>(context, listen: false);
+        //     await provider.autoSelectSeasonalPricing(_currentHotel!);
+        //   },
+        //   tooltip: "Sélectionner la saison actuelle",
+        // ),
 
         PopupMenuButton<VoidCallback>(
           tooltip: "Actions rapides",
@@ -1010,83 +1010,6 @@ class HotelManagementState extends State<Hotel_Management> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildRoomStatusLegend() {
-    final legendItems = [
-      {
-        "color": Colors.white,
-        "label": "Libre",
-        "icon": Icons.bed_outlined,
-        "iconColor": Colors.grey.shade600,
-      },
-      {
-        "color": Colors.green.shade100,
-        "label": "Occupée",
-        "icon": Icons.bed_rounded,
-        "iconColor": Colors.green.shade700,
-      },
-      {
-        "color": Colors.blue.shade100,
-        "label": "En attente",
-        "icon": Icons.schedule_rounded,
-        "iconColor": Colors.blue.shade700,
-      },
-    ];
-
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 16,
-        runSpacing: 8,
-        children: legendItems.map((item) {
-          return _buildLegendItem(
-            item["color"] as Color,
-            item["label"] as String,
-            item["icon"] as IconData,
-            item["iconColor"] as Color,
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildLegendItem(
-      Color bgColor, String label, IconData icon, Color iconColor) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: iconColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: iconColor.withOpacity(0.15),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -1671,7 +1594,7 @@ class HotelManagementState extends State<Hotel_Management> {
           borderRadius: BorderRadius.circular(20),
         ),
         child: SizedBox(
-          width: 350,
+          width: 400,
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1700,21 +1623,25 @@ class HotelManagementState extends State<Hotel_Management> {
                     children: [
                       // En-tête avec le nom du client et de la chambre
                       _buildHeaderSection(
+                        reservation,
                         reservation.guests.map((g) => g.fullName).join(", "),
                         roomCode, // ✅ Correction : on passe le code de la chambre
                       ),
-                      const SizedBox(height: 16),
 
-                      // Timeline du séjour
+                      const SizedBox(height: 16),
+                      ReservationCard(
+                        reservation: reservation,
+                      ),
+
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28.0, vertical: 18),
                         child: _buildReservationTimeline(
                           reservation.from,
                           reservation.to,
                           nights,
                         ),
                       ),
-                      const SizedBox(height: 16),
 
                       // Détails tarifaires
                       _buildPricingSection(
@@ -1786,7 +1713,8 @@ class HotelManagementState extends State<Hotel_Management> {
   }
 
 // Section pour l'en-tête (client et chambre)
-  Widget _buildHeaderSection(String clientName, String roomName) {
+  Widget _buildHeaderSection(
+      Reservation reservation, String clientName, String roomName) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -1797,8 +1725,61 @@ class HotelManagementState extends State<Hotel_Management> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDetailRow('Client', clientName, isHeader: true),
-            SizedBox(height: 8),
+            _buildDetailRow(
+                'Réception', reservation.receptionist.target!.fullName,
+                isHeader: true),
+            Row(
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: Text(
+                    'Client:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(reservation.guests.length, (index) {
+                    final guest = reservation.guests[index];
+
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InputChip(
+                          avatar: CircleAvatar(
+                            backgroundColor: Colors.blue.shade100,
+                            child: Text(
+                              guest.fullName.substring(0, 1).toUpperCase(),
+                              style: const TextStyle(
+                                  color: Colors.black, fontSize: 12),
+                            ),
+                          ),
+                          label: Text(
+                            guest.fullName.capitalize,
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          backgroundColor: Colors.deepPurpleAccent,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ClientDetailPage(guest: guest),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    );
+                  }),
+                ),
+              ],
+            ),
             _buildDetailRow('Chambre', roomName, isHeader: true),
           ],
         ),
@@ -1845,7 +1826,7 @@ class HotelManagementState extends State<Hotel_Management> {
     IconData statusIcon;
 
     switch (status.toLowerCase()) {
-      case 'confirmé':
+      case 'confirmée':
         statusColor = Colors.green;
         statusIcon = Icons.check_circle_rounded;
         break;
@@ -1862,22 +1843,26 @@ class HotelManagementState extends State<Hotel_Management> {
         statusIcon = Icons.help_outline_rounded;
     }
 
-    return Row(
-      children: [
-        Icon(statusIcon, color: statusColor),
-        SizedBox(width: 8),
-        Text(
-          'Statut: ',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        Text(
-          status,
-          style: TextStyle(
-            color: statusColor,
-            fontWeight: FontWeight.w600,
+    return Center(
+      child: Row(
+        children: [
+          Icon(statusIcon, color: statusColor),
+          SizedBox(width: 8),
+          Text(
+            'Statut: ',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-        ),
-      ],
+          Chip(
+            backgroundColor: statusColor,
+            label: Text(
+              status,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1887,7 +1872,7 @@ class HotelManagementState extends State<Hotel_Management> {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (icon != null)
             Padding(
@@ -1924,12 +1909,23 @@ class HotelManagementState extends State<Hotel_Management> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Durée du séjour $nights Nuitées",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+        Center(
+          child: CircleAvatar(
+            backgroundColor: Colors.black87,
+            child: Text(
+              '$nights',
+              style: TextStyle(color: Colors.white60, fontSize: 20),
+            ),
+          ),
+        ),
+        Center(
+          child: Text(
+            "Durée du séjour $nights Nuitées",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).primaryColor,
+            ),
           ),
         ),
         SizedBox(height: 12),
@@ -1938,7 +1934,7 @@ class HotelManagementState extends State<Hotel_Management> {
             // Check-in
             Column(
               children: [
-                Icon(Icons.login_rounded,
+                Icon(FontAwesomeIcons.planeArrival,
                     color: Colors.green.shade700, size: 28),
                 SizedBox(height: 6),
                 Text(
@@ -1962,7 +1958,7 @@ class HotelManagementState extends State<Hotel_Management> {
             // Check-out
             Column(
               children: [
-                Icon(Icons.logout_rounded,
+                Icon(FontAwesomeIcons.planeDeparture,
                     color: Colors.red.shade700, size: 28),
                 SizedBox(height: 6),
                 Text(
@@ -2380,7 +2376,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   ];
 
   List<SeasonalPricing> _seasonalPricings = [];
-  double _seasonalMultiplier = 1.0;
+  late double _seasonalMultiplier;
 
 // Ajouter après les contrôleurs existants
   final _discountPercentController = TextEditingController();
@@ -2397,44 +2393,74 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   @override
   void initState() {
     super.initState();
-    _seasonalPricings = widget.seasonalPricings;
-    _preselectSeasonalByToday();
 
+    // Valeur par défaut sûre
+    _seasonalMultiplier = 1.0;
+
+    final provider = Provider.of<HotelProvider>(context, listen: false);
+
+    // 1) Affecter la liste des tarifs saisonniers AVANT toute sélection
+    _seasonalPricings = widget.seasonalPricings ?? [];
+
+    // 2) Pré-sélectionner : prioriser le choix global du provider si présent
+    final activeSeason = provider.selectedSeasonalPricing;
+    if (activeSeason != null) {
+      _selectedSeasonalPricing = activeSeason;
+      _seasonalMultiplier = activeSeason.multiplier;
+    } else {
+      _preselectSeasonalByToday();
+    }
+
+    // Initialisation spécifique EDIT / NEW
     if (widget.isEditing && widget.existingReservation != null) {
       _initializeForEdit();
     } else {
       _initializeForNew();
     }
 
-    // Calculer le multiplicateur saisonnier dès l'initialisation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_fromDate != null && _toDate != null) {
-        setState(() {
-          _seasonalMultiplier =
-              _calculateSeasonalMultiplier(_fromDate!, _toDate!);
-          _updateRoomPrice(); // Nouveau: mettre à jour le prix de la chambre
-        });
-      }
-    });
-    _priceController = TextEditingController();
-    // Initialiser le prix uniquement si nécessaire
-    if (widget.isEditing && widget.existingReservation != null) {
-      _priceController.text =
-          widget.existingReservation!.pricePerNight.toString();
-    } else if (_selectedRoom != null) {
-      _updateRoomPrice(); // Calculer le prix initial
-    }
-    // Ajouter dans initState() après l'initialisation des autres contrôleurs
-    _discountPercentController.text = "0";
-    _discountAmountController.text = "0";
+    // Créer _priceController une seule fois et avec texte initial éventuel
+    _priceController = TextEditingController(
+      text: widget.isEditing && widget.existingReservation != null
+          ? widget.existingReservation!.pricePerNight.toString()
+          : (_selectedRoom != null ? '' : ''),
+    );
 
-    if (widget.isEditing && widget.existingReservation != null) {
-      // Après l'initialisation du prix
-      _discountPercent = widget.existingReservation!.discountPercent;
-      _discountAmount = widget.existingReservation!.discountAmount;
-      _discountPercentController.text = _discountPercent.toString();
-      _discountAmountController.text = _discountAmount.toString();
+    _discountPercentController.text = _discountPercent.toString();
+    _discountAmountController.text = _discountAmount.toString();
+    print('_seasonalMultiplier avant');
+    print(_seasonalMultiplier);
+    // Après build, recalculer le multiplicateur sur la plage et mettre à jour le prix
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (_fromDate != null && _toDate != null) {
+    //     _seasonalMultiplier =
+    //         _calculateSeasonalMultiplier(_fromDate!, _toDate!);
+    //     print('_seasonalMultiplier000');
+    //     print(_seasonalMultiplier);
+    //     _updateRoomPrice(); // doit utiliser _seasonalMultiplier ou la fonction per-night
+    //     setState(() {}); // uniquement si UI doit se rafraichir
+    //   }
+    // });
+    // print('_seasonalMultiplier apres');
+    // print(_seasonalMultiplier);
+    debugPrint('initState: seasonalPricings=${_seasonalPricings.length}, '
+        'selectedSeason=${_selectedSeasonalPricing?.id}, multiplier=$_seasonalMultiplier');
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = Provider.of<HotelProvider>(context, listen: true);
+    final active = provider.selectedSeasonalPricing;
+
+    if (active != null && active.id != _selectedSeasonalPricing?.id) {
+      setState(() {
+        _selectedSeasonalPricing = active;
+        _seasonalMultiplier = active.multiplier;
+        _updateRoomPrice();
+      });
     }
+    print('_seasonalMultiplier apres 2');
+    print(_seasonalMultiplier);
   }
 
   void _preselectSeasonalByToday() {
@@ -2521,17 +2547,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         .firstOrNull;
     _selectedBoardBasis = defaultBoardBasis;
   }
-
-  // NOUVEAU: Méthode pour mettre à jour le prix de la chambre
-  // void _updateRoomPrice() {
-  //   if (_isPriceManuallyEdited) return; // Ne pas écraser si édité manuellement
-  //   if (_selectedRoom != null && _selectedRoom!.category.target != null) {
-  //     final basePrice = _selectedRoom!.category.target!.basePrice;
-  //     final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
-  //     final effectivePrice = basePrice * seasonalMultiplier;
-  //     _priceController.text = effectivePrice.toStringAsFixed(2);
-  //   }
-  // }
 
   double _calculateSeasonalMultiplier(DateTime from, DateTime to) {
     if (_seasonalPricings.isEmpty || _selectedRoom == null) return 1.0;
@@ -2696,20 +2711,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                               selectedValue: _selectedSeasonalPricing,
                               customSeasonalPricings: _seasonalPricings,
                               useLocalState: true,
-                              // onChanged: (SeasonalPricing? newValue) {
-                              //   setState(() {
-                              //     _selectedSeasonalPricing = newValue;
-                              //     _seasonalMultiplier =
-                              //         newValue?.multiplier ?? 1.0;
-                              //
-                              //     // Mettre à jour le prix si pas édité manuellement
-                              //     if (!_isPriceManuallyEdited) {
-                              //       _updateRoomPrice();
-                              //     }
-                              //
-                              //     _updateAllExtraPrices();
-                              //   });
-                              // },
+
                               onChanged:
                                   _onSeasonalPricingChanged, // Utiliser le nouveau callback
                             ),
@@ -2752,7 +2754,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   _buildExtraServicesSection(),
                   SizedBox(height: 16),
                   // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
-// Remplacer SeasonalPricingDropdown() par :
+// Remplacer SeasonalPricingDropdown() par
+
                   SeasonalPricingDropdown(
                     selectedValue: _selectedSeasonalPricing,
                     customSeasonalPricings: _seasonalPricings,
@@ -3337,69 +3340,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Prix de base de la chambre
-                  // if (_selectedRoom?.category.target != null)
-                  //   Padding(
-                  //     padding: const EdgeInsets.only(bottom: 8),
-                  //     child: Text(
-                  //       'Prix de base chambre: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)} /nuit',
-                  //       style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-                  //     ),
-                  //   ),
-
-                  // Champ prix par nuit réservation
-                  // TextFormField(
-                  //   controller: _priceController,
-                  //   decoration: InputDecoration(
-                  //     labelText: 'Prix réservation/nuit (DA)',
-                  //     hintText: _selectedRoom?.category.target != null
-                  //         ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)} DA)'
-                  //         : 'Entrer le prix',
-                  //     prefixIcon: const Icon(Icons.attach_money),
-                  //     border: OutlineInputBorder(
-                  //       borderRadius: BorderRadius.circular(10),
-                  //     ),
-                  //   ),
-                  //   keyboardType: TextInputType.number,
-                  //   onChanged: (value) {
-                  //     _isPriceManuallyEdited = value.isNotEmpty;
-                  //     _updateAllExtraPrices();
-                  //     setState(() {}); // refresh totaux
-                  //   },
-                  //   validator: (value) {
-                  //     if ((value == null || value.isEmpty) &&
-                  //         _selectedRoom?.category.target != null) {
-                  //       return null; // prix auto utilisé
-                  //     }
-                  //     if (value == null || value.isEmpty) return 'Prix requis';
-                  //     if (double.tryParse(value) == null)
-                  //       return 'Prix invalide';
-                  //     return null;
-                  //   },
-                  // ),
-
                   const SizedBox(height: 8),
-
-                  // Champs supplémentaires (prix amélioré)
-                  // _buildPriceFieldImproved(),
-                  _buildPriceSection(),
+                  _buildPriceFieldImproved(),
                   const SizedBox(height: 32),
-                  // Affichage du prix effectif avec saison
-                  // if (_selectedSeasonalPricing != null &&
-                  //     _seasonalMultiplier != 1.0)
-                  //   Padding(
-                  //     padding: const EdgeInsets.only(top: 6, bottom: 12),
-                  //     child: Text(
-                  //       'Prix avec saison (x${_seasonalMultiplier}): ${_getEffectiveRoomPrice().toStringAsFixed(2)}/nuitée',
-                  //       style: TextStyle(
-                  //         fontSize: 13,
-                  //         color: Colors.blue[700],
-                  //         fontWeight: FontWeight.w600,
-                  //       ),
-                  //     ),
-                  //   ),
-
-                  // Dropdown Statut
                   DropdownButtonFormField<String>(
                     isDense: true,
                     isExpanded: true,
@@ -4044,71 +3987,74 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
 // 3. CORRECTION: Améliorer le champ prix avec prix automatique
   Widget _buildPriceFieldImproved() {
-    final String aug = _seasonalMultiplier > 0 ? 'Augmente de ' : 'Diminue de ';
-    final String sign = _seasonalMultiplier > 0 ? '+' : '';
+    print(_seasonalMultiplier);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Affichage du prix de base de la chambre
         if (_selectedRoom?.category.target != null) ...[
-          FittedBox(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 4),
-              child: Text(
-                'Prix de base: ${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)}/nuitée',
-                style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w400),
-              ),
-            ),
+          // FittedBox(
+          //   child: Padding(
+          //     padding: EdgeInsets.only(bottom: 4),
+          //     child: Text(
+          //       'Prix de base:\n${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)}/nuitée',
+          //       style: TextStyle(
+          //           fontSize: 16,
+          //           color: Colors.grey[600],
+          //           fontWeight: FontWeight.w400),
+          //     ),
+          //   ),
+          // ),
+          // // Affichage du prix avec saison si applicable
+          // // if (_selectedSeasonalPricing != null && _seasonalMultiplier != 1.0)
+          // FittedBox(
+          //   child: Padding(
+          //     padding: EdgeInsets.only(bottom: 16),
+          //     child: Text(
+          //       'Prix de saison (${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%):\n${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)}/nuitée',
+          //       style: TextStyle(
+          //           fontSize: 16,
+          //           color: Colors.blue[600],
+          //           fontWeight: FontWeight.w400),
+          //     ),
+          //   ),
+          // ),
+          PriceCard(
+            basePrice: _selectedRoom!.category.target!.basePrice,
+            seasonalMultiplier: _seasonalMultiplier,
           ),
-          // Affichage du prix avec saison si applicable
-          if (_selectedSeasonalPricing != null && _seasonalMultiplier != 1.0)
-            FittedBox(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Prix de saison (${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%): ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)}/nuitée',
-                  style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.blue[600],
-                      fontWeight: FontWeight.w400),
-                ),
-              ),
-            ),
         ],
 
         // Champ de saisie du prix
-        TextFormField(
-          controller: _priceController,
-          decoration: InputDecoration(
-            labelText: 'Prix réservation/nuit (DA)',
-            hintText: _selectedRoom?.category.target != null
-                ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)})'
-                : 'Entrer le prix',
-            prefixIcon: Icon(Icons.attach_money),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            helperText: 'Laissez vide pour utiliser le prix automatique',
-          ),
-          keyboardType: TextInputType.number,
-          onChanged: (value) {
-            setState(() {
-              _isPriceManuallyEdited = value.isNotEmpty;
-              _updateAllExtraPrices();
-            });
-          },
-          validator: (value) {
-            // Permettre vide si on a une chambre sélectionnée (prix auto)
-            if ((value == null || value.isEmpty) &&
-                _selectedRoom?.category.target != null) {
-              return null;
-            }
-            if (value == null || value.isEmpty) return 'Prix requis';
-            if (double.tryParse(value) == null) return 'Prix invalide';
-            return null;
-          },
-        ),
+        // TextFormField(
+        //   controller: _priceController,
+        //   decoration: InputDecoration(
+        //     labelText: 'Prix réservation/nuit (DA)',
+        //     hintText: _selectedRoom?.category.target != null
+        //         ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)})'
+        //         : 'Entrer le prix',
+        //     prefixIcon: Icon(Icons.attach_money),
+        //     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        //     helperText: 'Laissez vide pour utiliser le prix automatique',
+        //   ),
+        //   keyboardType: TextInputType.number,
+        //   onChanged: (value) {
+        //     setState(() {
+        //       _isPriceManuallyEdited = value.isNotEmpty;
+        //       _updateAllExtraPrices();
+        //     });
+        //   },
+        //   validator: (value) {
+        //     // Permettre vide si on a une chambre sélectionnée (prix auto)
+        //     if ((value == null || value.isEmpty) &&
+        //         _selectedRoom?.category.target != null) {
+        //       return null;
+        //     }
+        //     if (value == null || value.isEmpty) return 'Prix requis';
+        //     if (double.tryParse(value) == null) return 'Prix invalide';
+        //     return null;
+        //   },
+        // ),
       ],
     );
   }
@@ -4151,7 +4097,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     if (_selectedRoom != null && _selectedRoom!.category.target != null) {
       final basePrice = _selectedRoom!.category.target!.basePrice;
       // NE PAS appliquer le multiplicateur ici car il sera appliqué dans _getEffectiveRoomPrice
-      _priceController.text = basePrice.toStringAsFixed(2);
+      // _priceController.text =
+      //     (basePrice * _seasonalMultiplier).toStringAsFixed(2);
+      basePrice.toStringAsFixed(2);
     }
   }
 
@@ -4261,8 +4209,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           // Recalculer le multiplicateur saisonnier
           if (_fromDate != null && _toDate != null) {
             setState(() {
-              _seasonalMultiplier =
-                  _calculateSeasonalMultiplier(_fromDate!, _toDate!);
+              // _seasonalMultiplier =
+              //     _calculateSeasonalMultiplier(_fromDate!, _toDate!);
             });
           }
         }
@@ -4457,254 +4405,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSeasonalPricingSection23() {
-    // Liste à afficher selon le contexte
-    final List<SeasonalPricing> toShow = _fromDate == null || _toDate == null
-        ? _seasonalPricings.where((s) => s.isActive).toList()
-        : _seasonalPricings.where((s) {
-            if (!s.isActive) return false;
-            for (DateTime d = _fromDate!;
-                d.isBefore(_toDate!.add(const Duration(days: 1)));
-                d = d.add(const Duration(days: 1))) {
-              if (s.isDateInSeason(d)) return true;
-            }
-            return false;
-          }).toList();
-
-    if (toShow.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            _fromDate == null || _toDate == null
-                ? 'Aucun tarif saisonnier disponible'
-                : 'Aucun tarif saisonnier applicable pour ces dates',
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Tarifs saisonniers',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            ...toShow.map((seasonal) {
-              final isSelected = _selectedSeasonalPricing?.id == seasonal.id;
-              return InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedSeasonalPricing = isSelected ? null : seasonal;
-                    _seasonalMultiplier =
-                        _selectedSeasonalPricing?.multiplier ?? 1.0;
-                  });
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 8),
-                  decoration: BoxDecoration(
-                    color:
-                        isSelected ? Colors.green.shade50 : Colors.grey.shade50,
-                    border: Border.all(
-                      color: isSelected ? Colors.green : Colors.grey.shade300,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isSelected
-                            ? Icons.radio_button_on
-                            : Icons.radio_button_off,
-                        color: isSelected ? Colors.green : Colors.grey,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              seasonal.name,
-                              style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                            Text(
-                              '${_formatDate(seasonal.startDate)} – ${_formatDate(seasonal.endDate)}',
-                              style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        '× ${seasonal.multiplier}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.green : Colors.deepPurple,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSeasonalPricingSection24() {
-    return Column(
-      children: _seasonalPricings.map((seasonal) {
-        final isSelected = _selectedSeasonalPricing?.id == seasonal.id;
-        return InkWell(
-          onTap: () {
-            setState(() {
-              _selectedSeasonalPricing = isSelected ? null : seasonal;
-              _seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
-            });
-          },
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 4),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: isSelected ? Colors.green.shade50 : Colors.grey.shade50,
-              border: Border.all(
-                color: isSelected ? Colors.green : Colors.grey.shade300,
-                width: isSelected ? 2 : 1,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  isSelected ? Icons.radio_button_on : Icons.radio_button_off,
-                  color: isSelected ? Colors.green : Colors.grey,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(seasonal.name,
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          )),
-                      Text(
-                        '${_formatDate(seasonal.startDate)} – ${_formatDate(seasonal.endDate)}',
-                        style:
-                            const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  '× ${seasonal.multiplier}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.green : Colors.deepPurple,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildSeasonalPricingSection2() {
-    // Filtrage (garde ta logique actuelle)
-    final toShow = _fromDate == null || _toDate == null
-        ? _seasonalPricings.where((s) => s.isActive).toList()
-        : _seasonalPricings.where((s) {
-            if (!s.isActive) return false;
-            for (DateTime d = _fromDate!;
-                d.isBefore(_toDate!.add(const Duration(days: 1)));
-                d = d.add(const Duration(days: 1))) {
-              if (s.isDateInSeason(d)) return true;
-            }
-            return false;
-          }).toList();
-
-    if (toShow.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            _fromDate == null || _toDate == null
-                ? 'Aucun tarif saisonnier disponible'
-                : 'Aucun tarif saisonnier applicable pour ces dates',
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ),
-      );
-    }
-
-    // Garantit que la valeur est dans la liste des items
-    final currentValue = (_selectedSeasonalPricing != null &&
-            toShow.any((s) => s.id == _selectedSeasonalPricing!.id))
-        ? _selectedSeasonalPricing
-        : toShow.first; // fallback sûr
-
-    return DropdownButtonFormField<SeasonalPricing>(
-      isExpanded: true,
-      value: currentValue,
-      decoration: InputDecoration(
-        labelText: 'Tarif saisonnier',
-        prefixIcon: const Icon(Icons.event),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      items: toShow.map((seasonal) {
-        return DropdownMenuItem<SeasonalPricing>(
-          value: seasonal,
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(seasonal.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(
-                      '${_formatDate(seasonal.startDate)} – ${_formatDate(seasonal.endDate)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              Text('× ${seasonal.multiplier}',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-            ],
-          ),
-        );
-      }).toList(),
-      onChanged: (SeasonalPricing? newValue) {
-        setState(() {
-          _selectedSeasonalPricing = newValue;
-          _seasonalMultiplier = newValue?.multiplier ?? 1.0;
-          _updateRoomPrice(); // Recalculer le prix
-        });
-      },
     );
   }
 
@@ -5352,11 +5052,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
   }
 
-// 8. CORRECTION: Remplacer dans _buildBasicInfoSection le champ prix par:
-  Widget _buildPriceSection() {
-    return _buildPriceFieldImproved();
-  }
-
 // 9. CORRECTION: Mise à jour automatique lors du changement de réduction
   void _onDiscountChanged() {
     setState(() {
@@ -5753,160 +5448,86 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   }
 }
 
-class SeasonalPricingDropdown extends StatelessWidget {
-  final SeasonalPricing? selectedValue;
-  final Function(SeasonalPricing?)? onChanged;
-  final List<SeasonalPricing>? customSeasonalPricings;
-  final bool useLocalState;
-
-  const SeasonalPricingDropdown({
-    super.key,
-    this.selectedValue,
-    this.onChanged,
-    this.customSeasonalPricings,
-    this.useLocalState = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<HotelProvider>(
-      builder: (_, provider, __) {
-        final list = provider.seasonalPricing;
-        final selected = provider.selectedSeasonalPricing;
-
-        // 1. Élimine les doublons de la liste
-        final unique = <int, SeasonalPricing>{};
-        for (final sp in list) {
-          unique.putIfAbsent(sp.id, () => sp);
-        }
-        final uniqueList = unique.values.toList();
-
-        // 2. Cherche la bonne instance dans la liste unique
-        // C'est la correction clé. Au lieu de simplement vérifier si l'ID existe,
-        // nous trouvons l'objet réel dans `uniqueList` qui correspond à l'ID de `selected`.
-        // Cela garantit que l'objet passé à `value` est une instance qui existe dans `items`.
-        SeasonalPricing? validValue;
-        if (selected != null) {
-          try {
-            validValue =
-                uniqueList.firstWhere((item) => item.id == selected.id);
-          } catch (e) {
-            // Si l'élément sélectionné n'est plus dans la liste (par exemple, après un filtre),
-            // la valeur doit être nulle pour éviter une erreur.
-            validValue = null;
-          }
-        }
-
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: DropdownButtonFormField<SeasonalPricing>(
-            // Utilise l'instance trouvée dans la liste unique
-            value: validValue,
-            isExpanded: true,
-            decoration: InputDecoration(
-              labelText: 'Tarif saisonnier',
-              prefixIcon: const Icon(Icons.calendar_today),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            items: uniqueList
-                .map((sp) => DropdownMenuItem(
-                      value: sp,
-                      child: Text('${sp.name} - ${sp.multiplier}x'),
-                    ))
-                .toList(),
-            // onChanged: (v) =>
-            //     provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
-            onChanged: (SeasonalPricing? v) {
-              if (onChanged != null) {
-                // Utiliser le callback personnalisé
-                onChanged!(v);
-              } else {
-                // Comportement par défaut
-                provider.setSelectedSeasonalPricing(provider.currentHotel!, v);
-              }
-            },
-          ),
-        );
-      },
-    );
-  }
-}
 // class SeasonalPricingDropdown extends StatelessWidget {
-//   const SeasonalPricingDropdown({super.key});
+//   final SeasonalPricing? selectedValue;
+//   final Function(SeasonalPricing?)? onChanged;
+//   final List<SeasonalPricing>? customSeasonalPricings;
+//   final bool useLocalState;
+//
+//   const SeasonalPricingDropdown({
+//     super.key,
+//     this.selectedValue,
+//     this.onChanged,
+//     this.customSeasonalPricings,
+//     this.useLocalState = false,
+//   });
 //
 //   @override
 //   Widget build(BuildContext context) {
-//     return _buildSeasonalPricingDropdown();
-//
-//     // return Consumer<HotelProvider>(
-//     //   builder: (context, provider, child) {
-//     //     final seasonalPricings = provider.seasonalPricing;
-//     //     final selected = provider.selectedSeasonalPricing;
-//     //
-//     //     return DropdownButtonFormField<SeasonalPricing>(
-//     //       value: selected,
-//     //       isExpanded: true,
-//     //       decoration: InputDecoration(
-//     //         labelText: "Tarif saisonnier",
-//     //         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-//     //         prefixIcon: const Icon(Icons.calendar_today),
-//     //       ),
-//     //       items: seasonalPricings.map((sp) {
-//     //         return DropdownMenuItem<SeasonalPricing>(
-//     //           value: sp,
-//     //           child: Text("${sp.name} - ${sp.multiplier}x"),
-//     //         );
-//     //       }).toList(),
-//     //       onChanged: (newValue) {
-//     //         provider.setSelectedSeasonalPricing(newValue);
-//     //       },
-//     //     );
-//     //   },
-//     // );
-//   }
-//
-//   Widget _buildSeasonalPricingDropdown() {
 //     return Consumer<HotelProvider>(
-//       builder: (context, provider, child) {
-//         final seasonalPricings = provider.seasonalPricing;
+//       builder: (_, provider, __) {
+//         final list = provider.seasonalPricing;
 //         final selected = provider.selectedSeasonalPricing;
 //
-//         // 🔥 Élimine les doublons par ID
-//         final uniqueItems = <int, SeasonalPricing>{};
-//         for (final sp in seasonalPricings) {
-//           uniqueItems.putIfAbsent(sp.id, () => sp);
+//         // 1. Élimine les doublons de la liste
+//         final unique = <int, SeasonalPricing>{};
+//         for (final sp in list) {
+//           unique.putIfAbsent(sp.id, () => sp);
 //         }
-//         final uniqueList = uniqueItems.values.toList();
+//         final uniqueList = unique.values.toList();
 //
-//         // 🔥 Vérifie que la valeur est dans la liste
-//         final validValue =
-//             uniqueList.any((e) => e.id == selected?.id) ? selected : null;
+//         // 2. Cherche la bonne instance dans la liste unique
+//         // C'est la correction clé. Au lieu de simplement vérifier si l'ID existe,
+//         // nous trouvons l'objet réel dans `uniqueList` qui correspond à l'ID de `selected`.
+//         // Cela garantit que l'objet passé à `value` est une instance qui existe dans `items`.
+//         SeasonalPricing? validValue;
+//         if (selected != null) {
+//           try {
+//             validValue =
+//                 uniqueList.firstWhere((item) => item.id == selected.id);
+//           } catch (e) {
+//             // Si l'élément sélectionné n'est plus dans la liste (par exemple, après un filtre),
+//             // la valeur doit être nulle pour éviter une erreur.
+//             validValue = null;
+//           }
+//         }
 //
-//         return DropdownButtonFormField<SeasonalPricing>(
-//           value: validValue,
-//           isExpanded: true,
-//           decoration: InputDecoration(
-//             labelText: "Tarif saisonnier",
-//             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-//             prefixIcon: const Icon(Icons.calendar_today),
+//         return Padding(
+//           padding: const EdgeInsets.all(8.0),
+//           child: DropdownButtonFormField<SeasonalPricing>(
+//             // Utilise l'instance trouvée dans la liste unique
+//             value: validValue,
+//             isExpanded: true,
+//             decoration: InputDecoration(
+//               labelText: 'Tarif saisonnier',
+//               prefixIcon: const Icon(Icons.calendar_today),
+//               border:
+//                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+//             ),
+//             items: uniqueList
+//                 .map((sp) => DropdownMenuItem(
+//                       value: sp,
+//                       child: Text('${sp.name} - ${sp.multiplier}x'),
+//                     ))
+//                 .toList(),
+//             // onChanged: (v) =>
+//             //     provider.setSelectedSeasonalPricing(provider.currentHotel!, v),
+//             onChanged: (SeasonalPricing? v) {
+//               if (onChanged != null) {
+//                 // Utiliser le callback personnalisé
+//                 onChanged!(v);
+//               } else {
+//                 // Comportement par défaut
+//                 provider.setSelectedSeasonalPricing(provider.currentHotel!, v);
+//               }
+//             },
 //           ),
-//           items: uniqueList.map((sp) {
-//             return DropdownMenuItem<SeasonalPricing>(
-//               value: sp,
-//               child: Text("${sp.name} - ${sp.multiplier}x"),
-//             );
-//           }).toList(),
-//           onChanged: (newValue) {
-//             provider.setSelectedSeasonalPricing(newValue);
-//           },
 //         );
 //       },
 //     );
 //   }
 // }
 
-// Helper class for managing extra services in the UI
 class ReservationExtraItem {
   final ExtraService extraService;
   int quantity;
@@ -5924,1569 +5545,258 @@ class ReservationExtraItem {
     this.notes,
   });
 }
-// 2. Version modifiée de ReservationDialogContent pour supporter l'édition
-// class ReservationDialogContent extends StatefulWidget {
-//   final Room? preselectedRoom;
-//   final DateTime? preselectedDate;
-//   final Hotel currentHotel;
-//   final HotelProvider provider;
-//   final BuildContext parentContext;
-//   final VoidCallback onReservationAdded;
-//   final bool isEditing; // Nouveau paramètre
-//   final Reservation? existingReservation; // Nouveau paramètre
-//
-//   const ReservationDialogContent({
-//     Key? key,
-//     this.preselectedRoom,
-//     this.preselectedDate,
-//     required this.currentHotel,
-//     required this.provider,
-//     required this.parentContext,
-//     required this.onReservationAdded,
-//     this.isEditing = false, // Valeur par défaut
-//     this.existingReservation, // Peut être null pour nouveaux
-//   }) : super(key: key);
-//
-//   @override
-//   State<ReservationDialogContent> createState() =>
-//       _ReservationDialogContentState();
-// }
-//
-// class _ReservationDialogContentState extends State<ReservationDialogContent> {
-//   final _formKey = GlobalKey<FormState>();
-//   final _guestController = TextEditingController();
-//   final _phoneController = TextEditingController();
-//   final _idCardController = TextEditingController();
-//   final _priceController = TextEditingController();
-//
-//   Room? _selectedRoom;
-//   Employee? _selectedEmployee;
-//   List<Guest> _selectedGuests = [];
-//   DateTime? _fromDate;
-//   DateTime? _toDate;
-//   String _status = "Confirmée";
-//   bool _isLoading = false;
-//
-//   // Variables pour l'édition de client
-//   bool _isEditingGuest = false;
-//   Guest? _guestBeingEdited;
-//   int? _editingGuestIndex;
-//
-//   final List<String> _statuses = [
-//     "Confirmée",
-//     "En attente",
-//     "Arrivé",
-//     "Parti",
-//     "Annulée"
-//   ];
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//
-//     if (widget.isEditing && widget.existingReservation != null) {
-//       // Mode édition - pré-remplir avec les données existantes
-//       _initializeForEdit();
-//     } else {
-//       // Mode création - utiliser les valeurs par défaut
-//       _initializeForNew();
-//     }
-//   }
-//
-//   void _initializeForEdit() {
-//     final reservation = widget.existingReservation!;
-//
-//     // Trouver la chambre correspondante dans la liste des chambres de l'hôtel
-//     // pour éviter les problèmes de référence d'objet ObjectBox
-//     final roomId = reservation.room.target?.id;
-//     _selectedRoom = roomId != null
-//         ? widget.currentHotel.rooms
-//             .cast<Room?>()
-//             .firstWhere((room) => room?.id == roomId, orElse: () => null)
-//         : null;
-//
-//     // Même logique pour l'employé
-//     final employeeId = reservation.receptionist.target?.id;
-//     _selectedEmployee = employeeId != null
-//         ? widget.provider.employees
-//             .cast<Employee?>()
-//             .firstWhere((emp) => emp?.id == employeeId, orElse: () => null)
-//         : null;
-//
-//     _selectedGuests = reservation.guests.toList();
-//     _fromDate = reservation.from;
-//     _toDate = reservation.to;
-//     _status = reservation.status;
-//     _priceController.text = reservation.pricePerNight.toString();
-//   }
-//
-//   void _initializeForNew() {
-//     _selectedRoom = widget.preselectedRoom;
-//     _fromDate = widget.preselectedDate ?? DateTime.now();
-//     _toDate = _fromDate!.add(Duration(days: 1));
-//   }
-//
-//   @override
-//   void dispose() {
-//     _guestController.dispose();
-//     _phoneController.dispose();
-//     _idCardController.dispose();
-//     _priceController.dispose();
-//     super.dispose();
-//   }
-//
-//   void _addGuest() {
-//     if (_guestController.text.trim().isEmpty ||
-//         _phoneController.text.trim().isEmpty ||
-//         _idCardController.text.trim().isEmpty) {
-//       _showSnackBar('Veuillez remplir tous les champs du client',
-//           isError: true);
-//       return;
-//     }
-//
-//     final trimmedName = _guestController.text.trim();
-//
-//     // Vérifier si le client existe déjà (seulement pour l'ajout, pas l'édition)
-//     if (!_isEditingGuest &&
-//         _selectedGuests.any((guest) =>
-//             guest.fullName.toLowerCase() == trimmedName.toLowerCase())) {
-//       _showSnackBar('Ce client est déjà ajouté', isError: true);
-//       return;
-//     }
-//
-//     if (_isEditingGuest) {
-//       // Mode édition - utiliser la méthode de sauvegarde
-//       _saveGuestEdit();
-//     } else {
-//       // Mode ajout - créer un nouveau client
-//       final newGuest = Guest(
-//         fullName: trimmedName,
-//         phoneNumber: _phoneController.text.trim(),
-//         idCardNumber: _idCardController.text.trim(),
-//       );
-//
-//       setState(() {
-//         _selectedGuests.add(newGuest);
-//         _guestController.clear();
-//         _phoneController.clear();
-//         _idCardController.clear();
-//       });
-//
-//       _showSnackBar('Client ajouté avec succès');
-//     }
-//   }
-//
-//   void _removeGuest(Guest guest) {
-//     setState(() {
-//       _selectedGuests.remove(guest);
-//     });
-//   }
-//
-//   void _showSnackBar(String message, {bool isError = false}) {
-//     ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-//       SnackBar(
-//         content: Text(message),
-//         backgroundColor: isError ? Colors.red : Colors.green,
-//         behavior: SnackBarBehavior.floating,
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-//       ),
-//     );
-//   }
-//
-//   void _handleKeyPress(KeyEvent event) {
-//     // Détecter la touche Entrée
-//     if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.enter) {
-//       if (_guestController.text.trim().isNotEmpty ||
-//           _phoneController.text.trim().isNotEmpty ||
-//           _idCardController.text.trim().isNotEmpty) {
-//         _addGuest();
-//       }
-//     }
-//   }
-//
-//   void _editGuest(Guest guest, int index) {
-//     setState(() {
-//       _isEditingGuest = true;
-//       _guestBeingEdited = guest;
-//       _editingGuestIndex = index;
-//
-//       // Pré-remplir les champs avec les données du client
-//       _guestController.text = guest.fullName;
-//       _phoneController.text = guest.phoneNumber ?? '';
-//       _idCardController.text = guest.idCardNumber ?? '';
-//     });
-//   }
-//
-//   void _cancelGuestEdit() {
-//     setState(() {
-//       _isEditingGuest = false;
-//       _guestBeingEdited = null;
-//       _editingGuestIndex = null;
-//
-//       // Vider les champs
-//       _guestController.clear();
-//       _phoneController.clear();
-//       _idCardController.clear();
-//     });
-//   }
-//
-//   void _saveGuestEdit() async {
-//     if (_guestController.text.trim().isEmpty ||
-//         _phoneController.text.trim().isEmpty ||
-//         _idCardController.text.trim().isEmpty) {
-//       _showSnackBar('Veuillez remplir tous les champs du client',
-//           isError: true);
-//       return;
-//     }
-//
-//     final trimmedName = _guestController.text.trim();
-//
-//     // Vérifier si le nom existe déjà (sauf pour le client en cours d'édition)
-//     bool nameExists = false;
-//     for (int i = 0; i < _selectedGuests.length; i++) {
-//       if (i != _editingGuestIndex &&
-//           _selectedGuests[i].fullName.toLowerCase() ==
-//               trimmedName.toLowerCase()) {
-//         nameExists = true;
-//         break;
-//       }
-//     }
-//
-//     if (nameExists) {
-//       _showSnackBar('Ce nom de client existe déjà', isError: true);
-//       return;
-//     }
-//
-//     try {
-//       // Mettre à jour le client existant
-//       final guestToUpdate = _selectedGuests[_editingGuestIndex!];
-//       guestToUpdate.fullName = trimmedName;
-//       guestToUpdate.phoneNumber = _phoneController.text.trim();
-//       guestToUpdate.idCardNumber = _idCardController.text.trim();
-//
-//       // Sauvegarder dans ObjectBox si le client a un ID (existe déjà dans la DB)
-//       if (guestToUpdate.id != 0) {
-//         await widget.provider.updateGuest(guestToUpdate);
-//       }
-//       // Si l'ID est 0, c'est un nouveau client qui sera sauvegardé lors de la sauvegarde de la réservation
-//
-//       setState(() {
-//         // Réinitialiser l'état d'édition
-//         _isEditingGuest = false;
-//         _guestBeingEdited = null;
-//         _editingGuestIndex = null;
-//
-//         // Vider les champs
-//         _guestController.clear();
-//         _phoneController.clear();
-//         _idCardController.clear();
-//       });
-//
-//       _showSnackBar('Client modifié avec succès');
-//     } catch (e) {
-//       _showSnackBar('Erreur lors de la modification du client: $e',
-//           isError: true);
-//     }
-//   }
-//
-//   Future<void> _saveReservation() async {
-//     if (!_formKey.currentState!.validate()) return;
-//
-//     // Ajouter le client en cours si les champs sont remplis
-//     if (_guestController.text.trim().isNotEmpty) {
-//       _addGuest();
-//     }
-//
-//     if (_selectedRoom == null ||
-//         _selectedEmployee == null ||
-//         _fromDate == null ||
-//         _toDate == null ||
-//         _selectedGuests.isEmpty ||
-//         _priceController.text.trim().isEmpty) {
-//       _showSnackBar('Veuillez remplir tous les champs obligatoires',
-//           isError: true);
-//       return;
-//     }
-//
-//     if (_fromDate!.isAfter(_toDate!) || _fromDate!.isAtSameMomentAs(_toDate!)) {
-//       _showSnackBar('La date de départ doit être après la date d\'arrivée',
-//           isError: true);
-//       return;
-//     }
-//
-//     setState(() => _isLoading = true);
-//
-//     try {
-//       if (widget.isEditing && widget.existingReservation != null) {
-//         // Mode édition - mettre à jour toutes les propriétés directement
-//         final reservation = widget.existingReservation!;
-//
-//         // Mettre à jour toutes les propriétés
-//         reservation.receptionist.target = _selectedEmployee;
-//         reservation.pricePerNight = double.parse(_priceController.text);
-//         reservation.status = _status;
-//
-//         // Gérer les clients - sauvegarder nouveaux et mis à jour
-//         for (final guest in _selectedGuests) {
-//           if (guest.id == 0) {
-//             // Nouveau client
-//             await widget.provider.addGuest(guest);
-//           } else {
-//             // Client existant - s'assurer qu'il est à jour dans ObjectBox
-//             await widget.provider.updateGuest(guest);
-//           }
-//         }
-//
-//         // Mettre à jour la liste des clients
-//         reservation.guests.clear();
-//         reservation.guests.addAll(_selectedGuests);
-//
-//         // Maintenant faire la mise à jour avec vérification de disponibilité
-//         final result = await widget.provider.updateReservation(
-//           reservation,
-//           newRoom: _selectedRoom,
-//           newFrom: _fromDate,
-//           newTo: _toDate,
-//         );
-//
-//         if (result.isSuccess) {
-//           widget.onReservationAdded();
-//           Navigator.pop(context);
-//           _showSnackBar('Réservation modifiée avec succès');
-//         } else if (result.conflict != null) {
-//           _showConflictDialog(result.conflict!);
-//         } else {
-//           _showSnackBar(result.error ?? 'Erreur lors de la modification',
-//               isError: true);
-//         }
-//       } else {
-//         // Sauvegarder nouveaux et clients mis à jour
-//         for (final guest in _selectedGuests) {
-//           if (guest.id == 0) {
-//             // Nouveau client
-//             await widget.provider.addGuest(guest);
-//           } else {
-//             // Client existant - s'assurer qu'il est à jour dans ObjectBox
-//             await widget.provider.updateGuest(guest);
-//           }
-//         }
-//
-//         final result = await widget.provider.addReservation(
-//           room: _selectedRoom!,
-//           receptionist: _selectedEmployee!,
-//           guests: _selectedGuests,
-//           from: _fromDate!,
-//           to: _toDate!,
-//           pricePerNight: double.parse(_priceController.text),
-//           status: _status,
-//         );
-//
-//         if (result.isSuccess) {
-//           widget.onReservationAdded();
-//           Navigator.pop(context);
-//           _showSnackBar('Réservation créée avec succès');
-//         } else if (result.conflict != null) {
-//           _showConflictDialog(result.conflict!);
-//         } else {
-//           _showSnackBar(result.error ?? 'Erreur lors de la création',
-//               isError: true);
-//         }
-//       }
-//     } catch (e) {
-//       _showSnackBar('Erreur lors de l\'opération: $e', isError: true);
-//     } finally {
-//       if (mounted) {
-//         setState(() => _isLoading = false);
-//       }
-//     }
-//   }
-//
-//   void _showConflictDialog(ReservationConflict conflict) {
-//     showDialog(
-//       context: context,
-//       builder: (context) => AlertDialog(
-//         title: Text('Conflit de réservation'),
-//         content: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(
-//                 'La chambre ${conflict.room.code} est déjà réservée pour cette période.'),
-//             SizedBox(height: 16),
-//             Text('Réservations en conflit:'),
-//             ...conflict.conflictingReservations.map((res) => Padding(
-//                   padding: EdgeInsets.only(left: 8, top: 4),
-//                   child: Text(
-//                       '• ${_formatDate(res.from)} → ${_formatDate(res.to)}'),
-//                 )),
-//           ],
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Navigator.pop(context),
-//             child: Text('Annuler'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () {
-//               Navigator.pop(context);
-//               // Forcer la réservation malgré le conflit
-//               _saveWithForce();
-//             },
-//             child: Text('Forcer quand même'),
-//             style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Future<void> _saveWithForce() async {
-//     setState(() => _isLoading = true);
-//
-//     try {
-//       if (widget.isEditing && widget.existingReservation != null) {
-//         // Sauvegarder d'abord les nouveaux clients
-//         for (final guest in _selectedGuests) {
-//           if (guest.id == 0) {
-//             await widget.provider.addGuest(guest);
-//           }
-//         }
-//
-//         final result = await widget.provider.updateReservation(
-//           widget.existingReservation!,
-//           newRoom: _selectedRoom,
-//           newFrom: _fromDate,
-//           newTo: _toDate,
-//           forceOverride: true,
-//         );
-//
-//         if (result.isSuccess) {
-//           widget.onReservationAdded();
-//           Navigator.pop(context);
-//           _showSnackBar('Réservation modifiée avec succès (forcée)');
-//         }
-//       } else {
-//         // Sauvegarder d'abord les nouveaux clients
-//         for (final guest in _selectedGuests) {
-//           if (guest.id == 0) {
-//             await widget.provider.addGuest(guest);
-//           }
-//         }
-//
-//         final result = await widget.provider.addReservation(
-//           room: _selectedRoom!,
-//           receptionist: _selectedEmployee!,
-//           guests: _selectedGuests,
-//           from: _fromDate!,
-//           to: _toDate!,
-//           pricePerNight: double.parse(_priceController.text),
-//           status: _status,
-//           forceOverride: true,
-//         );
-//
-//         if (result.isSuccess) {
-//           widget.onReservationAdded();
-//           Navigator.pop(context);
-//           _showSnackBar('Réservation créée avec succès (forcée)');
-//         }
-//       }
-//     } catch (e) {
-//       _showSnackBar('Erreur lors de l\'opération forcée: $e', isError: true);
-//     } finally {
-//       if (mounted) {
-//         setState(() => _isLoading = false);
-//       }
-//     }
-//   }
-//
-//   String _formatDate(DateTime date) {
-//     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return LayoutBuilder(
-//       builder: (context, constraints) {
-//         double w = constraints.maxWidth;
-//
-//         if (w < 600) {
-//           // 📱 Mobile
-//           return buildForm();
-//         } else if (w < 1200) {
-//           // 💻 Tablette
-//           return buildForm2();
-//         } else {
-//           // 🖥️ Desktop
-//           return buildForm2();
-//         }
-//       },
-//     );
-//   }
-//
-//   Column buildForm() {
-//     return Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         // Header - Titre dynamique selon le mode
-//         Container(
-//           padding: EdgeInsets.all(20),
-//           decoration: BoxDecoration(
-//             color: Theme.of(context).primaryColor,
-//             borderRadius: BorderRadius.only(
-//               topLeft: Radius.circular(16),
-//               topRight: Radius.circular(16),
-//             ),
-//           ),
-//           child: Row(
-//             children: [
-//               Icon(Icons.hotel, color: Colors.white, size: 28),
-//               SizedBox(width: 12),
-//               Text(
-//                 widget.isEditing
-//                     ? 'Modifier la réservation'
-//                     : 'Nouvelle Réservation',
-//                 style: TextStyle(
-//                   color: Colors.white,
-//                   fontSize: 20,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               Spacer(),
-//               IconButton(
-//                 onPressed: () => Navigator.pop(context),
-//                 icon: Icon(Icons.close, color: Colors.white),
-//               ),
-//             ],
-//           ),
-//         ),
-//
-//         // Content - Même contenu que votre formulaire existant mais avec les données pré-remplies
-//         Expanded(
-//           child: SingleChildScrollView(
-//             padding: EdgeInsets.all(20),
-//             child: Form(
-//               key: _formKey,
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   // Chambre et Employé
-//                   SizedBox(
-//                     height: 120,
-//                     child: Column(
-//                       children: [
-//                         DropdownButtonFormField<int>(
-//                           isExpanded: true,
-//                           isDense: true,
-//                           value: _selectedEmployee?.id,
-//                           decoration: InputDecoration(
-//                             labelText: 'Réceptionniste *',
-//                             prefixIcon: Icon(Icons.person),
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                           ),
-//                           items: widget.provider.employees.map((emp) {
-//                             return DropdownMenuItem<int>(
-//                               value: emp.id,
-//                               // Utilisez l'ID comme valeur unique
-//                               child: Text(emp.fullName),
-//                             );
-//                           }).toList(),
-//                           onChanged: (int? empId) {
-//                             setState(() {
-//                               _selectedEmployee = widget.provider.employees
-//                                   .firstWhere((emp) => emp.id == empId);
-//                             });
-//                           },
-//                           validator: (value) => value == null
-//                               ? 'Choisissez un réceptionniste'
-//                               : null,
-//                         ),
-//                         Spacer(),
-//                         DropdownButtonFormField<Room>(
-//                           isExpanded: true,
-//                           isDense: true,
-//                           value: _selectedRoom,
-//                           decoration: InputDecoration(
-//                             labelText: 'Chambre *',
-//                             prefixIcon: Icon(Icons.room),
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                           ),
-//                           items: widget.currentHotel.rooms.map((room) {
-//                             final categoryName =
-//                                 widget.provider.getRoomCategoryName(room);
-//                             return DropdownMenuItem(
-//                               value: room,
-//                               child: Text(
-//                                   '${room.code} $categoryName ${room.type ?? ''}'),
-//                             );
-//                           }).toList(),
-//                           onChanged: (room) =>
-//                               setState(() => _selectedRoom = room),
-//                           validator: (value) =>
-//                               value == null ? 'Choisissez une chambre' : null,
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//
-//                   SizedBox(height: 24),
-//
-//                   // Section Clients
-//                   // Section Clients
-//                   Card(
-//                     elevation: 2,
-//                     shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(8)),
-//                     child: Padding(
-//                       padding: EdgeInsets.all(16),
-//                       child: Column(
-//                         crossAxisAlignment: CrossAxisAlignment.start,
-//                         children: [
-//                           SizedBox(
-//                             height: 30,
-//                             child: Row(
-//                               children: [
-//                                 Text(
-//                                   _isEditingGuest
-//                                       ? 'Modifier Client'
-//                                       : 'Informations Client',
-//                                   style: TextStyle(
-//                                       fontSize: 16,
-//                                       fontWeight: FontWeight.bold),
-//                                 ),
-//                                 if (_isEditingGuest) ...[
-//                                   Spacer(),
-//                                   TextButton(
-//                                     onPressed: _cancelGuestEdit,
-//                                     child: Text(
-//                                       'Annuler',
-//                                       style: TextStyle(color: Colors.grey[600]),
-//                                     ),
-//                                   ),
-//                                 ],
-//                               ],
-//                             ),
-//                           ),
-//                           SizedBox(height: 16),
-//                           KeyboardListener(
-//                             focusNode: FocusNode(),
-//                             onKeyEvent: _handleKeyPress,
-//                             child: Column(
-//                               children: [
-//                                 TextFormField(
-//                                   controller: _guestController,
-//                                   decoration: InputDecoration(
-//                                     labelText: 'Nom complet',
-//                                     prefixIcon: Icon(Icons.person_outline),
-//                                     border: OutlineInputBorder(
-//                                       borderRadius: BorderRadius.circular(8),
-//                                     ),
-//                                   ),
-//                                   onFieldSubmitted: (_) => _addGuest(),
-//                                 ),
-//                                 SizedBox(height: 12),
-//                                 TextFormField(
-//                                   controller: _phoneController,
-//                                   decoration: InputDecoration(
-//                                     labelText: 'Téléphone',
-//                                     prefixIcon: Icon(Icons.phone),
-//                                     border: OutlineInputBorder(
-//                                       borderRadius: BorderRadius.circular(8),
-//                                     ),
-//                                   ),
-//                                   keyboardType: TextInputType.phone,
-//                                   onFieldSubmitted: (_) => _addGuest(),
-//                                 ),
-//                                 SizedBox(height: 12),
-//                                 Row(
-//                                   children: [
-//                                     Expanded(
-//                                       child: TextFormField(
-//                                         controller: _idCardController,
-//                                         decoration: InputDecoration(
-//                                           labelText: 'Carte d\'identité',
-//                                           prefixIcon: Icon(Icons.credit_card),
-//                                           border: OutlineInputBorder(
-//                                             borderRadius:
-//                                                 BorderRadius.circular(8),
-//                                           ),
-//                                         ),
-//                                         onFieldSubmitted: (_) => _addGuest(),
-//                                       ),
-//                                     ),
-//                                     SizedBox(width: 12),
-//                                     ElevatedButton.icon(
-//                                       onPressed: _addGuest,
-//                                       icon: Icon(_isEditingGuest
-//                                           ? Icons.save
-//                                           : Icons.add),
-//                                       label: Text(_isEditingGuest
-//                                           ? 'Sauvegarder'
-//                                           : 'Ajouter'),
-//                                       style: ElevatedButton.styleFrom(
-//                                         backgroundColor: _isEditingGuest
-//                                             ? Colors.orange
-//                                             : null,
-//                                         foregroundColor: _isEditingGuest
-//                                             ? Colors.white
-//                                             : null,
-//                                         padding: EdgeInsets.symmetric(
-//                                             horizontal: 16, vertical: 12),
-//                                         shape: RoundedRectangleBorder(
-//                                           borderRadius:
-//                                               BorderRadius.circular(8),
-//                                         ),
-//                                       ),
-//                                     ),
-//                                   ],
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                           if (_selectedGuests.isNotEmpty) ...[
-//                             SizedBox(height: 16),
-//                             Text('Clients ajoutés:',
-//                                 style: TextStyle(fontWeight: FontWeight.w500)),
-//                             SizedBox(height: 8),
-//                             Wrap(
-//                               spacing: 8,
-//                               runSpacing: 4,
-//                               children:
-//                                   _selectedGuests.asMap().entries.map((entry) {
-//                                 final int index = entry.key;
-//                                 final Guest guest = entry.value;
-//                                 final bool isBeingEdited = _isEditingGuest &&
-//                                     _editingGuestIndex == index;
-//
-//                                 return InkWell(
-//                                   onTap: () => _editGuest(guest, index),
-//                                   onDoubleTap: () => _cancelGuestEdit(),
-//                                   child: Chip(
-//                                     avatar: CircleAvatar(
-//                                       backgroundColor: isBeingEdited
-//                                           ? Colors.orange
-//                                           : Colors.deepPurple,
-//                                       child: Icon(
-//                                         isBeingEdited
-//                                             ? Icons.edit
-//                                             : Icons.person,
-//                                         size: 16,
-//                                         color: Colors.white,
-//                                       ),
-//                                     ),
-//                                     label: Text(
-//                                       guest.fullName,
-//                                       style: TextStyle(
-//                                         fontWeight: FontWeight.w500,
-//                                         color: Theme.of(context)
-//                                             .colorScheme
-//                                             .onSurface,
-//                                       ),
-//                                     ),
-//                                     deleteIcon: Icon(
-//                                       Icons.close,
-//                                       size: 18,
-//                                       color:
-//                                           Theme.of(context).colorScheme.error,
-//                                     ),
-//                                     onDeleted: () => _removeGuest(guest),
-//                                     shape: RoundedRectangleBorder(
-//                                       borderRadius: BorderRadius.circular(8),
-//                                     ),
-//                                     backgroundColor: isBeingEdited
-//                                         ? Colors.orange.withOpacity(0.1)
-//                                         : Theme.of(context)
-//                                             .colorScheme
-//                                             .surfaceContainerHighest,
-//                                     // side: BorderSide(
-//                                     //   color: isBeingEdited
-//                                     //       ? Colors.orange
-//                                     //       : Theme.of(context)
-//                                     //           .colorScheme
-//                                     //           .outlineVariant,
-//                                     //   width: isBeingEdited ? 2 : 1,
-//                                     // ),
-//                                     padding: const EdgeInsets.symmetric(
-//                                         horizontal: 8, vertical: 4),
-//                                     materialTapTargetSize:
-//                                         MaterialTapTargetSize.shrinkWrap,
-//                                     visualDensity: VisualDensity.compact,
-//                                   ),
-//                                 );
-//                               }).toList(),
-//                             ),
-//                           ],
-//                         ],
-//                       ),
-//                     ),
-//                   ),
-//
-//                   SizedBox(height: 24),
-//
-//                   // Dates
-//                   Row(
-//                     children: [
-//                       Expanded(
-//                         child: InkWell(
-//                           onTap: () async {
-//                             final date = await showDatePicker(
-//                               context: context,
-//                               initialDate: _fromDate ?? DateTime.now(),
-//                               firstDate:
-//                                   DateTime.now().subtract(Duration(days: 30)),
-//                               lastDate: DateTime.now().add(Duration(days: 365)),
-//                             );
-//                             if (date != null) {
-//                               setState(() {
-//                                 _fromDate = date;
-//                                 if (_toDate != null &&
-//                                     _toDate!.isBefore(
-//                                         date.add(Duration(days: 1)))) {
-//                                   _toDate = date.add(Duration(days: 1));
-//                                 }
-//                               });
-//                             }
-//                           },
-//                           child: Container(
-//                             padding: EdgeInsets.all(16),
-//                             decoration: BoxDecoration(
-//                               border: Border.all(color: Colors.grey[300]!),
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                             child: Column(
-//                               crossAxisAlignment: CrossAxisAlignment.start,
-//                               children: [
-//                                 Text('Arrivée *',
-//                                     style: TextStyle(
-//                                         fontSize: 12, color: Colors.grey[600])),
-//                                 SizedBox(height: 4),
-//                                 Text(
-//                                   _fromDate != null
-//                                       ? _formatDate(_fromDate!)
-//                                       : 'Sélectionner',
-//                                   style: TextStyle(fontSize: 16),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                       SizedBox(width: 16),
-//                       Expanded(
-//                         child: InkWell(
-//                           onTap: () async {
-//                             final date = await showDatePicker(
-//                               context: context,
-//                               initialDate: _toDate ??
-//                                   (_fromDate?.add(Duration(days: 1)) ??
-//                                       DateTime.now().add(Duration(days: 1))),
-//                               firstDate: _fromDate?.add(Duration(days: 1)) ??
-//                                   DateTime.now(),
-//                               lastDate: DateTime.now().add(Duration(days: 365)),
-//                             );
-//                             if (date != null) {
-//                               setState(() => _toDate = date);
-//                             }
-//                           },
-//                           child: Container(
-//                             padding: EdgeInsets.all(16),
-//                             decoration: BoxDecoration(
-//                               border: Border.all(color: Colors.grey[300]!),
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                             child: Column(
-//                               crossAxisAlignment: CrossAxisAlignment.start,
-//                               children: [
-//                                 Text('Départ *',
-//                                     style: TextStyle(
-//                                         fontSize: 12, color: Colors.grey[600])),
-//                                 SizedBox(height: 4),
-//                                 Text(
-//                                   _toDate != null
-//                                       ? _formatDate(_toDate!)
-//                                       : 'Sélectionner',
-//                                   style: TextStyle(fontSize: 16),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//
-//                   SizedBox(height: 16),
-//
-//                   // Prix et Statut
-//                   Row(
-//                     children: [
-//                       Expanded(
-//                         child: TextFormField(
-//                           controller: _priceController,
-//                           decoration: InputDecoration(
-//                             labelText: 'Prix par nuit (DA) *',
-//                             prefixIcon: Icon(Icons.attach_money),
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                           ),
-//                           keyboardType: TextInputType.number,
-//                           validator: (value) {
-//                             if (value == null || value.isEmpty)
-//                               return 'Prix requis';
-//                             if (double.tryParse(value) == null)
-//                               return 'Prix invalide';
-//                             return null;
-//                           },
-//                         ),
-//                       ),
-//                       SizedBox(width: 16),
-//                       Expanded(
-//                         child: DropdownButtonFormField<String>(
-//                           isExpanded: true,
-//                           isDense: true,
-//                           value: _status,
-//                           decoration: InputDecoration(
-//                             labelText: 'Statut',
-//                             prefixIcon: Icon(Icons.info_outline),
-//                             border: OutlineInputBorder(
-//                               borderRadius: BorderRadius.circular(8),
-//                             ),
-//                           ),
-//                           items: _statuses.map((status) {
-//                             return DropdownMenuItem(
-//                               value: status,
-//                               child: Text(status),
-//                             );
-//                           }).toList(),
-//                           onChanged: (status) =>
-//                               setState(() => _status = status!),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//
-//         // Footer - Bouton dynamique selon le mode
-//         Container(
-//           padding: EdgeInsets.all(20),
-//           decoration: BoxDecoration(
-//             color: Colors.grey[50],
-//             borderRadius: BorderRadius.only(
-//               bottomLeft: Radius.circular(16),
-//               bottomRight: Radius.circular(16),
-//             ),
-//           ),
-//           child: Row(
-//             children: [
-//               Expanded(
-//                 child: OutlinedButton(
-//                   onPressed: _isLoading ? null : () => Navigator.pop(context),
-//                   child: Text('Annuler'),
-//                   style: OutlinedButton.styleFrom(
-//                     padding: EdgeInsets.symmetric(vertical: 12),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//               SizedBox(width: 16),
-//               Expanded(
-//                 child: ElevatedButton(
-//                   onPressed: _isLoading ? null : _saveReservation,
-//                   child: _isLoading
-//                       ? SizedBox(
-//                           height: 20,
-//                           width: 20,
-//                           child: CircularProgressIndicator(
-//                             strokeWidth: 2,
-//                             valueColor:
-//                                 AlwaysStoppedAnimation<Color>(Colors.white),
-//                           ),
-//                         )
-//                       : Text(widget.isEditing
-//                           ? 'Modifier la réservation'
-//                           : 'Créer la réservation'),
-//                   style: ElevatedButton.styleFrom(
-//                     padding: EdgeInsets.symmetric(vertical: 12),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-//
-//   /// Retourne le nom de la catégorie d'une chambre
-//   String getRoomCategoryName(Room room) {
-//     return room.category.target?.name ?? 'Aucune catégorie';
-//   }
-//
-//   Column buildForm2() {
-//     return Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         // Header - Titre dynamique selon le mode
-//         Container(
-//           padding: EdgeInsets.all(20),
-//           decoration: BoxDecoration(
-//             color: Theme.of(context).primaryColor,
-//             borderRadius: BorderRadius.only(
-//               topLeft: Radius.circular(16),
-//               topRight: Radius.circular(16),
-//             ),
-//           ),
-//           child: Row(
-//             children: [
-//               Icon(Icons.hotel, color: Colors.white, size: 28),
-//               SizedBox(width: 12),
-//               Text(
-//                 widget.isEditing
-//                     ? 'Modifier la réservation'
-//                     : 'Nouvelle Réservation',
-//                 style: TextStyle(
-//                   color: Colors.white,
-//                   fontSize: 20,
-//                   fontWeight: FontWeight.bold,
-//                 ),
-//               ),
-//               Spacer(),
-//               IconButton(
-//                 onPressed: () => Navigator.pop(context),
-//                 icon: Icon(Icons.close, color: Colors.white),
-//               ),
-//             ],
-//           ),
-//         ),
-//
-//         // Content - Fixed layout structure
-//         Expanded(
-//           child: SingleChildScrollView(
-//             padding: EdgeInsets.all(20),
-//             child: Form(
-//               key: _formKey,
-//               child: Row(
-//                 crossAxisAlignment: CrossAxisAlignment.center,
-//                 children: [
-//                   // Left Column - Chambre et Employé + Section Clients
-//                   Expanded(
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.stretch,
-//                       children: [
-//                         // Chambre et Employé Row
-//                         Row(
-//                           children: [
-//                             Expanded(
-//                               child: DropdownButtonFormField<Room>(
-//                                 isExpanded: true,
-//                                 isDense: true,
-//                                 value: _selectedRoom,
-//                                 decoration: InputDecoration(
-//                                   labelText: 'Chambre *',
-//                                   prefixIcon: Icon(Icons.room),
-//                                   border: OutlineInputBorder(
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                 ),
-//                                 items: widget.currentHotel.rooms.map((room) {
-//                                   final categoryName =
-//                                       widget.provider.getRoomCategoryName(room);
-//                                   return DropdownMenuItem(
-//                                     value: room,
-//                                     child: Text(
-//                                         '${room.code} $categoryName ${room.type ?? ''}'),
-//                                   );
-//                                 }).toList(),
-//                                 onChanged: (room) =>
-//                                     setState(() => _selectedRoom = room),
-//                                 validator: (value) => value == null
-//                                     ? 'Choisissez une chambre'
-//                                     : null,
-//                               ),
-//                             ),
-//                             SizedBox(width: 16),
-//                             Expanded(
-//                               child: DropdownButtonFormField<int>(
-//                                 value: _selectedEmployee?.id,
-//                                 decoration: InputDecoration(
-//                                   labelText: 'Réceptionniste *',
-//                                   prefixIcon: Icon(Icons.person),
-//                                   border: OutlineInputBorder(
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                 ),
-//                                 items: widget.provider.employees.map((emp) {
-//                                   return DropdownMenuItem<int>(
-//                                     value: emp.id,
-//                                     // Utilisez l'ID comme valeur unique
-//                                     child: Text(emp.fullName),
-//                                   );
-//                                 }).toList(),
-//                                 onChanged: (int? empId) {
-//                                   setState(() {
-//                                     _selectedEmployee = widget
-//                                         .provider.employees
-//                                         .firstWhere((emp) => emp.id == empId);
-//                                   });
-//                                 },
-//                                 validator: (value) => value == null
-//                                     ? 'Choisissez un réceptionniste'
-//                                     : null,
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//
-//                         SizedBox(height: 16),
-//                         // Dates Row
-//                         Row(
-//                           children: [
-//                             Expanded(
-//                               child: InkWell(
-//                                 onTap: () async {
-//                                   final date = await showDatePicker(
-//                                     context: context,
-//                                     initialDate: _fromDate ?? DateTime.now(),
-//                                     firstDate: DateTime.now()
-//                                         .subtract(Duration(days: 30)),
-//                                     lastDate:
-//                                         DateTime.now().add(Duration(days: 365)),
-//                                   );
-//                                   if (date != null) {
-//                                     setState(() {
-//                                       _fromDate = date;
-//                                       if (_toDate != null &&
-//                                           _toDate!.isBefore(
-//                                               date.add(Duration(days: 1)))) {
-//                                         _toDate = date.add(Duration(days: 1));
-//                                       }
-//                                     });
-//                                   }
-//                                 },
-//                                 child: Container(
-//                                   padding: EdgeInsets.all(16),
-//                                   decoration: BoxDecoration(
-//                                     border:
-//                                         Border.all(color: Colors.grey[300]!),
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                   child: Column(
-//                                     crossAxisAlignment:
-//                                         CrossAxisAlignment.start,
-//                                     children: [
-//                                       Text('Arrivée *',
-//                                           style: TextStyle(
-//                                               fontSize: 12,
-//                                               color: Colors.grey[600])),
-//                                       SizedBox(height: 4),
-//                                       Text(
-//                                         _fromDate != null
-//                                             ? _formatDate(_fromDate!)
-//                                             : 'Sélectionner',
-//                                         style: TextStyle(fontSize: 16),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                             SizedBox(width: 16),
-//                             Expanded(
-//                               child: InkWell(
-//                                 onTap: () async {
-//                                   final date = await showDatePicker(
-//                                     context: context,
-//                                     initialDate: _toDate ??
-//                                         (_fromDate?.add(Duration(days: 1)) ??
-//                                             DateTime.now()
-//                                                 .add(Duration(days: 1))),
-//                                     firstDate:
-//                                         _fromDate?.add(Duration(days: 1)) ??
-//                                             DateTime.now(),
-//                                     lastDate:
-//                                         DateTime.now().add(Duration(days: 365)),
-//                                   );
-//                                   if (date != null) {
-//                                     setState(() => _toDate = date);
-//                                   }
-//                                 },
-//                                 child: Container(
-//                                   padding: EdgeInsets.all(16),
-//                                   decoration: BoxDecoration(
-//                                     border:
-//                                         Border.all(color: Colors.grey[300]!),
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                   child: Column(
-//                                     crossAxisAlignment:
-//                                         CrossAxisAlignment.start,
-//                                     children: [
-//                                       Text('Départ *',
-//                                           style: TextStyle(
-//                                               fontSize: 12,
-//                                               color: Colors.grey[600])),
-//                                       SizedBox(height: 4),
-//                                       Text(
-//                                         _toDate != null
-//                                             ? _formatDate(_toDate!)
-//                                             : 'Sélectionner',
-//                                         style: TextStyle(fontSize: 16),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//
-//                         SizedBox(height: 16),
-//
-//                         // Prix et Statut Row
-//                         Row(
-//                           children: [
-//                             Expanded(
-//                               child: TextFormField(
-//                                 controller: _priceController,
-//                                 decoration: InputDecoration(
-//                                   labelText: 'Prix par nuit (DA) *',
-//                                   prefixIcon: Icon(Icons.attach_money),
-//                                   border: OutlineInputBorder(
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                 ),
-//                                 keyboardType: TextInputType.number,
-//                                 validator: (value) {
-//                                   if (value == null || value.isEmpty)
-//                                     return 'Prix requis';
-//                                   if (double.tryParse(value) == null)
-//                                     return 'Prix invalide';
-//                                   return null;
-//                                 },
-//                               ),
-//                             ),
-//                             SizedBox(width: 16),
-//                             Expanded(
-//                               child: DropdownButtonFormField<String>(
-//                                 value: _status,
-//                                 decoration: InputDecoration(
-//                                   labelText: 'Statut',
-//                                   prefixIcon: Icon(Icons.info_outline),
-//                                   border: OutlineInputBorder(
-//                                     borderRadius: BorderRadius.circular(8),
-//                                   ),
-//                                 ),
-//                                 items: _statuses.map((status) {
-//                                   return DropdownMenuItem(
-//                                     value: status,
-//                                     child: Text(
-//                                       status,
-//                                       overflow: TextOverflow.ellipsis,
-//                                     ),
-//                                   );
-//                                 }).toList(),
-//                                 onChanged: (status) =>
-//                                     setState(() => _status = status!),
-//                               ),
-//                             ),
-//                           ],
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//
-//                   SizedBox(width: 16),
-//
-//                   // Right Column - Dates and Price/Status
-//                   Expanded(
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.stretch,
-//                       children: [
-//                         // Section Clients - Fixed height to prevent layout issues
-//                         Container(
-//                           height: 350, // Fixed height instead of Expanded
-//                           child: Card(
-//                             elevation: 2,
-//                             shape: RoundedRectangleBorder(
-//                                 borderRadius: BorderRadius.circular(8)),
-//                             child: Padding(
-//                               padding: EdgeInsets.all(16),
-//                               child: Column(
-//                                 crossAxisAlignment: CrossAxisAlignment.start,
-//                                 children: [
-//                                   SizedBox(
-//                                     height: 30,
-//                                     child: Row(
-//                                       children: [
-//                                         Text(
-//                                           _isEditingGuest
-//                                               ? 'Modifier Client (Guest)'
-//                                               : 'Informations Client (Guest)',
-//                                           style: TextStyle(
-//                                               fontSize: 16,
-//                                               fontWeight: FontWeight.bold),
-//                                         ),
-//                                         if (_isEditingGuest) ...[
-//                                           Spacer(),
-//                                           TextButton(
-//                                             onPressed: _cancelGuestEdit,
-//                                             child: Text(
-//                                               'Annuler',
-//                                               style: TextStyle(
-//                                                   color: Colors.grey[600]),
-//                                             ),
-//                                           ),
-//                                         ],
-//                                       ],
-//                                     ),
-//                                   ),
-//                                   SizedBox(height: 16),
-//                                   KeyboardListener(
-//                                     focusNode: FocusNode(),
-//                                     onKeyEvent: _handleKeyPress,
-//                                     child: Column(
-//                                       children: [
-//                                         TextFormField(
-//                                           controller: _guestController,
-//                                           decoration: InputDecoration(
-//                                             labelText: 'Nom complet',
-//                                             prefixIcon:
-//                                                 Icon(Icons.person_outline),
-//                                             border: OutlineInputBorder(
-//                                               borderRadius:
-//                                                   BorderRadius.circular(8),
-//                                             ),
-//                                           ),
-//                                           onFieldSubmitted: (_) => _addGuest(),
-//                                         ),
-//                                         SizedBox(height: 12),
-//                                         TextFormField(
-//                                           controller: _phoneController,
-//                                           decoration: InputDecoration(
-//                                             labelText: 'Téléphone',
-//                                             prefixIcon: Icon(Icons.phone),
-//                                             border: OutlineInputBorder(
-//                                               borderRadius:
-//                                                   BorderRadius.circular(8),
-//                                             ),
-//                                           ),
-//                                           keyboardType: TextInputType.phone,
-//                                           onFieldSubmitted: (_) => _addGuest(),
-//                                         ),
-//                                         SizedBox(height: 12),
-//                                         Row(
-//                                           children: [
-//                                             Expanded(
-//                                               child: TextFormField(
-//                                                 controller: _idCardController,
-//                                                 decoration: InputDecoration(
-//                                                   labelText:
-//                                                       'Carte d\'identité',
-//                                                   prefixIcon:
-//                                                       Icon(Icons.credit_card),
-//                                                   border: OutlineInputBorder(
-//                                                     borderRadius:
-//                                                         BorderRadius.circular(
-//                                                             8),
-//                                                   ),
-//                                                 ),
-//                                                 onFieldSubmitted: (_) =>
-//                                                     _addGuest(),
-//                                               ),
-//                                             ),
-//                                             SizedBox(width: 12),
-//                                             ElevatedButton.icon(
-//                                               onPressed: _addGuest,
-//                                               icon: Icon(_isEditingGuest
-//                                                   ? Icons.save
-//                                                   : Icons.add),
-//                                               label: Text(_isEditingGuest
-//                                                   ? 'Sauvegarder'
-//                                                   : 'Ajouter'),
-//                                               style: ElevatedButton.styleFrom(
-//                                                 backgroundColor: _isEditingGuest
-//                                                     ? Colors.orange
-//                                                     : null,
-//                                                 foregroundColor: _isEditingGuest
-//                                                     ? Colors.white
-//                                                     : null,
-//                                                 padding: EdgeInsets.symmetric(
-//                                                     horizontal: 16,
-//                                                     vertical: 12),
-//                                                 shape: RoundedRectangleBorder(
-//                                                   borderRadius:
-//                                                       BorderRadius.circular(8),
-//                                                 ),
-//                                               ),
-//                                             ),
-//                                           ],
-//                                         ),
-//                                       ],
-//                                     ),
-//                                   ),
-//                                   if (_selectedGuests.isNotEmpty) ...[
-//                                     SizedBox(height: 16),
-//                                     Text('Clients ajoutés:',
-//                                         style: TextStyle(
-//                                             fontWeight: FontWeight.w500)),
-//                                     SizedBox(height: 8),
-//                                     Expanded(
-//                                       child: SingleChildScrollView(
-//                                         child: Wrap(
-//                                           spacing: 8,
-//                                           runSpacing: 4,
-//                                           children: _selectedGuests
-//                                               .asMap()
-//                                               .entries
-//                                               .map((entry) {
-//                                             final int index = entry.key;
-//                                             final Guest guest = entry.value;
-//                                             final bool isBeingEdited =
-//                                                 _isEditingGuest &&
-//                                                     _editingGuestIndex == index;
-//
-//                                             return InkWell(
-//                                               onTap: () =>
-//                                                   _editGuest(guest, index),
-//                                               onDoubleTap: () =>
-//                                                   _cancelGuestEdit(),
-//                                               child: Chip(
-//                                                 avatar: CircleAvatar(
-//                                                   backgroundColor: isBeingEdited
-//                                                       ? Colors.orange
-//                                                       : Colors.deepPurple,
-//                                                   child: Icon(
-//                                                     isBeingEdited
-//                                                         ? Icons.edit
-//                                                         : Icons.person,
-//                                                     size: 16,
-//                                                     color: Colors.white,
-//                                                   ),
-//                                                 ),
-//                                                 label: Text(
-//                                                   guest.fullName,
-//                                                   style: TextStyle(
-//                                                     fontWeight: FontWeight.w500,
-//                                                     color: Theme.of(context)
-//                                                         .colorScheme
-//                                                         .onSurface,
-//                                                   ),
-//                                                 ),
-//                                                 deleteIcon: Icon(
-//                                                   Icons.close,
-//                                                   size: 18,
-//                                                   color: Theme.of(context)
-//                                                       .colorScheme
-//                                                       .error,
-//                                                 ),
-//                                                 onDeleted: () =>
-//                                                     _removeGuest(guest),
-//                                                 shape: RoundedRectangleBorder(
-//                                                   borderRadius:
-//                                                       BorderRadius.circular(8),
-//                                                 ),
-//                                                 backgroundColor: isBeingEdited
-//                                                     ? Colors.orange
-//                                                         .withOpacity(0.1)
-//                                                     : Theme.of(context)
-//                                                         .colorScheme
-//                                                         .surfaceContainerHighest,
-//                                                 padding:
-//                                                     const EdgeInsets.symmetric(
-//                                                         horizontal: 8,
-//                                                         vertical: 4),
-//                                                 materialTapTargetSize:
-//                                                     MaterialTapTargetSize
-//                                                         .shrinkWrap,
-//                                                 visualDensity:
-//                                                     VisualDensity.compact,
-//                                               ),
-//                                             );
-//                                           }).toList(),
-//                                         ),
-//                                       ),
-//                                     ),
-//                                   ],
-//                                 ],
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//
-//         // Footer - Bouton dynamique selon le mode
-//         Container(
-//           padding: EdgeInsets.all(20),
-//           decoration: BoxDecoration(
-//             color: Colors.grey[50],
-//             borderRadius: BorderRadius.only(
-//               bottomLeft: Radius.circular(16),
-//               bottomRight: Radius.circular(16),
-//             ),
-//           ),
-//           child: Row(
-//             children: [
-//               Expanded(
-//                 child: OutlinedButton(
-//                   onPressed: _isLoading ? null : () => Navigator.pop(context),
-//                   child: Text('Annuler'),
-//                   style: OutlinedButton.styleFrom(
-//                     padding: EdgeInsets.symmetric(vertical: 12),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//               SizedBox(width: 16),
-//               Expanded(
-//                 child: ElevatedButton(
-//                   onPressed: _isLoading ? null : _saveReservation,
-//                   child: _isLoading
-//                       ? SizedBox(
-//                           height: 20,
-//                           width: 20,
-//                           child: CircularProgressIndicator(
-//                             strokeWidth: 2,
-//                             valueColor:
-//                                 AlwaysStoppedAnimation<Color>(Colors.white),
-//                           ),
-//                         )
-//                       : Text(widget.isEditing
-//                           ? 'Modifier la réservation'
-//                           : 'Créer la réservation'),
-//                   style: ElevatedButton.styleFrom(
-//                     padding: EdgeInsets.symmetric(vertical: 12),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-// }
+
+class SeasonalPricingDropdown extends StatelessWidget {
+  final SeasonalPricing? selectedValue;
+  final Function(SeasonalPricing?)? onChanged;
+  final List<SeasonalPricing>? customSeasonalPricings;
+  final bool useLocalState;
+  final bool autoSave;
+
+  const SeasonalPricingDropdown({
+    super.key,
+    this.selectedValue,
+    this.onChanged,
+    this.customSeasonalPricings,
+    this.useLocalState = false,
+    this.autoSave = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HotelProvider>(
+      builder: (context, provider, child) {
+        // Utiliser les tarifs personnalisés si fournis, sinon ceux du provider
+        final list = customSeasonalPricings ?? provider.getSeasonalPricings();
+
+        // Utiliser la valeur sélectionnée personnalisée si fournie, sinon celle du provider
+        final selected =
+            useLocalState ? selectedValue : provider.selectedSeasonalPricing;
+
+        // Éliminer les doublons de la liste
+        final uniqueMap = <int, SeasonalPricing>{};
+        for (final sp in list) {
+          uniqueMap[sp.id] = sp;
+        }
+        final uniqueList = uniqueMap.values.toList();
+
+        // Trier par priorité puis par nom
+        uniqueList.sort((a, b) {
+          final priorityComparison = b.priority.compareTo(a.priority);
+          if (priorityComparison != 0) return priorityComparison;
+          return a.name.compareTo(b.name);
+        });
+
+        // Trouver la bonne instance dans la liste unique
+        SeasonalPricing? validValue;
+        if (selected != null) {
+          try {
+            validValue =
+                uniqueList.firstWhere((item) => item.id == selected.id);
+          } catch (e) {
+            // Si l'élément sélectionné n'est plus dans la liste
+            validValue = null;
+          }
+        }
+
+        return Padding(
+          padding: const EdgeInsets.all(0.0),
+          child: DropdownButtonFormField<SeasonalPricing>(
+            style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).primaryColor,
+                fontFamily: 'OSWALD'),
+            value: validValue,
+            isExpanded: true,
+            isDense: false,
+            decoration: InputDecoration(
+              labelText: 'Tarif saisonnier',
+              prefixIcon: const Icon(Icons.calendar_today),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            items: uniqueList.map((sp) {
+              return DropdownMenuItem(
+                value: sp,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  // Centrer verticalement
+                  children: [
+                    FittedBox(
+                      child: Text(
+                        '${sp.name} (${sp.multiplier}x)',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatDateRange(sp),
+                      style: const TextStyle(
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            selectedItemBuilder: (context) {
+              return uniqueList.map((sp) {
+                return SizedBox(
+                  // ✅ Contraint la hauteur affichée
+                  height: 48, // Ajuste selon le design (par défaut 48px)
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${sp.name} (${sp.multiplier}x)',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        _formatDateRange(sp),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList();
+            },
+            onChanged: (SeasonalPricing? newValue) {
+              if (newValue == null) return;
+
+              if (onChanged != null) {
+                onChanged!(newValue);
+              } else if (provider.currentHotel != null) {
+                _handleSeasonChange(context, provider, newValue);
+              }
+            },
+            validator: (value) {
+              if (value == null) {
+                return 'Veuillez sélectionner un tarif saisonnier';
+              }
+              return null;
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  /// Gère le changement de saison de manière asynchrone
+  void _handleSeasonChange(
+      BuildContext context, HotelProvider provider, SeasonalPricing newValue) {
+    provider
+        .setSelectedSeasonalPricing(
+      provider.currentHotel!,
+      newValue,
+      autoSave: autoSave,
+    )
+        .then((_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Saison "${newValue.name}" sélectionnée'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }).catchError((error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la sauvegarde: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+  }
+
+  String _formatDateRange(SeasonalPricing sp) {
+    final startFormatted =
+        '${sp.startDate.day}/${sp.startDate.month}/${sp.startDate.year}';
+    final endFormatted =
+        '${sp.endDate.day}/${sp.endDate.month}/${sp.endDate.year}';
+    return '$startFormatted - $endFormatted';
+  }
+
+  String _getSeasonInfo(SeasonalPricing sp) {
+    final now = DateTime.now();
+    final isCurrentlyActive = sp.isDateInSeason(now);
+
+    if (isCurrentlyActive) {
+      return '✓ Saison active - ${_formatDateRange(sp)}';
+    } else {
+      return _formatDateRange(sp);
+    }
+  }
+}
+
+/// Widget pour afficher un indicateur de la saison actuelle
+class CurrentSeasonIndicator extends StatelessWidget {
+  const CurrentSeasonIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<HotelProvider>(
+      builder: (context, provider, child) {
+        final currentSeason = provider.selectedSeasonalPricing;
+
+        if (currentSeason == null) {
+          return Container(
+            padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.info, size: 16, color: Colors.grey),
+                SizedBox(width: 4),
+                Text('Aucune saison sélectionnée',
+                    style: TextStyle(fontSize: 12)),
+              ],
+            ),
+          );
+        }
+
+        final now = DateTime.now();
+        final isActive = currentSeason.isDateInSeason(now);
+
+        return Container(
+          padding: const EdgeInsets.all(8.0),
+          decoration: BoxDecoration(
+            color: isActive ? Colors.green.shade100 : Colors.orange.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isActive ? Icons.check_circle : Icons.schedule,
+                size: 16,
+                color: isActive ? Colors.green : Colors.orange,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${currentSeason.name} (${currentSeason.multiplier}x)',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
