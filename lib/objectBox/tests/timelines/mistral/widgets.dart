@@ -247,14 +247,20 @@ class PriceCard extends StatelessWidget {
     bool isHigher = seasonalPrice > basePrice;
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 0 : 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          colors: [Colors.black87, Colors.green.shade300],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+        gradient: isHigher
+            ? LinearGradient(
+                colors: [Colors.black87, Colors.green.shade300],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              )
+            : LinearGradient(
+                colors: [Colors.black87, Colors.red.shade300],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.25),
@@ -270,53 +276,98 @@ class PriceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Prix de saison
-            Text(
-              "${seasonalPrice.toStringAsFixed(2)} DA",
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Center(
+              child: Text(
+                "${seasonalPrice.toStringAsFixed(2)} DA",
+                style: TextStyle(
+                  fontSize: MediaQuery.of(context).size.width < 600 ? 25 : 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
+
             const SizedBox(height: 8),
 
             // Variation + flèche
-            Row(
-              children: [
-                Icon(
-                  isHigher
-                      ? FontAwesomeIcons.arrowUp
-                      : FontAwesomeIcons.arrowDown,
-                  color: isHigher ? Colors.greenAccent : Colors.redAccent,
-                  size: 20,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  "${variation.toStringAsFixed(2)}%",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isHigher ? Colors.greenAccent : Colors.redAccent,
-                    fontWeight: FontWeight.w500,
+            MediaQuery.of(context).size.width < 600
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        "Prix saison",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Icon(
+                            isHigher
+                                ? FontAwesomeIcons.arrowUp
+                                : FontAwesomeIcons.arrowDown,
+                            color: isHigher
+                                ? Colors.greenAccent
+                                : Colors.redAccent,
+                            size: MediaQuery.of(context).size.width < 600
+                                ? 14
+                                : 20,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "${variation.toStringAsFixed(2)}%",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isHigher
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Icon(
+                        isHigher
+                            ? FontAwesomeIcons.arrowUp
+                            : FontAwesomeIcons.arrowDown,
+                        color: isHigher ? Colors.greenAccent : Colors.redAccent,
+                        size: MediaQuery.of(context).size.width < 600 ? 14 : 20,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "${variation.toStringAsFixed(2)}%",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color:
+                              isHigher ? Colors.greenAccent : Colors.redAccent,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Spacer(),
+                      const Text(
+                        "Prix saison",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      )
+                    ],
                   ),
-                ),
-                const Spacer(),
-                const Text(
-                  "Prix saison",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white70,
-                  ),
-                )
-              ],
-            ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: MediaQuery.of(context).size.width < 600 ? 0 : 20),
 
             // Prix de base
             Text(
-              "Prix de base: ${basePrice.toStringAsFixed(2)} DA/nuitée",
+              "Prix de base:\n${basePrice.toStringAsFixed(2)} DA/nuitée",
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Colors.white60,
               ),
             ),
@@ -344,7 +395,7 @@ class ReservationCard extends StatelessWidget {
         NumberFormat.currency(symbol: '\$', decimalDigits: 2);
 
     return AspectRatio(
-      aspectRatio: 2.2,
+      aspectRatio: MediaQuery.of(context).size.width < 600 ? 1.8 : 2.2,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -374,28 +425,25 @@ class ReservationCard extends StatelessWidget {
               ],
             ),
             padding: const EdgeInsets.fromLTRB(22, 12, 22, 12),
-            child: Row(
-              children: [
-                // Bloc texte gauche
-                Expanded(
-                  flex: 6,
-                  child: Column(
+            child: MediaQuery.of(context).size.width < 600
+                ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
+                      Text(
                         'Board Basis',
                         style: TextStyle(
                           color: Colors.black87,
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
 
                       Text(
                         reservation.boardBasis.target!.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.black,
-                          fontSize: 20,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -410,22 +458,29 @@ class ReservationCard extends StatelessWidget {
                             label: 'Person(s)',
                             value: _guestsCount,
                           ),
-                          const SizedBox(width: 16),
-                          _InfoColumn2(
-                            label: 'Nuitées',
-                            value: '$_nights',
-                          ),
+                          // SizedBox(
+                          //   width: 10,
+                          // ),
+                          // _InfoColumn2(
+                          //   label: 'Nuitées',
+                          //   value: '$_nights',
+                          // ),
                         ],
                       ),
+
                       const Spacer(),
                       Row(
                         children: [
-                          _InfoColumn(
-                            label: 'Prix / pers.',
-                            value:
-                                '${money.format(reservation.boardBasis.target!.pricePerPerson)}',
+                          Expanded(
+                            child: _InfoColumn(
+                              label: 'Prix / pers.',
+                              value:
+                                  '${money.format(reservation.boardBasis.target!.pricePerPerson)}',
+                            ),
                           ),
-                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 10,
+                          ),
                           _InfoColumn(
                             label: 'Total board',
                             value: money.format(reservation.boardBasisPrice),
@@ -433,69 +488,152 @@ class ReservationCard extends StatelessWidget {
                         ],
                       ),
                     ],
-                  ),
-                ),
+                  )
+                : Row(
+                    children: [
+                      // Bloc texte gauche
+                      Expanded(
+                        flex: 7,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Board Basis',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
 
-                // Décor graphique droit (lignes courbes)
-                Expanded(
-                  flex: 4,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: CustomPaint(
-                      size: const Size(120, 140), // ✅ taille fixe
-                      painter: _WavePainter(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                            Text(
+                              reservation.boardBasis.target!.name,
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
 
-          // Bouton "pastille" qui dépasse à droite
-          Positioned(
-            right: 15,
-            bottom: 15,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => BoardBasisDetailScreen(
-                            boardBasis: reservation.boardBasis.target!,
-                          )));
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.6),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
+                            // ⬇️ CORRECTION ICI : Spacer → Overflow ! On le remplace :
+                            //const Expanded(child: SizedBox()),
+                            // ✅ Safe, ne déborde jamais
+                            const Spacer(),
+                            Row(
+                              children: [
+                                _InfoColumn2(
+                                  label: 'Person(s)',
+                                  value: _guestsCount,
+                                ),
+                                // SizedBox(
+                                //   width: 16,
+                                // ),
+                                // _InfoColumn2(
+                                //   label: 'Nuitées',
+                                //   value: '$_nights',
+                                // ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                _InfoColumn(
+                                  label: 'Prix / pers.',
+                                  value:
+                                      '${money.format(reservation.boardBasis.target!.pricePerPerson)}',
+                                ),
+                                SizedBox(
+                                  width: 16,
+                                ),
+                                _InfoColumn(
+                                  label: 'Total board',
+                                  value:
+                                      money.format(reservation.boardBasisPrice),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                      BoxShadow(
-                        color: Colors.greenAccent.withOpacity(0.25),
-                        blurRadius: 18,
-                        spreadRadius: 2,
+
+                      // Décor graphique droit (lignes courbes)
+                      Expanded(
+                        flex: 3,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: CustomPaint(
+                            size: const Size(120, 140), // ✅ taille fixe
+                            painter: _WavePainter(),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  child: const Text(
-                    'Détails',
-                    style: TextStyle(
-                      color: Color(0xFFB3FF6A),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
+          ),
+
+          // Bouton "pastille" qui dépasse à droite
+          MediaQuery.of(context).size.width < 600
+              ? Positioned(
+                  right: 15,
+                  top: 10,
+                  child: IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (ctx) => BoardBasisDetailScreen(
+                                  boardBasis: reservation.boardBasis.target!,
+                                )));
+                      },
+                      icon: Icon(
+                        Icons.info,
+                        size: 25,
+                      )),
+                )
+              : Positioned(
+                  right: 15,
+                  bottom: 15,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (ctx) => BoardBasisDetailScreen(
+                                  boardBasis: reservation.boardBasis.target!,
+                                )));
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 18),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.6),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                            BoxShadow(
+                              color: Colors.greenAccent.withOpacity(0.25),
+                              blurRadius: 18,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Détails',
+                          style: TextStyle(
+                            color: Color(0xFFB3FF6A),
+                            fontWeight: FontWeight.w700,
+                            fontSize: MediaQuery.of(context).size.width < 600
+                                ? 10
+                                : 14,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -525,9 +663,9 @@ class _InfoColumn extends StatelessWidget {
         // const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
-            fontSize: 17,
+            fontSize: MediaQuery.of(context).size.width < 600 ? 15 : 17,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -549,9 +687,9 @@ class _InfoColumn2 extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
-            fontSize: 17,
+            fontSize: MediaQuery.of(context).size.width < 600 ? 14 : 17,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -560,7 +698,7 @@ class _InfoColumn2 extends StatelessWidget {
           label,
           style: TextStyle(
             color: Colors.black.withOpacity(0.7),
-            fontSize: 17,
+            fontSize: MediaQuery.of(context).size.width < 600 ? 14 : 17,
             fontWeight: FontWeight.w500,
           ),
         ),

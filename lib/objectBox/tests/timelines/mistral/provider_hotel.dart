@@ -334,6 +334,35 @@ class HotelProvider with ChangeNotifier {
     return null;
   }
 
+// Dans ton provider
+  Future<SeasonalPricing?> selectSeasonalPricing(Hotel hotel) async {
+    final now = DateTime.now();
+
+    // Vérifier si un SeasonalPricing est déjà lié à l'hôtel
+    if (hotel.selectedSeasonalPricing.target != null &&
+        hotel.selectedSeasonalPricing.target!.isActive &&
+        hotel.selectedSeasonalPricing.target!.isDateInSeason(now)) {
+      _selectedSeasonalPricing = hotel.selectedSeasonalPricing.target;
+      return _selectedSeasonalPricing;
+    }
+
+    // Sinon, chercher une saison active correspondant à "now"
+    final SeasonalPricing? matching = _seasonalPricing
+        .where((sp) => sp.isActive && sp.isDateInSeason(now))
+        .firstOrNull;
+
+    if (matching != null) {
+      // Associer la saison trouvée à l'hôtel
+      setSelectedSeasonalPricing(hotel, matching);
+      _selectedSeasonalPricing = matching;
+      return matching;
+    }
+
+    // Aucun tarif trouvé → on reset
+    _selectedSeasonalPricing = null;
+    return null;
+  }
+
   /// Vérifie si une chambre est disponible pour une période donnée
   bool isRoomAvailable(Room room, DateTime from, DateTime to,
       {Reservation? excludeReservation}) {
@@ -444,6 +473,8 @@ class HotelProvider with ChangeNotifier {
     // AJOUTER CES PARAMÈTRES
     double discountPercent = 0.0,
     double discountAmount = 0.0,
+    SeasonalPricing? seasonalPricing, // ✅ AJOUT SAISON
+    double? seasonalMultiplier, // ✅ AJOUT MULTIPLICATEUR
   }) async {
     try {
       if (guests.isEmpty) {
@@ -481,6 +512,13 @@ class HotelProvider with ChangeNotifier {
       if (extras != null) {
         // Ajouter les extras via une méthode dédiée si nécessaire
       }
+      if (seasonalPricing != null) {
+        reservation.seasonalPricing.target = seasonalPricing; // ✅ SAISON
+      }
+      if (seasonalMultiplier != null) {
+        reservation.seasonalMultiplier = seasonalMultiplier; // ✅ MULTIPLICATEUR
+      }
+
       final id = _reservationBox.put(reservation);
       await _loadAllData();
       notifyListeners();
@@ -561,6 +599,8 @@ class HotelProvider with ChangeNotifier {
     // AJOUTER CES PARAMÈTRES
     double? newDiscountPercent,
     double? newDiscountAmount,
+    SeasonalPricing? newSeasonalPricing, // ✅ SAISON
+    double? newSeasonalMultiplier, // ✅ MULTIPLICATEUR
   }) async {
     try {
       final roomToCheck = newRoom ?? reservation.room.target!;
@@ -604,6 +644,14 @@ class HotelProvider with ChangeNotifier {
       if (newBoardBasis != null) {
         reservation.boardBasis.target = newBoardBasis;
       }
+      if (newSeasonalPricing != null) {
+        reservation.seasonalPricing.target = newSeasonalPricing; // ✅ SAISON
+      }
+      if (newSeasonalMultiplier != null) {
+        reservation.seasonalMultiplier =
+            newSeasonalMultiplier; // ✅ MULTIPLICATEUR
+      }
+
       if (reservation.id != 0) {
         _reservationBox.put(reservation, mode: PutMode.update);
       } else {

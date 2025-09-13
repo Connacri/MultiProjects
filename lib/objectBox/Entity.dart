@@ -941,6 +941,12 @@ class Reservation {
   @Backlink('reservation')
   final extras = ToMany<ReservationExtra>();
 
+  // ✅ Ajout saison
+  final seasonalPricing = ToOne<SeasonalPricing>();
+
+  // ✅ Multiplicateur saisonnier
+  double seasonalMultiplier;
+
   DateTime from;
   DateTime to;
   double pricePerNight;
@@ -963,6 +969,7 @@ class Reservation {
     this.discountAmount = 0.0,
     this.cachedBoardBasisPrice,
     this.cachedExtrasTotal,
+    this.seasonalMultiplier = 1.0, // valeur par défaut
   });
 
   // Prix du plan de pension

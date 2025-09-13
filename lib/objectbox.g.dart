@@ -668,7 +668,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
       id: const obx_int.IdUid(22, 4405813060867310126),
       name: 'Reservation',
-      lastPropertyId: const obx_int.IdUid(34, 693625170472915462),
+      lastPropertyId: const obx_int.IdUid(37, 5805441321577982475),
       flags: 0,
       properties: <obx_int.ModelProperty>[
         obx_int.ModelProperty(
@@ -735,6 +735,18 @@ final _entities = <obx_int.ModelEntity>[
         obx_int.ModelProperty(
             id: const obx_int.IdUid(34, 693625170472915462),
             name: 'discountAmount',
+            type: 8,
+            flags: 0),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(36, 5384985485401190875),
+            name: 'seasonalPricingId',
+            type: 11,
+            flags: 520,
+            indexId: const obx_int.IdUid(76, 2947701071097954536),
+            relationTarget: 'SeasonalPricing'),
+        obx_int.ModelProperty(
+            id: const obx_int.IdUid(37, 5805441321577982475),
+            name: 'seasonalMultiplier',
             type: 8,
             flags: 0)
       ],
@@ -1342,7 +1354,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
       lastEntityId: const obx_int.IdUid(43, 6119221834068341217),
-      lastIndexId: const obx_int.IdUid(74, 1977960640627402338),
+      lastIndexId: const obx_int.IdUid(76, 2947701071097954536),
       lastRelationId: const obx_int.IdUid(5, 6501254024098551487),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [
@@ -1383,7 +1395,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         2417887039904989190,
         1604604727978599251,
         464814572941631309,
-        374051867334777197
+        374051867334777197,
+        1645050276093830234
       ],
       retiredPropertyUids: const [
         8976483595831028651,
@@ -1610,7 +1623,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         8792455056654444544,
         5172980220661294888,
         8100719055238053942,
-        7609468699421722439
+        7609468699421722439,
+        4305092639336897746
       ],
       retiredRelationUids: const [
         2832941486252609678,
@@ -2309,8 +2323,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
         }),
     Reservation: obx_int.EntityDefinition<Reservation>(
         model: _entities[10],
-        toOneRelations: (Reservation object) =>
-            [object.room, object.boardBasis, object.receptionist],
+        toOneRelations: (Reservation object) => [
+              object.room,
+              object.boardBasis,
+              object.receptionist,
+              object.seasonalPricing
+            ],
         toManyRelations: (Reservation object) => {
               obx_int.RelInfo<Reservation>.toMany(5, object.id): object.guests,
               obx_int.RelInfo<ReservationExtra>.toOneBacklink(2, object.id,
@@ -2323,7 +2341,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         },
         objectToFB: (Reservation object, fb.Builder fbb) {
           final statusOffset = fbb.writeString(object.status);
-          fbb.startTable(35);
+          fbb.startTable(38);
           fbb.addInt64(0, object.id);
           fbb.addOffset(6, statusOffset);
           fbb.addInt64(7, object.room.targetId);
@@ -2336,6 +2354,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           fbb.addFloat64(31, object.cachedExtrasTotal);
           fbb.addFloat64(32, object.discountPercent);
           fbb.addFloat64(33, object.discountAmount);
+          fbb.addInt64(35, object.seasonalPricing.targetId);
+          fbb.addFloat64(36, object.seasonalMultiplier);
           fbb.finish(fbb.endTable());
           return object.id;
         },
@@ -2358,6 +2378,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .vTableGetNullable(buffer, rootOffset, 64);
           final cachedExtrasTotalParam = const fb.Float64Reader()
               .vTableGetNullable(buffer, rootOffset, 66);
+          final seasonalMultiplierParam =
+              const fb.Float64Reader().vTableGet(buffer, rootOffset, 76, 0);
           final object = Reservation(
               from: fromParam,
               to: toParam,
@@ -2366,7 +2388,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
               discountPercent: discountPercentParam,
               discountAmount: discountAmountParam,
               cachedBoardBasisPrice: cachedBoardBasisPriceParam,
-              cachedExtrasTotal: cachedExtrasTotalParam)
+              cachedExtrasTotal: cachedExtrasTotalParam,
+              seasonalMultiplier: seasonalMultiplierParam)
             ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
           object.room.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 18, 0);
@@ -2377,6 +2400,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
           object.receptionist.targetId =
               const fb.Int64Reader().vTableGet(buffer, rootOffset, 56, 0);
           object.receptionist.attach(store);
+          object.seasonalPricing.targetId =
+              const fb.Int64Reader().vTableGet(buffer, rootOffset, 74, 0);
+          object.seasonalPricing.attach(store);
           obx_int.InternalToManyAccess.setRelInfo<Reservation>(object.guests,
               store, obx_int.RelInfo<Reservation>.toMany(5, object.id));
           obx_int.InternalToManyAccess.setRelInfo<Reservation>(
@@ -3501,6 +3527,15 @@ class Reservation_ {
   /// See [Reservation.discountAmount].
   static final discountAmount =
       obx.QueryDoubleProperty<Reservation>(_entities[10].properties[11]);
+
+  /// See [Reservation.seasonalPricing].
+  static final seasonalPricing =
+      obx.QueryRelationToOne<Reservation, SeasonalPricing>(
+          _entities[10].properties[12]);
+
+  /// See [Reservation.seasonalMultiplier].
+  static final seasonalMultiplier =
+      obx.QueryDoubleProperty<Reservation>(_entities[10].properties[13]);
 
   /// see [Reservation.guests]
   static final guests =

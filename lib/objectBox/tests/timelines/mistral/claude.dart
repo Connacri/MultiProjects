@@ -1,3 +1,6 @@
+import 'dart:ui' as ui;
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -446,14 +449,26 @@ class HotelManagementState extends State<Hotel_Management> {
         // const SizedBox(width: 8),
         // // Menu vue calendrier
 
-        // IconButton(
-        //   icon: const Icon(Icons.auto_awesome),
-        //   onPressed: () async {
-        //     final provider = Provider.of<HotelProvider>(context, listen: false);
-        //     await provider.autoSelectSeasonalPricing(_currentHotel!);
-        //   },
-        //   tooltip: "Sélectionner la saison actuelle",
-        // ),
+        IconButton(
+          icon: const Icon(Icons.auto_awesome),
+          tooltip: "Sélectionner la saison actuelle",
+          onPressed: () async {
+            final provider = Provider.of<HotelProvider>(context, listen: false);
+            final seasonal =
+                await provider.selectSeasonalPricing(_currentHotel!);
+
+            if (seasonal != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Saison appliquée : ${seasonal.name}")),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text("Aucune saison applicable trouvée")),
+              );
+            }
+          },
+        ),
 
         PopupMenuButton<VoidCallback>(
           tooltip: "Actions rapides",
@@ -1632,6 +1647,74 @@ class HotelManagementState extends State<Hotel_Management> {
                       ReservationCard(
                         reservation: reservation,
                       ),
+                      const SizedBox(height: 8),
+                      reservation.extras.isEmpty
+                          ? SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Extras :",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  // coins arrondis
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                        sigmaX: 10, sigmaY: 10), // flou
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        // fond semi-transparent
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                            color:
+                                                Colors.white.withOpacity(0.3)),
+                                      ),
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        itemCount: reservation.extras.length,
+                                        itemBuilder: (context, index) {
+                                          final extra =
+                                              reservation.extras[index];
+                                          return Tooltip(
+                                            message:
+                                                extra.extraService.target!.name,
+                                            child: ListTile(
+                                              onTap: () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ExtraServiceDetailPage(
+                                                    reservationExtra: extra,
+                                                  ),
+                                                ),
+                                              ),
+                                              leading: const Icon(Icons.check,
+                                                  color: Colors.green),
+                                              title: Text(
+                                                extra.extraService.target!.name,
+                                                overflow: TextOverflow.ellipsis,
+                                                // texte visible
+                                              ),
+                                              trailing: Text(
+                                                  "${extra.extraService.target!.price.toStringAsFixed(2)} DA"),
+                                              dense: true,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
 
                       Padding(
                         padding: const EdgeInsets.symmetric(
@@ -1650,7 +1733,69 @@ class HotelManagementState extends State<Hotel_Management> {
                         totalPrice,
                       ),
                       const SizedBox(height: 16),
+                      // 🔹 Saison appliquée
+                      if (reservation.seasonalPricing.target != null) ...[
+                        const Text(
+                          "Saison appliquée :",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "${reservation.seasonalPricing.target!.name} "
+                          "(${reservation.seasonalPricing.target!.multiplier}x)",
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
 
+                      if (reservation.seasonalPricing.target != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Tarif saisonnier appliqué :",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today,
+                                    size: 20, color: Colors.orange),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "${reservation.seasonalPricing.target!.name} "
+                                    "(${reservation.seasonalPricing.target!.multiplier}x)",
+                                    style: const TextStyle(fontSize: 14),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Période : "
+                              "${reservation.seasonalPricing.target!.startDate} → "
+                              "${reservation.seasonalPricing.target!.endDate}",
+                              style: const TextStyle(
+                                  fontSize: 13, color: Colors.grey),
+                            ),
+                            const SizedBox(height: 16),
+                          ],
+                        )
+                      else
+                        const Text(
+                          "Aucune saison appliquée (tarif standard)",
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                          ),
+                        ),
+
+                      const SizedBox(height: 16),
                       // Statut de la réservation
                       _buildStatusSection(reservation.status),
                     ],
@@ -1728,55 +1873,207 @@ class HotelManagementState extends State<Hotel_Management> {
             _buildDetailRow(
                 'Réception', reservation.receptionist.target!.fullName,
                 isHeader: true),
+            // Row(
+            //   crossAxisAlignment: CrossAxisAlignment.center,
+            //   children: [
+            //     const Text(
+            //       'Client:',
+            //       style: TextStyle(
+            //         fontWeight: FontWeight.bold,
+            //         fontSize: 16,
+            //       ),
+            //     ),
+            //     Expanded(
+            //       // ✅ Pour que les chips prennent l’espace restant
+            //       child: Wrap(
+            //         spacing: -12,
+            //         runSpacing: 0,
+            //         children: List.generate(reservation.guests.length, (index) {
+            //           final guest = reservation.guests[index];
+            //
+            //           return Transform.scale(
+            //             scale: 0.8, // 70% de la taille -> réduction de ~30%
+            //             child: InputChip(
+            //               avatar: CircleAvatar(
+            //                 radius: 10, // réduit aussi l’avatar
+            //                 backgroundColor: Colors.blue.shade100,
+            //                 child: Text(
+            //                   guest.fullName.substring(0, 1).toUpperCase(),
+            //                   style: const TextStyle(
+            //                     color: Colors.black,
+            //                     fontSize: 12, // police réduite
+            //                   ),
+            //                 ),
+            //               ),
+            //               label: Text(
+            //                 guest.fullName.capitalize,
+            //                 style:
+            //                     const TextStyle(fontSize: 13), // police réduite
+            //               ),
+            //               backgroundColor: Colors.deepPurpleAccent,
+            //               labelStyle: const TextStyle(color: Colors.white),
+            //               shape: RoundedRectangleBorder(
+            //                 borderRadius: BorderRadius.circular(20),
+            //               ),
+            //               onPressed: () {
+            //                 Navigator.push(
+            //                   context,
+            //                   MaterialPageRoute(
+            //                     builder: (_) => ClientDetailPage(guest: guest),
+            //                   ),
+            //                 );
+            //               },
+            //             ),
+            //           );
+            //           ;
+            //         }),
+            //       ),
+            //     ),
+            //   ],
+            // ),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(
-                  width: 80,
-                  child: Text(
-                    'Client:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                const Text(
+                  'Client:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: List.generate(reservation.guests.length, (index) {
-                    final guest = reservation.guests[index];
+                const SizedBox(width: 8),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final List<Widget> chips = [];
+                      double usedWidth = 0;
+                      const double spacing = 6;
+                      const double chipScale = 0.8;
 
-                    return Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        InputChip(
-                          avatar: CircleAvatar(
-                            backgroundColor: Colors.blue.shade100,
-                            child: Text(
-                              guest.fullName.substring(0, 1).toUpperCase(),
-                              style: const TextStyle(
-                                  color: Colors.black, fontSize: 12),
-                            ),
+                      // On réserve la largeur pour le chip "+X"
+                      const double plusChipMinWidth = 50;
+
+                      for (int i = 0; i < reservation.guests.length; i++) {
+                        final guest = reservation.guests[i];
+
+                        // Mesure du texte (largeur du label)
+                        final painter = TextPainter(
+                          text: TextSpan(
+                            text: guest.fullName.capitalize,
+                            style: const TextStyle(fontSize: 13),
                           ),
-                          label: Text(
-                            guest.fullName.capitalize,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                          backgroundColor: Colors.deepPurpleAccent,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30)),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ClientDetailPage(guest: guest),
+                          maxLines: 1,
+                          textDirection: ui.TextDirection.ltr,
+                        )..layout();
+
+                        // Largeur estimée du chip (avatar + texte + padding)
+                        double chipWidth = painter.width + 40;
+                        chipWidth *= chipScale;
+
+                        // Vérifie si on peut placer ce chip + au moins le chip "+X"
+                        if (usedWidth + chipWidth + spacing + plusChipMinWidth >
+                            constraints.maxWidth) {
+                          final remaining = reservation.guests.length - i;
+
+                          // Ajout du chip "+X"
+                          chips.add(
+                            GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (_) => AlertDialog(
+                                    title: const Text("Tous les clients"),
+                                    content: SizedBox(
+                                      width: double.maxFinite,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: reservation.guests.length,
+                                        itemBuilder: (context, index) {
+                                          final g = reservation.guests[index];
+                                          return ListTile(
+                                            leading: CircleAvatar(
+                                              backgroundColor:
+                                                  Colors.blue.shade100,
+                                              child: Text(
+                                                g.fullName
+                                                    .substring(0, 1)
+                                                    .toUpperCase(),
+                                              ),
+                                            ),
+                                            title: Text(g.fullName.capitalize),
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      ClientDetailPage(
+                                                          guest: g),
+                                                ),
+                                              );
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Transform.scale(
+                                scale: 0.8,
+                                child: Chip(
+                                  backgroundColor: Colors.grey.shade300,
+                                  label: Text(
+                                    "+$remaining",
+                                    style: const TextStyle(color: Colors.black),
+                                  ),
+                                ),
                               ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  }),
+                            ),
+                          );
+                          break; // stop → on a placé "+X"
+                        } else {
+                          // Ajout du chip normal
+                          chips.add(
+                            InputChip(
+                              avatar: CircleAvatar(
+                                radius: 10,
+                                backgroundColor: Colors.blue.shade100,
+                                child: Text(
+                                  guest.fullName.substring(0, 1).toUpperCase(),
+                                  style: const TextStyle(
+                                      color: Colors.black, fontSize: 10),
+                                ),
+                              ),
+                              label: Text(
+                                guest.fullName.capitalize,
+                                style: const TextStyle(fontSize: 11),
+                              ),
+                              backgroundColor: Colors.deepPurpleAccent,
+                              labelStyle: const TextStyle(color: Colors.white),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ClientDetailPage(guest: guest),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                          usedWidth += chipWidth + spacing;
+                        }
+                      }
+
+                      return Row(
+                        children: chips,
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -1880,7 +2177,7 @@ class HotelManagementState extends State<Hotel_Management> {
               child: Icon(icon, size: 20, color: Colors.grey.shade600),
             ),
           SizedBox(
-            width: isHeader ? 80 : 100,
+            width: isHeader ? 82 : 100,
             child: Text(
               '$label:',
               style: TextStyle(
@@ -2112,71 +2409,7 @@ class HotelManagementState extends State<Hotel_Management> {
                 },
               );
             },
-            child: SeasonalAppBar()
-
-            // child: Padding(
-            //   padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
-            //   child: Text.rich(
-            //     TextSpan(
-            //       children: [
-            //         TextSpan(
-            //           text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
-            //           style: TextStyle(
-            //             fontSize: 25,
-            //             fontWeight: FontWeight.bold,
-            //             color: Theme.of(context).primaryColorLight,
-            //           ),
-            //         ),
-            //         TextSpan(
-            //           text: selected != null
-            //               ? "${selected.name} - x${selected.multiplier.toStringAsFixed(2)} "
-            //               : "",
-            //           style: TextStyle(
-            //             fontSize: 23,
-            //             fontWeight: FontWeight.w200,
-            //             color: Theme.of(context).primaryColorLight,
-            //           ),
-            //         ),
-            //         TextSpan(
-            //           children: [
-            //             if (selected != null) ...[
-            //               WidgetSpan(
-            //                 child: Icon(Icons.play_arrow,
-            //                     size: 20, color: Colors.greenAccent),
-            //               ),
-            //               TextSpan(
-            //                 text:
-            //                     " ${dateFormatter.format(selected.startDate)}  ",
-            //                 style: TextStyle(
-            //                   fontSize: 18,
-            //                   fontWeight: FontWeight.w400,
-            //                   color: Theme.of(context).primaryColorLight,
-            //                 ),
-            //               ),
-            //               WidgetSpan(
-            //                 child: Icon(Icons.arrow_forward,
-            //                     size: 20, color: Colors.white70),
-            //               ),
-            //               WidgetSpan(
-            //                 child: Icon(Icons.flag,
-            //                     size: 20, color: Colors.redAccent),
-            //               ),
-            //               TextSpan(
-            //                 text: " ${dateFormatter.format(selected.endDate)}",
-            //                 style: TextStyle(
-            //                   fontSize: 18,
-            //                   fontWeight: FontWeight.w400,
-            //                   color: Theme.of(context).primaryColorLight,
-            //                 ),
-            //               ),
-            //             ],
-            //           ],
-            //         )
-            //       ],
-            //     ),
-            //   ),
-            // ),
-            );
+            child: SeasonalAppBar());
       },
     );
   }
@@ -2247,14 +2480,14 @@ class HotelManagementState extends State<Hotel_Management> {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    TextSpan(
-                      text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColorLight,
-                      ),
-                    ),
+                    // TextSpan(
+                    //   text: "${_currentHotel?.name ?? 'Mon'} Hôtel ",
+                    //   style: TextStyle(
+                    //     fontSize: 25,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: Theme.of(context).primaryColorLight,
+                    //   ),
+                    // ),
                     TextSpan(
                       text:
                           //  "${selected.name} - "
@@ -2265,41 +2498,41 @@ class HotelManagementState extends State<Hotel_Management> {
                         color: Theme.of(context).primaryColorLight,
                       ),
                     ),
-                    // TextSpan(
-                    //   children: [
-                    //     if (selected != null) ...[
-                    //       WidgetSpan(
-                    //         child: Icon(Icons.play_arrow,
-                    //             size: 20, color: Colors.greenAccent),
-                    //       ),
-                    //       TextSpan(
-                    //         text:
-                    //             " ${dateFormatter.format(selected.startDate)}  ",
-                    //         style: TextStyle(
-                    //           fontSize: 18,
-                    //           fontWeight: FontWeight.w400,
-                    //           color: Theme.of(context).primaryColorLight,
-                    //         ),
-                    //       ),
-                    //       WidgetSpan(
-                    //         child: Icon(Icons.arrow_forward,
-                    //             size: 20, color: Colors.white70),
-                    //       ),
-                    //       WidgetSpan(
-                    //         child: Icon(Icons.flag,
-                    //             size: 20, color: Colors.redAccent),
-                    //       ),
-                    //       TextSpan(
-                    //         text: " ${dateFormatter.format(selected.endDate)}",
-                    //         style: TextStyle(
-                    //           fontSize: 18,
-                    //           fontWeight: FontWeight.w400,
-                    //           color: Theme.of(context).primaryColorLight,
-                    //         ),
-                    //       ),
-                    //     ],
-                    //   ],
-                    // )
+                    TextSpan(
+                      children: [
+                        if (selected != null) ...[
+                          WidgetSpan(
+                            child: Icon(Icons.play_arrow,
+                                size: 20, color: Colors.greenAccent),
+                          ),
+                          TextSpan(
+                            text:
+                                " ${dateFormatter.format(selected.startDate)}  ",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w400,
+                              color: Theme.of(context).primaryColorLight,
+                            ),
+                          ),
+                          WidgetSpan(
+                            child: Icon(Icons.arrow_forward,
+                                size: 20, color: Colors.white70),
+                          ),
+                          WidgetSpan(
+                            child: Icon(Icons.flag,
+                                size: 20, color: Colors.redAccent),
+                          ),
+                          TextSpan(
+                            text: " ${dateFormatter.format(selected.endDate)}",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w400,
+                              color: Theme.of(context).primaryColorLight,
+                            ),
+                          ),
+                        ],
+                      ],
+                    )
                   ],
                 ),
               ),
@@ -3212,7 +3445,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   Widget _buildBasicInfoSection() {
     return Card(
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding:
+            EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 8 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -3336,7 +3570,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
             // ================= Price & Status Section =================
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(
+                  MediaQuery.of(context).size.width < 600 ? 0 : 8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3993,68 +4228,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       children: [
         // Affichage du prix de base de la chambre
         if (_selectedRoom?.category.target != null) ...[
-          // FittedBox(
-          //   child: Padding(
-          //     padding: EdgeInsets.only(bottom: 4),
-          //     child: Text(
-          //       'Prix de base:\n${_selectedRoom!.category.target!.basePrice.toStringAsFixed(2)}/nuitée',
-          //       style: TextStyle(
-          //           fontSize: 16,
-          //           color: Colors.grey[600],
-          //           fontWeight: FontWeight.w400),
-          //     ),
-          //   ),
-          // ),
-          // // Affichage du prix avec saison si applicable
-          // // if (_selectedSeasonalPricing != null && _seasonalMultiplier != 1.0)
-          // FittedBox(
-          //   child: Padding(
-          //     padding: EdgeInsets.only(bottom: 16),
-          //     child: Text(
-          //       'Prix de saison (${((_seasonalMultiplier * 100) - 100).toStringAsFixed(2)}%):\n${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)}/nuitée',
-          //       style: TextStyle(
-          //           fontSize: 16,
-          //           color: Colors.blue[600],
-          //           fontWeight: FontWeight.w400),
-          //     ),
-          //   ),
-          // ),
           PriceCard(
             basePrice: _selectedRoom!.category.target!.basePrice,
             seasonalMultiplier: _seasonalMultiplier,
           ),
         ],
-
-        // Champ de saisie du prix
-        // TextFormField(
-        //   controller: _priceController,
-        //   decoration: InputDecoration(
-        //     labelText: 'Prix réservation/nuit (DA)',
-        //     hintText: _selectedRoom?.category.target != null
-        //         ? 'Laisser vide pour prix auto (${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier).toStringAsFixed(2)})'
-        //         : 'Entrer le prix',
-        //     prefixIcon: Icon(Icons.attach_money),
-        //     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        //     helperText: 'Laissez vide pour utiliser le prix automatique',
-        //   ),
-        //   keyboardType: TextInputType.number,
-        //   onChanged: (value) {
-        //     setState(() {
-        //       _isPriceManuallyEdited = value.isNotEmpty;
-        //       _updateAllExtraPrices();
-        //     });
-        //   },
-        //   validator: (value) {
-        //     // Permettre vide si on a une chambre sélectionnée (prix auto)
-        //     if ((value == null || value.isEmpty) &&
-        //         _selectedRoom?.category.target != null) {
-        //       return null;
-        //     }
-        //     if (value == null || value.isEmpty) return 'Prix requis';
-        //     if (double.tryParse(value) == null) return 'Prix invalide';
-        //     return null;
-        //   },
-        // ),
       ],
     );
   }
@@ -4594,160 +4772,91 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 children: List.generate(_selectedGuests.length, (index) {
                   final guest = _selectedGuests[index];
 
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InputChip(
-                        avatar: CircleAvatar(
-                          backgroundColor: Colors.blue.shade100,
-                          child: Text(
-                            guest.fullName.substring(0, 1).toUpperCase(),
-                            style: const TextStyle(
-                                color: Colors.blue, fontSize: 12),
-                          ),
+                  return InputChip(
+                    avatar: CircleAvatar(
+                      backgroundColor: Colors.blue.shade100,
+                      child: Text(
+                        guest.fullName.substring(0, 1).toUpperCase(),
+                        style:
+                            const TextStyle(color: Colors.blue, fontSize: 12),
+                      ),
+                    ),
+                    label: Text(
+                      guest.fullName.capitalize,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    backgroundColor: Colors.deepPurpleAccent,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ClientDetailPage(guest: guest),
                         ),
-                        label: Text(
-                          guest.fullName.capitalize,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        backgroundColor: Colors.deepPurpleAccent,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ClientDetailPage(guest: guest),
-                            ),
-                          );
-                        },
-                        onDeleted: () async {
-                          final action = await showDialog<String>(
-                            context: context,
-                            builder: (context) => SimpleDialog(
-                              title: const Text("Choisissez une action"),
-                              children: [
-                                SimpleDialogOption(
-                                  onPressed: () =>
-                                      Navigator.pop(context, "edit"),
-                                  child: Row(
-                                    children: const [
-                                      Icon(Icons.edit, color: Colors.blue),
-                                      SizedBox(width: 8),
-                                      Text("Éditer"),
-                                    ],
-                                  ),
-                                ),
-                                SimpleDialogOption(
-                                  onPressed: () =>
-                                      Navigator.pop(context, "delete"),
-                                  child: Row(
-                                    children: const [
-                                      Icon(Icons.delete, color: Colors.red),
-                                      SizedBox(width: 8),
-                                      Text("Supprimer"),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-
-                          if (action == "edit") {
-                            _editGuest(index);
-                          } else if (action == "delete") {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text("Confirmation"),
-                                content: const Text(
-                                    "Voulez-vous vraiment supprimer ce client ?"),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(false),
-                                    child: const Text("Annuler"),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(true),
-                                    child: const Text("Supprimer"),
-                                  ),
+                      );
+                    },
+                    onDeleted: () async {
+                      final action = await showDialog<String>(
+                        context: context,
+                        builder: (context) => SimpleDialog(
+                          title: const Text("Choisissez une action"),
+                          children: [
+                            SimpleDialogOption(
+                              onPressed: () => Navigator.pop(context, "edit"),
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.edit, color: Colors.blue),
+                                  SizedBox(width: 8),
+                                  Text("Éditer"),
                                 ],
                               ),
-                            );
-
-                            if (confirm == true) {
-                              _removeGuest(index);
-                            }
-                          }
-                        },
-                        deleteIcon: const Icon(
-                          Icons.delete,
+                            ),
+                            SimpleDialogOption(
+                              onPressed: () => Navigator.pop(context, "delete"),
+                              child: Row(
+                                children: const [
+                                  Icon(Icons.delete, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text("Supprimer"),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      // IconButton(
-                      //   icon: const Icon(Icons.edit, color: Colors.blue),
-                      //   onPressed: () async {
-                      //     final action = await showDialog<String>(
-                      //       context: context,
-                      //       builder: (context) => SimpleDialog(
-                      //         title: const Text("Choisissez une action"),
-                      //         children: [
-                      //           SimpleDialogOption(
-                      //             onPressed: () => Navigator.pop(context, "edit"),
-                      //             child: Row(
-                      //               children: const [
-                      //                 Icon(Icons.edit, color: Colors.blue),
-                      //                 SizedBox(width: 8),
-                      //                 Text("Éditer"),
-                      //               ],
-                      //             ),
-                      //           ),
-                      //           SimpleDialogOption(
-                      //             onPressed: () =>
-                      //                 Navigator.pop(context, "delete"),
-                      //             child: Row(
-                      //               children: const [
-                      //                 Icon(Icons.delete, color: Colors.red),
-                      //                 SizedBox(width: 8),
-                      //                 Text("Supprimer"),
-                      //               ],
-                      //             ),
-                      //           ),
-                      //         ],
-                      //       ),
-                      //     );
-                      //
-                      //     if (action == "edit") {
-                      //       _editGuest(index);
-                      //     } else if (action == "delete") {
-                      //       final confirm = await showDialog<bool>(
-                      //         context: context,
-                      //         builder: (context) => AlertDialog(
-                      //           title: const Text("Confirmation"),
-                      //           content: const Text(
-                      //               "Voulez-vous vraiment supprimer ce client ?"),
-                      //           actions: [
-                      //             TextButton(
-                      //               onPressed: () =>
-                      //                   Navigator.of(context).pop(false),
-                      //               child: const Text("Annuler"),
-                      //             ),
-                      //             ElevatedButton(
-                      //               onPressed: () =>
-                      //                   Navigator.of(context).pop(true),
-                      //               child: const Text("Supprimer"),
-                      //             ),
-                      //           ],
-                      //         ),
-                      //       );
-                      //
-                      //       if (confirm == true) {
-                      //         _removeGuest(index);
-                      //       }
-                      //     }
-                      //   },
-                      // ),
-                    ],
+                      );
+
+                      if (action == "edit") {
+                        _editGuest(index);
+                      } else if (action == "delete") {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Confirmation"),
+                            content: const Text(
+                                "Voulez-vous vraiment supprimer ce client ?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child: const Text("Annuler"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child: const Text("Supprimer"),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          _removeGuest(index);
+                        }
+                      }
+                    },
+                    deleteIcon: const Icon(
+                      Icons.delete,
+                    ),
                   );
                 }),
               )
@@ -4942,10 +5051,11 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       }
 
       ReservationResult result;
-      final basePrice = _selectedRoom!.category.target!.basePrice;
-      final seasonalMultiplier = _selectedSeasonalPricing?.multiplier ?? 1.0;
-      final effectivePrice = basePrice * seasonalMultiplier;
+
       if (widget.isEditing && widget.existingReservation != null) {
+        widget.existingReservation!.seasonalPricing.target =
+            _selectedSeasonalPricing;
+
         result = await widget.provider.updateReservationComplete(
           reservation: widget.existingReservation!,
           newRoom: _selectedRoom!,
@@ -4953,28 +5063,37 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newGuests: _selectedGuests,
           newFrom: _fromDate!,
           newTo: _toDate!,
-          newPricePerNight: // effectivePrice,
-              priceToSave,
-          //  pricePerNight,
+          newPricePerNight: priceToSave,
           newStatus: _status,
           newBoardBasis: _selectedBoardBasis,
           newDiscountPercent: _discountPercent,
           newDiscountAmount: _discountAmount,
         );
       } else {
+        final newReservation = Reservation(
+          from: _fromDate!,
+          to: _toDate!,
+          pricePerNight: priceToSave,
+          status: _status,
+        );
+
+        newReservation.room.target = _selectedRoom!;
+        newReservation.seasonalPricing.target = _selectedSeasonalPricing;
+        newReservation.guests.addAll(_selectedGuests);
+
         result = await widget.provider.addReservation(
           room: _selectedRoom!,
           receptionist: _selectedEmployee!,
           guests: _selectedGuests,
           from: _fromDate!,
           to: _toDate!,
-          pricePerNight: //effectivePrice,
-              priceToSave,
-          //     pricePerNight,
+          pricePerNight: priceToSave,
           status: _status,
           boardBasis: _selectedBoardBasis,
           discountPercent: _discountPercent,
           discountAmount: _discountAmount,
+          seasonalPricing:
+              _selectedSeasonalPricing, // si ton provider accepte en param
         );
       }
 
@@ -5604,14 +5723,14 @@ class SeasonalPricingDropdown extends StatelessWidget {
           child: DropdownButtonFormField<SeasonalPricing>(
             style: TextStyle(
                 fontSize: 14,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontFamily: 'OSWALD'),
             value: validValue,
             isExpanded: true,
             isDense: false,
             decoration: InputDecoration(
               labelText: 'Tarif saisonnier',
-              prefixIcon: const Icon(Icons.calendar_today),
+              // prefixIcon: const Icon(Icons.calendar_today),
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -5646,7 +5765,7 @@ class SeasonalPricingDropdown extends StatelessWidget {
               return uniqueList.map((sp) {
                 return SizedBox(
                   // ✅ Contraint la hauteur affichée
-                  height: 48, // Ajuste selon le design (par défaut 48px)
+                  height: 50, // Ajuste selon le design (par défaut 48px)
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
