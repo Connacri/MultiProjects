@@ -968,13 +968,15 @@ class HotelDataInitializer {
   }
 
   /// ==================== ENHANCED SEASONAL PRICING ====================
+  /// ==================== ENHANCED SEASONAL PRICING ====================
   Future<void> createDefaultSeasonalPricing() async {
     debugPrint('📅 Création des saisons tarifaires enrichies...');
     final currentYear = DateTime.now().year;
+
     final seasons = [
       // Saisons principales
       SeasonalPricing(
-        name: 'Basse saison hiver',
+        name: 'hiver',
         startDate: DateTime(currentYear, 1, 1),
         endDate: DateTime(currentYear, 2, 28),
         multiplier: 0.75,
@@ -982,9 +984,8 @@ class HotelDataInitializer {
         description: 'Période calme avec tarifs préférentiels',
         priority: 1,
       ),
-
       SeasonalPricing(
-        name: 'Saison intermédiaire printemps',
+        name: 'printemps',
         startDate: DateTime(currentYear, 3, 1),
         endDate: DateTime(currentYear, 5, 31),
         multiplier: 1.0,
@@ -992,9 +993,8 @@ class HotelDataInitializer {
         description: 'Climat idéal, tarifs normaux',
         priority: 2,
       ),
-
       SeasonalPricing(
-        name: 'Haute saison été',
+        name: 'été',
         startDate: DateTime(currentYear, 6, 1),
         endDate: DateTime(currentYear, 8, 31),
         multiplier: 1.6,
@@ -1002,9 +1002,8 @@ class HotelDataInitializer {
         description: 'Pic touristique estival, forte demande',
         priority: 3,
       ),
-
       SeasonalPricing(
-        name: 'Saison intermédiaire automne',
+        name: 'automne',
         startDate: DateTime(currentYear, 9, 1),
         endDate: DateTime(currentYear, 11, 15),
         multiplier: 1.1,
@@ -1015,7 +1014,7 @@ class HotelDataInitializer {
 
       // Périodes spéciales
       SeasonalPricing(
-        name: 'Vacances scolaires hiver',
+        name: 'vacances scolaires hiver',
         startDate: DateTime(currentYear, 2, 15),
         endDate: DateTime(currentYear, 2, 28),
         multiplier: 1.3,
@@ -1024,9 +1023,8 @@ class HotelDataInitializer {
         description: 'Augmentation pour chambres familiales',
         priority: 4,
       ),
-
       SeasonalPricing(
-        name: 'Fêtes de fin d\'année',
+        name: 'fêtes de fin d\'année',
         startDate: DateTime(currentYear, 12, 20),
         endDate: DateTime(currentYear, 12, 31),
         multiplier: 2.2,
@@ -1034,9 +1032,8 @@ class HotelDataInitializer {
         description: 'Période premium - Noël & Nouvel An',
         priority: 5,
       ),
-
       SeasonalPricing(
-        name: 'Ramadan - Tarifs préférentiels',
+        name: 'ramadan - tarifs préférentiels',
         startDate: DateTime(currentYear, 3, 10),
         endDate: DateTime(currentYear, 4, 9),
         multiplier: 0.85,
@@ -1044,9 +1041,8 @@ class HotelDataInitializer {
         description: 'Tarifs spéciaux pendant le Ramadan',
         priority: 3,
       ),
-
       SeasonalPricing(
-        name: 'Festival culturel été',
+        name: 'festival culturel été',
         startDate: DateTime(currentYear, 7, 5),
         endDate: DateTime(currentYear, 7, 15),
         multiplier: 2.0,
@@ -1054,9 +1050,8 @@ class HotelDataInitializer {
         description: 'Festival international - demande exceptionnelle',
         priority: 6,
       ),
-
       SeasonalPricing(
-        name: 'Conférence internationale',
+        name: 'conférence internationale',
         startDate: DateTime(currentYear, 10, 15),
         endDate: DateTime(currentYear, 10, 20),
         multiplier: 1.8,
@@ -1068,7 +1063,7 @@ class HotelDataInitializer {
 
       // Promotions spéciales
       SeasonalPricing(
-        name: 'Promotion séjour long',
+        name: 'promotion séjour long',
         startDate: DateTime(currentYear, 11, 16),
         endDate: DateTime(currentYear, 12, 19),
         multiplier: 0.9,

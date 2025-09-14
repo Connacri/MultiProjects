@@ -1,7 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:string_extensions/string_extensions.dart';
 
 import '../../../Entity.dart';
 import 'claude_crud.dart';
@@ -733,4 +736,387 @@ class _WavePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class BentoCard extends StatelessWidget {
+  final SeasonalPricing season;
+
+  const BentoCard({super.key, required this.season});
+
+  /// Mapping saison → image existante dans assets/seasons/
+  static final Map<String, String> seasonalImages = {
+    "hiver": "assets/seasons/hiver.jpg",
+    "printemps": "assets/seasons/printemps.jpg",
+    "été": "assets/seasons/ete.jpg", // attention au é accentué
+    "automne": "assets/seasons/automne.jpg",
+    "vacances scolaires hiver": "assets/seasons/vacances_scolaires_hiver.jpg",
+    "fêtes de fin d'année": "assets/seasons/fetes_de_fin_dannee.jpg",
+    "ramadan - tarifs préférentiels":
+        "assets/seasons/ramadan_tarifs_preferentiels.jpg",
+    "festival culturel été": "assets/seasons/festival_culturel_ete.jpg",
+    "conférence internationale": "assets/seasons/conference_internationale.jpg",
+    "promotion séjour long": "assets/seasons/promotion_sejour_long.jpeg",
+  };
+
+  String _formatDate(DateTime date) {
+    return DateFormat("EEEE d MMM", "fr_FR").format(date);
+  }
+
+  IconData _getSeasonIcon(String name) {
+    if (name.toLowerCase().contains("hiver")) return Icons.ac_unit;
+    if (name.toLowerCase().contains("printemps")) return Icons.local_florist;
+    if (name.toLowerCase().contains("ete")) return Icons.wb_sunny;
+    if (name.toLowerCase().contains("automne")) return Icons.park;
+    if (name.toLowerCase().contains("ramadan"))
+      return FontAwesomeIcons.starAndCrescent;
+    if (name.toLowerCase().contains("fête")) return Icons.celebration;
+    if (name.toLowerCase().contains("festival")) return Icons.music_note;
+    if (name.toLowerCase().contains("conférence")) return Icons.business;
+    return Icons.event;
+  }
+
+  String _normalizeSeasonName(String name) {
+    // Conversion en minuscule
+    String normalized = name.toLowerCase();
+
+    // Remplacement des accents par leurs équivalents simples
+    normalized = normalized
+        .replaceAll(RegExp(r"[àâä]"), "a")
+        .replaceAll(RegExp(r"[éèêë]"), "e")
+        .replaceAll(RegExp(r"[îï]"), "i")
+        .replaceAll(RegExp(r"[ôö]"), "o")
+        .replaceAll(RegExp(r"[ùûü]"), "u")
+        .replaceAll(RegExp(r"[ç]"), "c");
+
+    // Remplacement des espaces et caractères spéciaux par "_"
+    normalized = normalized
+        .replaceAll(RegExp(r"[^\w]+"), "_") // tout ce qui n'est pas [a-z0-9_]
+        .replaceAll(RegExp(r"_+"), "_") // supprime les doubles __
+        .replaceAll(RegExp(r"^_|_$"), ""); // supprime "_" au début/fin
+
+    return normalized;
+  }
+
+  String getSeasonImage(String name) {
+    final normalized = _normalizeSeasonName(name);
+
+    // Liste des fichiers existants dans assets/seasons
+    const availableImages = [
+      "automne.jpg",
+      "conference_internationale.jpg",
+      "festival_culturel_ete.jpg",
+      "fetes_de_fin_dannee.jpg",
+      "hiver.jpg",
+      "printemps.jpg",
+      "promotion_sejour_long.jpeg",
+      "ramadan_tarifs_preferentiels.jpg",
+      "vacances_scolaires_hiver.jpg",
+      "ete.jpg", // correspond à été.jpg après normalisation
+    ];
+
+    // Chercher le fichier correspondant
+    final match = availableImages.firstWhere(
+      (file) => file.startsWith(normalized),
+      orElse: () => "default.jpg", // fallback si pas trouvé
+    );
+
+    return "assets/seasons/$match";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // final imagePath = seasonalImages[season.name.toLowerCase()] ??
+    //     "assets/seasons/default.jpg";
+    final imagePath = getSeasonImage(season.name);
+
+    return Center(
+      child: Container(
+        width: 320,
+        height: 340,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.hardEdge,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.1),
+                      Colors.black.withOpacity(0.9),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Icon(
+                        _getSeasonIcon(season.name),
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      season.name.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TimelineWidget(
+                        startDate: season.startDate, endDate: season.endDate),
+                    const SizedBox(height: 8),
+                    Text(
+                      season.description ?? "",
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(30),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            "${season.multiplier}x",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w200,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class TimelineWidget extends StatelessWidget {
+  final DateTime startDate;
+  final DateTime endDate;
+
+  const TimelineWidget({
+    Key? key,
+    required this.startDate,
+    required this.endDate,
+  }) : super(key: key);
+
+  String _formatDate(DateTime date) {
+    return DateFormat("d MMMM y", "fr_FR").format(date);
+  }
+
+  String _formatDateName(DateTime date) {
+    return DateFormat("EEEE", "fr_FR").format(date);
+  }
+
+  String _formatDateDateShort(DateTime date) {
+    return DateFormat("d/MM", "fr_FR").format(date);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Point de départ
+          _buildTimelinePoint(
+            dateName: _formatDateName(startDate),
+            iconColor: Colors.white70,
+            circleColor: Colors.black54,
+            circleBorderColor: Colors.white70,
+            checkIcon: Icons.check,
+            date: _formatDate(startDate),
+            dateShort: _formatDateDateShort(startDate),
+          ),
+
+          // Ligne avec flèche
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: SizedBox(
+                height: 50,
+                child: CustomPaint(
+                  painter: TimelineArrowPainter(
+                    color: Colors.green,
+                    strokeWidth: 6,
+                    arrowHeadSize: 15,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Point d'arrivée
+          _buildTimelinePoint(
+            dateName: _formatDateName(endDate),
+            iconColor: Colors.green,
+            circleColor: Colors.black54,
+            circleBorderColor: Colors.green,
+            checkIcon: Icons.refresh,
+            date: _formatDate(endDate),
+            dateShort: _formatDateDateShort(endDate),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelinePoint({
+    required String dateName,
+    required Color iconColor,
+    required Color circleColor,
+    required Color circleBorderColor,
+    required IconData checkIcon,
+    required String date,
+    required String dateShort,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                color: circleColor,
+                shape: BoxShape.circle,
+                border: Border.all(color: circleBorderColor, width: 2),
+              ),
+              // child: Icon(checkIcon, size: 12, color: Colors.white),
+            ),
+            Text(
+              dateShort,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        // const SizedBox(height: 8),
+        // Text(
+        //   date,
+        //   style: const TextStyle(
+        //     color: Colors.white70,
+        //     fontSize: 13,
+        //   ),
+        // ),
+        Text(
+          dateName.capitalize,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class TimelineArrowPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double arrowHeadSize;
+
+  TimelineArrowPainter({
+    required this.color,
+    this.strokeWidth = 5.0,
+    this.arrowHeadSize = 10,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // Dessine la ligne horizontale au centre
+    final centerY = size.height / 2;
+    final lineStart = Offset(0, centerY);
+    final lineEnd = Offset(size.width, centerY);
+    canvas.drawLine(lineStart, lineEnd, paint);
+
+    // Dessine la tête de flèche
+    final path = Path();
+    path.moveTo(size.width - arrowHeadSize, centerY - arrowHeadSize / 2);
+    path.lineTo(size.width, centerY);
+    path.lineTo(size.width - arrowHeadSize, centerY + arrowHeadSize / 2);
+    path.close();
+
+    canvas.drawPath(path, paint..style = PaintingStyle.fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant TimelineArrowPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.arrowHeadSize != arrowHeadSize;
+  }
 }

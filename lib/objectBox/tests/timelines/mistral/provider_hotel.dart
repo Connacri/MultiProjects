@@ -209,17 +209,6 @@ class HotelProvider with ChangeNotifier {
     _boardBasis = _boardBasisBox.getAll();
     _extraServices = _extraServiceBox.getAll();
     _seasonalPricing = _seasonalPricingBox.getAll();
-
-    debugPrint('Données chargées :');
-    debugPrint('- Hôtels : ${_hotels.length}');
-    debugPrint('- Chambres : ${_rooms.length}');
-    debugPrint('- Réservations : ${_reservations.length}');
-    debugPrint('- Clients : ${_guests.length}');
-    debugPrint('- Employés : ${_employees.length}');
-    debugPrint('- Catégories de chambres : ${_roomCategories.length}');
-    debugPrint('- Plans de pension : ${_boardBasis.length}');
-    debugPrint('- Services supplémentaires : ${_extraServices.length}');
-    debugPrint('- Tarifications saisonnières : ${_seasonalPricing.length}');
   }
 
   void _checkFirstLaunch() {

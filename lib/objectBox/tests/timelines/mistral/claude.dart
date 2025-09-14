@@ -1315,6 +1315,7 @@ class HotelManagementState extends State<Hotel_Management> {
                 });
               },
               seasonalPricings: provider.getSeasonalPricings(),
+              seasonSaved: provider.selectedSeasonalPricing!,
             ),
           ),
         ),
@@ -1561,6 +1562,7 @@ class HotelManagementState extends State<Hotel_Management> {
                 });
               },
               seasonalPricings: provider.getSeasonalPricings(),
+              seasonSaved: provider.selectedSeasonalPricing!,
             ),
           ),
         ),
@@ -1594,6 +1596,8 @@ class HotelManagementState extends State<Hotel_Management> {
     }
   }
 
+  final dateFormatter =
+      DateFormat('EEEE dd/MM/yyyy', 'fr_FR'); // jour + date FR
   void _showReservationDetails(Reservation reservation) {
     final nights = reservation.to.difference(reservation.from).inDays;
     final totalPrice = reservation.pricePerNight * nights;
@@ -1734,67 +1738,7 @@ class HotelManagementState extends State<Hotel_Management> {
                       ),
                       const SizedBox(height: 16),
                       // 🔹 Saison appliquée
-                      if (reservation.seasonalPricing.target != null) ...[
-                        const Text(
-                          "Saison appliquée :",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "${reservation.seasonalPricing.target!.name} "
-                          "(${reservation.seasonalPricing.target!.multiplier}x)",
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-
-                      if (reservation.seasonalPricing.target != null)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Tarif saisonnier appliqué :",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today,
-                                    size: 20, color: Colors.orange),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "${reservation.seasonalPricing.target!.name} "
-                                    "(${reservation.seasonalPricing.target!.multiplier}x)",
-                                    style: const TextStyle(fontSize: 14),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Période : "
-                              "${reservation.seasonalPricing.target!.startDate} → "
-                              "${reservation.seasonalPricing.target!.endDate}",
-                              style: const TextStyle(
-                                  fontSize: 13, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        )
-                      else
-                        const Text(
-                          "Aucune saison appliquée (tarif standard)",
-                          style: TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.grey,
-                          ),
-                        ),
-
+                      BentoCard(season: reservation.seasonalPricing.target!),
                       const SizedBox(height: 16),
                       // Statut de la réservation
                       _buildStatusSection(reservation.status),
@@ -1814,6 +1758,7 @@ class HotelManagementState extends State<Hotel_Management> {
                   ),
                   padding: const EdgeInsets.all(16),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
                         "🎉 Félicitations ${reservation.guests.map((g) => g.fullName).join(", ")} 🎉",
@@ -1821,6 +1766,7 @@ class HotelManagementState extends State<Hotel_Management> {
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       const Text(
@@ -2555,6 +2501,7 @@ class ReservationDialogContent extends StatefulWidget {
   final bool isEditing;
   final Reservation? existingReservation;
   final List<SeasonalPricing> seasonalPricings;
+  final SeasonalPricing seasonSaved;
 
   const ReservationDialogContent({
     Key? key,
@@ -2567,6 +2514,7 @@ class ReservationDialogContent extends StatefulWidget {
     this.isEditing = false,
     this.existingReservation,
     required this.seasonalPricings,
+    required this.seasonSaved,
   }) : super(key: key);
 
   @override
@@ -2599,7 +2547,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   bool _isEditingGuest = false;
   Guest? _guestBeingEdited;
   int? _editingGuestIndex;
-
+  SeasonalPricing? seasonSaved;
   final List<String> _statuses = [
     "Confirmée",
     "En attente",
@@ -2626,7 +2574,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   @override
   void initState() {
     super.initState();
-
+    print(seasonSaved);
     // Valeur par défaut sûre
     _seasonalMultiplier = 1.0;
 
@@ -2660,8 +2608,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     _discountPercentController.text = _discountPercent.toString();
     _discountAmountController.text = _discountAmount.toString();
-    print('_seasonalMultiplier avant');
-    print(_seasonalMultiplier);
+
     // Après build, recalculer le multiplicateur sur la plage et mettre à jour le prix
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   if (_fromDate != null && _toDate != null) {
@@ -2692,8 +2639,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         _updateRoomPrice();
       });
     }
-    print('_seasonalMultiplier apres 2');
-    print(_seasonalMultiplier);
   }
 
   void _preselectSeasonalByToday() {
@@ -4222,7 +4167,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
 // 3. CORRECTION: Améliorer le champ prix avec prix automatique
   Widget _buildPriceFieldImproved() {
-    print(_seasonalMultiplier);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
