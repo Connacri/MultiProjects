@@ -2267,6 +2267,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _guestController.clear();
     _phoneController.clear();
     _idCardController.clear();
+    _selectedExtras.clear();
     _isEditingGuest = false;
     _editingGuestIndex = null;
     _guestBeingEdited = null;
@@ -2306,14 +2307,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     });
 
     try {
-      // Dans _saveReservation, remplacer :
-      // final pricePerNight = double.tryParse(_priceController.text) ?? 0.0;
-
-// Par :
-//       final pricePerNight = _priceController.text.isNotEmpty
-//           ? (double.tryParse(_priceController.text) ?? 0.0)
-//           : (_selectedRoom?.category.target?.basePrice ?? 0.0);
-      // Calculer le prix effectif à utiliser pour la sauvegarde
       double priceToSave;
 
       if (_priceController.text.isNotEmpty && _isPriceManuallyEdited) {
@@ -2348,6 +2341,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newTo: _toDate!,
           newPricePerNight: priceToSave,
           newStatus: _status,
+          newExtras: _selectedExtras,
           newBoardBasis: _selectedBoardBasis,
           newDiscountPercent: _discountPercent,
           newDiscountAmount: _discountAmount,

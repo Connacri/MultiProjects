@@ -498,9 +498,7 @@ class HotelProvider with ChangeNotifier {
       if (boardBasis != null) {
         reservation.boardBasis.target = boardBasis;
       }
-      if (extras != null) {
-        // Ajouter les extras via une méthode dédiée si nécessaire
-      }
+      if (extras != null) {}
       if (seasonalPricing != null) {
         reservation.seasonalPricing.target = seasonalPricing; // ✅ SAISON
       }
@@ -515,60 +513,6 @@ class HotelProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Erreur lors de l\'ajout de la réservation: $e');
       return ReservationResult.error('Erreur lors de l\'ajout: $e');
-    }
-  }
-
-  /// Met à jour une réservation avec vérification de disponibilité
-// Ajoutez cette méthode corrigée dans votre HotelProvider
-
-  /// Met à jour une réservation avec vérification de disponibilité
-  Future<ReservationResult> updateReservation(
-    Reservation reservation, {
-    Room? newRoom,
-    DateTime? newFrom,
-    DateTime? newTo,
-    bool forceOverride = false,
-    BoardBasis? newBoardBasis,
-    List<ReservationExtraItem>? newExtras,
-    SeasonalPricing? newSeasonalPricing,
-    double? newSeasonalMultiplier,
-  }) async {
-    try {
-      final roomToCheck = newRoom ?? reservation.room.target!;
-      final fromToCheck = newFrom ?? reservation.from;
-      final toToCheck = newTo ?? reservation.to;
-
-      // Vérifier la disponibilité si ce n'est pas forcé
-      if (!forceOverride) {
-        final conflict = checkReservationConflict(
-            roomToCheck, fromToCheck, toToCheck,
-            excludeReservation: reservation);
-        if (conflict != null) {
-          return ReservationResult.conflict(conflict);
-        }
-      }
-
-      // Appliquer les modifications
-      if (newRoom != null) reservation.room.target = newRoom;
-      if (newFrom != null) reservation.from = newFrom;
-      if (newTo != null) reservation.to = newTo;
-
-      // IMPORTANT : Utiliser PutMode.update ET s'assurer que l'ID existe
-      if (reservation.id != 0) {
-        _reservationBox.put(reservation, mode: PutMode.update);
-      } else {
-        // Si l'ID est 0, c'est un problème - forcer la création d'un nouvel ID
-        final newId = _reservationBox.put(reservation);
-        reservation.id = newId;
-      }
-
-      await _loadAllData();
-      notifyListeners();
-
-      return ReservationResult.success(reservation.id);
-    } catch (e) {
-      debugPrint('Erreur lors de la mise à jour de la réservation: $e');
-      return ReservationResult.error('Erreur lors de la mise à jour: $e');
     }
   }
 
@@ -633,6 +577,11 @@ class HotelProvider with ChangeNotifier {
       if (newBoardBasis != null) {
         reservation.boardBasis.target = newBoardBasis;
       }
+      if (newExtras != null) {
+        reservation.extras.clear();
+        // reservation.extras.addAll(newExtras);
+      }
+
       if (newSeasonalPricing != null) {
         reservation.seasonalPricing.target = newSeasonalPricing; // ✅ SAISON
       }
@@ -649,6 +598,57 @@ class HotelProvider with ChangeNotifier {
       }
       await _loadAllData();
       notifyListeners();
+      return ReservationResult.success(reservation.id);
+    } catch (e) {
+      debugPrint('Erreur lors de la mise à jour de la réservation: $e');
+      return ReservationResult.error('Erreur lors de la mise à jour: $e');
+    }
+  }
+
+  /// Met à jour une réservation avec vérification de disponibilité
+  Future<ReservationResult> updateReservation(
+    Reservation reservation, {
+    Room? newRoom,
+    DateTime? newFrom,
+    DateTime? newTo,
+    bool forceOverride = false,
+    BoardBasis? newBoardBasis,
+    List<ReservationExtraItem>? newExtras,
+    SeasonalPricing? newSeasonalPricing,
+    double? newSeasonalMultiplier,
+  }) async {
+    try {
+      final roomToCheck = newRoom ?? reservation.room.target!;
+      final fromToCheck = newFrom ?? reservation.from;
+      final toToCheck = newTo ?? reservation.to;
+
+      // Vérifier la disponibilité si ce n'est pas forcé
+      if (!forceOverride) {
+        final conflict = checkReservationConflict(
+            roomToCheck, fromToCheck, toToCheck,
+            excludeReservation: reservation);
+        if (conflict != null) {
+          return ReservationResult.conflict(conflict);
+        }
+      }
+
+      // Appliquer les modifications
+      if (newRoom != null) reservation.room.target = newRoom;
+      if (newFrom != null) reservation.from = newFrom;
+      if (newTo != null) reservation.to = newTo;
+
+      // IMPORTANT : Utiliser PutMode.update ET s'assurer que l'ID existe
+      if (reservation.id != 0) {
+        _reservationBox.put(reservation, mode: PutMode.update);
+      } else {
+        // Si l'ID est 0, c'est un problème - forcer la création d'un nouvel ID
+        final newId = _reservationBox.put(reservation);
+        reservation.id = newId;
+      }
+
+      await _loadAllData();
+      notifyListeners();
+
       return ReservationResult.success(reservation.id);
     } catch (e) {
       debugPrint('Erreur lors de la mise à jour de la réservation: $e');
