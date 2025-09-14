@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../objectbox.g.dart';
 import '../../../Entity.dart';
 import '../../../classeObjectBox.dart';
-import 'claude.dart';
+import 'ReservationDialogContent.dart';
 
 abstract class BaseEntityProvider<T> with ChangeNotifier {
   final ObjectBox objectBox;

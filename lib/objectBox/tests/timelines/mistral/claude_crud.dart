@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Entity.dart';
-import 'claude.dart';
+import 'ReservationDialogContent.dart';
 import 'provider_hotel.dart';
 
 class RoomCategoryListScreen extends StatelessWidget {
@@ -2203,7 +2203,7 @@ class AppDrawer extends StatelessWidget {
                         ],
                       ),
                 Spacer(),
-                SeasonalPricingDropdown(),
+                // SeasonalPricingDropdown(savedSeason: ,),
               ],
             ),
           ),
