@@ -1681,6 +1681,7 @@ class HotelManagementState extends State<Hotel_Management> {
                                         ),
                                         child: ReservationExtrasList(
                                           extras: reservation.extras,
+                                          reservation: reservation,
                                         )
 
                                         // ListView.builder(

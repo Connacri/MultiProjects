@@ -1123,8 +1123,10 @@ class TimelineArrowPainter extends CustomPainter {
 
 class ReservationExtrasList extends StatefulWidget {
   final List<ReservationExtra> extras;
+  final Reservation reservation;
 
-  const ReservationExtrasList({super.key, required this.extras});
+  const ReservationExtrasList(
+      {super.key, required this.extras, required this.reservation});
 
   @override
   State<ReservationExtrasList> createState() => _ReservationExtrasListState();
@@ -1192,7 +1194,7 @@ class _ReservationExtrasListState extends State<ReservationExtrasList> {
           ),
 
         const Divider(),
-
+        Text(widget.reservation.extrasTotal.toString()),
         // affichage du total
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
