@@ -131,8 +131,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     //   if (_fromDate != null && _toDate != null) {
     //     _seasonalMultiplier =
     //         _calculateSeasonalMultiplier(_fromDate!, _toDate!);
-    //     print('_seasonalMultiplier000');
-    //     print(_seasonalMultiplier);
+
     //     _updateRoomPrice(); // doit utiliser _seasonalMultiplier ou la fonction per-night
     //     setState(() {}); // uniquement si UI doit se rafraichir
     //   }
@@ -221,15 +220,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _seasonalMultiplier = reservationSeasonal;
     _selectedSeasonalPricing =
         widget.existingReservation!.seasonalPricing.target!;
-    print('reservationSeasonal : ${_selectedSeasonalPricing!.multiplier}');
+
     //////////////*************************************************************
     // Calculer les prix des extras après initialisation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateAllExtraPrices();
       _selectedSeasonalPricing =
           widget.existingReservation!.seasonalPricing.target!;
-      print(
-          'reservationSeasonal callback : ${_selectedSeasonalPricing!.multiplier}');
     });
   }
 
@@ -2895,14 +2892,14 @@ class SeasonalPricingDropdown extends StatelessWidget {
       builder: (context, provider, child) {
         // Utiliser les tarifs personnalisés si fournis, sinon ceux du provider
         final list = customSeasonalPricings ?? provider.getSeasonalPricings();
-        print('savedSeason  ${savedSeason!.multiplier}');
+
         // Utiliser la valeur sélectionnée personnalisée si fournie, sinon celle du provider
         final selected = savedSeason != null
             ? savedSeason
             : useLocalState
                 ? selectedValue
                 : provider.selectedSeasonalPricing;
-        print('selected  ${selected!.multiplier}');
+
         // Éliminer les doublons de la liste
         final uniqueMap = <int, SeasonalPricing>{};
         for (final sp in list) {

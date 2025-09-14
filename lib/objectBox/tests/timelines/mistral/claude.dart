@@ -1670,50 +1670,55 @@ class HotelManagementState extends State<Hotel_Management> {
                                     filter: ImageFilter.blur(
                                         sigmaX: 10, sigmaY: 10), // flou
                                     child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        // fond semi-transparent
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                            color:
-                                                Colors.white.withOpacity(0.3)),
-                                      ),
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        itemCount: reservation.extras.length,
-                                        itemBuilder: (context, index) {
-                                          final extra =
-                                              reservation.extras[index];
-                                          return Tooltip(
-                                            message:
-                                                extra.extraService.target!.name,
-                                            child: ListTile(
-                                              onTap: () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      ExtraServiceDetailPage(
-                                                    reservationExtra: extra,
-                                                  ),
-                                                ),
-                                              ),
-                                              leading: const Icon(Icons.check,
-                                                  color: Colors.green),
-                                              title: Text(
-                                                extra.extraService.target!.name,
-                                                overflow: TextOverflow.ellipsis,
-                                                // texte visible
-                                              ),
-                                              trailing: Text(
-                                                  "${extra.extraService.target!.price.toStringAsFixed(2)} DA"),
-                                              dense: true,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.2),
+                                          // fond semi-transparent
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          border: Border.all(
+                                              color: Colors.white
+                                                  .withOpacity(0.3)),
+                                        ),
+                                        child: ReservationExtrasList(
+                                          extras: reservation.extras,
+                                        )
+
+                                        // ListView.builder(
+                                        //   shrinkWrap: true,
+                                        //   physics:
+                                        //       const NeverScrollableScrollPhysics(),
+                                        //   itemCount: reservation.extras.length,
+                                        //   itemBuilder: (context, index) {
+                                        //     final extra =
+                                        //         reservation.extras[index];
+                                        //     return Tooltip(
+                                        //       message:
+                                        //           extra.extraService.target!.name,
+                                        //       child: ListTile(
+                                        //         onTap: () => Navigator.push(
+                                        //           context,
+                                        //           MaterialPageRoute(
+                                        //             builder: (context) =>
+                                        //                 ExtraServiceDetailPage(
+                                        //               reservationExtra: extra,
+                                        //             ),
+                                        //           ),
+                                        //         ),
+                                        //         leading: const Icon(Icons.check,
+                                        //             color: Colors.green),
+                                        //         title: Text(
+                                        //           extra.extraService.target!.name,
+                                        //           overflow: TextOverflow.ellipsis,
+                                        //           // texte visible
+                                        //         ),
+                                        //         trailing: Text(
+                                        //             "${extra.extraService.target!.price.toStringAsFixed(2)} DA"),
+                                        //         dense: true,
+                                        //       ),
+                                        //     );
+                                        //   },
+                                        // ),
+                                        ),
                                   ),
                                 ),
                               ],

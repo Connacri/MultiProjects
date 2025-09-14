@@ -1120,3 +1120,101 @@ class TimelineArrowPainter extends CustomPainter {
         oldDelegate.arrowHeadSize != arrowHeadSize;
   }
 }
+
+class ReservationExtrasList extends StatefulWidget {
+  final List<ReservationExtra> extras;
+
+  const ReservationExtrasList({super.key, required this.extras});
+
+  @override
+  State<ReservationExtrasList> createState() => _ReservationExtrasListState();
+}
+
+class _ReservationExtrasListState extends State<ReservationExtrasList> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final extras = widget.extras;
+
+    // calcul du total
+    final total = extras.fold<double>(
+      0,
+      (sum, e) => sum + e.extraService.target!.price,
+    );
+
+    final itemCount =
+        _expanded ? extras.length : (extras.length > 3 ? 3 : extras.length);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: itemCount,
+          itemBuilder: (context, index) {
+            final extra = extras[index];
+            return Tooltip(
+              message: extra.extraService.target!.name,
+              child: ListTile(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        ExtraServiceDetailPage(reservationExtra: extra),
+                  ),
+                ),
+                leading: const Icon(Icons.check, color: Colors.green),
+                title: Text(
+                  extra.extraService.target!.name,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: Text(
+                  "${extra.extraService.target!.price.toStringAsFixed(2)} DA",
+                ),
+                dense: true,
+              ),
+            );
+          },
+        ),
+        if (extras.length > 3)
+          Center(
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _expanded = !_expanded;
+                });
+              },
+              icon: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+              label: Text(_expanded ? "Voir moins" : "Voir plus"),
+            ),
+          ),
+
+        const Divider(),
+
+        // affichage du total
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const Text(
+                "Total : ",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              Text(
+                "${total.toStringAsFixed(2)} DA",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
