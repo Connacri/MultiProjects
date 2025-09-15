@@ -1742,6 +1742,22 @@ class HotelManagementState extends State<Hotel_Management> {
                         totalPrice,
                       ),
                       const SizedBox(height: 16),
+                      Text(reservation.discountAmount.toString()),
+                      Text(reservation.discountPercent.toString()),
+                      // Exemple dans une colonne ou une carte de réservation
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Réservation #${reservation.id}"),
+                          Text(
+                              "Prix total: ${reservation.totalPrice.toStringAsFixed(2)} DA"),
+                          SizedBox(height: 8),
+                          buildDiscountInfo(reservation),
+                          // 👉 Affiche les infos réduction
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
                       // 🔹 Saison appliquée
                       BentoCard(season: reservation.seasonalPricing.target!),
                       const SizedBox(height: 16),
@@ -1805,6 +1821,32 @@ class HotelManagementState extends State<Hotel_Management> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget buildDiscountInfo(Reservation reservation) {
+    String discountType;
+
+    if (reservation.discountPercent > 0 && reservation.discountAmount == 0) {
+      discountType = "Réduction en %";
+    } else if (reservation.discountAmount > 0 &&
+        reservation.discountPercent == 0) {
+      discountType = "Réduction en montant fixe";
+    } else if (reservation.discountAmount > 0 &&
+        reservation.discountPercent > 0) {
+      discountType = "Mixte (montant + %)";
+    } else {
+      discountType = "Aucune réduction";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Montant: ${reservation.discountAmount.toStringAsFixed(2)} DA"),
+        Text(
+            "Pourcentage: ${reservation.discountPercent.toStringAsFixed(1)} %"),
+        Text("Type: $discountType"),
+      ],
     );
   }
 

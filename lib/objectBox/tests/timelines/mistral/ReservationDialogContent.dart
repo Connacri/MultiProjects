@@ -1296,6 +1296,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(
               children: [
@@ -1372,15 +1373,18 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           _removeExtraService(extra);
                         }
                       },
-                      title: FittedBox(child: Text(extra.extraService.name)),
+                      title: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            extra.extraService.name,
+                          )),
                       subtitle: FittedBox(
+                        fit: BoxFit.scaleDown,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Text(extra.extraService.description),
-                            // SizedBox(height: 4),
                             Text(
-                              'Qtt: ${extra.quantity} | PU: ${extra.unitPrice} = ',
+                              'Qtt: ${extra.quantity} | PU: ${extra.unitPrice}${_getPricingText(extra.extraService.pricingUnit)} = ',
                               style: TextStyle(fontSize: 15),
                             ),
                             Text(
@@ -1394,24 +1398,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           ],
                         ),
                       ),
-
-                      //     Row(
-                      //   mainAxisSize: MainAxisSize.min,
-                      //   children: [
-                      //     Text(
-                      //       '${extra.totalPrice.toStringAsFixed(2)}',
-                      //       style: TextStyle(
-                      //         fontWeight: FontWeight.bold,
-                      //         color: Theme.of(context).primaryColor,
-                      //       ),
-                      //     ),
-                      //     SizedBox(width: 8),
-                      //     // IconButton(
-                      //     //   onPressed: () => _removeExtraService(extra),
-                      //     //   icon: Icon(Icons.delete, color: Colors.red),
-                      //     // ),
-                      //   ],
-                      // ),
                     ),
                   );
                 },
@@ -2841,6 +2827,21 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     String appliedText = _getDiscountAppliedToLabel();
 
     return 'Réduction de $discountText appliquée sur: $appliedText';
+  }
+
+  String _getPricingText(String pricingUnit) {
+    switch (pricingUnit.toLowerCase()) {
+      case 'per_person':
+        return '/Personne';
+      case 'per_item':
+        return '/Article';
+      case 'per_night':
+        return '/Nuit';
+      case 'per_stay':
+        return '/Séjour';
+      default:
+        return '';
+    }
   }
 }
 

@@ -1167,13 +1167,23 @@ class _ReservationExtrasListState extends State<ReservationExtrasList> {
                         ExtraServiceDetailPage(reservationExtra: extra),
                   ),
                 ),
-                leading: const Icon(Icons.check, color: Colors.green),
+                leading: CircleAvatar(
+                  child: Text('${extra.quantity}'),
+                ),
                 title: Text(
                   extra.extraService.target!.name,
                   overflow: TextOverflow.ellipsis,
                 ),
+                subtitle: Text(
+                  'PU: ${extra.unitPrice}${_getPricingText(extra.extraService.target!.pricingUnit)} = ',
+                ),
                 trailing: Text(
-                  "${extra.extraService.target!.price.toStringAsFixed(2)} DA",
+                  '${extra.totalPrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
                 ),
                 dense: true,
               ),
@@ -1193,20 +1203,18 @@ class _ReservationExtrasListState extends State<ReservationExtrasList> {
             ),
           ),
 
-        const Divider(),
-        Text(widget.reservation.extrasTotal.toString()),
         // affichage du total
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
                 "Total : ",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
               ),
               Text(
-                "${total.toStringAsFixed(2)} DA",
+                widget.reservation.extrasTotal.toStringAsFixed(2),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -1218,5 +1226,20 @@ class _ReservationExtrasListState extends State<ReservationExtrasList> {
         ),
       ],
     );
+  }
+
+  String _getPricingText(String pricingUnit) {
+    switch (pricingUnit.toLowerCase()) {
+      case 'per_person':
+        return '/Personne';
+      case 'per_item':
+        return '/Article';
+      case 'per_night':
+        return '/Nuit';
+      case 'per_stay':
+        return '/Séjour';
+      default:
+        return '';
+    }
   }
 }
