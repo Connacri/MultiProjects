@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../MyListLotties.dart';
 import '../../../Entity.dart';
 import 'ReservationDialogContent.dart';
 import 'provider_hotel.dart';
@@ -2258,6 +2259,16 @@ class AppDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) => const SeasonalPricingListScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.calendar_today),
+            title: const Text('Lotties'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LottieListPage()),
               );
             },
           ),

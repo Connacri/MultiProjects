@@ -10,6 +10,10 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:splash_master/core/source.dart';
+import 'package:splash_master/core/splash_master.dart';
+import 'package:splash_master/enums/splash_master_enums.dart';
+import 'package:splash_master/splashes/lottie/lottie_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -175,8 +179,17 @@ Future<void> main() async {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
   //WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  //SplashMaster.initialize();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   FlutterNativeSplash.remove();
+  SplashMaster.initialize();
+  Future.delayed(const Duration(seconds: 3)).then(
+    (value) {
+      /// Once initialization completes call below method to resume your
+      /// flutter app.
+      SplashMaster.resume();
+    },
+  );
   timeago.setLocaleMessages('fr', timeago.FrMessages());
   timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
   //
@@ -334,50 +347,69 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        scaffoldMessengerKey: globalScaffoldMessengerKey,
-        scrollBehavior: CustomScrollBehavior(),
-        // Applique le nouveau ScrollBehavior
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-          fontFamily: 'OSWALD',
-          textTheme: TextTheme(
-            bodyLarge: TextStyle(color: Colors.black87),
-          ),
-          chipTheme: ChipThemeData(
-            backgroundColor: Colors.black87, // fond foncé
-            labelStyle: const TextStyle(color: Colors.white), // texte clair
-            shape: StadiumBorder(), // arrondi moderne
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          ),
+      scaffoldMessengerKey: globalScaffoldMessengerKey,
+      scrollBehavior: CustomScrollBehavior(),
+      // Applique le nouveau ScrollBehavior
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        useMaterial3: true,
+        fontFamily: 'OSWALD',
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.black87),
         ),
-        locale: const Locale('fr', 'CA'),
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.black87, // fond foncé
+          labelStyle: const TextStyle(color: Colors.white), // texte clair
+          shape: StadiumBorder(), // arrondi moderne
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        ),
+      ),
+      locale: const Locale('fr', 'CA'),
 
-        //scaffoldMessengerKey: Utils.messengerKey,
-        navigatorKey: navigatorKey,
-        debugShowCheckedModeBanner: false,
-        title: 'Ramzi',
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          primaryColor: Colors.blueGrey,
-          textTheme: TextTheme(
-            bodyLarge: TextStyle(color: Colors.white),
-          ),
-          chipTheme: ChipThemeData(
-            backgroundColor: Colors.white, // fond clair
-            labelStyle: const TextStyle(color: Colors.black87), // texte foncé
-            shape: StadiumBorder(),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          ),
+      //scaffoldMessengerKey: Utils.messengerKey,
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      title: 'Ramzi',
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.blueGrey,
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
         ),
-        home: //LicenseCheckScreen(),
-            // Platform.isAndroid || Platform.isIOS
-            //     ?
-            MyMain()
-        //     : _isLicenseValidated || _isLicenseDemoValidated
-        //         ? MyMain()
-        //         : hashPage()
-        );
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.white, // fond clair
+          labelStyle: const TextStyle(color: Colors.black87), // texte foncé
+          shape: StadiumBorder(),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        ),
+      ),
+      home: //LicenseCheckScreen(),
+          // Platform.isAndroid || Platform.isIOS
+          //     ?
+          SplashMaster.lottie(
+        source: AssetSource('assets/lotties/1 (104).json'),
+        lottieConfig: LottieConfig(
+          fit: BoxFit.contain,
+          // conserve le ratio original
+          overrideBoxFit: false,
+          // empêche SplashMaster de forcer le BoxFit
+          alignment: Alignment.center,
+          //centre l’animation
+          repeat: true,
+          // si tu veux que ça boucle
+          animate: true,
+          // démarre automatiquement
+          filterQuality: FilterQuality.high,
+          // meilleure qualité d’affichage
+          visibilityEnum: VisibilityEnum.none,
+        ),
+        nextScreen: MyMain(),
+      ),
+
+      //     : _isLicenseValidated || _isLicenseDemoValidated
+      //         ? MyMain()
+      //         : hashPage()
+    );
   }
 
   @override

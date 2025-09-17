@@ -3,7 +3,7 @@ description: "A new Hötel DZ project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.7+7
+version: 1.0.8+8
 
 environment:
   sdk: ^3.5.0
@@ -113,6 +113,7 @@ dependencies:
   dynamic_flutter_form: ^1.0.2
   syncfusion_flutter_calendar: ^30.2.7
   flutter_native_splash: ^2.4.6
+  splash_master: ^0.0.3
 
 
 
@@ -161,6 +162,42 @@ flutter_native_splash:
   image: assets/icon/splash3.png
   color: "#2C2C2C"
 
+splash_master:
+  # Use to specifies the color for the splash screen
+  color: '#FFFFFF'
+  # Use to specifies the splash image
+  image: 'assets/splash.png'
+  # Provides content mode for splash image in iOS
+  # iOS content mode options: scaleToFill, scaleAspectFit, scaleAspectFill, redraw, center, top, bottom,
+  # left, right, topLeft, topRight, bottomLeft, bottomRight.
+  ios_content_mode: 'center'
+  # Provides gravity for splash image in Android
+  # Android gravity options: center, clip_horizontal, clip_vertical, fill_horizontal, fill, center_vertical,
+  # bottom, fill_vertical, center_horizontal, top, end, left, right, start
+  android_gravity: 'center'
+  # Use to specifies the splash image
+  background_image: 'assets/background_image.png'
+  # Provided content mode for splash image in background for iOS
+  ios_background_content_mode: 'scaleToFill'
+  # Provides gravity for background image in Android
+  # Android gravity options: center, clip_horizontal, clip_vertical, fill_horizontal, fill, center_vertical,
+  # bottom, fill_vertical, center_horizontal, top, end, left, right, start
+  android_background_image_gravity: 'fill'
+  # Use to specifies image for android in dark mode
+  image_dark_android: 'assets/splash_dark.png'
+  # Provides gravity for splash image for Android in dark mode
+  android_dark_gravity_key: 'center'
+  # Use to specifies the color for the splash screen for Android in dark mode
+  color_dark_android: '#000000'
+  # Section to specifies the configuration for the splash in Android 12+
+  android_12_and_above:
+    # Provides the background color of splash screen
+    color: '#FFFFFF'
+    # Provides custom icon to replace the default app icon
+    image: 'assets/splash_12.png'
+    # Provides branding image which is shown under main icon image.
+    branding_image: 'assets/branding_image.png'
+
 flutter:
 
   uses-material-design: true
@@ -208,5 +245,4 @@ flutter:
     - assets/logos/ooredoo.png
     - assets/splash_logo.png
     - assets/seasons/
-
 
