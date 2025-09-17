@@ -183,7 +183,7 @@ Future<void> main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   FlutterNativeSplash.remove();
   SplashMaster.initialize();
-  Future.delayed(const Duration(seconds: 3)).then(
+  Future.delayed(const Duration(seconds: 2)).then(
     (value) {
       /// Once initialization completes call below method to resume your
       /// flutter app.
