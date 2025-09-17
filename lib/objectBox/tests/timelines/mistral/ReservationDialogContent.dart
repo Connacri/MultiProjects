@@ -135,7 +135,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     //     _updateRoomPrice(); // doit utiliser _seasonalMultiplier ou la fonction per-night
     //     setState(() {}); // uniquement si UI doit se rafraichir
     //   }
-    // });
+    // });.
   }
 
   @override
@@ -205,14 +205,17 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
 
     // CORRECTION: Récupération des extras avec mapping correct
-    _selectedExtras = reservation.extras
-        .map((re) => ReservationExtraItem(
-              extraService: re.extraService.target!,
-              quantity: re.quantity,
-              unitPrice: re.unitPrice,
-              scheduledDate: re.scheduledDate,
-            ))
-        .toList();
+    if (_selectedExtras.isEmpty) {
+      _selectedExtras = reservation.extras
+          .map((re) => ReservationExtraItem(
+                extraService: re.extraService.target!,
+                quantity: re.quantity,
+                unitPrice: re.unitPrice,
+                scheduledDate: re.scheduledDate,
+              ))
+          .toList();
+    }
+
     //////////////*************************************************************
     final reservationSeasonal =
         widget.existingReservation!.seasonalPricing.target!.multiplier;
@@ -276,6 +279,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     setState(() {
       _selectedExtras.remove(item);
     });
+    print("Après suppression: ${_selectedExtras.length}");
   }
 
   void _updateExtraPrice(ReservationExtraItem item) {
@@ -704,13 +708,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             const Divider(),
             _buildPriceRow600(
               'Total général',
-              '${(extrasDiscount + roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)}',
+              '${(roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)}',
               isTotal: true,
             ),
             const Divider(),
             _buildPriceRow2600(
               'Net à Payer',
-              '${grandTotal.toStringAsFixed(2)}',
+              '${(grandTotal).toStringAsFixed(2)}',
             ),
           ],
         ),
@@ -1162,7 +1166,15 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         break;
       case 'total':
         final subtotal = roomTotal + boardBasisTotal + extrasTotal;
+        print('roomTotal ');
+        print(roomTotal);
+        print('boardBasisTotal ');
+        print(boardBasisTotal);
+        print('extrasTotal ');
+        print(extrasTotal);
         final totalReduction = _calculateDiscount(subtotal);
+        print('totalReduction ');
+        print(totalReduction);
         return (subtotal - totalReduction).clamp(0, double.infinity);
     }
 
@@ -1291,6 +1303,12 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   }
 
   Widget _buildExtraServicesSection() {
+    // Calcule le total de tous les extras sélectionnés
+    final double totalExtras = _selectedExtras.fold(
+      0.0,
+      (previousValue, extra) => previousValue + extra.totalPrice,
+    );
+
     return Card(
       child: Padding(
         padding: EdgeInsets.all(16),
@@ -1325,82 +1343,153 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 ),
               )
             else
-              ListView.builder(
-                shrinkWrap: true,
-                // prend juste la hauteur nécessaire
-                physics: NeverScrollableScrollPhysics(),
-                // désactive le scroll interne
-                itemCount: _selectedExtras.length,
-                itemBuilder: (context, index) {
-                  final extra = _selectedExtras[index];
-                  return Card(
-                    margin: EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ExtraServiceDetailPage(
-                              extraItem:
-                                  extra, // Passez directement l'extraItem
-                            ),
-                          ),
-                        );
-                      },
-                      onLongPress: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text("Confirmation"),
-                            content: const Text(
-                                "Voulez-vous vraiment supprimer ce service ?"),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child: const Text("Annuler"),
-                              ),
-                              ElevatedButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child: const Text("Supprimer"),
-                              ),
-                            ],
-                          ),
-                        );
+              Column(
+                children: [
+                  ListView.builder(
+                    shrinkWrap: true,
+                    // prend juste la hauteur nécessaire
+                    physics: NeverScrollableScrollPhysics(),
+                    // désactive le scroll interne
+                    itemCount: _selectedExtras.length,
 
-                        if (confirm == true) {
-                          _removeExtraService(extra);
-                        }
-                      },
-                      title: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            extra.extraService.name,
-                          )),
-                      subtitle: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    itemBuilder: (context, index) {
+                      final extra = _selectedExtras[index];
+
+                      final info =
+                          _getPricingInfo(extra.extraService.pricingUnit);
+                      return Card(
+                        color: info.color,
+                        margin: EdgeInsets.only(bottom: 8),
+                        child: Stack(
                           children: [
-                            Text(
-                              'Qtt: ${extra.quantity} | PU: ${extra.unitPrice}${_getPricingText(extra.extraService.pricingUnit)} = ',
-                              style: TextStyle(fontSize: 15),
+                            ListTile(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ExtraServiceDetailPage(
+                                      extraItem:
+                                          extra, // Passez directement l'extraItem
+                                    ),
+                                  ),
+                                );
+                              },
+                              onLongPress: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text("Confirmation"),
+                                    content: const Text(
+                                        "Voulez-vous vraiment supprimer ce service ?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: const Text("Annuler"),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        child: const Text("Supprimer"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+
+                                if (confirm == true) {
+                                  _removeExtraService(extra);
+                                }
+                              },
+                              title: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  extra.extraService.name,
+                                ),
+                              ),
+                              subtitle: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Qtt: ${extra.quantity} | PU: ${extra.unitPrice}${info.text} = ',
+                                      style: TextStyle(fontSize: 15),
+                                    ),
+                                    Text(
+                                      '${extra.totalPrice.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                            Text(
-                              '${extra.totalPrice.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Icon(
+                                info.icon,
+                                color: ColorScheme.of(context).inverseSurface,
                               ),
                             ),
                           ],
                         ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Card de TOTAL
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 5,
+                    shadowColor: Colors.black26,
+                    color: Theme.of(context).colorScheme.surface,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.attach_money_rounded,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 25,
+                              ),
+                              const Text(
+                                "Total Extras",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          FittedBox(
+                            child: Text(
+                              "${totalExtras.toStringAsFixed(2)}",
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ],
               ),
           ],
         ),
@@ -1547,7 +1636,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           Text(
             amount,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w500,
               fontSize: isTotal ? 16 : 14,
               color: isTotal
                   ? Theme.of(context).primaryColor
@@ -1717,41 +1806,55 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     final service =
                         widget.provider.getExtraServicesList()[index];
                     if (!service.isActive) return Container();
-
+                    final info = _getPricingInfo(service.pricingUnit);
                     return Card(
-                      child: ListTile(
-                        onLongPress: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => ExtraServiceDetailPage(
-                                    extraService: service)),
-                          );
-                        },
-                        onTap: () {
-                          _addExtraService(service);
-                          Navigator.pop(context);
-                        },
-                        title: Text(
-                          service.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              service.description,
+                      color: info.color,
+                      child: Stack(
+                        children: [
+                          ListTile(
+                            onLongPress: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ExtraServiceDetailPage(
+                                            extraService: service)),
+                              );
+                            },
+                            onTap: () {
+                              _addExtraService(service);
+                              Navigator.pop(context);
+                            },
+                            title: Text(
+                              service.name,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text(
-                              '${service.price} DA ${_getPricingUnitText(service.pricingUnit)}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  service.description,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  '${service.price} DA ${info.text}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: Icon(
+                              info.icon,
+                              color: ColorScheme.of(context).inverseSurface,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -1773,16 +1876,20 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     );
   }
 
-  String _getPricingUnitText(String unit) {
-    switch (unit) {
+  PricingInfo _getPricingInfo(String pricingUnit) {
+    switch (pricingUnit.toLowerCase()) {
       case 'per_person':
-        return 'par personne';
+        return PricingInfo('/Personne', Colors.blue.shade100, Icons.person);
+      case 'per_item':
+        return PricingInfo(
+            '/Article', Colors.green.shade100, Icons.shopping_bag);
       case 'per_night':
-        return 'par nuit';
+        return PricingInfo(
+            '/Nuit', Colors.purple.shade100, Icons.nightlight_round);
       case 'per_stay':
-        return 'par séjour';
+        return PricingInfo('/Séjour', Colors.orange.shade100, Icons.home);
       default:
-        return 'par article';
+        return PricingInfo('', Colors.grey.shade100, Icons.help_outline);
     }
   }
 
@@ -2246,6 +2353,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     });
 
     _clearGuestForm();
+    print("Avant recalcul extras: ${_selectedExtras.length}");
+
     Navigator.pop(context);
   }
 
@@ -2253,7 +2362,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _guestController.clear();
     _phoneController.clear();
     _idCardController.clear();
-    _selectedExtras.clear();
+    // _selectedExtras.clear();
     _isEditingGuest = false;
     _editingGuestIndex = null;
     _guestBeingEdited = null;
@@ -2828,21 +2937,14 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
 
     return 'Réduction de $discountText appliquée sur: $appliedText';
   }
+}
 
-  String _getPricingText(String pricingUnit) {
-    switch (pricingUnit.toLowerCase()) {
-      case 'per_person':
-        return '/Personne';
-      case 'per_item':
-        return '/Article';
-      case 'per_night':
-        return '/Nuit';
-      case 'per_stay':
-        return '/Séjour';
-      default:
-        return '';
-    }
-  }
+class PricingInfo {
+  final String text;
+  final Color color;
+  final IconData icon;
+
+  PricingInfo(this.text, this.color, this.icon);
 }
 
 class ReservationExtraItem {

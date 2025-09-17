@@ -1353,8 +1353,8 @@ Future<obx.Store> openStore(
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
       entities: _entities,
-      lastEntityId: const obx_int.IdUid(43, 6119221834068341217),
-      lastIndexId: const obx_int.IdUid(76, 2947701071097954536),
+      lastEntityId: const obx_int.IdUid(44, 5478577903830562238),
+      lastIndexId: const obx_int.IdUid(77, 2618335578616887586),
       lastRelationId: const obx_int.IdUid(5, 6501254024098551487),
       lastSequenceId: const obx_int.IdUid(0, 0),
       retiredEntityUids: const [
@@ -1380,7 +1380,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         4060395522626165643,
         2717543384485050169,
         5529961723732993923,
-        6119221834068341217
+        6119221834068341217,
+        5478577903830562238
       ],
       retiredIndexUids: const [
         7680843215305245682,
@@ -1624,7 +1625,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
         5172980220661294888,
         8100719055238053942,
         7609468699421722439,
-        4305092639336897746
+        4305092639336897746,
+        3513916606644527898,
+        1285899445252856780,
+        8799060014176562283,
+        4452554524108096241,
+        3259537297487087809,
+        5757132126363856511
       ],
       retiredRelationUids: const [
         2832941486252609678,

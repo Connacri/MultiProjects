@@ -2170,7 +2170,7 @@ class HotelManagementState extends State<Hotel_Management> {
               child: Icon(icon, size: 20, color: Colors.grey.shade600),
             ),
           SizedBox(
-            width: isHeader ? 82 : 100,
+            width: isHeader ? 85 : 100,
             child: Text(
               '$label:',
               style: TextStyle(
