@@ -462,6 +462,9 @@ class HotelProvider with ChangeNotifier {
     // AJOUTER CES PARAMÈTRES
     double discountPercent = 0.0,
     double discountAmount = 0.0,
+    String discountType = 'percentage',
+    String discountAppliedTo = 'total',
+    String selectedDiscountItems = '',
     SeasonalPricing? seasonalPricing, // ✅ AJOUT SAISON
     double? seasonalMultiplier, // ✅ AJOUT MULTIPLICATEUR
   }) async {
@@ -490,6 +493,9 @@ class HotelProvider with ChangeNotifier {
         status: status,
         discountPercent: discountPercent,
         discountAmount: discountAmount,
+        discountType: discountType,
+        discountAppliedTo: discountAppliedTo,
+        selectedDiscountItems: selectedDiscountItems,
       );
 
       reservation.room.target = room;
@@ -532,6 +538,9 @@ class HotelProvider with ChangeNotifier {
     // AJOUTER CES PARAMÈTRES
     double? newDiscountPercent,
     double? newDiscountAmount,
+    String? newDiscountType,
+    String? newDiscountAppliedTo,
+    String? newSelectedDiscountItems,
     SeasonalPricing? newSeasonalPricing, // ✅ SAISON
     double? newSeasonalMultiplier, // ✅ MULTIPLICATEUR
   }) async {
@@ -569,6 +578,11 @@ class HotelProvider with ChangeNotifier {
         reservation.discountPercent = newDiscountPercent;
       if (newDiscountAmount != null)
         reservation.discountAmount = newDiscountAmount;
+      if (newDiscountType != null) reservation.discountType = newDiscountType;
+      if (newDiscountAppliedTo != null)
+        reservation.discountAppliedTo = newDiscountAppliedTo;
+      if (newSelectedDiscountItems != null)
+        reservation.selectedDiscountItems = newSelectedDiscountItems;
 
       if (newGuests != null) {
         reservation.guests.clear();

@@ -460,7 +460,9 @@ class HotelManagementState extends State<Hotel_Management> {
 
             if (seasonal != null) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Saison appliquée : ${seasonal.name}")),
+                SnackBar(
+                    content:
+                        Text("Calibrage Saison Actuelle : ${seasonal.name}")),
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(

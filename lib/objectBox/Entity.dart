@@ -955,6 +955,11 @@ class Reservation {
   // 🚀 Ajout pour gestion des réductions
   double discountPercent; // ex: 10 = 10%
   double discountAmount; // ex: 2000 DZD
+// NOUVEAU : Ajouter ces champs
+  String? discountType = 'percentage'; // 'percentage' ou 'amount'
+  String? discountAppliedTo =
+      'total'; // 'room', 'board', 'extras', 'total', 'specific'
+  String? selectedDiscountItems = ''; // JSON string
 
   // Champs calculés optionnels
   double? cachedBoardBasisPrice;
@@ -967,6 +972,9 @@ class Reservation {
     this.status = "Confirmée",
     this.discountPercent = 0.0,
     this.discountAmount = 0.0,
+    this.discountType,
+    this.discountAppliedTo,
+    this.selectedDiscountItems,
     this.cachedBoardBasisPrice,
     this.cachedExtrasTotal,
     this.seasonalMultiplier = 1.0, // valeur par défaut

@@ -112,7 +112,7 @@ dependencies:
   flutter_card_swiper: ^7.0.2
   dynamic_flutter_form: ^1.0.2
   syncfusion_flutter_calendar: ^30.2.7
-  flutter_native_splash: ^2.4.6
+  #  flutter_native_splash: ^2.4.6
   splash_master: ^0.0.3
 
 
@@ -148,19 +148,19 @@ flutter_icons:
     generate: true
     image_path: "assets/images/ic_launcher/icon.png"
 
-flutter_native_splash:
-  # Configuration Android
-  android: true
-  background_image: assets/icon/splash3.png
-  android_12:
-    image: assets/icon/splash3.png
-    icon_background_color: "#2C2C2C"
-
-
-  # Configuration iOS
-  ios: true
-  image: assets/icon/splash3.png
-  color: "#2C2C2C"
+#flutter_native_splash:
+#  # Configuration Android
+#  android: true
+#  background_image: assets/icon/splash3.png
+#  android_12:
+#    image: assets/icon/splash3.png
+#    icon_background_color: "#2C2C2C"
+#
+#
+#  # Configuration iOS
+#  ios: true
+#  image: assets/icon/splash3.png
+#  color: "#2C2C2C"
 
 splash_master:
   # Use to specifies the color for the splash screen

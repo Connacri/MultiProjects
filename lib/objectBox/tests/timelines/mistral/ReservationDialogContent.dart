@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
@@ -138,20 +140,22 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     // });.
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final provider = Provider.of<HotelProvider>(context, listen: true);
-    final active = provider.selectedSeasonalPricing;
-
-    if (active != null && active.id != _selectedSeasonalPricing?.id) {
-      setState(() {
-        _selectedSeasonalPricing = active;
-        _seasonalMultiplier = active.multiplier;
-        _updateRoomPrice();
-      });
-    }
-  }
+  // @override
+  // void didChangeDependencies() {
+  //   super.didChangeDependencies();
+  //   final provider = Provider.of<HotelProvider>(context, listen: true);
+  //   final active = provider.selectedSeasonalPricing;
+  //
+  //   if (active != null && active.id != _selectedSeasonalPricing?.id) {
+  //     setState(() {
+  //       _selectedSeasonalPricing = active;
+  //       _seasonalMultiplier = active.multiplier;
+  //       print('didChangeDependencies');
+  //       print(_seasonalMultiplier);
+  //       _updateRoomPrice();
+  //     });
+  //   }
+  // }
 
   void _preselectSeasonalByToday() {
     final now = DateTime.now();
@@ -178,6 +182,19 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     _discountAmount = reservation.discountAmount;
     _discountPercentController.text = _discountPercent.toString();
     _discountAmountController.text = _discountAmount.toString();
+    // NOUVEAU : Récupérer le type et l'application
+    _discountType = reservation.discountType ?? 'percentage';
+    _discountAppliedTo = reservation.discountAppliedTo ?? 'total';
+    // Si c'est des éléments spécifiques, décoder la liste
+    if (_discountAppliedTo == 'specific' &&
+        reservation.selectedDiscountItems!.isNotEmpty) {
+      try {
+        _selectedDiscountItems =
+            List<String>.from(jsonDecode(reservation.selectedDiscountItems!));
+      } catch (e) {
+        _selectedDiscountItems = [];
+      }
+    }
     // Initialisation des objets existants
     final roomId = reservation.room.target?.id;
     _selectedRoom = roomId != null
@@ -365,7 +382,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           // _buildSeasonalPricingSection2(),
                           // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
                           // Remplacer SeasonalPricingDropdown() par :
-                          Text(_selectedSeasonalPricing!.multiplier.toString()),
+
                           Padding(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 16),
@@ -861,9 +878,10 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             const Divider(),
             _buildPriceRow(
               'Total général',
-              '${(extrasDiscount + roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)}',
+              '${(roomTotal + boardBasisTotal + extrasTotal).toStringAsFixed(2)}',
               isTotal: true,
             ),
+
             const Divider(),
             _buildPriceRow2(
               'Net à Payer',
@@ -1060,6 +1078,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               ],
             ),
             SizedBox(height: 16),
+
+            /////////////chatgpt////////////////
             if (_discountPercent > 0 || _discountAmount > 0) ...[
               Container(
                 padding: EdgeInsets.all(12),
@@ -1073,13 +1093,23 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                   children: [
                     if (_discountPercent > 0)
                       Text(
-                          'Réduction: ${_discountPercent.toStringAsFixed(1)}%'),
+                        'Réduction: ${_discountPercent.toStringAsFixed(0)}%',
+                        style: TextStyle(fontSize: 20),
+                      ),
                     if (_discountAmount > 0)
                       Text(
-                          'Montant fixe: ${_discountAmount.toStringAsFixed(2)}'),
+                          'Montant fixe: ${_discountAmount.toStringAsFixed(0)}'),
+                    SizedBox(height: 8),
                     Text(
-                      'Appliqué sur: ${_getDiscountAppliedToLabel()}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      'Appliqué sur:',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(
+                      height: 2,
+                    ),
+                    Text(
+                      _getDiscountDetails(),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -1095,6 +1125,46 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         ),
       ),
     );
+  }
+
+  String _getDiscountDetails() {
+    List<String> details = [];
+
+    // Si réduction appliquée sur tout
+    if (_discountAppliedTo == 'total') {
+      details.add("Total général");
+    } else if (_discountAppliedTo == 'room') {
+      details.add(
+          "Chambre (${_selectedRoom!.code}) devient ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier * _discountPercent / 100).toStringAsFixed(2)}");
+    } else if (_discountAppliedTo == 'board') {
+      details.add(
+          "Pension (${_selectedBoardBasis?.name ?? '-'}) devient ${(_selectedBoardBasis!.pricePerPerson * _discountPercent / 100).toStringAsFixed(2)}/person");
+    } else if (_discountAppliedTo == 'extras') {
+      if (_selectedExtras.isNotEmpty) {
+        details.addAll(_selectedExtras.map((extra) =>
+            "Service: ${extra.extraService.name} devient ${(extra.totalPrice * _discountPercent / 100).toStringAsFixed(2)}"));
+      }
+    } else if (_discountAppliedTo == 'specific') {
+      // Pour les sélections spécifiques
+      if (_selectedDiscountItems.contains('room') && _selectedRoom != null) {
+        details.add(
+            "Chambre (${_selectedRoom!.code})  devient ${(_selectedRoom!.category.target!.basePrice * _seasonalMultiplier * _discountPercent / 100).toStringAsFixed(2)}/nuitée");
+      }
+      if (_selectedDiscountItems.contains('board') &&
+          _selectedBoardBasis != null) {
+        details.add(
+            "Pension (${_selectedBoardBasis!.name}) devient ${(_selectedBoardBasis!.pricePerPerson * _discountPercent / 100).toStringAsFixed(2)}/person");
+      }
+      for (var extra in _selectedExtras) {
+        final itemId = 'extra_${extra.extraService.id}';
+        if (_selectedDiscountItems.contains(itemId)) {
+          details.add("Supplément: ${extra.extraService.name} "
+              "devient ${(extra.totalPrice * _discountPercent / 100).toStringAsFixed(2)}");
+        }
+      }
+    }
+
+    return details.isEmpty ? "Aucune sélection" : details.join("\n");
   }
 
   String _getDiscountAppliedToLabel() {
@@ -1166,15 +1236,15 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         break;
       case 'total':
         final subtotal = roomTotal + boardBasisTotal + extrasTotal;
-        print('roomTotal ');
-        print(roomTotal);
-        print('boardBasisTotal ');
-        print(boardBasisTotal);
-        print('extrasTotal ');
-        print(extrasTotal);
+        // print('roomTotal ');
+        // print(roomTotal);
+        // print('boardBasisTotal ');
+        // print(boardBasisTotal);
+        // print('extrasTotal ');
+        // print(extrasTotal);
         final totalReduction = _calculateDiscount(subtotal);
-        print('totalReduction ');
-        print(totalReduction);
+        // print('totalReduction ');
+        // print(totalReduction);
         return (subtotal - totalReduction).clamp(0, double.infinity);
     }
 
@@ -1320,6 +1390,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               children: [
                 Expanded(
                   child: FittedBox(
+                    fit: BoxFit.scaleDown,
                     child: Text('Services supplémentaires',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
@@ -1336,6 +1407,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
             if (_selectedExtras.isEmpty)
               Center(
                 child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     'Aucun service supplémentaire sélectionné',
                     style: TextStyle(color: Colors.grey[600]),
@@ -1459,32 +1531,99 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.attach_money_rounded,
-                                color: Theme.of(context).colorScheme.primary,
-                                size: 25,
-                              ),
-                              const Text(
-                                "Total Extras",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          FittedBox(
-                            child: Text(
-                              "${totalExtras.toStringAsFixed(2)}",
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                color: Theme.of(context).colorScheme.primary,
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.attach_money_rounded,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    size: 50,
+                                  ),
+                                  Column(
+                                    children: [
+                                      const Text(
+                                        "Total Extras",
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        "${totalExtras.toStringAsFixed(2)}",
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w500,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ),
+                          // ListTile(
+                          //   dense: true,
+                          //   isThreeLine: false,
+                          //   // leading: Icon(
+                          //   //   Icons.attach_money_rounded,
+                          //   //   color: Theme.of(context).colorScheme.primary,
+                          //   //   size: 50,
+                          //   // ),
+                          //   title: FittedBox(fit: BoxFit.scaleDown,
+                          //     child: const Text(
+                          //       "Total Extras",
+                          //       style: TextStyle(
+                          //         fontSize: 18,
+                          //         fontWeight: FontWeight.w600,
+                          //       ),
+                          //     ),
+                          //   ),
+                          //   subtitle: FittedBox(fit: BoxFit.scaleDown,
+                          //     child: Text(
+                          //       "${totalExtras.toStringAsFixed(2)}",
+                          //       style: TextStyle(
+                          //         fontSize: 20,
+                          //         fontWeight: FontWeight.w500,
+                          //         color: Theme.of(context).colorScheme.primary,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.center,
+                          //   children: [
+                          //     Icon(
+                          //       Icons.attach_money_rounded,
+                          //       color: Theme.of(context).colorScheme.primary,
+                          //       size: 25,
+                          //     ),
+                          //     const Text(
+                          //       "Total Extras",
+                          //       style: TextStyle(
+                          //         fontSize: 18,
+                          //         fontWeight: FontWeight.w600,
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
+                          // FittedBox(fit: BoxFit.scaleDown,
+                          //   child: Text(
+                          //     "${totalExtras.toStringAsFixed(2)}",
+                          //     style: TextStyle(
+                          //       fontSize: 20,
+                          //       fontWeight: FontWeight.w500,
+                          //       color: Theme.of(context).colorScheme.primary,
+                          //     ),
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
@@ -1507,6 +1646,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         children: [
           Expanded(
             child: FittedBox(
+              fit: BoxFit.scaleDown,
               child: Text(
                 label,
                 style: TextStyle(
@@ -1561,6 +1701,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                     width: 16,
                   ),
                   FittedBox(
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       amount,
                       style: TextStyle(
@@ -1582,6 +1723,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: FittedBox(
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       label,
                       style: TextStyle(
@@ -1595,6 +1737,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: FittedBox(
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       amount,
                       style: TextStyle(
@@ -1693,6 +1836,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: FittedBox(
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       label,
                       style: TextStyle(
@@ -1706,6 +1850,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: FittedBox(
+                    fit: BoxFit.scaleDown,
                     child: Text(
                       amount,
                       style: TextStyle(
@@ -1915,6 +2060,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         }
       },
       child: FittedBox(
+        fit: BoxFit.scaleDown,
         child: Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -2424,8 +2570,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
       ReservationResult result;
 
       if (widget.isEditing && widget.existingReservation != null) {
-        widget.existingReservation!.seasonalPricing.target =
-            _selectedSeasonalPricing;
+        // Pour l'édition
+        widget.existingReservation!.discountType = _discountType;
+        widget.existingReservation!.discountAppliedTo = _discountAppliedTo;
+        widget.existingReservation!.selectedDiscountItems =
+            _discountAppliedTo == 'specific'
+                ? jsonEncode(_selectedDiscountItems)
+                : '';
 
         result = await widget.provider.updateReservationComplete(
           reservation: widget.existingReservation!,
@@ -2440,6 +2591,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newBoardBasis: _selectedBoardBasis,
           newDiscountPercent: _discountPercent,
           newDiscountAmount: _discountAmount,
+          newDiscountType: _discountType,
+          newDiscountAppliedTo: _discountAppliedTo,
+          newSelectedDiscountItems: jsonEncode(_selectedDiscountItems),
         );
       } else {
         final newReservation = Reservation(
@@ -2464,8 +2618,10 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           boardBasis: _selectedBoardBasis,
           discountPercent: _discountPercent,
           discountAmount: _discountAmount,
-          seasonalPricing:
-              _selectedSeasonalPricing, // si ton provider accepte en param
+          seasonalPricing: _selectedSeasonalPricing,
+          discountType: _discountType,
+          discountAppliedTo: _discountAppliedTo,
+          selectedDiscountItems: jsonEncode(_selectedDiscountItems),
         );
       }
 
@@ -2547,7 +2703,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   void _onDiscountChanged() {
     setState(() {
       // Forcer la mise à jour de l'affichage
-      // _calculateTotalPrice() sera automatiquement appelé dans _buildPricingSummary
+      _calculateTotalPrice();
+      // sera automatiquement appelé dans _buildPricingSummary
     });
   }
 
@@ -2651,6 +2808,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text('Configuration de la réduction',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -2673,6 +2831,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           _discountAmountController.text = "0";
                           _discountAppliedTo = 'total';
                           _selectedDiscountItems.clear();
+                          _onDiscountChanged();
+                          Navigator.pop(context);
                         });
                       },
                       child: Text('Tout Réinitialiser',
@@ -2708,26 +2868,53 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       );
                     } else {
                       // Version mobile (<600px)
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        // adapte la hauteur à son contenu
+                      return Row(
                         children: [
-                          RadioListTile<String>(
-                            title: const Text('Pourcentage'),
-                            value: 'percentage',
-                            groupValue: _discountType,
-                            onChanged: (value) =>
-                                setDialogState(() => _discountType = value!),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Icon(FontAwesomeIcons.percent),
+                              dense: true,
+                              // Text('Pourcentage'),
+                              value: 'percentage',
+                              groupValue: _discountType,
+                              onChanged: (value) =>
+                                  setDialogState(() => _discountType = value!),
+                            ),
                           ),
-                          RadioListTile<String>(
-                            title: const Text('Montant fixe'),
-                            value: 'amount',
-                            groupValue: _discountType,
-                            onChanged: (value) =>
-                                setDialogState(() => _discountType = value!),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: Icon(FontAwesomeIcons.dollarSign),
+                              //Text('Montant fixe'),
+                              value: 'amount',
+                              groupValue: _discountType,
+                              onChanged: (value) =>
+                                  setDialogState(() => _discountType = value!),
+                            ),
                           ),
                         ],
                       );
+
+                      //
+                      //     Column(
+                      //     mainAxisSize: MainAxisSize.min,
+                      //     // adapte la hauteur à son contenu
+                      //     children: [
+                      //       RadioListTile<String>(
+                      //         title: const Text('Pourcentage'),
+                      //         value: 'percentage',
+                      //         groupValue: _discountType,
+                      //         onChanged: (value) =>
+                      //             setDialogState(() => _discountType = value!),
+                      //       ),
+                      //       RadioListTile<String>(
+                      //         title: const Text('Montant fixe'),
+                      //         value: 'amount',
+                      //         groupValue: _discountType,
+                      //         onChanged: (value) =>
+                      //             setDialogState(() => _discountType = value!),
+                      //       ),
+                      //     ],
+                      //   );
                     }
                   },
                 ),
@@ -2769,12 +2956,20 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                 // Application de la réduction
                 Text('Appliquer la réduction sur:',
                     style: TextStyle(fontWeight: FontWeight.bold)),
+
                 Expanded(
                   child: SingleChildScrollView(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        RadioListTile<String>(
+                          title: Text('Total général'),
+                          value: 'total',
+                          groupValue: _discountAppliedTo,
+                          onChanged: (value) =>
+                              setDialogState(() => _discountAppliedTo = value!),
+                        ),
                         RadioListTile<String>(
                           title: Text('Chambre'),
                           value: 'room',
@@ -2792,20 +2987,15 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           onChanged: (value) =>
                               setDialogState(() => _discountAppliedTo = value!),
                         ),
-                        RadioListTile<String>(
-                          title: Text('Services Supplément'),
-                          value: 'extras',
-                          groupValue: _discountAppliedTo,
-                          onChanged: (value) =>
-                              setDialogState(() => _discountAppliedTo = value!),
-                        ),
-                        RadioListTile<String>(
-                          title: Text('Total général'),
-                          value: 'total',
-                          groupValue: _discountAppliedTo,
-                          onChanged: (value) =>
-                              setDialogState(() => _discountAppliedTo = value!),
-                        ),
+                        if (!_selectedExtras.isEmpty)
+                          RadioListTile<String>(
+                            title: Text('Services Supplément'),
+                            value: 'extras',
+                            groupValue: _discountAppliedTo,
+                            onChanged: (value) => setDialogState(
+                                () => _discountAppliedTo = value!),
+                          ),
+
                         RadioListTile<String>(
                           title: Text('Éléments spécifiques'),
                           value: 'specific',
@@ -2819,7 +3009,9 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           Divider(),
                           Text('Sélectionnez les éléments:',
                               style: TextStyle(fontWeight: FontWeight.bold)),
-
+                          SizedBox(
+                            height: 8,
+                          ),
                           // Chambre
                           if (_selectedRoom != null)
                             CheckboxListTile(
@@ -2907,8 +3099,60 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       child: Text('Annuler'),
                     ),
                     SizedBox(width: 8),
+                    // ElevatedButton(
+                    //   onPressed: () {
+                    //     _onDiscountChanged();
+                    //     Navigator.pop(context);
+                    //   },
+                    //   child: Text('Appliquer'),
+                    // ),
                     ElevatedButton(
                       onPressed: () {
+                        bool hasError = false;
+                        String errorMessage = '';
+
+                        if (_discountType == 'percentage' &&
+                            (_discountPercent <= 0 ||
+                                _discountPercentController.text.isEmpty)) {
+                          hasError = true;
+                          errorMessage =
+                              'Le pourcentage de réduction doit être supérieur à 0.';
+                        } else if (_discountType == 'amount' &&
+                            (_discountAmount <= 0 ||
+                                _discountAmountController.text.isEmpty)) {
+                          hasError = true;
+                          errorMessage =
+                              'Le montant de réduction doit être supérieur à 0.';
+                        } else if (_discountAppliedTo == 'specific' &&
+                            _selectedDiscountItems.isEmpty) {
+                          hasError = true;
+                          errorMessage =
+                              'Veuillez sélectionner au moins un élément pour appliquer la réduction.';
+                        }
+
+                        if (hasError) {
+                          // Afficher un AlertDialog au lieu d'un SnackBar
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Erreur de validation"),
+                                content: Text(errorMessage),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text("OK"),
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Fermer l'AlertDialog
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                          return;
+                        }
+
                         _onDiscountChanged();
                         Navigator.pop(context);
                       },
@@ -3048,6 +3292,7 @@ class SeasonalPricingDropdown extends StatelessWidget {
                   // Centrer verticalement
                   children: [
                     FittedBox(
+                      fit: BoxFit.scaleDown,
                       child: Text(
                         '${sp.name} (${sp.multiplier}x)',
                         overflow: TextOverflow.ellipsis,
@@ -3071,22 +3316,25 @@ class SeasonalPricingDropdown extends StatelessWidget {
                 return SizedBox(
                   // ✅ Contraint la hauteur affichée
                   height: 50, // Ajuste selon le design (par défaut 48px)
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '${sp.name} (${sp.multiplier}x)',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                      Text(
-                        _formatDateRange(sp),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${sp.name} (${sp.multiplier}x)',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
-                      ),
-                    ],
+                        Text(
+                          _formatDateRange(sp),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               }).toList();

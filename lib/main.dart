@@ -6,7 +6,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:shared_preferences/shared_preferences.dart';
@@ -48,76 +47,21 @@ class CustomScrollBehavior extends MaterialScrollBehavior {
 //late ObjectBox objectbox;
 
 Future<void> main() async {
-  // Initialisation de Flutter
-  //WidgetsFlutterBinding.ensureInitialized();
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  //FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
   MobileAds.instance.initialize();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  // Initialisation de Supabase (si async)
+
   await initializeSupabase();
 
-  //await Firebase.initializeApp(name: projectId, demoProjectId: projectId);
-  // Initialisation de Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Configuration de Firestore (cache local activé)
   FirebaseFirestore.instance.settings = const Settings(
     persistenceEnabled: true,
   );
 
-  //try {
-  // Initialiser Firebase en attendant la fin de l'initialisation
-
-  // print('Firebase initialisé avec succès.');
-  // // Connexion anonyme
-  // await signInAnonymously();
-
-  //   // Accéder à Firestore après l'initialisation
-  //   final firestore = FirebaseFirestore.instance;
-  //   final collection = firestore.collection('carouselFactures');
-  //
-  //   // Lire un document spécifique
-  //   final docSnapshot = await collection.doc('2r0EV3uDCtbqICY0SFLn').get();
-  //   if (docSnapshot.exists) {
-  //     print('Données du document : ${docSnapshot.data()}');
-  //   } else {
-  //     print('Le document n\'existe pas.');
-  //   }
-  // } catch (e) {
-  //   print('Erreur lors de l\'accès à Firestore : $e');
-  // }
-  // initializeApp();
-
-// Vérifier que la plateforme est desktop avant d'initialiser window_manager
-//   if (!Platform.isAndroid && !Platform.isIOS) {
-//     // Initialiser window_manager uniquement pour les plateformes desktop
-//     await windowManager.ensureInitialized();
-//
-//     // Désactiver le redimensionnement
-//     WindowOptions windowOptions = const WindowOptions(
-//       size: Size(1920, 1080), // Taille initiale (mode desktop)
-//       center: true,
-//       backgroundColor: Colors.transparent,
-//       titleBarStyle: TitleBarStyle.normal,
-//       // fullScreen: true,
-//       // skipTaskbar: false,
-//     );
-//
-//     windowManager.waitUntilReadyToShow(windowOptions, () async {
-//       await windowManager
-//           .setResizable(false); // Désactiver redimensionnement manuel
-//       await windowManager.show();
-//     });
-//   }
-  // TikTokOpenApiFactory.init(new TikTokOpenConfig("VOTRE_CLIENT_KEY"));
-  // if (Platform.isWindows) {
-  //   WindowsVideoPlayer
-  //       .registerWith(); // Initialisez video_player_win pour Windows
-  // }
-  //MediaKit.ensureInitialized(); // Initialisez media_kit
   initializeDateFormatting(
       'fr_FR', null); // Initialisez la localisation française
   if (Platform.isAndroid || Platform.isIOS) {
@@ -126,82 +70,18 @@ Future<void> main() async {
     print("Google Mobile Ads n'est pas supporté sur cette plateforme");
   }
 
-  //final objectBox = await ObjectBox.create();
-
-  // await su.Supabase.initialize(
-  //   url: 'https://wirxpjoeahuvjoocdnbk.supabase.co',
-  //   anonKey:
-  //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpcnhwam9lYWh1dmpvb2NkbmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTYxNjI0MzAsImV4cCI6MjAzMTczODQzMH0.MQpp7i2TdH3Q5aPEbMq5qvUwbuYpIX8RccW_GH64r1U',
-  //   debug: true,
-  // );
-  // await su.Supabase.initialize(
-  //   url: 'https://wirxpjoeahuvjoocdnbk.supabase.co',
-  //   anonKey:
-  //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpcnhwam9lYWh1dmpvb2NkbmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTYxNjI0MzAsImV4cCI6MjAzMTczODQzMH0.MQpp7i2TdH3Q5aPEbMq5qvUwbuYpIX8RccW_GH64r1U',
-  //   authOptions: const su.FlutterAuthClientOptions(
-  //     authFlowType: su.AuthFlowType.pkce,
-  //   ),
-  //   realtimeClientOptions: const su.RealtimeClientOptions(
-  //     logLevel: su.RealtimeLogLevel.info,
-  //   ),
-  //   storageOptions: const su.StorageClientOptions(
-  //     retryAttempts: 10,
-  //   ),
-  //   debug: true,
-  // );
-///////////////////////////////////////////////////////////////////////////////////////////
-//   final String message = 'objectbox-desktop-service';
-//   final List<int> data = utf8.encode(message);
-//
-//   // Create a UDP socket
-//   final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 8081);
-//   print('UDP server listening on port ${socket.port}');
-//
-//   socket.listen((RawSocketEvent event) {
-//     if (event == RawSocketEvent.read) {
-//       Datagram? dg = socket.receive();
-//       if (dg != null) {
-//         print(
-//             'Received from ${dg.address.address}:${dg.port}: ${utf8.decode(dg.data)}');
-//       }
-//     }
-//   });
-//
-//   // Broadcast the presence of the desktop application
-//   Timer.periodic(Duration(seconds: 5), (Timer t) {
-//     try {
-//       socket.send(data, InternetAddress('255.255.255.255'), 8081);
-//       print('Broadcast message sent');
-//     } catch (e) {
-//       print('Error sending broadcast: $e');
-//     }
-//   });
-///////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  //WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  //SplashMaster.initialize();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  FlutterNativeSplash.remove();
   SplashMaster.initialize();
   Future.delayed(const Duration(seconds: 2)).then(
     (value) {
-      /// Once initialization completes call below method to resume your
-      /// flutter app.
       SplashMaster.resume();
     },
   );
   timeago.setLocaleMessages('fr', timeago.FrMessages());
   timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
-  //
-  // SystemChrome.setEnabledSystemUIMode(
-  //     SystemUiMode.edgeToEdge, //.immersiveSticky,
-  //     overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
-  // Initialisez ObjectBox
+
   await ObjectBox().init();
   runApp(
-    MyApp(
-        // objectBox: objectBox,
-        ),
+    MyApp(),
   );
 }
 
@@ -423,3 +303,161 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   print("Message reçu en arrière-plan : ${message.messageId}");
 }
+
+// Future<void> main() async {
+//   // Initialisation de Flutter
+//   //WidgetsFlutterBinding.ensureInitialized();
+//   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+//   //FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+//   MobileAds.instance.initialize();
+//   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+//   // Initialisation de Supabase (si async)
+//   await initializeSupabase();
+//
+//   //await Firebase.initializeApp(name: projectId, demoProjectId: projectId);
+//   // Initialisation de Firebase
+//   await Firebase.initializeApp(
+//     options: DefaultFirebaseOptions.currentPlatform,
+//   );
+//
+//   // Configuration de Firestore (cache local activé)
+//   FirebaseFirestore.instance.settings = const Settings(
+//     persistenceEnabled: true,
+//   );
+//
+//   //try {
+//   // Initialiser Firebase en attendant la fin de l'initialisation
+//
+//   // print('Firebase initialisé avec succès.');
+//   // // Connexion anonyme
+//   // await signInAnonymously();
+//
+//   //   // Accéder à Firestore après l'initialisation
+//   //   final firestore = FirebaseFirestore.instance;
+//   //   final collection = firestore.collection('carouselFactures');
+//   //
+//   //   // Lire un document spécifique
+//   //   final docSnapshot = await collection.doc('2r0EV3uDCtbqICY0SFLn').get();
+//   //   if (docSnapshot.exists) {
+//   //     print('Données du document : ${docSnapshot.data()}');
+//   //   } else {
+//   //     print('Le document n\'existe pas.');
+//   //   }
+//   // } catch (e) {
+//   //   print('Erreur lors de l\'accès à Firestore : $e');
+//   // }
+//   // initializeApp();
+//
+// // Vérifier que la plateforme est desktop avant d'initialiser window_manager
+// //   if (!Platform.isAndroid && !Platform.isIOS) {
+// //     // Initialiser window_manager uniquement pour les plateformes desktop
+// //     await windowManager.ensureInitialized();
+// //
+// //     // Désactiver le redimensionnement
+// //     WindowOptions windowOptions = const WindowOptions(
+// //       size: Size(1920, 1080), // Taille initiale (mode desktop)
+// //       center: true,
+// //       backgroundColor: Colors.transparent,
+// //       titleBarStyle: TitleBarStyle.normal,
+// //       // fullScreen: true,
+// //       // skipTaskbar: false,
+// //     );
+// //
+// //     windowManager.waitUntilReadyToShow(windowOptions, () async {
+// //       await windowManager
+// //           .setResizable(false); // Désactiver redimensionnement manuel
+// //       await windowManager.show();
+// //     });
+// //   }
+//   // TikTokOpenApiFactory.init(new TikTokOpenConfig("VOTRE_CLIENT_KEY"));
+//   // if (Platform.isWindows) {
+//   //   WindowsVideoPlayer
+//   //       .registerWith(); // Initialisez video_player_win pour Windows
+//   // }
+//   //MediaKit.ensureInitialized(); // Initialisez media_kit
+//   initializeDateFormatting(
+//       'fr_FR', null); // Initialisez la localisation française
+//   if (Platform.isAndroid || Platform.isIOS) {
+//     MobileAds.instance.initialize();
+//   } else {
+//     print("Google Mobile Ads n'est pas supporté sur cette plateforme");
+//   }
+//
+//   //final objectBox = await ObjectBox.create();
+//
+//   // await su.Supabase.initialize(
+//   //   url: 'https://wirxpjoeahuvjoocdnbk.supabase.co',
+//   //   anonKey:
+//   //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpcnhwam9lYWh1dmpvb2NkbmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTYxNjI0MzAsImV4cCI6MjAzMTczODQzMH0.MQpp7i2TdH3Q5aPEbMq5qvUwbuYpIX8RccW_GH64r1U',
+//   //   debug: true,
+//   // );
+//   // await su.Supabase.initialize(
+//   //   url: 'https://wirxpjoeahuvjoocdnbk.supabase.co',
+//   //   anonKey:
+//   //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpcnhwam9lYWh1dmpvb2NkbmJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTYxNjI0MzAsImV4cCI6MjAzMTczODQzMH0.MQpp7i2TdH3Q5aPEbMq5qvUwbuYpIX8RccW_GH64r1U',
+//   //   authOptions: const su.FlutterAuthClientOptions(
+//   //     authFlowType: su.AuthFlowType.pkce,
+//   //   ),
+//   //   realtimeClientOptions: const su.RealtimeClientOptions(
+//   //     logLevel: su.RealtimeLogLevel.info,
+//   //   ),
+//   //   storageOptions: const su.StorageClientOptions(
+//   //     retryAttempts: 10,
+//   //   ),
+//   //   debug: true,
+//   // );
+// ///////////////////////////////////////////////////////////////////////////////////////////
+// //   final String message = 'objectbox-desktop-service';
+// //   final List<int> data = utf8.encode(message);
+// //
+// //   // Create a UDP socket
+// //   final socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 8081);
+// //   print('UDP server listening on port ${socket.port}');
+// //
+// //   socket.listen((RawSocketEvent event) {
+// //     if (event == RawSocketEvent.read) {
+// //       Datagram? dg = socket.receive();
+// //       if (dg != null) {
+// //         print(
+// //             'Received from ${dg.address.address}:${dg.port}: ${utf8.decode(dg.data)}');
+// //       }
+// //     }
+// //   });
+// //
+// //   // Broadcast the presence of the desktop application
+// //   Timer.periodic(Duration(seconds: 5), (Timer t) {
+// //     try {
+// //       socket.send(data, InternetAddress('255.255.255.255'), 8081);
+// //       print('Broadcast message sent');
+// //     } catch (e) {
+// //       print('Error sending broadcast: $e');
+// //     }
+// //   });
+// ///////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//   //WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+//   //SplashMaster.initialize();
+//   // FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+//   // FlutterNativeSplash.remove();
+//   SplashMaster.initialize();
+//   Future.delayed(const Duration(seconds: 2)).then(
+//         (value) {
+//       /// Once initialization completes call below method to resume your
+//       /// flutter app.
+//       SplashMaster.resume();
+//     },
+//   );
+//   timeago.setLocaleMessages('fr', timeago.FrMessages());
+//   timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
+//   //
+//   // SystemChrome.setEnabledSystemUIMode(
+//   //     SystemUiMode.edgeToEdge, //.immersiveSticky,
+//   //     overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+//   // Initialisez ObjectBox
+//   await ObjectBox().init();
+//   runApp(
+//     MyApp(
+//       // objectBox: objectBox,
+//     ),
+//   );
+// }
