@@ -342,31 +342,31 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
                         flex: 2,
                         child: Column(children: [
                           _buildExtraServicesSection(),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 16),
-                              child: ListTile(
-                                  leading: CircleAvatar(
-                                    child: Text(
-                                        '${_selectedSeasonalPricing!.multiplier}x'),
-                                  ),
-                                  title: Text(_selectedSeasonalPricing!.name)),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 16),
-                            child: SeasonalPricingDropdown(
-                              selectedValue: _selectedSeasonalPricing,
-                              customSeasonalPricings: _seasonalPricings,
-                              useLocalState: true,
-                              savedSeason: _selectedSeasonalPricing,
-
-                              onChanged:
-                                  _onSeasonalPricingChanged, // Utiliser le nouveau callback
-                            ),
-                          ),
+                          // Card(
+                          //   child: Padding(
+                          //     padding: const EdgeInsets.symmetric(
+                          //         horizontal: 8, vertical: 16),
+                          //     child: ListTile(
+                          //         leading: CircleAvatar(
+                          //           child: Text(
+                          //               '${_selectedSeasonalPricing!.multiplier}x'),
+                          //         ),
+                          //         title: Text(_selectedSeasonalPricing!.name)),
+                          //   ),
+                          // ),
+                          // Padding(
+                          //   padding: const EdgeInsets.symmetric(
+                          //       horizontal: 8, vertical: 16),
+                          //   child: SeasonalPricingDropdown(
+                          //     selectedValue: _selectedSeasonalPricing,
+                          //     customSeasonalPricings: _seasonalPricings,
+                          //     useLocalState: true,
+                          //     savedSeason: _selectedSeasonalPricing,
+                          //
+                          //     onChanged:
+                          //         _onSeasonalPricingChanged, // Utiliser le nouveau callback
+                          //   ),
+                          // ),
                           _buildDiscountSection(),
                         ]),
                       ),
@@ -1165,20 +1165,20 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text('Réductions',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Spacer(),
-                IconButton(
-                  onPressed: _showDiscountDialog,
-                  icon: Icon(Icons.percent),
-                  tooltip: 'Configurer la réduction',
-                ),
-              ],
-            ),
-            SizedBox(height: 16),
+            // Row(
+            //   children: [
+            //     Text('Réductions',
+            //         style:
+            //             TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            //     Spacer(),
+            //     IconButton(
+            //       onPressed: _showDiscountDialog,
+            //       icon: Icon(Icons.percent),
+            //       tooltip: 'Configurer la réduction',
+            //     ),
+            //   ],
+            // ),
+            // SizedBox(height: 16),
 
             /////////////chatgpt////////////////
             if (_discountPercent > 0 || _discountAmount > 0) ...[

@@ -1879,6 +1879,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           PriceCard(
             basePrice: _selectedRoom!.category.target!.basePrice,
             seasonalMultiplier: _seasonalMultiplier,
+            season: _selectedSeasonalPricing,
           ),
         ],
       ],

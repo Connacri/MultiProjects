@@ -312,15 +312,6 @@ class PriceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      FittedBox(
-                        child: Text(
-                          season!.name.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
                       Row(
                         children: [
                           Icon(
@@ -369,18 +360,17 @@ class PriceCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      FittedBox(
-                        child: Text(
-                          season!.name.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
-
+            FittedBox(
+              child: Text(
+                season!.name.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white70,
+                ),
+              ),
+            ),
             SizedBox(height: MediaQuery.of(context).size.width < 600 ? 0 : 20),
 
             // Prix de base
