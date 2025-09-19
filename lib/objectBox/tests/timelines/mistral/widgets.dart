@@ -235,11 +235,13 @@ class SeasonStyle {
 class PriceCard extends StatelessWidget {
   final double basePrice;
   final double seasonalMultiplier;
+  final SeasonalPricing? season;
 
   const PriceCard({
     super.key,
     required this.basePrice,
     required this.seasonalMultiplier,
+    this.season,
   });
 
   @override
@@ -279,14 +281,25 @@ class PriceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Prix de saison
-            Center(
-              child: Text(
-                "${seasonalPrice.toStringAsFixed(2)} DA",
-                style: TextStyle(
-                  fontSize: MediaQuery.of(context).size.width < 600 ? 25 : 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CircleAvatar(
+                    child: Text('x${season!.multiplier}'),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "${seasonalPrice.toStringAsFixed(2)}",
+                    style: TextStyle(
+                      fontSize:
+                          MediaQuery.of(context).size.width < 600 ? 25 : 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -299,11 +312,13 @@ class PriceCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        "Prix saison",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
+                      FittedBox(
+                        child: Text(
+                          season!.name.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
                         ),
                       ),
                       Row(
@@ -354,13 +369,15 @@ class PriceCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      const Text(
-                        "Prix saison",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
+                      FittedBox(
+                        child: Text(
+                          season!.name.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
                         ),
-                      )
+                      ),
                     ],
                   ),
 

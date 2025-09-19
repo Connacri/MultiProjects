@@ -162,6 +162,7 @@ flutter_icons:
 #  image: assets/icon/splash3.png
 #  color: "#2C2C2C"
 
+
 splash_master:
   # Use to specifies the color for the splash screen
   color: '#FFFFFF'
