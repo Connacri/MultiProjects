@@ -43,8 +43,7 @@ class HotelReservationDataSource extends CalendarDataSource {
       final roomExists = rooms.any((r) => r.id == room.id);
       if (!roomExists) {
         debugPrint(
-            'ATTENTION: Réservation pour chambre ${room
-                .code} non trouvée dans la liste');
+            'ATTENTION: Réservation pour chambre ${room.code} non trouvée dans la liste');
         return false;
       }
 
@@ -57,12 +56,11 @@ class HotelReservationDataSource extends CalendarDataSource {
     appointments = validReservations;
 
     resources = rooms
-        .map((room) =>
-        CalendarResource(
-          id: room.id,
-          displayName: room.code,
-          color: Colors.black45,
-        ))
+        .map((room) => CalendarResource(
+              id: room.id,
+              displayName: room.code,
+              color: Colors.black45,
+            ))
         .toList();
 
     // debugPrint('DataSource: ${resources!.length} ressources (chambres) créées');
@@ -97,13 +95,9 @@ class HotelReservationDataSource extends CalendarDataSource {
         ? reservation.guests.first.fullName
         : 'Aucun client';
     final totalPrice = reservation.pricePerNight *
-        reservation.to
-            .difference(reservation.from)
-            .inDays;
+        reservation.to.difference(reservation.from).inDays;
 
-    return '$guestName\nNuitée : ${reservation.pricePerNight.toStringAsFixed(
-        2)} DA\nTotal : ${totalPrice.toStringAsFixed(
-        2)} DA\nStatus : ${reservation.status}';
+    return '$guestName\nNuitée : ${reservation.pricePerNight.toStringAsFixed(2)} DA\nTotal : ${totalPrice.toStringAsFixed(2)} DA\nStatus : ${reservation.status}';
   }
 
   @override
@@ -271,7 +265,7 @@ class HotelManagementState extends State<Hotel_Management> {
 
   Widget _buildCalendar(HotelProvider provider) {
     final reservations =
-    _currentHotel!.rooms.expand((room) => room.reservations).toList();
+        _currentHotel!.rooms.expand((room) => room.reservations).toList();
     _dataSource = HotelReservationDataSource(
         _currentHotel!.rooms.expand((room) => room.reservations).toList(),
         _currentHotel!.rooms.toList());
@@ -315,6 +309,7 @@ class HotelManagementState extends State<Hotel_Management> {
 
       onTap: _onCalendarTap,
       onLongPress: _onCalendarLongPress,
+
       headerStyle: CalendarHeaderStyle(
         backgroundColor: Colors.deepPurple,
         textStyle: TextStyle(color: Colors.white, fontSize: 20),
@@ -463,13 +458,13 @@ class HotelManagementState extends State<Hotel_Management> {
           onPressed: () async {
             final provider = Provider.of<HotelProvider>(context, listen: false);
             final seasonal =
-            await provider.selectSeasonalPricing(_currentHotel!);
+                await provider.selectSeasonalPricing(_currentHotel!);
 
             if (seasonal != null) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content:
-                    Text("Calibrage Saison Actuelle : ${seasonal.name}")),
+                        Text("Calibrage Saison Actuelle : ${seasonal.name}")),
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -488,8 +483,7 @@ class HotelManagementState extends State<Hotel_Management> {
           color: Colors.white,
           icon: Icon(Icons.more_vert, color: Colors.white),
           onSelected: (action) => action(),
-          itemBuilder: (context) =>
-          [
+          itemBuilder: (context) => [
             PopupMenuItem(
               value: () => _showEditOptions(),
               child: Row(
@@ -562,8 +556,7 @@ class HotelManagementState extends State<Hotel_Management> {
                 break;
             }
           },
-          itemBuilder: (context) =>
-          [
+          itemBuilder: (context) => [
             PopupMenuItem(
               value: 'hotels',
               child: Row(
@@ -603,139 +596,134 @@ class HotelManagementState extends State<Hotel_Management> {
   void showHotelEditDialog(HotelProvider provider, Hotel hotel) {
     final nameController = TextEditingController(text: hotel.name);
     final floorsController =
-    TextEditingController(text: hotel.floors.toString());
+        TextEditingController(text: hotel.floors.toString());
     final roomsPerFloorController =
-    TextEditingController(text: hotel.roomsPerFloor.toString());
+        TextEditingController(text: hotel.roomsPerFloor.toString());
     final avoidedController =
-    TextEditingController(text: hotel.avoidedNumbers ?? '');
+        TextEditingController(text: hotel.avoidedNumbers ?? '');
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Modifier l\'hôtel'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom de l\'hôtel*',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.business),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: floorsController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre d\'étages*',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.layers),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: roomsPerFloorController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Chambres par étage*',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.meeting_room),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: avoidedController,
-                    decoration: const InputDecoration(
-                      labelText: 'Numéros à éviter (optionnel)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.block),
-                    ),
-                  ),
-                ],
+      builder: (context) => AlertDialog(
+        title: const Text('Modifier l\'hôtel'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nom de l\'hôtel*',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.business),
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Annuler'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: floorsController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre d\'étages*',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.layers),
+                ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameController.text
-                      .trim()
-                      .isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Veuillez saisir un nom pour l\'hôtel'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  // Modifier l'hôtel
-                  hotel.name = nameController.text.trim();
-                  hotel.floors =
-                      int.tryParse(floorsController.text) ?? hotel.floors;
-                  hotel.roomsPerFloor =
-                      int.tryParse(roomsPerFloorController.text) ??
-                          hotel.roomsPerFloor;
-                  hotel.avoidedNumbers = avoidedController.text.trim();
-
-                  provider.updateHotel(hotel);
-
-                  Navigator.pop(context);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Hôtel modifié avec succès'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                },
-                child: const Text('Enregistrer'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: roomsPerFloorController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Chambres par étage*',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.meeting_room),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: avoidedController,
+                decoration: const InputDecoration(
+                  labelText: 'Numéros à éviter (optionnel)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.block),
+                ),
               ),
             ],
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Veuillez saisir un nom pour l\'hôtel'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              // Modifier l'hôtel
+              hotel.name = nameController.text.trim();
+              hotel.floors =
+                  int.tryParse(floorsController.text) ?? hotel.floors;
+              hotel.roomsPerFloor =
+                  int.tryParse(roomsPerFloorController.text) ??
+                      hotel.roomsPerFloor;
+              hotel.avoidedNumbers = avoidedController.text.trim();
+
+              provider.updateHotel(hotel);
+
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Hôtel modifié avec succès'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            child: const Text('Enregistrer'),
+          ),
+        ],
+      ),
     );
   }
 
   void confirmDeleteHotel(HotelProvider provider, Hotel hotel) {
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Supprimer l\'hôtel'),
-            content: Text(
-                'Êtes-vous sûr de vouloir supprimer l\'hôtel "${hotel
-                    .name}" ?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Annuler'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                onPressed: () {
-                  provider.deleteHotel(hotel.id);
-                  Navigator.pop(context);
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Hôtel "${hotel.name}" supprimé'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                },
-                child: const Text('Supprimer'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer l\'hôtel'),
+        content: Text(
+            'Êtes-vous sûr de vouloir supprimer l\'hôtel "${hotel.name}" ?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              provider.deleteHotel(hotel.id);
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Hôtel "${hotel.name}" supprimé'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -750,33 +738,22 @@ class HotelManagementState extends State<Hotel_Management> {
             Icon(
               Icons.hotel,
               size: 120,
-              color: Theme
-                  .of(context)
-                  .primaryColor
-                  .withOpacity(0.7),
+              color: Theme.of(context).primaryColor.withOpacity(0.7),
             ),
             const SizedBox(height: 32),
             Text(
               'Bienvenue !',
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .headlineMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
             const SizedBox(height: 16),
             Text(
               'Créez votre premier hôtel pour commencer à gérer vos réservations',
               textAlign: TextAlign.center,
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .bodyLarge
-                  ?.copyWith(
-                color: Colors.grey[600],
-              ),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: Colors.grey[600],
+                  ),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -806,101 +783,100 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Création de l\'hôtel'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Nom de l\'hôtel*',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.business),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: floorsController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Nombre d\'étages*',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.layers),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: roomsPerFloorController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Chambres par étage*',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.meeting_room),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: avoidedController,
-                    decoration: const InputDecoration(
-                      labelText: 'Numéros à éviter (optionnel)',
-                      hintText: 'Ex: 13,113,213',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.block),
-                      helperText: 'Séparez les numéros par des virgules',
-                    ),
-                  ),
-                ],
+      builder: (context) => AlertDialog(
+        title: const Text('Création de l\'hôtel'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nom de l\'hôtel*',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.business),
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Annuler'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: floorsController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre d\'étages*',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.layers),
+                ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameController.text
-                      .trim()
-                      .isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Veuillez saisir un nom pour l\'hôtel'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    return;
-                  }
-
-                  createHotel(
-                    provider,
-                    nameController.text.trim(),
-                    int.tryParse(floorsController.text) ?? 3,
-                    int.tryParse(roomsPerFloorController.text) ?? 10,
-                    avoidedController.text
-                        .split(',')
-                        .map((e) => e.trim())
-                        .where((e) => e.isNotEmpty)
-                        .toList(),
-                    context,
-                  );
-                  Navigator.pop(context);
-                },
-                child: const Text('Créer'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: roomsPerFloorController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Chambres par étage*',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.meeting_room),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: avoidedController,
+                decoration: const InputDecoration(
+                  labelText: 'Numéros à éviter (optionnel)',
+                  hintText: 'Ex: 13,113,213',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.block),
+                  helperText: 'Séparez les numéros par des virgules',
+                ),
               ),
             ],
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (nameController.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Veuillez saisir un nom pour l\'hôtel'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              createHotel(
+                provider,
+                nameController.text.trim(),
+                int.tryParse(floorsController.text) ?? 3,
+                int.tryParse(roomsPerFloorController.text) ?? 10,
+                avoidedController.text
+                    .split(',')
+                    .map((e) => e.trim())
+                    .where((e) => e.isNotEmpty)
+                    .toList(),
+                context,
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Créer'),
+          ),
+        ],
+      ),
     );
   }
 
-  Future<void> createHotel(HotelProvider provider,
-      String name,
-      int floors,
-      int roomsPerFloor,
-      List<String> avoidedNumbers,
-      BuildContext context,) async {
+  Future<void> createHotel(
+    HotelProvider provider,
+    String name,
+    int floors,
+    int roomsPerFloor,
+    List<String> avoidedNumbers,
+    BuildContext context,
+  ) async {
     try {
       // 1. Créer et enregistrer l’hôtel
       final hotel = Hotel(
@@ -938,7 +914,7 @@ class HotelManagementState extends State<Hotel_Management> {
 
           // ignorer les numéros interdits
           final shouldAvoid = avoidedNumbers.any(
-                (a) => a.isNotEmpty && roomCode.contains(a),
+            (a) => a.isNotEmpty && roomCode.contains(a),
           );
           if (shouldAvoid) continue;
 
@@ -1002,7 +978,7 @@ class HotelManagementState extends State<Hotel_Management> {
               backgroundColor: Colors.deepPurple.withOpacity(0.1),
               radius: 24,
               child:
-              Icon(Icons.hotel_rounded, color: Colors.deepPurple, size: 28),
+                  Icon(Icons.hotel_rounded, color: Colors.deepPurple, size: 28),
             ),
 
             const SizedBox(width: 16),
@@ -1058,13 +1034,11 @@ class HotelManagementState extends State<Hotel_Management> {
     );
   }
 
-  Widget _appointmentBuilder(BuildContext context,
-      CalendarAppointmentDetails details) {
+  Widget _appointmentBuilder(
+      BuildContext context, CalendarAppointmentDetails details) {
     if (details.appointments.isEmpty) return Container();
     final reservation = details.appointments.first as Reservation;
-    final nights = reservation.to
-        .difference(reservation.from)
-        .inDays;
+    final nights = reservation.to.difference(reservation.from).inDays;
     final totalPrice = reservation.pricePerNight * nights;
 
     return Container(
@@ -1161,78 +1135,74 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) =>
-          AlertDialog(
-            title: Text('Création de l\'hôtel'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Nom de l\'hôtel',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: floorsController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Nombre d\'étages',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: roomsPerFloorController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Chambres par étage',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 16),
-                  TextField(
-                    controller: avoidedController,
-                    decoration: InputDecoration(
-                      labelText: 'Numéros à éviter (séparés par virgule)',
-                      hintText: 'Ex: 13,113,213',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              if (_currentHotel != null)
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Annuler'),
+      builder: (context) => AlertDialog(
+        title: Text('Création de l\'hôtel'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(
+                  labelText: 'Nom de l\'hôtel',
+                  border: OutlineInputBorder(),
                 ),
-              ElevatedButton(
-                onPressed: () {
-                  createHotel(
-                    Provider.of<HotelProvider>(
-                      context,
-                      listen: false,
-                    ),
-                    nameController.text,
-                    int.tryParse(floorsController.text) ?? 3,
-                    int.tryParse(roomsPerFloorController.text) ?? 10,
-                    avoidedController.text
-                        .split(',')
-                        .map((e) => e.trim())
-                        .toList(),
-                    context,
-                  );
-                  Navigator.pop(context);
-                },
-                child: Text('Créer'),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: floorsController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Nombre d\'étages',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: roomsPerFloorController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Chambres par étage',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 16),
+              TextField(
+                controller: avoidedController,
+                decoration: InputDecoration(
+                  labelText: 'Numéros à éviter (séparés par virgule)',
+                  hintText: 'Ex: 13,113,213',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ],
           ),
+        ),
+        actions: [
+          if (_currentHotel != null)
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Annuler'),
+            ),
+          ElevatedButton(
+            onPressed: () {
+              createHotel(
+                Provider.of<HotelProvider>(
+                  context,
+                  listen: false,
+                ),
+                nameController.text,
+                int.tryParse(floorsController.text) ?? 3,
+                int.tryParse(roomsPerFloorController.text) ?? 10,
+                avoidedController.text.split(',').map((e) => e.trim()).toList(),
+                context,
+              );
+              Navigator.pop(context);
+            },
+            child: Text('Créer'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1243,52 +1213,39 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) =>
-          ChangeNotifierProvider.value(
-            value: context.read<HotelProvider>(),
-            child: Dialog(
-              shape:
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: context.read<HotelProvider>(),
+        child: Dialog(
+          shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width < 600
-                    ? MediaQuery
-                    .of(context)
-                    .size
-                    .width
-                    : MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.8,
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.9),
-                child: ReservationDialogContent(
-                  preselectedRoom: preselectedRoom,
-                  preselectedDate: preselectedDate,
-                  currentHotel: _currentHotel!,
-                  provider: provider,
-                  parentContext: context,
-                  // Passer le contexte parent pour SnackBar
-                  onReservationAdded: () {
-                    // Rafraîchir le calendrier
-                    setState(() {
-                      _dataSource = HotelReservationDataSource(
-                          _currentHotel!.rooms
-                              .expand((room) => room.reservations)
-                              .toList(),
-                          _currentHotel!.rooms.toList());
-                    });
-                  },
-                  seasonalPricings: provider.getSeasonalPricings(),
-                ),
-              ),
+          child: Container(
+            width: MediaQuery.of(context).size.width < 600
+                ? MediaQuery.of(context).size.width
+                : MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.9),
+            child: ReservationDialogContent(
+              preselectedRoom: preselectedRoom,
+              preselectedDate: preselectedDate,
+              currentHotel: _currentHotel!,
+              provider: provider,
+              parentContext: context,
+              // Passer le contexte parent pour SnackBar
+              onReservationAdded: () {
+                // Rafraîchir le calendrier
+                setState(() {
+                  _dataSource = HotelReservationDataSource(
+                      _currentHotel!.rooms
+                          .expand((room) => room.reservations)
+                          .toList(),
+                      _currentHotel!.rooms.toList());
+                });
+              },
+              seasonalPricings: provider.getSeasonalPricings(),
             ),
           ),
+        ),
+      ),
     );
   }
 
@@ -1299,83 +1256,69 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) =>
-          ChangeNotifierProvider.value(
-            value: context.read<HotelProvider>(),
-            child: Dialog(
-              shape:
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: context.read<HotelProvider>(),
+        child: Dialog(
+          shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width < 600
-                    ? MediaQuery
-                    .of(context)
-                    .size
-                    .width
-                    : MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.8,
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.9),
-                child: ReservationDetailView(
-                  preselectedRoom: preselectedRoom,
-                  preselectedDate: preselectedDate,
-                  currentHotel: _currentHotel!,
-                  provider: provider,
-                  parentContext: context,
-                  // Passer le contexte parent pour SnackBar
-                  onReservationAdded: () {
-                    // Rafraîchir le calendrier
-                    setState(() {
-                      _dataSource = HotelReservationDataSource(
-                          _currentHotel!.rooms
-                              .expand((room) => room.reservations)
-                              .toList(),
-                          _currentHotel!.rooms.toList());
-                    });
-                  },
-                  seasonalPricings: provider.getSeasonalPricings(),
-                ),
-              ),
+          child: Container(
+            width: MediaQuery.of(context).size.width < 600
+                ? MediaQuery.of(context).size.width
+                : MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.9),
+            child: ReservationDetailView(
+              preselectedRoom: preselectedRoom,
+              preselectedDate: preselectedDate,
+              currentHotel: _currentHotel!,
+              provider: provider,
+              parentContext: context,
+              // Passer le contexte parent pour SnackBar
+              onReservationAdded: () {
+                // Rafraîchir le calendrier
+                setState(() {
+                  _dataSource = HotelReservationDataSource(
+                      _currentHotel!.rooms
+                          .expand((room) => room.reservations)
+                          .toList(),
+                      _currentHotel!.rooms.toList());
+                });
+              },
+              seasonalPricings: provider.getSeasonalPricings(),
             ),
           ),
+        ),
+      ),
     );
   }
 
   void _showEditOptions() {
     showModalBottomSheet(
       context: context,
-      builder: (context) =>
-          Container(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.edit),
-                  title: Text('Modifier une réservation'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    showReservationList(isEdit: true);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.delete, color: Colors.red),
-                  title: Text('Supprimer une réservation'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    showReservationList(isDelete: true);
-                  },
-                ),
-              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.edit),
+              title: Text('Modifier une réservation'),
+              onTap: () {
+                Navigator.pop(context);
+                showReservationList(isEdit: true);
+              },
             ),
-          ),
+            ListTile(
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: Text('Supprimer une réservation'),
+              onTap: () {
+                Navigator.pop(context);
+                showReservationList(isDelete: true);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -1387,86 +1330,82 @@ class HotelManagementState extends State<Hotel_Management> {
 
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: Text(isDelete
-                ? 'Supprimer une réservation'
-                : 'Modifier une réservation'),
-            content: Container(
-              width: double.maxFinite,
-              height: 300,
-              child: reservations.isEmpty
-                  ? const Center(
-                child: Text(
-                  'Aucune réservation disponible',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              )
-                  : ListView.builder(
-                itemCount: reservations.length,
-                itemBuilder: (context, index) {
-                  final reservation = reservations[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: _getStatusColor(reservation.status),
-                      child: Text(
-                        reservation.room.target?.code ?? 'N/A',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      // Utilisation de la méthode du provider pour obtenir le nom du client principal
-                      reservation.guests.map((g) => g.fullName).join(", "),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          // Utilisation de la méthode du provider pour obtenir le nom de la chambre
-                          '${provider.getRoomNameForReservation(
-                              reservation)} - ${_formatDate(
-                              reservation.from)} → ${_formatDate(
-                              reservation.to)}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        Text(
-                          'Statut: ${reservation.status}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _getStatusColor(reservation.status),
-                            fontWeight: FontWeight.w500,
+      builder: (context) => AlertDialog(
+        title: Text(isDelete
+            ? 'Supprimer une réservation'
+            : 'Modifier une réservation'),
+        content: Container(
+          width: double.maxFinite,
+          height: 300,
+          child: reservations.isEmpty
+              ? const Center(
+                  child: Text(
+                    'Aucune réservation disponible',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: reservations.length,
+                  itemBuilder: (context, index) {
+                    final reservation = reservations[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: _getStatusColor(reservation.status),
+                        child: Text(
+                          reservation.room.target?.code ?? 'N/A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ],
-                    ),
-                    trailing: Icon(
-                      isDelete ? Icons.delete : Icons.edit,
-                      color: isDelete ? Colors.red : Colors.blue,
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      if (isDelete) {
-                        confirmDeleteReservation(reservation);
-                      } else {
-                        showEditReservationDialog(reservation);
-                      }
-                    },
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Fermer'),
-              ),
-            ],
+                      ),
+                      title: Text(
+                        // Utilisation de la méthode du provider pour obtenir le nom du client principal
+                        reservation.guests.map((g) => g.fullName).join(", "),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            // Utilisation de la méthode du provider pour obtenir le nom de la chambre
+                            '${provider.getRoomNameForReservation(reservation)} - ${_formatDate(reservation.from)} → ${_formatDate(reservation.to)}',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          Text(
+                            'Statut: ${reservation.status}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _getStatusColor(reservation.status),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: Icon(
+                        isDelete ? Icons.delete : Icons.edit,
+                        color: isDelete ? Colors.red : Colors.blue,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        if (isDelete) {
+                          confirmDeleteReservation(reservation);
+                        } else {
+                          showEditReservationDialog(reservation);
+                        }
+                      },
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Fermer'),
           ),
+        ],
+      ),
     );
   }
 
@@ -1495,66 +1434,63 @@ class HotelManagementState extends State<Hotel_Management> {
 
     showDialog(
       context: context,
-      builder: (dialogContext) =>
-          AlertDialog(
-            title: const Text('Confirmer la suppression'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                    'Êtes-vous sûr de vouloir supprimer cette réservation ?'),
-                const SizedBox(height: 16),
-                Text(
-                  'Client: $clientName',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                Text(
-                  'Chambre: $roomName',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                Text(
-                  'Période: ${_formatDate(reservation.from)} → ${_formatDate(
-                      reservation.to)}',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ],
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+                'Êtes-vous sûr de vouloir supprimer cette réservation ?'),
+            const SizedBox(height: 16),
+            Text(
+              'Client: $clientName',
+              style: const TextStyle(fontWeight: FontWeight.w500),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext),
-                child: const Text('Annuler'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () async {
-                  Navigator.pop(dialogContext);
-                  final success = await provider.deleteReservation(
-                      reservation.id);
-
-                  if (success) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Réservation supprimée avec succès'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Erreur lors de la suppression'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                },
-                child: const Text('Supprimer'),
-              ),
-            ],
+            Text(
+              'Chambre: $roomName',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            Text(
+              'Période: ${_formatDate(reservation.from)} → ${_formatDate(reservation.to)}',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Annuler'),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final success = await provider.deleteReservation(reservation.id);
+
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Réservation supprimée avec succès'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Erreur lors de la suppression'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1565,47 +1501,40 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) =>
-          ChangeNotifierProvider.value(
-            value: context.read<HotelProvider>(),
-            child: Dialog(
-              shape:
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: context.read<HotelProvider>(),
+        child: Dialog(
+          shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.8,
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.8),
-                child: ReservationDialogContent(
-                  preselectedRoom: reservation.room.target,
-                  preselectedDate: reservation.from,
-                  currentHotel: _currentHotel!,
-                  provider: provider,
-                  parentContext: context,
-                  isEditing: true,
-                  // Nouveau paramètre
-                  existingReservation: reservation,
-                  // Nouveau paramètre
-                  onReservationAdded: () {
-                    // Rafraîchir le calendrier après modification
-                    setState(() {
-                      _dataSource = HotelReservationDataSource(
-                          _currentHotel!.rooms
-                              .expand((room) => room.reservations)
-                              .toList(),
-                          _currentHotel!.rooms.toList());
-                    });
-                  },
-                  seasonalPricings: provider.getSeasonalPricings(),
-                ),
-              ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8),
+            child: ReservationDialogContent(
+              preselectedRoom: reservation.room.target,
+              preselectedDate: reservation.from,
+              currentHotel: _currentHotel!,
+              provider: provider,
+              parentContext: context,
+              isEditing: true,
+              // Nouveau paramètre
+              existingReservation: reservation,
+              // Nouveau paramètre
+              onReservationAdded: () {
+                // Rafraîchir le calendrier après modification
+                setState(() {
+                  _dataSource = HotelReservationDataSource(
+                      _currentHotel!.rooms
+                          .expand((room) => room.reservations)
+                          .toList(),
+                      _currentHotel!.rooms.toList());
+                });
+              },
+              seasonalPricings: provider.getSeasonalPricings(),
             ),
           ),
+        ),
+      ),
     );
   }
 
@@ -1615,47 +1544,40 @@ class HotelManagementState extends State<Hotel_Management> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) =>
-          ChangeNotifierProvider.value(
-            value: context.read<HotelProvider>(),
-            child: Dialog(
-              shape:
+      builder: (dialogContext) => ChangeNotifierProvider.value(
+        value: context.read<HotelProvider>(),
+        child: Dialog(
+          shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width * 0.8,
-                constraints: BoxConstraints(
-                    maxHeight: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.8),
-                child: ReservationDetailView(
-                  preselectedRoom: reservation.room.target,
-                  preselectedDate: reservation.from,
-                  currentHotel: _currentHotel!,
-                  provider: provider,
-                  parentContext: context,
-                  isEditing: true,
-                  // Nouveau paramètre
-                  existingReservation: reservation,
-                  // Nouveau paramètre
-                  onReservationAdded: () {
-                    // Rafraîchir le calendrier après modification
-                    setState(() {
-                      _dataSource = HotelReservationDataSource(
-                          _currentHotel!.rooms
-                              .expand((room) => room.reservations)
-                              .toList(),
-                          _currentHotel!.rooms.toList());
-                    });
-                  },
-                  seasonalPricings: provider.getSeasonalPricings(),
-                ),
-              ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8),
+            child: ReservationDetailView(
+              preselectedRoom: reservation.room.target,
+              preselectedDate: reservation.from,
+              currentHotel: _currentHotel!,
+              provider: provider,
+              parentContext: context,
+              isEditing: true,
+              // Nouveau paramètre
+              existingReservation: reservation,
+              // Nouveau paramètre
+              onReservationAdded: () {
+                // Rafraîchir le calendrier après modification
+                setState(() {
+                  _dataSource = HotelReservationDataSource(
+                      _currentHotel!.rooms
+                          .expand((room) => room.reservations)
+                          .toList(),
+                      _currentHotel!.rooms.toList());
+                });
+              },
+              seasonalPricings: provider.getSeasonalPricings(),
             ),
           ),
+        ),
+      ),
     );
   }
 
@@ -1683,17 +1605,16 @@ class HotelManagementState extends State<Hotel_Management> {
   void _onCalendarLongPress(CalendarLongPressDetails details) {
     if (details.appointments != null && details.appointments!.isNotEmpty) {
       final reservation = details.appointments!.first as Reservation;
+
       _showQuickActions(reservation);
     }
   }
 
   final dateFormatter =
-  DateFormat('EEEE dd/MM/yyyy', 'fr_FR'); // jour + date FR
+      DateFormat('EEEE dd/MM/yyyy', 'fr_FR'); // jour + date FR
 
   void _showReservationDetails(Reservation reservation) {
-    final nights = reservation.to
-        .difference(reservation.from)
-        .inDays;
+    final nights = reservation.to.difference(reservation.from).inDays;
     final totalPrice = reservation.pricePerNight * nights;
 
     // 🔹 Récupération de la chambre liée
@@ -1701,229 +1622,221 @@ class HotelManagementState extends State<Hotel_Management> {
 
     showDialog(
       context: context,
-      builder: (context) =>
-          Dialog(
-            insetPadding: const EdgeInsets.symmetric(
-                horizontal: 20, vertical: 24),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: SizedBox(
-              width: 400,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // ==== HEADER ====
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
-                      child: Text(
-                        'Réservation Détail',
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Theme
-                              .of(context)
-                              .primaryColorDark,
-                        ),
-                      ),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: SizedBox(
+          width: 400,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ==== HEADER ====
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 20, 0, 0),
+                  child: Text(
+                    'Réservation Détail',
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColorDark,
                     ),
+                  ),
+                ),
 
-                    // ==== CONTENU ====
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // En-tête avec le nom du client et de la chambre
-                          _buildHeaderSection(
-                            reservation,
-                            reservation.guests.map((g) => g.fullName).join(
-                                ", "),
-                            roomCode, // ✅ Correction : on passe le code de la chambre
-                          ),
+                // ==== CONTENU ====
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // En-tête avec le nom du client et de la chambre
+                      _buildHeaderSection(
+                        reservation,
+                        reservation.guests.map((g) => g.fullName).join(", "),
+                        roomCode, // ✅ Correction : on passe le code de la chambre
+                      ),
 
-                          const SizedBox(height: 16),
-                          ReservationCard(
-                            reservation: reservation,
-                          ),
-                          const SizedBox(height: 8),
-                          reservation.extras.isEmpty
-                              ? SizedBox.shrink()
-                              : Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Extras :",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                // coins arrondis
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: 10, sigmaY: 10), // flou
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        // fond semi-transparent
-                                        borderRadius:
-                                        BorderRadius.circular(16),
-                                        border: Border.all(
-                                            color: Colors.white
-                                                .withOpacity(0.3)),
-                                      ),
-                                      child: ReservationExtrasList(
-                                        extras: reservation.extras,
-                                        reservation: reservation,
-                                      )
-
-                                    // ListView.builder(
-                                    //   shrinkWrap: true,
-                                    //   physics:
-                                    //       const NeverScrollableScrollPhysics(),
-                                    //   itemCount: reservation.extras.length,
-                                    //   itemBuilder: (context, index) {
-                                    //     final extra =
-                                    //         reservation.extras[index];
-                                    //     return Tooltip(
-                                    //       message:
-                                    //           extra.extraService.target!.name,
-                                    //       child: ListTile(
-                                    //         onTap: () => Navigator.push(
-                                    //           context,
-                                    //           MaterialPageRoute(
-                                    //             builder: (context) =>
-                                    //                 ExtraServiceDetailPage(
-                                    //               reservationExtra: extra,
-                                    //             ),
-                                    //           ),
-                                    //         ),
-                                    //         leading: const Icon(Icons.check,
-                                    //             color: Colors.green),
-                                    //         title: Text(
-                                    //           extra.extraService.target!.name,
-                                    //           overflow: TextOverflow.ellipsis,
-                                    //           // texte visible
-                                    //         ),
-                                    //         trailing: Text(
-                                    //             "${extra.extraService.target!.price.toStringAsFixed(2)} DA"),
-                                    //         dense: true,
-                                    //       ),
-                                    //     );
-                                    //   },
-                                    // ),
+                      const SizedBox(height: 16),
+                      ReservationCard(
+                        reservation: reservation,
+                      ),
+                      const SizedBox(height: 8),
+                      reservation.extras.isEmpty
+                          ? SizedBox.shrink()
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Extras :",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  // coins arrondis
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                        sigmaX: 10, sigmaY: 10), // flou
+                                    child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.2),
+                                          // fond semi-transparent
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          border: Border.all(
+                                              color: Colors.white
+                                                  .withOpacity(0.3)),
+                                        ),
+                                        child: ReservationExtrasList(
+                                          extras: reservation.extras,
+                                          reservation: reservation,
+                                        )
 
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 28.0, vertical: 18),
-                            child: _buildReservationTimeline(
-                              reservation.from,
-                              reservation.to,
-                              nights,
+                                        // ListView.builder(
+                                        //   shrinkWrap: true,
+                                        //   physics:
+                                        //       const NeverScrollableScrollPhysics(),
+                                        //   itemCount: reservation.extras.length,
+                                        //   itemBuilder: (context, index) {
+                                        //     final extra =
+                                        //         reservation.extras[index];
+                                        //     return Tooltip(
+                                        //       message:
+                                        //           extra.extraService.target!.name,
+                                        //       child: ListTile(
+                                        //         onTap: () => Navigator.push(
+                                        //           context,
+                                        //           MaterialPageRoute(
+                                        //             builder: (context) =>
+                                        //                 ExtraServiceDetailPage(
+                                        //               reservationExtra: extra,
+                                        //             ),
+                                        //           ),
+                                        //         ),
+                                        //         leading: const Icon(Icons.check,
+                                        //             color: Colors.green),
+                                        //         title: Text(
+                                        //           extra.extraService.target!.name,
+                                        //           overflow: TextOverflow.ellipsis,
+                                        //           // texte visible
+                                        //         ),
+                                        //         trailing: Text(
+                                        //             "${extra.extraService.target!.price.toStringAsFixed(2)} DA"),
+                                        //         dense: true,
+                                        //       ),
+                                        //     );
+                                        //   },
+                                        // ),
+                                        ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
 
-                          // Détails tarifaires
-                          _buildPricingSection(
-                            nights,
-                            reservation.pricePerNight,
-                            totalPrice,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(reservation.discountAmount.toString()),
-                          Text(reservation.discountPercent.toString()),
-                          // Exemple dans une colonne ou une carte de réservation
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Réservation #${reservation.id}"),
-                              Text(
-                                  "Prix total: ${reservation.totalPrice
-                                      .toStringAsFixed(2)} DA"),
-                              SizedBox(height: 8),
-                              buildDiscountInfo(reservation),
-                              // 👉 Affiche les infos réduction
-                            ],
-                          ),
-
-                          const SizedBox(height: 16),
-                          // 🔹 Saison appliquée
-                          BentoCard(
-                              season: reservation.seasonalPricing.target!),
-                          const SizedBox(height: 16),
-                          // Statut de la réservation
-                          _buildStatusSection(reservation.status),
-                        ],
-                      ),
-                    ),
-
-                    //==== FOOTER style coupon vert ====
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade400,
-                        borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(20),
-                          bottomRight: Radius.circular(20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28.0, vertical: 18),
+                        child: _buildReservationTimeline(
+                          reservation.from,
+                          reservation.to,
+                          nights,
                         ),
                       ),
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+
+                      // Détails tarifaires
+                      _buildPricingSection(
+                        nights,
+                        reservation.pricePerNight,
+                        totalPrice,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(reservation.discountAmount.toString()),
+                      Text(reservation.discountPercent.toString()),
+                      // Exemple dans une colonne ou une carte de réservation
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text("Réservation #${reservation.id}"),
                           Text(
-                            "🎉 Félicitations ${reservation.guests.map((g) =>
-                            g.fullName).join(", ")} 🎉",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            "Vous avez réservé",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              "ROOM-$roomCode",
-                              // ✅ Correction : affichage code chambre
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green.shade700,
-                              ),
-                            ),
-                          ),
+                              "Prix total: ${reservation.totalPrice.toStringAsFixed(2)} DA"),
+                          SizedBox(height: 8),
+                          buildDiscountInfo(reservation),
+                          // 👉 Affiche les infos réduction
                         ],
                       ),
-                    ),
-                  ],
+
+                      const SizedBox(height: 16),
+                      // 🔹 Saison appliquée
+                      BentoCard(season: reservation.seasonalPricing.target!),
+                      const SizedBox(height: 16),
+                      // Statut de la réservation
+                      _buildStatusSection(reservation.status),
+                    ],
+                  ),
                 ),
-              ),
+
+                //==== FOOTER style coupon vert ====
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade400,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "🎉 Félicitations ${reservation.guests.map((g) => g.fullName).join(", ")} 🎉",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Vous avez réservé",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          "ROOM-$roomCode",
+                          // ✅ Correction : affichage code chambre
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
+        ),
+      ),
     );
   }
 
@@ -1954,8 +1867,8 @@ class HotelManagementState extends State<Hotel_Management> {
   }
 
 // Section pour l'en-tête (client et chambre)
-  Widget _buildHeaderSection(Reservation reservation, String clientName,
-      String roomName) {
+  Widget _buildHeaderSection(
+      Reservation reservation, String clientName, String roomName) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -2060,8 +1973,7 @@ class HotelManagementState extends State<Hotel_Management> {
                           ),
                           maxLines: 1,
                           textDirection: ui.TextDirection.ltr,
-                        )
-                          ..layout();
+                        )..layout();
 
                         // Largeur estimée du chip (avatar + texte + padding)
                         double chipWidth = painter.width + 40;
@@ -2078,46 +1990,42 @@ class HotelManagementState extends State<Hotel_Management> {
                               onTap: () {
                                 showDialog(
                                   context: context,
-                                  builder: (_) =>
-                                      AlertDialog(
-                                        title: const Text("Tous les clients"),
-                                        content: SizedBox(
-                                          width: double.maxFinite,
-                                          child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: reservation.guests
-                                                .length,
-                                            itemBuilder: (context, index) {
-                                              final g = reservation
-                                                  .guests[index];
-                                              return ListTile(
-                                                leading: CircleAvatar(
-                                                  backgroundColor:
+                                  builder: (_) => AlertDialog(
+                                    title: const Text("Tous les clients"),
+                                    content: SizedBox(
+                                      width: double.maxFinite,
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        itemCount: reservation.guests.length,
+                                        itemBuilder: (context, index) {
+                                          final g = reservation.guests[index];
+                                          return ListTile(
+                                            leading: CircleAvatar(
+                                              backgroundColor:
                                                   Colors.blue.shade100,
-                                                  child: Text(
-                                                    g.fullName
-                                                        .substring(0, 1)
-                                                        .toUpperCase(),
-                                                  ),
+                                              child: Text(
+                                                g.fullName
+                                                    .substring(0, 1)
+                                                    .toUpperCase(),
+                                              ),
+                                            ),
+                                            title: Text(g.fullName.capitalize),
+                                            onTap: () {
+                                              Navigator.pop(context);
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      ClientDetailPage(
+                                                          guest: g),
                                                 ),
-                                                title: Text(
-                                                    g.fullName.capitalize),
-                                                onTap: () {
-                                                  Navigator.pop(context);
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          ClientDetailPage(
-                                                              guest: g),
-                                                    ),
-                                                  );
-                                                },
                                               );
                                             },
-                                          ),
-                                        ),
+                                          );
+                                        },
                                       ),
+                                    ),
+                                  ),
                                 );
                               },
                               child: Transform.scale(
@@ -2186,8 +2094,8 @@ class HotelManagementState extends State<Hotel_Management> {
   }
 
 // Section pour les détails tarifaires
-  Widget _buildPricingSection(int nights, double pricePerNight,
-      double totalPrice) {
+  Widget _buildPricingSection(
+      int nights, double pricePerNight, double totalPrice) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -2293,9 +2201,7 @@ class HotelManagementState extends State<Hotel_Management> {
               style: TextStyle(
                 fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
                 fontSize: isHighlighted ? 16 : 14,
-                color: isHighlighted ? Theme
-                    .of(context)
-                    .primaryColor : null,
+                color: isHighlighted ? Theme.of(context).primaryColor : null,
               ),
             ),
           ),
@@ -2324,9 +2230,7 @@ class HotelManagementState extends State<Hotel_Management> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Theme
-                  .of(context)
-                  .primaryColor,
+              color: Theme.of(context).primaryColor,
             ),
           ),
         ),
@@ -2382,63 +2286,59 @@ class HotelManagementState extends State<Hotel_Management> {
   void _showQuickActions(Reservation reservation) {
     showModalBottomSheet(
       context: context,
-      builder: (context) =>
-          Container(
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  reservation.guests.map((g) => g.fullName).join(", "),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 20),
-                ListTile(
-                  leading: Icon(Icons.info),
-                  title: Text('Voir les détails'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showReservationDetails(reservation);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.edit, color: Colors.blue),
-                  title: Text('View Details'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    //showEditReservationDialog(reservation);
-                    showViewReservationDialog(reservation);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.edit, color: Colors.blue),
-                  title: Text('Modifier'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    showEditReservationDialog(reservation);
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.delete, color: Colors.red),
-                  title: Text('Supprimer'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    confirmDeleteReservation(reservation);
-                  },
-                ),
-              ],
+      builder: (context) => Container(
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              reservation.guests.map((g) => g.fullName).join(", "),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-          ),
+            SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.info),
+              title: Text('Voir les détails'),
+              onTap: () {
+                Navigator.pop(context);
+                _showReservationDetails(reservation);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.edit, color: Colors.blue),
+              title: Text('View Details'),
+              onTap: () {
+                Navigator.pop(context);
+                //showEditReservationDialog(reservation);
+                showViewReservationDialog(reservation);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.edit, color: Colors.blue),
+              title: Text('Modifier'),
+              onTap: () {
+                Navigator.pop(context);
+                showEditReservationDialog(reservation);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete, color: Colors.red),
+              title: Text('Supprimer'),
+              onTap: () {
+                Navigator.pop(context);
+                confirmDeleteReservation(reservation);
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   // ========================= UTILITAIRES =========================
 
   int _calculateVisibleRooms() {
-    final screenWidth = MediaQuery
-        .of(context)
-        .size
-        .width;
+    final screenWidth = MediaQuery.of(context).size.width;
     return ((screenWidth - 100) / 120).floor().clamp(3, 15);
   }
 
@@ -2476,8 +2376,8 @@ class HotelManagementState extends State<Hotel_Management> {
           final now = DateTime.now();
           try {
             final found = list.firstWhere(
-                  (sp) =>
-              sp.startDate.isBefore(now) &&
+              (sp) =>
+                  sp.startDate.isBefore(now) &&
                   sp.endDate.isAfter(now), // saison active
             );
 
@@ -2512,8 +2412,7 @@ class HotelManagementState extends State<Hotel_Management> {
                         leading: const Icon(Icons.calendar_today),
                         title: Text(sp.name),
                         subtitle: Text(
-                            "Multiplicateur: ${sp.multiplier}x\n${sp.startDate
-                                .toLocal()} → ${sp.endDate.toLocal()}"),
+                            "Multiplicateur: ${sp.multiplier}x\n${sp.startDate.toLocal()} → ${sp.endDate.toLocal()}"),
                         trailing: selected?.id == sp.id
                             ? const Icon(Icons.check, color: Colors.green)
                             : null,
@@ -2544,8 +2443,8 @@ class HotelManagementState extends State<Hotel_Management> {
           final now = DateTime.now();
           try {
             final found = list.firstWhere(
-                  (sp) =>
-              sp.startDate.isBefore(now) &&
+              (sp) =>
+                  sp.startDate.isBefore(now) &&
                   sp.endDate.isAfter(now), // saison active
             );
 
@@ -2575,8 +2474,7 @@ class HotelManagementState extends State<Hotel_Management> {
                       leading: const Icon(Icons.calendar_today),
                       title: Text(sp.name),
                       subtitle: Text(
-                          "Multiplicateur: ${sp.multiplier}x\n${sp.startDate
-                              .toLocal()} → ${sp.endDate.toLocal()}"),
+                          "Multiplicateur: ${sp.multiplier}x\n${sp.startDate.toLocal()} → ${sp.endDate.toLocal()}"),
                       trailing: selected?.id == sp.id
                           ? const Icon(Icons.check, color: Colors.green)
                           : null,
@@ -2610,14 +2508,12 @@ class HotelManagementState extends State<Hotel_Management> {
                     // ),
                     TextSpan(
                       text:
-                      //  "${selected.name} - "
-                      "x${selected.multiplier.toStringAsFixed(2)} ",
+                          //  "${selected.name} - "
+                          "x${selected.multiplier.toStringAsFixed(2)} ",
                       style: TextStyle(
                         fontSize: 23,
                         fontWeight: FontWeight.w200,
-                        color: Theme
-                            .of(context)
-                            .primaryColorLight,
+                        color: Theme.of(context).primaryColorLight,
                       ),
                     ),
                     TextSpan(
@@ -2629,13 +2525,11 @@ class HotelManagementState extends State<Hotel_Management> {
                           ),
                           TextSpan(
                             text:
-                            " ${dateFormatter.format(selected.startDate)}  ",
+                                " ${dateFormatter.format(selected.startDate)}  ",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,
-                              color: Theme
-                                  .of(context)
-                                  .primaryColorLight,
+                              color: Theme.of(context).primaryColorLight,
                             ),
                           ),
                           WidgetSpan(
@@ -2651,9 +2545,7 @@ class HotelManagementState extends State<Hotel_Management> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w400,
-                              color: Theme
-                                  .of(context)
-                                  .primaryColorLight,
+                              color: Theme.of(context).primaryColorLight,
                             ),
                           ),
                         ],

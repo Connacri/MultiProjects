@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 
 import '../../../../objectbox.g.dart';
 import '../../../Entity.dart';
 import '../../../classeObjectBox.dart';
-import 'ReservationDialogContent.dart';
 
 abstract class BaseEntityProvider<T> with ChangeNotifier {
   final ObjectBox objectBox;

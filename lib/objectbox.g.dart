@@ -918,7 +918,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(23, 7337300309619921213),
     name: 'Room',
-    lastPropertyId: const obx_int.IdUid(14, 3736744018751654018),
+    lastPropertyId: const obx_int.IdUid(16, 8434304324101682248),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -956,6 +956,12 @@ final _entities = <obx_int.ModelEntity>[
         type: 9,
         flags: 0,
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 8434304324101682248),
+        name: 'photosJson',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[
@@ -969,7 +975,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(25, 6525685758623725352),
     name: 'Employee',
-    lastPropertyId: const obx_int.IdUid(11, 7669064762153100021),
+    lastPropertyId: const obx_int.IdUid(13, 4149790836478463359),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -996,6 +1002,12 @@ final _entities = <obx_int.ModelEntity>[
         type: 9,
         flags: 0,
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 4149790836478463359),
+        name: 'photosJson',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[
@@ -1009,7 +1021,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(26, 8000924420460436742),
     name: 'Guest',
-    lastPropertyId: const obx_int.IdUid(13, 5580332256023722647),
+    lastPropertyId: const obx_int.IdUid(15, 2318127558024854039),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1048,6 +1060,12 @@ final _entities = <obx_int.ModelEntity>[
         type: 9,
         flags: 0,
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 2318127558024854039),
+        name: 'photosJson',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[
@@ -1061,7 +1079,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(29, 6276934219192680664),
     name: 'Hotel',
-    lastPropertyId: const obx_int.IdUid(6, 1926354658288891923),
+    lastPropertyId: const obx_int.IdUid(8, 8122189067926806935),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1102,6 +1120,12 @@ final _entities = <obx_int.ModelEntity>[
         indexId: const obx_int.IdUid(74, 1977960640627402338),
         relationTarget: 'SeasonalPricing',
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 8122189067926806935),
+        name: 'photosJson',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[
@@ -1115,7 +1139,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(30, 7290228926903551263),
     name: 'BoardBasis',
-    lastPropertyId: const obx_int.IdUid(25, 1881526249683023702),
+    lastPropertyId: const obx_int.IdUid(27, 3767595173140025459),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1220,6 +1244,12 @@ final _entities = <obx_int.ModelEntity>[
         type: 1,
         flags: 0,
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(27, 3767595173140025459),
+        name: 'photosJson',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
@@ -1227,7 +1257,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(31, 8720453165107695461),
     name: 'ExtraService',
-    lastPropertyId: const obx_int.IdUid(24, 7777161809952552651),
+    lastPropertyId: const obx_int.IdUid(26, 7212381107658597400),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1323,6 +1353,12 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(24, 7777161809952552651),
         name: 'packageIncludes',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(26, 7212381107658597400),
+        name: 'photosJson',
         type: 9,
         flags: 0,
       ),
@@ -1513,7 +1549,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(34, 637841729528048361),
     name: 'SeasonalPricing',
-    lastPropertyId: const obx_int.IdUid(16, 8639205115021756438),
+    lastPropertyId: const obx_int.IdUid(18, 4297814468444447790),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1573,6 +1609,12 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(16, 8639205115021756438),
         name: 'targetIds',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(18, 4297814468444447790),
+        name: 'photosJson',
         type: 9,
         flags: 0,
       ),
@@ -1899,6 +1941,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
       4452554524108096241,
       3259537297487087809,
       5757132126363856511,
+      2294371935230615525,
+      7495650345969893914,
+      8358090772194301322,
+      7719958318531079219,
+      4229857189863884367,
+      686127309564577120,
+      1171201029039590510,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -3058,12 +3107,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectToFB: (Room object, fb.Builder fbb) {
         final codeOffset = fbb.writeString(object.code);
         final statusOffset = fbb.writeString(object.status);
-        fbb.startTable(15);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(17);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, codeOffset);
         fbb.addInt64(6, object.hotel.targetId);
         fbb.addInt64(7, object.category.targetId);
         fbb.addOffset(13, statusOffset);
+        fbb.addOffset(15, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3076,8 +3127,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final statusParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 30, '');
-        final object = Room(code: codeParam, status: statusParam)
-          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 34, '');
+        final object = Room(
+          code: codeParam,
+          status: statusParam,
+          photosJson: photosJsonParam,
+        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
         object.hotel.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -3124,11 +3181,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
             ? null
             : fbb.writeString(object.email!);
         final fullNameOffset = fbb.writeString(object.fullName);
-        fbb.startTable(12);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(14);
         fbb.addInt64(0, object.id);
         fbb.addOffset(2, phoneNumberOffset);
         fbb.addOffset(3, emailOffset);
         fbb.addOffset(10, fullNameOffset);
+        fbb.addOffset(12, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3144,10 +3203,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final emailParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 10);
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 28, '');
         final object = Employee(
           fullName: fullNameParam,
           phoneNumber: phoneNumberParam,
           email: emailParam,
+          photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
         obx_int.InternalToManyAccess.setRelInfo<Employee>(
           object.reservations,
@@ -3182,13 +3245,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
             ? null
             : fbb.writeString(object.nationality!);
         final fullNameOffset = fbb.writeString(object.fullName);
-        fbb.startTable(14);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(16);
         fbb.addInt64(0, object.id);
         fbb.addOffset(2, phoneNumberOffset);
         fbb.addOffset(3, emailOffset);
         fbb.addOffset(4, idCardNumberOffset);
         fbb.addOffset(5, nationalityOffset);
         fbb.addOffset(12, fullNameOffset);
+        fbb.addOffset(14, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3210,12 +3275,16 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final nationalityParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 14);
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 32, '');
         final object = Guest(
           fullName: fullNameParam,
           phoneNumber: phoneNumberParam,
           email: emailParam,
           idCardNumber: idCardNumberParam,
           nationality: nationalityParam,
+          photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
         obx_int.InternalToManyAccess.setRelInfo<Guest>(
           object.reservations,
@@ -3242,13 +3311,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectToFB: (Hotel object, fb.Builder fbb) {
         final nameOffset = fbb.writeString(object.name);
         final avoidedNumbersOffset = fbb.writeString(object.avoidedNumbers);
-        fbb.startTable(7);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(9);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, nameOffset);
         fbb.addInt64(2, object.floors);
         fbb.addInt64(3, object.roomsPerFloor);
         fbb.addOffset(4, avoidedNumbersOffset);
         fbb.addInt64(5, object.selectedSeasonalPricing.targetId);
+        fbb.addOffset(7, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3273,11 +3344,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final avoidedNumbersParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 12, '');
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 18, '');
         final object = Hotel(
           name: nameParam,
           floors: floorsParam,
           roomsPerFloor: roomsPerFloorParam,
           avoidedNumbers: avoidedNumbersParam,
+          photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
         object.selectedSeasonalPricing.targetId = const fb.Int64Reader()
             .vTableGet(buffer, rootOffset, 14, 0);
@@ -3309,7 +3384,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final notesOffset = object.notes == null
             ? null
             : fbb.writeString(object.notes!);
-        fbb.startTable(26);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(28);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, nameOffset);
         fbb.addOffset(2, codeOffset);
@@ -3327,6 +3403,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addBool(22, object.includesAlcoholicDrinks);
         fbb.addBool(23, object.includesRoomService);
         fbb.addBool(24, object.includesMinibar);
+        fbb.addOffset(26, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3417,6 +3494,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final notesParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 36);
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 56, '');
         final object = BoardBasis(
           name: nameParam,
           code: codeParam,
@@ -3434,6 +3514,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           isActive: isActiveParam,
           sortOrder: sortOrderParam,
           notes: notesParam,
+          photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
         return object;
@@ -3459,7 +3540,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final packageIncludesOffset = object.packageIncludes == null
             ? null
             : fbb.writeString(object.packageIncludes!);
-        fbb.startTable(25);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(27);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, nameOffset);
         fbb.addOffset(3, descriptionOffset);
@@ -3476,6 +3558,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(21, notesOffset);
         fbb.addBool(22, object.isPackage);
         fbb.addOffset(23, packageIncludesOffset);
+        fbb.addOffset(25, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3551,6 +3634,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final packageIncludesParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 50);
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 54, '');
         final object = ExtraService(
           name: nameParam,
           code: codeParam,
@@ -3567,6 +3653,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           notes: notesParam,
           isPackage: isPackageParam,
           packageIncludes: packageIncludesParam,
+          photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
         return object;
@@ -3821,7 +3908,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
             : fbb.writeString(object.description!);
         final applicationTypeOffset = fbb.writeString(object.applicationType);
         final targetIdsOffset = fbb.writeString(object.targetIds);
-        fbb.startTable(17);
+        final photosJsonOffset = fbb.writeString(object.photosJson);
+        fbb.startTable(19);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, nameOffset);
         fbb.addInt64(2, object.startDate.millisecondsSinceEpoch);
@@ -3832,6 +3920,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addFloat64(13, object.multiplier);
         fbb.addOffset(14, applicationTypeOffset);
         fbb.addOffset(15, targetIdsOffset);
+        fbb.addOffset(17, photosJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -3874,6 +3963,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final descriptionParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 22);
+        final photosJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 38, '');
         final object = SeasonalPricing(
           name: nameParam,
           startDate: startDateParam,
@@ -3884,6 +3976,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           isActive: isActiveParam,
           priority: priorityParam,
           description: descriptionParam,
+          photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
         return object;
@@ -4562,6 +4655,11 @@ class Room_ {
     _entities[11].properties[4],
   );
 
+  /// See [Room.photosJson].
+  static final photosJson = obx.QueryStringProperty<Room>(
+    _entities[11].properties[5],
+  );
+
   /// see [Room.reservations]
   static final reservations = obx.QueryBacklinkToMany<Reservation, Room>(
     Reservation_.room,
@@ -4588,6 +4686,11 @@ class Employee_ {
   /// See [Employee.fullName].
   static final fullName = obx.QueryStringProperty<Employee>(
     _entities[12].properties[3],
+  );
+
+  /// See [Employee.photosJson].
+  static final photosJson = obx.QueryStringProperty<Employee>(
+    _entities[12].properties[4],
   );
 
   /// see [Employee.reservations]
@@ -4627,6 +4730,11 @@ class Guest_ {
   static final fullName = obx.QueryStringProperty<Guest>(
     _entities[13].properties[5],
   );
+
+  /// See [Guest.photosJson].
+  static final photosJson = obx.QueryStringProperty<Guest>(
+    _entities[13].properties[6],
+  );
 }
 
 /// [Hotel] entity fields to define ObjectBox queries.
@@ -4661,6 +4769,11 @@ class Hotel_ {
       obx.QueryRelationToOne<Hotel, SeasonalPricing>(
         _entities[14].properties[5],
       );
+
+  /// See [Hotel.photosJson].
+  static final photosJson = obx.QueryStringProperty<Hotel>(
+    _entities[14].properties[6],
+  );
 
   /// see [Hotel.rooms]
   static final rooms = obx.QueryBacklinkToMany<Room, Hotel>(Room_.hotel);
@@ -4752,6 +4865,11 @@ class BoardBasis_ {
   static final includesMinibar = obx.QueryBooleanProperty<BoardBasis>(
     _entities[15].properties[16],
   );
+
+  /// See [BoardBasis.photosJson].
+  static final photosJson = obx.QueryStringProperty<BoardBasis>(
+    _entities[15].properties[17],
+  );
 }
 
 /// [ExtraService] entity fields to define ObjectBox queries.
@@ -4834,6 +4952,11 @@ class ExtraService_ {
   /// See [ExtraService.packageIncludes].
   static final packageIncludes = obx.QueryStringProperty<ExtraService>(
     _entities[16].properties[15],
+  );
+
+  /// See [ExtraService.photosJson].
+  static final photosJson = obx.QueryStringProperty<ExtraService>(
+    _entities[16].properties[16],
   );
 }
 
@@ -5025,5 +5148,10 @@ class SeasonalPricing_ {
   /// See [SeasonalPricing.targetIds].
   static final targetIds = obx.QueryStringProperty<SeasonalPricing>(
     _entities[19].properties[9],
+  );
+
+  /// See [SeasonalPricing.photosJson].
+  static final photosJson = obx.QueryStringProperty<SeasonalPricing>(
+    _entities[19].properties[10],
   );
 }

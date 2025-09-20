@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:objectbox/objectbox.dart';
 
 @Entity()
@@ -544,6 +546,8 @@ class Hotel {
   String avoidedNumbers; // Stockage des numéros évités comme string
 
   // Backlink vers les chambres de l'hôtel
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
   @Backlink('hotel')
   final rooms = ToMany<Room>();
 
@@ -555,6 +559,7 @@ class Hotel {
     required this.floors,
     required this.roomsPerFloor,
     this.avoidedNumbers = '',
+    this.photosJson = '[]',
   });
 
   // Helper pour récupérer la liste des numéros évités
@@ -566,6 +571,27 @@ class Hotel {
   // Helper pour définir les numéros évités
   void setAvoidedNumbers(List<String> numbers) {
     avoidedNumbers = numbers.join(',');
+  }
+
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
   }
 }
 
@@ -582,6 +608,9 @@ class Room {
   // double? basePrice; // Peut être remplacé par category.basePrice
   String status;
 
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
+
   // NOUVELLE RELATION
   final category = ToOne<RoomCategory>();
 
@@ -595,14 +624,29 @@ class Room {
     // this.capacity,
     // this.basePrice,
     this.status = "Libre",
+    this.photosJson = '[]',
   });
 
-// Helper pour obtenir le prix effectif selon la catégorie et la saison
-// double getEffectivePrice(DateTime date) {
-//   final categoryPrice = category.target?.basePrice ?? basePrice ?? 0.0;
-//   // Ici vous pourriez ajouter la logique de calcul saisonnier
-//   return categoryPrice;
-// }
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
+  }
 }
 
 /// ==================== ROOM CATEGORY ====================
@@ -691,6 +735,9 @@ class BoardBasis {
   String code; // "BB", "HB", "AI"
   String description;
 
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
+
   // Détails des repas inclus
   bool includesBreakfast;
   bool includesLunch;
@@ -727,6 +774,7 @@ class BoardBasis {
     this.isActive = true,
     this.sortOrder = 0,
     this.notes,
+    this.photosJson = '[]',
   });
 
   // Helper pour obtenir un résumé des inclusions
@@ -752,6 +800,27 @@ class BoardBasis {
     if (inclusions.length <= 2) return inclusions.join(', ');
     return '${inclusions.take(2).join(', ')} (+${inclusions.length - 2} autres)';
   }
+
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
+  }
 }
 
 /// ==================== EXTRAS & OPTIONS ====================
@@ -764,6 +833,8 @@ class ExtraService {
   String code; // "AIRPORT", "SPA_MASSAGE", "BABY_BED"
   String description;
   String category; // "Transport", "Spa", "Room", "Food", "Activity", "Package"
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
 
   // Tarification
   double price;
@@ -798,6 +869,7 @@ class ExtraService {
     this.notes,
     this.isPackage = false,
     this.packageIncludes,
+    this.photosJson = '[]',
   });
 
   // Helper pour le calcul du prix
@@ -815,6 +887,27 @@ class ExtraService {
       default:
         return price * quantity;
     }
+  }
+
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
   }
 }
 
@@ -855,6 +948,8 @@ class SeasonalPricing {
   DateTime endDate;
   double multiplier;
 
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
   String applicationType; // all_categories, specific_categories, specific_rooms
   String targetIds; // JSON array des IDs concernés
   bool isActive;
@@ -871,11 +966,33 @@ class SeasonalPricing {
     this.isActive = true,
     this.priority = 0,
     this.description,
+    this.photosJson = '[]',
   });
 
   bool isDateInSeason(DateTime date) {
     return date.isAfter(startDate.subtract(Duration(days: 1))) &&
         date.isBefore(endDate.add(Duration(days: 1)));
+  }
+
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
   }
 }
 
@@ -891,6 +1008,9 @@ class Guest {
   String idCardNumber;
   String? nationality;
 
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
+
   // Relation Many-to-Many avec Reservation
   @Backlink('guests')
   final reservations = ToMany<Reservation>();
@@ -901,6 +1021,7 @@ class Guest {
     this.email,
     required this.idCardNumber,
     this.nationality,
+    this.photosJson = '[]',
   });
 
   /// ---- Factory ----
@@ -923,6 +1044,27 @@ class Guest {
       'idCardNumber': idCardNumber,
       'nationality': nationality,
     };
+  }
+
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
   }
 }
 
@@ -1051,6 +1193,8 @@ class Employee {
   String phoneNumber;
   String? email;
 
+  // Liste des photos sauvegardées en JSON (local & online mélangées)
+  String photosJson = '[]';
   @Backlink('receptionist')
   final reservations = ToMany<Reservation>();
 
@@ -1058,6 +1202,7 @@ class Employee {
     required this.fullName,
     required this.phoneNumber,
     this.email,
+    this.photosJson = '[]',
   });
 
   factory Employee.fromMap(Map<String, dynamic> map) {
@@ -1075,5 +1220,26 @@ class Employee {
       'phoneNumber': phoneNumber,
       'email': email,
     };
+  }
+
+  /// ===== Helpers =====
+
+  List<Map<String, dynamic>> get photos =>
+      List<Map<String, dynamic>>.from(jsonDecode(photosJson));
+
+  void setPhotos(List<Map<String, dynamic>> list) {
+    photosJson = jsonEncode(list);
+  }
+
+  void addPhoto({required String path, required String type}) {
+    final list = photos;
+    list.add({"type": type, "path": path});
+    setPhotos(list);
+  }
+
+  void removePhoto(String path) {
+    final list = photos;
+    list.removeWhere((photo) => photo["path"] == path);
+    setPhotos(list);
   }
 }

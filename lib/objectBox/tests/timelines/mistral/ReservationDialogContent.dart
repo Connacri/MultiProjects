@@ -3184,32 +3184,6 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   }
 }
 
-class PricingInfo {
-  final String text;
-  final Color color;
-  final IconData icon;
-
-  PricingInfo(this.text, this.color, this.icon);
-}
-
-class ReservationExtraItem {
-  final ExtraService extraService;
-  int quantity;
-  double unitPrice;
-  double totalPrice;
-  DateTime? scheduledDate;
-  String? notes;
-
-  ReservationExtraItem({
-    required this.extraService,
-    this.quantity = 1,
-    required this.unitPrice,
-    this.totalPrice = 0.0,
-    this.scheduledDate,
-    this.notes,
-  });
-}
-
 class SeasonalPricingDropdown extends StatelessWidget {
   final SeasonalPricing? selectedValue;
   final SeasonalPricing? savedSeason;

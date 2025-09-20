@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
@@ -11,6 +12,9 @@ import 'package:string_extensions/string_extensions.dart';
 import '../../../Entity.dart';
 import 'ReservationDialogContent.dart';
 import 'claude_crud.dart';
+import 'generated/profile1.dart';
+import 'generated/profile22.dart';
+import 'generated/profile3.dart';
 
 // Enhanced ReservationDialogContent with Board Basis and Extra Services integration
 class ReservationDetailView extends StatefulWidget {
@@ -56,24 +60,10 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
   DateTime? _toDate;
   String _status = "Confirmée";
   bool _isLoading = false;
-  bool _isPriceEditable = false; // Nouveau: pour contrôler l'édition du prix
 
   // Board Basis and Extra Services
   BoardBasis? _selectedBoardBasis;
   List<ReservationExtraItem> _selectedExtras = [];
-
-  // Variables pour l'édition de client
-  bool _isEditingGuest = false;
-  Guest? _guestBeingEdited;
-  int? _editingGuestIndex;
-
-  final List<String> _statuses = [
-    "Confirmée",
-    "En attente",
-    "Arrivé",
-    "Parti",
-    "Annulée"
-  ];
 
   List<SeasonalPricing> _seasonalPricings = [];
   late double _seasonalMultiplier;
@@ -93,11 +83,9 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
   @override
   void initState() {
     super.initState();
-
+    final provider = Provider.of<HotelProvider>(context, listen: false);
     // Valeur par défaut sûre
     _seasonalMultiplier = 1.0;
-
-    final provider = Provider.of<HotelProvider>(context, listen: false);
 
     // 1) Affecter la liste des tarifs saisonniers AVANT toute sélection
     _seasonalPricings = widget.seasonalPricings ?? [];
@@ -263,13 +251,6 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
         _selectedExtras.add(extraItem);
       });
     }
-  }
-
-  void _removeExtraService(ReservationExtraItem item) {
-    setState(() {
-      _selectedExtras.remove(item);
-    });
-    print("Après suppression: ${_selectedExtras.length}");
   }
 
   void _updateExtraPrice(ReservationExtraItem item) {
@@ -546,11 +527,47 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
             ),
           ),
           IconButton(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (ctx) => Profile1(),
+            )),
+            icon: Icon(Icons.mediation, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: () {
+              // 👉 Ouvre le dialog
+              showProfileDialog22(context);
+            },
+            icon: Icon(Icons.mediation, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (ctx) => Profile3(),
+            )),
+            icon: Icon(Icons.mediation, color: Colors.white),
+          ),
+          IconButton(
             onPressed: () => Navigator.pop(context),
             icon: Icon(Icons.close, color: Colors.white),
           ),
         ],
       ),
+    );
+  }
+
+  void showProfileDialog22(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => Profile22(
+          preselectedRoom: widget.preselectedRoom,
+          preselectedDate: widget.preselectedDate,
+          currentHotel: widget.currentHotel,
+          provider: widget.provider,
+          parentContext: widget.parentContext,
+          onReservationAdded: widget.onReservationAdded,
+          isEditing: widget.isEditing,
+          existingReservation: widget.existingReservation,
+          seasonalPricings: widget.seasonalPricings),
     );
   }
 
@@ -2563,379 +2580,6 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
     }
   }
 
-  void _showDiscountDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => Dialog(
-          child: Container(
-            width: 700,
-            height: 700,
-            padding: EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text('Configuration de la réduction',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                SizedBox(height: 16),
-
-                // Type de réduction
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Type de réduction:',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    TextButton(
-                      onPressed: () {
-                        // Réinitialiser
-                        setDialogState(() {
-                          _discountPercent = 0.0;
-                          _discountAmount = 0.0;
-                          _discountPercentController.text = "0";
-                          _discountAmountController.text = "0";
-                          _discountAppliedTo = 'total';
-                          _selectedDiscountItems.clear();
-                          _onDiscountChanged();
-                          Navigator.pop(context);
-                        });
-                      },
-                      child: Text('Tout Réinitialiser',
-                          style: TextStyle(fontSize: 12, color: Colors.red)),
-                    ),
-                  ],
-                ),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    if (constraints.maxWidth > 600) {
-                      // Version desktop / tablette large
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: Text('Pourcentage'),
-                              value: 'percentage',
-                              groupValue: _discountType,
-                              onChanged: (value) =>
-                                  setDialogState(() => _discountType = value!),
-                            ),
-                          ),
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: Text('Montant fixe'),
-                              value: 'amount',
-                              groupValue: _discountType,
-                              onChanged: (value) =>
-                                  setDialogState(() => _discountType = value!),
-                            ),
-                          ),
-                        ],
-                      );
-                    } else {
-                      // Version mobile (<600px)
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: Icon(FontAwesomeIcons.percent),
-                              dense: true,
-                              // Text('Pourcentage'),
-                              value: 'percentage',
-                              groupValue: _discountType,
-                              onChanged: (value) =>
-                                  setDialogState(() => _discountType = value!),
-                            ),
-                          ),
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: Icon(FontAwesomeIcons.dollarSign),
-                              //Text('Montant fixe'),
-                              value: 'amount',
-                              groupValue: _discountType,
-                              onChanged: (value) =>
-                                  setDialogState(() => _discountType = value!),
-                            ),
-                          ),
-                        ],
-                      );
-
-                      //
-                      //     Column(
-                      //     mainAxisSize: MainAxisSize.min,
-                      //     // adapte la hauteur à son contenu
-                      //     children: [
-                      //       RadioListTile<String>(
-                      //         title: const Text('Pourcentage'),
-                      //         value: 'percentage',
-                      //         groupValue: _discountType,
-                      //         onChanged: (value) =>
-                      //             setDialogState(() => _discountType = value!),
-                      //       ),
-                      //       RadioListTile<String>(
-                      //         title: const Text('Montant fixe'),
-                      //         value: 'amount',
-                      //         groupValue: _discountType,
-                      //         onChanged: (value) =>
-                      //             setDialogState(() => _discountType = value!),
-                      //       ),
-                      //     ],
-                      //   );
-                    }
-                  },
-                ),
-
-                SizedBox(height: 16),
-
-                // Valeur de la réduction
-                if (_discountType == 'percentage')
-                  TextFormField(
-                    controller: _discountPercentController,
-                    decoration: InputDecoration(
-                      labelText: 'Pourcentage de réduction (%)',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) => setDialogState(() {
-                      _discountPercent = double.tryParse(value) ?? 0.0;
-                      _discountAmount = 0.0;
-                      _discountAmountController.text = "0";
-                    }),
-                  )
-                else
-                  TextFormField(
-                    controller: _discountAmountController,
-                    decoration: InputDecoration(
-                      labelText: 'Montant de réduction (DA)',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) => setDialogState(() {
-                      _discountAmount = double.tryParse(value) ?? 0.0;
-                      _discountPercent = 0.0;
-                      _discountPercentController.text = "0";
-                    }),
-                  ),
-
-                SizedBox(height: 16),
-
-                // Application de la réduction
-                Text('Appliquer la réduction sur:',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        RadioListTile<String>(
-                          title: Text('Total général'),
-                          value: 'total',
-                          groupValue: _discountAppliedTo,
-                          onChanged: (value) =>
-                              setDialogState(() => _discountAppliedTo = value!),
-                        ),
-                        RadioListTile<String>(
-                          title: Text('Chambre'),
-                          value: 'room',
-                          groupValue: _discountAppliedTo,
-                          onChanged: (value) =>
-                              setDialogState(() => _discountAppliedTo = value!),
-                        ),
-                        RadioListTile<String>(
-                          title: Text(
-                            'Pension',
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          value: 'board',
-                          groupValue: _discountAppliedTo,
-                          onChanged: (value) =>
-                              setDialogState(() => _discountAppliedTo = value!),
-                        ),
-                        if (!_selectedExtras.isEmpty)
-                          RadioListTile<String>(
-                            title: Text('Services Supplément'),
-                            value: 'extras',
-                            groupValue: _discountAppliedTo,
-                            onChanged: (value) => setDialogState(
-                                () => _discountAppliedTo = value!),
-                          ),
-
-                        RadioListTile<String>(
-                          title: Text('Éléments spécifiques'),
-                          value: 'specific',
-                          groupValue: _discountAppliedTo,
-                          onChanged: (value) =>
-                              setDialogState(() => _discountAppliedTo = value!),
-                        ),
-
-                        // Sélection spécifique si nécessaire
-                        if (_discountAppliedTo == 'specific') ...[
-                          Divider(),
-                          Text('Sélectionnez les éléments:',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          SizedBox(
-                            height: 8,
-                          ),
-                          // Chambre
-                          if (_selectedRoom != null)
-                            CheckboxListTile(
-                              title: Text('Chambre (${_selectedRoom!.code})'),
-                              subtitle: Text(
-                                  'Prix: ${(double.tryParse(_priceController.text) ?? 0.0 * _seasonalMultiplier).toStringAsFixed(2)}/nuit'),
-                              value: _selectedDiscountItems.contains('room'),
-                              onChanged: (bool? value) => setDialogState(() {
-                                if (value == true) {
-                                  _selectedDiscountItems.add('room');
-                                } else {
-                                  _selectedDiscountItems.remove('room');
-                                }
-                              }),
-                            ),
-
-                          // Plan de pension
-                          if (_selectedBoardBasis != null)
-                            CheckboxListTile(
-                              title: Text(
-                                  'Plan de pension (${_selectedBoardBasis!.name})'),
-                              subtitle: Text(
-                                  'Prix: ${_selectedBoardBasis!.pricePerPerson.toStringAsFixed(2)}/personne/nuit'),
-                              value: _selectedDiscountItems.contains('board'),
-                              onChanged: (bool? value) => setDialogState(() {
-                                if (value == true) {
-                                  _selectedDiscountItems.add('board');
-                                } else {
-                                  _selectedDiscountItems.remove('board');
-                                }
-                              }),
-                            ),
-
-                          // Services supplémentaires
-                          ..._selectedExtras.map((extra) {
-                            final itemId = 'extra_${extra.extraService.id}';
-                            return CheckboxListTile(
-                              title: Text(extra.extraService.name),
-                              subtitle: Text(
-                                  'Prix total: ${extra.totalPrice.toStringAsFixed(2)}'),
-                              value: _selectedDiscountItems.contains(itemId),
-                              onChanged: (bool? value) => setDialogState(() {
-                                if (value == true) {
-                                  _selectedDiscountItems.add(itemId);
-                                } else {
-                                  _selectedDiscountItems.remove(itemId);
-                                }
-                              }),
-                            );
-                          }).toList(),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 16),
-
-                // Aperçu de la réduction
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    border: Border.all(color: Colors.blue.shade200),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Aperçu:',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text(_getDiscountPreview()),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 16,
-                ),
-                // Boutons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Annuler'),
-                    ),
-                    SizedBox(width: 8),
-                    // ElevatedButton(
-                    //   onPressed: () {
-                    //     _onDiscountChanged();
-                    //     Navigator.pop(context);
-                    //   },
-                    //   child: Text('Appliquer'),
-                    // ),
-                    ElevatedButton(
-                      onPressed: () {
-                        bool hasError = false;
-                        String errorMessage = '';
-
-                        if (_discountType == 'percentage' &&
-                            (_discountPercent <= 0 ||
-                                _discountPercentController.text.isEmpty)) {
-                          hasError = true;
-                          errorMessage =
-                              'Le pourcentage de réduction doit être supérieur à 0.';
-                        } else if (_discountType == 'amount' &&
-                            (_discountAmount <= 0 ||
-                                _discountAmountController.text.isEmpty)) {
-                          hasError = true;
-                          errorMessage =
-                              'Le montant de réduction doit être supérieur à 0.';
-                        } else if (_discountAppliedTo == 'specific' &&
-                            _selectedDiscountItems.isEmpty) {
-                          hasError = true;
-                          errorMessage =
-                              'Veuillez sélectionner au moins un élément pour appliquer la réduction.';
-                        }
-
-                        if (hasError) {
-                          // Afficher un AlertDialog au lieu d'un SnackBar
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text("Erreur de validation"),
-                                content: Text(errorMessage),
-                                actions: <Widget>[
-                                  TextButton(
-                                    child: const Text("OK"),
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(); // Fermer l'AlertDialog
-                                    },
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                          return;
-                        }
-
-                        _onDiscountChanged();
-                        Navigator.pop(context);
-                      },
-                      child: Text('Appliquer'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   String _getDiscountPreview() {
     if (_discountPercent == 0 && _discountAmount == 0) {
       return 'Aucune réduction configurée';
@@ -2988,266 +2632,16 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
   }
 }
 
-class SeasonalPricingDropdown extends StatelessWidget {
-  final SeasonalPricing? selectedValue;
-  final SeasonalPricing? savedSeason;
-  final Function(SeasonalPricing?)? onChanged;
-  final List<SeasonalPricing>? customSeasonalPricings;
-  final bool useLocalState;
-  final bool autoSave;
-
-  const SeasonalPricingDropdown({
-    super.key,
-    this.selectedValue,
-    required this.savedSeason,
-    this.onChanged,
-    this.customSeasonalPricings,
-    this.useLocalState = false,
-    this.autoSave = true,
-  });
+class ReservationDetailView2 extends StatefulWidget {
+  const ReservationDetailView2({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<HotelProvider>(
-      builder: (context, provider, child) {
-        // Utiliser les tarifs personnalisés si fournis, sinon ceux du provider
-        final list = customSeasonalPricings ?? provider.getSeasonalPricings();
-
-        // Utiliser la valeur sélectionnée personnalisée si fournie, sinon celle du provider
-        final selected = savedSeason != null
-            ? savedSeason
-            : useLocalState
-                ? selectedValue
-                : provider.selectedSeasonalPricing;
-
-        // Éliminer les doublons de la liste
-        final uniqueMap = <int, SeasonalPricing>{};
-        for (final sp in list) {
-          uniqueMap[sp.id] = sp;
-        }
-        final uniqueList = uniqueMap.values.toList();
-
-        // Trier par priorité puis par nom
-        uniqueList.sort((a, b) {
-          final priorityComparison = b.priority.compareTo(a.priority);
-          if (priorityComparison != 0) return priorityComparison;
-          return a.name.compareTo(b.name);
-        });
-
-        // Trouver la bonne instance dans la liste unique
-        SeasonalPricing? validValue;
-        if (selected != null) {
-          try {
-            validValue =
-                uniqueList.firstWhere((item) => item.id == selected.id);
-          } catch (e) {
-            // Si l'élément sélectionné n'est plus dans la liste
-            validValue = null;
-          }
-        }
-
-        return Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: DropdownButtonFormField<SeasonalPricing>(
-            style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurface,
-                fontFamily: 'OSWALD'),
-            value: validValue,
-            isExpanded: true,
-            isDense: false,
-            decoration: InputDecoration(
-              labelText: 'Tarif saisonnier',
-              // prefixIcon: const Icon(Icons.calendar_today),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            items: uniqueList.map((sp) {
-              return DropdownMenuItem(
-                value: sp,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  // Centrer verticalement
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        '${sp.name} (${sp.multiplier}x)',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      _formatDateRange(sp),
-                      style: const TextStyle(
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-            selectedItemBuilder: (context) {
-              return uniqueList.map((sp) {
-                return SizedBox(
-                  // ✅ Contraint la hauteur affichée
-                  height: 50, // Ajuste selon le design (par défaut 48px)
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${sp.name} (${sp.multiplier}x)',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        Text(
-                          _formatDateRange(sp),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList();
-            },
-            onChanged: (SeasonalPricing? newValue) {
-              if (newValue == null) return;
-
-              if (onChanged != null) {
-                onChanged!(newValue);
-              } else if (provider.currentHotel != null) {
-                _handleSeasonChange(context, provider, newValue);
-              }
-            },
-            validator: (value) {
-              if (value == null) {
-                return 'Veuillez sélectionner un tarif saisonnier';
-              }
-              return null;
-            },
-          ),
-        );
-      },
-    );
-  }
-
-  /// Gère le changement de saison de manière asynchrone
-  void _handleSeasonChange(
-      BuildContext context, HotelProvider provider, SeasonalPricing newValue) {
-    provider
-        .setSelectedSeasonalPricing(
-      provider.currentHotel!,
-      newValue,
-      autoSave: autoSave,
-    )
-        .then((_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Saison "${newValue.name}" sélectionnée'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    }).catchError((error) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la sauvegarde: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
-  }
-
-  String _formatDateRange(SeasonalPricing sp) {
-    final startFormatted =
-        '${sp.startDate.day}/${sp.startDate.month}/${sp.startDate.year}';
-    final endFormatted =
-        '${sp.endDate.day}/${sp.endDate.month}/${sp.endDate.year}';
-    return '$startFormatted - $endFormatted';
-  }
-
-  String _getSeasonInfo(SeasonalPricing sp) {
-    final now = DateTime.now();
-    final isCurrentlyActive = sp.isDateInSeason(now);
-
-    if (isCurrentlyActive) {
-      return '✓ Saison active - ${_formatDateRange(sp)}';
-    } else {
-      return _formatDateRange(sp);
-    }
-  }
+  State<ReservationDetailView2> createState() => _ReservationDetailView2State();
 }
 
-/// Widget pour afficher un indicateur de la saison actuelle
-class CurrentSeasonIndicator extends StatelessWidget {
-  const CurrentSeasonIndicator({super.key});
-
+class _ReservationDetailView2State extends State<ReservationDetailView2> {
   @override
   Widget build(BuildContext context) {
-    return Consumer<HotelProvider>(
-      builder: (context, provider, child) {
-        final currentSeason = provider.selectedSeasonalPricing;
-
-        if (currentSeason == null) {
-          return Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.info, size: 16, color: Colors.grey),
-                SizedBox(width: 4),
-                Text('Aucune saison sélectionnée',
-                    style: TextStyle(fontSize: 12)),
-              ],
-            ),
-          );
-        }
-
-        final now = DateTime.now();
-        final isActive = currentSeason.isDateInSeason(now);
-
-        return Container(
-          padding: const EdgeInsets.all(8.0),
-          decoration: BoxDecoration(
-            color: isActive ? Colors.green.shade100 : Colors.orange.shade100,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isActive ? Icons.check_circle : Icons.schedule,
-                size: 16,
-                color: isActive ? Colors.green : Colors.orange,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${currentSeason.name} (${currentSeason.multiplier}x)',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    return const Placeholder();
   }
 }

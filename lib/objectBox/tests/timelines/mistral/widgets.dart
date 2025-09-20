@@ -232,6 +232,32 @@ class SeasonStyle {
   SeasonStyle({required this.icon, required this.color, required this.label});
 }
 
+class PricingInfo {
+  final String text;
+  final Color color;
+  final IconData icon;
+
+  PricingInfo(this.text, this.color, this.icon);
+}
+
+class ReservationExtraItem {
+  final ExtraService extraService;
+  int quantity;
+  double unitPrice;
+  double totalPrice;
+  DateTime? scheduledDate;
+  String? notes;
+
+  ReservationExtraItem({
+    required this.extraService,
+    this.quantity = 1,
+    required this.unitPrice,
+    this.totalPrice = 0.0,
+    this.scheduledDate,
+    this.notes,
+  });
+}
+
 class PriceCard extends StatelessWidget {
   final double basePrice;
   final double seasonalMultiplier;
@@ -382,6 +408,182 @@ class PriceCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class PriceCard22 extends StatelessWidget {
+  final double basePrice;
+  final double seasonalMultiplier;
+  final SeasonalPricing? season;
+
+  const PriceCard22({
+    super.key,
+    required this.basePrice,
+    required this.seasonalMultiplier,
+    this.season,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    double seasonalPrice = basePrice * seasonalMultiplier;
+    double variation = ((seasonalMultiplier * 100) - 100);
+
+    bool isHigher = seasonalPrice > basePrice;
+
+    return Banner(
+      location: BannerLocation.bottomEnd,
+      color: Colors.yellow,
+      textStyle: TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w500,
+          fontFamily: 'OSWALD'),
+      message: 'Nuitée',
+      child: Container(
+        margin:
+            EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 0 : 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: isHigher
+              ? LinearGradient(
+                  colors: [Colors.black87, Colors.green.shade300],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              : LinearGradient(
+                  colors: [Colors.black87, Colors.red.shade300],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            )
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Prix de saison
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        CircleAvatar(
+                          child: Text('x${season!.multiplier}'),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "${seasonalPrice.toStringAsFixed(2)}",
+                          style: TextStyle(
+                            fontSize: MediaQuery.of(context).size.width < 600
+                                ? 25
+                                : 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Variation + flèche
+                  MediaQuery.of(context).size.width < 600
+                      ? Row(
+                          children: [
+                            Icon(
+                              isHigher
+                                  ? FontAwesomeIcons.arrowUp
+                                  : FontAwesomeIcons.arrowDown,
+                              color: isHigher
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                              size: MediaQuery.of(context).size.width < 600
+                                  ? 14
+                                  : 20,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${variation.toStringAsFixed(2)}%",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isHigher
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Icon(
+                              isHigher
+                                  ? FontAwesomeIcons.arrowUp
+                                  : FontAwesomeIcons.arrowDown,
+                              color: isHigher
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent,
+                              size: MediaQuery.of(context).size.width < 600
+                                  ? 14
+                                  : 20,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              "${variation.toStringAsFixed(2)}%",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isHigher
+                                    ? Colors.greenAccent
+                                    : Colors.redAccent,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(),
+                          ],
+                        ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  season!.name.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 30,
+                    color: Colors.white70,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+
+              SizedBox(
+                  height: MediaQuery.of(context).size.width < 600 ? 0 : 20),
+
+              // Prix de base
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  "Prix de Base: ${basePrice.toStringAsFixed(2)}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white60,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -71,11 +71,11 @@ Future<void> main() async {
   }
 
   SplashMaster.initialize();
-  Future.delayed(const Duration(seconds: 2)).then(
-    (value) {
-      SplashMaster.resume();
-    },
-  );
+  // Future.delayed(const Duration(seconds: 2)).then(
+  //   (value) {
+  //     SplashMaster.resume();
+  //   },
+  // );
   timeago.setLocaleMessages('fr', timeago.FrMessages());
   timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
 
