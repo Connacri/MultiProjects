@@ -205,10 +205,10 @@ packages:
     dependency: "direct main"
     description:
       name: call_log
-      sha256: "72979f958366acfdf7a194c11ca5ace609e58a6d71b25074a891a3e87493f35f"
+      sha256: "6ad3e241efa2bc82febc537fe11112a62c94eb5db826bd532500574ba34a78a2"
       url: "https://pub.dev"
     source: hosted
-    version: "6.0.0"
+    version: "6.0.1"
   carousel_slider:
     dependency: "direct main"
     description:
@@ -449,6 +449,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.0"
+  equatable:
+    dependency: transitive
+    description:
+      name: equatable
+      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.7"
   exif:
     dependency: transitive
     description:
@@ -705,6 +713,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
+  fl_chart:
+    dependency: "direct main"
+    description:
+      name: fl_chart
+      sha256: "5276944c6ffc975ae796569a826c38a62d2abcf264e26b88fa6f482e107f4237"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.70.2"
   flat_buffers:
     dependency: transitive
     description:
@@ -1185,10 +1201,10 @@ packages:
     dependency: "direct main"
     description:
       name: gradient_borders
-      sha256: b1cd969552c83f458ff755aa68e13a0327d09f06c3f42f471b423b01427f21f8
+      sha256: "492bc88ab8d88a4117a7f00e525a669b65f19973bea7ee677f9d9de7603bf037"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.1"
+    version: "1.0.2"
   graphs:
     dependency: transitive
     description:

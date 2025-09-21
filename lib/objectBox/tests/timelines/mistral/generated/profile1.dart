@@ -62,6 +62,7 @@ class _Profile1State extends State<Profile1> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       body: Stack(
         children: [
           // ——— Fond et overlay existants ———

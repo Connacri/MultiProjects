@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
@@ -448,7 +449,7 @@ class PriceCard22 extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           gradient: isHigher
               ? LinearGradient(
-                  colors: [Colors.black87, Colors.green.shade300],
+                  colors: [Colors.black87, Colors.yellow.shade300],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 )
@@ -487,60 +488,28 @@ class PriceCard22 extends StatelessWidget {
                     ),
                   ),
                   // Variation + flèche
-                  MediaQuery.of(context).size.width < 600
-                      ? Row(
-                          children: [
-                            Icon(
-                              isHigher
-                                  ? FontAwesomeIcons.arrowUp
-                                  : FontAwesomeIcons.arrowDown,
-                              color: isHigher
-                                  ? Colors.greenAccent
-                                  : Colors.redAccent,
-                              size: MediaQuery.of(context).size.width < 600
-                                  ? 14
-                                  : 20,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              "${variation.toStringAsFixed(2)}%",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isHigher
-                                    ? Colors.greenAccent
-                                    : Colors.redAccent,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            Icon(
-                              isHigher
-                                  ? FontAwesomeIcons.arrowUp
-                                  : FontAwesomeIcons.arrowDown,
-                              color: isHigher
-                                  ? Colors.greenAccent
-                                  : Colors.redAccent,
-                              size: MediaQuery.of(context).size.width < 600
-                                  ? 14
-                                  : 20,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              "${variation.toStringAsFixed(2)}%",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isHigher
-                                    ? Colors.greenAccent
-                                    : Colors.redAccent,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const Spacer(),
-                          ],
+                  Row(
+                    children: [
+                      Icon(
+                        isHigher
+                            ? FontAwesomeIcons.arrowUp
+                            : FontAwesomeIcons.arrowDown,
+                        color: isHigher ? Colors.greenAccent : Colors.redAccent,
+                        size: MediaQuery.of(context).size.width < 600 ? 14 : 20,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        "${variation.toStringAsFixed(2)}%",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color:
+                              isHigher ? Colors.greenAccent : Colors.redAccent,
+                          fontWeight: FontWeight.w500,
                         ),
+                      ),
+                    ],
+                  ),
+
                   Text(
                     'x${season!.multiplier}',
                     style: TextStyle(
@@ -1445,5 +1414,158 @@ class _ReservationExtrasListState extends State<ReservationExtrasList> {
       default:
         return '';
     }
+  }
+}
+
+class SeasonalPricingCard extends StatelessWidget {
+  final double basePrice;
+  final String imageUrl; // tu peux mettre un path local ou un lien
+  final List<SeasonalPricing> seasonalPricings;
+
+  const SeasonalPricingCard({
+    super.key,
+    required this.basePrice,
+    required this.imageUrl,
+    required this.seasonalPricings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (seasonalPricings.isEmpty) {
+      return const Center(
+        child: Text('Aucune tarification saisonnière trouvée.'),
+      );
+    }
+
+    return Card(
+      elevation: 6,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      margin: const EdgeInsets.all(12),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          // --- Photo ---
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            child: Image.network(
+              imageUrl,
+              height: 180,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+
+          // --- Infos + Chart ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Prix actuel
+                Text(
+                  "Prix de base: ${basePrice.toStringAsFixed(2)}",
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+
+                // Graphique FL Chart
+                SizedBox(
+                  height: 160,
+                  child: BarChart(
+                    BarChartData(
+                      alignment: BarChartAlignment.spaceAround,
+                      barGroups: seasonalPricings.map((s) {
+                        final price = basePrice * s.multiplier;
+                        return BarChartGroupData(
+                          x: seasonalPricings.indexOf(s),
+                          barRods: [
+                            BarChartRodData(
+                              toY: price,
+                              gradient: LinearGradient(
+                                colors: [Colors.blue, Colors.cyanAccent],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                      titlesData: FlTitlesData(
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: true),
+                        ),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              if (value.toInt() < seasonalPricings.length) {
+                                return Text(
+                                  seasonalPricings[value.toInt()].name,
+                                  style: const TextStyle(fontSize: 10),
+                                );
+                              }
+                              return const SizedBox();
+                            },
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      gridData: FlGridData(show: false),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Liste des saisons avec détails
+                ...seasonalPricings.map((s) {
+                  final price = basePrice * s.multiplier;
+                  final variation = ((s.multiplier * 100) - 100);
+                  final isHigher = price >= basePrice;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(s.name,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w600)),
+                        Row(
+                          children: [
+                            Icon(
+                              isHigher
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward,
+                              size: 16,
+                              color: isHigher ? Colors.green : Colors.redAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "${variation.toStringAsFixed(1)}%",
+                              style: TextStyle(
+                                color:
+                                    isHigher ? Colors.green : Colors.redAccent,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "${price.toStringAsFixed(2)}",
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

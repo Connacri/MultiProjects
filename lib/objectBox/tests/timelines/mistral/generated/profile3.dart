@@ -28,7 +28,7 @@ N’hésitez pas à me contacter si vous souhaitez collaborer ou échanger sur d
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      // Pas d'AppBar : tout est dans le body pour gérer le fond d'écran derrière
+      appBar: AppBar(),
       body: Stack(
         children: [
           // 1) Image de fond plein écran
@@ -116,7 +116,8 @@ N’hésitez pas à me contacter si vous souhaitez collaborer ou échanger sur d
                   style: TextStyle(color: Colors.white70, fontSize: 16),
                 ),
 
-                const Spacer(), // pousse tout vers le haut pour que le blur soit en bas
+                const Spacer(),
+                // pousse tout vers le haut pour que le blur soit en bas
                 // 4) Zone floutée avec texte et “More+”
                 //    On utilise un AnimatedContainer pour animer la hauteur
                 AnimatedContainer(
@@ -186,31 +187,30 @@ N’hésitez pas à me contacter si vous souhaitez collaborer ou échanger sur d
                             Expanded(
                               child: AnimatedSwitcher(
                                 duration: const Duration(milliseconds: 300),
-                                child:
-                                    isExpanded
-                                        ? SingleChildScrollView(
-                                          key: const ValueKey('expanded'),
-                                          child: Text(
-                                            longDescription,
-                                            style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 14,
-                                              height: 1.4,
-                                            ),
-                                          ),
-                                        )
-                                        : Text(
-                                          // Tronque à 3 lignes si pas expand
+                                child: isExpanded
+                                    ? SingleChildScrollView(
+                                        key: const ValueKey('expanded'),
+                                        child: Text(
                                           longDescription,
-                                          key: const ValueKey('collapsed'),
                                           style: const TextStyle(
                                             color: Colors.white70,
                                             fontSize: 14,
                                             height: 1.4,
                                           ),
-                                          maxLines: 3,
-                                          overflow: TextOverflow.ellipsis,
                                         ),
+                                      )
+                                    : Text(
+                                        // Tronque à 3 lignes si pas expand
+                                        longDescription,
+                                        key: const ValueKey('collapsed'),
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                          height: 1.4,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                               ),
                             ),
 

@@ -789,32 +789,33 @@ class _Profile22State extends State<Profile22> {
             ),
 
             // ================= Price & Status Section =================
-            Padding(
-              padding: EdgeInsets.all(
-                  MediaQuery.of(context).size.width < 600 ? 0 : 8.0),
-              child: Column(
-                children: [
-                  _buildPriceFieldImproved(),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.star),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Text(
-                        'Statut',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Expanded(child: Text(_status)),
-                    ],
-                  ),
-                ],
-              ),
-            )
+            Column(
+              children: [
+                SeasonalPricingCard(
+                  basePrice: 1568,
+                  imageUrl: 'assets/photos/a (11).png',
+                  seasonalPricings: _seasonalPricings,
+                ),
+                _buildPriceFieldImproved(),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.star),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Text(
+                      'Statut',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(
+                      width: 5,
+                    ),
+                    Expanded(child: Text(_status)),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
       ),
