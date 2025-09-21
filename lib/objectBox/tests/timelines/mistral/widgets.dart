@@ -431,7 +431,7 @@ class PriceCard22 extends StatelessWidget {
     double seasonalPrice = basePrice * seasonalMultiplier;
     double variation = ((seasonalMultiplier * 100) - 100);
 
-    bool isHigher = seasonalPrice > basePrice;
+    bool isHigher = seasonalPrice >= basePrice;
 
     return Banner(
       location: BannerLocation.bottomEnd,
@@ -466,7 +466,7 @@ class PriceCard22 extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -476,24 +476,14 @@ class PriceCard22 extends StatelessWidget {
                 children: [
                   FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        CircleAvatar(
-                          child: Text('x${season!.multiplier}'),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          "${seasonalPrice.toStringAsFixed(2)}",
-                          style: TextStyle(
-                            fontSize: MediaQuery.of(context).size.width < 600
-                                ? 25
-                                : 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      "${seasonalPrice.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontSize:
+                            MediaQuery.of(context).size.width < 600 ? 20 : 25,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                   // Variation + flèche
@@ -551,10 +541,15 @@ class PriceCard22 extends StatelessWidget {
                             const Spacer(),
                           ],
                         ),
+                  Text(
+                    'x${season!.multiplier}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isHigher ? Colors.greenAccent : Colors.redAccent,
+                    ),
+                  ),
                 ],
               ),
-
-              const SizedBox(height: 8),
 
               FittedBox(
                 fit: BoxFit.scaleDown,
@@ -577,8 +572,8 @@ class PriceCard22 extends StatelessWidget {
                 child: Text(
                   "Prix de Base: ${basePrice.toStringAsFixed(2)}",
                   style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white60,
+                    fontSize: 16,
+                    color: Colors.black,
                   ),
                 ),
               ),

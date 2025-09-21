@@ -293,6 +293,174 @@ class _Profile22State extends State<Profile22> {
                   ),
                 ),
                 _buildBasicInfoSection(),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final List<Widget> chips = [];
+                    double usedWidth = 0;
+                    const double spacing = 6;
+                    const double chipScale = 0.8;
+
+                    // On réserve la largeur pour le chip "+X"
+                    const double plusChipMinWidth = 50;
+
+                    for (int i = 0; i < _selectedGuests.length; i++) {
+                      final guest = _selectedGuests[i];
+
+                      // Mesure du texte (largeur du label)
+                      final painter = TextPainter(
+                        text: TextSpan(
+                          text: guest.fullName.capitalize,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        maxLines: 1,
+                        textDirection: ui.TextDirection.ltr,
+                      )..layout();
+
+                      // Largeur estimée du chip (avatar + texte + padding)
+                      double chipWidth = painter.width + 50;
+                      chipWidth *= chipScale;
+
+                      // Vérifie si on peut placer ce chip + au moins le chip "+X"
+                      if (usedWidth + chipWidth + spacing + plusChipMinWidth >
+                          constraints.maxWidth) {
+                        final remaining = _selectedGuests.length - i;
+
+                        // Ajout du chip "+X"
+                        chips.add(
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (_) => AlertDialog(
+                                  title: Text(
+                                      "Clients avec ${_selectedGuests.first.fullName} de ${_selectedRoom?.code ?? "—"}"),
+                                  content: SizedBox(
+                                    width: double.minPositive,
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: _selectedGuests.length,
+                                      itemBuilder: (context, index) {
+                                        final g = _selectedGuests[index];
+                                        return ListTile(
+                                          leading: CircleAvatar(
+                                            backgroundColor:
+                                                Colors.blue.shade100,
+                                            child: Text(
+                                              g.fullName
+                                                  .substring(0, 1)
+                                                  .toUpperCase(),
+                                            ),
+                                          ),
+                                          title: Text(g.fullName.capitalize),
+                                          onTap: () {
+                                            Navigator.pop(context);
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    ClientDetailPage(guest: g),
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Transform.scale(
+                              scale: 0.8,
+                              child: Chip(
+                                backgroundColor: Colors.grey.shade300,
+                                label: Text(
+                                  "+$remaining",
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                        break; // stop → on a placé "+X"
+                      } else {
+                        // Ajout du chip normal
+                        chips.add(
+                          Tooltip(
+                            message: [
+                              guest.fullName,
+                              if (guest.phoneNumber.isNotEmpty)
+                                guest.phoneNumber,
+                              if (guest.idCardNumber.isNotEmpty)
+                                guest.idCardNumber,
+                            ].join('\n'),
+                            child: Container(
+                              child: InputChip(
+                                avatar: CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: Colors.blue.shade100,
+                                  child: Text(
+                                    guest.fullName
+                                        .substring(0, 1)
+                                        .toUpperCase(),
+                                    style: const TextStyle(
+                                        color: Colors.black, fontSize: 10),
+                                  ),
+                                ),
+                                label: Text(
+                                  guest.fullName.capitalize,
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                backgroundColor: Colors.deepPurpleAccent,
+                                labelStyle:
+                                    const TextStyle(color: Colors.white),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          ClientDetailPage(guest: guest),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        );
+                        usedWidth += chipWidth + spacing;
+                      }
+                    }
+
+                    return Row(
+                      children: chips,
+                    );
+                  },
+                ),
+                SizedBox(
+                  height: 70,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    itemCount: thumbs.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white70, width: 2),
+                          image: DecorationImage(
+                            image: AssetImage(thumbs[index]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 const Spacer(),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -327,30 +495,6 @@ class _Profile22State extends State<Profile22> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                SizedBox(
-                  height: 70,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    itemCount: thumbs.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white70, width: 2),
-                          image: DecorationImage(
-                            image: AssetImage(thumbs[index]),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -369,232 +513,252 @@ class _Profile22State extends State<Profile22> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Informations de base',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: ColorScheme.of(context).onPrimary)),
 
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              padding: EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailRow99(
+                      icon: Icons.person_4_outlined,
+                      'Réception',
+                      _selectedEmployee?.fullName ?? "—",
+                      isHeader: true),
+
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _buildDetailRow99(
-                          icon: Icons.person_4_outlined,
-                          'Réception',
-                          _selectedEmployee?.fullName ?? "—",
-                          isHeader: true),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.only(right: 8),
-                            child: Icon(Icons.person,
-                                size: 20, color: Colors.grey.shade600),
-                          ),
-                          const Text(
-                            'Client:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final List<Widget> chips = [];
-                                double usedWidth = 0;
-                                const double spacing = 6;
-                                const double chipScale = 0.8;
+                      Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: Icon(Icons.person,
+                            size: 17, color: Colors.grey.shade600),
+                      ),
+                      Text(
+                        'Client:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w300,
+                          color: ColorScheme.of(context).onPrimary,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            final List<Widget> chips = [];
+                            double usedWidth = 0;
+                            const double spacing = 6;
+                            const double chipScale = 0.8;
 
-                                // On réserve la largeur pour le chip "+X"
-                                const double plusChipMinWidth = 50;
+                            // On réserve la largeur pour le chip "+X"
+                            const double plusChipMinWidth = 50;
 
-                                for (int i = 0;
-                                    i < _selectedGuests.length;
-                                    i++) {
-                                  final guest = _selectedGuests[i];
+                            for (int i = 0; i < _selectedGuests.length; i++) {
+                              final guest = _selectedGuests[i];
 
-                                  // Mesure du texte (largeur du label)
-                                  final painter = TextPainter(
-                                    text: TextSpan(
-                                      text: guest.fullName.capitalize,
-                                      style: const TextStyle(fontSize: 13),
-                                    ),
-                                    maxLines: 1,
-                                    textDirection: ui.TextDirection.ltr,
-                                  )..layout();
+                              // Mesure du texte (largeur du label)
+                              final painter = TextPainter(
+                                text: TextSpan(
+                                  text: guest.fullName.capitalize,
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                                maxLines: 1,
+                                textDirection: ui.TextDirection.ltr,
+                              )..layout();
 
-                                  // Largeur estimée du chip (avatar + texte + padding)
-                                  double chipWidth = painter.width + 50;
-                                  chipWidth *= chipScale;
+                              // Largeur estimée du chip (avatar + texte + padding)
+                              double chipWidth = painter.width + 50;
+                              chipWidth *= chipScale;
 
-                                  // Vérifie si on peut placer ce chip + au moins le chip "+X"
-                                  if (usedWidth +
-                                          chipWidth +
-                                          spacing +
-                                          plusChipMinWidth >
-                                      constraints.maxWidth) {
-                                    final remaining =
-                                        _selectedGuests.length - i;
+                              // Vérifie si on peut placer ce chip + au moins le chip "+X"
+                              if (usedWidth +
+                                      chipWidth +
+                                      spacing +
+                                      plusChipMinWidth >
+                                  constraints.maxWidth) {
+                                final remaining = _selectedGuests.length - i;
 
-                                    // Ajout du chip "+X"
-                                    chips.add(
-                                      GestureDetector(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (_) => AlertDialog(
-                                              title: Text(
-                                                  "Clients avec ${_selectedGuests.first.fullName} de ${_selectedRoom?.code ?? "—"}"),
-                                              content: SizedBox(
-                                                width: double.minPositive,
-                                                child: ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount:
-                                                      _selectedGuests.length,
-                                                  itemBuilder:
-                                                      (context, index) {
-                                                    final g =
-                                                        _selectedGuests[index];
-                                                    return ListTile(
-                                                      leading: CircleAvatar(
-                                                        backgroundColor: Colors
-                                                            .blue.shade100,
-                                                        child: Text(
-                                                          g.fullName
-                                                              .substring(0, 1)
-                                                              .toUpperCase(),
-                                                        ),
+                                // Ajout du chip "+X"
+                                chips.add(
+                                  GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: Text(
+                                              "Clients avec ${_selectedGuests.first.fullName} de ${_selectedRoom?.code ?? "—"}"),
+                                          content: SizedBox(
+                                            width: double.minPositive,
+                                            child: ListView.builder(
+                                              shrinkWrap: true,
+                                              itemCount: _selectedGuests.length,
+                                              itemBuilder: (context, index) {
+                                                final g =
+                                                    _selectedGuests[index];
+                                                return ListTile(
+                                                  leading: CircleAvatar(
+                                                    backgroundColor:
+                                                        Colors.blue.shade100,
+                                                    child: Text(
+                                                      g.fullName
+                                                          .substring(0, 1)
+                                                          .toUpperCase(),
+                                                    ),
+                                                  ),
+                                                  title: Text(
+                                                      g.fullName.capitalize),
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            ClientDetailPage(
+                                                                guest: g),
                                                       ),
-                                                      title: Text(g
-                                                          .fullName.capitalize),
-                                                      onTap: () {
-                                                        Navigator.pop(context);
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                ClientDetailPage(
-                                                                    guest: g),
-                                                          ),
-                                                        );
-                                                      },
                                                     );
                                                   },
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        child: Transform.scale(
-                                          scale: 0.8,
-                                          child: Chip(
-                                            backgroundColor:
-                                                Colors.grey.shade300,
-                                            label: Text(
-                                              "+$remaining",
-                                              style: const TextStyle(
-                                                  color: Colors.black),
+                                                );
+                                              },
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                    break; // stop → on a placé "+X"
-                                  } else {
-                                    // Ajout du chip normal
-                                    chips.add(
-                                      Tooltip(
-                                        message: [
-                                          guest.fullName,
-                                          if (guest.phoneNumber.isNotEmpty)
-                                            guest.phoneNumber,
-                                          if (guest.idCardNumber.isNotEmpty)
-                                            guest.idCardNumber,
-                                        ].join('\n'),
-                                        child: InputChip(
-                                          avatar: CircleAvatar(
-                                            radius: 10,
-                                            backgroundColor:
-                                                Colors.blue.shade100,
-                                            child: Text(
-                                              guest.fullName
-                                                  .substring(0, 1)
-                                                  .toUpperCase(),
-                                              style: const TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 10),
-                                            ),
-                                          ),
-                                          label: Text(
-                                            guest.fullName.capitalize,
-                                            style:
-                                                const TextStyle(fontSize: 11),
-                                          ),
-                                          backgroundColor:
-                                              Colors.deepPurpleAccent,
-                                          labelStyle: const TextStyle(
-                                              color: Colors.white),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    ClientDetailPage(
-                                                        guest: guest),
-                                              ),
-                                            );
-                                          },
+                                      );
+                                    },
+                                    child: Transform.scale(
+                                      scale: 0.8,
+                                      child: Chip(
+                                        backgroundColor: Colors.grey.shade300,
+                                        label: Text(
+                                          "+$remaining",
+                                          style: const TextStyle(
+                                              color: Colors.black),
                                         ),
                                       ),
-                                    );
-                                    usedWidth += chipWidth + spacing;
-                                  }
-                                }
-
-                                return Row(
-                                  children: chips,
+                                    ),
+                                  ),
                                 );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      _buildDetailRow99(
-                          icon: Icons.bed,
-                          'Chambre',
-                          _selectedRoom!.code ?? '_',
-                          isHeader: true),
-                      Container(
-                        color: Colors.blueGrey,
-                        padding: EdgeInsets.all(2),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                                '${_selectedRoom?.category.target?.name ?? "—"}',
-                                style: TextStyle(
-                                    color:
-                                        ColorScheme.light(primary: Colors.white)
-                                            .onPrimary)),
-                          ],
+                                break; // stop → on a placé "+X"
+                              } else {
+                                // Ajout du chip normal
+                                chips.add(
+                                  Tooltip(
+                                    message: [
+                                      guest.fullName,
+                                      if (guest.phoneNumber.isNotEmpty)
+                                        guest.phoneNumber,
+                                      if (guest.idCardNumber.isNotEmpty)
+                                        guest.idCardNumber,
+                                    ].join('\n'),
+                                    child: InputChip(
+                                      avatar: CircleAvatar(
+                                        radius: 10,
+                                        backgroundColor: Colors.blue.shade100,
+                                        child: Text(
+                                          guest.fullName
+                                              .substring(0, 1)
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 10),
+                                        ),
+                                      ),
+                                      label: Text(
+                                        guest.fullName.capitalize,
+                                        style: const TextStyle(fontSize: 11),
+                                      ),
+                                      backgroundColor: Colors.deepPurpleAccent,
+                                      labelStyle:
+                                          const TextStyle(color: Colors.white),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                ClientDetailPage(guest: guest),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                );
+                                usedWidth += chipWidth + spacing;
+                              }
+                            }
+
+                            return Row(
+                              children: chips,
+                            );
+                          },
                         ),
                       ),
                     ],
                   ),
-                ),
+                  // _buildDetailRow99(
+                  //     icon: Icons.bed,
+                  //     'Chambre',
+                  //     _selectedRoom!.code ?? '_',
+                  //     isHeader: true),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12), // coins arrondis
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black54,
+                          Colors.deepPurple.shade400,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(
+                            Icons.bed,
+                            size: 17,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          _selectedRoom!.code ?? '_',
+                          style: TextStyle(
+                            color: Colors.white,
+                            // direct au lieu de ColorScheme
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        SizedBox(
+                          width: 8,
+                        ),
+                        Text(
+                          '${_selectedRoom?.category.target?.name ?? "—"}',
+                          style: TextStyle(
+                            color: Colors.white,
+                            // direct au lieu de ColorScheme
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
+
             // Dates
             Row(
               children: [
@@ -667,25 +831,23 @@ class _Profile22State extends State<Profile22> {
           if (icon != null)
             Padding(
               padding: EdgeInsets.only(right: 8),
-              child: Icon(icon, size: 20, color: Colors.grey.shade600),
+              child: Icon(icon, size: 17, color: Colors.grey.shade600),
             ),
           SizedBox(
             width: isHeader ? 85 : 100,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: isHeader ? FontWeight.bold : FontWeight.w500,
-                fontSize: isHeader ? 16 : 14,
-              ),
-            ),
+            child: Text('$label:',
+                style: TextStyle(
+                    fontWeight: isHeader ? FontWeight.w300 : FontWeight.w300,
+                    fontSize: isHeader ? 13 : 12,
+                    color: ColorScheme.of(context).onPrimary)),
           ),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
-                fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-                fontSize: isHighlighted ? 16 : 14,
-                color: isHighlighted ? Theme.of(context).primaryColor : null,
+                fontWeight: isHighlighted ? FontWeight.w400 : FontWeight.normal,
+                fontSize: isHighlighted ? 17 : 13,
+                color: Theme.of(context).primaryColorLight,
               ),
             ),
           ),
@@ -700,38 +862,25 @@ class _Profile22State extends State<Profile22> {
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Container(
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(8),
-          ),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          // decoration: BoxDecoration(
+          //   border: Border.all(color: Colors.grey[300]!),
+          //   borderRadius: BorderRadius.circular(8),
+          // ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                      color: departarrive ? Colors.green[600] : Colors.red[600],
-                      fontSize: 16),
-                  children: [
-                    WidgetSpan(
-                      child: Icon(
-                        icon,
-                        size: 16,
-                        color:
-                            departarrive ? Colors.green[600] : Colors.red[600],
-                      ),
-                      alignment: PlaceholderAlignment.middle,
-                    ),
-                    // TextSpan(
-                    //     text: label, style: TextStyle(fontFamily: 'oswald')),
-                  ],
-                ),
+              Icon(
+                icon,
+                size: 16,
+                color: departarrive ? Colors.green[600] : Colors.red[600],
               ),
-              SizedBox(width: 8),
+              SizedBox(width: 12),
               Text(
                 date != null ? _formatDate(date) : 'Sélectionner',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).secondaryHeaderColor),
               ),
             ],
           ),

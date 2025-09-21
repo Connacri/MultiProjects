@@ -2574,6 +2574,8 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
         // Pour l'édition
         widget.existingReservation!.discountType = _discountType;
         widget.existingReservation!.discountAppliedTo = _discountAppliedTo;
+        widget.existingReservation!.seasonalPricing.target =
+            _selectedSeasonalPricing;
         widget.existingReservation!.selectedDiscountItems =
             _discountAppliedTo == 'specific'
                 ? jsonEncode(_selectedDiscountItems)
@@ -2589,6 +2591,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
           newPricePerNight: priceToSave,
           newStatus: _status,
           newExtras: _selectedExtras,
+          newSeasonalPricing: _selectedSeasonalPricing,
           newBoardBasis: _selectedBoardBasis,
           newDiscountPercent: _discountPercent,
           newDiscountAmount: _discountAmount,
