@@ -266,7 +266,7 @@ class _Profile22State extends State<Profile22> {
           ),
 
           // 3) Contenu
-          SafeArea(
+          SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -461,7 +461,7 @@ class _Profile22State extends State<Profile22> {
                     },
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
@@ -791,10 +791,11 @@ class _Profile22State extends State<Profile22> {
             // ================= Price & Status Section =================
             Column(
               children: [
-                SeasonalPricingCard(
-                  basePrice: 1568,
-                  imageUrl: 'assets/photos/a (11).png',
+                SeasonalPricingCard2(
+                  basePrice: _selectedRoom!.category.target!.basePrice,
+                  imageUrl: 'assets/photos/a (15).png',
                   seasonalPricings: _seasonalPricings,
+                  recentSeason: _selectedSeasonalPricing!,
                 ),
                 _buildPriceFieldImproved(),
                 const SizedBox(height: 8),
