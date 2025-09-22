@@ -918,7 +918,7 @@ class HotelManagementState extends State<Hotel_Management> {
           );
           if (shouldAvoid) continue;
 
-          final room = Room(code: roomCode, status: 'Libre');
+          final room = Room(code: roomCode, status: 'free');
           room.hotel.targetId = hotelId;
           room.category.targetId = defaultCategory.id;
 
@@ -1326,7 +1326,7 @@ class HotelManagementState extends State<Hotel_Management> {
     final provider = Provider.of<HotelProvider>(context, listen: false);
     final reservations = isEdit
         ? provider.reservations
-        : provider.reservations.where((r) => r.status != 'Annulée').toList();
+        : provider.reservations.where((r) => r.status != 'Cancelled').toList();
 
     showDialog(
       context: context,
@@ -1412,13 +1412,13 @@ class HotelManagementState extends State<Hotel_Management> {
 // Méthode helper pour obtenir la couleur selon le statut
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'Confirmée':
+      case 'Confirmed':
         return Colors.green;
-      case 'En cours':
+      case 'Waiting':
         return Colors.blue;
-      case 'Terminée':
+      case 'Completed':
         return Colors.grey;
-      case 'Annulée':
+      case 'Cancelled':
         return Colors.red;
       default:
         return Colors.orange;
@@ -2132,15 +2132,15 @@ class HotelManagementState extends State<Hotel_Management> {
     IconData statusIcon;
 
     switch (status.toLowerCase()) {
-      case 'confirmée':
+      case 'confirmed':
         statusColor = Colors.green;
         statusIcon = Icons.check_circle_rounded;
         break;
-      case 'annulé':
+      case 'Cancelled':
         statusColor = Colors.red;
         statusIcon = Icons.cancel_rounded;
         break;
-      case 'en attente':
+      case 'Waiting':
         statusColor = Colors.orange;
         statusIcon = Icons.hourglass_empty_rounded;
         break;

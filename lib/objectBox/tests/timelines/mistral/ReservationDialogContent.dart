@@ -53,7 +53,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   List<Guest> _selectedGuests = [];
   DateTime? _fromDate;
   DateTime? _toDate;
-  String _status = "Confirmée";
+  String _status = "Confirmed";
   bool _isLoading = false;
   bool _isPriceEditable = false; // Nouveau: pour contrôler l'édition du prix
 
@@ -67,11 +67,13 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
   int? _editingGuestIndex;
 
   final List<String> _statuses = [
-    "Confirmée",
-    "En attente",
-    "Arrivé",
-    "Parti",
-    "Annulée"
+    "Pending",
+    "Confirmed",
+    "Cancelled",
+    "Completed",
+    "free",
+    "leaved",
+    "arrived"
   ];
 
   List<SeasonalPricing> _seasonalPricings = [];
@@ -993,7 +995,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
               children: [
                 Expanded(
                     child: _buildDateField(
-                        FontAwesomeIcons.planeArrival, '  Arrivée', _fromDate,
+                        FontAwesomeIcons.planeArrival, '  Arrived', _fromDate,
                         (date) {
                   setState(() {
                     _fromDate = date;

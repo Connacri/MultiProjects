@@ -623,7 +623,7 @@ class Room {
     // this.type,
     // this.capacity,
     // this.basePrice,
-    this.status = "Libre",
+    this.status = "free",
     this.photosJson = '[]',
   });
 
@@ -923,7 +923,8 @@ class ReservationExtra {
   int quantity;
   double unitPrice; // Prix au moment de la réservation
   double totalPrice; // Prix total calculé
-  String status; // "Pending", "Confirmed", "Cancelled", "Completed"
+  String
+      status; // "Pending", "Confirmed", "Cancelled", "Completed" "free" "leaved" "arrived "waiting"
   DateTime? scheduledDate; // Date programmée pour le service
   String? notes;
 
@@ -1111,7 +1112,7 @@ class Reservation {
     required this.from,
     required this.to,
     required this.pricePerNight,
-    this.status = "Confirmée",
+    this.status = "Confirmed",
     this.discountPercent = 0.0,
     this.discountAmount = 0.0,
     this.discountType,
@@ -1154,9 +1155,9 @@ class Reservation {
 
   int get numberOfGuests => guests.length;
 
-  bool get isActive => status != "Annulée" && status != "Parti";
+  bool get isActive => status != "Cancelled" && status != "leaved";
 
-  bool get hasArrived => status == "Arrivé" || status == "Parti";
+  bool get hasArrived => status == "arrived" || status == "leaved";
 
   double get averagePricePerPersonPerNight {
     final persons = numberOfGuests;

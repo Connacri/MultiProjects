@@ -128,7 +128,7 @@ class HotelDataInitializer {
           // Créer la chambre
           final room = Room(
             code: roomCode,
-            status: roomIndex % 5 == 0 ? 'Occupée' : 'Libre',
+            status: roomIndex % 5 == 0 ? 'Occupied' : 'Free',
           );
 
           // Associer hôtel et catégorie
@@ -1187,7 +1187,7 @@ class HotelDataInitializer {
         'to': now.add(Duration(days: 10)),
         'employeeIndex': 0,
         'boardCode': 'BB',
-        'status': 'Confirmée',
+        'status': 'Confirmed',
       },
       {
         'guestIndex': 1,
@@ -1195,7 +1195,7 @@ class HotelDataInitializer {
         'to': now.add(Duration(days: 22)),
         'employeeIndex': 1,
         'boardCode': 'AI',
-        'status': 'Confirmée',
+        'status': 'Confirmed',
       },
       {
         'guestIndex': 2,
@@ -1203,7 +1203,7 @@ class HotelDataInitializer {
         'to': now.add(Duration(days: 35)),
         'employeeIndex': 2,
         'boardCode': 'UAI',
-        'status': 'En attente',
+        'status': 'Waiting',
       },
       {
         'guestIndex': 3,
@@ -1211,7 +1211,7 @@ class HotelDataInitializer {
         'to': now.add(Duration(days: 14)),
         'employeeIndex': 0,
         'boardCode': 'HB',
-        'status': 'Confirmée',
+        'status': 'Confirmed',
       },
       {
         'guestIndex': 4,
@@ -1219,7 +1219,7 @@ class HotelDataInitializer {
         'to': now.add(Duration(days: 4)),
         'employeeIndex': 3,
         'boardCode': 'BB',
-        'status': 'En cours',
+        'status': 'Waiting',
       },
       {
         'guestIndex': 5,
@@ -1227,7 +1227,7 @@ class HotelDataInitializer {
         'to': now.add(Duration(days: 27)),
         'employeeIndex': 4,
         'boardCode': 'AI',
-        'status': 'Confirmée',
+        'status': 'Confirmed',
       },
     ];
 
@@ -1240,7 +1240,7 @@ class HotelDataInitializer {
       if (rooms.isEmpty) continue;
 
       final availableRoom = rooms.firstWhere(
-        (room) => room.status == 'Libre',
+        (room) => room.status == 'Free',
         orElse: () => rooms.first,
       );
 
@@ -1266,7 +1266,7 @@ class HotelDataInitializer {
       if (result.isSuccess) {
         // Mettre à jour le statut de la chambre si nécessaire
         if (data['status'] == 'En cours') {
-          await hotelProvider.updateRoomStatus(availableRoom, 'Occupée');
+          await hotelProvider.updateRoomStatus(availableRoom, 'Occupied');
         }
         debugPrint(
             '✅ Réservation créée pour ${guests[data['guestIndex'] as int].fullName}');

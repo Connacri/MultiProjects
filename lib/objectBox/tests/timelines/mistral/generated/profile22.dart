@@ -51,7 +51,7 @@ class _Profile22State extends State<Profile22> {
   List<Guest> _selectedGuests = [];
   DateTime? _fromDate;
   DateTime? _toDate;
-  String _status = "Confirmée";
+  String _status = "Confirmed";
   bool _isLoading = false;
 
   // Board Basis and Extra Services
@@ -764,7 +764,7 @@ class _Profile22State extends State<Profile22> {
               children: [
                 Expanded(
                     child: _buildDateField(
-                        FontAwesomeIcons.planeArrival, '  Arrivée', _fromDate,
+                        FontAwesomeIcons.planeArrival, '  Arrived', _fromDate,
                         (date) {
                   setState(() {
                     _fromDate = date;
@@ -797,24 +797,27 @@ class _Profile22State extends State<Profile22> {
                   seasonalPricings: _seasonalPricings,
                   recentSeason: _selectedSeasonalPricing!,
                 ),
-                _buildPriceFieldImproved(),
+                // _buildPriceFieldImproved(),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.star),
-                    SizedBox(
-                      width: 5,
+                IconTheme(
+                  data: IconThemeData(
+                      color: Theme.of(context).colorScheme.onSecondary),
+                  child: DefaultTextStyle.merge(
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary),
+                    child: Row(
+                      children: [
+                        Icon(Icons.star),
+                        const SizedBox(width: 5),
+                        Text('Statut',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 5),
+                        Expanded(child: Text(_status)),
+                      ],
                     ),
-                    Text(
-                      'Statut',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(
-                      width: 5,
-                    ),
-                    Expanded(child: Text(_status)),
-                  ],
-                ),
+                  ),
+                )
               ],
             ),
           ],

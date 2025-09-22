@@ -58,7 +58,7 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
   List<Guest> _selectedGuests = [];
   DateTime? _fromDate;
   DateTime? _toDate;
-  String _status = "Confirmée";
+  String _status = "Confirmed";
   bool _isLoading = false;
 
   // Board Basis and Extra Services
@@ -376,6 +376,8 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
             child: Form(
               key: _formKey,
               child: Column(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   _buildBasicInfoSection(),
                   SizedBox(height: 16),
@@ -385,28 +387,57 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
                   SizedBox(height: 16),
                   _buildExtraServicesSection(),
                   SizedBox(height: 16),
-                  // Dans _buildDesktopForm(), _buildMobileForm(), et _buildTabletForm()
-// Remplacer SeasonalPricingDropdown() par
-
-                  SeasonalPricingDropdown(
-                    selectedValue: _selectedSeasonalPricing,
-                    customSeasonalPricings: _seasonalPricings,
-                    savedSeason: _selectedSeasonalPricing,
-                    useLocalState: true,
-                    onChanged: (SeasonalPricing? newValue) {
-                      setState(() {
-                        _selectedSeasonalPricing = newValue;
-                        _seasonalMultiplier = newValue?.multiplier ?? 1.0;
-
-                        // Mettre à jour le prix si pas édité manuellement
-                        if (!_isPriceManuallyEdited) {
-                          _updateRoomPrice();
-                        }
-
-                        _updateAllExtraPrices();
-                      });
-                    },
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: Colors.black54,
+                            child: Text(
+                              '${_selectedSeasonalPricing!.multiplier}x',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 8,
+                          ),
+                          Expanded(
+                            child: FittedBox(
+                              child: Text(
+                                _selectedSeasonalPricing!.name.toUpperCase() ??
+                                    'Pas de saison',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w400,
+                                    color: Colors.blueGrey),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                  // SeasonalPricingDropdown(
+                  //   selectedValue: _selectedSeasonalPricing,
+                  //   customSeasonalPricings: _seasonalPricings,
+                  //   savedSeason: _selectedSeasonalPricing,
+                  //   useLocalState: true,
+                  //   onChanged: (SeasonalPricing? newValue) {
+                  //     setState(() {
+                  //       _selectedSeasonalPricing = newValue;
+                  //       _seasonalMultiplier = newValue?.multiplier ?? 1.0;
+                  //
+                  //       // Mettre à jour le prix si pas édité manuellement
+                  //       if (!_isPriceManuallyEdited) {
+                  //         _updateRoomPrice();
+                  //       }
+                  //
+                  //       _updateAllExtraPrices();
+                  //     });
+                  //   },
+                  // ),
                   SizedBox(height: 16),
                   _buildDiscountSection(),
                   SizedBox(height: 16),
@@ -1118,7 +1149,7 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
               children: [
                 Expanded(
                     child: _buildDateField(
-                        FontAwesomeIcons.planeArrival, '  Arrivée', _fromDate,
+                        FontAwesomeIcons.planeArrival, '  Arrived', _fromDate,
                         (date) {
                   setState(() {
                     _fromDate = date;
