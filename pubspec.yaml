@@ -116,6 +116,7 @@ dependencies:
   #  flutter_native_splash: ^2.4.6
   splash_master: ^0.0.3
   fl_chart: ^0.70.0
+  syncfusion_flutter_datagrid: ^30.2.7
 
 
 

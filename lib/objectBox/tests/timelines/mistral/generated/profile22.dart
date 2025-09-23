@@ -193,27 +193,26 @@ class _Profile22State extends State<Profile22> {
 
     //////////////*************************************************************
     final reservationSeasonal =
-        widget.existingReservation!.seasonalPricing.target!.multiplier;
+        widget.existingReservation?.seasonalPricing.target!.multiplier;
 
-    _seasonalMultiplier = reservationSeasonal;
+    _seasonalMultiplier = reservationSeasonal!;
     _selectedSeasonalPricing =
-        widget.existingReservation!.seasonalPricing.target!;
+        widget.existingReservation?.seasonalPricing.target!;
 
     //////////////*************************************************************
     // Calculer les prix des extras après initialisation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateAllExtraPrices();
       _selectedSeasonalPricing =
-          widget.existingReservation!.seasonalPricing.target!;
+          widget.existingReservation?.seasonalPricing.target!;
     });
   }
 
   void _updateAllExtraPrices() {
-    setState(() {
-      for (final extra in _selectedExtras) {
-        _updateExtraPrice(extra);
-      }
-    });
+    for (final extra in _selectedExtras) {
+      _updateExtraPrice(extra);
+    }
+    setState(() {}); // ✅ un seul rebuild
   }
 
   void _updateExtraPrice(ReservationExtraItem item) {
@@ -734,7 +733,7 @@ class _Profile22State extends State<Profile22> {
                           ),
                         ),
                         Text(
-                          _selectedRoom!.code ?? '_',
+                          _selectedRoom?.code ?? "—",
                           style: TextStyle(
                             color: Colors.white,
                             // direct au lieu de ColorScheme
@@ -912,5 +911,16 @@ class _Profile22State extends State<Profile22> {
 
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  @override
+  void dispose() {
+    _guestController.dispose();
+    _phoneController.dispose();
+    _idCardController.dispose();
+    _priceController.dispose();
+    _discountPercentController.dispose();
+    _discountAmountController.dispose();
+    super.dispose();
   }
 }

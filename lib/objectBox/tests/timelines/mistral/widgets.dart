@@ -1806,7 +1806,6 @@ class SeasonalPricingCard2 extends StatelessWidget {
                       ),
                     ],
                   ),
-                  duration: const Duration(milliseconds: 200),
                 ),
               ),
             ),

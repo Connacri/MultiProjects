@@ -1244,3 +1244,222 @@ class Employee {
     setPhotos(list);
   }
 }
+
+///********************* Hopital ******************************
+
+@Entity()
+class Personnel {
+  @Id()
+  int id = 0;
+
+  String nom;
+  String prenom;
+  String fonction; // ex: Rhumatologue, ATS, IDE, Psychologue
+  String grade; // Médecin Chef, Médecin Principal, ATS Principal...
+  String service; // Service de Rhumatologie, Pharmacie, Hygiène, etc.
+
+  final affectations = ToMany<AffectationJour>();
+  final activites = ToMany<ActiviteHebdo>();
+  final observations = ToMany<Observation>();
+  final groupeTravail = ToOne<GroupeTravail>(); // <-- relation ToOne
+
+  Personnel({
+    required this.nom,
+    required this.prenom,
+    required this.fonction,
+    required this.grade,
+    required this.service,
+  });
+
+  factory Personnel.fromMap(Map<String, dynamic> map) {
+    return Personnel(
+      nom: map['nom'] ?? '',
+      prenom: map['prenom'] ?? '',
+      fonction: map['fonction'] ?? '',
+      grade: map['grade'] ?? '',
+      service: map['service'] ?? '',
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'nom': nom,
+      'prenom': prenom,
+      'fonction': fonction,
+      'grade': grade,
+      'service': service,
+    };
+  }
+}
+
+@Entity()
+class Service {
+  @Id()
+  int id = 0;
+
+  String nom;
+
+  Service({required this.nom});
+
+  factory Service.fromMap(Map<String, dynamic> map) {
+    return Service(nom: map['nom'] ?? '')..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() => {'id': id, 'nom': nom};
+}
+
+@Entity()
+class PlanningMois {
+  @Id()
+  int id = 0;
+
+  int annee;
+  int mois;
+
+  final affectations = ToMany<AffectationJour>();
+
+  PlanningMois({required this.annee, required this.mois});
+
+  factory PlanningMois.fromMap(Map<String, dynamic> map) {
+    return PlanningMois(
+      annee: map['annee'] ?? DateTime.now().year,
+      mois: map['mois'] ?? DateTime.now().month,
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() => {'id': id, 'annee': annee, 'mois': mois};
+}
+
+@Entity()
+class AffectationJour {
+  @Id()
+  int id = 0;
+
+  DateTime date;
+
+  @Property(type: PropertyType.byte)
+  int statut; // index de StatutActivite
+
+  final personnel = ToOne<Personnel>();
+  final planningMois = ToOne<PlanningMois>();
+
+  AffectationJour({required this.date, required this.statut});
+
+  // constructeur vide optionnel
+  AffectationJour.empty()
+      : date = DateTime.now(),
+        statut = StatutActivite.normal.index;
+
+  factory AffectationJour.fromMap(Map<String, dynamic> map) {
+    return AffectationJour(
+      date: DateTime.tryParse(map['date'] ?? '') ?? DateTime.now(),
+      statut: map['statut'] ?? StatutActivite.normal.index,
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'date': date.toIso8601String(),
+        'statut': statut,
+      };
+}
+
+@Entity()
+class ActiviteHebdo {
+  @Id()
+  int id = 0;
+
+  String jour; // Dimanche, Lundi, etc.
+  String activite; // Consultation, EPSP, Visite Générale...
+
+  final personnel = ToOne<Personnel>();
+
+  ActiviteHebdo({required this.jour, required this.activite});
+
+  factory ActiviteHebdo.fromMap(Map<String, dynamic> map) {
+    return ActiviteHebdo(
+      jour: map['jour'] ?? '',
+      activite: map['activite'] ?? '',
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'jour': jour,
+        'activite': activite,
+      };
+}
+
+@Entity()
+class Observation {
+  @Id()
+  int id = 0;
+
+  String type; // Congé, Congé Maternité, Congé Maladie...
+  String details; // ex: "11 jours à partir du 08/09/2025"
+  DateTime dateDebut;
+  DateTime? dateFin;
+
+  final personnel = ToOne<Personnel>();
+
+  Observation({
+    required this.type,
+    required this.details,
+    required this.dateDebut,
+    this.dateFin,
+  });
+
+  factory Observation.fromMap(Map<String, dynamic> map) {
+    return Observation(
+      type: map['type'] ?? '',
+      details: map['details'] ?? '',
+      dateDebut: DateTime.tryParse(map['dateDebut'] ?? '') ?? DateTime.now(),
+      dateFin:
+          map['dateFin'] != null ? DateTime.tryParse(map['dateFin']) : null,
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'type': type,
+        'details': details,
+        'dateDebut': dateDebut.toIso8601String(),
+        'dateFin': dateFin?.toIso8601String(),
+      };
+}
+
+@Entity()
+class GroupeTravail {
+  @Id()
+  int id = 0;
+
+  late String nom;
+  late String service; // "Médecins", "Infirmiers", "Bureau", "Femmes de ménage"
+  final membres = ToMany<Personnel>();
+
+  GroupeTravail({required this.nom, required this.service});
+
+  GroupeTravail.empty(); // nécessaire pour ObjectBox
+  factory GroupeTravail.fromMap(Map<String, dynamic> map) {
+    return GroupeTravail(
+      nom: map['nom'] ?? '',
+      service: map['service'] ?? 'Médecins', // valeur par défaut
+    )..id = map['id'] ?? 0;
+  }
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'nom': nom,
+        'service': service, // avant il manquait le service
+      };
+}
+
+enum StatutActivite {
+  normal, // N
+  repos, // R
+  garde, // G
+  recuperation, // Ré
+  conge, // C
+  congeMaladie // CM
+}

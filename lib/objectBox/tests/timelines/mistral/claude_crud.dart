@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../Hopital/homePage.dart';
 import '../../../../MyListLotties.dart';
 import '../../../Entity.dart';
 import 'provider_hotel.dart';
@@ -2269,6 +2270,19 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => LottieListPage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              Icons.local_hospital,
+              color: Colors.red,
+            ),
+            title: const Text('Hopital'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HomePageH()),
               );
             },
           ),
