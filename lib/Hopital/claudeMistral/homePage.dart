@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'DailyPlanningListPage.dart';
 import 'HospitalServiceListPage.dart';
+import 'ImportHopitalButton.dart';
 import 'MonthlyPlanningListPage.dart';
 import 'StaffListPage.dart';
 
@@ -11,6 +12,9 @@ class HomePageZou extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Gestion de Planning Hospitalier'),
+        actions: [
+          ImportHopitalButton(),
+        ],
       ),
       body: Center(
         child: Column(
