@@ -1910,6 +1910,911 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(52, 3093542658583975966),
+    name: 'DailyPlanning',
+    lastPropertyId: const obx_int.IdUid(14, 5282269349009641738),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 2436526717507053436),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 3196146503711397222),
+        name: 'dayDate',
+        type: 10,
+        flags: 8,
+        indexId: const obx_int.IdUid(83, 8508433845048164508),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 7483240197742055580),
+        name: 'dayOfMonth',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(84, 943082451206590045),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 6928097277066948927),
+        name: 'activityType',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(85, 6608168375801620375),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 616157900830012542),
+        name: 'status',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(86, 6085545007955204827),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 3319119933982033415),
+        name: 'startTime',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 8345609346399019040),
+        name: 'endTime',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 2085420662219568320),
+        name: 'activityLocation',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 6059371853482645892),
+        name: 'activityDescription',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 3940893899546810212),
+        name: 'isWeekend',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(87, 9210064480880003288),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 6086531616256518484),
+        name: 'isHoliday',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(88, 4467283834893752834),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 7813406315870014154),
+        name: 'monthlyPlanningId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(90, 2267968319831682078),
+        relationTarget: 'MonthlyPlanning',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 5282269349009641738),
+        name: 'staffId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(138, 3268784344599821080),
+        relationTarget: 'Staff',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(53, 6611960556972074278),
+    name: 'HospitalService',
+    lastPropertyId: const obx_int.IdUid(14, 3836569665807155847),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 2183648125758056456),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 8535074483732783915),
+        name: 'serviceCode',
+        type: 9,
+        flags: 2080,
+        indexId: const obx_int.IdUid(91, 2433718504900531158),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 2285740691736490186),
+        name: 'name',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(92, 2738756645790404206),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 7916160037588885463),
+        name: 'description',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 4059820310398845966),
+        name: 'location',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 1402218224236531394),
+        name: 'phone',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 5667403220693651086),
+        name: 'serviceChief',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 5143474728736091881),
+        name: 'medicalSupervisor',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 2447049663456814821),
+        name: 'generalDirector',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 4136996848164320626),
+        name: 'numberOfEmployees',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 6651395837410088707),
+        name: 'numberOfDoctors',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 1755507659422614798),
+        name: 'numberOfNurses',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 1722985908057451368),
+        name: 'isActive',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(93, 4962635600557164196),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 3836569665807155847),
+        name: 'creationDate',
+        type: 10,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[
+      obx_int.ModelBacklink(
+        name: 'staffs',
+        srcEntity: 'Staff',
+        srcField: 'hospitalService',
+      ),
+      obx_int.ModelBacklink(
+        name: 'monthlyPlannings',
+        srcEntity: 'MonthlyPlanning',
+        srcField: 'hospitalService',
+      ),
+    ],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(54, 783491562628111942),
+    name: 'Leave',
+    lastPropertyId: const obx_int.IdUid(14, 5999813182214709332),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 7678656469693875888),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 1770667208496124925),
+        name: 'startDate',
+        type: 10,
+        flags: 8,
+        indexId: const obx_int.IdUid(94, 9078478841342788779),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 4208374894094973049),
+        name: 'endDate',
+        type: 10,
+        flags: 8,
+        indexId: const obx_int.IdUid(95, 164030820015145547),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 2771091207870398904),
+        name: 'leaveType',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(96, 8950926884487971964),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 3706730999761202780),
+        name: 'reason',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 8803162958078135179),
+        name: 'observations',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 2683208643097224575),
+        name: 'status',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(97, 7832720591773153581),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 1446531057031960666),
+        name: 'requestNumber',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 3615454929283340522),
+        name: 'requestSubmissionDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 6313866133463246160),
+        name: 'approvalDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 1634437349687407307),
+        name: 'approvedBy',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 3624736205271052490),
+        name: 'isFullyPaid',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(98, 1681757627217042693),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 5999813182214709332),
+        name: 'staffId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(139, 6129868197154326940),
+        relationTarget: 'Staff',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(55, 4546320432752991852),
+    name: 'MedicalActivity',
+    lastPropertyId: const obx_int.IdUid(14, 942515191417688677),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 7349427228757656800),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 8452618099988953233),
+        name: 'activityDate',
+        type: 10,
+        flags: 8,
+        indexId: const obx_int.IdUid(100, 1913675331769419579),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 4671051815183921581),
+        name: 'weekDay',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(101, 1165627658566261808),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 8836539521664929611),
+        name: 'activityType',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(102, 6610698218585141186),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 886249373498147513),
+        name: 'activityName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 3855732294732015712),
+        name: 'description',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 2562488008298579975),
+        name: 'location',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 4565959535459383686),
+        name: 'startTime',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 9181658758069997432),
+        name: 'endTime',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 4596196641273165173),
+        name: 'isRecurrent',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(103, 7587833704642236244),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 2290705561970107652),
+        name: 'isActive',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(104, 7599054621312972016),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 2981129106359984901),
+        name: 'observations',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 942515191417688677),
+        name: 'staffId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(140, 7833137068585213943),
+        relationTarget: 'Staff',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(56, 3223770380636374366),
+    name: 'MonthlyPlanning',
+    lastPropertyId: const obx_int.IdUid(16, 6444429739128469266),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 2670103269574213996),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 2411569095283400576),
+        name: 'month',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(106, 5175971258003496036),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 1801246840000216319),
+        name: 'year',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(107, 5114372568507182145),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 9214846958904586731),
+        name: 'service',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(108, 1486878942952601630),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 4448101302698023572),
+        name: 'department',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(109, 8677090914662597289),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 2233565271214929805),
+        name: 'planningType',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(110, 3546894594091273849),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 7219118947896314685),
+        name: 'title',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 1046724886144117691),
+        name: 'description',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 6137542602646130912),
+        name: 'creationDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 2395113828621404404),
+        name: 'modificationDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 4257922996782926404),
+        name: 'status',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(111, 2636405576787574333),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 481642991219465752),
+        name: 'isValidated',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(112, 1943025830693617518),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 6748407295383129617),
+        name: 'observations',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 8096738231154031468),
+        name: 'approvedBy',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 4599108377656369821),
+        name: 'approvalDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 6444429739128469266),
+        name: 'hospitalServiceId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(113, 4502665016215304400),
+        relationTarget: 'HospitalService',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[
+      obx_int.ModelBacklink(
+        name: 'dailyPlannings',
+        srcEntity: 'DailyPlanning',
+        srcField: 'monthlyPlanning',
+      ),
+    ],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(57, 1825897810017309983),
+    name: 'PlanningStatistics',
+    lastPropertyId: const obx_int.IdUid(16, 5647570346051526540),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 7522631959721505720),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 5081491823474748979),
+        name: 'month',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(114, 7383338152763536073),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 2088870319613478853),
+        name: 'year',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(115, 5454396691164164322),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 7647578427452438552),
+        name: 'service',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(116, 3966667932478956291),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 3104480834992262751),
+        name: 'statisticsType',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(117, 4260416040301525339),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 7020734441199888681),
+        name: 'totalWorkDays',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 4170644720871026580),
+        name: 'totalGuardDays',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 9202840398727023355),
+        name: 'totalRestDays',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 2131573003643240448),
+        name: 'totalLeaveDays',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 2448663080748253735),
+        name: 'totalAbsenceDays',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 7195895447044563764),
+        name: 'presenceRate',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 9060385516893245945),
+        name: 'absenceRate',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 1395463380278154893),
+        name: 'guardOccupationRate',
+        type: 8,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 6188230155746119386),
+        name: 'detailedDataJson',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 7337549334035484456),
+        name: 'calculationDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 5647570346051526540),
+        name: 'serviceRelationId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(118, 1734351416883614411),
+        relationTarget: 'HospitalService',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(58, 5841557151341947182),
+    name: 'PlanningTemplate',
+    lastPropertyId: const obx_int.IdUid(8, 2143242231554525019),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 6264354318691880853),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 2484501987565530985),
+        name: 'name',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(119, 3365457381838651055),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 8760143202620453867),
+        name: 'description',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 4900526480857530032),
+        name: 'scheduleType',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(120, 6271513392827022636),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 2669156905558714904),
+        name: 'rotationPattern',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 6381888693510586037),
+        name: 'isActive',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(121, 8810539734378663780),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 4597734365005597962),
+        name: 'creationDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 2143242231554525019),
+        name: 'patternList',
+        type: 30,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(59, 7892213973742006565),
+    name: 'Staff',
+    lastPropertyId: const obx_int.IdUid(32, 1003759732967968636),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 1152091593661511263),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 2832806579047419286),
+        name: 'lastName',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(123, 1260016742969459391),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 3912529585061436506),
+        name: 'firstName',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(124, 6146818407166251892),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 1232761458506718282),
+        name: 'function',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(125, 7614381365690749811),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 6301141709924423207),
+        name: 'grade',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(126, 517944109487583315),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 2743118376845724350),
+        name: 'service',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(127, 2531846313062582022),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 7163247152944777273),
+        name: 'department',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(128, 2542943431848096884),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 8018801732111556371),
+        name: 'category',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(129, 8505935981456089400),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 5246117500924186682),
+        name: 'guardGroup',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(130, 8804000867879415370),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 657685686400689878),
+        name: 'phone',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 1300545506004575274),
+        name: 'email',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 5560591115794451517),
+        name: 'address',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 7173242863589440102),
+        name: 'scheduleType',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(131, 2878202104548724317),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 1976720739406416978),
+        name: 'scheduleStart',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 7397388381787352463),
+        name: 'scheduleEnd',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(17, 4159328677983614404),
+        name: 'status',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(132, 7249903120237511383),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(18, 1468926046857927762),
+        name: 'isActive',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(133, 4890621087534730258),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(19, 2809162169141308415),
+        name: 'isAvailableForGuard',
+        type: 1,
+        flags: 8,
+        indexId: const obx_int.IdUid(134, 4289809794667337102),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(20, 4432656748806120577),
+        name: 'specialty',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(21, 5008491447694780801),
+        name: 'leaveStart',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(22, 3428782766954103107),
+        name: 'leaveEnd',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(23, 6266646246571903231),
+        name: 'leaveReason',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(24, 3428977416838829591),
+        name: 'creationDate',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(25, 4312546509709242664),
+        name: 'lastModification',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(26, 2168489526555256737),
+        name: 'observations',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(27, 7167655569274157689),
+        name: 'qualifications',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(28, 8260799672052407917),
+        name: 'hospitalServiceId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(135, 8664461267398711495),
+        relationTarget: 'HospitalService',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(29, 2263650145058026020),
+        name: 'qualificationsList',
+        type: 30,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(32, 1003759732967968636),
+        name: 'staffNumber',
+        type: 9,
+        flags: 2080,
+        indexId: const obx_int.IdUid(141, 780187164246969954),
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[
+      obx_int.ModelBacklink(
+        name: 'dailyPlannings',
+        srcEntity: 'DailyPlanning',
+        srcField: 'staff',
+      ),
+      obx_int.ModelBacklink(
+        name: 'medicalActivities',
+        srcEntity: 'MedicalActivity',
+        srcField: 'staff',
+      ),
+      obx_int.ModelBacklink(
+        name: 'leaves',
+        srcEntity: 'Leave',
+        srcField: 'staff',
+      ),
+    ],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -1950,8 +2855,8 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(51, 6686547310239751793),
-    lastIndexId: const obx_int.IdUid(82, 1837711883215562898),
+    lastEntityId: const obx_int.IdUid(59, 7892213973742006565),
+    lastIndexId: const obx_int.IdUid(141, 780187164246969954),
     lastRelationId: const obx_int.IdUid(10, 2533515178288443251),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -1995,6 +2900,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
       464814572941631309,
       374051867334777197,
       1645050276093830234,
+      8482635430657477729,
+      1608692258503986970,
+      3240954611981074186,
+      3715369648097597428,
+      6270285977185657086,
+      3625987433435977267,
     ],
     retiredPropertyUids: const [
       8976483595831028651,
@@ -2236,6 +3147,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
       4229857189863884367,
       686127309564577120,
       1171201029039590510,
+      6421061573477842651,
+      7745185543975160981,
+      6283720588037323779,
+      7896876929349474935,
+      7360107830162433745,
+      1845837837895797432,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -4609,6 +5526,1010 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
+    DailyPlanning: obx_int.EntityDefinition<DailyPlanning>(
+      model: _entities[27],
+      toOneRelations: (DailyPlanning object) => [
+        object.monthlyPlanning,
+        object.staff,
+      ],
+      toManyRelations: (DailyPlanning object) => {},
+      getId: (DailyPlanning object) => object.id,
+      setId: (DailyPlanning object, int id) {
+        object.id = id;
+      },
+      objectToFB: (DailyPlanning object, fb.Builder fbb) {
+        final startTimeOffset = object.startTime == null
+            ? null
+            : fbb.writeString(object.startTime!);
+        final endTimeOffset = object.endTime == null
+            ? null
+            : fbb.writeString(object.endTime!);
+        final activityLocationOffset = object.activityLocation == null
+            ? null
+            : fbb.writeString(object.activityLocation!);
+        final activityDescriptionOffset = object.activityDescription == null
+            ? null
+            : fbb.writeString(object.activityDescription!);
+        fbb.startTable(15);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.dayDate.millisecondsSinceEpoch);
+        fbb.addInt64(2, object.dayOfMonth);
+        fbb.addInt64(3, object.activityType);
+        fbb.addInt64(4, object.status);
+        fbb.addOffset(5, startTimeOffset);
+        fbb.addOffset(6, endTimeOffset);
+        fbb.addOffset(7, activityLocationOffset);
+        fbb.addOffset(8, activityDescriptionOffset);
+        fbb.addBool(9, object.isWeekend);
+        fbb.addBool(10, object.isHoliday);
+        fbb.addInt64(12, object.monthlyPlanning.targetId);
+        fbb.addInt64(13, object.staff.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+
+        final object = DailyPlanning()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..dayDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
+          )
+          ..dayOfMonth = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            8,
+            0,
+          )
+          ..activityType = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            10,
+            0,
+          )
+          ..status = const fb.Int64Reader().vTableGet(buffer, rootOffset, 12, 0)
+          ..startTime = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 14)
+          ..endTime = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 16)
+          ..activityLocation = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 18)
+          ..activityDescription = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 20)
+          ..isWeekend = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            22,
+            false,
+          )
+          ..isHoliday = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            24,
+            false,
+          );
+        object.monthlyPlanning.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          28,
+          0,
+        );
+        object.monthlyPlanning.attach(store);
+        object.staff.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          30,
+          0,
+        );
+        object.staff.attach(store);
+        return object;
+      },
+    ),
+    HospitalService: obx_int.EntityDefinition<HospitalService>(
+      model: _entities[28],
+      toOneRelations: (HospitalService object) => [],
+      toManyRelations: (HospitalService object) => {
+        obx_int.RelInfo<Staff>.toOneBacklink(
+          28,
+          object.id,
+          (Staff srcObject) => srcObject.hospitalService,
+        ): object.staffs,
+        obx_int.RelInfo<MonthlyPlanning>.toOneBacklink(
+          16,
+          object.id,
+          (MonthlyPlanning srcObject) => srcObject.hospitalService,
+        ): object.monthlyPlannings,
+      },
+      getId: (HospitalService object) => object.id,
+      setId: (HospitalService object, int id) {
+        object.id = id;
+      },
+      objectToFB: (HospitalService object, fb.Builder fbb) {
+        final serviceCodeOffset = fbb.writeString(object.serviceCode);
+        final nameOffset = fbb.writeString(object.name);
+        final descriptionOffset = object.description == null
+            ? null
+            : fbb.writeString(object.description!);
+        final locationOffset = object.location == null
+            ? null
+            : fbb.writeString(object.location!);
+        final phoneOffset = object.phone == null
+            ? null
+            : fbb.writeString(object.phone!);
+        final serviceChiefOffset = object.serviceChief == null
+            ? null
+            : fbb.writeString(object.serviceChief!);
+        final medicalSupervisorOffset = object.medicalSupervisor == null
+            ? null
+            : fbb.writeString(object.medicalSupervisor!);
+        final generalDirectorOffset = object.generalDirector == null
+            ? null
+            : fbb.writeString(object.generalDirector!);
+        fbb.startTable(15);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, serviceCodeOffset);
+        fbb.addOffset(2, nameOffset);
+        fbb.addOffset(3, descriptionOffset);
+        fbb.addOffset(4, locationOffset);
+        fbb.addOffset(5, phoneOffset);
+        fbb.addOffset(6, serviceChiefOffset);
+        fbb.addOffset(7, medicalSupervisorOffset);
+        fbb.addOffset(8, generalDirectorOffset);
+        fbb.addInt64(9, object.numberOfEmployees);
+        fbb.addInt64(10, object.numberOfDoctors);
+        fbb.addInt64(11, object.numberOfNurses);
+        fbb.addBool(12, object.isActive);
+        fbb.addInt64(13, object.creationDate.millisecondsSinceEpoch);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+
+        final object = HospitalService()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..serviceCode = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 6, '')
+          ..name = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 8, '')
+          ..description = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 10)
+          ..location = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 12)
+          ..phone = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 14)
+          ..serviceChief = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 16)
+          ..medicalSupervisor = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 18)
+          ..generalDirector = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 20)
+          ..numberOfEmployees = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            22,
+          )
+          ..numberOfDoctors = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            24,
+          )
+          ..numberOfNurses = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            26,
+          )
+          ..isActive = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            28,
+            false,
+          )
+          ..creationDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 30, 0),
+          );
+        obx_int.InternalToManyAccess.setRelInfo<HospitalService>(
+          object.staffs,
+          store,
+          obx_int.RelInfo<Staff>.toOneBacklink(
+            28,
+            object.id,
+            (Staff srcObject) => srcObject.hospitalService,
+          ),
+        );
+        obx_int.InternalToManyAccess.setRelInfo<HospitalService>(
+          object.monthlyPlannings,
+          store,
+          obx_int.RelInfo<MonthlyPlanning>.toOneBacklink(
+            16,
+            object.id,
+            (MonthlyPlanning srcObject) => srcObject.hospitalService,
+          ),
+        );
+        return object;
+      },
+    ),
+    Leave: obx_int.EntityDefinition<Leave>(
+      model: _entities[29],
+      toOneRelations: (Leave object) => [object.staff],
+      toManyRelations: (Leave object) => {},
+      getId: (Leave object) => object.id,
+      setId: (Leave object, int id) {
+        object.id = id;
+      },
+      objectToFB: (Leave object, fb.Builder fbb) {
+        final reasonOffset = object.reason == null
+            ? null
+            : fbb.writeString(object.reason!);
+        final observationsOffset = object.observations == null
+            ? null
+            : fbb.writeString(object.observations!);
+        final requestNumberOffset = object.requestNumber == null
+            ? null
+            : fbb.writeString(object.requestNumber!);
+        final approvedByOffset = object.approvedBy == null
+            ? null
+            : fbb.writeString(object.approvedBy!);
+        fbb.startTable(15);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.startDate.millisecondsSinceEpoch);
+        fbb.addInt64(2, object.endDate.millisecondsSinceEpoch);
+        fbb.addInt64(3, object.leaveType);
+        fbb.addOffset(4, reasonOffset);
+        fbb.addOffset(5, observationsOffset);
+        fbb.addInt64(6, object.status);
+        fbb.addOffset(7, requestNumberOffset);
+        fbb.addInt64(8, object.requestSubmissionDate.millisecondsSinceEpoch);
+        fbb.addInt64(9, object.approvalDate?.millisecondsSinceEpoch);
+        fbb.addOffset(10, approvedByOffset);
+        fbb.addBool(11, object.isFullyPaid);
+        fbb.addInt64(13, object.staff.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final approvalDateValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          22,
+        );
+        final object = Leave()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..startDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
+          )
+          ..endDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0),
+          )
+          ..leaveType = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            10,
+            0,
+          )
+          ..reason = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 12)
+          ..observations = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 14)
+          ..status = const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0)
+          ..requestNumber = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 18)
+          ..requestSubmissionDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 20, 0),
+          )
+          ..approvalDate = approvalDateValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(approvalDateValue)
+          ..approvedBy = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 24)
+          ..isFullyPaid = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            26,
+            false,
+          );
+        object.staff.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          30,
+          0,
+        );
+        object.staff.attach(store);
+        return object;
+      },
+    ),
+    MedicalActivity: obx_int.EntityDefinition<MedicalActivity>(
+      model: _entities[30],
+      toOneRelations: (MedicalActivity object) => [object.staff],
+      toManyRelations: (MedicalActivity object) => {},
+      getId: (MedicalActivity object) => object.id,
+      setId: (MedicalActivity object, int id) {
+        object.id = id;
+      },
+      objectToFB: (MedicalActivity object, fb.Builder fbb) {
+        final activityNameOffset = fbb.writeString(object.activityName);
+        final descriptionOffset = object.description == null
+            ? null
+            : fbb.writeString(object.description!);
+        final locationOffset = object.location == null
+            ? null
+            : fbb.writeString(object.location!);
+        final startTimeOffset = fbb.writeString(object.startTime);
+        final endTimeOffset = fbb.writeString(object.endTime);
+        final observationsOffset = object.observations == null
+            ? null
+            : fbb.writeString(object.observations!);
+        fbb.startTable(15);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.activityDate.millisecondsSinceEpoch);
+        fbb.addInt64(2, object.weekDay);
+        fbb.addInt64(3, object.activityType);
+        fbb.addOffset(4, activityNameOffset);
+        fbb.addOffset(5, descriptionOffset);
+        fbb.addOffset(6, locationOffset);
+        fbb.addOffset(7, startTimeOffset);
+        fbb.addOffset(8, endTimeOffset);
+        fbb.addBool(9, object.isRecurrent);
+        fbb.addBool(10, object.isActive);
+        fbb.addOffset(11, observationsOffset);
+        fbb.addInt64(13, object.staff.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+
+        final object = MedicalActivity()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..activityDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
+          )
+          ..weekDay = const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0)
+          ..activityType = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            10,
+            0,
+          )
+          ..activityName = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 12, '')
+          ..description = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 14)
+          ..location = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 16)
+          ..startTime = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 18, '')
+          ..endTime = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 20, '')
+          ..isRecurrent = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            22,
+            false,
+          )
+          ..isActive = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            24,
+            false,
+          )
+          ..observations = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 26);
+        object.staff.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          30,
+          0,
+        );
+        object.staff.attach(store);
+        return object;
+      },
+    ),
+    MonthlyPlanning: obx_int.EntityDefinition<MonthlyPlanning>(
+      model: _entities[31],
+      toOneRelations: (MonthlyPlanning object) => [object.hospitalService],
+      toManyRelations: (MonthlyPlanning object) => {
+        obx_int.RelInfo<DailyPlanning>.toOneBacklink(
+          13,
+          object.id,
+          (DailyPlanning srcObject) => srcObject.monthlyPlanning,
+        ): object.dailyPlannings,
+      },
+      getId: (MonthlyPlanning object) => object.id,
+      setId: (MonthlyPlanning object, int id) {
+        object.id = id;
+      },
+      objectToFB: (MonthlyPlanning object, fb.Builder fbb) {
+        final serviceOffset = fbb.writeString(object.service);
+        final departmentOffset = fbb.writeString(object.department);
+        final titleOffset = object.title == null
+            ? null
+            : fbb.writeString(object.title!);
+        final descriptionOffset = object.description == null
+            ? null
+            : fbb.writeString(object.description!);
+        final observationsOffset = object.observations == null
+            ? null
+            : fbb.writeString(object.observations!);
+        final approvedByOffset = object.approvedBy == null
+            ? null
+            : fbb.writeString(object.approvedBy!);
+        fbb.startTable(17);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.month);
+        fbb.addInt64(2, object.year);
+        fbb.addOffset(3, serviceOffset);
+        fbb.addOffset(4, departmentOffset);
+        fbb.addInt64(5, object.planningType);
+        fbb.addOffset(6, titleOffset);
+        fbb.addOffset(7, descriptionOffset);
+        fbb.addInt64(8, object.creationDate.millisecondsSinceEpoch);
+        fbb.addInt64(9, object.modificationDate?.millisecondsSinceEpoch);
+        fbb.addInt64(10, object.status);
+        fbb.addBool(11, object.isValidated);
+        fbb.addOffset(12, observationsOffset);
+        fbb.addOffset(13, approvedByOffset);
+        fbb.addInt64(14, object.approvalDate?.millisecondsSinceEpoch);
+        fbb.addInt64(15, object.hospitalService.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final modificationDateValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          22,
+        );
+        final approvalDateValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          32,
+        );
+        final object = MonthlyPlanning()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..month = const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0)
+          ..year = const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0)
+          ..service = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 10, '')
+          ..department = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 12, '')
+          ..planningType = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            14,
+            0,
+          )
+          ..title = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 16)
+          ..description = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 18)
+          ..creationDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 20, 0),
+          )
+          ..modificationDate = modificationDateValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(modificationDateValue)
+          ..status = const fb.Int64Reader().vTableGet(buffer, rootOffset, 24, 0)
+          ..isValidated = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            26,
+            false,
+          )
+          ..observations = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 28)
+          ..approvedBy = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 30)
+          ..approvalDate = approvalDateValue == null
+              ? null
+              : DateTime.fromMillisecondsSinceEpoch(approvalDateValue);
+        object.hospitalService.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          34,
+          0,
+        );
+        object.hospitalService.attach(store);
+        obx_int.InternalToManyAccess.setRelInfo<MonthlyPlanning>(
+          object.dailyPlannings,
+          store,
+          obx_int.RelInfo<DailyPlanning>.toOneBacklink(
+            13,
+            object.id,
+            (DailyPlanning srcObject) => srcObject.monthlyPlanning,
+          ),
+        );
+        return object;
+      },
+    ),
+    PlanningStatistics: obx_int.EntityDefinition<PlanningStatistics>(
+      model: _entities[32],
+      toOneRelations: (PlanningStatistics object) => [object.serviceRelation],
+      toManyRelations: (PlanningStatistics object) => {},
+      getId: (PlanningStatistics object) => object.id,
+      setId: (PlanningStatistics object, int id) {
+        object.id = id;
+      },
+      objectToFB: (PlanningStatistics object, fb.Builder fbb) {
+        final serviceOffset = fbb.writeString(object.service);
+        final statisticsTypeOffset = fbb.writeString(object.statisticsType);
+        final detailedDataJsonOffset = object.detailedDataJson == null
+            ? null
+            : fbb.writeString(object.detailedDataJson!);
+        fbb.startTable(17);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.month);
+        fbb.addInt64(2, object.year);
+        fbb.addOffset(3, serviceOffset);
+        fbb.addOffset(4, statisticsTypeOffset);
+        fbb.addInt64(5, object.totalWorkDays);
+        fbb.addInt64(6, object.totalGuardDays);
+        fbb.addInt64(7, object.totalRestDays);
+        fbb.addInt64(8, object.totalLeaveDays);
+        fbb.addInt64(9, object.totalAbsenceDays);
+        fbb.addFloat64(10, object.presenceRate);
+        fbb.addFloat64(11, object.absenceRate);
+        fbb.addFloat64(12, object.guardOccupationRate);
+        fbb.addOffset(13, detailedDataJsonOffset);
+        fbb.addInt64(14, object.calculationDate.millisecondsSinceEpoch);
+        fbb.addInt64(15, object.serviceRelation.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+
+        final object = PlanningStatistics()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..month = const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0)
+          ..year = const fb.Int64Reader().vTableGet(buffer, rootOffset, 8, 0)
+          ..service = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 10, '')
+          ..statisticsType = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 12, '')
+          ..totalWorkDays = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            14,
+          )
+          ..totalGuardDays = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            16,
+          )
+          ..totalRestDays = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            18,
+          )
+          ..totalLeaveDays = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            20,
+          )
+          ..totalAbsenceDays = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            22,
+          )
+          ..presenceRate = const fb.Float64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            24,
+          )
+          ..absenceRate = const fb.Float64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            26,
+          )
+          ..guardOccupationRate = const fb.Float64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            28,
+          )
+          ..detailedDataJson = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 30)
+          ..calculationDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 32, 0),
+          );
+        object.serviceRelation.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          34,
+          0,
+        );
+        object.serviceRelation.attach(store);
+        return object;
+      },
+    ),
+    PlanningTemplate: obx_int.EntityDefinition<PlanningTemplate>(
+      model: _entities[33],
+      toOneRelations: (PlanningTemplate object) => [],
+      toManyRelations: (PlanningTemplate object) => {},
+      getId: (PlanningTemplate object) => object.id,
+      setId: (PlanningTemplate object, int id) {
+        object.id = id;
+      },
+      objectToFB: (PlanningTemplate object, fb.Builder fbb) {
+        final nameOffset = fbb.writeString(object.name);
+        final descriptionOffset = object.description == null
+            ? null
+            : fbb.writeString(object.description!);
+        final rotationPatternOffset = fbb.writeString(object.rotationPattern);
+        final patternListOffset = fbb.writeList(
+          object.patternList.map(fbb.writeString).toList(growable: false),
+        );
+        fbb.startTable(9);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, nameOffset);
+        fbb.addOffset(2, descriptionOffset);
+        fbb.addInt64(3, object.scheduleType);
+        fbb.addOffset(4, rotationPatternOffset);
+        fbb.addBool(5, object.isActive);
+        fbb.addInt64(6, object.creationDate.millisecondsSinceEpoch);
+        fbb.addOffset(7, patternListOffset);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+
+        final object = PlanningTemplate()
+          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+          ..name = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 6, '')
+          ..description = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 8)
+          ..scheduleType = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            10,
+            0,
+          )
+          ..rotationPattern = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGet(buffer, rootOffset, 12, '')
+          ..isActive = const fb.BoolReader().vTableGet(
+            buffer,
+            rootOffset,
+            14,
+            false,
+          )
+          ..creationDate = DateTime.fromMillisecondsSinceEpoch(
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0),
+          )
+          ..patternList = const fb.ListReader<String>(
+            fb.StringReader(asciiOptimization: true),
+            lazy: false,
+          ).vTableGet(buffer, rootOffset, 18, []);
+
+        return object;
+      },
+    ),
+    Staff: obx_int.EntityDefinition<Staff>(
+      model: _entities[34],
+      toOneRelations: (Staff object) => [object.hospitalService],
+      toManyRelations: (Staff object) => {
+        obx_int.RelInfo<DailyPlanning>.toOneBacklink(
+          14,
+          object.id,
+          (DailyPlanning srcObject) => srcObject.staff,
+        ): object.dailyPlannings,
+        obx_int.RelInfo<MedicalActivity>.toOneBacklink(
+          14,
+          object.id,
+          (MedicalActivity srcObject) => srcObject.staff,
+        ): object.medicalActivities,
+        obx_int.RelInfo<Leave>.toOneBacklink(
+          14,
+          object.id,
+          (Leave srcObject) => srcObject.staff,
+        ): object.leaves,
+      },
+      getId: (Staff object) => object.id,
+      setId: (Staff object, int id) {
+        object.id = id;
+      },
+      objectToFB: (Staff object, fb.Builder fbb) {
+        final lastNameOffset = fbb.writeString(object.lastName);
+        final firstNameOffset = fbb.writeString(object.firstName);
+        final gradeOffset = fbb.writeString(object.grade);
+        final serviceOffset = fbb.writeString(object.service);
+        final departmentOffset = fbb.writeString(object.department);
+        final guardGroupOffset = object.guardGroup == null
+            ? null
+            : fbb.writeString(object.guardGroup!);
+        final phoneOffset = object.phone == null
+            ? null
+            : fbb.writeString(object.phone!);
+        final emailOffset = object.email == null
+            ? null
+            : fbb.writeString(object.email!);
+        final addressOffset = object.address == null
+            ? null
+            : fbb.writeString(object.address!);
+        final scheduleStartOffset = object.scheduleStart == null
+            ? null
+            : fbb.writeString(object.scheduleStart!);
+        final scheduleEndOffset = object.scheduleEnd == null
+            ? null
+            : fbb.writeString(object.scheduleEnd!);
+        final specialtyOffset = object.specialty == null
+            ? null
+            : fbb.writeString(object.specialty!);
+        final leaveReasonOffset = object.leaveReason == null
+            ? null
+            : fbb.writeString(object.leaveReason!);
+        final observationsOffset = object.observations == null
+            ? null
+            : fbb.writeString(object.observations!);
+        final qualificationsOffset = fbb.writeString(object.qualifications);
+        final qualificationsListOffset = fbb.writeList(
+          object.qualificationsList
+              .map(fbb.writeString)
+              .toList(growable: false),
+        );
+        final staffNumberOffset = fbb.writeString(object.staffNumber);
+        fbb.startTable(33);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(2, lastNameOffset);
+        fbb.addOffset(3, firstNameOffset);
+        fbb.addInt64(4, object.function);
+        fbb.addOffset(5, gradeOffset);
+        fbb.addOffset(6, serviceOffset);
+        fbb.addOffset(7, departmentOffset);
+        fbb.addInt64(8, object.category);
+        fbb.addOffset(9, guardGroupOffset);
+        fbb.addOffset(10, phoneOffset);
+        fbb.addOffset(11, emailOffset);
+        fbb.addOffset(12, addressOffset);
+        fbb.addInt64(13, object.scheduleType);
+        fbb.addOffset(14, scheduleStartOffset);
+        fbb.addOffset(15, scheduleEndOffset);
+        fbb.addInt64(16, object.status);
+        fbb.addBool(17, object.isActive);
+        fbb.addBool(18, object.isAvailableForGuard);
+        fbb.addOffset(19, specialtyOffset);
+        fbb.addInt64(20, object.leaveStart?.millisecondsSinceEpoch);
+        fbb.addInt64(21, object.leaveEnd?.millisecondsSinceEpoch);
+        fbb.addOffset(22, leaveReasonOffset);
+        fbb.addInt64(23, object.creationDate.millisecondsSinceEpoch);
+        fbb.addInt64(24, object.lastModification?.millisecondsSinceEpoch);
+        fbb.addOffset(25, observationsOffset);
+        fbb.addOffset(26, qualificationsOffset);
+        fbb.addInt64(27, object.hospitalService.targetId);
+        fbb.addOffset(28, qualificationsListOffset);
+        fbb.addOffset(31, staffNumberOffset);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final leaveStartValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          44,
+        );
+        final leaveEndValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          46,
+        );
+        final lastModificationValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          52,
+        );
+        final staffNumberParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 66, '');
+        final lastNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final firstNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 10, '');
+        final functionParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          12,
+          0,
+        );
+        final gradeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 14, '');
+        final serviceParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 16, '');
+        final departmentParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 18, '');
+        final categoryParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          20,
+          0,
+        );
+        final guardGroupParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 22);
+        final phoneParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 24);
+        final emailParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 26);
+        final addressParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 28);
+        final scheduleTypeParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          30,
+          0,
+        );
+        final scheduleStartParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 32);
+        final scheduleEndParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 34);
+        final statusParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          36,
+          0,
+        );
+        final isActiveParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          38,
+          false,
+        );
+        final isAvailableForGuardParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          40,
+          false,
+        );
+        final specialtyParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 42);
+        final qualificationsListParam = const fb.ListReader<String>(
+          fb.StringReader(asciiOptimization: true),
+          lazy: false,
+        ).vTableGet(buffer, rootOffset, 60, []);
+        final leaveStartParam = leaveStartValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(leaveStartValue);
+        final leaveEndParam = leaveEndValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(leaveEndValue);
+        final leaveReasonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 48);
+        final creationDateParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 50, 0),
+        );
+        final lastModificationParam = lastModificationValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(lastModificationValue);
+        final observationsParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 54);
+        final object =
+            Staff(
+                staffNumber: staffNumberParam,
+                lastName: lastNameParam,
+                firstName: firstNameParam,
+                function: functionParam,
+                grade: gradeParam,
+                service: serviceParam,
+                department: departmentParam,
+                category: categoryParam,
+                guardGroup: guardGroupParam,
+                phone: phoneParam,
+                email: emailParam,
+                address: addressParam,
+                scheduleType: scheduleTypeParam,
+                scheduleStart: scheduleStartParam,
+                scheduleEnd: scheduleEndParam,
+                status: statusParam,
+                isActive: isActiveParam,
+                isAvailableForGuard: isAvailableForGuardParam,
+                specialty: specialtyParam,
+                qualificationsList: qualificationsListParam,
+                leaveStart: leaveStartParam,
+                leaveEnd: leaveEndParam,
+                leaveReason: leaveReasonParam,
+                creationDate: creationDateParam,
+                lastModification: lastModificationParam,
+                observations: observationsParam,
+              )
+              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
+              ..qualifications = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGet(buffer, rootOffset, 56, '');
+        object.hospitalService.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          58,
+          0,
+        );
+        object.hospitalService.attach(store);
+        obx_int.InternalToManyAccess.setRelInfo<Staff>(
+          object.dailyPlannings,
+          store,
+          obx_int.RelInfo<DailyPlanning>.toOneBacklink(
+            14,
+            object.id,
+            (DailyPlanning srcObject) => srcObject.staff,
+          ),
+        );
+        obx_int.InternalToManyAccess.setRelInfo<Staff>(
+          object.medicalActivities,
+          store,
+          obx_int.RelInfo<MedicalActivity>.toOneBacklink(
+            14,
+            object.id,
+            (MedicalActivity srcObject) => srcObject.staff,
+          ),
+        );
+        obx_int.InternalToManyAccess.setRelInfo<Staff>(
+          object.leaves,
+          store,
+          obx_int.RelInfo<Leave>.toOneBacklink(
+            14,
+            object.id,
+            (Leave srcObject) => srcObject.staff,
+          ),
+        );
+        return object;
+      },
+    ),
   };
 
   return obx_int.ModelDefinition(model, bindings);
@@ -5980,4 +7901,669 @@ class Service_ {
   static final nom = obx.QueryStringProperty<Service>(
     _entities[26].properties[1],
   );
+}
+
+/// [DailyPlanning] entity fields to define ObjectBox queries.
+class DailyPlanning_ {
+  /// See [DailyPlanning.id].
+  static final id = obx.QueryIntegerProperty<DailyPlanning>(
+    _entities[27].properties[0],
+  );
+
+  /// See [DailyPlanning.dayDate].
+  static final dayDate = obx.QueryDateProperty<DailyPlanning>(
+    _entities[27].properties[1],
+  );
+
+  /// See [DailyPlanning.dayOfMonth].
+  static final dayOfMonth = obx.QueryIntegerProperty<DailyPlanning>(
+    _entities[27].properties[2],
+  );
+
+  /// See [DailyPlanning.activityType].
+  static final activityType = obx.QueryIntegerProperty<DailyPlanning>(
+    _entities[27].properties[3],
+  );
+
+  /// See [DailyPlanning.status].
+  static final status = obx.QueryIntegerProperty<DailyPlanning>(
+    _entities[27].properties[4],
+  );
+
+  /// See [DailyPlanning.startTime].
+  static final startTime = obx.QueryStringProperty<DailyPlanning>(
+    _entities[27].properties[5],
+  );
+
+  /// See [DailyPlanning.endTime].
+  static final endTime = obx.QueryStringProperty<DailyPlanning>(
+    _entities[27].properties[6],
+  );
+
+  /// See [DailyPlanning.activityLocation].
+  static final activityLocation = obx.QueryStringProperty<DailyPlanning>(
+    _entities[27].properties[7],
+  );
+
+  /// See [DailyPlanning.activityDescription].
+  static final activityDescription = obx.QueryStringProperty<DailyPlanning>(
+    _entities[27].properties[8],
+  );
+
+  /// See [DailyPlanning.isWeekend].
+  static final isWeekend = obx.QueryBooleanProperty<DailyPlanning>(
+    _entities[27].properties[9],
+  );
+
+  /// See [DailyPlanning.isHoliday].
+  static final isHoliday = obx.QueryBooleanProperty<DailyPlanning>(
+    _entities[27].properties[10],
+  );
+
+  /// See [DailyPlanning.monthlyPlanning].
+  static final monthlyPlanning =
+      obx.QueryRelationToOne<DailyPlanning, MonthlyPlanning>(
+        _entities[27].properties[11],
+      );
+
+  /// See [DailyPlanning.staff].
+  static final staff = obx.QueryRelationToOne<DailyPlanning, Staff>(
+    _entities[27].properties[12],
+  );
+}
+
+/// [HospitalService] entity fields to define ObjectBox queries.
+class HospitalService_ {
+  /// See [HospitalService.id].
+  static final id = obx.QueryIntegerProperty<HospitalService>(
+    _entities[28].properties[0],
+  );
+
+  /// See [HospitalService.serviceCode].
+  static final serviceCode = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[1],
+  );
+
+  /// See [HospitalService.name].
+  static final name = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[2],
+  );
+
+  /// See [HospitalService.description].
+  static final description = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[3],
+  );
+
+  /// See [HospitalService.location].
+  static final location = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[4],
+  );
+
+  /// See [HospitalService.phone].
+  static final phone = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[5],
+  );
+
+  /// See [HospitalService.serviceChief].
+  static final serviceChief = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[6],
+  );
+
+  /// See [HospitalService.medicalSupervisor].
+  static final medicalSupervisor = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[7],
+  );
+
+  /// See [HospitalService.generalDirector].
+  static final generalDirector = obx.QueryStringProperty<HospitalService>(
+    _entities[28].properties[8],
+  );
+
+  /// See [HospitalService.numberOfEmployees].
+  static final numberOfEmployees = obx.QueryIntegerProperty<HospitalService>(
+    _entities[28].properties[9],
+  );
+
+  /// See [HospitalService.numberOfDoctors].
+  static final numberOfDoctors = obx.QueryIntegerProperty<HospitalService>(
+    _entities[28].properties[10],
+  );
+
+  /// See [HospitalService.numberOfNurses].
+  static final numberOfNurses = obx.QueryIntegerProperty<HospitalService>(
+    _entities[28].properties[11],
+  );
+
+  /// See [HospitalService.isActive].
+  static final isActive = obx.QueryBooleanProperty<HospitalService>(
+    _entities[28].properties[12],
+  );
+
+  /// See [HospitalService.creationDate].
+  static final creationDate = obx.QueryDateProperty<HospitalService>(
+    _entities[28].properties[13],
+  );
+
+  /// see [HospitalService.staffs]
+  static final staffs = obx.QueryBacklinkToMany<Staff, HospitalService>(
+    Staff_.hospitalService,
+  );
+
+  /// see [HospitalService.monthlyPlannings]
+  static final monthlyPlannings =
+      obx.QueryBacklinkToMany<MonthlyPlanning, HospitalService>(
+        MonthlyPlanning_.hospitalService,
+      );
+}
+
+/// [Leave] entity fields to define ObjectBox queries.
+class Leave_ {
+  /// See [Leave.id].
+  static final id = obx.QueryIntegerProperty<Leave>(
+    _entities[29].properties[0],
+  );
+
+  /// See [Leave.startDate].
+  static final startDate = obx.QueryDateProperty<Leave>(
+    _entities[29].properties[1],
+  );
+
+  /// See [Leave.endDate].
+  static final endDate = obx.QueryDateProperty<Leave>(
+    _entities[29].properties[2],
+  );
+
+  /// See [Leave.leaveType].
+  static final leaveType = obx.QueryIntegerProperty<Leave>(
+    _entities[29].properties[3],
+  );
+
+  /// See [Leave.reason].
+  static final reason = obx.QueryStringProperty<Leave>(
+    _entities[29].properties[4],
+  );
+
+  /// See [Leave.observations].
+  static final observations = obx.QueryStringProperty<Leave>(
+    _entities[29].properties[5],
+  );
+
+  /// See [Leave.status].
+  static final status = obx.QueryIntegerProperty<Leave>(
+    _entities[29].properties[6],
+  );
+
+  /// See [Leave.requestNumber].
+  static final requestNumber = obx.QueryStringProperty<Leave>(
+    _entities[29].properties[7],
+  );
+
+  /// See [Leave.requestSubmissionDate].
+  static final requestSubmissionDate = obx.QueryDateProperty<Leave>(
+    _entities[29].properties[8],
+  );
+
+  /// See [Leave.approvalDate].
+  static final approvalDate = obx.QueryDateProperty<Leave>(
+    _entities[29].properties[9],
+  );
+
+  /// See [Leave.approvedBy].
+  static final approvedBy = obx.QueryStringProperty<Leave>(
+    _entities[29].properties[10],
+  );
+
+  /// See [Leave.isFullyPaid].
+  static final isFullyPaid = obx.QueryBooleanProperty<Leave>(
+    _entities[29].properties[11],
+  );
+
+  /// See [Leave.staff].
+  static final staff = obx.QueryRelationToOne<Leave, Staff>(
+    _entities[29].properties[12],
+  );
+}
+
+/// [MedicalActivity] entity fields to define ObjectBox queries.
+class MedicalActivity_ {
+  /// See [MedicalActivity.id].
+  static final id = obx.QueryIntegerProperty<MedicalActivity>(
+    _entities[30].properties[0],
+  );
+
+  /// See [MedicalActivity.activityDate].
+  static final activityDate = obx.QueryDateProperty<MedicalActivity>(
+    _entities[30].properties[1],
+  );
+
+  /// See [MedicalActivity.weekDay].
+  static final weekDay = obx.QueryIntegerProperty<MedicalActivity>(
+    _entities[30].properties[2],
+  );
+
+  /// See [MedicalActivity.activityType].
+  static final activityType = obx.QueryIntegerProperty<MedicalActivity>(
+    _entities[30].properties[3],
+  );
+
+  /// See [MedicalActivity.activityName].
+  static final activityName = obx.QueryStringProperty<MedicalActivity>(
+    _entities[30].properties[4],
+  );
+
+  /// See [MedicalActivity.description].
+  static final description = obx.QueryStringProperty<MedicalActivity>(
+    _entities[30].properties[5],
+  );
+
+  /// See [MedicalActivity.location].
+  static final location = obx.QueryStringProperty<MedicalActivity>(
+    _entities[30].properties[6],
+  );
+
+  /// See [MedicalActivity.startTime].
+  static final startTime = obx.QueryStringProperty<MedicalActivity>(
+    _entities[30].properties[7],
+  );
+
+  /// See [MedicalActivity.endTime].
+  static final endTime = obx.QueryStringProperty<MedicalActivity>(
+    _entities[30].properties[8],
+  );
+
+  /// See [MedicalActivity.isRecurrent].
+  static final isRecurrent = obx.QueryBooleanProperty<MedicalActivity>(
+    _entities[30].properties[9],
+  );
+
+  /// See [MedicalActivity.isActive].
+  static final isActive = obx.QueryBooleanProperty<MedicalActivity>(
+    _entities[30].properties[10],
+  );
+
+  /// See [MedicalActivity.observations].
+  static final observations = obx.QueryStringProperty<MedicalActivity>(
+    _entities[30].properties[11],
+  );
+
+  /// See [MedicalActivity.staff].
+  static final staff = obx.QueryRelationToOne<MedicalActivity, Staff>(
+    _entities[30].properties[12],
+  );
+}
+
+/// [MonthlyPlanning] entity fields to define ObjectBox queries.
+class MonthlyPlanning_ {
+  /// See [MonthlyPlanning.id].
+  static final id = obx.QueryIntegerProperty<MonthlyPlanning>(
+    _entities[31].properties[0],
+  );
+
+  /// See [MonthlyPlanning.month].
+  static final month = obx.QueryIntegerProperty<MonthlyPlanning>(
+    _entities[31].properties[1],
+  );
+
+  /// See [MonthlyPlanning.year].
+  static final year = obx.QueryIntegerProperty<MonthlyPlanning>(
+    _entities[31].properties[2],
+  );
+
+  /// See [MonthlyPlanning.service].
+  static final service = obx.QueryStringProperty<MonthlyPlanning>(
+    _entities[31].properties[3],
+  );
+
+  /// See [MonthlyPlanning.department].
+  static final department = obx.QueryStringProperty<MonthlyPlanning>(
+    _entities[31].properties[4],
+  );
+
+  /// See [MonthlyPlanning.planningType].
+  static final planningType = obx.QueryIntegerProperty<MonthlyPlanning>(
+    _entities[31].properties[5],
+  );
+
+  /// See [MonthlyPlanning.title].
+  static final title = obx.QueryStringProperty<MonthlyPlanning>(
+    _entities[31].properties[6],
+  );
+
+  /// See [MonthlyPlanning.description].
+  static final description = obx.QueryStringProperty<MonthlyPlanning>(
+    _entities[31].properties[7],
+  );
+
+  /// See [MonthlyPlanning.creationDate].
+  static final creationDate = obx.QueryDateProperty<MonthlyPlanning>(
+    _entities[31].properties[8],
+  );
+
+  /// See [MonthlyPlanning.modificationDate].
+  static final modificationDate = obx.QueryDateProperty<MonthlyPlanning>(
+    _entities[31].properties[9],
+  );
+
+  /// See [MonthlyPlanning.status].
+  static final status = obx.QueryIntegerProperty<MonthlyPlanning>(
+    _entities[31].properties[10],
+  );
+
+  /// See [MonthlyPlanning.isValidated].
+  static final isValidated = obx.QueryBooleanProperty<MonthlyPlanning>(
+    _entities[31].properties[11],
+  );
+
+  /// See [MonthlyPlanning.observations].
+  static final observations = obx.QueryStringProperty<MonthlyPlanning>(
+    _entities[31].properties[12],
+  );
+
+  /// See [MonthlyPlanning.approvedBy].
+  static final approvedBy = obx.QueryStringProperty<MonthlyPlanning>(
+    _entities[31].properties[13],
+  );
+
+  /// See [MonthlyPlanning.approvalDate].
+  static final approvalDate = obx.QueryDateProperty<MonthlyPlanning>(
+    _entities[31].properties[14],
+  );
+
+  /// See [MonthlyPlanning.hospitalService].
+  static final hospitalService =
+      obx.QueryRelationToOne<MonthlyPlanning, HospitalService>(
+        _entities[31].properties[15],
+      );
+
+  /// see [MonthlyPlanning.dailyPlannings]
+  static final dailyPlannings =
+      obx.QueryBacklinkToMany<DailyPlanning, MonthlyPlanning>(
+        DailyPlanning_.monthlyPlanning,
+      );
+}
+
+/// [PlanningStatistics] entity fields to define ObjectBox queries.
+class PlanningStatistics_ {
+  /// See [PlanningStatistics.id].
+  static final id = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[0],
+  );
+
+  /// See [PlanningStatistics.month].
+  static final month = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[1],
+  );
+
+  /// See [PlanningStatistics.year].
+  static final year = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[2],
+  );
+
+  /// See [PlanningStatistics.service].
+  static final service = obx.QueryStringProperty<PlanningStatistics>(
+    _entities[32].properties[3],
+  );
+
+  /// See [PlanningStatistics.statisticsType].
+  static final statisticsType = obx.QueryStringProperty<PlanningStatistics>(
+    _entities[32].properties[4],
+  );
+
+  /// See [PlanningStatistics.totalWorkDays].
+  static final totalWorkDays = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[5],
+  );
+
+  /// See [PlanningStatistics.totalGuardDays].
+  static final totalGuardDays = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[6],
+  );
+
+  /// See [PlanningStatistics.totalRestDays].
+  static final totalRestDays = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[7],
+  );
+
+  /// See [PlanningStatistics.totalLeaveDays].
+  static final totalLeaveDays = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[8],
+  );
+
+  /// See [PlanningStatistics.totalAbsenceDays].
+  static final totalAbsenceDays = obx.QueryIntegerProperty<PlanningStatistics>(
+    _entities[32].properties[9],
+  );
+
+  /// See [PlanningStatistics.presenceRate].
+  static final presenceRate = obx.QueryDoubleProperty<PlanningStatistics>(
+    _entities[32].properties[10],
+  );
+
+  /// See [PlanningStatistics.absenceRate].
+  static final absenceRate = obx.QueryDoubleProperty<PlanningStatistics>(
+    _entities[32].properties[11],
+  );
+
+  /// See [PlanningStatistics.guardOccupationRate].
+  static final guardOccupationRate =
+      obx.QueryDoubleProperty<PlanningStatistics>(_entities[32].properties[12]);
+
+  /// See [PlanningStatistics.detailedDataJson].
+  static final detailedDataJson = obx.QueryStringProperty<PlanningStatistics>(
+    _entities[32].properties[13],
+  );
+
+  /// See [PlanningStatistics.calculationDate].
+  static final calculationDate = obx.QueryDateProperty<PlanningStatistics>(
+    _entities[32].properties[14],
+  );
+
+  /// See [PlanningStatistics.serviceRelation].
+  static final serviceRelation =
+      obx.QueryRelationToOne<PlanningStatistics, HospitalService>(
+        _entities[32].properties[15],
+      );
+}
+
+/// [PlanningTemplate] entity fields to define ObjectBox queries.
+class PlanningTemplate_ {
+  /// See [PlanningTemplate.id].
+  static final id = obx.QueryIntegerProperty<PlanningTemplate>(
+    _entities[33].properties[0],
+  );
+
+  /// See [PlanningTemplate.name].
+  static final name = obx.QueryStringProperty<PlanningTemplate>(
+    _entities[33].properties[1],
+  );
+
+  /// See [PlanningTemplate.description].
+  static final description = obx.QueryStringProperty<PlanningTemplate>(
+    _entities[33].properties[2],
+  );
+
+  /// See [PlanningTemplate.scheduleType].
+  static final scheduleType = obx.QueryIntegerProperty<PlanningTemplate>(
+    _entities[33].properties[3],
+  );
+
+  /// See [PlanningTemplate.rotationPattern].
+  static final rotationPattern = obx.QueryStringProperty<PlanningTemplate>(
+    _entities[33].properties[4],
+  );
+
+  /// See [PlanningTemplate.isActive].
+  static final isActive = obx.QueryBooleanProperty<PlanningTemplate>(
+    _entities[33].properties[5],
+  );
+
+  /// See [PlanningTemplate.creationDate].
+  static final creationDate = obx.QueryDateProperty<PlanningTemplate>(
+    _entities[33].properties[6],
+  );
+
+  /// See [PlanningTemplate.patternList].
+  static final patternList = obx.QueryStringVectorProperty<PlanningTemplate>(
+    _entities[33].properties[7],
+  );
+}
+
+/// [Staff] entity fields to define ObjectBox queries.
+class Staff_ {
+  /// See [Staff.id].
+  static final id = obx.QueryIntegerProperty<Staff>(
+    _entities[34].properties[0],
+  );
+
+  /// See [Staff.lastName].
+  static final lastName = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[1],
+  );
+
+  /// See [Staff.firstName].
+  static final firstName = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[2],
+  );
+
+  /// See [Staff.function].
+  static final function = obx.QueryIntegerProperty<Staff>(
+    _entities[34].properties[3],
+  );
+
+  /// See [Staff.grade].
+  static final grade = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[4],
+  );
+
+  /// See [Staff.service].
+  static final service = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[5],
+  );
+
+  /// See [Staff.department].
+  static final department = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[6],
+  );
+
+  /// See [Staff.category].
+  static final category = obx.QueryIntegerProperty<Staff>(
+    _entities[34].properties[7],
+  );
+
+  /// See [Staff.guardGroup].
+  static final guardGroup = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[8],
+  );
+
+  /// See [Staff.phone].
+  static final phone = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[9],
+  );
+
+  /// See [Staff.email].
+  static final email = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[10],
+  );
+
+  /// See [Staff.address].
+  static final address = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[11],
+  );
+
+  /// See [Staff.scheduleType].
+  static final scheduleType = obx.QueryIntegerProperty<Staff>(
+    _entities[34].properties[12],
+  );
+
+  /// See [Staff.scheduleStart].
+  static final scheduleStart = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[13],
+  );
+
+  /// See [Staff.scheduleEnd].
+  static final scheduleEnd = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[14],
+  );
+
+  /// See [Staff.status].
+  static final status = obx.QueryIntegerProperty<Staff>(
+    _entities[34].properties[15],
+  );
+
+  /// See [Staff.isActive].
+  static final isActive = obx.QueryBooleanProperty<Staff>(
+    _entities[34].properties[16],
+  );
+
+  /// See [Staff.isAvailableForGuard].
+  static final isAvailableForGuard = obx.QueryBooleanProperty<Staff>(
+    _entities[34].properties[17],
+  );
+
+  /// See [Staff.specialty].
+  static final specialty = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[18],
+  );
+
+  /// See [Staff.leaveStart].
+  static final leaveStart = obx.QueryDateProperty<Staff>(
+    _entities[34].properties[19],
+  );
+
+  /// See [Staff.leaveEnd].
+  static final leaveEnd = obx.QueryDateProperty<Staff>(
+    _entities[34].properties[20],
+  );
+
+  /// See [Staff.leaveReason].
+  static final leaveReason = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[21],
+  );
+
+  /// See [Staff.creationDate].
+  static final creationDate = obx.QueryDateProperty<Staff>(
+    _entities[34].properties[22],
+  );
+
+  /// See [Staff.lastModification].
+  static final lastModification = obx.QueryDateProperty<Staff>(
+    _entities[34].properties[23],
+  );
+
+  /// See [Staff.observations].
+  static final observations = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[24],
+  );
+
+  /// See [Staff.qualifications].
+  static final qualifications = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[25],
+  );
+
+  /// See [Staff.hospitalService].
+  static final hospitalService = obx.QueryRelationToOne<Staff, HospitalService>(
+    _entities[34].properties[26],
+  );
+
+  /// See [Staff.qualificationsList].
+  static final qualificationsList = obx.QueryStringVectorProperty<Staff>(
+    _entities[34].properties[27],
+  );
+
+  /// See [Staff.staffNumber].
+  static final staffNumber = obx.QueryStringProperty<Staff>(
+    _entities[34].properties[28],
+  );
+
+  /// see [Staff.dailyPlannings]
+  static final dailyPlannings = obx.QueryBacklinkToMany<DailyPlanning, Staff>(
+    DailyPlanning_.staff,
+  );
+
+  /// see [Staff.medicalActivities]
+  static final medicalActivities =
+      obx.QueryBacklinkToMany<MedicalActivity, Staff>(MedicalActivity_.staff);
+
+  /// see [Staff.leaves]
+  static final leaves = obx.QueryBacklinkToMany<Leave, Staff>(Leave_.staff);
 }

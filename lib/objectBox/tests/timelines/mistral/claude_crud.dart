@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../Hopital/claudeMistral/homePage.dart';
 import '../../../../Hopital/homePage.dart';
 import '../../../../MyListLotties.dart';
 import '../../../Entity.dart';
@@ -2283,6 +2285,19 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => HomePageH()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(
+              FontAwesomeIcons.hospital,
+              color: Colors.red,
+            ),
+            title: const Text('Rhumathology'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HomePageZou()),
               );
             },
           ),

@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
 import '../Hopital/Providers.dart';
+import '../Hopital/claudeMistral/Providers.dart';
 import '../Hopital/repos.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
@@ -104,28 +105,30 @@ class MyApp9 extends StatelessWidget {
           create: (context) => HotelProvider(objectBox),
         ),
         ChangeNotifierProvider(
-          create: (_) =>
-              AffectationJourProvider(AffectationJourRepository(
-                  objectBox.store.box<AffectationJour>())),
+          create: (_) => AffectationJourProvider(AffectationJourRepository(
+              objectBox.store.box<AffectationJour>())),
         ),
         ChangeNotifierProvider(
-          create: (_) =>
-              PersonnelProvider(
-                  PersonnelRepository(objectBox.store.box<Personnel>())),
+          create: (_) => PersonnelProvider(
+              PersonnelRepository(objectBox.store.box<Personnel>())),
         ),
         ChangeNotifierProvider(
-            create: (_) =>
-                ActiviteHebdoProvider(
-                    ActiviteHebdoRepository(
-                        objectBox.store.box<ActiviteHebdo>()))),
+            create: (_) => ActiviteHebdoProvider(
+                ActiviteHebdoRepository(objectBox.store.box<ActiviteHebdo>()))),
 
         ChangeNotifierProvider(
           create: (_) => ImportProvider(objectBox.store),
         ),
-        ChangeNotifierProvider(create: (_) =>
-            GroupeTravailProvider(
+        ChangeNotifierProvider(
+            create: (_) => GroupeTravailProvider(
                 GroupeTravailRepository(objectBox.store.box<GroupeTravail>()))),
 
+        ChangeNotifierProvider(create: (_) => MonthlyPlanningProvider()),
+        ChangeNotifierProvider(create: (_) => StaffProvider()),
+        ChangeNotifierProvider(
+          create: (_) => DailyPlanningProvider(objectBox.store),
+        ),
+        ChangeNotifierProvider(create: (_) => HospitalServiceProvider()),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(
@@ -171,7 +174,7 @@ class MyApp9 extends StatelessWidget {
               ),
             ),
             themeMode:
-            themeProvider.isDarkTheme ? ThemeMode.dark : ThemeMode.light,
+                themeProvider.isDarkTheme ? ThemeMode.dark : ThemeMode.light,
 
             //darkTheme: ThemeData.dark(),
             // home: Scaffold(body: FactureList()),
@@ -182,11 +185,11 @@ class MyApp9 extends StatelessWidget {
             home: Platform.isAndroid || Platform.isIOS
                 ? Hotel_Management() //HomePage3()
                 : /*showPlatform*/
-            Hotel_Management() //
-          // adaptiveHome(
-          //         objectBox: objectBox,
-          //       ),
-        );
+                Hotel_Management() //
+            // adaptiveHome(
+            //         objectBox: objectBox,
+            //       ),
+            );
       }),
     );
   }
@@ -205,15 +208,15 @@ class _adaptiveHomeState extends State<adaptiveHome> {
   double prixMin = 0;
   double prixMax = 0;
   final TextEditingController _userController =
-  TextEditingController(text: '20');
+      TextEditingController(text: '20');
   final TextEditingController _clientController =
-  TextEditingController(text: '20');
+      TextEditingController(text: '20');
   final TextEditingController _supplierController =
-  TextEditingController(text: '20');
+      TextEditingController(text: '20');
   final TextEditingController _productController =
-  TextEditingController(text: '20');
+      TextEditingController(text: '20');
   final TextEditingController _approviController =
-  TextEditingController(text: '20');
+      TextEditingController(text: '20');
 
   int lengthPin = 10;
 
@@ -284,13 +287,13 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 decoration: InputDecoration(labelText: 'Prix minimum'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) =>
-                nouveauPrixMin = double.tryParse(value) ?? nouveauPrixMin,
+                    nouveauPrixMin = double.tryParse(value) ?? nouveauPrixMin,
               ),
               TextField(
                 decoration: InputDecoration(labelText: 'Prix maximum'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) =>
-                nouveauPrixMax = double.tryParse(value) ?? nouveauPrixMax,
+                    nouveauPrixMax = double.tryParse(value) ?? nouveauPrixMax,
               ),
             ],
           ),
@@ -329,19 +332,19 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 TextField(
                     controller: _userController,
                     decoration:
-                    InputDecoration(labelText: 'Nombre d\'utilisateurs')),
+                        InputDecoration(labelText: 'Nombre d\'utilisateurs')),
                 TextField(
                     controller: _clientController,
                     decoration:
-                    InputDecoration(labelText: 'Nombre de clients')),
+                        InputDecoration(labelText: 'Nombre de clients')),
                 TextField(
                     controller: _supplierController,
                     decoration:
-                    InputDecoration(labelText: 'Nombre de fournisseurs')),
+                        InputDecoration(labelText: 'Nombre de fournisseurs')),
                 TextField(
                     controller: _productController,
                     decoration:
-                    InputDecoration(labelText: 'Nombre de produits')),
+                        InputDecoration(labelText: 'Nombre de produits')),
                 TextField(
                     controller: _approviController,
                     decoration: InputDecoration(
@@ -423,7 +426,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
   Widget build(BuildContext context) {
     final objectBoxi = Provider.of<ObjectBox>(context, listen: false);
     List<String> roomNumbers =
-    generateRoomNumbers(3, 13, ["111", "102", "313"]);
+        generateRoomNumbers(3, 13, ["111", "102", "313"]);
     final randomId = Random().nextInt(100);
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -441,18 +444,17 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                       child: ElevatedButton.icon(
                         onPressed: () =>
                             Navigator.of(context).push(MaterialPageRoute(
-                              builder: (ctx) =>
-                                  ReservationNavigationButtons(
-                                    roomNumbers: [
-                                      '101',
-                                      '102',
-                                      '103',
-                                      '104',
-                                      '105',
-                                      '108'
-                                    ],
-                                  ),
-                            )),
+                          builder: (ctx) => ReservationNavigationButtons(
+                            roomNumbers: [
+                              '101',
+                              '102',
+                              '103',
+                              '104',
+                              '105',
+                              '108'
+                            ],
+                          ),
+                        )),
                         label: Text('Hotel'),
                         icon: Icon(FontAwesomeIcons.hotel),
                       ),
@@ -464,9 +466,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Switch(
-                        value: Provider
-                            .of<ThemeProvider>(context)
-                            .isDarkTheme,
+                        value: Provider.of<ThemeProvider>(context).isDarkTheme,
                         onChanged: (value) {
                           Provider.of<ThemeProvider>(context, listen: false)
                               .toggleTheme();
@@ -479,15 +479,14 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     ),
                     Platform.isAndroid || Platform.isIOS
                         ? IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (ctx) =>
-                                HashAdmin(
-                                  lengthPin: lengthPin,
-                                )));
-                      },
-                      icon: Icon(Icons.verified_user),
-                    )
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (ctx) => HashAdmin(
+                                        lengthPin: lengthPin,
+                                      )));
+                            },
+                            icon: Icon(Icons.verified_user),
+                          )
                         : Container(),
                     IconButton(
                       onPressed: () => _showDialogFake(objectBoxi),
@@ -721,512 +720,491 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 ),
                 body: Consumer<CommerceProvider>(
                     builder: (context, produitProvider, child) {
-                      int totalProduits = produitProvider.getTotalProduits();
-                      List<Produit> produitsFiltres = produitProvider
-                          .getProduitsBetweenPrices(prixMin, prixMax);
-                      // var produitsLowStock = produitProvider.getProduitsLowStock(5.0);
-                      // var produitsLowStock0 = produitProvider.getProduitsLowStock(0.0);
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TabBarView(children: [
-                          ListView(
-                            children: [
-                              // Padding(
-                              //   padding: const EdgeInsets.all(18.0),
-                              //   child: Center(
-                              //     child: Text(
-                              //       'Mode ${Provider.of<ThemeProvider>(context).isDarkTheme ? "Sombre" : "Clair"}',
-                              //       style: Theme.of(context).textTheme.bodyLarge,
-                              //     ),
-                              //   ),
-                              // ),
-                              GestureDetector(
-                                onTap: () =>
-                                    showForcedRewardedAd(
-                                        context, ProduitListScreen()),
-                                // onTap: () {
-                                //   Navigator.of(context).push(
-                                //     MaterialPageRoute(
-                                //         builder: (context) => ProduitListScreen()),
-                                //   );
-                                // },
-                                child: CardTop(
-                                  image:
+                  int totalProduits = produitProvider.getTotalProduits();
+                  List<Produit> produitsFiltres = produitProvider
+                      .getProduitsBetweenPrices(prixMin, prixMax);
+                  // var produitsLowStock = produitProvider.getProduitsLowStock(5.0);
+                  // var produitsLowStock0 = produitProvider.getProduitsLowStock(0.0);
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TabBarView(children: [
+                      ListView(
+                        children: [
+                          // Padding(
+                          //   padding: const EdgeInsets.all(18.0),
+                          //   child: Center(
+                          //     child: Text(
+                          //       'Mode ${Provider.of<ThemeProvider>(context).isDarkTheme ? "Sombre" : "Clair"}',
+                          //       style: Theme.of(context).textTheme.bodyLarge,
+                          //     ),
+                          //   ),
+                          // ),
+                          GestureDetector(
+                            onTap: () => showForcedRewardedAd(
+                                context, ProduitListScreen()),
+                            // onTap: () {
+                            //   Navigator.of(context).push(
+                            //     MaterialPageRoute(
+                            //         builder: (context) => ProduitListScreen()),
+                            //   );
+                            // },
+                            child: CardTop(
+                              image:
                                   'https://picsum.photos/seed/$randomId/200/100',
-                                  text:
-                                  '${produitProvider
-                                      .getTotalProduits()} Produits',
-                                  provider: produitProvider,
-                                  // button: ElevatedButton(
-                                  //   onPressed: () {
-                                  //     Navigator.of(context).push(
-                                  //       MaterialPageRoute(
-                                  //           builder: (context) => ProduitListScreen()),
-                                  //     );
-                                  //   },
-                                  //   child: Text('Voir plus'),
-                                  // ),
-                                  SmallBanner: false,
+                              text:
+                                  '${produitProvider.getTotalProduits()} Produits',
+                              provider: produitProvider,
+                              // button: ElevatedButton(
+                              //   onPressed: () {
+                              //     Navigator.of(context).push(
+                              //       MaterialPageRoute(
+                              //           builder: (context) => ProduitListScreen()),
+                              //     );
+                              //   },
+                              //   child: Text('Voir plus'),
+                              // ),
+                              SmallBanner: false,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Row(
+                          //   children: [
+                          //     ElevatedButton(
+                          //         onPressed: () => Navigator.of(context)
+                          //                 .push(MaterialPageRoute(
+                          //               builder: (ctx) => HotelReservationChart(
+                          //                 fromDate: DateTime(2024, 1, 1),
+                          //                 toDate: DateTime(2024, 12, 31),
+                          //                 roomNames: roomNumbers,
+                          //                 reservations: [
+                          //                   Reservation(
+                          //                     clientName: "John Doe",
+                          //                     roomName: "101",
+                          //                     startDate: DateTime(2024, 1, 5),
+                          //                     endDate: DateTime(2024, 1, 9),
+                          //                     pricePerNight: 100.0,
+                          //                     status: "Confirmed",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "Jane Smith",
+                          //                     roomName: "102",
+                          //                     startDate: DateTime(2024, 2, 4),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 150.0,
+                          //                     status: "Checked In",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "John Doe",
+                          //                     roomName: "103",
+                          //                     startDate: DateTime(2024, 2, 1),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 100.0,
+                          //                     status: "Confirmed",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "Jane Smith",
+                          //                     roomName: "104",
+                          //                     startDate: DateTime(2024, 2, 4),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 150.0,
+                          //                     status: "Checked In",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "John Doe",
+                          //                     roomName: "105",
+                          //                     startDate: DateTime(2024, 1, 2),
+                          //                     endDate: DateTime(2024, 1, 5),
+                          //                     pricePerNight: 100.0,
+                          //                     status: "Confirmed",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "Jane Smith",
+                          //                     roomName: "108",
+                          //                     startDate: DateTime(2024, 2, 4),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 150.0,
+                          //                     status: "Checked In",
+                          //                   ),
+                          //                 ],
+                          //               ),
+                          //             )),
+                          //         child: Text('Hotel')),
+                          //     SizedBox(
+                          //       width: 20,
+                          //     ),
+                          //     ElevatedButton(
+                          //         onPressed: () => Navigator.of(context)
+                          //                 .push(MaterialPageRoute(
+                          //               builder: (ctx) =>
+                          //                   CalendarTableWithDragging(
+                          //                 fromDate: DateTime.now(),
+                          //                 toDate: DateTime.now()
+                          //                     .add(Duration(days: 30)),
+                          //                 roomNames: roomNumbers,
+                          //                 reservations: [
+                          //                   Reservation(
+                          //                     clientName: "John Doe",
+                          //                     roomName: "101",
+                          //                     startDate: DateTime(2024, 1, 5),
+                          //                     endDate: DateTime(2024, 1, 9),
+                          //                     pricePerNight: 100.0,
+                          //                     status: "Confirmed",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "Jane Smith",
+                          //                     roomName: "102",
+                          //                     startDate: DateTime(2024, 2, 4),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 150.0,
+                          //                     status: "Checked In",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "John Doe",
+                          //                     roomName: "103",
+                          //                     startDate: DateTime(2024, 2, 1),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 100.0,
+                          //                     status: "Confirmed",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "Jane Smith",
+                          //                     roomName: "104",
+                          //                     startDate: DateTime(2024, 2, 4),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 150.0,
+                          //                     status: "Checked In",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "John Doe",
+                          //                     roomName: "105",
+                          //                     startDate: DateTime(2024, 1, 2),
+                          //                     endDate: DateTime(2024, 1, 5),
+                          //                     pricePerNight: 100.0,
+                          //                     status: "Confirmed",
+                          //                   ),
+                          //                   Reservation(
+                          //                     clientName: "Jane Smith",
+                          //                     roomName: "108",
+                          //                     startDate: DateTime(2024, 2, 4),
+                          //                     endDate: DateTime(2024, 2, 5),
+                          //                     pricePerNight: 150.0,
+                          //                     status: "Checked In",
+                          //                   ),
+                          //                 ],
+                          //               ),
+                          //             )),
+                          //         child: Text('Hotel Fiable')),
+                          //   ],
+                          // ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              width: MediaQuery.of(context).size.width,
+                              padding: EdgeInsets.all(15.0),
+                              // Espacement à l'intérieur du cadre
+                              decoration: BoxDecoration(
+                                //      color: Colors.grey, // Couleur de fond
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Bords arrondis
+                                border: Border.all(
+                                  color: Colors.grey,
+                                  // Couleur de la bordure
+                                  width: 1.0, // Épaisseur de la bordure
                                 ),
                               ),
-                              const SizedBox(height: 20),
-                              // Row(
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: ElevatedButton.icon(
+                                    onPressed: () => showForcedRewardedAd(
+                                        context, FacturationPageUI()),
+                                    // onPressed: () {
+                                    //   Navigator.of(context).push(MaterialPageRoute(
+                                    //       builder: (_) => FacturePage()));
+                                    // },
+                                    label: Text(
+                                      'Factures',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    icon: Icon(Icons.add)),
+                              ),
+                              // Column(
                               //   children: [
-                              //     ElevatedButton(
-                              //         onPressed: () => Navigator.of(context)
-                              //                 .push(MaterialPageRoute(
-                              //               builder: (ctx) => HotelReservationChart(
-                              //                 fromDate: DateTime(2024, 1, 1),
-                              //                 toDate: DateTime(2024, 12, 31),
-                              //                 roomNames: roomNumbers,
-                              //                 reservations: [
-                              //                   Reservation(
-                              //                     clientName: "John Doe",
-                              //                     roomName: "101",
-                              //                     startDate: DateTime(2024, 1, 5),
-                              //                     endDate: DateTime(2024, 1, 9),
-                              //                     pricePerNight: 100.0,
-                              //                     status: "Confirmed",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "Jane Smith",
-                              //                     roomName: "102",
-                              //                     startDate: DateTime(2024, 2, 4),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 150.0,
-                              //                     status: "Checked In",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "John Doe",
-                              //                     roomName: "103",
-                              //                     startDate: DateTime(2024, 2, 1),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 100.0,
-                              //                     status: "Confirmed",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "Jane Smith",
-                              //                     roomName: "104",
-                              //                     startDate: DateTime(2024, 2, 4),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 150.0,
-                              //                     status: "Checked In",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "John Doe",
-                              //                     roomName: "105",
-                              //                     startDate: DateTime(2024, 1, 2),
-                              //                     endDate: DateTime(2024, 1, 5),
-                              //                     pricePerNight: 100.0,
-                              //                     status: "Confirmed",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "Jane Smith",
-                              //                     roomName: "108",
-                              //                     startDate: DateTime(2024, 2, 4),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 150.0,
-                              //                     status: "Checked In",
-                              //                   ),
-                              //                 ],
-                              //               ),
-                              //             )),
-                              //         child: Text('Hotel')),
-                              //     SizedBox(
-                              //       width: 20,
+                              //     Text('Factures'),
+                              //
+                              //
+                              //
+                              //     Row(
+                              //       mainAxisAlignment: MainAxisAlignment.center,
+                              //       children: [
+                              //         Expanded(
+                              //           child: Padding(
+                              //             padding: const EdgeInsets.all(8.0),
+                              //             child: ElevatedButton.icon(
+                              //                 onPressed: () =>
+                              //                     showForcedRewardedAd(context,
+                              //                         FacturationPageUI()),
+                              //                 // onPressed: () {
+                              //                 //   Navigator.of(context).push(MaterialPageRoute(
+                              //                 //       builder: (_) => FacturePage()));
+                              //                 // },
+                              //                 label: Text(
+                              //                   'Ajouter',
+                              //                   overflow: TextOverflow.ellipsis,
+                              //                 ),
+                              //                 icon: Icon(Icons.add)),
+                              //           ),
+                              //         ),
+                              //
+                              //         Expanded(
+                              //           child: Padding(
+                              //             padding: const EdgeInsets.all(8.0),
+                              //             child: ElevatedButton.icon(
+                              //                 onPressed: () =>
+                              //                     showForcedRewardedAd(
+                              //                       context,
+                              //                       FactureList(),
+                              //                       // FacturesListPage(
+                              //                       //     // onFactureSelected:
+                              //                       //     //     (facture) {
+                              //                       //     //   setState(() {
+                              //                       //     //     selectedFacture =
+                              //                       //     //         facture;
+                              //                       //     //   });
+                              //                       //     // },
+                              //                       //     ),
+                              //                     ),
+                              //                 // onPressed: () {
+                              //                 //   Navigator.of(context).push(MaterialPageRoute(
+                              //                 //       builder: (_) => FacturesListPage()));
+                              //                 // },
+                              //                 label: Text(
+                              //                   'List',
+                              //                   overflow: TextOverflow.ellipsis,
+                              //                 ),
+                              //                 icon: Icon(Icons.list_alt)),
+                              //           ),
+                              //         ),
+                              //       ],
                               //     ),
-                              //     ElevatedButton(
-                              //         onPressed: () => Navigator.of(context)
-                              //                 .push(MaterialPageRoute(
-                              //               builder: (ctx) =>
-                              //                   CalendarTableWithDragging(
-                              //                 fromDate: DateTime.now(),
-                              //                 toDate: DateTime.now()
-                              //                     .add(Duration(days: 30)),
-                              //                 roomNames: roomNumbers,
-                              //                 reservations: [
-                              //                   Reservation(
-                              //                     clientName: "John Doe",
-                              //                     roomName: "101",
-                              //                     startDate: DateTime(2024, 1, 5),
-                              //                     endDate: DateTime(2024, 1, 9),
-                              //                     pricePerNight: 100.0,
-                              //                     status: "Confirmed",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "Jane Smith",
-                              //                     roomName: "102",
-                              //                     startDate: DateTime(2024, 2, 4),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 150.0,
-                              //                     status: "Checked In",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "John Doe",
-                              //                     roomName: "103",
-                              //                     startDate: DateTime(2024, 2, 1),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 100.0,
-                              //                     status: "Confirmed",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "Jane Smith",
-                              //                     roomName: "104",
-                              //                     startDate: DateTime(2024, 2, 4),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 150.0,
-                              //                     status: "Checked In",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "John Doe",
-                              //                     roomName: "105",
-                              //                     startDate: DateTime(2024, 1, 2),
-                              //                     endDate: DateTime(2024, 1, 5),
-                              //                     pricePerNight: 100.0,
-                              //                     status: "Confirmed",
-                              //                   ),
-                              //                   Reservation(
-                              //                     clientName: "Jane Smith",
-                              //                     roomName: "108",
-                              //                     startDate: DateTime(2024, 2, 4),
-                              //                     endDate: DateTime(2024, 2, 5),
-                              //                     pricePerNight: 150.0,
-                              //                     status: "Checked In",
-                              //                   ),
-                              //                 ],
-                              //               ),
-                              //             )),
-                              //         child: Text('Hotel Fiable')),
                               //   ],
                               // ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                  width: MediaQuery
-                                      .of(context)
-                                      .size
-                                      .width,
-                                  padding: EdgeInsets.all(15.0),
-                                  // Espacement à l'intérieur du cadre
-                                  decoration: BoxDecoration(
-                                    //      color: Colors.grey, // Couleur de fond
-                                    borderRadius: BorderRadius.circular(
-                                        8.0), // Bords arrondis
-                                    border: Border.all(
-                                      color: Colors.grey,
-                                      // Couleur de la bordure
-                                      width: 1.0, // Épaisseur de la bordure
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton.icon(
-                                        onPressed: () =>
-                                            showForcedRewardedAd(
-                                                context, FacturationPageUI()),
-                                        // onPressed: () {
-                                        //   Navigator.of(context).push(MaterialPageRoute(
-                                        //       builder: (_) => FacturePage()));
-                                        // },
-                                        label: Text(
-                                          'Factures',
-                                          overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        foregroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .onPrimary,
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(15.0),
                                         ),
-                                        icon: Icon(Icons.add)),
-                                  ),
-                                  // Column(
-                                  //   children: [
-                                  //     Text('Factures'),
-                                  //
-                                  //
-                                  //
-                                  //     Row(
-                                  //       mainAxisAlignment: MainAxisAlignment.center,
-                                  //       children: [
-                                  //         Expanded(
-                                  //           child: Padding(
-                                  //             padding: const EdgeInsets.all(8.0),
-                                  //             child: ElevatedButton.icon(
-                                  //                 onPressed: () =>
-                                  //                     showForcedRewardedAd(context,
-                                  //                         FacturationPageUI()),
-                                  //                 // onPressed: () {
-                                  //                 //   Navigator.of(context).push(MaterialPageRoute(
-                                  //                 //       builder: (_) => FacturePage()));
-                                  //                 // },
-                                  //                 label: Text(
-                                  //                   'Ajouter',
-                                  //                   overflow: TextOverflow.ellipsis,
-                                  //                 ),
-                                  //                 icon: Icon(Icons.add)),
-                                  //           ),
-                                  //         ),
-                                  //
-                                  //         Expanded(
-                                  //           child: Padding(
-                                  //             padding: const EdgeInsets.all(8.0),
-                                  //             child: ElevatedButton.icon(
-                                  //                 onPressed: () =>
-                                  //                     showForcedRewardedAd(
-                                  //                       context,
-                                  //                       FactureList(),
-                                  //                       // FacturesListPage(
-                                  //                       //     // onFactureSelected:
-                                  //                       //     //     (facture) {
-                                  //                       //     //   setState(() {
-                                  //                       //     //     selectedFacture =
-                                  //                       //     //         facture;
-                                  //                       //     //   });
-                                  //                       //     // },
-                                  //                       //     ),
-                                  //                     ),
-                                  //                 // onPressed: () {
-                                  //                 //   Navigator.of(context).push(MaterialPageRoute(
-                                  //                 //       builder: (_) => FacturesListPage()));
-                                  //                 // },
-                                  //                 label: Text(
-                                  //                   'List',
-                                  //                   overflow: TextOverflow.ellipsis,
-                                  //                 ),
-                                  //                 icon: Icon(Icons.list_alt)),
-                                  //           ),
-                                  //         ),
-                                  //       ],
-                                  //     ),
-                                  //   ],
-                                  // ),
-                                ),
-                              ),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            foregroundColor: Theme
-                                                .of(context)
-                                                .colorScheme
-                                                .onPrimary,
-                                            backgroundColor: Theme
-                                                .of(context)
-                                                .colorScheme
-                                                .primary,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(15.0),
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        addProduct()));
-                                          },
-                                          label: Text(
-                                            'Produit',
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          icon: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 50),
-                                            child: Icon(
-                                              Icons.add,
-                                              color: Theme
-                                                  .of(context)
-                                                  .colorScheme
-                                                  .onPrimary, // Force la couleur
-                                            ),
-                                          )),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: ElevatedButton.icon(
-                                          style: ElevatedButton.styleFrom(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(15.0),
-                                            ),
-                                          ),
-                                          onPressed: () {
-                                            showModalBottomSheet(
-                                              context: context,
-                                              isScrollControlled: true,
-                                              // Permet de redimensionner en fonction de la hauteur du contenu
-                                              builder: (context) =>
-                                                  AddFournisseurForm(),
-                                            );
-                                          },
-                                          label: Text(
-                                            'Fournisseur',
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          icon: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 50),
-                                            child: Icon(Icons.add),
-                                          )),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              // ElevatedButton(
-                              //     onPressed: () {
-                              //       Navigator.of(context).push(MaterialPageRoute(
-                              //           builder: (_) => addProduct()));
-                              //     },
-                              //     child: Text('Add Product 2')),
-                              // Padding(
-                              //   padding: const EdgeInsets.symmetric(
-                              //       horizontal: 8, vertical: 15),
-                              //   child: ElevatedButton(
-                              //     onPressed: () async {
-                              //       await replaceObjectBoxDatabase(context);
-                              //       // Rafraîchir l'interface utilisateur ou redémarrer l'application si nécessaire
-                              //     },
-                              //     child: Text('Remplacer la base de données'),
-                              //   ),
-                              // ),
-                              // Padding(
-                              //   padding: const EdgeInsets.symmetric(
-                              //       horizontal: 18, vertical: 20),
-                              //   child: ElevatedButton.icon(
-                              //       style: ElevatedButton.styleFrom(
-                              //         foregroundColor:
-                              //             Theme.of(context).colorScheme.onPrimary,
-                              //         backgroundColor:
-                              //             Theme.of(context).colorScheme.primary,
-                              //         shape: RoundedRectangleBorder(
-                              //           borderRadius: BorderRadius.circular(15.0),
-                              //         ),
-                              //       ),
-                              //       onPressed: () {
-                              //         Navigator.of(context).push(MaterialPageRoute(
-                              //             builder: (ctx) => add_Produit()));
-                              //       },
-                              //       label: Text('Add Product'),
-                              //       icon: Icon(Icons.add)),
-                              // ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 50, vertical: 15),
-                                child: ElevatedButton.icon(
-                                    onPressed: () =>
-                                        DatabaseUpdater.pickAndReplaceDatabase(
-                                            context),
-                                    label: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 8),
-                                      child: Text(
-                                        'Upload DB',
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
                                       ),
-                                    ),
-                                    icon: Icon(
-                                      Icons.download,
-                                      color: Colors.blue,
-                                    )),
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                            MaterialPageRoute(
+                                                builder: (_) => addProduct()));
+                                      },
+                                      label: Text(
+                                        'Produit',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      icon: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 50),
+                                        child: Icon(
+                                          Icons.add,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary, // Force la couleur
+                                        ),
+                                      )),
+                                ),
                               ),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(15.0),
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          // Permet de redimensionner en fonction de la hauteur du contenu
+                                          builder: (context) =>
+                                              AddFournisseurForm(),
+                                        );
+                                      },
+                                      label: Text(
+                                        'Fournisseur',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      icon: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 50),
+                                        child: Icon(Icons.add),
+                                      )),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // ElevatedButton(
+                          //     onPressed: () {
+                          //       Navigator.of(context).push(MaterialPageRoute(
+                          //           builder: (_) => addProduct()));
+                          //     },
+                          //     child: Text('Add Product 2')),
+                          // Padding(
+                          //   padding: const EdgeInsets.symmetric(
+                          //       horizontal: 8, vertical: 15),
+                          //   child: ElevatedButton(
+                          //     onPressed: () async {
+                          //       await replaceObjectBoxDatabase(context);
+                          //       // Rafraîchir l'interface utilisateur ou redémarrer l'application si nécessaire
+                          //     },
+                          //     child: Text('Remplacer la base de données'),
+                          //   ),
+                          // ),
+                          // Padding(
+                          //   padding: const EdgeInsets.symmetric(
+                          //       horizontal: 18, vertical: 20),
+                          //   child: ElevatedButton.icon(
+                          //       style: ElevatedButton.styleFrom(
+                          //         foregroundColor:
+                          //             Theme.of(context).colorScheme.onPrimary,
+                          //         backgroundColor:
+                          //             Theme.of(context).colorScheme.primary,
+                          //         shape: RoundedRectangleBorder(
+                          //           borderRadius: BorderRadius.circular(15.0),
+                          //         ),
+                          //       ),
+                          //       onPressed: () {
+                          //         Navigator.of(context).push(MaterialPageRoute(
+                          //             builder: (ctx) => add_Produit()));
+                          //       },
+                          //       label: Text('Add Product'),
+                          //       icon: Icon(Icons.add)),
+                          // ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 50, vertical: 15),
+                            child: ElevatedButton.icon(
+                                onPressed: () =>
+                                    DatabaseUpdater.pickAndReplaceDatabase(
+                                        context),
+                                label: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 8),
+                                  child: Text(
+                                    'Upload DB',
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                icon: Icon(
+                                  Icons.download,
+                                  color: Colors.blue,
+                                )),
+                          ),
 
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            cruds.UserListScreen()),
-                                  );
-                                },
-                                child: CardTop(
-                                  image:
-                                  'https://picsum.photos/seed/${randomId +
-                                      4}/200/100',
-                                  text: '${produitProvider.users.length} Users',
-                                  provider: produitProvider,
-                                  SmallBanner: true,
-                                ),
-                              ),
-                              // Padding(
-                              //   padding: const EdgeInsets.all(8.0),
-                              //   child: ElevatedButton.icon(
-                              //       onPressed: () => showForcedRewardedAd(
-                              //           context, ClientListScreen()),
-                              //       // onPressed: () {
-                              //       //   Navigator.of(context).push(MaterialPageRoute(
-                              //       //       builder: (_) => ClientListScreen()));
-                              //       // },
-                              //       label: Text('Client List'),
-                              //       icon: Icon(Icons.account_circle)),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        cruds.UserListScreen()),
+                              );
+                            },
+                            child: CardTop(
+                              image:
+                                  'https://picsum.photos/seed/${randomId + 4}/200/100',
+                              text: '${produitProvider.users.length} Users',
+                              provider: produitProvider,
+                              SmallBanner: true,
+                            ),
+                          ),
+                          // Padding(
+                          //   padding: const EdgeInsets.all(8.0),
+                          //   child: ElevatedButton.icon(
+                          //       onPressed: () => showForcedRewardedAd(
+                          //           context, ClientListScreen()),
+                          //       // onPressed: () {
+                          //       //   Navigator.of(context).push(MaterialPageRoute(
+                          //       //       builder: (_) => ClientListScreen()));
+                          //       // },
+                          //       label: Text('Client List'),
+                          //       icon: Icon(Icons.account_circle)),
+                          // ),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        FournisseurListScreen()),
+                              );
+                            },
+                            child: CardTop(
+                              image:
+                                  'https://picsum.photos/seed/${randomId + 8}/200/100',
+                              text:
+                                  '${produitProvider.fournisseurs.length} Fournisseurs',
+                              provider: produitProvider,
+                              SmallBanner: true,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => showForcedRewardedAd(
+                                context, ClientListScreen()),
+                            // onTap: () {
+                            //   Navigator.of(context).push(
+                            //     MaterialPageRoute(
+                            //         builder: (context) => ClientListScreen()),
+                            //   );
+                            // },
+                            child: CardTop(
+                              image:
+                                  'https://picsum.photos/seed/${randomId + 2}/200/100',
+                              text:
+                                  '${produitProvider.getTotalClientsCount()} Clients',
+                              provider: produitProvider,
+                              // button: ElevatedButton(
+                              //   onPressed: () {
+                              //     Navigator.of(context).push(
+                              //       MaterialPageRoute(
+                              //           builder: (context) => ProduitListScreen()),
+                              //     );
+                              //   },
+                              //   child: Text('Voir plus'),
                               // ),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            FournisseurListScreen()),
-                                  );
-                                },
-                                child: CardTop(
-                                  image:
-                                  'https://picsum.photos/seed/${randomId +
-                                      8}/200/100',
-                                  text:
-                                  '${produitProvider.fournisseurs
-                                      .length} Fournisseurs',
-                                  provider: produitProvider,
-                                  SmallBanner: true,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () =>
-                                    showForcedRewardedAd(
-                                        context, ClientListScreen()),
-                                // onTap: () {
-                                //   Navigator.of(context).push(
-                                //     MaterialPageRoute(
-                                //         builder: (context) => ClientListScreen()),
-                                //   );
-                                // },
-                                child: CardTop(
-                                  image:
-                                  'https://picsum.photos/seed/${randomId +
-                                      2}/200/100',
-                                  text:
-                                  '${produitProvider
-                                      .getTotalClientsCount()} Clients',
-                                  provider: produitProvider,
-                                  // button: ElevatedButton(
-                                  //   onPressed: () {
-                                  //     Navigator.of(context).push(
-                                  //       MaterialPageRoute(
-                                  //           builder: (context) => ProduitListScreen()),
-                                  //     );
-                                  //   },
-                                  //   child: Text('Voir plus'),
-                                  // ),
-                                  SmallBanner: false,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () =>
-                                    _ouvrirDialogAjustementPrix(context),
-                                child: CardTop2(
-                                  image:
-                                  'https://picsum.photos/seed/${randomId +
-                                      1}/200/100',
-                                  text:
-                                  '${produitsFiltres
-                                      .length} Produits\nentre ${prixMin
-                                      .toStringAsFixed(2)} DZD et ${prixMax
-                                      .toStringAsFixed(2)} DZD',
-                                  provider: produitProvider,
-                                  button: produitsFiltres.length == 0
-                                      ? ElevatedButton(
+                              SmallBanner: false,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => _ouvrirDialogAjustementPrix(context),
+                            child: CardTop2(
+                              image:
+                                  'https://picsum.photos/seed/${randomId + 1}/200/100',
+                              text:
+                                  '${produitsFiltres.length} Produits\nentre ${prixMin.toStringAsFixed(2)} DZD et ${prixMax.toStringAsFixed(2)} DZD',
+                              provider: produitProvider,
+                              button: produitsFiltres.length == 0
+                                  ? ElevatedButton(
                                       onPressed: null,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.grey[300],
@@ -1234,93 +1212,93 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                                         foregroundColor: Colors.grey[600],
                                         // Couleur du texte grise
                                         disabledBackgroundColor:
-                                        Colors.grey[300],
+                                            Colors.grey[300],
                                         // Assure que la couleur reste grise même désactivé
                                         disabledForegroundColor: Colors.grey[
-                                        600], // Assure que la couleur du texte reste grise même désactivé
+                                            600], // Assure que la couleur du texte reste grise même désactivé
                                       ),
                                       child: Text(('Liste Vide')))
-                                      : ElevatedButton.icon(
+                                  : ElevatedButton.icon(
                                       onPressed: () {
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
                                               builder: (context) =>
                                                   ProduitListInterval(
                                                     produitsFiltres:
-                                                    produitsFiltres,
+                                                        produitsFiltres,
                                                   )),
                                         );
                                       },
                                       label: Text(('Voire La List'))),
-                                  SmallBanner: false,
+                              SmallBanner: false,
+                            ),
+                          ),
+                          // CardAlert(
+                          //   image:
+                          //       'https://picsum.photos/seed/${randomId + 3}/200/100',
+                          //   text:
+                          //       'Alert stock < 5\n${produitsLowStock['count']} Produits\n\nRupture de stock\n${produitsLowStock0['count']} Produits',
+                          //   provider: produitProvider,
+                          //   button: produitsLowStock['count'] == 0 &&
+                          //           produitsLowStock0['count'] == 0
+                          //       ? null
+                          //       : ElevatedButton(
+                          //           onPressed: () {
+                          //             Navigator.of(context).push(
+                          //               MaterialPageRoute(
+                          //                 builder: (context) => LowStockList(
+                          //                     produitsLowStock: produitsLowStock),
+                          //                 // ProduitListInterval(
+                          //                 //   produitsFiltres:
+                          //                 //       produitsFiltres,
+                          //                 // ),
+                          //               ),
+                          //             );
+                          //           },
+                          //           child: Text(('Voire La List'))),
+                          //   Color1: Colors.red,
+                          //   Color2: Colors.black,
+                          // ),
+                          Padding(
+                            padding: const EdgeInsets.all(15.0),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                widget.objectBox.deleteDatabase();
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Base de Données Vider avec succes!')),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
                                 ),
-                              ),
-                              // CardAlert(
-                              //   image:
-                              //       'https://picsum.photos/seed/${randomId + 3}/200/100',
-                              //   text:
-                              //       'Alert stock < 5\n${produitsLowStock['count']} Produits\n\nRupture de stock\n${produitsLowStock0['count']} Produits',
-                              //   provider: produitProvider,
-                              //   button: produitsLowStock['count'] == 0 &&
-                              //           produitsLowStock0['count'] == 0
-                              //       ? null
-                              //       : ElevatedButton(
-                              //           onPressed: () {
-                              //             Navigator.of(context).push(
-                              //               MaterialPageRoute(
-                              //                 builder: (context) => LowStockList(
-                              //                     produitsLowStock: produitsLowStock),
-                              //                 // ProduitListInterval(
-                              //                 //   produitsFiltres:
-                              //                 //       produitsFiltres,
-                              //                 // ),
-                              //               ),
-                              //             );
-                              //           },
-                              //           child: Text(('Voire La List'))),
-                              //   Color1: Colors.red,
-                              //   Color2: Colors.black,
-                              // ),
-                              Padding(
-                                padding: const EdgeInsets.all(15.0),
-                                child: TextButton.icon(
-                                  onPressed: () {
-                                    widget.objectBox.deleteDatabase();
+                                // Couleur de fond grise
 
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Base de Données Vider avec succes!')),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15.0),
-                                    ),
-                                    // Couleur de fond grise
-
-                                    backgroundColor: Colors.red,
-                                    // Couleur de fond grise
-                                    foregroundColor: Colors.grey[300],
-                                    // Couleur du texte grise
-                                    disabledBackgroundColor: Colors.grey[300],
-                                    // Assure que la couleur reste grise même désactivé
-                                    disabledForegroundColor: Colors.grey[
+                                backgroundColor: Colors.red,
+                                // Couleur de fond grise
+                                foregroundColor: Colors.grey[300],
+                                // Couleur du texte grise
+                                disabledBackgroundColor: Colors.grey[300],
+                                // Assure que la couleur reste grise même désactivé
+                                disabledForegroundColor: Colors.grey[
                                     600], // Assure que la couleur du texte reste grise même désactivé
-                                  ),
-                                  icon: Icon(Icons.delete_outline_sharp),
-                                  label: Text('DB Erase'),
-                                ),
                               ),
-                            ],
+                              icon: Icon(Icons.delete_outline_sharp),
+                              label: Text('DB Erase'),
+                            ),
                           ),
-                          // Vue pour le CarouselExample
-                          CarouselExample(
-                            provider: produitProvider,
-                          ),
-                        ]),
-                      );
-                    }),
+                        ],
+                      ),
+                      // Vue pour le CarouselExample
+                      CarouselExample(
+                        provider: produitProvider,
+                      ),
+                    ]),
+                  );
+                }),
               ),
             ),
           );
@@ -1354,18 +1332,17 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     child: ElevatedButton.icon(
                       onPressed: () =>
                           Navigator.of(context).push(MaterialPageRoute(
-                            builder: (ctx) =>
-                                ReservationNavigationButtons(
-                                  roomNumbers: [
-                                    '101',
-                                    '102',
-                                    '103',
-                                    '104',
-                                    '105',
-                                    '108'
-                                  ],
-                                ),
-                          )),
+                        builder: (ctx) => ReservationNavigationButtons(
+                          roomNumbers: [
+                            '101',
+                            '102',
+                            '103',
+                            '104',
+                            '105',
+                            '108'
+                          ],
+                        ),
+                      )),
                       label: Text('Hotel Screen'),
                       icon: Icon(FontAwesomeIcons.hotel),
                     ),
@@ -1375,9 +1352,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Switch(
-                      value: Provider
-                          .of<ThemeProvider>(context)
-                          .isDarkTheme,
+                      value: Provider.of<ThemeProvider>(context).isDarkTheme,
                       onChanged: (value) {
                         Provider.of<ThemeProvider>(context, listen: false)
                             .toggleTheme();
@@ -1425,13 +1400,12 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                   IconButton(
                     onPressed: () {
                       Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) =>
-                            FacturesListPage(
-                              // onFactureSelected: (facture) {
-                              //   setState(() {
-                              //     selectedFacture = facture;
-                              //   });
-                              // },
+                        builder: (ctx) => FacturesListPage(
+                            // onFactureSelected: (facture) {
+                            //   setState(() {
+                            //     selectedFacture = facture;
+                            //   });
+                            // },
                             ),
                       ));
                     },
@@ -1450,9 +1424,9 @@ class _adaptiveHomeState extends State<adaptiveHome> {
 
                   IconButton(
                     onPressed: () =>
-                    //objectBox.fillWithFakeData(20, 20, 10, 20, 20),
+                        //objectBox.fillWithFakeData(20, 20, 10, 20, 20),
 
-                    _showDialogFake(objectBoxi),
+                        _showDialogFake(objectBoxi),
                     icon: Icon(Icons.send),
                   ),
                   IconButton(
@@ -1569,22 +1543,22 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                       _selectedIndex == 0
                           ? Expanded(flex: 5, child: FactureDetail())
                           : _selectedIndex == 1
-                          ? buildExpanded(context, randomId,
-                          produitProvider, produitsFiltres, roomNumbers
-                        // produitsLowStock,
-                        // produitsLowStock0,
-                      )
-                          : Expanded(
-                        flex: 1,
-                        child: CarouselExample(
-                          provider: produitProvider,
-                        ),
-                      ),
+                              ? buildExpanded(context, randomId,
+                                  produitProvider, produitsFiltres, roomNumbers
+                                  // produitsLowStock,
+                                  // produitsLowStock0,
+                                  )
+                              : Expanded(
+                                  flex: 1,
+                                  child: CarouselExample(
+                                    provider: produitProvider,
+                                  ),
+                                ),
                       _selectedIndex == 0
                           ? Expanded(
-                        flex: 2,
-                        child: _widgetOptions()[_selectedIndex],
-                      )
+                              flex: 2,
+                              child: _widgetOptions()[_selectedIndex],
+                            )
                           : Container(),
                     ],
                   );
@@ -1606,14 +1580,15 @@ class _adaptiveHomeState extends State<adaptiveHome> {
     );
   }
 
-  Expanded buildExpanded(BuildContext context,
-      int randomId,
-      CommerceProvider produitProvider,
-      List<Produit> produitsFiltres,
-      List<String> roomNumbers,
-      // Map<String, dynamic> produitsLowStock,
-      // Map<String, dynamic> produitsLowStock0
-      ) {
+  Expanded buildExpanded(
+    BuildContext context,
+    int randomId,
+    CommerceProvider produitProvider,
+    List<Produit> produitsFiltres,
+    List<String> roomNumbers,
+    // Map<String, dynamic> produitsLowStock,
+    // Map<String, dynamic> produitsLowStock0
+  ) {
     return Expanded(
       flex: 1,
       child: ListView(
@@ -1632,7 +1607,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     },
                     child: CardTop(
                       image:
-                      'https://picsum.photos/seed/${randomId + 4}/200/100',
+                          'https://picsum.photos/seed/${randomId + 4}/200/100',
                       text: '${produitProvider.users.length} Users',
                       provider: produitProvider,
                       SmallBanner: true,
@@ -1649,9 +1624,9 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     },
                     child: CardTop(
                       image:
-                      'https://picsum.photos/seed/${randomId + 8}/200/100',
+                          'https://picsum.photos/seed/${randomId + 8}/200/100',
                       text:
-                      '${produitProvider.fournisseurs.length} Fournisseurs',
+                          '${produitProvider.fournisseurs.length} Fournisseurs',
                       provider: produitProvider,
                       // button: ElevatedButton(
                       //   onPressed: () {
@@ -1698,36 +1673,34 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     onTap: () => _ouvrirDialogAjustementPrix(context),
                     child: CardTop(
                       image:
-                      'https://picsum.photos/seed/${randomId + 1}/200/100',
+                          'https://picsum.photos/seed/${randomId + 1}/200/100',
                       text:
-                      '${produitsFiltres.length} Produits\n${prixMin
-                          .toStringAsFixed(2)}\n${prixMax.toStringAsFixed(2)}',
+                          '${produitsFiltres.length} Produits\n${prixMin.toStringAsFixed(2)}\n${prixMax.toStringAsFixed(2)}',
                       provider: produitProvider,
                       button: produitsFiltres.length == 0
                           ? ElevatedButton(
-                          onPressed: null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[300],
-                            // Couleur de fond grise
-                            foregroundColor: Colors.grey[600],
-                            // Couleur du texte grise
-                            disabledBackgroundColor: Colors.grey[300],
-                            // Assure que la couleur reste grise même désactivé
-                            disabledForegroundColor: Colors.grey[
-                            600], // Assure que la couleur du texte reste grise même désactivé
-                          ),
-                          child: Text(('Liste Vide')))
+                              onPressed: null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                // Couleur de fond grise
+                                foregroundColor: Colors.grey[600],
+                                // Couleur du texte grise
+                                disabledBackgroundColor: Colors.grey[300],
+                                // Assure que la couleur reste grise même désactivé
+                                disabledForegroundColor: Colors.grey[
+                                    600], // Assure que la couleur du texte reste grise même désactivé
+                              ),
+                              child: Text(('Liste Vide')))
                           : ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProduitListInterval(
-                                        produitsFiltres: produitsFiltres,
-                                      )),
-                            );
-                          },
-                          label: Text(('Voire La List'))),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (context) => ProduitListInterval(
+                                            produitsFiltres: produitsFiltres,
+                                          )),
+                                );
+                              },
+                              label: Text(('Voire La List'))),
                       SmallBanner: false,
                     ),
                   ),
@@ -1771,20 +1744,11 @@ class _adaptiveHomeState extends State<adaptiveHome> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton.icon(
-              onPressed: () =>
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (ctx) =>
-                        ReservationNavigationButtons(
-                          roomNumbers: [
-                            '101',
-                            '102',
-                            '103',
-                            '104',
-                            '105',
-                            '108'
-                          ],
-                        ),
-                  )),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (ctx) => ReservationNavigationButtons(
+                  roomNumbers: ['101', '102', '103', '104', '105', '108'],
+                ),
+              )),
               label: Text('Hotel Screen'),
               icon: Icon(FontAwesomeIcons.hotel),
             ),
@@ -1819,15 +1783,9 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                     child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           foregroundColor:
-                          Theme
-                              .of(context)
-                              .colorScheme
-                              .onPrimary,
+                              Theme.of(context).colorScheme.onPrimary,
                           backgroundColor:
-                          Theme
-                              .of(context)
-                              .colorScheme
-                              .primary,
+                              Theme.of(context).colorScheme.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15.0),
                           ),
@@ -1844,8 +1802,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                           padding: const EdgeInsets.symmetric(vertical: 50),
                           child: Icon(
                             Icons.add,
-                            color: Theme
-                                .of(context)
+                            color: Theme.of(context)
                                 .colorScheme
                                 .onPrimary, // Force la couleur
                           ),
@@ -1960,9 +1917,9 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 backgroundColor: Colors.grey[300], // Couleur de fond grise
                 foregroundColor: Colors.red, // Couleur du texte grise
                 disabledBackgroundColor: Colors.grey[
-                300], // Assure que la couleur reste grise même désactivé
+                    300], // Assure que la couleur reste grise même désactivé
                 disabledForegroundColor: Colors.grey[
-                600], // Assure que la couleur du texte reste grise même désactivé
+                    600], // Assure que la couleur du texte reste grise même désactivé
               ),
               child: Text('Delete all'),
               onPressed: () {
@@ -2026,18 +1983,18 @@ class ProduitListInterval extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Card(
                 child: ListTile(
-                  title: Text(
-                    produit.nom,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Text(
-                    'DZD ${produit.prixVente.toStringAsFixed(2)}',
-                    style: TextStyle(color: Colors.green, fontSize: 20),
-                  ),
-                  subtitle: Text('Stock: ${produit.stock}'),
-                )),
+              title: Text(
+                produit.nom,
+                style: TextStyle(fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              trailing: Text(
+                'DZD ${produit.prixVente.toStringAsFixed(2)}',
+                style: TextStyle(color: Colors.green, fontSize: 20),
+              ),
+              subtitle: Text('Stock: ${produit.stock}'),
+            )),
           );
         },
       ),
@@ -2059,11 +2016,11 @@ class LowStockList extends StatelessWidget {
       appBar: AppBar(),
       body: ListView.builder(
         itemCount: (produitsLowStock['produits'] as List<Produit>)
-        //.take(5)
+            //.take(5)
             .length,
         itemBuilder: (context, index) {
           final produit = (produitsLowStock['produits'] as List<Produit>)
-          //.take(5)
+              //.take(5)
               .toList()[index];
           return Card(
             child: ListTile(
@@ -2107,23 +2064,11 @@ class CardTop extends StatelessWidget {
       color: Colors.white70,
       child: SizedBox(
         height: Platform.isWindows || Platform.isMacOS || Platform.isLinux
-            ? MediaQuery
-            .of(context)
-            .size
-            .height * 0.25
+            ? MediaQuery.of(context).size.height * 0.25
             : SmallBanner
-            ? MediaQuery
-            .of(context)
-            .size
-            .height * 0.15
-            : MediaQuery
-            .of(context)
-            .size
-            .height * 0.35,
-        width: MediaQuery
-            .of(context)
-            .size
-            .width * 0.30,
+                ? MediaQuery.of(context).size.height * 0.15
+                : MediaQuery.of(context).size.height * 0.35,
+        width: MediaQuery.of(context).size.width * 0.30,
         child: Stack(
           fit: StackFit.passthrough,
           children: [
@@ -2141,16 +2086,15 @@ class CardTop extends StatelessWidget {
                 height: 150,
                 fit: BoxFit.cover,
                 imageUrl: image,
-                placeholder: (context, url) =>
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.blue, Colors.black],
-                        ),
-                      ),
+                placeholder: (context, url) => Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.blue, Colors.black],
                     ),
+                  ),
+                ),
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
@@ -2182,8 +2126,8 @@ class CardTop extends StatelessWidget {
                 ),
                 button != null
                     ? SizedBox(
-                  height: 15,
-                )
+                        height: 15,
+                      )
                     : Container(),
                 button != null ? FittedBox(child: button) : Container(),
               ],
@@ -2225,23 +2169,11 @@ class CardTop2 extends StatelessWidget {
       color: Colors.white70,
       child: SizedBox(
         height: Platform.isWindows || Platform.isMacOS || Platform.isLinux
-            ? MediaQuery
-            .of(context)
-            .size
-            .height * 0.25
+            ? MediaQuery.of(context).size.height * 0.25
             : SmallBanner
-            ? MediaQuery
-            .of(context)
-            .size
-            .height * 0.15
-            : MediaQuery
-            .of(context)
-            .size
-            .height * 0.55,
-        width: MediaQuery
-            .of(context)
-            .size
-            .width * 0.30,
+                ? MediaQuery.of(context).size.height * 0.15
+                : MediaQuery.of(context).size.height * 0.55,
+        width: MediaQuery.of(context).size.width * 0.30,
         child: Stack(
           fit: StackFit.passthrough,
           children: [
@@ -2259,16 +2191,15 @@ class CardTop2 extends StatelessWidget {
                 height: 150,
                 fit: BoxFit.cover,
                 imageUrl: image,
-                placeholder: (context, url) =>
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.blue, Colors.black],
-                        ),
-                      ),
+                placeholder: (context, url) => Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.blue, Colors.black],
                     ),
+                  ),
+                ),
                 errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
@@ -2300,8 +2231,8 @@ class CardTop2 extends StatelessWidget {
                 ),
                 button != null
                     ? SizedBox(
-                  height: 15,
-                )
+                        height: 15,
+                      )
                     : Container(),
                 button != null ? FittedBox(child: button) : Container(),
               ],
@@ -2314,14 +2245,15 @@ class CardTop2 extends StatelessWidget {
 }
 
 class CardAlert extends StatelessWidget {
-  const CardAlert({Key? key,
-    this.text,
-    required this.provider,
-    this.button,
-    this.filtre,
-    required this.image,
-    required this.Color1,
-    required this.Color2})
+  const CardAlert(
+      {Key? key,
+      this.text,
+      required this.provider,
+      this.button,
+      this.filtre,
+      required this.image,
+      required this.Color1,
+      required this.Color2})
       : super(key: key);
 
   final String? text;
@@ -2344,18 +2276,9 @@ class CardAlert extends StatelessWidget {
       color: Colors.white70,
       child: SizedBox(
         height: Platform.isWindows || Platform.isMacOS || Platform.isLinux
-            ? MediaQuery
-            .of(context)
-            .size
-            .width * 0.15
-            : MediaQuery
-            .of(context)
-            .size
-            .height * 0.35,
-        width: MediaQuery
-            .of(context)
-            .size
-            .width * 0.30,
+            ? MediaQuery.of(context).size.width * 0.15
+            : MediaQuery.of(context).size.height * 0.35,
+        width: MediaQuery.of(context).size.width * 0.30,
         child: Stack(
           fit: StackFit.passthrough,
           children: [
@@ -2497,8 +2420,8 @@ class ConnectionStatusIndicator extends StatelessWidget {
             color: statusProvider.isBlocked
                 ? Colors.red
                 : statusProvider.isOnline
-                ? Colors.green
-                : Colors.orange,
+                    ? Colors.green
+                    : Colors.orange,
           ),
           onPressed: () {
             Navigator.of(context).push(
@@ -2643,8 +2566,7 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
               Text(
                 _isOfflineForMoreThan2Days
                     ? 'Veuillez vous reconnecter à Internet\npour continuer à utiliser l\'application.'
-                    : 'Vous êtes hors ligne depuis :\n${_formatDuration(
-                    _offlineDuration)}',
+                    : 'Vous êtes hors ligne depuis :\n${_formatDuration(_offlineDuration)}',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
