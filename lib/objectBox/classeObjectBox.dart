@@ -33,9 +33,9 @@ class ObjectBox {
   late final Box<ExtraService> extraService;
   late final Box<ReservationExtra> reservationExtra;
   late final Box<SeasonalPricing> seasonalPricing;
-  late final Box<DailyPlanning> dailyPlanningBox;
+
   late final Box<Staff> staffBox;
-  late final Box<MedicalActivity> medicalActivityBox;
+  late final Box<ActiviteJour> activiteBox;
 
   Admin? admin; // Admin optionnel
 
@@ -74,10 +74,9 @@ class ObjectBox {
       extraService = Box<ExtraService>(store);
       reservationExtra = Box<ReservationExtra>(store);
       seasonalPricing = Box<SeasonalPricing>(store);
-      dailyPlanningBox = Box<DailyPlanning>(store);
-      staffBox = Box<Staff>(store);
-      medicalActivityBox = Box<MedicalActivity>(store);
 
+      staffBox = Box<Staff>(store);
+      activiteBox = Box<ActiviteJour>(store);
       // ✅ CORRECTION 2: Initialisez Admin correctement
       await _initializeAdmin();
     }

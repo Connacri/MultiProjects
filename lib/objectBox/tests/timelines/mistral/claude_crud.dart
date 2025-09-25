@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../Hopital/claudeMistral/homePage.dart';
-import '../../../../Hopital/homePage.dart';
+import '../../../../Hopital/TableauStaff.dart';
 import '../../../../MyListLotties.dart';
 import '../../../Entity.dart';
 import 'provider_hotel.dart';
@@ -2277,19 +2276,6 @@ class AppDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: const Icon(
-              Icons.local_hospital,
-              color: Colors.red,
-            ),
-            title: const Text('Hopital'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HomePageH()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(
               FontAwesomeIcons.hospital,
               color: Colors.red,
             ),
@@ -2297,7 +2283,7 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HomePageZou()),
+                MaterialPageRoute(builder: (context) => TableauStaffPage()),
               );
             },
           ),

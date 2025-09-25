@@ -13,9 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
-import '../Hopital/Providers.dart';
-import '../Hopital/claudeMistral/Providers.dart';
-import '../Hopital/repos.dart';
+import '../Hopital/StaffProvider.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import '../objectBox/pages/ClientListScreen.dart';
@@ -91,44 +89,13 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => SignalementProviderSupabase(),
         ),
-        //////////////////////////////////////////////////////////////////
-        // ChangeNotifierProvider(
-        //   create: (context) => HotelStructureProvider(),
-        // ),
-        // ChangeNotifierProvider(
-        //   create: (_) => HotelManagementProvider(objectBox), // <= injection ici
-        // ),
-        // ChangeNotifierProvider(
-        //   create: (context) => ReservationProvider(objectBox),
-        // ),
+
         ChangeNotifierProvider(
           create: (context) => HotelProvider(objectBox),
         ),
-        ChangeNotifierProvider(
-          create: (_) => AffectationJourProvider(AffectationJourRepository(
-              objectBox.store.box<AffectationJour>())),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => PersonnelProvider(
-              PersonnelRepository(objectBox.store.box<Personnel>())),
-        ),
-        ChangeNotifierProvider(
-            create: (_) => ActiviteHebdoProvider(
-                ActiviteHebdoRepository(objectBox.store.box<ActiviteHebdo>()))),
 
-        ChangeNotifierProvider(
-          create: (_) => ImportProvider(objectBox.store),
-        ),
-        ChangeNotifierProvider(
-            create: (_) => GroupeTravailProvider(
-                GroupeTravailRepository(objectBox.store.box<GroupeTravail>()))),
-
-        ChangeNotifierProvider(create: (_) => MonthlyPlanningProvider()),
         ChangeNotifierProvider(create: (_) => StaffProvider()),
-        ChangeNotifierProvider(
-          create: (_) => DailyPlanningProvider(objectBox.store),
-        ),
-        ChangeNotifierProvider(create: (_) => HospitalServiceProvider()),
+        ChangeNotifierProvider(create: (_) => ActiviteProvider()),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(
