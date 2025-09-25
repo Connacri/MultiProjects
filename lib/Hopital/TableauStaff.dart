@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../objectBox/Entity.dart';
+import '../objectBox/classeObjectBox.dart';
 import 'ActivitePersonne.dart';
 import 'StaffProvider.dart';
 
@@ -185,74 +186,115 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         foregroundColor: Colors.white,
         actions: [
           _buildEditControls(),
-          const SizedBox(width: 28),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.add, color: Colors.blue),
-            label: const Text("Ajouter toutes les activités"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: Colors.blue,
-            ),
+          IconButton(
+            icon: const Icon(Icons.delete_forever, color: Colors.red),
+            tooltip: "Vider toutes les activités",
             onPressed: () async {
-              // Demander confirmation avant de vider la base
               final confirm = await showDialog<bool>(
                 context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text("Confirmation"),
-                    content: const Text(
-                      "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
+                builder: (context) => AlertDialog(
+                  title: const Text("Confirmation"),
+                  content: const Text(
+                      "Voulez-vous vraiment supprimer toutes les activités ?"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text("Annuler"),
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text("Annuler"),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text("Confirmer"),
-                      ),
-                    ],
-                  );
-                },
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text("Oui, vider"),
+                    ),
+                  ],
+                ),
               );
 
-              if (confirm != true) return;
+              if (confirm == true) {
+                // Suppression de toutes les activités
+                ObjectBox().activiteBox.removeAll();
 
-              try {
-                final activiteProvider = ActiviteProvider();
-                await activiteProvider.insertActivites(activites);
-
-                // Rafraîchir les données
-                final staffProvider =
-                    Provider.of<StaffProvider>(context, listen: false);
-                await staffProvider.fetchStaffs();
-
+                // Feedback utilisateur
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text(
-                        "Toutes les activités ont été ajoutées avec succès !"),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Erreur lors de l'insertion: $e"),
-                    backgroundColor: Colors.red,
-                  ),
+                      content:
+                          Text("Toutes les activités ont été supprimées.")),
                 );
               }
             },
           ),
           const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              final provider =
-                  Provider.of<StaffProvider>(context, listen: false);
-              provider.fetchStaffs();
-            },
+          Tooltip(
+            message: "Ajouter toutes les activités",
+            child: IconButton(
+              icon: const Icon(Icons.add, color: Colors.blue),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.blue,
+              ),
+              onPressed: () async {
+                // Demander confirmation avant de vider la base
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Confirmation"),
+                      content: const Text(
+                        "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text("Annuler"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text("Confirmer"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+
+                if (confirm != true) return;
+
+                try {
+                  final activiteProvider = ActiviteProvider();
+                  await activiteProvider.insertActivites(activites);
+
+                  // Rafraîchir les données
+                  final staffProvider =
+                      Provider.of<StaffProvider>(context, listen: false);
+                  await staffProvider.fetchStaffs();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                          "Toutes les activités ont été ajoutées avec succès !"),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Erreur lors de l'insertion: $e"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Tooltip(
+            message: 'Fetch Staff',
+            child: IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                final provider =
+                    Provider.of<StaffProvider>(context, listen: false);
+                provider.fetchStaffs();
+              },
+            ),
           )
         ],
       ),
@@ -867,18 +909,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         // Filtrer le personnel médical avec équipes A, B, C, D (CORRECTION ICI)
                                         final personnelMedical =
                                             staffProvider.staffs.where((staff) {
-                                          final isPersonnelMedical = staff.grade
-                                                  .toLowerCase()
-                                                  .contains('médecin') ||
-                                              staff.grade
-                                                  .toLowerCase()
-                                                  .contains('rhumatologue');
                                           final hasEquipe = staff.equipe !=
                                                   null &&
                                               equipes.contains(
                                                   staff.equipe!.toUpperCase());
-                                          return isPersonnelMedical &&
-                                              hasEquipe;
+                                          return hasEquipe;
                                         }).toList();
 
                                         if (personnelMedical.isEmpty) {
@@ -1254,8 +1289,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               fontWeight: FontWeight.w600,
                                               color: Colors.black87,
                                               fontSize: 13,
-                                              decoration:
-                                                  TextDecoration.underline,
                                             ),
                                           ),
                                         )),
@@ -1276,12 +1309,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 12)),
                                         )),
-                                        DataCell(Text(
-                                          staff.obs ?? "-",
-                                          style: const TextStyle(
-                                              fontSize: 11,
-                                              fontStyle: FontStyle.italic),
-                                        )),
+                                        DataCell(
+                                          onDoubleTap: () async {
+                                            await _showTimeOffDialog(
+                                                context, staff);
+                                          },
+                                          Text(
+                                            staff.obs ?? "-",
+                                            style: const TextStyle(
+                                                fontSize: 11,
+                                                fontStyle: FontStyle.italic),
+                                          ),
+                                        ),
                                         ...List.generate(jours.length, (index) {
                                           final jourIndex = index + 1;
                                           final statutJour = jours[index];
@@ -1697,5 +1736,356 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         );
       },
     );
+  }
+
+  // Ajoutez ces trois méthodes à votre classe _TableauStaffPageState
+
+// Méthode pour afficher le dialogue de congé
+// Ajoutez ces trois méthodes à votre classe _TableauStaffPageState
+
+// Méthode pour afficher le dialogue de congé
+  Future<void> _showTimeOffDialog(BuildContext context, Staff staff) async {
+    DateTime? dateDebut;
+    DateTime? dateFin;
+    int? nombreJours;
+    String selectedStatut = 'C'; // Congé par défaut
+    bool useNombreJours =
+        false; // Mode de saisie : false = dates, true = début + nb jours
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Calculer automatiquement selon le mode
+            if (useNombreJours && dateDebut != null && nombreJours != null) {
+              dateFin = dateDebut!.add(Duration(days: nombreJours! - 1));
+            } else if (!useNombreJours &&
+                dateDebut != null &&
+                dateFin != null) {
+              nombreJours = dateFin!.difference(dateDebut!).inDays + 1;
+            }
+
+            return AlertDialog(
+              title: Text("Planifier un congé - ${staff.nom}"),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Mode de saisie
+                    Row(
+                      children: [
+                        Text("Mode de saisie:",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: SegmentedButton<bool>(
+                            segments: [
+                              ButtonSegment(value: false, label: Text("Dates")),
+                              ButtonSegment(
+                                  value: true, label: Text("Début + Jours")),
+                            ],
+                            selected: {useNombreJours},
+                            onSelectionChanged: (Set<bool> selection) {
+                              setState(() {
+                                useNombreJours = selection.first;
+                                // Reset des valeurs quand on change de mode
+                                nombreJours = null;
+                                dateFin = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+
+                    // Date de début (toujours présente)
+                    Row(
+                      children: [
+                        Text("Date début:",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: Icon(Icons.calendar_month),
+                            label: Text(dateDebut != null
+                                ? DateFormat('dd/MM/yyyy').format(dateDebut!)
+                                : 'Sélectionner'),
+                            onPressed: () async {
+                              final firstDate =
+                                  DateTime(_selectedYear, _selectedMonth, 1);
+                              final lastDate = DateTime(
+                                  _selectedYear, _selectedMonth + 1, 0);
+                              final now = DateTime.now();
+
+                              // S'assurer que l'initialDate est dans la plage valide
+                              DateTime initialDate;
+                              if (dateDebut != null) {
+                                initialDate = dateDebut!;
+                              } else if (now.isAfter(firstDate) &&
+                                  now.isBefore(
+                                      lastDate.add(Duration(days: 1)))) {
+                                initialDate = now;
+                              } else {
+                                initialDate = firstDate;
+                              }
+
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: initialDate,
+                                firstDate: firstDate,
+                                lastDate: lastDate,
+                              );
+                              if (date != null) {
+                                setState(() {
+                                  dateDebut = date;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 15),
+
+                    // Mode dates : Date de fin
+                    if (!useNombreJours) ...[
+                      Row(
+                        children: [
+                          Text("Date fin:",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: Icon(Icons.calendar_month),
+                              label: Text(dateFin != null
+                                  ? DateFormat('dd/MM/yyyy').format(dateFin!)
+                                  : 'Sélectionner'),
+                              onPressed: dateDebut == null
+                                  ? null
+                                  : () async {
+                                      final date = await showDatePicker(
+                                        context: context,
+                                        initialDate: dateFin ??
+                                            dateDebut!.add(Duration(days: 1)),
+                                        firstDate: dateDebut!,
+                                        lastDate: DateTime(_selectedYear,
+                                            _selectedMonth + 1, 0),
+                                      );
+                                      if (date != null) {
+                                        setState(() {
+                                          dateFin = date;
+                                        });
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    // Mode début + jours : Nombre de jours
+                    if (useNombreJours) ...[
+                      Row(
+                        children: [
+                          Text("Nb jours:",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: "Ex: 5",
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  nombreJours = int.tryParse(value);
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    SizedBox(height: 15),
+
+                    // Affichage du résumé
+                    if (dateDebut != null &&
+                        ((dateFin != null && !useNombreJours) ||
+                            (nombreJours != null && useNombreJours))) ...[
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Résumé:",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade700)),
+                            Text(
+                                "Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
+                            Text(
+                                "Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
+                            Text(
+                                "Durée: ${nombreJours!} jour${nombreJours! > 1 ? 's' : ''}"),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                    ],
+
+                    // Sélection du statut
+                    Text("Type de congé:",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: ['C', 'CM', 'G', 'RE', '-'].map((statut) {
+                        String label;
+                        Color color;
+                        switch (statut) {
+                          case 'C':
+                            label = 'Congé';
+                            color = Colors.orange;
+                            break;
+                          case 'CM':
+                            label = 'Congé Maladie';
+                            color = Colors.purple;
+                            break;
+                          case 'G':
+                            label = 'Garde';
+                            color = Colors.green;
+                            break;
+                          case 'RE':
+                            label = 'Récupération';
+                            color = Colors.blue;
+                            break;
+                          case '-':
+                            label = 'Repos';
+                            color = Colors.grey;
+                            break;
+                          default:
+                            label = statut;
+                            color = Colors.grey;
+                        }
+
+                        return ChoiceChip(
+                          label: Text("$statut - $label"),
+                          selected: selectedStatut == statut,
+                          selectedColor: color.withOpacity(0.3),
+                          onSelected: (bool selected) {
+                            setState(() {
+                              selectedStatut = selected ? statut : 'C';
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text("Annuler"),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: (dateDebut != null && dateFin != null)
+                      ? () async {
+                          await _saveTimeOff(
+                              staff, dateDebut!, dateFin!, selectedStatut);
+                          Navigator.of(context).pop();
+                        }
+                      : null,
+                  child: Text("Enregistrer"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+// Méthode pour sauvegarder le congé
+  Future<void> _saveTimeOff(
+      Staff staff, DateTime debut, DateTime fin, String statut) async {
+    try {
+      final activiteProvider = ActiviteProvider();
+      int joursModifies = 0;
+
+      // Marquer chaque jour du congé avec le statut choisi
+      DateTime currentDate = debut;
+      while (currentDate.isBefore(fin.add(Duration(days: 1)))) {
+        // Vérifier si le jour est dans le mois sélectionné
+        if (currentDate.year == _selectedYear &&
+            currentDate.month == _selectedMonth) {
+          int jour = currentDate.day;
+          await activiteProvider.updateActivite(staff.id, jour, statut);
+          joursModifies++;
+        }
+        currentDate = currentDate.add(Duration(days: 1));
+      }
+
+      // Mettre à jour l'observation du staff
+      staff.obs =
+          "${_getStatutName(statut)} du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}";
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.updateStaff(staff);
+
+      // Rafraîchir les données
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              "✅ ${_getStatutName(statut)} planifié pour ${staff.nom}\n"
+              "Du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}\n"
+              "$joursModifies jours modifiés avec le statut '$statut'"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de l'enregistrement: $e"),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+// Fonction utilitaire pour obtenir le nom du statut
+  String _getStatutName(String statut) {
+    switch (statut) {
+      case 'C':
+        return 'Congé';
+      case 'CM':
+        return 'Congé Maladie';
+      case 'G':
+        return 'Garde';
+      case 'RE':
+        return 'Récupération';
+      case '-':
+        return 'Repos';
+      default:
+        return statut;
+    }
   }
 }
