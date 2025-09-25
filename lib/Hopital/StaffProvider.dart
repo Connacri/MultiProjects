@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
+import '../objectbox.g.dart';
 import 'ActivitePersonne.dart';
 
 class StaffProvider with ChangeNotifier {
@@ -15,7 +16,7 @@ class StaffProvider with ChangeNotifier {
     _initObjectBox();
   }
 
-  void _initObjectBox() async {
+  Future<void> _initObjectBox() async {
     try {
       _objectBox = ObjectBox();
       await fetchStaffs();
@@ -24,117 +25,99 @@ class StaffProvider with ChangeNotifier {
     }
   }
 
-  /// Récupère tous les staffs avec leurs activités
+  /// 🔹 Récupère tous les staffs avec leurs activités, branch et congés
   Future<void> fetchStaffs() async {
     try {
       _staffs = _objectBox.staffBox.getAll();
-
-      print('=================== DEBUG FETCH STAFFS ===================');
       print('Nombre de staffs récupérés: ${_staffs.length}');
 
-      // Debug complet de chaque staff
-      for (int i = 0; i < _staffs.length; i++) {
-        final staff = _staffs[i];
-        print('\n--- STAFF ${i + 1} ---');
-        print('ID: ${staff.id}');
-        print('Nom: "${staff.nom}" (longueur: ${staff.nom.length})');
-        print('Grade: "${staff.grade}" (longueur: ${staff.grade.length})');
-        print('Groupe: "${staff.groupe}" (longueur: ${staff.groupe.length})');
+      for (final staff in _staffs) {
+        print("\n--- STAFF ${staff.id} ---");
+        print(
+            "Nom: ${staff.nom}, Grade: ${staff.grade}, Groupe: ${staff.groupe}");
+        print("Équipe: ${staff.equipe ?? "-"}");
+        print("Branch: ${staff.branch.target?.branchNom ?? "Non assigné"}");
 
-        // Forcer le chargement des activités et les afficher
-        final activites = staff.activites.toList();
-        print('Nombre d\'activités: ${activites.length}');
+        // Activités liées
+        final activites = _objectBox.activiteBox
+            .query(ActiviteJour_.staff.equals(staff.id))
+            .build()
+            .find();
+        print("Activités: ${activites.length}");
 
-        if (activites.isNotEmpty) {
-          print('Activités détaillées:');
-          for (var activite in activites.take(5)) {
-            // Afficher les 5 premières
-            print('  Jour ${activite.jour}: "${activite.statut}"');
-          }
-          if (activites.length > 5) {
-            print('  ... et ${activites.length - 5} autres activités');
-          }
-        } else {
-          print('AUCUNE ACTIVITÉ TROUVÉE POUR CE STAFF !');
-        }
-      }
-
-      // Vérifier également le contenu de la base directement
-      final totalActivites = _objectBox.activiteBox.getAll();
-      print('\n--- VÉRIFICATION BASE DE DONNÉES ---');
-      print('Total activités dans la base: ${totalActivites.length}');
-
-      if (totalActivites.isNotEmpty) {
-        print('Quelques activités de la base:');
-        for (var activite in totalActivites.take(3)) {
+        // Congés liés
+        final timeOffs = staff.timeOff.toList();
+        print("Congés: ${timeOffs.length}");
+        for (var timeOff in timeOffs) {
           print(
-              '  Activité ID: ${activite.id}, Jour: ${activite.jour}, Statut: "${activite.statut}"');
-          print('    Staff lié: ${activite.staff.target?.nom ?? "AUCUN"}');
+              " - ${timeOff.debut} -> ${timeOff.fin} (${timeOff.motif ?? "aucun"})");
         }
       }
-
-      print('=========================================================\n');
 
       notifyListeners();
     } catch (e) {
-      print('Erreur lors de la récupération des staffs: $e');
-      print('StackTrace: ${StackTrace.current}');
+      print("Erreur fetchStaffs: $e");
     }
   }
 
-  /// Ajoute un staff avec ses 31 activités
+  /// 🔹 Ajoute un staff avec ses activités
   Future<void> addStaff(Staff staff, List<String> activites) async {
     try {
-      // 1️⃣ Sauvegarder le staff pour générer l'id
       _objectBox.staffBox.put(staff);
 
-      // 2️⃣ Créer chaque activité et assigner la relation ToOne correctement
       for (int i = 0; i < activites.length && i < 31; i++) {
         final activite = ActiviteJour(
           jour: i + 1,
           statut: activites[i],
-        );
+        )..staff.target = staff;
 
-        // Lier le staff existant à l'activité
-        activite.staff.target = staff;
         _objectBox.activiteBox.put(activite);
       }
 
-      await fetchStaffs(); // notifie les widgets
+      await fetchStaffs();
     } catch (e) {
-      print('Erreur lors de l\'ajout du staff: $e');
+      print("Erreur addStaff: $e");
     }
   }
 
-  /// Met à jour un staff (hors activités)
+  /// 🔹 Mise à jour staff
   Future<void> updateStaff(Staff staff) async {
     try {
       _objectBox.staffBox.put(staff);
       await fetchStaffs();
     } catch (e) {
-      print('Erreur lors de la mise à jour du staff: $e');
+      print("Erreur updateStaff: $e");
     }
   }
 
-  /// Supprime un staff et toutes ses activités
+  /// 🔹 Suppression staff + relations
   Future<void> deleteStaff(Staff staff) async {
     try {
-      // Supprimer les activités liées via la relation ToMany
-      final activitesToDelete = staff.activites.toList();
-      for (var activite in activitesToDelete) {
-        _objectBox.activiteBox.remove(activite.id);
+      // Supprimer activités liées
+      final activites = _objectBox.activiteBox
+          .query(ActiviteJour_.staff.equals(staff.id))
+          .build()
+          .find();
+      for (var act in activites) {
+        _objectBox.activiteBox.remove(act.id);
+      }
+
+      // Supprimer congés liés
+      for (var timeOff in staff.timeOff) {
+        _objectBox.timeOffBox.remove(timeOff.id);
       }
 
       // Supprimer le staff
       _objectBox.staffBox.remove(staff.id);
+
       await fetchStaffs();
     } catch (e) {
-      print('Erreur lors de la suppression du staff: $e');
+      print("Erreur deleteStaff: $e");
     }
   }
 }
 
-/// Provider pour insérer plusieurs activités depuis une liste
+/// Provider pour gérer les activités
 class ActiviteProvider with ChangeNotifier {
   late final ObjectBox _objectBox;
 
@@ -142,98 +125,92 @@ class ActiviteProvider with ChangeNotifier {
     _objectBox = ObjectBox();
   }
 
-  /// Insère la liste complète des activités depuis une liste de personnes
+  /// 🔹 Met à jour ou insère une activité d’un staff
+  Future<void> updateActivite(int staffId, int jour, String statut) async {
+    try {
+      final staff = _objectBox.staffBox.get(staffId);
+      if (staff == null) throw Exception("Staff non trouvé");
+
+      final query = _objectBox.activiteBox
+          .query(ActiviteJour_.staff.equals(staffId) &
+              ActiviteJour_.jour.equals(jour))
+          .build();
+
+      final activites = query.find();
+      query.close();
+
+      if (activites.isNotEmpty) {
+        final activite = activites.first;
+        activite.statut = statut;
+        _objectBox.activiteBox.put(activite);
+      } else {
+        final nouvelle = ActiviteJour(jour: jour, statut: statut)
+          ..staff.target = staff;
+        _objectBox.activiteBox.put(nouvelle);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print("Erreur updateActivite: $e");
+    }
+  }
+
+  /// 🔹 Insère plusieurs staffs avec activités + relations (branch & congés)
   Future<void> insertActivites(List<ActivitePersonne> liste) async {
     try {
-      print('=================== DEBUG INSERTION ===================');
-      print('Début insertion de ${liste.length} personnes...');
-
-      // Nettoyer d'abord la base si nécessaire
-      print('Nettoyage de la base existante...');
       _objectBox.activiteBox.removeAll();
       _objectBox.staffBox.removeAll();
-
-      int staffCount = 0;
-      int activiteCount = 0;
+      _objectBox.branchBox.removeAll();
+      _objectBox.timeOffBox.removeAll();
 
       for (var e in liste) {
-        staffCount++;
-        print('\n--- INSERTION STAFF ${staffCount} ---');
-        print('Nom: "${e.nom}"');
-        print('Grade: "${e.grade}"');
-        print('Groupe: "${e.groupe}"');
-        print('Nombre de jours d\'activité: ${e.jours.length}');
+        // Branch (service)
+        Branch branch = _objectBox.branchBox
+                .query(Branch_.branchNom.equals(e.branchNom ?? "Inconnu"))
+                .build()
+                .findFirst() ??
+            Branch(branchNom: e.branchNom ?? "Inconnu");
+        _objectBox.branchBox.put(branch);
 
-        // 1️⃣ Créer le staff avec toutes les informations
+        // Staff
         final staff = Staff(
           nom: e.nom,
           grade: e.grade,
           groupe: e.groupe,
           equipe: e.equipe,
-          mois: e.mois,
-          horaire: e.horaire,
           obs: e.obs,
-        );
-        final staffId = _objectBox.staffBox.put(staff);
-        print('Staff créé avec ID: $staffId');
+        )..branch.target = branch;
 
-        // Vérifier que le staff a bien été créé
-        final verifyStaff = _objectBox.staffBox.get(staffId);
-        if (verifyStaff != null) {
-          print(
-              'Vérification - Staff récupéré: "${verifyStaff.nom}", "${verifyStaff.grade}", "${verifyStaff.groupe}"');
-        } else {
-          print('ERREUR: Impossible de récupérer le staff créé !');
-          continue;
+        _objectBox.staffBox.put(staff);
+
+        // Activités liées (jours du mois)
+        for (int i = 0; i < e.jours.length && i < 31; i++) {
+          final activite = ActiviteJour(jour: i + 1, statut: e.jours[i])
+            ..staff.target = staff;
+          _objectBox.activiteBox.put(activite);
         }
 
-        // 2️⃣ Créer les activités et les lier au staff
-        print('Création des activités:');
-        for (int i = 0; i < e.jours.length && i < 31; i++) {
-          activiteCount++;
-          final activite = ActiviteJour(
-            jour: i + 1,
-            statut: e.jours[i],
-          );
-
-          activite.staff.target = staff;
-          final activiteId = _objectBox.activiteBox.put(activite);
-
-          if (i < 3) {
-            // Afficher les 3 premières activités pour debug
-            print(
-                '  Activité ${i + 1}: Jour ${activite.jour}, Statut "${activite.statut}", ID: $activiteId');
+        // Congés liés
+        if (e.conges != null) {
+          for (var conge in e.conges!) {
+            final timeOff = TimeOff(
+              debut: conge.debut,
+              fin: conge.fin,
+              motif: conge.motif,
+            )..staff.target = staff;
+            _objectBox.timeOffBox.put(timeOff);
           }
         }
-        print('${e.jours.length} activités créées pour ${e.nom}');
       }
 
-      print('\n--- RÉSUMÉ INSERTION ---');
-      print('Total staffs insérés: $staffCount');
-      print('Total activités insérées: $activiteCount');
-
-      // Vérification finale
-      final finalStaffs = _objectBox.staffBox.getAll();
-      final finalActivites = _objectBox.activiteBox.getAll();
-      print('Vérification finale:');
-      print('  Staffs dans la base: ${finalStaffs.length}');
-      print('  Activités dans la base: ${finalActivites.length}');
-
-      // Test des relations
-      if (finalStaffs.isNotEmpty) {
-        final premierStaff = finalStaffs.first;
-        final sesActivites = premierStaff.activites.toList();
-        print(
-            '  Relations - Premier staff "${premierStaff.nom}" a ${sesActivites.length} activités');
-      }
-
-      print('=========================================================\n');
-
-      notifyListeners();
+      await fetchStaffs();
     } catch (e) {
-      print('Erreur lors de l\'insertion des activités: $e');
-      print('StackTrace: ${StackTrace.current}');
-      rethrow;
+      print("Erreur insertActivites: $e");
     }
+  }
+
+  Future<void> fetchStaffs() async {
+    final staffs = _objectBox.staffBox.getAll();
+    print("Staffs dans la DB: ${staffs.length}");
   }
 }

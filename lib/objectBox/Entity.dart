@@ -1473,10 +1473,15 @@ class Staff {
   String grade;
   String groupe; // ex: "Garde 12H", "08H-16H", "08H-08H"
   String? equipe; // A, B, C, D
-  String? mois; // "Octobre 2025", "Septembre 2025"
-  String? horaire; // "08h-16h", "08h-08h", "08h-12h"
   String? obs; // observations particulières
 
+  // 🔹 Lien vers la branche (service)
+  final branch = ToOne<Branch>();
+
+  // 🔹 Lien vers les congés
+  final timeOff = ToMany<TimeOff>();
+
+  // 🔹 Lien vers les activités quotidiennes (jours du mois)
   @Backlink('staff')
   final activites = ToMany<ActiviteJour>();
 
@@ -1486,8 +1491,6 @@ class Staff {
     required this.grade,
     required this.groupe,
     this.equipe,
-    this.mois,
-    this.horaire,
     this.obs,
   });
 }
@@ -1495,13 +1498,40 @@ class Staff {
 @Entity()
 class ActiviteJour {
   int id;
-  final int jour; // 1 à 31
+  int jour; // 1 à 31
   String statut; // G, RE, C, CM, N
-  final ToOne<Staff> staff = ToOne<Staff>();
+
+  final staff = ToOne<Staff>();
 
   ActiviteJour({
     this.id = 0,
     required this.jour,
     required this.statut,
+  });
+}
+
+@Entity()
+class Branch {
+  int id;
+  String
+      branchNom; // ex: "Médecins", "Infirmiers", "Bureau", "Femmes de ménage"
+
+  Branch({this.id = 0, required this.branchNom});
+}
+
+@Entity()
+class TimeOff {
+  int id;
+  DateTime debut;
+  DateTime fin;
+  String? motif;
+
+  final staff = ToOne<Staff>();
+
+  TimeOff({
+    this.id = 0,
+    required this.debut,
+    required this.fin,
+    this.motif,
   });
 }

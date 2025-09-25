@@ -1913,7 +1913,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(59, 7892213973742006565),
     name: 'Staff',
-    lastPropertyId: const obx_int.IdUid(38, 1780196528697690791),
+    lastPropertyId: const obx_int.IdUid(40, 7268369681695897981),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1947,25 +1947,27 @@ final _entities = <obx_int.ModelEntity>[
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(36, 7829062700460478056),
-        name: 'mois',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(37, 1964693981062540990),
-        name: 'horaire',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
         id: const obx_int.IdUid(38, 1780196528697690791),
         name: 'obs',
         type: 9,
         flags: 0,
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(40, 7268369681695897981),
+        name: 'branchId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(145, 3025151161047139801),
+        relationTarget: 'Branch',
+      ),
     ],
-    relations: <obx_int.ModelRelation>[],
+    relations: <obx_int.ModelRelation>[
+      obx_int.ModelRelation(
+        id: const obx_int.IdUid(11, 6355601734277678121),
+        name: 'timeOff',
+        targetId: const obx_int.IdUid(64, 5212567268726366170),
+      ),
+    ],
     backlinks: <obx_int.ModelBacklink>[
       obx_int.ModelBacklink(
         name: 'activites',
@@ -2005,6 +2007,70 @@ final _entities = <obx_int.ModelEntity>[
         flags: 520,
         indexId: const obx_int.IdUid(142, 6706610394050757592),
         relationTarget: 'Staff',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(63, 8684591826737852263),
+    name: 'Branch',
+    lastPropertyId: const obx_int.IdUid(3, 4638893510237506986),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 8783211361608906964),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 4638893510237506986),
+        name: 'branchNom',
+        type: 9,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(64, 5212567268726366170),
+    name: 'TimeOff',
+    lastPropertyId: const obx_int.IdUid(7, 4439141467620706675),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 7479846253910505008),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 323931155620664522),
+        name: 'motif',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 4350831529526660812),
+        name: 'staffId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(146, 4505509574144870846),
+        relationTarget: 'Staff',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 3855453386933017518),
+        name: 'debut',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 4439141467620706675),
+        name: 'fin',
+        type: 10,
+        flags: 0,
       ),
     ],
     relations: <obx_int.ModelRelation>[],
@@ -2050,9 +2116,9 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(60, 1632757783293151936),
-    lastIndexId: const obx_int.IdUid(142, 6706610394050757592),
-    lastRelationId: const obx_int.IdUid(10, 2533515178288443251),
+    lastEntityId: const obx_int.IdUid(64, 5212567268726366170),
+    lastIndexId: const obx_int.IdUid(146, 4505509574144870846),
+    lastRelationId: const obx_int.IdUid(11, 6355601734277678121),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
       6647246884597588827,
@@ -2086,6 +2152,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       3223770380636374366,
       1825897810017309983,
       5841557151341947182,
+      6880452506314359223,
+      4414320882310450560,
     ],
     retiredIndexUids: const [
       7680843215305245682,
@@ -2122,6 +2190,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       4289809794667337102,
       8664461267398711495,
       780187164246969954,
+      7626901822469274824,
     ],
     retiredPropertyUids: const [
       8976483595831028651,
@@ -2489,6 +2558,21 @@ obx_int.ModelDefinition getObjectBoxModel() {
       6381888693510586037,
       4597734365005597962,
       2143242231554525019,
+      7356558040851505675,
+      3951079477853437901,
+      7829062700460478056,
+      1964693981062540990,
+      9069953890983479010,
+      1499453643154160968,
+      4066477771751919161,
+      5302931828470575259,
+      8014883655046385378,
+      334717776259647622,
+      2365958813984915487,
+      2472267457839323712,
+      8490284429699837968,
+      9061462179866711356,
+      2472786284142281708,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -4864,8 +4948,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
     ),
     Staff: obx_int.EntityDefinition<Staff>(
       model: _entities[27],
-      toOneRelations: (Staff object) => [],
+      toOneRelations: (Staff object) => [object.branch],
       toManyRelations: (Staff object) => {
+        obx_int.RelInfo<Staff>.toMany(11, object.id): object.timeOff,
         obx_int.RelInfo<ActiviteJour>.toOneBacklink(
           4,
           object.id,
@@ -4883,24 +4968,17 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final equipeOffset = object.equipe == null
             ? null
             : fbb.writeString(object.equipe!);
-        final moisOffset = object.mois == null
-            ? null
-            : fbb.writeString(object.mois!);
-        final horaireOffset = object.horaire == null
-            ? null
-            : fbb.writeString(object.horaire!);
         final obsOffset = object.obs == null
             ? null
             : fbb.writeString(object.obs!);
-        fbb.startTable(39);
+        fbb.startTable(41);
         fbb.addInt64(0, object.id);
         fbb.addOffset(5, gradeOffset);
         fbb.addOffset(32, nomOffset);
         fbb.addOffset(33, groupeOffset);
         fbb.addOffset(34, equipeOffset);
-        fbb.addOffset(35, moisOffset);
-        fbb.addOffset(36, horaireOffset);
         fbb.addOffset(37, obsOffset);
+        fbb.addInt64(39, object.branch.targetId);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -4925,12 +5003,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final equipeParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 72);
-        final moisParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 74);
-        final horaireParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGetNullable(buffer, rootOffset, 76);
         final obsParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 78);
@@ -4940,9 +5012,19 @@ obx_int.ModelDefinition getObjectBoxModel() {
           grade: gradeParam,
           groupe: groupeParam,
           equipe: equipeParam,
-          mois: moisParam,
-          horaire: horaireParam,
           obs: obsParam,
+        );
+        object.branch.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          82,
+          0,
+        );
+        object.branch.attach(store);
+        obx_int.InternalToManyAccess.setRelInfo<Staff>(
+          object.timeOff,
+          store,
+          obx_int.RelInfo<Staff>.toMany(11, object.id),
         );
         obx_int.InternalToManyAccess.setRelInfo<Staff>(
           object.activites,
@@ -5001,6 +5083,94 @@ obx_int.ModelDefinition getObjectBoxModel() {
           buffer,
           rootOffset,
           10,
+          0,
+        );
+        object.staff.attach(store);
+        return object;
+      },
+    ),
+    Branch: obx_int.EntityDefinition<Branch>(
+      model: _entities[29],
+      toOneRelations: (Branch object) => [],
+      toManyRelations: (Branch object) => {},
+      getId: (Branch object) => object.id,
+      setId: (Branch object, int id) {
+        object.id = id;
+      },
+      objectToFB: (Branch object, fb.Builder fbb) {
+        final branchNomOffset = fbb.writeString(object.branchNom);
+        fbb.startTable(4);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(2, branchNomOffset);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final branchNomParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final object = Branch(id: idParam, branchNom: branchNomParam);
+
+        return object;
+      },
+    ),
+    TimeOff: obx_int.EntityDefinition<TimeOff>(
+      model: _entities[30],
+      toOneRelations: (TimeOff object) => [object.staff],
+      toManyRelations: (TimeOff object) => {},
+      getId: (TimeOff object) => object.id,
+      setId: (TimeOff object, int id) {
+        object.id = id;
+      },
+      objectToFB: (TimeOff object, fb.Builder fbb) {
+        final motifOffset = object.motif == null
+            ? null
+            : fbb.writeString(object.motif!);
+        fbb.startTable(8);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(3, motifOffset);
+        fbb.addInt64(4, object.staff.targetId);
+        fbb.addInt64(5, object.debut.millisecondsSinceEpoch);
+        fbb.addInt64(6, object.fin.millisecondsSinceEpoch);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final debutParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0),
+        );
+        final finParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0),
+        );
+        final motifParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 10);
+        final object = TimeOff(
+          id: idParam,
+          debut: debutParam,
+          fin: finParam,
+          motif: motifParam,
+        );
+        object.staff.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          12,
           0,
         );
         object.staff.attach(store);
@@ -6407,19 +6577,19 @@ class Staff_ {
     _entities[27].properties[4],
   );
 
-  /// See [Staff.mois].
-  static final mois = obx.QueryStringProperty<Staff>(
+  /// See [Staff.obs].
+  static final obs = obx.QueryStringProperty<Staff>(
     _entities[27].properties[5],
   );
 
-  /// See [Staff.horaire].
-  static final horaire = obx.QueryStringProperty<Staff>(
+  /// See [Staff.branch].
+  static final branch = obx.QueryRelationToOne<Staff, Branch>(
     _entities[27].properties[6],
   );
 
-  /// See [Staff.obs].
-  static final obs = obx.QueryStringProperty<Staff>(
-    _entities[27].properties[7],
+  /// see [Staff.timeOff]
+  static final timeOff = obx.QueryRelationToMany<Staff, TimeOff>(
+    _entities[27].relations[0],
   );
 
   /// see [Staff.activites]
@@ -6448,5 +6618,46 @@ class ActiviteJour_ {
   /// See [ActiviteJour.staff].
   static final staff = obx.QueryRelationToOne<ActiviteJour, Staff>(
     _entities[28].properties[3],
+  );
+}
+
+/// [Branch] entity fields to define ObjectBox queries.
+class Branch_ {
+  /// See [Branch.id].
+  static final id = obx.QueryIntegerProperty<Branch>(
+    _entities[29].properties[0],
+  );
+
+  /// See [Branch.branchNom].
+  static final branchNom = obx.QueryStringProperty<Branch>(
+    _entities[29].properties[1],
+  );
+}
+
+/// [TimeOff] entity fields to define ObjectBox queries.
+class TimeOff_ {
+  /// See [TimeOff.id].
+  static final id = obx.QueryIntegerProperty<TimeOff>(
+    _entities[30].properties[0],
+  );
+
+  /// See [TimeOff.motif].
+  static final motif = obx.QueryStringProperty<TimeOff>(
+    _entities[30].properties[1],
+  );
+
+  /// See [TimeOff.staff].
+  static final staff = obx.QueryRelationToOne<TimeOff, Staff>(
+    _entities[30].properties[2],
+  );
+
+  /// See [TimeOff.debut].
+  static final debut = obx.QueryDateProperty<TimeOff>(
+    _entities[30].properties[3],
+  );
+
+  /// See [TimeOff.fin].
+  static final fin = obx.QueryDateProperty<TimeOff>(
+    _entities[30].properties[4],
   );
 }

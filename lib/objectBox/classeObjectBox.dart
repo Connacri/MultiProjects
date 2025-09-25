@@ -36,7 +36,8 @@ class ObjectBox {
 
   late final Box<Staff> staffBox;
   late final Box<ActiviteJour> activiteBox;
-
+  late final Box<Branch> branchBox;
+  late final Box<TimeOff> timeOffBox;
   Admin? admin; // Admin optionnel
 
   static final ObjectBox _singleton = ObjectBox._internal();
@@ -77,6 +78,8 @@ class ObjectBox {
 
       staffBox = Box<Staff>(store);
       activiteBox = Box<ActiviteJour>(store);
+      branchBox = Box<Branch>(store);
+      timeOffBox = Box<TimeOff>(store);
       // ✅ CORRECTION 2: Initialisez Admin correctement
       await _initializeAdmin();
     }

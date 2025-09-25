@@ -1,15 +1,24 @@
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
+import '../objectbox.g.dart';
 
 class ActivitePersonne {
   String nom;
   String grade;
-  String groupe;
+  String groupe; // Exemple: "08H-16H", "Garde 12H"
   String? equipe; // A, B, C, D
-  String? mois; // "Octobre 2025", "Septembre 2025"
-  String? horaire; // "08h-16h", "08h-08h", "08h-12h"
-  String? obs; // observations particulières
-  List<String> jours; // liste des statuts du 1er au 31
+  String? mois; // "Octobre 2025"
+  String? horaire; // "08h-16h", "08h-08h"
+  String? obs; // Observations particulières
+
+  /// Statuts du 1er au 31 (jours)
+  List<String> jours;
+
+  /// Optionnel : liste des congés
+  List<TimeOffDTO>? conges;
+
+  /// Optionnel : nom du service (branch)
+  String? branchNom;
 
   ActivitePersonne({
     required this.nom,
@@ -20,6 +29,21 @@ class ActivitePersonne {
     this.horaire,
     this.obs,
     required this.jours,
+    this.conges,
+    this.branchNom,
+  });
+}
+
+/// DTO temporaire pour représenter un congé avant insertion dans ObjectBox
+class TimeOffDTO {
+  DateTime debut;
+  DateTime fin;
+  String? motif;
+
+  TimeOffDTO({
+    required this.debut,
+    required this.fin,
+    this.motif,
   });
 }
 
@@ -34,29 +58,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -74,29 +98,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -114,29 +138,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -154,29 +178,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -194,29 +218,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -235,29 +259,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -275,29 +299,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -315,29 +339,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -355,29 +379,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -395,29 +419,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -435,29 +459,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -475,29 +499,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -515,29 +539,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -555,29 +579,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -595,29 +619,29 @@ final List<ActivitePersonne> activites = [
     jours: [
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
       "N",
       "N",
-      "R",
-      "R",
+      "Ré",
+      "Ré",
       "N",
       "N",
       "N",
@@ -1258,37 +1282,89 @@ void insertActivites(List<ActivitePersonne> liste) {
   final objectBox = ObjectBox();
   final staffBox = objectBox.staffBox;
   final activiteBox = objectBox.activiteBox;
+  final branchBox = objectBox.branchBox;
+  final timeOffBox = objectBox.timeOffBox;
 
-  // Vider la base de données avant l'insertion
+  // ⚠️ Nettoyer les tables (à utiliser seulement si tu veux repartir à zéro)
   activiteBox.removeAll();
   staffBox.removeAll();
+  branchBox.removeAll();
+  timeOffBox.removeAll();
 
   for (var e in liste) {
-    // 1️⃣ Créer et sauvegarder le staff avec toutes les informations
+    // 1️⃣ Vérifier/créer la Branch (service)
+    Branch branch = branchBox
+            .query(Branch_.branchNom.equals(e.branchNom!))
+            .build()
+            .findFirst() ??
+        Branch(branchNom: e.branchNom!);
+
+    branchBox.put(branch);
+
+    // 2️⃣ Créer le Staff et lui affecter la Branch
     final staff = Staff(
       nom: e.nom,
       grade: e.grade,
       groupe: e.groupe,
       equipe: e.equipe,
-      // Ajouter l'équipe
-      mois: e.mois,
-      // Ajouter le mois
-      horaire: e.horaire,
-      // Ajouter l'horaire
-      obs: e.obs, // Ajouter les observations
+      obs: e.obs,
     );
-    staffBox.put(staff);
 
-    // 2️⃣ Créer les activités et assigner la relation ToOne correctement
+    staff.branch.target = branch; // liaison OneToOne
+    final staffId = staffBox.put(staff);
+
+    print(
+        "✅ Staff inséré: ${staff.nom}, ID: $staffId, Branch: ${branch.branchNom}");
+
+    // 3️⃣ Insérer les activités (planning des jours)
     for (int i = 0; i < e.jours.length && i < 31; i++) {
       final activite = ActiviteJour(
         jour: i + 1,
         statut: e.jours[i],
       );
 
-      // Lier le staff existant
-      activite.staff.target = staff;
+      activite.staff.target = staff; // liaison vers staff
       activiteBox.put(activite);
     }
+
+    // 4️⃣ Insérer les congés si dispo
+    if (e.conges != null) {
+      for (var conge in e.conges!) {
+        final timeOff = TimeOff(
+          debut: conge.debut,
+          fin: conge.fin,
+          motif: conge.motif,
+        );
+
+        timeOff.staff.target = staff;
+        timeOffBox.put(timeOff);
+      }
+    }
   }
+}
+
+Future<void> assignRhumatologieToAllStaffs() async {
+  final objectBox = ObjectBox();
+
+  // Vérifier si la branche "Rhumatologie" existe déjà
+  final branchQuery = objectBox.branchBox
+      .query(Branch_.branchNom.equals("Rhumatologie"))
+      .build();
+  Branch? branch = branchQuery.findFirst();
+  branchQuery.close();
+
+  // Si elle n'existe pas, la créer
+  branch ??= Branch(branchNom: "Rhumatologie");
+  final branchId = objectBox.branchBox.put(branch);
+  print("✅ Branche Rhumatologie ID: $branchId");
+
+  // Assigner la branche à tous les staffs
+  final staffs = objectBox.staffBox.getAll();
+  for (var staff in staffs) {
+    staff.branch.target = branch;
+    objectBox.staffBox.put(staff);
+    print("👤 ${staff.nom} lié à Rhumatologie");
+  }
+
+  print("--- ✅ Tous les staffs ont été assignés à Rhumatologie ---");
 }
