@@ -126,36 +126,29 @@ class ActiviteProvider with ChangeNotifier {
   }
 
   /// 🔹 Met à jour ou insère une activité avec vérification des congés
-  /// Méthode modifiée avec vérification des congés TimeOff
+  /// Version corrigée qui vérifie AUSSI les activités existantes avec statut C/CM
   Future<void> updateActivite(int staffId, int jour, String statut,
       {required int year, required int month}) async {
     try {
       final staff = _objectBox.staffBox.get(staffId);
       if (staff == null) throw Exception("Staff non trouvé");
 
-      // VÉRIFICATION CONGÉS : Créer la date du jour à vérifier
+      // VÉRIFICATION 1 : Congés dans TimeOff
       final dateJour = DateTime(year, month, jour);
-
-      // Vérifier si le staff a un congé ce jour-là
       final timeOffs = staff.timeOff.toList();
-      bool estEnConge = false;
+      bool estEnCongeTimeOff = false;
 
       for (var timeOff in timeOffs) {
         if (dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
             dateJour.isBefore(timeOff.fin.add(Duration(days: 1)))) {
-          estEnConge = true;
+          estEnCongeTimeOff = true;
           print(
-              "🚫 ${staff.nom} est en congé le $jour/$month/$year (${timeOff.motif ?? 'Congé'})");
+              "🚫 ${staff.nom} est en congé TimeOff le $jour/$month/$year (${timeOff.motif ?? 'Congé'})");
           break;
         }
       }
 
-      if (estEnConge) {
-        print(
-            "⚠️  Modification ignorée pour ${staff.nom} - jour $jour (en congé)");
-        return; // Ne pas modifier l'activité si en congé
-      }
-
+      // VÉRIFICATION 2 : Congés dans les activités existantes
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
               ActiviteJour_.jour.equals(jour))
@@ -164,14 +157,35 @@ class ActiviteProvider with ChangeNotifier {
       final activites = query.find();
       query.close();
 
+      bool estEnCongeActivite = false;
+      if (activites.isNotEmpty) {
+        final activiteExistante = activites.first;
+        if (activiteExistante.statut == 'C' ||
+            activiteExistante.statut == 'CM') {
+          estEnCongeActivite = true;
+          print(
+              "🚫 ${staff.nom} a déjà un congé le jour $jour (statut: ${activiteExistante.statut})");
+        }
+      }
+
+      // Si en congé (TimeOff OU activité), ne pas modifier
+      if (estEnCongeTimeOff || estEnCongeActivite) {
+        print(
+            "⚠️  Modification IGNORÉE pour ${staff.nom} - jour $jour (en congé)");
+        return;
+      }
+
+      // Procéder à la modification normale
       if (activites.isNotEmpty) {
         final activite = activites.first;
         activite.statut = statut;
         _objectBox.activiteBox.put(activite);
+        print("✅ Activité mise à jour: ${staff.nom} jour $jour = $statut");
       } else {
         final nouvelle = ActiviteJour(jour: jour, statut: statut)
           ..staff.target = staff;
         _objectBox.activiteBox.put(nouvelle);
+        print("➕ Nouvelle activité créée: ${staff.nom} jour $jour = $statut");
       }
 
       notifyListeners();
