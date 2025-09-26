@@ -241,11 +241,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ],
                 ),
               );
-
               if (confirm == true) {
-                // Suppression de toutes les activités
-                ObjectBox().activiteBox.removeAll();
-
+                // Appel via le Provider
+                await context
+                    .read<ActiviteProvider>()
+                    .clearAllActivites(context);
                 // Feedback utilisateur
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -545,8 +545,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             0; // NOUVEAU: Compteur des congés
 
                                         // Parcourir TOUS les staffs
+                                        // Parcourir TOUS les staffs
                                         for (final staff
                                             in staffProvider.staffs) {
+                                          // 🚫 Ignorer le groupe "08H-08H"
+                                          if (staff.groupe == "Garde 12H") {
+                                            print(
+                                                "⏩ ${staff.nom} ignoré car groupe = 08H-08H");
+                                            continue; // passe au staff suivant
+                                          }
+
                                           final equipe =
                                               staff.equipe?.toUpperCase();
                                           final isEquipeABCD = equipe != null &&
@@ -572,10 +580,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                                             for (var timeOff in timeOffs) {
                                               if (date.isAfter(timeOff.debut
-                                                      .subtract(
-                                                          Duration(days: 1))) &&
+                                                      .subtract(const Duration(
+                                                          days: 1))) &&
                                                   date.isBefore(timeOff.fin.add(
-                                                      Duration(days: 1)))) {
+                                                      const Duration(
+                                                          days: 1)))) {
                                                 estEnConge = true;
                                                 congesIgnores++;
                                                 break;
@@ -595,9 +604,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               // Week-end : marquer 'RE' pour TOUS
                                               await activiteProvider
                                                   .updateActivite(
-                                                      staff.id, day, "RE",
-                                                      year: _selectedYear,
-                                                      month: _selectedMonth);
+                                                staff.id,
+                                                day,
+                                                "RE",
+                                                year: _selectedYear,
+                                                month: _selectedMonth,
+                                              );
                                               totalModifications++;
 
                                               if (staff ==
@@ -605,19 +617,25 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                 weekendDaysCount++;
                                               }
                                             } else {
-                                              // Jours normaux : logique différente selon l'équipe
+                                              // Jours normaux
                                               if (isEquipeABCD) {
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "-",
-                                                        year: _selectedYear,
-                                                        month: _selectedMonth);
+                                                  staff.id,
+                                                  day,
+                                                  "-",
+                                                  year: _selectedYear,
+                                                  month: _selectedMonth,
+                                                );
                                               } else {
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "N",
-                                                        year: _selectedYear,
-                                                        month: _selectedMonth);
+                                                  staff.id,
+                                                  day,
+                                                  "N",
+                                                  year: _selectedYear,
+                                                  month: _selectedMonth,
+                                                );
                                               }
                                               totalModifications++;
 
@@ -635,16 +653,38 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                            content: Text(
-                                                "✅ Planification automatique terminée!\n"
-                                                "• $weekendDaysCount jours de weekend marqués 'RE'\n"
-                                                "• $normalDaysCount jours normaux traités\n"
-                                                "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux\n"
-                                                "• $staffAutres autres staff → 'N' jours normaux\n"
-                                                "• $congesIgnores jours de congé préservés\n" // NOUVEAU
-                                                "• $totalModifications modifications totales"),
                                             backgroundColor: Colors.green,
-                                            duration: Duration(seconds: 5),
+                                            duration:
+                                                const Duration(seconds: 5),
+                                            content: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // Texte principal
+                                                Expanded(
+                                                  child: Text(
+                                                    "✅ Planification automatique terminée!\n"
+                                                    "• $weekendDaysCount jours de weekend marqués 'RE'\n"
+                                                    "• $normalDaysCount jours normaux traités\n"
+                                                    "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux\n"
+                                                    "• $staffAutres autres staff → 'N' jours normaux\n"
+                                                    "• $congesIgnores jours de congé préservés\n"
+                                                    "• $totalModifications modifications totales",
+                                                  ),
+                                                ),
+
+                                                // Icône close
+                                                IconButton(
+                                                  icon: const Icon(Icons.close,
+                                                      color: Colors.white),
+                                                  onPressed: () {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .hideCurrentSnackBar();
+                                                  },
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         );
                                       } catch (e) {
@@ -684,18 +724,19 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                     "Planification des gardes médicales"),
                                                 content: SingleChildScrollView(
                                                   child: Column(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
                                                     crossAxisAlignment:
                                                         CrossAxisAlignment
                                                             .start,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
                                                     children: [
                                                       Text(
                                                         "Mois: $_selectedMonthName $_selectedYear\n",
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                            color: Colors.teal),
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Colors.teal,
+                                                        ),
                                                       ),
 
                                                       // Sélection du jour de commencement
@@ -720,9 +761,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                         ),
                                                         child: GridView.builder(
                                                           padding:
-                                                              EdgeInsets.all(8),
+                                                              const EdgeInsets
+                                                                  .all(8),
                                                           gridDelegate:
-                                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                                              const SliverGridDelegateWithFixedCrossAxisCount(
                                                             crossAxisCount: 7,
                                                             crossAxisSpacing: 4,
                                                             mainAxisSpacing: 4,
@@ -734,36 +776,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                               (context, index) {
                                                             final day =
                                                                 index + 1;
-                                                            final date = DateTime(
-                                                                _selectedYear,
-                                                                _selectedMonth,
-                                                                day);
-                                                            final isWeekend = date
-                                                                        .weekday ==
-                                                                    DateTime
-                                                                        .friday ||
-                                                                date.weekday ==
-                                                                    DateTime
-                                                                        .saturday;
-
                                                             return GestureDetector(
-                                                              onTap: isWeekend
-                                                                  ? null
-                                                                  : () {
-                                                                      setState(
-                                                                          () {
-                                                                        chosenDay =
-                                                                            day;
-                                                                      });
-                                                                    },
+                                                              onTap: () =>
+                                                                  setState(() =>
+                                                                      chosenDay =
+                                                                          day),
                                                               child: Container(
                                                                 decoration:
                                                                     BoxDecoration(
-                                                                  color: isWeekend
-                                                                      ? Colors.grey.shade300
-                                                                      : chosenDay == day
-                                                                          ? Colors.teal
-                                                                          : Colors.grey.shade100,
+                                                                  color: chosenDay ==
+                                                                          day
+                                                                      ? Colors
+                                                                          .teal
+                                                                      : Colors
+                                                                          .grey
+                                                                          .shade100,
                                                                   borderRadius:
                                                                       BorderRadius
                                                                           .circular(
@@ -784,11 +811,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                                     day.toString(),
                                                                     style:
                                                                         TextStyle(
-                                                                      color: isWeekend
-                                                                          ? Colors.grey.shade600
-                                                                          : chosenDay == day
-                                                                              ? Colors.white
-                                                                              : Colors.black87,
+                                                                      color: chosenDay ==
+                                                                              day
+                                                                          ? Colors
+                                                                              .white
+                                                                          : Colors
+                                                                              .black87,
                                                                       fontWeight: chosenDay ==
                                                                               day
                                                                           ? FontWeight
@@ -849,7 +877,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                           height: 16),
                                                       Container(
                                                         padding:
-                                                            EdgeInsets.all(12),
+                                                            const EdgeInsets
+                                                                .all(12),
                                                         decoration:
                                                             BoxDecoration(
                                                           color: Colors
@@ -875,24 +904,25 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                                     color: Colors
                                                                         .blue
                                                                         .shade700)),
-                                                            SizedBox(height: 4),
-                                                            Text(
-                                                                "• L'équipe sélectionnée commence de garde le jour choisi",
+                                                            const SizedBox(
+                                                                height: 4),
+                                                            const Text(
+                                                                "• L'équipe sélectionnée commence le jour choisi",
                                                                 style: TextStyle(
                                                                     fontSize:
                                                                         12)),
-                                                            Text(
-                                                                "• Rotation A→B→C→D pour les jours suivants",
+                                                            const Text(
+                                                                "• Rotation A → B → C → D",
                                                                 style: TextStyle(
                                                                     fontSize:
                                                                         12)),
-                                                            Text(
-                                                                "• Équipe de garde = 'G', autres équipes = 'RE'",
+                                                            const Text(
+                                                                "• Équipe de garde = 'G', autres = 'RE'",
                                                                 style: TextStyle(
                                                                     fontSize:
                                                                         12)),
-                                                            Text(
-                                                                "• Week-ends ignorés (déjà gérés ailleurs)",
+                                                            const Text(
+                                                                "• Les congés sont respectés",
                                                                 style: TextStyle(
                                                                     fontSize:
                                                                         12)),
@@ -961,13 +991,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         int totalModifications = 0;
                                         int joursGarde = 0;
                                         Map<String, int> gardesParEquipe = {
-                                          "A": 0,
-                                          "B": 0,
-                                          "C": 0,
-                                          "D": 0
+                                          for (var e in equipes) e: 0
                                         };
 
-                                        // Filtrer le personnel médical avec équipes A, B, C, D (CORRECTION ICI)
+                                        // Filtrer personnel médical avec équipes A,B,C,D
                                         final personnelMedical =
                                             staffProvider.staffs.where((staff) {
                                           final hasEquipe = staff.equipe !=
@@ -982,148 +1009,67 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                  "❌ Aucun personnel médical avec équipes A,B,C,D trouvé"),
+                                                  "❌ Aucun personnel médical trouvé avec équipes A,B,C,D"),
                                               backgroundColor: Colors.red,
                                             ),
                                           );
                                           return;
                                         }
 
-                                        // Planifier les gardes à partir du jour sélectionné
-                                        int dayCounter = 0;
-                                        // Dans la boucle de planification des gardes, ajouter la vérification :
-                                        for (int day = selectedDay;
-                                            day <= daysInMonth;
-                                            day++) {
-                                          final date = DateTime(_selectedYear,
-                                              _selectedMonth, day);
+                                        /// Fonction utilitaire pour tester si staff est en congé
+                                        bool estEnConge(staff, int day) {
+                                          return staff.timeOff.any((timeOff) =>
+                                              DateTime(_selectedYear,
+                                                      _selectedMonth, day)
+                                                  .isAfter(timeOff.debut
+                                                      .subtract(const Duration(
+                                                          days: 1))) &&
+                                              DateTime(_selectedYear,
+                                                      _selectedMonth, day)
+                                                  .isBefore(timeOff.fin.add(
+                                                      const Duration(days: 1))));
+                                        }
 
-                                          // Ignorer les weekends
-                                          if (date.weekday != DateTime.friday &&
-                                              date.weekday !=
-                                                  DateTime.saturday) {
-                                            final equipeIndex =
-                                                (startEquipeIndex +
-                                                        dayCounter) %
-                                                    equipes.length;
-                                            final equipeDeGarde =
-                                                equipes[equipeIndex];
+                                        /// Rotation unique (1 → N)
+                                        for (int i = 0; i < daysInMonth; i++) {
+                                          final day = ((selectedDay - 1 + i) %
+                                                  daysInMonth) +
+                                              1;
+                                          final equipeIndex =
+                                              (startEquipeIndex + i) %
+                                                  equipes.length;
+                                          final equipeDeGarde =
+                                              equipes[equipeIndex];
 
-                                            joursGarde++;
-                                            gardesParEquipe[equipeDeGarde] =
-                                                (gardesParEquipe[
-                                                            equipeDeGarde] ??
-                                                        0) +
-                                                    1;
-                                            dayCounter++;
+                                          joursGarde++;
+                                          gardesParEquipe[equipeDeGarde] =
+                                              (gardesParEquipe[equipeDeGarde] ??
+                                                      0) +
+                                                  1;
 
-                                            // Marquer les gardes pour le personnel médical
-                                            for (final staff
-                                                in personnelMedical) {
-                                              final staffEquipe =
-                                                  staff.equipe!.toUpperCase();
+                                          for (final staff
+                                              in personnelMedical) {
+                                            final staffEquipe =
+                                                staff.equipe!.toUpperCase();
+                                            if (estEnConge(staff, day))
+                                              continue;
 
-                                              // VÉRIFICATION CONGÉS AVANT ATTRIBUTION DE GARDE
-                                              final timeOffs =
-                                                  staff.timeOff.toList();
-                                              bool estEnConge = false;
-
-                                              for (var timeOff in timeOffs) {
-                                                if (date.isAfter(timeOff.debut
-                                                        .subtract(Duration(
-                                                            days: 1))) &&
-                                                    date.isBefore(timeOff.fin
-                                                        .add(Duration(
-                                                            days: 1)))) {
-                                                  estEnConge = true;
-                                                  break;
-                                                }
-                                              }
-
-                                              if (estEnConge) {
-                                                print(
-                                                    "🚫 ${staff.nom} en congé le jour $day - Garde ignorée");
-                                                continue; // Ignorer ce staff pour cette garde
-                                              }
-
-                                              if (staffEquipe ==
-                                                  equipeDeGarde) {
-                                                await activiteProvider
-                                                    .updateActivite(
-                                                        staff.id, day, "G",
-                                                        year: _selectedYear,
-                                                        month: _selectedMonth);
-                                              } else {
-                                                await activiteProvider
-                                                    .updateActivite(
-                                                        staff.id, day, "RE",
-                                                        year: _selectedYear,
-                                                        month: _selectedMonth);
-                                              }
-                                              totalModifications++;
-                                            }
+                                            await activiteProvider
+                                                .updateActivite(
+                                              staff.id,
+                                              day,
+                                              staffEquipe == equipeDeGarde
+                                                  ? "G"
+                                                  : "RE",
+                                              year: _selectedYear,
+                                              month: _selectedMonth,
+                                            );
+                                            totalModifications++;
                                           }
                                         }
 
-                                        // Planifier les jours avant le jour de commencement (si nécessaire)
-                                        dayCounter = 0;
-                                        for (int day = 1;
-                                            day < selectedDay;
-                                            day++) {
-                                          final date = DateTime(_selectedYear,
-                                              _selectedMonth, day);
-
-                                          if (date.weekday != DateTime.friday &&
-                                              date.weekday !=
-                                                  DateTime.saturday) {
-                                            // Calculer l'équipe pour les jours précédents (en remontant)
-                                            final daysFromStart = (daysInMonth -
-                                                    selectedDay +
-                                                    1) +
-                                                day -
-                                                1;
-                                            final equipeIndex =
-                                                (startEquipeIndex +
-                                                        daysFromStart) %
-                                                    equipes.length;
-                                            final equipeDeGarde =
-                                                equipes[equipeIndex];
-
-                                            joursGarde++;
-                                            gardesParEquipe[equipeDeGarde] =
-                                                (gardesParEquipe[
-                                                            equipeDeGarde] ??
-                                                        0) +
-                                                    1;
-
-                                            for (final staff
-                                                in personnelMedical) {
-                                              final staffEquipe =
-                                                  staff.equipe!.toUpperCase();
-
-                                              if (staffEquipe ==
-                                                  equipeDeGarde) {
-                                                await activiteProvider
-                                                    .updateActivite(
-                                                        staff.id, day, "G",
-                                                        year: _selectedYear,
-                                                        month: _selectedMonth);
-                                              } else {
-                                                await activiteProvider
-                                                    .updateActivite(
-                                                        staff.id, day, "RE",
-                                                        year: _selectedYear,
-                                                        month: _selectedMonth);
-                                              }
-                                              totalModifications++;
-                                            }
-                                          }
-                                        }
-
-                                        // Rafraîchir les données
                                         await staffProvider.fetchStaffs();
 
-                                        // Créer le message de résumé
                                         String resumeGardes = gardesParEquipe
                                             .entries
                                             .where((e) => e.value > 0)
@@ -1134,15 +1080,34 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                            content: Text(
-                                                "✅ Gardes médicales planifiées!\n"
-                                                "• Début: Jour $selectedDay, Équipe $selectedEquipe\n"
-                                                "• $joursGarde jours de garde répartis\n"
-                                                "• Répartition: $resumeGardes\n"
-                                                "• ${personnelMedical.length} médecins concernés\n"
-                                                "• $totalModifications modifications effectuées"),
                                             backgroundColor: Colors.green,
-                                            duration: Duration(seconds: 5),
+                                            duration:
+                                                const Duration(seconds: 6),
+                                            content: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Expanded(
+                                                  child: Text(
+                                                    "✅ Gardes médicales planifiées !\n"
+                                                    "• Début: Jour $selectedDay, Équipe $selectedEquipe\n"
+                                                    "• $joursGarde jours planifiés\n"
+                                                    "• Répartition: $resumeGardes\n"
+                                                    "• ${personnelMedical.length} médecins concernés\n"
+                                                    "• $totalModifications modifications",
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.close,
+                                                      color: Colors.white),
+                                                  onPressed: () {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .hideCurrentSnackBar();
+                                                  },
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         );
                                       } catch (e) {
@@ -1152,12 +1117,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             content: Text(
                                                 "❌ Erreur lors de la planification: $e"),
                                             backgroundColor: Colors.red,
-                                            duration: Duration(seconds: 3),
+                                            duration:
+                                                const Duration(seconds: 3),
                                           ),
                                         );
                                       }
                                     },
-                                  )
+                                  ),
                                 ],
                               ),
                             ),

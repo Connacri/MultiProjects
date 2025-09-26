@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
@@ -7,14 +8,15 @@ import 'ActivitePersonne.dart';
 
 class StaffProvider with ChangeNotifier {
   List<Staff> _staffs = [];
+  late final ObjectBox _objectBox;
 
   List<Staff> get staffs => _staffs;
-
-  late final ObjectBox _objectBox;
 
   StaffProvider() {
     _initObjectBox();
   }
+
+  Box<ActiviteJour> get activiteBox => _objectBox.activiteBox;
 
   Future<void> _initObjectBox() async {
     try {
@@ -278,5 +280,19 @@ class ActiviteProvider with ChangeNotifier {
   Future<void> fetchStaffs() async {
     final staffs = _objectBox.staffBox.getAll();
     print("Staffs dans la DB: ${staffs.length}");
+  }
+
+  /// 🔹 Supprimer toutes les activités
+  Future<void> clearAllActivites(BuildContext context) async {
+    try {
+      _objectBox.activiteBox.removeAll();
+      print("✅ Toutes les activités ont été supprimées.");
+      notifyListeners();
+      // Rafraîchir les staffs après suppression
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs();
+    } catch (e) {
+      print("Erreur clearAllActivites: $e");
+    }
   }
 }

@@ -228,6 +228,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: globalScaffoldMessengerKey,
+
       scrollBehavior: CustomScrollBehavior(),
       // Applique le nouveau ScrollBehavior
       theme: ThemeData(
