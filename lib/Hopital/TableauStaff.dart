@@ -57,14 +57,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   // ⭐ NOUVEAU : Obtenir le nom du mois sélectionné
   String get _selectedMonthName => _moisNoms[_selectedMonth - 1];
 
-  // Méthode pour sauvegarder les modifications
+// 4. Modifier aussi la méthode _saveActiviteModification
   Future<void> _saveActiviteModification(
       Staff staff, int jour, String nouveauStatut) async {
     try {
       final activiteProvider = ActiviteProvider();
-      await activiteProvider.updateActivite(staff.id, jour, nouveauStatut);
+      await activiteProvider.updateActivite(staff.id, jour, nouveauStatut,
+          year: _selectedYear, month: _selectedMonth);
 
-      // Rafraîchir les données
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       await staffProvider.fetchStaffs();
 
@@ -259,7 +259,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                 try {
                   final activiteProvider = ActiviteProvider();
-                  await activiteProvider.insertActivites(activites);
+                  await activiteProvider.insertActivites(activites,
+                      year: _selectedYear, month: _selectedMonth);
 
                   // Rafraîchir les données
                   final staffProvider =
@@ -507,11 +508,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         int totalModifications = 0;
                                         int staffEquipeABCD = 0;
                                         int staffAutres = 0;
+                                        int congesIgnores =
+                                            0; // NOUVEAU: Compteur des congés
 
                                         // Parcourir TOUS les staffs
                                         for (final staff
                                             in staffProvider.staffs) {
-                                          // Déterminer si le staff fait partie des équipes A,B,C,D
                                           final equipe =
                                               staff.equipe?.toUpperCase();
                                           final isEquipeABCD = equipe != null &&
@@ -530,6 +532,29 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             final date = DateTime(_selectedYear,
                                                 _selectedMonth, day);
 
+                                            // VÉRIFICATION CONGÉS AVANT MODIFICATION
+                                            final timeOffs =
+                                                staff.timeOff.toList();
+                                            bool estEnConge = false;
+
+                                            for (var timeOff in timeOffs) {
+                                              if (date.isAfter(timeOff.debut
+                                                      .subtract(
+                                                          Duration(days: 1))) &&
+                                                  date.isBefore(timeOff.fin.add(
+                                                      Duration(days: 1)))) {
+                                                estEnConge = true;
+                                                congesIgnores++;
+                                                break;
+                                              }
+                                            }
+
+                                            if (estEnConge) {
+                                              print(
+                                                  "🚫 ${staff.nom} en congé le jour $day - Planification ignorée");
+                                              continue; // Ignorer ce jour
+                                            }
+
                                             if (date.weekday ==
                                                     DateTime.friday ||
                                                 date.weekday ==
@@ -537,10 +562,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               // Week-end : marquer 'RE' pour TOUS
                                               await activiteProvider
                                                   .updateActivite(
-                                                      staff.id, day, "RE");
+                                                      staff.id, day, "RE",
+                                                      year: _selectedYear,
+                                                      month: _selectedMonth);
                                               totalModifications++;
 
-                                              // Compter les jours de weekend uniques
                                               if (staff ==
                                                   staffProvider.staffs.first) {
                                                 weekendDaysCount++;
@@ -548,19 +574,20 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             } else {
                                               // Jours normaux : logique différente selon l'équipe
                                               if (isEquipeABCD) {
-                                                // Équipes A,B,C,D : marquer '-'
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "-");
+                                                        staff.id, day, "-",
+                                                        year: _selectedYear,
+                                                        month: _selectedMonth);
                                               } else {
-                                                // Autres staff : marquer 'N'
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "N");
+                                                        staff.id, day, "N",
+                                                        year: _selectedYear,
+                                                        month: _selectedMonth);
                                               }
                                               totalModifications++;
 
-                                              // Compter les jours normaux uniques
                                               if (staff ==
                                                   staffProvider.staffs.first) {
                                                 normalDaysCount++;
@@ -581,6 +608,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                 "• $normalDaysCount jours normaux traités\n"
                                                 "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux\n"
                                                 "• $staffAutres autres staff → 'N' jours normaux\n"
+                                                "• $congesIgnores jours de congé préservés\n" // NOUVEAU
                                                 "• $totalModifications modifications totales"),
                                             backgroundColor: Colors.green,
                                             duration: Duration(seconds: 5),
@@ -930,6 +958,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                                         // Planifier les gardes à partir du jour sélectionné
                                         int dayCounter = 0;
+                                        // Dans la boucle de planification des gardes, ajouter la vérification :
                                         for (int day = selectedDay;
                                             day <= daysInMonth;
                                             day++) {
@@ -940,7 +969,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                           if (date.weekday != DateTime.friday &&
                                               date.weekday !=
                                                   DateTime.saturday) {
-                                            // Calculer quelle équipe doit être de garde
                                             final equipeIndex =
                                                 (startEquipeIndex +
                                                         dayCounter) %
@@ -962,17 +990,42 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               final staffEquipe =
                                                   staff.equipe!.toUpperCase();
 
+                                              // VÉRIFICATION CONGÉS AVANT ATTRIBUTION DE GARDE
+                                              final timeOffs =
+                                                  staff.timeOff.toList();
+                                              bool estEnConge = false;
+
+                                              for (var timeOff in timeOffs) {
+                                                if (date.isAfter(timeOff.debut
+                                                        .subtract(Duration(
+                                                            days: 1))) &&
+                                                    date.isBefore(timeOff.fin
+                                                        .add(Duration(
+                                                            days: 1)))) {
+                                                  estEnConge = true;
+                                                  break;
+                                                }
+                                              }
+
+                                              if (estEnConge) {
+                                                print(
+                                                    "🚫 ${staff.nom} en congé le jour $day - Garde ignorée");
+                                                continue; // Ignorer ce staff pour cette garde
+                                              }
+
                                               if (staffEquipe ==
                                                   equipeDeGarde) {
-                                                // Cette équipe est de garde : marquer 'G'
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "G");
+                                                        staff.id, day, "G",
+                                                        year: _selectedYear,
+                                                        month: _selectedMonth);
                                               } else {
-                                                // Autres équipes médicales : marquer 'RE'
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "RE");
+                                                        staff.id, day, "RE",
+                                                        year: _selectedYear,
+                                                        month: _selectedMonth);
                                               }
                                               totalModifications++;
                                             }
@@ -1019,11 +1072,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                   equipeDeGarde) {
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "G");
+                                                        staff.id, day, "G",
+                                                        year: _selectedYear,
+                                                        month: _selectedMonth);
                                               } else {
                                                 await activiteProvider
                                                     .updateActivite(
-                                                        staff.id, day, "RE");
+                                                        staff.id, day, "RE",
+                                                        year: _selectedYear,
+                                                        month: _selectedMonth);
                                               }
                                               totalModifications++;
                                             }
@@ -2035,7 +2092,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
           int jour = currentDate.day;
-          await activiteProvider.updateActivite(staff.id, jour, statut);
+          await activiteProvider.updateActivite(staff.id, jour, statut,
+              year: _selectedYear, month: _selectedMonth);
           joursModifies++;
         }
         currentDate = currentDate.add(Duration(days: 1));

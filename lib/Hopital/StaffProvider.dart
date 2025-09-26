@@ -125,11 +125,36 @@ class ActiviteProvider with ChangeNotifier {
     _objectBox = ObjectBox();
   }
 
-  /// 🔹 Met à jour ou insère une activité d’un staff
-  Future<void> updateActivite(int staffId, int jour, String statut) async {
+  /// 🔹 Met à jour ou insère une activité avec vérification des congés
+  /// Méthode modifiée avec vérification des congés TimeOff
+  Future<void> updateActivite(int staffId, int jour, String statut,
+      {required int year, required int month}) async {
     try {
       final staff = _objectBox.staffBox.get(staffId);
       if (staff == null) throw Exception("Staff non trouvé");
+
+      // VÉRIFICATION CONGÉS : Créer la date du jour à vérifier
+      final dateJour = DateTime(year, month, jour);
+
+      // Vérifier si le staff a un congé ce jour-là
+      final timeOffs = staff.timeOff.toList();
+      bool estEnConge = false;
+
+      for (var timeOff in timeOffs) {
+        if (dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+            dateJour.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+          estEnConge = true;
+          print(
+              "🚫 ${staff.nom} est en congé le $jour/$month/$year (${timeOff.motif ?? 'Congé'})");
+          break;
+        }
+      }
+
+      if (estEnConge) {
+        print(
+            "⚠️  Modification ignorée pour ${staff.nom} - jour $jour (en congé)");
+        return; // Ne pas modifier l'activité si en congé
+      }
 
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
@@ -155,8 +180,22 @@ class ActiviteProvider with ChangeNotifier {
     }
   }
 
-  /// 🔹 Insère plusieurs staffs avec activités + relations (branch & congés)
-  Future<void> insertActivites(List<ActivitePersonne> liste) async {
+  /// 🔹 Vérifie si un staff est en congé à une date donnée
+  bool _isStaffOnLeave(Staff staff, DateTime dateJour) {
+    final timeOffs = staff.timeOff.toList();
+
+    for (var timeOff in timeOffs) {
+      if (dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+          dateJour.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// 🔹 Version avec dates pour insertActivites
+  Future<void> insertActivites(List<ActivitePersonne> liste,
+      {required int year, required int month}) async {
     try {
       _objectBox.activiteBox.removeAll();
       _objectBox.staffBox.removeAll();
@@ -183,14 +222,7 @@ class ActiviteProvider with ChangeNotifier {
 
         _objectBox.staffBox.put(staff);
 
-        // Activités liées (jours du mois)
-        for (int i = 0; i < e.jours.length && i < 31; i++) {
-          final activite = ActiviteJour(jour: i + 1, statut: e.jours[i])
-            ..staff.target = staff;
-          _objectBox.activiteBox.put(activite);
-        }
-
-        // Congés liés
+        // Insérer les congés en premier
         if (e.conges != null) {
           for (var conge in e.conges!) {
             final timeOff = TimeOff(
@@ -199,6 +231,26 @@ class ActiviteProvider with ChangeNotifier {
               motif: conge.motif,
             )..staff.target = staff;
             _objectBox.timeOffBox.put(timeOff);
+          }
+        }
+
+        // Traiter les activités en évitant d'écraser les congés
+        for (int i = 0; i < e.jours.length && i < 31; i++) {
+          final jour = i + 1;
+          final statutJour = e.jours[i];
+
+          // Utiliser les paramètres year/month
+          final dateJour = DateTime(year, month, jour);
+          final estEnConge = _isStaffOnLeave(staff, dateJour);
+
+          if (estEnConge) {
+            final activite = ActiviteJour(jour: jour, statut: 'C')
+              ..staff.target = staff;
+            _objectBox.activiteBox.put(activite);
+          } else {
+            final activite = ActiviteJour(jour: jour, statut: statutJour)
+              ..staff.target = staff;
+            _objectBox.activiteBox.put(activite);
           }
         }
       }
