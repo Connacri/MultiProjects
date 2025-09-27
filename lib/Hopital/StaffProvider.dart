@@ -31,28 +31,28 @@ class StaffProvider with ChangeNotifier {
   Future<void> fetchStaffs() async {
     try {
       _staffs = _objectBox.staffBox.getAll();
-      print('Nombre de staffs récupérés: ${_staffs.length}');
+      //  print('Nombre de staffs récupérés: ${_staffs.length}');
 
       for (final staff in _staffs) {
-        print("\n--- STAFF ${staff.id} ---");
-        print(
-            "Nom: ${staff.nom}, Grade: ${staff.grade}, Groupe: ${staff.groupe}");
-        print("Équipe: ${staff.equipe ?? "-"}");
-        print("Branch: ${staff.branch.target?.branchNom ?? "Non assigné"}");
+        // print("\n--- STAFF ${staff.id} ---");
+        // print(
+        //     "Nom: ${staff.nom}, Grade: ${staff.grade}, Groupe: ${staff.groupe}");
+        // print("Équipe: ${staff.equipe ?? "-"}");
+        // print("Branch: ${staff.branch.target?.branchNom ?? "Non assigné"}");
 
         // Activités liées
         final activites = _objectBox.activiteBox
             .query(ActiviteJour_.staff.equals(staff.id))
             .build()
             .find();
-        print("Activités: ${activites.length}");
+        //  print("Activités: ${activites.length}");
 
         // Congés liés
         final timeOffs = staff.timeOff.toList();
-        print("Congés: ${timeOffs.length}");
+        // print("Congés: ${timeOffs.length}");
         for (var timeOff in timeOffs) {
-          print(
-              " - ${timeOff.debut} -> ${timeOff.fin} (${timeOff.motif ?? "aucun"})");
+          // print(
+          //     " - ${timeOff.debut} -> ${timeOff.fin} (${timeOff.motif ?? "aucun"})");
         }
       }
 
@@ -119,7 +119,7 @@ class StaffProvider with ChangeNotifier {
   }
 }
 
-/// Provider pour gérer les activités
+/// Provider pour gérer les activités - VERSION AMÉLIORÉE
 class ActiviteProvider with ChangeNotifier {
   late final ObjectBox _objectBox;
 
@@ -127,77 +127,158 @@ class ActiviteProvider with ChangeNotifier {
     _objectBox = ObjectBox();
   }
 
-  /// 🔹 Met à jour ou insère une activité avec vérification des congés
-  /// Version corrigée qui vérifie AUSSI les activités existantes avec statut C/CM
+  // Méthodes publiques pour accéder aux boxes
+  Box<ActiviteJour> get activiteBox => _objectBox.activiteBox;
+
+  Box<TimeOff> get timeOffBox => _objectBox.timeOffBox;
+
+  Box<Staff> get staffBox => _objectBox.staffBox;
+
+  /// 🔹 VERSION CORRIGÉE : Met à jour une activité en respectant la logique métier
   Future<void> updateActivite(int staffId, int jour, String statut,
       {required int year, required int month}) async {
     try {
       final staff = _objectBox.staffBox.get(staffId);
-      if (staff == null) throw Exception("Staff non trouvé");
-
-      // VÉRIFICATION 1 : Congés dans TimeOff
-      final dateJour = DateTime(year, month, jour);
-      final timeOffs = staff.timeOff.toList();
-      bool estEnCongeTimeOff = false;
-
-      for (var timeOff in timeOffs) {
-        if (dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
-            dateJour.isBefore(timeOff.fin.add(Duration(days: 1)))) {
-          estEnCongeTimeOff = true;
-          print(
-              "🚫 ${staff.nom} est en congé TimeOff le $jour/$month/$year (${timeOff.motif ?? 'Congé'})");
-          break;
-        }
+      if (staff == null) {
+        print("⚠️ Staff $staffId non trouvé");
+        return;
       }
 
-      // VÉRIFICATION 2 : Congés dans les activités existantes
+      final dateJour = DateTime(year, month, jour);
+
+      // VÉRIFICATION 1 : Congés TimeOff (plus prioritaires)
+      bool estEnCongeTimeOff = _isStaffOnLeaveTimeOff(staff, dateJour);
+
+      if (estEnCongeTimeOff) {
+        print(
+            "🚫 ${staff.nom} est en congé TimeOff le $jour/$month/$year - Modification ignorée");
+        return;
+      }
+
+      // VÉRIFICATION 2 : Activités de congé existantes (C, CM) - seulement si pas TimeOff
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
               ActiviteJour_.jour.equals(jour))
           .build();
-
       final activites = query.find();
       query.close();
 
       bool estEnCongeActivite = false;
+      ActiviteJour? activiteExistante;
+
       if (activites.isNotEmpty) {
-        final activiteExistante = activites.first;
+        activiteExistante = activites.first;
         if (activiteExistante.statut == 'C' ||
             activiteExistante.statut == 'CM') {
           estEnCongeActivite = true;
           print(
-              "🚫 ${staff.nom} a déjà un congé le jour $jour (statut: ${activiteExistante.statut})");
+              "🚫 ${staff.nom} a un congé activité le jour $jour (${activiteExistante.statut}) - Modification ignorée");
         }
       }
 
-      // Si en congé (TimeOff OU activité), ne pas modifier
-      if (estEnCongeTimeOff || estEnCongeActivite) {
+      // Si en congé activité, ignorer SAUF si on veut forcer un autre type de congé
+      if (estEnCongeActivite && !['C', 'CM'].contains(statut)) {
         print(
-            "⚠️  Modification IGNORÉE pour ${staff.nom} - jour $jour (en congé)");
+            "⚠️ Modification IGNORÉE pour ${staff.nom} - jour $jour (congé activité existant)");
         return;
       }
 
-      // Procéder à la modification normale
-      if (activites.isNotEmpty) {
-        final activite = activites.first;
-        activite.statut = statut;
-        _objectBox.activiteBox.put(activite);
-        print("✅ Activité mise à jour: ${staff.nom} jour $jour = $statut");
+      // MODIFICATION AUTORISÉE : Procéder à la mise à jour
+      if (activiteExistante != null) {
+        // Mise à jour de l'activité existante
+        String ancienStatut = activiteExistante.statut;
+        activiteExistante.statut = statut;
+        _objectBox.activiteBox.put(activiteExistante);
+        print(
+            "✅ Activité mise à jour: ${staff.nom} jour $jour: $ancienStatut → $statut");
       } else {
-        final nouvelle = ActiviteJour(jour: jour, statut: statut)
+        // Création d'une nouvelle activité
+        final nouvelleActivite = ActiviteJour(jour: jour, statut: statut)
           ..staff.target = staff;
-        _objectBox.activiteBox.put(nouvelle);
+        _objectBox.activiteBox.put(nouvelleActivite);
         print("➕ Nouvelle activité créée: ${staff.nom} jour $jour = $statut");
       }
 
       notifyListeners();
     } catch (e) {
-      print("Erreur updateActivite: $e");
+      print("❌ Erreur updateActivite: $e");
+      rethrow;
     }
   }
 
-  /// 🔹 Vérifie si un staff est en congé à une date donnée
-  bool _isStaffOnLeave(Staff staff, DateTime dateJour) {
+  /// 🔹 NOUVELLE MÉTHODE : Force la mise à jour (pour les congés planifiés)
+  Future<void> forceUpdateActivite(int staffId, int jour, String statut,
+      {required int year, required int month}) async {
+    try {
+      final staff = _objectBox.staffBox.get(staffId);
+      if (staff == null) return;
+
+      final query = _objectBox.activiteBox
+          .query(ActiviteJour_.staff.equals(staffId) &
+              ActiviteJour_.jour.equals(jour))
+          .build();
+      final activites = query.find();
+      query.close();
+
+      if (activites.isNotEmpty) {
+        final activite = activites.first;
+        activite.statut = statut;
+        _objectBox.activiteBox.put(activite);
+        print("🔄 Activité forcée: ${staff.nom} jour $jour = $statut");
+      } else {
+        final nouvelle = ActiviteJour(jour: jour, statut: statut)
+          ..staff.target = staff;
+        _objectBox.activiteBox.put(nouvelle);
+        print("➕ Nouvelle activité forcée: ${staff.nom} jour $jour = $statut");
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print("❌ Erreur forceUpdateActivite: $e");
+    }
+  }
+
+  /// 🔹 NOUVELLE MÉTHODE : Force la mise à jour en ignorant complètement les congés
+  Future<void> forceUpdateActiviteIgnoringLeave(
+      int staffId, int jour, String statut,
+      {required int year, required int month}) async {
+    try {
+      final staff = _objectBox.staffBox.get(staffId);
+      if (staff == null) {
+        print("⚠️ Staff $staffId non trouvé");
+        return;
+      }
+
+      final query = _objectBox.activiteBox
+          .query(ActiviteJour_.staff.equals(staffId) &
+              ActiviteJour_.jour.equals(jour))
+          .build();
+      final activites = query.find();
+      query.close();
+
+      if (activites.isNotEmpty) {
+        final activite = activites.first;
+        String ancienStatut = activite.statut;
+        activite.statut = statut;
+        _objectBox.activiteBox.put(activite);
+        print(
+            "🔄 Force update: ${staff.nom} jour $jour: $ancienStatut → $statut");
+      } else {
+        final nouvelle = ActiviteJour(jour: jour, statut: statut)
+          ..staff.target = staff;
+        _objectBox.activiteBox.put(nouvelle);
+        print("➕ Force create: ${staff.nom} jour $jour = $statut");
+      }
+
+      notifyListeners();
+    } catch (e) {
+      print("❌ Erreur forceUpdateActiviteIgnoringLeave: $e");
+      rethrow;
+    }
+  }
+
+  /// 🔹 Vérifie si un staff est en congé TimeOff à une date donnée
+  bool _isStaffOnLeaveTimeOff(Staff staff, DateTime dateJour) {
     final timeOffs = staff.timeOff.toList();
 
     for (var timeOff in timeOffs) {
@@ -209,25 +290,40 @@ class ActiviteProvider with ChangeNotifier {
     return false;
   }
 
-  /// 🔹 Version avec dates pour insertActivites
+  /// 🔹 Vérifie si un staff est en congé (TimeOff OU activité) à une date donnée
+  bool isStaffOnLeave(Staff staff, DateTime dateJour) {
+    // Vérifier TimeOff
+    if (_isStaffOnLeaveTimeOff(staff, dateJour)) {
+      return true;
+    }
+
+    // Vérifier activités de congé
+    final activites = staff.activites.toList();
+    return activites.any((activite) =>
+        activite.jour == dateJour.day &&
+        (activite.statut == 'C' || activite.statut == 'CM'));
+  }
+
+  /// 🔹 VERSION CORRIGÉE : insertActivites avec gestion des congés
   Future<void> insertActivites(List<ActivitePersonne> liste,
       {required int year, required int month}) async {
     try {
+      // Nettoyage complet de la base (si nécessaire)
       _objectBox.activiteBox.removeAll();
       _objectBox.staffBox.removeAll();
       _objectBox.branchBox.removeAll();
       _objectBox.timeOffBox.removeAll();
 
       for (var e in liste) {
-        // Branch (service)
+        // 1. Créer/récupérer Branch
         Branch branch = _objectBox.branchBox
-                .query(Branch_.branchNom.equals(e.branchNom ?? "Inconnu"))
+                .query(Branch_.branchNom.equals(e.branchNom ?? "Rhumatologie"))
                 .build()
                 .findFirst() ??
-            Branch(branchNom: e.branchNom ?? "Inconnu");
+            Branch(branchNom: e.branchNom ?? "Rhumatologie");
         _objectBox.branchBox.put(branch);
 
-        // Staff
+        // 2. Créer Staff
         final staff = Staff(
           nom: e.nom,
           grade: e.grade,
@@ -238,8 +334,8 @@ class ActiviteProvider with ChangeNotifier {
 
         _objectBox.staffBox.put(staff);
 
-        // Insérer les congés en premier
-        if (e.conges != null) {
+        // 3. Insérer les congés TimeOff AVANT les activités
+        if (e.conges != null && e.conges!.isNotEmpty) {
           for (var conge in e.conges!) {
             final timeOff = TimeOff(
               debut: conge.debut,
@@ -247,39 +343,50 @@ class ActiviteProvider with ChangeNotifier {
               motif: conge.motif,
             )..staff.target = staff;
             _objectBox.timeOffBox.put(timeOff);
+            print(
+                "📅 Congé ajouté: ${staff.nom} du ${conge.debut} au ${conge.fin}");
           }
         }
 
-        // Traiter les activités en évitant d'écraser les congés
+        // 4. Traiter les activités journalières avec respect des congés
         for (int i = 0; i < e.jours.length && i < 31; i++) {
           final jour = i + 1;
           final statutJour = e.jours[i];
-
-          // Utiliser les paramètres year/month
           final dateJour = DateTime(year, month, jour);
-          final estEnConge = _isStaffOnLeave(staff, dateJour);
 
-          if (estEnConge) {
-            final activite = ActiviteJour(jour: jour, statut: 'C')
-              ..staff.target = staff;
-            _objectBox.activiteBox.put(activite);
+          // Vérifier si le staff est en congé TimeOff ce jour-là
+          final estEnCongeTimeOff = _isStaffOnLeaveTimeOff(staff, dateJour);
+
+          String statutFinal;
+          if (estEnCongeTimeOff) {
+            // Si en congé TimeOff, forcer 'C'
+            statutFinal = 'C';
           } else {
-            final activite = ActiviteJour(jour: jour, statut: statutJour)
-              ..staff.target = staff;
-            _objectBox.activiteBox.put(activite);
+            // Sinon utiliser le statut planifié
+            statutFinal = statutJour;
           }
+
+          final activite = ActiviteJour(jour: jour, statut: statutFinal)
+            ..staff.target = staff;
+          _objectBox.activiteBox.put(activite);
         }
+
+        print(
+            "✅ Staff inséré: ${staff.nom} avec ${e.conges?.length ?? 0} congés");
       }
 
       await fetchStaffs();
+      print("🎉 Insertion terminée: ${liste.length} staffs traités");
     } catch (e) {
-      print("Erreur insertActivites: $e");
+      print("❌ Erreur insertActivites: $e");
+      rethrow;
     }
   }
 
   Future<void> fetchStaffs() async {
     final staffs = _objectBox.staffBox.getAll();
-    print("Staffs dans la DB: ${staffs.length}");
+    print("📊 Staffs dans la DB: ${staffs.length}");
+    notifyListeners();
   }
 
   /// 🔹 Supprimer toutes les activités
@@ -288,11 +395,117 @@ class ActiviteProvider with ChangeNotifier {
       _objectBox.activiteBox.removeAll();
       print("✅ Toutes les activités ont été supprimées.");
       notifyListeners();
+
       // Rafraîchir les staffs après suppression
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       await staffProvider.fetchStaffs();
     } catch (e) {
-      print("Erreur clearAllActivites: $e");
+      print("❌ Erreur clearAllActivites: $e");
     }
   }
+
+  /// 🔹 NOUVELLE MÉTHODE : Planification intelligente des gardes
+  Future<PlanificationResult> planifierGardesAvancees({
+    required List<String> equipesOrdonnees,
+    required int jourDepart,
+    required int year,
+    required int month,
+    required int daysInMonth,
+  }) async {
+    try {
+      int totalModifications = 0;
+      int congesRespectes = 0;
+      Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
+      Map<String, int> recuperationsParEquipe = {
+        for (var e in equipesOrdonnees) e: 0
+      };
+
+      // Récupérer le personnel médical concerné
+      final personnelMedical = _objectBox.staffBox
+          .getAll()
+          .where((staff) =>
+              staff.equipe != null &&
+              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+          .toList();
+
+      if (personnelMedical.isEmpty) {
+        throw Exception(
+            "Aucun personnel médical trouvé avec les équipes: ${equipesOrdonnees.join(', ')}");
+      }
+
+      // LOGIQUE DE ROTATION CORRIGÉE
+      for (int day = 1; day <= daysInMonth; day++) {
+        // Calculer l'équipe de garde pour ce jour
+        int joursDepuisDebut = (day - jourDepart + daysInMonth) % daysInMonth;
+        int equipeIndex = joursDepuisDebut % equipesOrdonnees.length;
+        String equipeDeGarde = equipesOrdonnees[equipeIndex];
+
+        // Planifier chaque membre du personnel
+        for (final staff in personnelMedical) {
+          final staffEquipe = staff.equipe!.toUpperCase();
+          final dateJour = DateTime(year, month, day);
+
+          // Vérifier les congés
+          if (isStaffOnLeave(staff, dateJour)) {
+            congesRespectes++;
+            print("🚫 ${staff.nom} en congé le jour $day - ignoré");
+            continue;
+          }
+
+          // Déterminer le statut
+          String statutAAffecter;
+          if (staffEquipe == equipeDeGarde) {
+            statutAAffecter = "G"; // Garde
+            gardesParEquipe[staffEquipe] =
+                (gardesParEquipe[staffEquipe] ?? 0) + 1;
+          } else {
+            statutAAffecter = "RE"; // Récupération
+            recuperationsParEquipe[staffEquipe] =
+                (recuperationsParEquipe[staffEquipe] ?? 0) + 1;
+          }
+
+          // Appliquer la modification
+          await updateActivite(staff.id, day, statutAAffecter,
+              year: year, month: month);
+          totalModifications++;
+        }
+      }
+
+      return PlanificationResult(
+        success: true,
+        totalModifications: totalModifications,
+        congesRespectes: congesRespectes,
+        gardesParEquipe: gardesParEquipe,
+        recuperationsParEquipe: recuperationsParEquipe,
+        personnelConcerne: personnelMedical.length,
+      );
+    } catch (e) {
+      print("❌ Erreur planifierGardesAvancees: $e");
+      return PlanificationResult(
+        success: false,
+        error: e.toString(),
+      );
+    }
+  }
+}
+
+/// 🔹 Classe pour le résultat de planification
+class PlanificationResult {
+  final bool success;
+  final String? error;
+  final int totalModifications;
+  final int congesRespectes;
+  final Map<String, int> gardesParEquipe;
+  final Map<String, int> recuperationsParEquipe;
+  final int personnelConcerne;
+
+  PlanificationResult({
+    required this.success,
+    this.error,
+    this.totalModifications = 0,
+    this.congesRespectes = 0,
+    this.gardesParEquipe = const {},
+    this.recuperationsParEquipe = const {},
+    this.personnelConcerne = 0,
+  });
 }

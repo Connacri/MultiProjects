@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -87,37 +89,37 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// NOUVELLE MÉTHODE à ajouter - Force la mise à jour même sur des congés existants
-  Future<void> _forceUpdateActivite(
-      int staffId, int jour, String statut) async {
-    try {
-      final objectBox = ObjectBox();
-      final staff = objectBox.staffBox.get(staffId);
-      if (staff == null) return;
-
-      final query = objectBox.activiteBox
-          .query(ActiviteJour_.staff.equals(staffId) &
-              ActiviteJour_.jour.equals(jour))
-          .build();
-
-      final activites = query.find();
-      query.close();
-
-      if (activites.isNotEmpty) {
-        final activite = activites.first;
-        activite.statut = statut;
-        objectBox.activiteBox.put(activite);
-        print("🔄 Activité forcée: ${staff.nom} jour $jour = $statut");
-      } else {
-        final nouvelle = ActiviteJour(jour: jour, statut: statut)
-          ..staff.target = staff;
-        objectBox.activiteBox.put(nouvelle);
-        print("➕ Nouvelle activité congé: ${staff.nom} jour $jour = $statut");
-      }
-    } catch (e) {
-      print("Erreur _forceUpdateActivite: $e");
-    }
-  }
+// // NOUVELLE MÉTHODE à ajouter - Force la mise à jour même sur des congés existants
+//   Future<void> _forceUpdateActivite(
+//       int staffId, int jour, String statut) async {
+//     try {
+//       final objectBox = ObjectBox();
+//       final staff = objectBox.staffBox.get(staffId);
+//       if (staff == null) return;
+//
+//       final query = objectBox.activiteBox
+//           .query(ActiviteJour_.staff.equals(staffId) &
+//               ActiviteJour_.jour.equals(jour))
+//           .build();
+//
+//       final activites = query.find();
+//       query.close();
+//
+//       if (activites.isNotEmpty) {
+//         final activite = activites.first;
+//         activite.statut = statut;
+//         objectBox.activiteBox.put(activite);
+//         print("🔄 Activité forcée: ${staff.nom} jour $jour = $statut");
+//       } else {
+//         final nouvelle = ActiviteJour(jour: jour, statut: statut)
+//           ..staff.target = staff;
+//         objectBox.activiteBox.put(nouvelle);
+//         print("➕ Nouvelle activité congé: ${staff.nom} jour $jour = $statut");
+//       }
+//     } catch (e) {
+//       print("Erreur _forceUpdateActivite: $e");
+//     }
+//   }
 
   // Fonction pour grouper les staffs
   Map<String, List<dynamic>> _groupStaffs(List<Staff> staffs) {
@@ -545,7 +547,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             0; // NOUVEAU: Compteur des congés
 
                                         // Parcourir TOUS les staffs
-                                        // Parcourir TOUS les staffs
                                         for (final staff
                                             in staffProvider.staffs) {
                                           // 🚫 Ignorer le groupe "08H-08H"
@@ -554,7 +555,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                 "⏩ ${staff.nom} ignoré car groupe = 08H-08H");
                                             continue; // passe au staff suivant
                                           }
-
+                                          if (staff.grade ==
+                                              "Agent d'hygiène") {
+                                            print(
+                                                "⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
+                                            continue; // passe au staff suivant
+                                          }
                                           final equipe =
                                               staff.equipe?.toUpperCase();
                                           final isEquipeABCD = equipe != null &&
@@ -710,420 +716,449 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                       foregroundColor: Colors.white,
                                     ),
                                     onPressed: () async {
-                                      // Dialog pour choisir l'équipe et le jour de départ
-                                      final result = await showDialog<
-                                          Map<String, dynamic>>(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          String? chosenEquipe;
-                                          int? chosenDay;
-                                          return StatefulBuilder(
-                                            builder: (context, setState) {
-                                              return AlertDialog(
-                                                title: const Text(
-                                                    "Planification des gardes médicales"),
-                                                content: SingleChildScrollView(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      Text(
-                                                        "Mois: $_selectedMonthName $_selectedYear\n",
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.teal,
-                                                        ),
-                                                      ),
-
-                                                      // Sélection du jour de commencement
-                                                      const Text(
-                                                          "Jour de commencement:",
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                      const SizedBox(height: 8),
-                                                      Container(
-                                                        height: 200,
-                                                        width: double.maxFinite,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          border: Border.all(
-                                                              color: Colors.grey
-                                                                  .shade300),
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                        ),
-                                                        child: GridView.builder(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(8),
-                                                          gridDelegate:
-                                                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                                            crossAxisCount: 7,
-                                                            crossAxisSpacing: 4,
-                                                            mainAxisSpacing: 4,
-                                                            childAspectRatio: 1,
-                                                          ),
-                                                          itemCount:
-                                                              _daysInSelectedMonth,
-                                                          itemBuilder:
-                                                              (context, index) {
-                                                            final day =
-                                                                index + 1;
-                                                            return GestureDetector(
-                                                              onTap: () =>
-                                                                  setState(() =>
-                                                                      chosenDay =
-                                                                          day),
-                                                              child: Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: chosenDay ==
-                                                                          day
-                                                                      ? Colors
-                                                                          .teal
-                                                                      : Colors
-                                                                          .grey
-                                                                          .shade100,
-                                                                  borderRadius:
-                                                                      BorderRadius
-                                                                          .circular(
-                                                                              4),
-                                                                  border: Border
-                                                                      .all(
-                                                                    color: chosenDay == day
-                                                                        ? Colors
-                                                                            .teal
-                                                                            .shade700
-                                                                        : Colors
-                                                                            .grey
-                                                                            .shade400,
-                                                                  ),
-                                                                ),
-                                                                child: Center(
-                                                                  child: Text(
-                                                                    day.toString(),
-                                                                    style:
-                                                                        TextStyle(
-                                                                      color: chosenDay ==
-                                                                              day
-                                                                          ? Colors
-                                                                              .white
-                                                                          : Colors
-                                                                              .black87,
-                                                                      fontWeight: chosenDay ==
-                                                                              day
-                                                                          ? FontWeight
-                                                                              .bold
-                                                                          : FontWeight
-                                                                              .normal,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ),
-
-                                                      const SizedBox(
-                                                          height: 16),
-
-                                                      // Sélection de l'équipe de départ
-                                                      const Text(
-                                                          "Équipe qui commence:",
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold)),
-                                                      const SizedBox(height: 8),
-                                                      Wrap(
-                                                        spacing: 8,
-                                                        children: [
-                                                          "A",
-                                                          "B",
-                                                          "C",
-                                                          "D"
-                                                        ].map((equipe) {
-                                                          return ChoiceChip(
-                                                            label: Text(
-                                                                "Équipe $equipe"),
-                                                            selected:
-                                                                chosenEquipe ==
-                                                                    equipe,
-                                                            onSelected: (bool
-                                                                selected) {
-                                                              setState(() {
-                                                                chosenEquipe =
-                                                                    selected
-                                                                        ? equipe
-                                                                        : null;
-                                                              });
-                                                            },
-                                                            selectedColor:
-                                                                Colors.teal
-                                                                    .shade200,
-                                                          );
-                                                        }).toList(),
-                                                      ),
-
-                                                      const SizedBox(
-                                                          height: 16),
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(12),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors
-                                                              .blue.shade50,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(8),
-                                                          border: Border.all(
-                                                              color: Colors.blue
-                                                                  .shade200),
-                                                        ),
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                                "Logique de planification:",
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold,
-                                                                    color: Colors
-                                                                        .blue
-                                                                        .shade700)),
-                                                            const SizedBox(
-                                                                height: 4),
-                                                            const Text(
-                                                                "• L'équipe sélectionnée commence le jour choisi",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12)),
-                                                            const Text(
-                                                                "• Rotation A → B → C → D",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12)),
-                                                            const Text(
-                                                                "• Équipe de garde = 'G', autres = 'RE'",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12)),
-                                                            const Text(
-                                                                "• Les congés sont respectés",
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12)),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(context)
-                                                            .pop(null),
-                                                    child:
-                                                        const Text("Annuler"),
-                                                  ),
-                                                  ElevatedButton(
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      backgroundColor:
-                                                          Colors.teal,
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                    ),
-                                                    onPressed: (chosenEquipe !=
-                                                                null &&
-                                                            chosenDay != null)
-                                                        ? () => Navigator.of(
-                                                                    context)
-                                                                .pop({
-                                                              'equipe':
-                                                                  chosenEquipe,
-                                                              'day': chosenDay,
-                                                            })
-                                                        : null,
-                                                    child:
-                                                        const Text("Confirmer"),
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                      );
-
-                                      if (result == null) return;
-
-                                      final selectedEquipe =
-                                          result['equipe'] as String;
-                                      final selectedDay = result['day'] as int;
-
-                                      try {
-                                        final staffProvider =
-                                            Provider.of<StaffProvider>(context,
-                                                listen: false);
-                                        final activiteProvider =
-                                            ActiviteProvider();
-
-                                        final daysInMonth =
-                                            _daysInSelectedMonth;
-                                        final equipes = ["A", "B", "C", "D"];
-                                        final startEquipeIndex =
-                                            equipes.indexOf(selectedEquipe);
-
-                                        int totalModifications = 0;
-                                        int joursGarde = 0;
-                                        Map<String, int> gardesParEquipe = {
-                                          for (var e in equipes) e: 0
-                                        };
-
-                                        // Filtrer personnel médical avec équipes A,B,C,D
-                                        final personnelMedical =
-                                            staffProvider.staffs.where((staff) {
-                                          final hasEquipe = staff.equipe !=
-                                                  null &&
-                                              equipes.contains(
-                                                  staff.equipe!.toUpperCase());
-                                          return hasEquipe;
-                                        }).toList();
-
-                                        if (personnelMedical.isEmpty) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  "❌ Aucun personnel médical trouvé avec équipes A,B,C,D"),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
-                                          return;
-                                        }
-
-                                        /// Fonction utilitaire pour tester si staff est en congé
-                                        bool estEnConge(staff, int day) {
-                                          return staff.timeOff.any((timeOff) =>
-                                              DateTime(_selectedYear,
-                                                      _selectedMonth, day)
-                                                  .isAfter(timeOff.debut
-                                                      .subtract(const Duration(
-                                                          days: 1))) &&
-                                              DateTime(_selectedYear,
-                                                      _selectedMonth, day)
-                                                  .isBefore(timeOff.fin.add(
-                                                      const Duration(days: 1))));
-                                        }
-
-                                        /// Rotation unique (1 → N)
-                                        for (int i = 0; i < daysInMonth; i++) {
-                                          final day = ((selectedDay - 1 + i) %
-                                                  daysInMonth) +
-                                              1;
-                                          final equipeIndex =
-                                              (startEquipeIndex + i) %
-                                                  equipes.length;
-                                          final equipeDeGarde =
-                                              equipes[equipeIndex];
-
-                                          joursGarde++;
-                                          gardesParEquipe[equipeDeGarde] =
-                                              (gardesParEquipe[equipeDeGarde] ??
-                                                      0) +
-                                                  1;
-
-                                          for (final staff
-                                              in personnelMedical) {
-                                            final staffEquipe =
-                                                staff.equipe!.toUpperCase();
-                                            if (estEnConge(staff, day))
-                                              continue;
-
-                                            await activiteProvider
-                                                .updateActivite(
-                                              staff.id,
-                                              day,
-                                              staffEquipe == equipeDeGarde
-                                                  ? "G"
-                                                  : "RE",
-                                              year: _selectedYear,
-                                              month: _selectedMonth,
-                                            );
-                                            totalModifications++;
-                                          }
-                                        }
-
-                                        await staffProvider.fetchStaffs();
-
-                                        String resumeGardes = gardesParEquipe
-                                            .entries
-                                            .where((e) => e.value > 0)
-                                            .map((e) =>
-                                                "${e.key}: ${e.value} jours")
-                                            .join(", ");
-
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            backgroundColor: Colors.green,
-                                            duration:
-                                                const Duration(seconds: 6),
-                                            content: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Expanded(
-                                                  child: Text(
-                                                    "✅ Gardes médicales planifiées !\n"
-                                                    "• Début: Jour $selectedDay, Équipe $selectedEquipe\n"
-                                                    "• $joursGarde jours planifiés\n"
-                                                    "• Répartition: $resumeGardes\n"
-                                                    "• ${personnelMedical.length} médecins concernés\n"
-                                                    "• $totalModifications modifications",
-                                                  ),
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(Icons.close,
-                                                      color: Colors.white),
-                                                  onPressed: () {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .hideCurrentSnackBar();
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                                "❌ Erreur lors de la planification: $e"),
-                                            backgroundColor: Colors.red,
-                                            duration:
-                                                const Duration(seconds: 3),
-                                          ),
-                                        );
-                                      }
+                                      await _showSimplePlanificationDialog();
                                     },
                                   ),
+                                  // ElevatedButton.icon(
+                                  //   icon: const Icon(Icons.medical_services,
+                                  //       size: 16),
+                                  //   label:
+                                  //       const Text("Planifier gardes médical"),
+                                  //   style: ElevatedButton.styleFrom(
+                                  //     backgroundColor: Colors.teal,
+                                  //     foregroundColor: Colors.white,
+                                  //   ),
+                                  //   onPressed: () async {
+                                  //     // Dialog pour choisir l'équipe et le jour de départ
+                                  //     final result = await showDialog<
+                                  //         Map<String, dynamic>>(
+                                  //       context: context,
+                                  //       builder: (BuildContext context) {
+                                  //         String? chosenEquipe;
+                                  //         int? chosenDay;
+                                  //         return StatefulBuilder(
+                                  //           builder: (context, setState) {
+                                  //             return AlertDialog(
+                                  //               title: const Text(
+                                  //                   "Planification des gardes médicales"),
+                                  //               content: SingleChildScrollView(
+                                  //                 child: Column(
+                                  //                   crossAxisAlignment:
+                                  //                       CrossAxisAlignment
+                                  //                           .start,
+                                  //                   mainAxisSize:
+                                  //                       MainAxisSize.min,
+                                  //                   children: [
+                                  //                     Text(
+                                  //                       "Mois: $_selectedMonthName $_selectedYear\n",
+                                  //                       style: const TextStyle(
+                                  //                         fontWeight:
+                                  //                             FontWeight.bold,
+                                  //                         color: Colors.teal,
+                                  //                       ),
+                                  //                     ),
+                                  //
+                                  //                     // Sélection du jour de commencement
+                                  //                     const Text(
+                                  //                         "Jour de commencement:",
+                                  //                         style: TextStyle(
+                                  //                             fontWeight:
+                                  //                                 FontWeight
+                                  //                                     .bold)),
+                                  //                     const SizedBox(height: 8),
+                                  //                     Container(
+                                  //                       height: 200,
+                                  //                       width: double.maxFinite,
+                                  //                       decoration:
+                                  //                           BoxDecoration(
+                                  //                         border: Border.all(
+                                  //                             color: Colors.grey
+                                  //                                 .shade300),
+                                  //                         borderRadius:
+                                  //                             BorderRadius
+                                  //                                 .circular(8),
+                                  //                       ),
+                                  //                       child: GridView.builder(
+                                  //                         padding:
+                                  //                             const EdgeInsets
+                                  //                                 .all(8),
+                                  //                         gridDelegate:
+                                  //                             const SliverGridDelegateWithFixedCrossAxisCount(
+                                  //                           crossAxisCount: 7,
+                                  //                           crossAxisSpacing: 4,
+                                  //                           mainAxisSpacing: 4,
+                                  //                           childAspectRatio: 1,
+                                  //                         ),
+                                  //                         itemCount:
+                                  //                             _daysInSelectedMonth,
+                                  //                         itemBuilder:
+                                  //                             (context, index) {
+                                  //                           final day =
+                                  //                               index + 1;
+                                  //                           return GestureDetector(
+                                  //                             onTap: () =>
+                                  //                                 setState(() =>
+                                  //                                     chosenDay =
+                                  //                                         day),
+                                  //                             child: Container(
+                                  //                               decoration:
+                                  //                                   BoxDecoration(
+                                  //                                 color: chosenDay ==
+                                  //                                         day
+                                  //                                     ? Colors
+                                  //                                         .teal
+                                  //                                     : Colors
+                                  //                                         .grey
+                                  //                                         .shade100,
+                                  //                                 borderRadius:
+                                  //                                     BorderRadius
+                                  //                                         .circular(
+                                  //                                             4),
+                                  //                                 border: Border
+                                  //                                     .all(
+                                  //                                   color: chosenDay == day
+                                  //                                       ? Colors
+                                  //                                           .teal
+                                  //                                           .shade700
+                                  //                                       : Colors
+                                  //                                           .grey
+                                  //                                           .shade400,
+                                  //                                 ),
+                                  //                               ),
+                                  //                               child: Center(
+                                  //                                 child: Text(
+                                  //                                   day.toString(),
+                                  //                                   style:
+                                  //                                       TextStyle(
+                                  //                                     color: chosenDay ==
+                                  //                                             day
+                                  //                                         ? Colors
+                                  //                                             .white
+                                  //                                         : Colors
+                                  //                                             .black87,
+                                  //                                     fontWeight: chosenDay ==
+                                  //                                             day
+                                  //                                         ? FontWeight
+                                  //                                             .bold
+                                  //                                         : FontWeight
+                                  //                                             .normal,
+                                  //                                   ),
+                                  //                                 ),
+                                  //                               ),
+                                  //                             ),
+                                  //                           );
+                                  //                         },
+                                  //                       ),
+                                  //                     ),
+                                  //
+                                  //                     const SizedBox(
+                                  //                         height: 16),
+                                  //
+                                  //                     // Sélection de l'équipe de départ
+                                  //                     const Text(
+                                  //                         "Équipe qui commence:",
+                                  //                         style: TextStyle(
+                                  //                             fontWeight:
+                                  //                                 FontWeight
+                                  //                                     .bold)),
+                                  //                     const SizedBox(height: 8),
+                                  //                     Wrap(
+                                  //                       spacing: 8,
+                                  //                       children: [
+                                  //                         "A",
+                                  //                         "B",
+                                  //                         "C",
+                                  //                         "D"
+                                  //                       ].map((equipe) {
+                                  //                         return ChoiceChip(
+                                  //                           label: Text(
+                                  //                               "Équipe $equipe"),
+                                  //                           selected:
+                                  //                               chosenEquipe ==
+                                  //                                   equipe,
+                                  //                           onSelected: (bool
+                                  //                               selected) {
+                                  //                             setState(() {
+                                  //                               chosenEquipe =
+                                  //                                   selected
+                                  //                                       ? equipe
+                                  //                                       : null;
+                                  //                             });
+                                  //                           },
+                                  //                           selectedColor:
+                                  //                               Colors.teal
+                                  //                                   .shade200,
+                                  //                         );
+                                  //                       }).toList(),
+                                  //                     ),
+                                  //
+                                  //                     const SizedBox(
+                                  //                         height: 16),
+                                  //                     Container(
+                                  //                       padding:
+                                  //                           const EdgeInsets
+                                  //                               .all(12),
+                                  //                       decoration:
+                                  //                           BoxDecoration(
+                                  //                         color: Colors
+                                  //                             .blue.shade50,
+                                  //                         borderRadius:
+                                  //                             BorderRadius
+                                  //                                 .circular(8),
+                                  //                         border: Border.all(
+                                  //                             color: Colors.blue
+                                  //                                 .shade200),
+                                  //                       ),
+                                  //                       child: Column(
+                                  //                         crossAxisAlignment:
+                                  //                             CrossAxisAlignment
+                                  //                                 .start,
+                                  //                         children: [
+                                  //                           Text(
+                                  //                               "Logique de planification:",
+                                  //                               style: TextStyle(
+                                  //                                   fontWeight:
+                                  //                                       FontWeight
+                                  //                                           .bold,
+                                  //                                   color: Colors
+                                  //                                       .blue
+                                  //                                       .shade700)),
+                                  //                           const SizedBox(
+                                  //                               height: 4),
+                                  //                           const Text(
+                                  //                               "• L'équipe sélectionnée commence le jour choisi",
+                                  //                               style: TextStyle(
+                                  //                                   fontSize:
+                                  //                                       12)),
+                                  //                           const Text(
+                                  //                               "• Rotation A → B → C → D",
+                                  //                               style: TextStyle(
+                                  //                                   fontSize:
+                                  //                                       12)),
+                                  //                           const Text(
+                                  //                               "• Équipe de garde = 'G', autres = 'RE'",
+                                  //                               style: TextStyle(
+                                  //                                   fontSize:
+                                  //                                       12)),
+                                  //                           const Text(
+                                  //                               "• Les congés sont respectés",
+                                  //                               style: TextStyle(
+                                  //                                   fontSize:
+                                  //                                       12)),
+                                  //                         ],
+                                  //                       ),
+                                  //                     ),
+                                  //                   ],
+                                  //                 ),
+                                  //               ),
+                                  //               actions: [
+                                  //                 TextButton(
+                                  //                   onPressed: () =>
+                                  //                       Navigator.of(context)
+                                  //                           .pop(null),
+                                  //                   child:
+                                  //                       const Text("Annuler"),
+                                  //                 ),
+                                  //                 ElevatedButton(
+                                  //                   style: ElevatedButton
+                                  //                       .styleFrom(
+                                  //                     backgroundColor:
+                                  //                         Colors.teal,
+                                  //                     foregroundColor:
+                                  //                         Colors.white,
+                                  //                   ),
+                                  //                   onPressed: (chosenEquipe !=
+                                  //                               null &&
+                                  //                           chosenDay != null)
+                                  //                       ? () => Navigator.of(
+                                  //                                   context)
+                                  //                               .pop({
+                                  //                             'equipe':
+                                  //                                 chosenEquipe,
+                                  //                             'day': chosenDay,
+                                  //                           })
+                                  //                       : null,
+                                  //                   child:
+                                  //                       const Text("Confirmer"),
+                                  //                 ),
+                                  //               ],
+                                  //             );
+                                  //           },
+                                  //         );
+                                  //       },
+                                  //     );
+                                  //
+                                  //     if (result == null) return;
+                                  //
+                                  //     final selectedEquipe =
+                                  //         result['equipe'] as String;
+                                  //     final selectedDay = result['day'] as int;
+                                  //
+                                  //     try {
+                                  //       final staffProvider =
+                                  //           Provider.of<StaffProvider>(context,
+                                  //               listen: false);
+                                  //       final activiteProvider =
+                                  //           ActiviteProvider();
+                                  //
+                                  //       final daysInMonth =
+                                  //           _daysInSelectedMonth;
+                                  //       final equipes = ["A", "B", "C", "D"];
+                                  //       final startEquipeIndex =
+                                  //           equipes.indexOf(selectedEquipe);
+                                  //
+                                  //       int totalModifications = 0;
+                                  //       int joursGarde = 0;
+                                  //       Map<String, int> gardesParEquipe = {
+                                  //         for (var e in equipes) e: 0
+                                  //       };
+                                  //
+                                  //       // Filtrer personnel médical avec équipes A,B,C,D
+                                  //       final personnelMedical =
+                                  //           staffProvider.staffs.where((staff) {
+                                  //         final hasEquipe = staff.equipe !=
+                                  //                 null &&
+                                  //             equipes.contains(
+                                  //                 staff.equipe!.toUpperCase());
+                                  //         return hasEquipe;
+                                  //       }).toList();
+                                  //
+                                  //       if (personnelMedical.isEmpty) {
+                                  //         ScaffoldMessenger.of(context)
+                                  //             .showSnackBar(
+                                  //           const SnackBar(
+                                  //             content: Text(
+                                  //                 "❌ Aucun personnel médical trouvé avec équipes A,B,C,D"),
+                                  //             backgroundColor: Colors.red,
+                                  //           ),
+                                  //         );
+                                  //         return;
+                                  //       }
+                                  //
+                                  //       /// Fonction utilitaire pour tester si staff est en congé
+                                  //       bool estEnConge(staff, int day) {
+                                  //         return staff.timeOff.any((timeOff) =>
+                                  //             DateTime(_selectedYear,
+                                  //                     _selectedMonth, day)
+                                  //                 .isAfter(timeOff.debut
+                                  //                     .subtract(const Duration(
+                                  //                         days: 1))) &&
+                                  //             DateTime(_selectedYear,
+                                  //                     _selectedMonth, day)
+                                  //                 .isBefore(timeOff.fin.add(
+                                  //                     const Duration(days: 1))));
+                                  //       }
+                                  //
+                                  //       /// Rotation unique (1 → N)
+                                  //       for (int i = 0; i < daysInMonth; i++) {
+                                  //         final day = ((selectedDay - 1 + i) %
+                                  //                 daysInMonth) +
+                                  //             1;
+                                  //         final equipeIndex =
+                                  //             (startEquipeIndex + i) %
+                                  //                 equipes.length;
+                                  //         final equipeDeGarde =
+                                  //             equipes[equipeIndex];
+                                  //
+                                  //         joursGarde++;
+                                  //         gardesParEquipe[equipeDeGarde] =
+                                  //             (gardesParEquipe[equipeDeGarde] ??
+                                  //                     0) +
+                                  //                 1;
+                                  //
+                                  //         for (final staff
+                                  //             in personnelMedical) {
+                                  //           final staffEquipe =
+                                  //               staff.equipe!.toUpperCase();
+                                  //           if (estEnConge(staff, day))
+                                  //             continue;
+                                  //
+                                  //           await activiteProvider
+                                  //               .updateActivite(
+                                  //             staff.id,
+                                  //             day,
+                                  //             staffEquipe == equipeDeGarde
+                                  //                 ? "G"
+                                  //                 : "RE",
+                                  //             year: _selectedYear,
+                                  //             month: _selectedMonth,
+                                  //           );
+                                  //           totalModifications++;
+                                  //         }
+                                  //       }
+                                  //
+                                  //       await staffProvider.fetchStaffs();
+                                  //
+                                  //       String resumeGardes = gardesParEquipe
+                                  //           .entries
+                                  //           .where((e) => e.value > 0)
+                                  //           .map((e) =>
+                                  //               "${e.key}: ${e.value} jours")
+                                  //           .join(", ");
+                                  //
+                                  //       ScaffoldMessenger.of(context)
+                                  //           .showSnackBar(
+                                  //         SnackBar(
+                                  //           backgroundColor: Colors.green,
+                                  //           duration:
+                                  //               const Duration(seconds: 6),
+                                  //           content: Row(
+                                  //             crossAxisAlignment:
+                                  //                 CrossAxisAlignment.start,
+                                  //             children: [
+                                  //               Expanded(
+                                  //                 child: Text(
+                                  //                   "✅ Gardes médicales planifiées !\n"
+                                  //                   "• Début: Jour $selectedDay, Équipe $selectedEquipe\n"
+                                  //                   "• $joursGarde jours planifiés\n"
+                                  //                   "• Répartition: $resumeGardes\n"
+                                  //                   "• ${personnelMedical.length} médecins concernés\n"
+                                  //                   "• $totalModifications modifications",
+                                  //                 ),
+                                  //               ),
+                                  //               IconButton(
+                                  //                 icon: const Icon(Icons.close,
+                                  //                     color: Colors.white),
+                                  //                 onPressed: () {
+                                  //                   ScaffoldMessenger.of(
+                                  //                           context)
+                                  //                       .hideCurrentSnackBar();
+                                  //                 },
+                                  //               ),
+                                  //             ],
+                                  //           ),
+                                  //         ),
+                                  //       );
+                                  //     } catch (e) {
+                                  //       ScaffoldMessenger.of(context)
+                                  //           .showSnackBar(
+                                  //         SnackBar(
+                                  //           content: Text(
+                                  //               "❌ Erreur lors de la planification: $e"),
+                                  //           backgroundColor: Colors.red,
+                                  //           duration:
+                                  //               const Duration(seconds: 3),
+                                  //         ),
+                                  //       );
+                                  //     }
+                                  //   },
+                                  // ),
+                                  // ElevatedButton.icon(
+                                  //   icon: const Icon(Icons.medical_services,
+                                  //       size: 16),
+                                  //   label:
+                                  //       const Text("Planifier gardes médical"),
+                                  //   style: ElevatedButton.styleFrom(
+                                  //     backgroundColor: Colors.teal,
+                                  //     foregroundColor: Colors.white,
+                                  //   ),
+                                  //   onPressed: () async {
+                                  //     await _showAdvancedPlanificationDialog();
+                                  //   },
+                                  // ),
+                                  FilledButton.tonalIcon(
+                                      onPressed: () => _listStaffWithTimeOff(),
+                                      label: Text('List Congé debug'))
                                 ],
                               ),
                             ),
@@ -2326,70 +2361,201 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-// Méthode pour supprimer un congé
-  Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
-    try {
-      final objectBox = ObjectBox();
-      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-
-      // 1. Supprimer l'entité TimeOff
-      objectBox.timeOffBox.remove(timeOff.id);
-
-      // 2. Remettre les activités journalières à '-' pour les jours concernés
-      DateTime currentDate = timeOff.debut;
-      int joursRestaures = 0;
-
-      while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
-        if (currentDate.year == _selectedYear &&
-            currentDate.month == _selectedMonth) {
-          int jour = currentDate.day;
-          await _forceUpdateActivite(staff.id, jour, '-');
-          joursRestaures++;
-        }
-        currentDate = currentDate.add(Duration(days: 1));
-      }
-
-      // 3. Nettoyer l'observation si elle correspond à ce congé
-      if (staff.obs != null &&
-          staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
-        staff.obs = null;
-        await staffProvider.updateStaff(staff);
-      }
-
-      // 4. Rafraîchir
-      await staffProvider.fetchStaffs();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              "✅ Congé supprimé pour ${staff.nom}\n$joursRestaures jours restaurés"),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Erreur lors de la suppression: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-// Méthode pour mettre à jour un congé existant
+// // Méthode pour supprimer un congé
+//   Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
+//     try {
+//       final objectBox = ObjectBox();
+//       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+//
+//       // 1. Supprimer l'entité TimeOff
+//       objectBox.timeOffBox.remove(timeOff.id);
+//
+//       // 2. Remettre les activités journalières à '-' pour les jours concernés
+//       DateTime currentDate = timeOff.debut;
+//       int joursRestaures = 0;
+//
+//       while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+//         if (currentDate.year == _selectedYear &&
+//             currentDate.month == _selectedMonth) {
+//           int jour = currentDate.day;
+//           await _forceUpdateActivite(staff.id, jour, '-');
+//           joursRestaures++;
+//         }
+//         currentDate = currentDate.add(Duration(days: 1));
+//       }
+//
+//       // 3. Nettoyer l'observation si elle correspond à ce congé
+//       if (staff.obs != null &&
+//           staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
+//         staff.obs = null;
+//         await staffProvider.updateStaff(staff);
+//       }
+//
+//       // 4. Rafraîchir
+//       await staffProvider.fetchStaffs();
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text(
+//               "✅ Congé supprimé pour ${staff.nom}\n$joursRestaures jours restaurés"),
+//           backgroundColor: Colors.green,
+//           duration: Duration(seconds: 3),
+//         ),
+//       );
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("❌ Erreur lors de la suppression: $e"),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//     }
+//   }
+//
+// // Méthode pour mettre à jour un congé existant
+//   Future<void> _updateTimeOff(Staff staff, TimeOff timeOff,
+//       DateTime nouveauDebut, DateTime nouvelleFin, String nouveauMotif) async {
+//     try {
+//       final objectBox = ObjectBox();
+//       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+//
+//       // 1. Remettre à '-' les anciens jours
+//       DateTime currentDate = timeOff.debut;
+//       while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+//         if (currentDate.year == _selectedYear &&
+//             currentDate.month == _selectedMonth) {
+//           await _forceUpdateActivite(staff.id, currentDate.day, '-');
+//         }
+//         currentDate = currentDate.add(Duration(days: 1));
+//       }
+//
+//       // 2. Mettre à jour l'entité TimeOff
+//       timeOff.debut = nouveauDebut;
+//       timeOff.fin = nouvelleFin;
+//       timeOff.motif = nouveauMotif;
+//       objectBox.timeOffBox.put(timeOff);
+//
+//       // 3. Appliquer les nouveaux jours
+//       currentDate = nouveauDebut;
+//       int joursModifies = 0;
+//       while (currentDate.isBefore(nouvelleFin.add(Duration(days: 1)))) {
+//         if (currentDate.year == _selectedYear &&
+//             currentDate.month == _selectedMonth) {
+//           await _forceUpdateActivite(staff.id, currentDate.day, 'C');
+//           joursModifies++;
+//         }
+//         currentDate = currentDate.add(Duration(days: 1));
+//       }
+//
+//       // 4. Mettre à jour l'observation
+//       staff.obs =
+//           "$nouveauMotif du ${DateFormat('dd/MM/yyyy').format(nouveauDebut)} au ${DateFormat('dd/MM/yyyy').format(nouvelleFin)}";
+//       await staffProvider.updateStaff(staff);
+//
+//       // 5. Rafraîchir
+//       await staffProvider.fetchStaffs();
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text(
+//               "✅ Congé modifié pour ${staff.nom}\n$joursModifies jours mis à jour"),
+//           backgroundColor: Colors.green,
+//           duration: Duration(seconds: 3),
+//         ),
+//       );
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("❌ Erreur lors de la modification: $e"),
+//           backgroundColor: Colors.red,
+//         ),
+//       );
+//     }
+//   }
+//
+//   Future<void> _saveTimeOff(
+//       Staff staff, DateTime debut, DateTime fin, String statut) async {
+//     try {
+//       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+//       int joursModifies = 0;
+//
+//       // 1. CRÉER L'ENTITÉ TIMEOFF DANS LA BASE DE DONNÉES
+//       final objectBox = ObjectBox();
+//       final timeOff = TimeOff(
+//         debut: debut,
+//         fin: fin,
+//         motif: _getStatutName(statut),
+//       )..staff.target = staff;
+//
+//       objectBox.timeOffBox.put(timeOff);
+//       print(
+//           "📅 TimeOff créé pour ${staff.nom} du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}");
+//
+//       // 2. Marquer chaque jour du congé avec le statut choisi
+//       DateTime currentDate = debut;
+//       while (currentDate.isBefore(fin.add(Duration(days: 1)))) {
+//         // Vérifier si le jour est dans le mois sélectionné
+//         if (currentDate.year == _selectedYear &&
+//             currentDate.month == _selectedMonth) {
+//           int jour = currentDate.day;
+//
+//           // Forcer la création du congé même si une activité existe déjà
+//           await _forceUpdateActivite(staff.id, jour, statut);
+//           joursModifies++;
+//         }
+//         currentDate = currentDate.add(Duration(days: 1));
+//       }
+//
+//       // 3. Mettre à jour l'observation du staff
+//       staff.obs =
+//           "${_getStatutName(statut)} du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}";
+//       await staffProvider.updateStaff(staff);
+//
+//       // 4. Rafraîchir les données
+//       await staffProvider.fetchStaffs();
+//
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text(
+//               "✅ ${_getStatutName(statut)} planifié pour ${staff.nom}\n"
+//               "Du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}\n"
+//               "$joursModifies jours modifiés avec le statut '$statut'\n"
+//               "TimeOff créé dans la base de données"),
+//           backgroundColor: Colors.green,
+//           duration: Duration(seconds: 4),
+//         ),
+//       );
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("❌ Erreur lors de l'enregistrement: $e"),
+//           backgroundColor: Colors.red,
+//           duration: Duration(seconds: 3),
+//         ),
+//       );
+//     }
+//   }
+// CORRIGER la méthode _updateTimeOff - utiliser la nouvelle méthode sans vérification
   Future<void> _updateTimeOff(Staff staff, TimeOff timeOff,
       DateTime nouveauDebut, DateTime nouvelleFin, String nouveauMotif) async {
     try {
       final objectBox = ObjectBox();
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider(); // Utiliser le provider
 
       // 1. Remettre à '-' les anciens jours
       DateTime currentDate = timeOff.debut;
       while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
-          await _forceUpdateActivite(staff.id, currentDate.day, '-');
+          // UTILISER LA NOUVELLE MÉTHODE
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            currentDate.day,
+            '-',
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
         }
         currentDate = currentDate.add(Duration(days: 1));
       }
@@ -2406,7 +2572,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       while (currentDate.isBefore(nouvelleFin.add(Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
-          await _forceUpdateActivite(staff.id, currentDate.day, 'C');
+          // UTILISER LA NOUVELLE MÉTHODE pour forcer l'écrasement
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            currentDate.day,
+            'C',
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
           joursModifies++;
         }
         currentDate = currentDate.add(Duration(days: 1));
@@ -2438,10 +2611,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
+// CORRIGER la méthode _saveTimeOff - utiliser la nouvelle méthode
   Future<void> _saveTimeOff(
       Staff staff, DateTime debut, DateTime fin, String statut) async {
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider(); // Utiliser le provider
       int joursModifies = 0;
 
       // 1. CRÉER L'ENTITÉ TIMEOFF DANS LA BASE DE DONNÉES
@@ -2464,8 +2639,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             currentDate.month == _selectedMonth) {
           int jour = currentDate.day;
 
-          // Forcer la création du congé même si une activité existe déjà
-          await _forceUpdateActivite(staff.id, jour, statut);
+          // UTILISER LA NOUVELLE MÉTHODE pour forcer l'écrasement
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            jour,
+            statut,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
           joursModifies++;
         }
         currentDate = currentDate.add(Duration(days: 1));
@@ -2501,6 +2682,83 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
+// CORRIGER également la méthode _deleteTimeOff si elle existe
+  Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
+    try {
+      final objectBox = ObjectBox();
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider(); // Utiliser le provider
+
+      // 1. Supprimer l'entité TimeOff
+      objectBox.timeOffBox.remove(timeOff.id);
+
+      // 2. Remettre les activités journalières à '-' pour les jours concernés
+      DateTime currentDate = timeOff.debut;
+      int joursRestaures = 0;
+
+      while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+        if (currentDate.year == _selectedYear &&
+            currentDate.month == _selectedMonth) {
+          int jour = currentDate.day;
+          // UTILISER LA NOUVELLE MÉTHODE
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            jour,
+            '-',
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          joursRestaures++;
+        }
+        currentDate = currentDate.add(Duration(days: 1));
+      }
+
+      // 3. Nettoyer l'observation si elle correspond à ce congé
+      if (staff.obs != null &&
+          staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
+        staff.obs = null;
+        await staffProvider.updateStaff(staff);
+      }
+
+      // 4. Rafraîchir
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              "✅ Congé supprimé pour ${staff.nom}\n$joursRestaures jours restaurés"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de la suppression: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+// SUPPRIMER ou REMPLACER l'ancienne méthode _forceUpdateActivite
+// Cette méthode doit maintenant utiliser le provider
+  Future<void> _forceUpdateActivite(
+      int staffId, int jour, String statut) async {
+    try {
+      final activiteProvider = ActiviteProvider();
+      await activiteProvider.forceUpdateActiviteIgnoringLeave(
+        staffId,
+        jour,
+        statut,
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+    } catch (e) {
+      print("Erreur _forceUpdateActivite: $e");
+    }
+  }
+
 // Fonction utilitaire pour obtenir le nom du statut
   String _getStatutName(String statut) {
     switch (statut) {
@@ -2516,6 +2774,2008 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return 'Repos';
       default:
         return statut;
+    }
+  }
+
+  Future<Map<String, dynamic>?> showPlanificationDialog({
+    required BuildContext context,
+    required List<String> equipesInit, // ex: ["A", "B", "C", "D"]
+    required int year,
+    required int month,
+  }) {
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (ctx) {
+        List<String> orderedEquipes = List.from(equipesInit);
+        int? selectedDay; // 1 à orderedEquipes.length
+
+        return StatefulBuilder(
+          builder: (ctxS, setState) {
+            final equipeCount = orderedEquipes.length;
+            final dayChoices = List.generate(equipeCount, (i) => i + 1);
+
+            // Fonction pour obtenir le nom court du jour (sam, dim, lun...)
+            String shortWeekdayName(int day) {
+              final dt = DateTime(year, month, day);
+              return DateFormat.E('fr_FR').format(dt);
+            }
+
+            return AlertDialog(
+              title: const Text("Planification des gardes"),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Affichage du mois et de l'année
+                    Text(
+                      "Mois: ${DateFormat.MMMM('fr_FR').format(DateTime(year, month))} $year",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Réorganisation des équipes par drag-and-drop
+                    const Text(
+                      "Ordre des équipes (glissez pour réorganiser):",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 56.0 + (orderedEquipes.length * 12),
+                      child: ReorderableListView(
+                        buildDefaultDragHandles: true,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex -= 1;
+                            final item = orderedEquipes.removeAt(oldIndex);
+                            orderedEquipes.insert(newIndex, item);
+                          });
+                        },
+                        children: [
+                          for (int i = 0; i < orderedEquipes.length; i++)
+                            ListTile(
+                              key: ValueKey('eq_${orderedEquipes[i]}_$i'),
+                              title: Text("Équipe ${orderedEquipes[i]}"),
+                              leading: CircleAvatar(child: Text("${i + 1}")),
+                              trailing: const Icon(Icons.drag_handle),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Sélection du jour de départ (1 à N)
+                    const Text(
+                      "Jour de départ (choisissez parmi les N premiers jours):",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: dayChoices.map((day) {
+                        final label = "$day • ${shortWeekdayName(day)}";
+                        return ChoiceChip(
+                          label: Text(label),
+                          selected: selectedDay == day,
+                          onSelected: (_) => setState(() => selectedDay = day),
+                          selectedColor: Colors.teal.shade200,
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Légende de la logique
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Logique de planification:",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                              "• L'équipe en 1ère position commence le jour sélectionné."),
+                          Text(
+                              "• Rotation circulaire selon l'ordre réorganisé."),
+                          Text(
+                              "• Les congés (TimeOff/activités C/CM) sont respectés."),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(null),
+                  child: const Text("Annuler"),
+                ),
+                ElevatedButton(
+                  onPressed: (selectedDay != null)
+                      ? () => Navigator.of(ctx).pop({
+                            'orderedEquipes': orderedEquipes,
+                            'selectedDay': selectedDay,
+                          })
+                      : null,
+                  child: const Text("Confirmer"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showAdvancedPlanificationDialog() async {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+
+    // 1. Identifier les équipes médicales disponibles
+    final equipesDisponibles = staffProvider.staffs
+        .where((staff) =>
+            staff.equipe != null &&
+            ['A', 'B', 'C', 'D'].contains(staff.equipe!.toUpperCase()))
+        .map((staff) => staff.equipe!.toUpperCase())
+        .toSet()
+        .toList();
+
+    equipesDisponibles.sort();
+
+    if (equipesDisponibles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❌ Aucune équipe médicale trouvée (A,B,C,D)"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 2. Calculer les jours disponibles selon le nombre d'équipes
+    final nombreEquipes = equipesDisponibles.length;
+    final joursDisponibles = List.generate(nombreEquipes, (i) => i + 1);
+
+    // 3. Afficher le dialog de planification
+    final result = await _showPlanificationAvanceeDialog(
+      equipesDisponibles: equipesDisponibles,
+      joursDisponibles: joursDisponibles,
+    );
+
+    if (result == null) return;
+
+    // 4. Exécuter la planification
+    await _executerPlanificationGardes(
+      equipesOrdonnees: result['equipesOrdonnees'],
+      jourDepart: result['jourDepart'],
+    );
+  }
+
+// NOUVELLE MÉTHODE : Dialog de planification avancé
+  Future<Map<String, dynamic>?> _showPlanificationAvanceeDialog({
+    required List<String> equipesDisponibles,
+    required List<int> joursDisponibles,
+  }) async {
+    List<String> equipesOrdonnees = List.from(equipesDisponibles);
+    int? jourDepart;
+
+    return await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.medical_services, color: Colors.teal),
+                  SizedBox(width: 8),
+                  Text("Planification des Gardes",
+                      style: TextStyle(color: Colors.teal.shade700)),
+                ],
+              ),
+              content: Container(
+                width: double.maxFinite,
+                constraints: BoxConstraints(maxHeight: 600),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Informations du mois
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.teal.shade50, Colors.teal.shade100],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.teal.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              "Mois: $_selectedMonthName $_selectedYear",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal.shade700,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "${equipesDisponibles.length} équipes détectées: ${equipesDisponibles.join(', ')}",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.teal.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20),
+
+                      // Ordre des équipes avec drag & drop
+                      Text(
+                        "1. Ordre de rotation des équipes",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Glissez pour réorganiser l'ordre de rotation :",
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade600),
+                      ),
+                      SizedBox(height: 8),
+
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: equipesOrdonnees.length,
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              if (newIndex > oldIndex) newIndex -= 1;
+                              final item = equipesOrdonnees.removeAt(oldIndex);
+                              equipesOrdonnees.insert(newIndex, item);
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return Container(
+                              key: ValueKey(
+                                  'equipe_${equipesOrdonnees[index]}_$index'),
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 2),
+                              child: Card(
+                                elevation: 1,
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Container(
+                                    width: 30,
+                                    height: 30,
+                                    decoration: BoxDecoration(
+                                      color: _getEquipeColor(
+                                          equipesOrdonnees[index]),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "${index + 1}",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                    "Équipe ${equipesOrdonnees[index]}",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: Text(
+                                    index == 0
+                                        ? "Première à faire la garde"
+                                        : "Position ${index + 1}",
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                  trailing: Icon(Icons.drag_handle,
+                                      color: Colors.grey.shade400),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 24),
+
+                      // Sélection du jour de départ
+                      Text(
+                        "2. Jour de commencement",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Choisissez le jour où l'équipe en 1ère position commence sa garde :",
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade600),
+                      ),
+                      SizedBox(height: 12),
+
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: joursDisponibles.map((jour) {
+                            final date =
+                                DateTime(_selectedYear, _selectedMonth, jour);
+                            final nomJour = _getNomJourCourt(date.weekday);
+                            final isSelected = jourDepart == jour;
+
+                            return GestureDetector(
+                              onTap: () => setState(() => jourDepart = jour),
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 200),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color:
+                                      isSelected ? Colors.teal : Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? Colors.teal.shade700
+                                        : Colors.grey.shade300,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                  boxShadow: isSelected
+                                      ? [
+                                          BoxShadow(
+                                            color: Colors.teal.withOpacity(0.3),
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ]
+                                      : [],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "Jour $jour",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.grey.shade700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Text(
+                                      nomJour,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white70
+                                            : Colors.grey.shade500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+
+                      // Aperçu de la rotation
+                      if (jourDepart != null) ...[
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.preview,
+                                      color: Colors.blue.shade700, size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Aperçu de la rotation",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 8),
+                              ...List.generate(
+                                math.min(equipesOrdonnees.length, 4),
+                                (index) {
+                                  final jour = jourDepart! + index;
+                                  final equipe = equipesOrdonnees[index];
+                                  final date = DateTime(
+                                      _selectedYear, _selectedMonth, jour);
+                                  final nomJour =
+                                      _getNomJourComplet(date.weekday);
+
+                                  return Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 2),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: _getEquipeColor(equipe),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              equipe,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "Jour $jour ($nomJour) → Équipe $equipe",
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (equipesOrdonnees.length > 4)
+                                Text(
+                                  "... et ainsi de suite pour le reste du mois",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.blue.shade600,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      SizedBox(height: 16),
+
+                      // Note importante
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.amber.shade200),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: Colors.amber.shade700, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Les congés et activités existantes (C, CM) seront préservés automatiquement.",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.amber.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: Text("Annuler"),
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.schedule, size: 16),
+                  label: Text("Planifier les gardes"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                  onPressed: (jourDepart != null)
+                      ? () => Navigator.of(context).pop({
+                            'equipesOrdonnees': equipesOrdonnees,
+                            'jourDepart': jourDepart,
+                          })
+                      : null,
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+// NOUVELLE MÉTHODE : Exécution de la planification des gardes
+  Future<void> _executerPlanificationGardes({
+    required List<String> equipesOrdonnees,
+    required int jourDepart,
+  }) async {
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+
+      final daysInMonth = _daysInSelectedMonth;
+      int totalModifications = 0;
+      Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
+      Map<String, int> recuperationsParEquipe = {
+        for (var e in equipesOrdonnees) e: 0
+      };
+      int congesRespectes = 0;
+
+      // Personnel médical avec équipes
+      final personnelMedical = staffProvider.staffs
+          .where((staff) =>
+              staff.equipe != null &&
+              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+          .toList();
+
+      if (personnelMedical.isEmpty) {
+        throw Exception(
+            "Aucun personnel médical trouvé avec les équipes sélectionnées");
+      }
+
+      // Fonction pour vérifier les congés (TimeOff + activités C/CM)
+      bool estEnCongeOuActivite(Staff staff, int jour) {
+        final dateJour = DateTime(_selectedYear, _selectedMonth, jour);
+
+        // Vérifier TimeOff
+        final timeOffs = staff.timeOff.toList();
+        bool enCongeTimeOff = timeOffs.any((timeOff) =>
+            dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+            dateJour.isBefore(timeOff.fin.add(Duration(days: 1))));
+
+        // Vérifier activités existantes C/CM
+        final activites = staff.activites.toList();
+        bool enCongeActivite = activites.any((activite) =>
+            activite.jour == jour &&
+            (activite.statut == 'C' || activite.statut == 'CM'));
+
+        return enCongeTimeOff || enCongeActivite;
+      }
+
+      // ROTATION CORRECTE : Calculer l'équipe de garde pour chaque jour
+      for (int day = 1; day <= daysInMonth; day++) {
+        // Calculer l'index de l'équipe selon la rotation
+        int joursEcoules = (day - jourDepart + daysInMonth) % daysInMonth;
+        int equipeIndex = joursEcoules % equipesOrdonnees.length;
+        String equipeDeGarde = equipesOrdonnees[equipeIndex];
+
+        // Planifier pour chaque membre du personnel médical
+        for (final staff in personnelMedical) {
+          final staffEquipe = staff.equipe!.toUpperCase();
+
+          // Vérifier si en congé
+          if (estEnCongeOuActivite(staff, day)) {
+            congesRespectes++;
+            continue;
+          }
+
+          // Déterminer le statut selon l'équipe
+          String nouveauStatut;
+          if (staffEquipe == equipeDeGarde) {
+            nouveauStatut = "G"; // Garde
+            gardesParEquipe[staffEquipe] =
+                (gardesParEquipe[staffEquipe] ?? 0) + 1;
+          } else {
+            nouveauStatut = "RE"; // Récupération
+            recuperationsParEquipe[staffEquipe] =
+                (recuperationsParEquipe[staffEquipe] ?? 0) + 1;
+          }
+
+          // Mettre à jour l'activité
+          await activiteProvider.updateActivite(
+            staff.id,
+            day,
+            nouveauStatut,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          totalModifications++;
+        }
+      }
+
+      // Rafraîchir les données
+      await staffProvider.fetchStaffs();
+
+      // Préparer le résumé
+      String resumeGardes = gardesParEquipe.entries
+          .map((e) => "${e.key}: ${e.value}G")
+          .join(", ");
+
+      String resumeRecuperations = recuperationsParEquipe.entries
+          .map((e) => "${e.key}: ${e.value}RE")
+          .join(", ");
+
+      // Afficher le résultat
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 8),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Gardes planifiées avec succès !",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text("📅 Période: $_selectedMonthName $_selectedYear",
+                    style: TextStyle(color: Colors.white)),
+                Text(
+                    "🎯 Début: Jour $jourDepart, Équipe ${equipesOrdonnees[0]}",
+                    style: TextStyle(color: Colors.white)),
+                Text("👥 ${personnelMedical.length} médecins concernés",
+                    style: TextStyle(color: Colors.white)),
+                Text("✅ $totalModifications modifications effectuées",
+                    style: TextStyle(color: Colors.white)),
+                Text("🚫 $congesRespectes congés préservés",
+                    style: TextStyle(color: Colors.white)),
+                SizedBox(height: 4),
+                Text("Gardes: $resumeGardes",
+                    style: TextStyle(color: Colors.white, fontSize: 12)),
+                Text("Récupérations: $resumeRecuperations",
+                    style: TextStyle(color: Colors.white, fontSize: 12)),
+              ],
+            ),
+          ),
+          action: SnackBarAction(
+            label: "OK",
+            textColor: Colors.white,
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de la planification: $e"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+// MÉTHODES UTILITAIRES pour les noms des jours
+  String _getNomJourCourt(int weekday) {
+    const jours = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+    return jours[weekday - 1];
+  }
+
+  String _getNomJourComplet(int weekday) {
+    const jours = [
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi',
+      'Vendredi',
+      'Samedi',
+      'Dimanche'
+    ];
+    return jours[weekday - 1];
+  }
+
+// NOUVELLE MÉTHODE : Dialog simplifié - ordre des équipes seulement
+  Future<void> _showSimplePlanificationDialog() async {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+
+    // 1. Identifier les équipes médicales disponibles
+    final equipesDisponibles = staffProvider.staffs
+        .where((staff) =>
+            staff.equipe != null &&
+            ['A', 'B', 'C', 'D'].contains(staff.equipe!.toUpperCase()))
+        .map((staff) => staff.equipe!.toUpperCase())
+        .toSet()
+        .toList();
+
+    equipesDisponibles.sort();
+
+    if (equipesDisponibles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Aucune équipe médicale trouvée (A,B,C,D)"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // 2. Afficher le dialog de planification simplifié
+    final equipesOrdonnees = await _showOrderEquipesDialog(equipesDisponibles);
+
+    if (equipesOrdonnees == null) return;
+
+    // 3. Exécuter la planification (commence automatiquement au jour 1)
+    await _executerPlanificationGardesSimple(equipesOrdonnees);
+  }
+
+// NOUVELLE MÉTHODE : Dialog pour ordonner les équipes uniquement
+  Future<List<String>?> _showOrderEquipesDialog(
+      List<String> equipesDisponibles) async {
+    List<String> equipesOrdonnees = List.from(equipesDisponibles);
+
+    return await showDialog<List<String>>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.medical_services, color: Colors.teal),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Ordre des Gardes Médicales",
+                      style: TextStyle(color: Colors.teal.shade700),
+                    ),
+                  ),
+                ],
+              ),
+              content: Container(
+                width: double.maxFinite,
+                constraints: BoxConstraints(maxHeight: 500),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Informations du mois
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.teal.shade50, Colors.teal.shade100],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.teal.shade200),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              "Mois: $_selectedMonthName $_selectedYear",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.teal.shade700,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              "${equipesDisponibles.length} équipes détectées: ${equipesDisponibles.join(', ')}",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.teal.shade600,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.info,
+                                      size: 14, color: Colors.blue.shade700),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    "La rotation commence automatiquement le 1er jour",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20),
+
+                      // Instructions
+                      Text(
+                        "Organisez l'ordre de rotation :",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        "Glissez les équipes pour définir l'ordre de rotation. L'équipe en première position commencera sa garde le 1er jour du mois.",
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade600),
+                      ),
+                      SizedBox(height: 12),
+
+                      // Liste réorganisable des équipes
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ReorderableListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: equipesOrdonnees.length,
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              if (newIndex > oldIndex) newIndex -= 1;
+                              final item = equipesOrdonnees.removeAt(oldIndex);
+                              equipesOrdonnees.insert(newIndex, item);
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            final equipe = equipesOrdonnees[index];
+                            final isFirst = index == 0;
+
+                            return Container(
+                              key: ValueKey('equipe_${equipe}_$index'),
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 2),
+                              child: Card(
+                                elevation: isFirst ? 3 : 1,
+                                color: isFirst
+                                    ? Colors.teal.shade50
+                                    : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: BorderSide(
+                                    color: isFirst
+                                        ? Colors.teal.shade300
+                                        : Colors.grey.shade200,
+                                    width: isFirst ? 2 : 1,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Container(
+                                    width: 35,
+                                    height: 35,
+                                    decoration: BoxDecoration(
+                                      color: _getEquipeColor(equipe),
+                                      shape: BoxShape.circle,
+                                      boxShadow: isFirst
+                                          ? [
+                                              BoxShadow(
+                                                color: _getEquipeColor(equipe)
+                                                    .withOpacity(0.4),
+                                                blurRadius: 4,
+                                                offset: Offset(0, 2),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        equipe,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Text(
+                                        "Équipe $equipe",
+                                        style: TextStyle(
+                                          fontWeight: isFirst
+                                              ? FontWeight.bold
+                                              : FontWeight.w600,
+                                          color: isFirst
+                                              ? Colors.teal.shade700
+                                              : Colors.grey.shade700,
+                                        ),
+                                      ),
+                                      if (isFirst) ...[
+                                        SizedBox(width: 8),
+                                        Container(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.teal.shade200,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            "1ère",
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.teal.shade800,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  subtitle: Text(
+                                    isFirst
+                                        ? "Commence la garde le 1er jour"
+                                        : "Jour ${index + 1} de rotation",
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isFirst
+                                          ? Colors.teal.shade600
+                                          : Colors.grey.shade500,
+                                      fontWeight: isFirst
+                                          ? FontWeight.w500
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  trailing: Icon(
+                                    Icons.drag_handle,
+                                    color: isFirst
+                                        ? Colors.teal.shade400
+                                        : Colors.grey.shade400,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 16),
+
+                      // Aperçu de la rotation
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.preview,
+                                    color: Colors.blue.shade700, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Aperçu des premiers jours",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            ...List.generate(
+                              math.min(equipesOrdonnees.length, 4),
+                              (index) {
+                                final jour = index + 1;
+                                final equipe = equipesOrdonnees[index];
+                                final date = DateTime(
+                                    _selectedYear, _selectedMonth, jour);
+                                final nomJour =
+                                    DateFormat('EEEE', 'fr_FR').format(date);
+
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 2),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          color: _getEquipeColor(equipe),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            equipe,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Jour $jour ($nomJour) → Équipe $equipe en garde",
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            if (equipesOrdonnees.length > 4)
+                              Padding(
+                                padding: EdgeInsets.only(top: 4),
+                                child: Text(
+                                  "... rotation continue pour le reste du mois",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                    color: Colors.blue.shade600,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 12),
+
+                      // Note importante
+                      Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.amber.shade200),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: Colors.amber.shade700, size: 16),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                "Les congés existants (TimeOff et activités C/CM) seront automatiquement préservés.",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.amber.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(null),
+                  child: Text("Annuler"),
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.schedule, size: 16),
+                  label: Text("Planifier les gardes"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(equipesOrdonnees),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+// // NOUVELLE MÉTHODE : Exécution simplifiée (commence au jour 1)
+//   Future<void> _executerPlanificationGardesSimple(
+//       List<String> equipesOrdonnees) async {
+//     try {
+//       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+//       final activiteProvider = ActiviteProvider();
+//
+//       final daysInMonth = _daysInSelectedMonth;
+//       int totalModifications = 0;
+//       Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
+//       Map<String, int> recuperationsParEquipe = {
+//         for (var e in equipesOrdonnees) e: 0
+//       };
+//       int congesRespectes = 0;
+//
+//       // Personnel médical avec équipes
+//       final personnelMedical = staffProvider.staffs
+//           .where((staff) =>
+//               staff.equipe != null &&
+//               equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+//           .toList();
+//
+//       if (personnelMedical.isEmpty) {
+//         throw Exception(
+//             "Aucun personnel médical trouvé avec les équipes sélectionnées");
+//       }
+//
+//       // Fonction pour vérifier les congés (TimeOff + activités C/CM)
+//       bool estEnCongeOuActivite(Staff staff, int jour) {
+//         final dateJour = DateTime(_selectedYear, _selectedMonth, jour);
+//
+//         // Vérifier TimeOff
+//         final timeOffs = staff.timeOff.toList();
+//         bool enCongeTimeOff = timeOffs.any((timeOff) =>
+//             dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+//             dateJour.isBefore(timeOff.fin.add(Duration(days: 1))));
+//
+//         // Vérifier activités existantes C/CM
+//         final activites = staff.activites.toList();
+//         bool enCongeActivite = activites.any((activite) =>
+//             activite.jour == jour &&
+//             (activite.statut == 'C' || activite.statut == 'CM'));
+//
+//         return enCongeTimeOff || enCongeActivite;
+//       }
+//
+//       // ROTATION SIMPLE : Commence au jour 1
+//       for (int day = 1; day <= daysInMonth; day++) {
+//         // L'équipe de garde pour ce jour (rotation simple depuis le jour 1)
+//         int equipeIndex = (day - 1) % equipesOrdonnees.length;
+//         String equipeDeGarde = equipesOrdonnees[equipeIndex];
+//
+//         // Planifier pour chaque membre du personnel médical
+//         for (final staff in personnelMedical) {
+//           final staffEquipe = staff.equipe!.toUpperCase();
+//
+//           // Vérifier si en congé
+//           if (estEnCongeOuActivite(staff, day)) {
+//             congesRespectes++;
+//             continue;
+//           }
+//
+//           // Déterminer le statut selon l'équipe
+//           String nouveauStatut;
+//           if (staffEquipe == equipeDeGarde) {
+//             nouveauStatut = "G"; // Garde
+//             gardesParEquipe[staffEquipe] =
+//                 (gardesParEquipe[staffEquipe] ?? 0) + 1;
+//           } else {
+//             nouveauStatut = "RE"; // Récupération
+//             recuperationsParEquipe[staffEquipe] =
+//                 (recuperationsParEquipe[staffEquipe] ?? 0) + 1;
+//           }
+//
+//           // Mettre à jour l'activité
+//           await activiteProvider.updateActivite(
+//             staff.id,
+//             day,
+//             nouveauStatut,
+//             year: _selectedYear,
+//             month: _selectedMonth,
+//           );
+//           totalModifications++;
+//         }
+//       }
+//
+//       // Rafraîchir les données
+//       await staffProvider.fetchStaffs();
+//
+//       // Préparer le résumé
+//       String resumeGardes = gardesParEquipe.entries
+//           .map((e) => "${e.key}: ${e.value}G")
+//           .join(", ");
+//
+//       String resumeRecuperations = recuperationsParEquipe.entries
+//           .map((e) => "${e.key}: ${e.value}RE")
+//           .join(", ");
+//
+//       // Afficher le résultat
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           backgroundColor: Colors.green,
+//           duration: const Duration(seconds: 6),
+//           content: SingleChildScrollView(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 Row(
+//                   children: [
+//                     Icon(Icons.check_circle, color: Colors.white, size: 20),
+//                     SizedBox(width: 8),
+//                     Text(
+//                       "Gardes planifiées avec succès !",
+//                       style: TextStyle(
+//                         fontWeight: FontWeight.bold,
+//                         fontSize: 16,
+//                         color: Colors.white,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 SizedBox(height: 8),
+//                 Text("Période: $_selectedMonthName $_selectedYear",
+//                     style: TextStyle(color: Colors.white)),
+//                 Text("Ordre: ${equipesOrdonnees.join(' → ')}",
+//                     style: TextStyle(color: Colors.white)),
+//                 Text("${personnelMedical.length} médecins concernés",
+//                     style: TextStyle(color: Colors.white)),
+//                 Text("$totalModifications modifications effectuées",
+//                     style: TextStyle(color: Colors.white)),
+//                 Text("$congesRespectes congés préservés",
+//                     style: TextStyle(color: Colors.white)),
+//                 SizedBox(height: 4),
+//                 Text("Gardes: $resumeGardes",
+//                     style: TextStyle(color: Colors.white, fontSize: 12)),
+//                 Text("Récupérations: $resumeRecuperations",
+//                     style: TextStyle(color: Colors.white, fontSize: 12)),
+//               ],
+//             ),
+//           ),
+//           action: SnackBarAction(
+//             label: "OK",
+//             textColor: Colors.white,
+//             onPressed: () =>
+//                 ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+//           ),
+//         ),
+//       );
+//     } catch (e) {
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("Erreur lors de la planification: $e"),
+//           backgroundColor: Colors.red,
+//           duration: const Duration(seconds: 4),
+//         ),
+//       );
+//     }
+//   }
+// NOUVELLE MÉTHODE : Exécution avec override des congés
+// NOUVELLE VERSION avec débogage pour la Phase 2
+//   Future<void> _executerPlanificationGardesSimple(
+//       List<String> equipesOrdonnees) async {
+//     try {
+//       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+//       final activiteProvider = ActiviteProvider();
+//
+//       final daysInMonth = _daysInSelectedMonth;
+//       int totalModifications = 0;
+//       int gardesEcrasees = 0;
+//       Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
+//       Map<String, int> recuperationsParEquipe = {
+//         for (var e in equipesOrdonnees) e: 0
+//       };
+//       Map<String, int> congesAppliques = {for (var e in equipesOrdonnees) e: 0};
+//
+//       // Personnel médical avec équipes
+//       final personnelMedical = staffProvider.staffs
+//           .where((staff) =>
+//               staff.equipe != null &&
+//               equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+//           .toList();
+//
+//       if (personnelMedical.isEmpty) {
+//         throw Exception(
+//             "Aucun personnel médical trouvé avec les équipes sélectionnées");
+//       }
+//
+//       print(
+//           "🔄 PHASE 1: Attribution des gardes (${personnelMedical.length} staffs)");
+//
+//       // 1. Collecter TOUS les congés (TimeOff + activités C/CM) pour chaque staff
+//       Map<int, Map<int, String>> congesParStaff =
+//           {}; // {staffId: {jour: statut}}
+//
+//       for (final staff in personnelMedical) {
+//         congesParStaff[staff.id] = {};
+//
+//         // 1a. Congés depuis TimeOff
+//         for (var timeOff in staff.timeOff) {
+//           DateTime currentDate = timeOff.debut;
+//           while (
+//               currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
+//             if (currentDate.year == _selectedYear &&
+//                 currentDate.month == _selectedMonth) {
+//               String statutConge = _getStatutCongeFromTimeOff(timeOff);
+//               congesParStaff[staff.id]![currentDate.day] = statutConge;
+//             }
+//             currentDate = currentDate.add(const Duration(days: 1));
+//           }
+//         }
+//
+//         // 1b. Congés depuis Activités (C/CM)
+//         for (var activite in staff.activites) {
+//           if ((activite.statut == 'C' || activite.statut == 'CM') &&
+//               activite.jour >= 1 &&
+//               activite.jour <= daysInMonth) {
+//             congesParStaff[staff.id]![activite.jour] = activite.statut;
+//           }
+//         }
+//       }
+//       // PHASE 1: ATTRIBUTION COMPLÈTE DES GARDES (ignorer les congés)
+//       for (int day = 1; day <= daysInMonth; day++) {
+//         int equipeIndex = (day - 1) % equipesOrdonnees.length;
+//         String equipeDeGarde = equipesOrdonnees[equipeIndex];
+//
+//         for (final staff in personnelMedical) {
+//           final staffEquipe = staff.equipe!.toUpperCase();
+//
+//           String nouveauStatut;
+//           if (staffEquipe == equipeDeGarde) {
+//             nouveauStatut = "G";
+//             gardesParEquipe[staffEquipe] =
+//                 (gardesParEquipe[staffEquipe] ?? 0) + 1;
+//           } else {
+//             nouveauStatut = "RE";
+//             recuperationsParEquipe[staffEquipe] =
+//                 (recuperationsParEquipe[staffEquipe] ?? 0) + 1;
+//           }
+//
+//           await activiteProvider.forceUpdateActiviteIgnoringLeave(
+//             staff.id,
+//             day,
+//             nouveauStatut,
+//             year: _selectedYear,
+//             month: _selectedMonth,
+//           );
+//           totalModifications++;
+//         }
+//       }
+//
+//       print("🔄 PHASE 2: Application des congés (analyse détaillée)");
+//
+//       // PHASE 2: APPLIQUER LES CONGÉS PAR-DESSUS (écraser les gardes)
+//       for (final staff in personnelMedical) {
+//         final staffEquipe = staff.equipe!.toUpperCase();
+//
+//         print("\n--- ANALYSE CONGÉS POUR ${staff.nom} (ID: ${staff.id}) ---");
+//
+//         // 🔍 DÉBOGAGE: Vérifier les TimeOff
+//         final timeOffs = staff.timeOff.toList();
+//         print("📅 TimeOffs trouvés: ${timeOffs.length}");
+//
+//         if (timeOffs.isNotEmpty) {
+//           for (int i = 0; i < timeOffs.length; i++) {
+//             var timeOff = timeOffs[i];
+//             print(
+//                 "  TimeOff $i: ${timeOff.debut} → ${timeOff.fin} (${timeOff.motif ?? 'sans motif'})");
+//
+//             // Vérifier si le congé intersecte avec le mois sélectionné
+//             bool intersecte = false;
+//             DateTime currentDate = timeOff.debut;
+//             List<int> joursIntersection = [];
+//
+//             while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+//               if (currentDate.year == _selectedYear &&
+//                   currentDate.month == _selectedMonth) {
+//                 intersecte = true;
+//                 joursIntersection.add(currentDate.day);
+//               }
+//               currentDate = currentDate.add(Duration(days: 1));
+//             }
+//
+//             if (intersecte) {
+//               print(
+//                   "    ✅ Intersecte avec $_selectedMonthName $_selectedYear aux jours: ${joursIntersection.join(', ')}");
+//
+//               // Appliquer le congé aux jours concernés
+//               for (int jour in joursIntersection) {
+//                 // Vérifier le statut actuel avant écrasement
+//                 final query = activiteProvider.activiteBox
+//                     .query(ActiviteJour_.staff.equals(staff.id) &
+//                         ActiviteJour_.jour.equals(jour))
+//                     .build();
+//                 final activites = query.find();
+//                 query.close();
+//
+//                 String? statutActuel;
+//                 if (activites.isNotEmpty) {
+//                   statutActuel = activites.first.statut;
+//                   print("      Jour $jour: $statutActuel → C (congé TimeOff)");
+//
+//                   if (statutActuel == 'G') {
+//                     gardesEcrasees++;
+//                     gardesParEquipe[staffEquipe] =
+//                         (gardesParEquipe[staffEquipe] ?? 1) - 1;
+//                   } else if (statutActuel == 'RE') {
+//                     recuperationsParEquipe[staffEquipe] =
+//                         (recuperationsParEquipe[staffEquipe] ?? 1) - 1;
+//                   }
+//                 } else {
+//                   print("      Jour $jour: vide → C (congé TimeOff)");
+//                 }
+//
+//                 // Déterminer le statut de congé selon le motif
+//                 String statutConge = _getStatutCongeFromTimeOff(timeOff);
+//
+//                 await activiteProvider.forceUpdateActiviteIgnoringLeave(
+//                   staff.id,
+//                   jour,
+//                   statutConge,
+//                   year: _selectedYear,
+//                   month: _selectedMonth,
+//                 );
+//
+//                 congesAppliques[staffEquipe] =
+//                     (congesAppliques[staffEquipe] ?? 0) + 1;
+//               }
+//             } else {
+//               print(
+//                   "    ❌ N'intersecte PAS avec $_selectedMonthName $_selectedYear");
+//             }
+//           }
+//         } else {
+//           print("  Aucun TimeOff trouvé pour ce staff");
+//         }
+//
+//         // 🔍 DÉBOGAGE: Vérifier les activités de congé existantes
+//         print("📋 Vérification des activités de congé existantes...");
+//         final activites = staff.activites.toList();
+//         print("  Total activités: ${activites.length}");
+//
+//         List<ActiviteJour> congesActivites = activites
+//             .where((activite) =>
+//                 (activite.statut == 'C' || activite.statut == 'CM') &&
+//                 activite.jour >= 1 &&
+//                 activite.jour <= daysInMonth)
+//             .toList();
+//
+//         if (congesActivites.isNotEmpty) {
+//           print("  Congés d'activités trouvés: ${congesActivites.length}");
+//           for (var activite in congesActivites) {
+//             print("    Jour ${activite.jour}: ${activite.statut}");
+//
+//             // Réappliquer le congé pour s'assurer qu'il n'a pas été écrasé
+//             await activiteProvider.forceUpdateActiviteIgnoringLeave(
+//               staff.id,
+//               activite.jour,
+//               activite.statut,
+//               year: _selectedYear,
+//               month: _selectedMonth,
+//             );
+//
+//             congesAppliques[staffEquipe] =
+//                 (congesAppliques[staffEquipe] ?? 0) + 1;
+//             print("      → Congé activité réappliqué");
+//           }
+//         } else {
+//           print("  Aucun congé d'activité trouvé");
+//         }
+//       }
+//
+//       // PHASE 3: Vérification finale
+//       print("\n🔍 PHASE 3: Vérification finale");
+//       for (final staff in personnelMedical) {
+//         final activitesFinal = staff.activites.toList();
+//         final congesFinal = activitesFinal
+//             .where((a) => a.statut == 'C' || a.statut == 'CM')
+//             .length;
+//         final gardesFinal = activitesFinal.where((a) => a.statut == 'G').length;
+//
+//         print("${staff.nom}: ${gardesFinal}G, ${congesFinal}C");
+//       }
+//
+//       // Rafraîchir les données
+//       await staffProvider.fetchStaffs();
+//
+//       // Préparer le résumé
+//       String resumeGardes = gardesParEquipe.entries
+//           .where((e) => e.value > 0)
+//           .map((e) => "${e.key}: ${e.value}G")
+//           .join(", ");
+//
+//       String resumeRecuperations = recuperationsParEquipe.entries
+//           .where((e) => e.value > 0)
+//           .map((e) => "${e.key}: ${e.value}RE")
+//           .join(", ");
+//
+//       String resumeConges = congesAppliques.entries
+//           .where((e) => e.value > 0)
+//           .map((e) => "${e.key}: ${e.value}C")
+//           .join(", ");
+//
+//       // Afficher le résultat détaillé
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           backgroundColor: Colors.green,
+//           duration: const Duration(seconds: 10),
+//           content: SingleChildScrollView(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               mainAxisSize: MainAxisSize.min,
+//               children: [
+//                 Row(
+//                   children: [
+//                     Icon(Icons.check_circle, color: Colors.white, size: 20),
+//                     SizedBox(width: 8),
+//                     Text(
+//                       "Planification terminée !",
+//                       style: TextStyle(
+//                         fontWeight: FontWeight.bold,
+//                         fontSize: 16,
+//                         color: Colors.white,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 SizedBox(height: 8),
+//                 Text("📅 Période: $_selectedMonthName $_selectedYear",
+//                     style: TextStyle(color: Colors.white)),
+//                 Text("🔄 Ordre: ${equipesOrdonnees.join(' → ')}",
+//                     style: TextStyle(color: Colors.white)),
+//                 Text("👥 ${personnelMedical.length} médecins concernés",
+//                     style: TextStyle(color: Colors.white)),
+//                 SizedBox(height: 6),
+//                 Text(
+//                   "Phase 1 - Gardes attribuées:",
+//                   style: TextStyle(
+//                       color: Colors.white, fontWeight: FontWeight.w600),
+//                 ),
+//                 if (resumeGardes.isNotEmpty)
+//                   Text(
+//                     "  Gardes: $resumeGardes",
+//                     style: TextStyle(color: Colors.white, fontSize: 12),
+//                   ),
+//                 if (resumeRecuperations.isNotEmpty)
+//                   Text(
+//                     "  Récupérations: $resumeRecuperations",
+//                     style: TextStyle(color: Colors.white, fontSize: 12),
+//                   ),
+//                 SizedBox(height: 4),
+//                 Text(
+//                   "Phase 2 - Congés appliqués:",
+//                   style: TextStyle(
+//                       color: Colors.white, fontWeight: FontWeight.w600),
+//                 ),
+//                 if (gardesEcrasees > 0)
+//                   Text(
+//                     "  🚫 $gardesEcrasees gardes écrasées par des congés",
+//                     style:
+//                         TextStyle(color: Colors.yellow.shade200, fontSize: 12),
+//                   ),
+//                 if (resumeConges.isNotEmpty)
+//                   Text(
+//                     "  Congés: $resumeConges",
+//                     style: TextStyle(color: Colors.white, fontSize: 12),
+//                   )
+//                 else
+//                   Text(
+//                     "  ⚠️ Aucun congé appliqué - vérifiez les logs",
+//                     style:
+//                         TextStyle(color: Colors.yellow.shade200, fontSize: 12),
+//                   ),
+//                 SizedBox(height: 4),
+//                 Text(
+//                   "✅ Total: $totalModifications modifications",
+//                   style: TextStyle(color: Colors.white),
+//                 ),
+//               ],
+//             ),
+//           ),
+//           action: SnackBarAction(
+//             label: "OK",
+//             textColor: Colors.white,
+//             onPressed: () =>
+//                 ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+//           ),
+//         ),
+//       );
+//     } catch (e) {
+//       print("❌ ERREUR PLANIFICATION: $e");
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text("❌ Erreur lors de la planification: $e"),
+//           backgroundColor: Colors.red,
+//           duration: const Duration(seconds: 4),
+//         ),
+//       );
+//     }
+//   }
+  Future<void> _executerPlanificationGardesSimple(
+      List<String> equipesOrdonnees) async {
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+      final objectBox = ObjectBox();
+      final daysInMonth = _daysInSelectedMonth;
+      int totalModifications = 0;
+      int gardesEcrasees = 0;
+      Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
+      Map<String, int> recuperationsParEquipe = {
+        for (var e in equipesOrdonnees) e: 0
+      };
+      Map<String, int> congesAppliques = {for (var e in equipesOrdonnees) e: 0};
+
+      // Personnel médical avec équipes
+      final personnelMedical = staffProvider.staffs
+          .where((staff) =>
+              staff.equipe != null &&
+              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+          .toList();
+
+      if (personnelMedical.isEmpty) {
+        throw Exception(
+            "Aucun personnel médical trouvé avec les équipes sélectionnées");
+      }
+
+      // 1. Collecter TOUS les congés (TimeOff + activités C/CM) pour chaque staff
+      Map<int, Map<int, String>> congesParStaff =
+          {}; // {staffId: {jour: statut}}
+
+      // Récupérer tous les TimeOffs
+      final allTimeOffs = objectBox.timeOffBox.getAll();
+      for (var timeOff in allTimeOffs) {
+        // Vérifier que la relation staff est chargée
+        if (timeOff.staff.target != null) {
+          final staff = timeOff.staff.target!;
+          final staffId = staff.id;
+          if (!congesParStaff.containsKey(staffId)) {
+            congesParStaff[staffId] = {};
+          }
+
+          // Calculer les jours de congé
+          DateTime currentDate = timeOff.debut;
+          while (
+              currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
+            if (currentDate.year == _selectedYear &&
+                currentDate.month == _selectedMonth) {
+              String statutConge = _getStatutCongeFromTimeOff(timeOff);
+              congesParStaff[staffId]![currentDate.day] = statutConge;
+            }
+            currentDate = currentDate.add(const Duration(days: 1));
+          }
+        }
+      }
+
+      // 2. Ajouter les congés depuis les Activités (C/CM)
+      for (final staff in personnelMedical) {
+        if (!congesParStaff.containsKey(staff.id)) {
+          congesParStaff[staff.id] = {};
+        }
+
+        for (var activite in staff.activites) {
+          if ((activite.statut == 'C' || activite.statut == 'CM') &&
+              activite.jour >= 1 &&
+              activite.jour <= daysInMonth) {
+            congesParStaff[staff.id]![activite.jour] = activite.statut;
+          }
+        }
+      }
+
+      // 3. Planifier les gardes en ignorant les jours de congé
+      for (int day = 1; day <= daysInMonth; day++) {
+        int equipeIndex = (day - 1) % equipesOrdonnees.length;
+        String equipeDeGarde = equipesOrdonnees[equipeIndex];
+
+        for (final staff in personnelMedical) {
+          // Sauter si le jour est un congé
+          if (congesParStaff[staff.id]!.containsKey(day)) {
+            continue;
+          }
+
+          // Déterminer le statut (G ou RE)
+          String nouveauStatut =
+              (staff.equipe!.toUpperCase() == equipeDeGarde) ? "G" : "RE";
+
+          // Mettre à jour l'activité
+          await activiteProvider.updateActivite(
+            staff.id,
+            day,
+            nouveauStatut,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+
+          // Mettre à jour les compteurs
+          if (nouveauStatut == "G") {
+            gardesParEquipe[staff.equipe!.toUpperCase()] =
+                (gardesParEquipe[staff.equipe!.toUpperCase()] ?? 0) + 1;
+          } else {
+            recuperationsParEquipe[staff.equipe!.toUpperCase()] =
+                (recuperationsParEquipe[staff.equipe!.toUpperCase()] ?? 0) + 1;
+          }
+          totalModifications++;
+        }
+      }
+
+      // 4. Appliquer les congés (écraser les gardes si nécessaire)
+      for (final staff in personnelMedical) {
+        for (var entry in congesParStaff[staff.id]!.entries) {
+          int jour = entry.key;
+          String statutConge = entry.value;
+
+          // Vérifier le statut actuel avant écrasement
+          final query = activiteProvider.activiteBox
+              .query(ActiviteJour_.staff.equals(staff.id) &
+                  ActiviteJour_.jour.equals(jour))
+              .build();
+          final activites = query.find();
+          query.close();
+
+          if (activites.isNotEmpty) {
+            String? statutActuel = activites.first.statut;
+            if (statutActuel == 'G') {
+              gardesEcrasees++;
+              gardesParEquipe[staff.equipe!.toUpperCase()] =
+                  (gardesParEquipe[staff.equipe!.toUpperCase()] ?? 1) - 1;
+            } else if (statutActuel == 'RE') {
+              recuperationsParEquipe[staff.equipe!.toUpperCase()] =
+                  (recuperationsParEquipe[staff.equipe!.toUpperCase()] ?? 1) -
+                      1;
+            }
+          }
+
+          // Appliquer le congé
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            jour,
+            statutConge,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          congesAppliques[staff.equipe!.toUpperCase()] =
+              (congesAppliques[staff.equipe!.toUpperCase()] ?? 0) + 1;
+        }
+      }
+
+      // 5. Rafraîchir les données
+      await staffProvider.fetchStaffs();
+
+      // 6. Préparer le résumé
+      String resumeGardes = gardesParEquipe.entries
+          .where((e) => e.value > 0)
+          .map((e) => "${e.key}: ${e.value}G")
+          .join(", ");
+
+      String resumeRecuperations = recuperationsParEquipe.entries
+          .where((e) => e.value > 0)
+          .map((e) => "${e.key}: ${e.value}RE")
+          .join(", ");
+
+      String resumeConges = congesAppliques.entries
+          .where((e) => e.value > 0)
+          .map((e) => "${e.key}: ${e.value}C")
+          .join(", ");
+
+      // 7. Afficher le résultat
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 10),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Planification terminée !",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text("📅 Période: $_selectedMonthName $_selectedYear",
+                    style: TextStyle(color: Colors.white)),
+                Text("🔄 Ordre: ${equipesOrdonnees.join(' → ')}",
+                    style: TextStyle(color: Colors.white)),
+                Text("👥 ${personnelMedical.length} médecins concernés",
+                    style: TextStyle(color: Colors.white)),
+                SizedBox(height: 6),
+                Text(
+                  "Phase 1 - Gardes attribuées:",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+                if (resumeGardes.isNotEmpty)
+                  Text(
+                    "  Gardes: $resumeGardes",
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                if (resumeRecuperations.isNotEmpty)
+                  Text(
+                    "  Récupérations: $resumeRecuperations",
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                SizedBox(height: 4),
+                Text(
+                  "Phase 2 - Congés appliqués:",
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600),
+                ),
+                if (gardesEcrasees > 0)
+                  Text(
+                    "  🚫 $gardesEcrasees gardes écrasées par des congés",
+                    style:
+                        TextStyle(color: Colors.yellow.shade200, fontSize: 12),
+                  ),
+                if (resumeConges.isNotEmpty)
+                  Text(
+                    "  Congés: $resumeConges",
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  )
+                else
+                  Text(
+                    "  ⚠️ Aucun congé appliqué - vérifiez les logs",
+                    style:
+                        TextStyle(color: Colors.yellow.shade200, fontSize: 12),
+                  ),
+                SizedBox(height: 4),
+                Text(
+                  "✅ Total: $totalModifications modifications",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          action: SnackBarAction(
+            label: "OK",
+            textColor: Colors.white,
+            onPressed: () =>
+                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+          ),
+        ),
+      );
+    } catch (e) {
+      print("❌ ERREUR PLANIFICATION: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de la planification: $e"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+  }
+
+  /// Détermine le statut de congé à partir d'un TimeOff
+  String _getStatutCongeFromTimeOff(TimeOff timeOff) {
+    if (timeOff.motif == null) return 'C';
+
+    final motif = timeOff.motif!.toLowerCase();
+    if (motif.contains('maladie') || motif.contains('medical')) {
+      return 'CM';
+    } else if (motif.contains('garde')) {
+      return 'G';
+    } else if (motif.contains('récupération') ||
+        motif.contains('recuperation')) {
+      return 'RE';
+    } else {
+      return 'C'; // Congé par défaut
+    }
+  }
+
+  Future<void> _listStaffWithTimeOff() async {
+    try {
+      final objectBox = ObjectBox();
+      final staffs = objectBox.staffBox.getAll();
+      final timeOffs = objectBox.timeOffBox.getAll();
+
+      // Grouper les TimeOff par staffId
+      Map<int, List<TimeOff>> timeOffsByStaff = {};
+      for (var timeOff in timeOffs) {
+        if (timeOff.staff.target != null) {
+          final staffId = timeOff.staff.target!.id;
+          if (!timeOffsByStaff.containsKey(staffId)) {
+            timeOffsByStaff[staffId] = [];
+          }
+          timeOffsByStaff[staffId]!.add(timeOff);
+        }
+      }
+
+      // Afficher les résultats
+      String result = "=== Liste des congés (TimeOff) ===\n";
+      for (var staff in staffs) {
+        final staffTimeOffs = timeOffsByStaff[staff.id] ?? [];
+        result += "\n👤 ${staff.nom} (ID: ${staff.id})\n";
+        if (staffTimeOffs.isEmpty) {
+          result += "   - Aucun congé enregistré.\n";
+        } else {
+          for (var timeOff in staffTimeOffs) {
+            final debut = DateFormat('dd/MM/yyyy').format(timeOff.debut);
+            final fin = DateFormat('dd/MM/yyyy').format(timeOff.fin);
+            final motif = timeOff.motif ?? "Congé";
+            result += "   - $motif : du $debut au $fin\n";
+          }
+        }
+      }
+
+      // Afficher dans la console
+      print(result);
+
+      // Afficher dans un dialog (optionnel)
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Liste des congés (TimeOff)"),
+          content: SingleChildScrollView(
+            child: Text(result),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Fermer"),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print("Erreur lors de la récupération des congés : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur : $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }
