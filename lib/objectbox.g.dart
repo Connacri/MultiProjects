@@ -1623,294 +1623,6 @@ final _entities = <obx_int.ModelEntity>[
     backlinks: <obx_int.ModelBacklink>[],
   ),
   obx_int.ModelEntity(
-    id: const obx_int.IdUid(45, 2094998699711199469),
-    name: 'ActiviteHebdo',
-    lastPropertyId: const obx_int.IdUid(4, 5580194185712901792),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 1000376483035344704),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 3204506852465690199),
-        name: 'jour',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 2493930113821764065),
-        name: 'activite',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 5580194185712901792),
-        name: 'personnelId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(78, 5984116542143615704),
-        relationTarget: 'Personnel',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(46, 2608718223444670659),
-    name: 'AffectationJour',
-    lastPropertyId: const obx_int.IdUid(5, 9108001318011992005),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 1901430889397710847),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 7065250858067174505),
-        name: 'date',
-        type: 10,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 2360762905721991557),
-        name: 'statut',
-        type: 2,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 126599235391079130),
-        name: 'personnelId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(79, 7603981544517854869),
-        relationTarget: 'Personnel',
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 9108001318011992005),
-        name: 'planningMoisId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(80, 1538828785486773126),
-        relationTarget: 'PlanningMois',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(47, 6970969845640149357),
-    name: 'GroupeTravail',
-    lastPropertyId: const obx_int.IdUid(3, 262123985321064810),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 213862492482478863),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 8815354529418430565),
-        name: 'nom',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 262123985321064810),
-        name: 'service',
-        type: 9,
-        flags: 0,
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[
-      obx_int.ModelRelation(
-        id: const obx_int.IdUid(6, 4280395601446583701),
-        name: 'membres',
-        targetId: const obx_int.IdUid(49, 4317017855221956627),
-      ),
-    ],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(48, 696359892635768631),
-    name: 'Observation',
-    lastPropertyId: const obx_int.IdUid(6, 8684157085831017553),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 6494981701814064798),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 7129912726441776662),
-        name: 'type',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 4975661062963769992),
-        name: 'details',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 3230720466743530308),
-        name: 'dateDebut',
-        type: 10,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 3489770541122792175),
-        name: 'dateFin',
-        type: 10,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 8684157085831017553),
-        name: 'personnelId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(81, 3717456895900964689),
-        relationTarget: 'Personnel',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(49, 4317017855221956627),
-    name: 'Personnel',
-    lastPropertyId: const obx_int.IdUid(7, 7010985967533243877),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 3491579946990900427),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 2383832815382967971),
-        name: 'nom',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 301612319500002117),
-        name: 'prenom',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 3608704201108705106),
-        name: 'fonction',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 8009031511021379522),
-        name: 'grade',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 5270503741012402266),
-        name: 'service',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 7010985967533243877),
-        name: 'groupeTravailId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(82, 1837711883215562898),
-        relationTarget: 'GroupeTravail',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[
-      obx_int.ModelRelation(
-        id: const obx_int.IdUid(7, 9103009364221115797),
-        name: 'affectations',
-        targetId: const obx_int.IdUid(46, 2608718223444670659),
-      ),
-      obx_int.ModelRelation(
-        id: const obx_int.IdUid(8, 8257152333762707956),
-        name: 'activites',
-        targetId: const obx_int.IdUid(45, 2094998699711199469),
-      ),
-      obx_int.ModelRelation(
-        id: const obx_int.IdUid(9, 2370174446676436111),
-        name: 'observations',
-        targetId: const obx_int.IdUid(48, 696359892635768631),
-      ),
-    ],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(50, 356068960353205892),
-    name: 'PlanningMois',
-    lastPropertyId: const obx_int.IdUid(3, 9186702705855549324),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 4739561116944474849),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 4527767989696361168),
-        name: 'annee',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 9186702705855549324),
-        name: 'mois',
-        type: 6,
-        flags: 0,
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[
-      obx_int.ModelRelation(
-        id: const obx_int.IdUid(10, 2533515178288443251),
-        name: 'affectations',
-        targetId: const obx_int.IdUid(46, 2608718223444670659),
-      ),
-    ],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(51, 6686547310239751793),
-    name: 'Service',
-    lastPropertyId: const obx_int.IdUid(2, 8573314322817892672),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 6543905351124105609),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 8573314322817892672),
-        name: 'nom',
-        type: 9,
-        flags: 0,
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
     id: const obx_int.IdUid(59, 7892213973742006565),
     name: 'Staff',
     lastPropertyId: const obx_int.IdUid(40, 7268369681695897981),
@@ -2154,6 +1866,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
       5841557151341947182,
       6880452506314359223,
       4414320882310450560,
+      2094998699711199469,
+      2608718223444670659,
+      6970969845640149357,
+      696359892635768631,
+      4317017855221956627,
+      356068960353205892,
+      6686547310239751793,
     ],
     retiredIndexUids: const [
       7680843215305245682,
@@ -2573,6 +2292,36 @@ obx_int.ModelDefinition getObjectBoxModel() {
       8490284429699837968,
       9061462179866711356,
       2472786284142281708,
+      1000376483035344704,
+      3204506852465690199,
+      2493930113821764065,
+      5580194185712901792,
+      1901430889397710847,
+      7065250858067174505,
+      2360762905721991557,
+      126599235391079130,
+      9108001318011992005,
+      213862492482478863,
+      8815354529418430565,
+      262123985321064810,
+      6494981701814064798,
+      7129912726441776662,
+      4975661062963769992,
+      3230720466743530308,
+      3489770541122792175,
+      8684157085831017553,
+      3491579946990900427,
+      2383832815382967971,
+      301612319500002117,
+      3608704201108705106,
+      8009031511021379522,
+      5270503741012402266,
+      7010985967533243877,
+      4739561116944474849,
+      4527767989696361168,
+      9186702705855549324,
+      6543905351124105609,
+      8573314322817892672,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -4607,347 +4356,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
-    ActiviteHebdo: obx_int.EntityDefinition<ActiviteHebdo>(
-      model: _entities[20],
-      toOneRelations: (ActiviteHebdo object) => [object.personnel],
-      toManyRelations: (ActiviteHebdo object) => {},
-      getId: (ActiviteHebdo object) => object.id,
-      setId: (ActiviteHebdo object, int id) {
-        object.id = id;
-      },
-      objectToFB: (ActiviteHebdo object, fb.Builder fbb) {
-        final jourOffset = fbb.writeString(object.jour);
-        final activiteOffset = fbb.writeString(object.activite);
-        fbb.startTable(5);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, jourOffset);
-        fbb.addOffset(2, activiteOffset);
-        fbb.addInt64(3, object.personnel.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final jourParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final activiteParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final object = ActiviteHebdo(jour: jourParam, activite: activiteParam)
-          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        object.personnel.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          10,
-          0,
-        );
-        object.personnel.attach(store);
-        return object;
-      },
-    ),
-    AffectationJour: obx_int.EntityDefinition<AffectationJour>(
-      model: _entities[21],
-      toOneRelations: (AffectationJour object) => [
-        object.personnel,
-        object.planningMois,
-      ],
-      toManyRelations: (AffectationJour object) => {},
-      getId: (AffectationJour object) => object.id,
-      setId: (AffectationJour object, int id) {
-        object.id = id;
-      },
-      objectToFB: (AffectationJour object, fb.Builder fbb) {
-        fbb.startTable(6);
-        fbb.addInt64(0, object.id);
-        fbb.addInt64(1, object.date.millisecondsSinceEpoch);
-        fbb.addInt8(2, object.statut);
-        fbb.addInt64(3, object.personnel.targetId);
-        fbb.addInt64(4, object.planningMois.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final dateParam = DateTime.fromMillisecondsSinceEpoch(
-          const fb.Int64Reader().vTableGet(buffer, rootOffset, 6, 0),
-        );
-        final statutParam = const fb.Int8Reader().vTableGet(
-          buffer,
-          rootOffset,
-          8,
-          0,
-        );
-        final object = AffectationJour(date: dateParam, statut: statutParam)
-          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        object.personnel.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          10,
-          0,
-        );
-        object.personnel.attach(store);
-        object.planningMois.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          12,
-          0,
-        );
-        object.planningMois.attach(store);
-        return object;
-      },
-    ),
-    GroupeTravail: obx_int.EntityDefinition<GroupeTravail>(
-      model: _entities[22],
-      toOneRelations: (GroupeTravail object) => [],
-      toManyRelations: (GroupeTravail object) => {
-        obx_int.RelInfo<GroupeTravail>.toMany(6, object.id): object.membres,
-      },
-      getId: (GroupeTravail object) => object.id,
-      setId: (GroupeTravail object, int id) {
-        object.id = id;
-      },
-      objectToFB: (GroupeTravail object, fb.Builder fbb) {
-        final nomOffset = fbb.writeString(object.nom);
-        final serviceOffset = fbb.writeString(object.service);
-        fbb.startTable(4);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, nomOffset);
-        fbb.addOffset(2, serviceOffset);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final nomParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final serviceParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final object = GroupeTravail(nom: nomParam, service: serviceParam)
-          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        obx_int.InternalToManyAccess.setRelInfo<GroupeTravail>(
-          object.membres,
-          store,
-          obx_int.RelInfo<GroupeTravail>.toMany(6, object.id),
-        );
-        return object;
-      },
-    ),
-    Observation: obx_int.EntityDefinition<Observation>(
-      model: _entities[23],
-      toOneRelations: (Observation object) => [object.personnel],
-      toManyRelations: (Observation object) => {},
-      getId: (Observation object) => object.id,
-      setId: (Observation object, int id) {
-        object.id = id;
-      },
-      objectToFB: (Observation object, fb.Builder fbb) {
-        final typeOffset = fbb.writeString(object.type);
-        final detailsOffset = fbb.writeString(object.details);
-        fbb.startTable(7);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, typeOffset);
-        fbb.addOffset(2, detailsOffset);
-        fbb.addInt64(3, object.dateDebut.millisecondsSinceEpoch);
-        fbb.addInt64(4, object.dateFin?.millisecondsSinceEpoch);
-        fbb.addInt64(5, object.personnel.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final dateFinValue = const fb.Int64Reader().vTableGetNullable(
-          buffer,
-          rootOffset,
-          12,
-        );
-        final typeParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final detailsParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final dateDebutParam = DateTime.fromMillisecondsSinceEpoch(
-          const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0),
-        );
-        final dateFinParam = dateFinValue == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(dateFinValue);
-        final object = Observation(
-          type: typeParam,
-          details: detailsParam,
-          dateDebut: dateDebutParam,
-          dateFin: dateFinParam,
-        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        object.personnel.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          14,
-          0,
-        );
-        object.personnel.attach(store);
-        return object;
-      },
-    ),
-    Personnel: obx_int.EntityDefinition<Personnel>(
-      model: _entities[24],
-      toOneRelations: (Personnel object) => [object.groupeTravail],
-      toManyRelations: (Personnel object) => {
-        obx_int.RelInfo<Personnel>.toMany(7, object.id): object.affectations,
-        obx_int.RelInfo<Personnel>.toMany(8, object.id): object.activites,
-        obx_int.RelInfo<Personnel>.toMany(9, object.id): object.observations,
-      },
-      getId: (Personnel object) => object.id,
-      setId: (Personnel object, int id) {
-        object.id = id;
-      },
-      objectToFB: (Personnel object, fb.Builder fbb) {
-        final nomOffset = fbb.writeString(object.nom);
-        final prenomOffset = fbb.writeString(object.prenom);
-        final fonctionOffset = fbb.writeString(object.fonction);
-        final gradeOffset = fbb.writeString(object.grade);
-        final serviceOffset = fbb.writeString(object.service);
-        fbb.startTable(8);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, nomOffset);
-        fbb.addOffset(2, prenomOffset);
-        fbb.addOffset(3, fonctionOffset);
-        fbb.addOffset(4, gradeOffset);
-        fbb.addOffset(5, serviceOffset);
-        fbb.addInt64(6, object.groupeTravail.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final nomParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final prenomParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final fonctionParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 10, '');
-        final gradeParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 12, '');
-        final serviceParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 14, '');
-        final object = Personnel(
-          nom: nomParam,
-          prenom: prenomParam,
-          fonction: fonctionParam,
-          grade: gradeParam,
-          service: serviceParam,
-        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        object.groupeTravail.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          16,
-          0,
-        );
-        object.groupeTravail.attach(store);
-        obx_int.InternalToManyAccess.setRelInfo<Personnel>(
-          object.affectations,
-          store,
-          obx_int.RelInfo<Personnel>.toMany(7, object.id),
-        );
-        obx_int.InternalToManyAccess.setRelInfo<Personnel>(
-          object.activites,
-          store,
-          obx_int.RelInfo<Personnel>.toMany(8, object.id),
-        );
-        obx_int.InternalToManyAccess.setRelInfo<Personnel>(
-          object.observations,
-          store,
-          obx_int.RelInfo<Personnel>.toMany(9, object.id),
-        );
-        return object;
-      },
-    ),
-    PlanningMois: obx_int.EntityDefinition<PlanningMois>(
-      model: _entities[25],
-      toOneRelations: (PlanningMois object) => [],
-      toManyRelations: (PlanningMois object) => {
-        obx_int.RelInfo<PlanningMois>.toMany(10, object.id):
-            object.affectations,
-      },
-      getId: (PlanningMois object) => object.id,
-      setId: (PlanningMois object, int id) {
-        object.id = id;
-      },
-      objectToFB: (PlanningMois object, fb.Builder fbb) {
-        fbb.startTable(4);
-        fbb.addInt64(0, object.id);
-        fbb.addInt64(1, object.annee);
-        fbb.addInt64(2, object.mois);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final anneeParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          6,
-          0,
-        );
-        final moisParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          8,
-          0,
-        );
-        final object = PlanningMois(annee: anneeParam, mois: moisParam)
-          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        obx_int.InternalToManyAccess.setRelInfo<PlanningMois>(
-          object.affectations,
-          store,
-          obx_int.RelInfo<PlanningMois>.toMany(10, object.id),
-        );
-        return object;
-      },
-    ),
-    Service: obx_int.EntityDefinition<Service>(
-      model: _entities[26],
-      toOneRelations: (Service object) => [],
-      toManyRelations: (Service object) => {},
-      getId: (Service object) => object.id,
-      setId: (Service object, int id) {
-        object.id = id;
-      },
-      objectToFB: (Service object, fb.Builder fbb) {
-        final nomOffset = fbb.writeString(object.nom);
-        fbb.startTable(3);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, nomOffset);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final nomParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final object = Service(nom: nomParam)
-          ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-
-        return object;
-      },
-    ),
     Staff: obx_int.EntityDefinition<Staff>(
-      model: _entities[27],
+      model: _entities[20],
       toOneRelations: (Staff object) => [object.branch],
       toManyRelations: (Staff object) => {
         obx_int.RelInfo<Staff>.toMany(11, object.id): object.timeOff,
@@ -5039,7 +4449,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     ActiviteJour: obx_int.EntityDefinition<ActiviteJour>(
-      model: _entities[28],
+      model: _entities[21],
       toOneRelations: (ActiviteJour object) => [object.staff],
       toManyRelations: (ActiviteJour object) => {},
       getId: (ActiviteJour object) => object.id,
@@ -5090,7 +4500,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     Branch: obx_int.EntityDefinition<Branch>(
-      model: _entities[29],
+      model: _entities[22],
       toOneRelations: (Branch object) => [],
       toManyRelations: (Branch object) => {},
       getId: (Branch object) => object.id,
@@ -5123,7 +4533,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     TimeOff: obx_int.EntityDefinition<TimeOff>(
-      model: _entities[30],
+      model: _entities[23],
       toOneRelations: (TimeOff object) => [object.staff],
       toManyRelations: (TimeOff object) => {},
       getId: (TimeOff object) => object.id,
@@ -6351,245 +5761,46 @@ class SeasonalPricing_ {
   );
 }
 
-/// [ActiviteHebdo] entity fields to define ObjectBox queries.
-class ActiviteHebdo_ {
-  /// See [ActiviteHebdo.id].
-  static final id = obx.QueryIntegerProperty<ActiviteHebdo>(
-    _entities[20].properties[0],
-  );
-
-  /// See [ActiviteHebdo.jour].
-  static final jour = obx.QueryStringProperty<ActiviteHebdo>(
-    _entities[20].properties[1],
-  );
-
-  /// See [ActiviteHebdo.activite].
-  static final activite = obx.QueryStringProperty<ActiviteHebdo>(
-    _entities[20].properties[2],
-  );
-
-  /// See [ActiviteHebdo.personnel].
-  static final personnel = obx.QueryRelationToOne<ActiviteHebdo, Personnel>(
-    _entities[20].properties[3],
-  );
-}
-
-/// [AffectationJour] entity fields to define ObjectBox queries.
-class AffectationJour_ {
-  /// See [AffectationJour.id].
-  static final id = obx.QueryIntegerProperty<AffectationJour>(
-    _entities[21].properties[0],
-  );
-
-  /// See [AffectationJour.date].
-  static final date = obx.QueryDateProperty<AffectationJour>(
-    _entities[21].properties[1],
-  );
-
-  /// See [AffectationJour.statut].
-  static final statut = obx.QueryIntegerProperty<AffectationJour>(
-    _entities[21].properties[2],
-  );
-
-  /// See [AffectationJour.personnel].
-  static final personnel = obx.QueryRelationToOne<AffectationJour, Personnel>(
-    _entities[21].properties[3],
-  );
-
-  /// See [AffectationJour.planningMois].
-  static final planningMois =
-      obx.QueryRelationToOne<AffectationJour, PlanningMois>(
-        _entities[21].properties[4],
-      );
-}
-
-/// [GroupeTravail] entity fields to define ObjectBox queries.
-class GroupeTravail_ {
-  /// See [GroupeTravail.id].
-  static final id = obx.QueryIntegerProperty<GroupeTravail>(
-    _entities[22].properties[0],
-  );
-
-  /// See [GroupeTravail.nom].
-  static final nom = obx.QueryStringProperty<GroupeTravail>(
-    _entities[22].properties[1],
-  );
-
-  /// See [GroupeTravail.service].
-  static final service = obx.QueryStringProperty<GroupeTravail>(
-    _entities[22].properties[2],
-  );
-
-  /// see [GroupeTravail.membres]
-  static final membres = obx.QueryRelationToMany<GroupeTravail, Personnel>(
-    _entities[22].relations[0],
-  );
-}
-
-/// [Observation] entity fields to define ObjectBox queries.
-class Observation_ {
-  /// See [Observation.id].
-  static final id = obx.QueryIntegerProperty<Observation>(
-    _entities[23].properties[0],
-  );
-
-  /// See [Observation.type].
-  static final type = obx.QueryStringProperty<Observation>(
-    _entities[23].properties[1],
-  );
-
-  /// See [Observation.details].
-  static final details = obx.QueryStringProperty<Observation>(
-    _entities[23].properties[2],
-  );
-
-  /// See [Observation.dateDebut].
-  static final dateDebut = obx.QueryDateProperty<Observation>(
-    _entities[23].properties[3],
-  );
-
-  /// See [Observation.dateFin].
-  static final dateFin = obx.QueryDateProperty<Observation>(
-    _entities[23].properties[4],
-  );
-
-  /// See [Observation.personnel].
-  static final personnel = obx.QueryRelationToOne<Observation, Personnel>(
-    _entities[23].properties[5],
-  );
-}
-
-/// [Personnel] entity fields to define ObjectBox queries.
-class Personnel_ {
-  /// See [Personnel.id].
-  static final id = obx.QueryIntegerProperty<Personnel>(
-    _entities[24].properties[0],
-  );
-
-  /// See [Personnel.nom].
-  static final nom = obx.QueryStringProperty<Personnel>(
-    _entities[24].properties[1],
-  );
-
-  /// See [Personnel.prenom].
-  static final prenom = obx.QueryStringProperty<Personnel>(
-    _entities[24].properties[2],
-  );
-
-  /// See [Personnel.fonction].
-  static final fonction = obx.QueryStringProperty<Personnel>(
-    _entities[24].properties[3],
-  );
-
-  /// See [Personnel.grade].
-  static final grade = obx.QueryStringProperty<Personnel>(
-    _entities[24].properties[4],
-  );
-
-  /// See [Personnel.service].
-  static final service = obx.QueryStringProperty<Personnel>(
-    _entities[24].properties[5],
-  );
-
-  /// See [Personnel.groupeTravail].
-  static final groupeTravail = obx.QueryRelationToOne<Personnel, GroupeTravail>(
-    _entities[24].properties[6],
-  );
-
-  /// see [Personnel.affectations]
-  static final affectations =
-      obx.QueryRelationToMany<Personnel, AffectationJour>(
-        _entities[24].relations[0],
-      );
-
-  /// see [Personnel.activites]
-  static final activites = obx.QueryRelationToMany<Personnel, ActiviteHebdo>(
-    _entities[24].relations[1],
-  );
-
-  /// see [Personnel.observations]
-  static final observations = obx.QueryRelationToMany<Personnel, Observation>(
-    _entities[24].relations[2],
-  );
-}
-
-/// [PlanningMois] entity fields to define ObjectBox queries.
-class PlanningMois_ {
-  /// See [PlanningMois.id].
-  static final id = obx.QueryIntegerProperty<PlanningMois>(
-    _entities[25].properties[0],
-  );
-
-  /// See [PlanningMois.annee].
-  static final annee = obx.QueryIntegerProperty<PlanningMois>(
-    _entities[25].properties[1],
-  );
-
-  /// See [PlanningMois.mois].
-  static final mois = obx.QueryIntegerProperty<PlanningMois>(
-    _entities[25].properties[2],
-  );
-
-  /// see [PlanningMois.affectations]
-  static final affectations =
-      obx.QueryRelationToMany<PlanningMois, AffectationJour>(
-        _entities[25].relations[0],
-      );
-}
-
-/// [Service] entity fields to define ObjectBox queries.
-class Service_ {
-  /// See [Service.id].
-  static final id = obx.QueryIntegerProperty<Service>(
-    _entities[26].properties[0],
-  );
-
-  /// See [Service.nom].
-  static final nom = obx.QueryStringProperty<Service>(
-    _entities[26].properties[1],
-  );
-}
-
 /// [Staff] entity fields to define ObjectBox queries.
 class Staff_ {
   /// See [Staff.id].
   static final id = obx.QueryIntegerProperty<Staff>(
-    _entities[27].properties[0],
+    _entities[20].properties[0],
   );
 
   /// See [Staff.grade].
   static final grade = obx.QueryStringProperty<Staff>(
-    _entities[27].properties[1],
+    _entities[20].properties[1],
   );
 
   /// See [Staff.nom].
   static final nom = obx.QueryStringProperty<Staff>(
-    _entities[27].properties[2],
+    _entities[20].properties[2],
   );
 
   /// See [Staff.groupe].
   static final groupe = obx.QueryStringProperty<Staff>(
-    _entities[27].properties[3],
+    _entities[20].properties[3],
   );
 
   /// See [Staff.equipe].
   static final equipe = obx.QueryStringProperty<Staff>(
-    _entities[27].properties[4],
+    _entities[20].properties[4],
   );
 
   /// See [Staff.obs].
   static final obs = obx.QueryStringProperty<Staff>(
-    _entities[27].properties[5],
+    _entities[20].properties[5],
   );
 
   /// See [Staff.branch].
   static final branch = obx.QueryRelationToOne<Staff, Branch>(
-    _entities[27].properties[6],
+    _entities[20].properties[6],
   );
 
   /// see [Staff.timeOff]
   static final timeOff = obx.QueryRelationToMany<Staff, TimeOff>(
-    _entities[27].relations[0],
+    _entities[20].relations[0],
   );
 
   /// see [Staff.activites]
@@ -6602,22 +5813,22 @@ class Staff_ {
 class ActiviteJour_ {
   /// See [ActiviteJour.id].
   static final id = obx.QueryIntegerProperty<ActiviteJour>(
-    _entities[28].properties[0],
+    _entities[21].properties[0],
   );
 
   /// See [ActiviteJour.jour].
   static final jour = obx.QueryIntegerProperty<ActiviteJour>(
-    _entities[28].properties[1],
+    _entities[21].properties[1],
   );
 
   /// See [ActiviteJour.statut].
   static final statut = obx.QueryStringProperty<ActiviteJour>(
-    _entities[28].properties[2],
+    _entities[21].properties[2],
   );
 
   /// See [ActiviteJour.staff].
   static final staff = obx.QueryRelationToOne<ActiviteJour, Staff>(
-    _entities[28].properties[3],
+    _entities[21].properties[3],
   );
 }
 
@@ -6625,12 +5836,12 @@ class ActiviteJour_ {
 class Branch_ {
   /// See [Branch.id].
   static final id = obx.QueryIntegerProperty<Branch>(
-    _entities[29].properties[0],
+    _entities[22].properties[0],
   );
 
   /// See [Branch.branchNom].
   static final branchNom = obx.QueryStringProperty<Branch>(
-    _entities[29].properties[1],
+    _entities[22].properties[1],
   );
 }
 
@@ -6638,26 +5849,26 @@ class Branch_ {
 class TimeOff_ {
   /// See [TimeOff.id].
   static final id = obx.QueryIntegerProperty<TimeOff>(
-    _entities[30].properties[0],
+    _entities[23].properties[0],
   );
 
   /// See [TimeOff.motif].
   static final motif = obx.QueryStringProperty<TimeOff>(
-    _entities[30].properties[1],
+    _entities[23].properties[1],
   );
 
   /// See [TimeOff.staff].
   static final staff = obx.QueryRelationToOne<TimeOff, Staff>(
-    _entities[30].properties[2],
+    _entities[23].properties[2],
   );
 
   /// See [TimeOff.debut].
   static final debut = obx.QueryDateProperty<TimeOff>(
-    _entities[30].properties[3],
+    _entities[23].properties[3],
   );
 
   /// See [TimeOff.fin].
   static final fin = obx.QueryDateProperty<TimeOff>(
-    _entities[30].properties[4],
+    _entities[23].properties[4],
   );
 }

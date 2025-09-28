@@ -71,7 +71,8 @@ class StaffProvider with ChangeNotifier {
         final activite = ActiviteJour(
           jour: i + 1,
           statut: activites[i],
-        )..staff.target = staff;
+        )
+          ..staff.target = staff;
 
         _objectBox.activiteBox.put(activite);
       }
@@ -151,14 +152,15 @@ class ActiviteProvider with ChangeNotifier {
 
       if (estEnCongeTimeOff) {
         print(
-            "🚫 ${staff.nom} est en congé TimeOff le $jour/$month/$year - Modification ignorée");
+            "🚫 ${staff
+                .nom} est en congé TimeOff le $jour/$month/$year - Modification ignorée");
         return;
       }
 
       // VÉRIFICATION 2 : Activités de congé existantes (C, CM) - seulement si pas TimeOff
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
-              ActiviteJour_.jour.equals(jour))
+      ActiviteJour_.jour.equals(jour))
           .build();
       final activites = query.find();
       query.close();
@@ -172,14 +174,17 @@ class ActiviteProvider with ChangeNotifier {
             activiteExistante.statut == 'CM') {
           estEnCongeActivite = true;
           print(
-              "🚫 ${staff.nom} a un congé activité le jour $jour (${activiteExistante.statut}) - Modification ignorée");
+              "🚫 ${staff
+                  .nom} a un congé activité le jour $jour (${activiteExistante
+                  .statut}) - Modification ignorée");
         }
       }
 
       // Si en congé activité, ignorer SAUF si on veut forcer un autre type de congé
       if (estEnCongeActivite && !['C', 'CM'].contains(statut)) {
         print(
-            "⚠️ Modification IGNORÉE pour ${staff.nom} - jour $jour (congé activité existant)");
+            "⚠️ Modification IGNORÉE pour ${staff
+                .nom} - jour $jour (congé activité existant)");
         return;
       }
 
@@ -190,7 +195,8 @@ class ActiviteProvider with ChangeNotifier {
         activiteExistante.statut = statut;
         _objectBox.activiteBox.put(activiteExistante);
         print(
-            "✅ Activité mise à jour: ${staff.nom} jour $jour: $ancienStatut → $statut");
+            "✅ Activité mise à jour: ${staff
+                .nom} jour $jour: $ancienStatut → $statut");
       } else {
         // Création d'une nouvelle activité
         final nouvelleActivite = ActiviteJour(jour: jour, statut: statut)
@@ -215,7 +221,7 @@ class ActiviteProvider with ChangeNotifier {
 
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
-              ActiviteJour_.jour.equals(jour))
+      ActiviteJour_.jour.equals(jour))
           .build();
       final activites = query.find();
       query.close();
@@ -239,8 +245,8 @@ class ActiviteProvider with ChangeNotifier {
   }
 
   /// 🔹 NOUVELLE MÉTHODE : Force la mise à jour en ignorant complètement les congés
-  Future<void> forceUpdateActiviteIgnoringLeave(
-      int staffId, int jour, String statut,
+  Future<void> forceUpdateActiviteIgnoringLeave(int staffId, int jour,
+      String statut,
       {required int year, required int month}) async {
     try {
       final staff = _objectBox.staffBox.get(staffId);
@@ -251,7 +257,7 @@ class ActiviteProvider with ChangeNotifier {
 
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
-              ActiviteJour_.jour.equals(jour))
+      ActiviteJour_.jour.equals(jour))
           .build();
       final activites = query.find();
       query.close();
@@ -300,7 +306,7 @@ class ActiviteProvider with ChangeNotifier {
     // Vérifier activités de congé
     final activites = staff.activites.toList();
     return activites.any((activite) =>
-        activite.jour == dateJour.day &&
+    activite.jour == dateJour.day &&
         (activite.statut == 'C' || activite.statut == 'CM'));
   }
 
@@ -317,9 +323,9 @@ class ActiviteProvider with ChangeNotifier {
       for (var e in liste) {
         // 1. Créer/récupérer Branch
         Branch branch = _objectBox.branchBox
-                .query(Branch_.branchNom.equals(e.branchNom ?? "Rhumatologie"))
-                .build()
-                .findFirst() ??
+            .query(Branch_.branchNom.equals(e.branchNom ?? "Rhumatologie"))
+            .build()
+            .findFirst() ??
             Branch(branchNom: e.branchNom ?? "Rhumatologie");
         _objectBox.branchBox.put(branch);
 
@@ -330,7 +336,8 @@ class ActiviteProvider with ChangeNotifier {
           groupe: e.groupe,
           equipe: e.equipe,
           obs: e.obs,
-        )..branch.target = branch;
+        )
+          ..branch.target = branch;
 
         _objectBox.staffBox.put(staff);
 
@@ -341,10 +348,12 @@ class ActiviteProvider with ChangeNotifier {
               debut: conge.debut,
               fin: conge.fin,
               motif: conge.motif,
-            )..staff.target = staff;
+            )
+              ..staff.target = staff;
             _objectBox.timeOffBox.put(timeOff);
             print(
-                "📅 Congé ajouté: ${staff.nom} du ${conge.debut} au ${conge.fin}");
+                "📅 Congé ajouté: ${staff.nom} du ${conge.debut} au ${conge
+                    .fin}");
           }
         }
 
@@ -372,7 +381,8 @@ class ActiviteProvider with ChangeNotifier {
         }
 
         print(
-            "✅ Staff inséré: ${staff.nom} avec ${e.conges?.length ?? 0} congés");
+            "✅ Staff inséré: ${staff.nom} avec ${e.conges?.length ??
+                0} congés");
       }
 
       await fetchStaffs();
@@ -390,17 +400,30 @@ class ActiviteProvider with ChangeNotifier {
   }
 
   /// 🔹 Supprimer toutes les activités
+  /// 🔹 Supprimer toutes les activités et réinitialiser les obs des staffs
   Future<void> clearAllActivites(BuildContext context) async {
     try {
+      // 1️⃣ Supprimer toutes les activités
       _objectBox.activiteBox.removeAll();
       print("✅ Toutes les activités ont été supprimées.");
+
+      // 2️⃣ Réinitialiser les obs des staffs
+      final staffs = _objectBox.staffBox.getAll();
+      for (var staff in staffs) {
+        if (staff.obs != null && staff.obs!.isNotEmpty) {
+          staff.obs = null; // ou "" si tu préfères une chaîne vide
+          _objectBox.staffBox.put(staff);
+        }
+      }
+      print("✅ Tous les champs 'obs' des staffs ont été réinitialisés.");
+
       notifyListeners();
 
-      // Rafraîchir les staffs après suppression
+      // 3️⃣ Rafraîchir les staffs après la modification
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       await staffProvider.fetchStaffs();
     } catch (e) {
-      print("❌ Erreur clearAllActivites: $e");
+      print("❌ Erreur clearAllActivitesEtObs: $e");
     }
   }
 
@@ -424,13 +447,14 @@ class ActiviteProvider with ChangeNotifier {
       final personnelMedical = _objectBox.staffBox
           .getAll()
           .where((staff) =>
-              staff.equipe != null &&
-              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+      staff.equipe != null &&
+          equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
           .toList();
 
       if (personnelMedical.isEmpty) {
         throw Exception(
-            "Aucun personnel médical trouvé avec les équipes: ${equipesOrdonnees.join(', ')}");
+            "Aucun personnel médical trouvé avec les équipes: ${equipesOrdonnees
+                .join(', ')}");
       }
 
       // LOGIQUE DE ROTATION CORRIGÉE
