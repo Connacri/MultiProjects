@@ -907,6 +907,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                     },
                                   ),
                                   ElevatedButton.icon(
+                                    icon: Icon(Icons.edit, color: Colors.white),
+                                    label: Text("Éditer planification"),
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue),
+                                    onPressed: () async {
+                                      await _showEditPlanificationDialog(
+                                          context,
+                                          _selectedMonth,
+                                          _selectedYear);
+                                    },
+                                  ),
+                                  ElevatedButton.icon(
                                     icon: const Icon(Icons.cleaning_services,
                                         size: 16),
                                     label: const Text(
@@ -1244,7 +1256,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                           GestureDetector(
                                             onTap: () async {
                                               await _showCongesManagementDialog(
-                                                  context, staff);
+                                                  context, staff,
+                                                  parentContext: context);
                                             },
                                             child: _buildCongesIndicator(staff),
                                           ),
@@ -1928,8 +1941,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                           initialDate: dateFin ??
                                               dateDebut!.add(Duration(days: 1)),
                                           firstDate: dateDebut!,
-                                          lastDate: DateTime(_selectedYear,
-                                              _selectedMonth + 1, 0),
+                                          lastDate: DateTime(2100),
+                                          // DateTime(_selectedYear,
+                                          //     _selectedMonth + 1, 0),
                                         );
                                         if (date != null) {
                                           setState(() {
@@ -2342,25 +2356,26 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// CORRIGER également la méthode _deleteTimeOff si elle existe
   Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
     try {
       final objectBox = ObjectBox();
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final activiteProvider = ActiviteProvider(); // Utiliser le provider
+      final activiteProvider = ActiviteProvider();
+      final timeOffProvider =
+          Provider.of<TimeOffProvider>(context, listen: false);
 
       // 1. Supprimer l'entité TimeOff
       objectBox.timeOffBox.remove(timeOff.id);
 
-      // 2. Remettre les activités journalières à '-' pour les jours concernés
+      // 2. Restaurer les jours dans ActiviteJour
       DateTime currentDate = timeOff.debut;
       int joursRestaures = 0;
 
-      while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+      while (currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
           int jour = currentDate.day;
-          // UTILISER LA NOUVELLE MÉTHODE
+
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
             staff.id,
             jour,
@@ -2368,27 +2383,30 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             year: _selectedYear,
             month: _selectedMonth,
           );
+
           joursRestaures++;
         }
-        currentDate = currentDate.add(Duration(days: 1));
+        currentDate = currentDate.add(const Duration(days: 1));
       }
 
-      // 3. Nettoyer l'observation si elle correspond à ce congé
+      // 3. Nettoyer les obs
       if (staff.obs != null &&
           staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
         staff.obs = null;
         await staffProvider.updateStaff(staff);
       }
 
-      // 4. Rafraîchir
+      // 4. Rafraîchir les données
       await staffProvider.fetchStaffs();
+      await timeOffProvider.fetchTimeOffs(); // 🔹 Important pour vider la liste
 
+      // 5. Feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
               "✅ Congé supprimé pour ${staff.nom}\n$joursRestaures jours restaurés"),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         ),
       );
     } catch (e) {
@@ -3125,7 +3143,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     return jours[weekday - 1];
   }
 
-// NOUVELLE MÉTHODE : Dialog simplifié - ordre des équipes seulement
+//NOUVELLE MÉTHODE : Dialog simplifié - ordre des équipes seulement
   Future<void> _showSimplePlanificationDialog() async {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
@@ -3159,10 +3177,73 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     await _executerPlanificationGardesSimple(equipesOrdonnees);
   }
 
-// NOUVELLE MÉTHODE : Dialog pour ordonner les équipes uniquement
+  Future<void> _showEditPlanificationDialog(
+      BuildContext context, int mois, int annee) async {
+    final objectBox = ObjectBox();
+
+    // Charger la planification existante
+    final query = objectBox.planificationBox
+        .query(Planification_.mois.equals(mois) &
+            Planification_.annee.equals(annee))
+        .build();
+    Planification? planifExistante = query.findFirst();
+    query.close();
+
+    List<String> equipesExistantes = [];
+    if (planifExistante != null) {
+      equipesExistantes = planifExistante.ordreEquipes.split(",");
+    }
+
+    // Ouvrir le dialog avec l’ordre existant
+    final equipesOrdonnees = await _showOrderEquipesDialog(
+      equipesExistantes.isNotEmpty ? equipesExistantes : ['A', 'B', 'C', 'D'],
+    );
+
+    if (equipesOrdonnees == null) return;
+
+    // Mettre à jour ou créer
+    if (planifExistante != null) {
+      planifExistante.ordreEquipes = equipesOrdonnees.join(',');
+      objectBox.planificationBox.put(planifExistante);
+    } else {
+      final planif = Planification(
+        mois: mois,
+        annee: annee,
+        ordreEquipes: equipesOrdonnees.join(','),
+      );
+      objectBox.planificationBox.put(planif);
+    }
+
+    // Relancer la planification
+    await _executerPlanificationGardesSimple(equipesOrdonnees);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("✅ Planification mise à jour pour $mois/$annee")),
+    );
+  }
+
+//NOUVELLE MÉTHODE : Dialog pour ordonner les équipes uniquement
   Future<List<String>?> _showOrderEquipesDialog(
       List<String> equipesDisponibles) async {
-    List<String> equipesOrdonnees = List.from(equipesDisponibles);
+    final objectBox = ObjectBox();
+
+    // Vérifier si une planification existe déjà
+    final query = objectBox.planificationBox
+        .query(Planification_.mois.equals(_selectedMonth) &
+            Planification_.annee.equals(_selectedYear))
+        .build();
+
+    final existingPlanif = query.findFirst();
+    query.close();
+
+    List<String> equipesOrdonnees;
+
+    if (existingPlanif != null) {
+      equipesOrdonnees = existingPlanif.ordreEquipes.split(',');
+    } else {
+      equipesOrdonnees = List.from(equipesDisponibles);
+    }
+    // List<String> equipesOrdonnees = List.from(equipesDisponibles);
 
     return await showDialog<List<String>>(
       context: context,
@@ -3548,15 +3629,39 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final activiteProvider = ActiviteProvider();
       final objectBox = ObjectBox();
       final daysInMonth = _daysInSelectedMonth;
+
       int totalModifications = 0;
       int gardesEcrasees = 0;
+
       Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
       Map<String, int> recuperationsParEquipe = {
         for (var e in equipesOrdonnees) e: 0
       };
       Map<String, int> congesAppliques = {for (var e in equipesOrdonnees) e: 0};
 
-      // Personnel médical avec équipes
+      // ✅ 1. Sauvegarder l'ordre des équipes
+      final query = objectBox.planificationBox
+          .query(
+            Planification_.mois.equals(_selectedMonth) &
+                Planification_.annee.equals(_selectedYear),
+          )
+          .build();
+      Planification? existingPlanif = query.findFirst();
+      query.close();
+
+      if (existingPlanif != null) {
+        existingPlanif.ordreEquipes = equipesOrdonnees.join(',');
+        objectBox.planificationBox.put(existingPlanif);
+      } else {
+        final planif = Planification(
+          mois: _selectedMonth,
+          annee: _selectedYear,
+          ordreEquipes: equipesOrdonnees.join(','),
+        );
+        objectBox.planificationBox.put(planif);
+      }
+
+      // ✅ 2. Sélectionner le personnel médical concerné
       final personnelMedical = staffProvider.staffs
           .where((staff) =>
               staff.equipe != null &&
@@ -3568,41 +3673,33 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             "Aucun personnel médical trouvé avec les équipes sélectionnées");
       }
 
-      // 1. Collecter TOUS les congés (TimeOff + activités C/CM) pour chaque staff
+      // ✅ 3. Collecter TOUS les congés (TimeOff + activités C/CM)
       Map<int, Map<int, String>> congesParStaff =
           {}; // {staffId: {jour: statut}}
 
-      // Récupérer tous les TimeOffs
+      // --- TimeOff
       final allTimeOffs = objectBox.timeOffBox.getAll();
       for (var timeOff in allTimeOffs) {
-        // Vérifier que la relation staff est chargée
         if (timeOff.staff.target != null) {
           final staff = timeOff.staff.target!;
-          final staffId = staff.id;
-          if (!congesParStaff.containsKey(staffId)) {
-            congesParStaff[staffId] = {};
-          }
+          congesParStaff.putIfAbsent(staff.id, () => {});
 
-          // Calculer les jours de congé
           DateTime currentDate = timeOff.debut;
           while (
               currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
             if (currentDate.year == _selectedYear &&
                 currentDate.month == _selectedMonth) {
-              String statutConge = _getStatutCongeFromTimeOff(timeOff);
-              congesParStaff[staffId]![currentDate.day] = statutConge;
+              congesParStaff[staff.id]![currentDate.day] =
+                  _getStatutCongeFromTimeOff(timeOff);
             }
             currentDate = currentDate.add(const Duration(days: 1));
           }
         }
       }
 
-      // 2. Ajouter les congés depuis les Activités (C/CM)
+      // --- Congés depuis ActiviteJour (C/CM)
       for (final staff in personnelMedical) {
-        if (!congesParStaff.containsKey(staff.id)) {
-          congesParStaff[staff.id] = {};
-        }
-
+        congesParStaff.putIfAbsent(staff.id, () => {});
         for (var activite in staff.activites) {
           if ((activite.statut == 'C' || activite.statut == 'CM') &&
               activite.jour >= 1 &&
@@ -3612,22 +3709,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         }
       }
 
-      // 3. Planifier les gardes en ignorant les jours de congé
+      // ✅ 4. Planifier les gardes et récupérations
       for (int day = 1; day <= daysInMonth; day++) {
         int equipeIndex = (day - 1) % equipesOrdonnees.length;
         String equipeDeGarde = equipesOrdonnees[equipeIndex];
 
         for (final staff in personnelMedical) {
-          // Sauter si le jour est un congé
-          if (congesParStaff[staff.id]!.containsKey(day)) {
-            continue;
-          }
+          if (congesParStaff[staff.id]!.containsKey(day)) continue;
 
-          // Déterminer le statut (G ou RE)
           String nouveauStatut =
               (staff.equipe!.toUpperCase() == equipeDeGarde) ? "G" : "RE";
 
-          // Mettre à jour l'activité
           await activiteProvider.updateActivite(
             staff.id,
             day,
@@ -3636,7 +3728,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             month: _selectedMonth,
           );
 
-          // Mettre à jour les compteurs
           if (nouveauStatut == "G") {
             gardesParEquipe[staff.equipe!.toUpperCase()] =
                 (gardesParEquipe[staff.equipe!.toUpperCase()] ?? 0) + 1;
@@ -3648,13 +3739,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         }
       }
 
-      // 4. Appliquer les congés (écraser les gardes si nécessaire)
+      // ✅ 5. Appliquer les congés et écraser si nécessaire
       for (final staff in personnelMedical) {
         for (var entry in congesParStaff[staff.id]!.entries) {
           int jour = entry.key;
           String statutConge = entry.value;
 
-          // Vérifier le statut actuel avant écrasement
           final query = activiteProvider.activiteBox
               .query(ActiviteJour_.staff.equals(staff.id) &
                   ActiviteJour_.jour.equals(jour))
@@ -3667,15 +3757,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             if (statutActuel == 'G') {
               gardesEcrasees++;
               gardesParEquipe[staff.equipe!.toUpperCase()] =
-                  (gardesParEquipe[staff.equipe!.toUpperCase()] ?? 1) - 1;
+                  (gardesParEquipe[staff.equipe!.toUpperCase()] ?? 0) - 1;
             } else if (statutActuel == 'RE') {
               recuperationsParEquipe[staff.equipe!.toUpperCase()] =
-                  (recuperationsParEquipe[staff.equipe!.toUpperCase()] ?? 1) -
+                  (recuperationsParEquipe[staff.equipe!.toUpperCase()] ?? 0) -
                       1;
             }
           }
 
-          // Appliquer le congé
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
             staff.id,
             jour,
@@ -3683,15 +3772,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             year: _selectedYear,
             month: _selectedMonth,
           );
+
           congesAppliques[staff.equipe!.toUpperCase()] =
               (congesAppliques[staff.equipe!.toUpperCase()] ?? 0) + 1;
         }
       }
 
-      // 5. Rafraîchir les données
+      // ✅ 6. Rafraîchir les données
       await staffProvider.fetchStaffs();
 
-      // 6. Préparer le résumé
+      // ✅ 7. Résumés
       String resumeGardes = gardesParEquipe.entries
           .where((e) => e.value > 0)
           .map((e) => "${e.key}: ${e.value}G")
@@ -3707,7 +3797,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           .map((e) => "${e.key}: ${e.value}C")
           .join(", ");
 
-      // 7. Afficher le résultat
+      // ✅ 8. Affichage
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
@@ -3739,49 +3829,33 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 Text("👥 ${personnelMedical.length} médecins concernés",
                     style: TextStyle(color: Colors.white)),
                 SizedBox(height: 6),
-                Text(
-                  "Phase 1 - Gardes attribuées:",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600),
-                ),
+                Text("Phase 1 - Gardes attribuées:",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600)),
                 if (resumeGardes.isNotEmpty)
-                  Text(
-                    "  Gardes: $resumeGardes",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
+                  Text("  Gardes: $resumeGardes",
+                      style: TextStyle(color: Colors.white, fontSize: 12)),
                 if (resumeRecuperations.isNotEmpty)
-                  Text(
-                    "  Récupérations: $resumeRecuperations",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
+                  Text("  Récupérations: $resumeRecuperations",
+                      style: TextStyle(color: Colors.white, fontSize: 12)),
                 SizedBox(height: 4),
-                Text(
-                  "Phase 2 - Congés appliqués:",
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600),
-                ),
+                Text("Phase 2 - Congés appliqués:",
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.w600)),
                 if (gardesEcrasees > 0)
-                  Text(
-                    "  🚫 $gardesEcrasees gardes écrasées par des congés",
-                    style:
-                        TextStyle(color: Colors.yellow.shade200, fontSize: 12),
-                  ),
+                  Text("  🚫 $gardesEcrasees gardes écrasées par des congés",
+                      style: TextStyle(
+                          color: Colors.yellow.shade200, fontSize: 12)),
                 if (resumeConges.isNotEmpty)
-                  Text(
-                    "  Congés: $resumeConges",
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  )
+                  Text("  Congés: $resumeConges",
+                      style: TextStyle(color: Colors.white, fontSize: 12))
                 else
-                  Text(
-                    "  ⚠️ Aucun congé appliqué - vérifiez les logs",
-                    style:
-                        TextStyle(color: Colors.yellow.shade200, fontSize: 12),
-                  ),
+                  Text("  ⚠️ Aucun congé appliqué - vérifiez les logs",
+                      style: TextStyle(
+                          color: Colors.yellow.shade200, fontSize: 12)),
                 SizedBox(height: 4),
-                Text(
-                  "✅ Total: $totalModifications modifications",
-                  style: TextStyle(color: Colors.white),
-                ),
+                Text("✅ Total: $totalModifications modifications",
+                    style: TextStyle(color: Colors.white)),
               ],
             ),
           ),
@@ -3812,25 +3886,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final timeOffs = objectBox.timeOffBox.getAll();
 
       // Grouper les TimeOff par staffId
-      Map<int, List<TimeOff>> timeOffsByStaff = {};
+      final Map<int, List<TimeOff>> timeOffsByStaff = {};
       for (var timeOff in timeOffs) {
         if (timeOff.staff.target != null) {
           final staffId = timeOff.staff.target!.id;
-          if (!timeOffsByStaff.containsKey(staffId)) {
-            timeOffsByStaff[staffId] = [];
-          }
+          timeOffsByStaff.putIfAbsent(staffId, () => []);
           timeOffsByStaff[staffId]!.add(timeOff);
         }
       }
 
-      // Afficher les résultats
+      // Construire le résultat : uniquement les staffs qui ont au moins 1 congé
       String result = "=== Liste des congés (TimeOff) ===\n";
       for (var staff in staffs) {
-        final staffTimeOffs = timeOffsByStaff[staff.id] ?? [];
-        result += "\n👤 ${staff.nom} (ID: ${staff.id})\n";
-        if (staffTimeOffs.isEmpty) {
-          result += "   - Aucun congé enregistré.\n";
-        } else {
+        final staffTimeOffs = timeOffsByStaff[staff.id];
+        if (staffTimeOffs != null && staffTimeOffs.isNotEmpty) {
+          result += "\n👤 ${staff.nom} (ID: ${staff.id})\n";
           for (var timeOff in staffTimeOffs) {
             final debut = DateFormat('dd/MM/yyyy').format(timeOff.debut);
             final fin = DateFormat('dd/MM/yyyy').format(timeOff.fin);
@@ -3840,10 +3910,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         }
       }
 
+      if (result.trim() == "=== Liste des congés (TimeOff) ===") {
+        result += "\n(Aucun staff n'a de congé enregistré)";
+      }
+
       // Afficher dans la console
       print(result);
 
-      // Afficher dans un dialog (optionnel)
+      // Afficher dans un dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -4578,10 +4652,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // NOUVELLE MÉTHODE : Dialog complet de gestion des congés
-  Future<void> _showCongesManagementDialog(
-      BuildContext context, Staff staff) async {
+  Future<void> _showCongesManagementDialog(BuildContext context, Staff staff,
+      {required BuildContext parentContext}) async {
     await showDialog(
-      context: context,
+      context: parentContext,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -4623,9 +4697,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           ),
                           onPressed: () async {
                             Navigator.of(context).pop();
-                            await _showTimeOffDialog(context, staff);
-                            // Rouvrir ce dialog après création
-                            await _showCongesManagementDialog(context, staff);
+                            await _showTimeOffDialog(
+                                parentContext, staff); // utiliser parent
+                            await _showCongesManagementDialog(
+                                parentContext, staff,
+                                parentContext: parentContext); // reouvrir
                           },
                         ),
                       ],
@@ -5097,7 +5173,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               onPressed: () async {
                 Navigator.of(context).pop();
                 await _showEditTimeOffDialog(context, staff, timeOff);
-                await _showCongesManagementDialog(context, staff);
+                await _showCongesManagementDialog(context, staff,
+                    parentContext: context);
               },
               tooltip: "Modifier",
             ),

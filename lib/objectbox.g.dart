@@ -1788,6 +1788,48 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(65, 4929433361385066189),
+    name: 'Planification',
+    lastPropertyId: const obx_int.IdUid(5, 461988957453692681),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 674854889463390568),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 2984333881401830721),
+        name: 'mois',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 5315833448038085611),
+        name: 'annee',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 1970772358704446035),
+        name: 'ordreEquipes',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 461988957453692681),
+        name: 'branchId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(147, 51939098627082601),
+        relationTarget: 'Branch',
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -1828,8 +1870,8 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(64, 5212567268726366170),
-    lastIndexId: const obx_int.IdUid(146, 4505509574144870846),
+    lastEntityId: const obx_int.IdUid(65, 4929433361385066189),
+    lastIndexId: const obx_int.IdUid(147, 51939098627082601),
     lastRelationId: const obx_int.IdUid(11, 6355601734277678121),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -4587,6 +4629,65 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
+    Planification: obx_int.EntityDefinition<Planification>(
+      model: _entities[24],
+      toOneRelations: (Planification object) => [object.branch],
+      toManyRelations: (Planification object) => {},
+      getId: (Planification object) => object.id,
+      setId: (Planification object, int id) {
+        object.id = id;
+      },
+      objectToFB: (Planification object, fb.Builder fbb) {
+        final ordreEquipesOffset = fbb.writeString(object.ordreEquipes);
+        fbb.startTable(6);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.mois);
+        fbb.addInt64(2, object.annee);
+        fbb.addOffset(3, ordreEquipesOffset);
+        fbb.addInt64(4, object.branch.targetId);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final moisParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          6,
+          0,
+        );
+        final anneeParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          8,
+          0,
+        );
+        final ordreEquipesParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 10, '');
+        final object = Planification(
+          id: idParam,
+          mois: moisParam,
+          annee: anneeParam,
+          ordreEquipes: ordreEquipesParam,
+        );
+        object.branch.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          12,
+          0,
+        );
+        object.branch.attach(store);
+        return object;
+      },
+    ),
   };
 
   return obx_int.ModelDefinition(model, bindings);
@@ -5870,5 +5971,33 @@ class TimeOff_ {
   /// See [TimeOff.fin].
   static final fin = obx.QueryDateProperty<TimeOff>(
     _entities[23].properties[4],
+  );
+}
+
+/// [Planification] entity fields to define ObjectBox queries.
+class Planification_ {
+  /// See [Planification.id].
+  static final id = obx.QueryIntegerProperty<Planification>(
+    _entities[24].properties[0],
+  );
+
+  /// See [Planification.mois].
+  static final mois = obx.QueryIntegerProperty<Planification>(
+    _entities[24].properties[1],
+  );
+
+  /// See [Planification.annee].
+  static final annee = obx.QueryIntegerProperty<Planification>(
+    _entities[24].properties[2],
+  );
+
+  /// See [Planification.ordreEquipes].
+  static final ordreEquipes = obx.QueryStringProperty<Planification>(
+    _entities[24].properties[3],
+  );
+
+  /// See [Planification.branch].
+  static final branch = obx.QueryRelationToOne<Planification, Branch>(
+    _entities[24].properties[4],
   );
 }

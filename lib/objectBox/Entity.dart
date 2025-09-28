@@ -1316,3 +1316,23 @@ class TimeOff {
     this.motif,
   });
 }
+
+@Entity()
+class Planification {
+  int id;
+
+  int mois; // ex: 9
+  int annee; // ex: 2025
+
+  String ordreEquipes; // "A,B,C,D"
+
+  // 🔹 Optionnel : lier à une branche/service
+  final branch = ToOne<Branch>();
+
+  Planification({
+    this.id = 0,
+    required this.mois,
+    required this.annee,
+    required this.ordreEquipes,
+  });
+}

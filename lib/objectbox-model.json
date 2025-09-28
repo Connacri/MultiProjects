@@ -1490,10 +1490,47 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "65:4929433361385066189",
+      "lastPropertyId": "5:461988957453692681",
+      "name": "Planification",
+      "properties": [
+        {
+          "id": "1:674854889463390568",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2984333881401830721",
+          "name": "mois",
+          "type": 6
+        },
+        {
+          "id": "3:5315833448038085611",
+          "name": "annee",
+          "type": 6
+        },
+        {
+          "id": "4:1970772358704446035",
+          "name": "ordreEquipes",
+          "type": 9
+        },
+        {
+          "id": "5:461988957453692681",
+          "name": "branchId",
+          "indexId": "147:51939098627082601",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Branch"
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "64:5212567268726366170",
-  "lastIndexId": "146:4505509574144870846",
+  "lastEntityId": "65:4929433361385066189",
+  "lastIndexId": "147:51939098627082601",
   "lastRelationId": "11:6355601734277678121",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
