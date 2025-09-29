@@ -170,13 +170,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       ),
                     );
                   }),
-                  onChanged: (value) {
+                  onChanged: (value) async {
                     if (value != null) {
                       setState(() {
                         _selectedMonth = value;
                         _editingCells.clear();
                         _tempValues.clear();
                       });
+                      await runPlanificationAutomatique(context);
+                      await _showPlanificationAgentsHygieneDialog();
+                      await _showSimplePlanificationDialog();
                     }
                   },
                 ),
@@ -521,377 +524,379 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                       backgroundColor: Colors.purple,
                                       foregroundColor: Colors.white,
                                     ),
-                                    onPressed: () async {
-                                      // Demander confirmation
-                                      final confirm = await showDialog<bool>(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: const Text("Confirmation"),
-                                            content: Text(
-                                              "Cette action va :\n"
-                                              "PHASE 1 - Attribution initiale :\n"
-                                              "• Marquer 'RE' les weekends (vendredi/samedi) pour TOUS\n"
-                                              "• Marquer '-' les jours normaux pour les équipes A,B,C,D\n"
-                                              "• Marquer 'N' les jours normaux pour les autres staff\n"
-                                              "\nPHASE 2 - Application des congés :\n"
-                                              "• Les congés existants vont ÉCRASER les planifications\n"
-                                              "• Aucun congé ne sera perdu\n"
-                                              "\nMois: $_selectedMonthName $_selectedYear\n"
-                                              "Continuer ?",
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () =>
-                                                    Navigator.of(context)
-                                                        .pop(false),
-                                                child: const Text("Annuler"),
-                                              ),
-                                              ElevatedButton(
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor:
-                                                      Colors.purple,
-                                                  foregroundColor: Colors.white,
-                                                ),
-                                                onPressed: () =>
-                                                    Navigator.of(context)
-                                                        .pop(true),
-                                                child: const Text("Confirmer"),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-
-                                      if (confirm != true) return;
-
-                                      try {
-                                        final staffProvider =
-                                            Provider.of<StaffProvider>(context,
-                                                listen: false);
-                                        final activiteProvider =
-                                            ActiviteProvider();
-                                        final objectBox = ObjectBox();
-
-                                        final daysInMonth =
-                                            _daysInSelectedMonth;
-                                        int weekendDaysCount = 0;
-                                        int normalDaysCount = 0;
-                                        int totalModifications = 0;
-                                        int staffEquipeABCD = 0;
-                                        int staffAutres = 0;
-                                        int congesAppliques = 0;
-                                        int gardesEcrasees = 0;
-
-                                        print(
-                                            "🔄 PHASE 1: Attribution automatique (ignorant les congés)");
-
-                                        // PHASE 1: ATTRIBUTION AUTOMATIQUE (ignorer les congés temporairement)
-                                        for (final staff
-                                            in staffProvider.staffs) {
-                                          // Ignorer certains groupes
-                                          if (staff.groupe == "Garde 12H") {
-                                            print(
-                                                "⏩ ${staff.nom} ignoré car groupe = Garde 12H");
-                                            continue;
-                                          }
-                                          if (staff.grade ==
-                                              "Agent d'hygiène") {
-                                            print(
-                                                "⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
-                                            continue;
-                                          }
-
-                                          final equipe =
-                                              staff.equipe?.toUpperCase();
-                                          final isEquipeABCD = equipe != null &&
-                                              ['A', 'B', 'C', 'D']
-                                                  .contains(equipe);
-
-                                          if (isEquipeABCD) {
-                                            staffEquipeABCD++;
-                                          } else {
-                                            staffAutres++;
-                                          }
-
-                                          for (int day = 1;
-                                              day <= daysInMonth;
-                                              day++) {
-                                            final date = DateTime(_selectedYear,
-                                                _selectedMonth, day);
-
-                                            String statutAAffecter;
-                                            if (date.weekday ==
-                                                    DateTime.friday ||
-                                                date.weekday ==
-                                                    DateTime.saturday) {
-                                              // Week-end : marquer 'RE' pour TOUS
-                                              statutAAffecter = "RE";
-                                              if (staff ==
-                                                  staffProvider.staffs.first) {
-                                                weekendDaysCount++;
-                                              }
-                                            } else {
-                                              // Jours normaux
-                                              if (isEquipeABCD) {
-                                                statutAAffecter = "-";
-                                              } else {
-                                                statutAAffecter = "N";
-                                              }
-                                              if (staff ==
-                                                  staffProvider.staffs.first) {
-                                                normalDaysCount++;
-                                              }
-                                            }
-
-                                            // UTILISER forceUpdateActiviteIgnoringLeave pour ignorer les congés
-                                            await activiteProvider
-                                                .forceUpdateActiviteIgnoringLeave(
-                                              staff.id,
-                                              day,
-                                              statutAAffecter,
-                                              year: _selectedYear,
-                                              month: _selectedMonth,
-                                            );
-                                            totalModifications++;
-                                          }
-                                        }
-
-                                        print(
-                                            "🔄 PHASE 2: Application des congés (écrasement)");
-
-                                        // PHASE 2: APPLIQUER LES CONGÉS PAR-DESSUS (écraser les planifications)
-                                        for (final staff
-                                            in staffProvider.staffs) {
-                                          // Ignorer les mêmes groupes que dans la Phase 1
-                                          if (staff.groupe == "Garde 12H"
-                                              // ||
-                                              // staff.grade ==
-                                              //     "Agent d'hygiène"
-                                              ) {
-                                            continue;
-                                          }
-
-                                          print(
-                                              "  Traitement congés pour ${staff.nom}...");
-
-                                          // Récupérer TimeOff via requête directe
-                                          final timeOffQuery = objectBox
-                                              .timeOffBox
-                                              .query(TimeOff_.staff
-                                                  .equals(staff.id))
-                                              .build();
-                                          final timeOffs = timeOffQuery.find();
-                                          timeOffQuery.close();
-
-                                          if (timeOffs.isNotEmpty) {
-                                            print(
-                                                "    ${timeOffs.length} TimeOff(s) trouvé(s)");
-
-                                            for (var timeOff in timeOffs) {
-                                              DateTime currentDate =
-                                                  timeOff.debut;
-                                              while (currentDate.isBefore(
-                                                  timeOff.fin.add(
-                                                      Duration(days: 1)))) {
-                                                if (currentDate.year ==
-                                                        _selectedYear &&
-                                                    currentDate.month ==
-                                                        _selectedMonth) {
-                                                  int jour = currentDate.day;
-
-                                                  // Vérifier si c'était une planification qui va être écrasée
-                                                  final activiteQuery =
-                                                      objectBox.activiteBox
-                                                          .query(ActiviteJour_
-                                                                  .staff
-                                                                  .equals(staff
-                                                                      .id) &
-                                                              ActiviteJour_.jour
-                                                                  .equals(jour))
-                                                          .build();
-                                                  final activites =
-                                                      activiteQuery.find();
-                                                  activiteQuery.close();
-
-                                                  if (activites.isNotEmpty) {
-                                                    String ancienStatut =
-                                                        activites.first.statut;
-                                                    if (ancienStatut != 'C' &&
-                                                        ancienStatut != 'CM') {
-                                                      gardesEcrasees++;
-                                                      print(
-                                                          "      Jour $jour: $ancienStatut → C (TimeOff)");
-                                                    }
-                                                  }
-
-                                                  // Déterminer le statut de congé
-                                                  String statutConge =
-                                                      _getStatutCongeFromTimeOff(
-                                                          timeOff);
-
-                                                  // Écraser avec le congé
-                                                  await activiteProvider
-                                                      .forceUpdateActiviteIgnoringLeave(
-                                                    staff.id,
-                                                    jour,
-                                                    statutConge,
-                                                    year: _selectedYear,
-                                                    month: _selectedMonth,
-                                                  );
-                                                  congesAppliques++;
-                                                }
-                                                currentDate = currentDate
-                                                    .add(Duration(days: 1));
-                                              }
-                                            }
-                                          }
-
-                                          // Récupérer et réappliquer les activités de congé existantes
-                                          final activiteQuery = objectBox
-                                              .activiteBox
-                                              .query(ActiviteJour_.staff
-                                                  .equals(staff.id))
-                                              .build();
-                                          final activites =
-                                              activiteQuery.find();
-                                          activiteQuery.close();
-
-                                          List<ActiviteJour> congesActivites =
-                                              activites
-                                                  .where((activite) =>
-                                                      (activite.statut == 'C' ||
-                                                          activite.statut ==
-                                                              'CM') &&
-                                                      activite.jour >= 1 &&
-                                                      activite.jour <=
-                                                          daysInMonth)
-                                                  .toList();
-
-                                          for (var activite
-                                              in congesActivites) {
-                                            await activiteProvider
-                                                .forceUpdateActiviteIgnoringLeave(
-                                              staff.id,
-                                              activite.jour,
-                                              activite.statut,
-                                              year: _selectedYear,
-                                              month: _selectedMonth,
-                                            );
-                                            congesAppliques++;
-                                            print(
-                                                "      Congé activité réappliqué: J${activite.jour}=${activite.statut}");
-                                          }
-                                        }
-
-                                        // Rafraîchir les données
-                                        await staffProvider.fetchStaffs();
-
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            backgroundColor: Colors.green,
-                                            duration:
-                                                const Duration(seconds: 8),
-                                            content: SingleChildScrollView(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      Icon(Icons.check_circle,
-                                                          color: Colors.white,
-                                                          size: 20),
-                                                      SizedBox(width: 8),
-                                                      Text(
-                                                        "Planification automatique terminée !",
-                                                        style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 16,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  SizedBox(height: 8),
-                                                  Text(
-                                                    "Phase 1 - Attribution initiale :",
-                                                    style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                  ),
-                                                  Text(
-                                                      "• $weekendDaysCount jours de weekend marqués 'RE'",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12)),
-                                                  Text(
-                                                      "• $normalDaysCount jours normaux traités",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12)),
-                                                  Text(
-                                                      "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12)),
-                                                  Text(
-                                                      "• $staffAutres autres staff → 'N' jours normaux",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12)),
-                                                  SizedBox(height: 4),
-                                                  Text(
-                                                    "Phase 2 - Congés appliqués :",
-                                                    style: TextStyle(
-                                                        color: Colors.white,
-                                                        fontWeight:
-                                                            FontWeight.w600),
-                                                  ),
-                                                  if (gardesEcrasees > 0)
-                                                    Text(
-                                                        "• $gardesEcrasees planifications écrasées par des congés",
-                                                        style: TextStyle(
-                                                            color: Colors.yellow
-                                                                .shade200,
-                                                            fontSize: 12)),
-                                                  Text(
-                                                      "• $congesAppliques jours de congé appliqués",
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 12)),
-                                                  SizedBox(height: 4),
-                                                  Text(
-                                                      "✅ Total: $totalModifications modifications",
-                                                      style: TextStyle(
-                                                          color: Colors.white)),
-                                                ],
-                                              ),
-                                            ),
-                                            action: SnackBarAction(
-                                              label: "OK",
-                                              textColor: Colors.white,
-                                              onPressed: () =>
-                                                  ScaffoldMessenger.of(context)
-                                                      .hideCurrentSnackBar(),
-                                            ),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                                "❌ Erreur lors de la planification: $e"),
-                                            backgroundColor: Colors.red,
-                                            duration: Duration(seconds: 3),
-                                          ),
-                                        );
-                                      }
-                                    },
+                                    onPressed: () =>
+                                        runPlanificationAutomatique(context),
+                                    // onPressed: () async {
+                                    //   // Demander confirmation
+                                    //   final confirm = await showDialog<bool>(
+                                    //     context: context,
+                                    //     builder: (BuildContext context) {
+                                    //       return AlertDialog(
+                                    //         title: const Text("Confirmation"),
+                                    //         content: Text(
+                                    //           "Cette action va :\n"
+                                    //           "PHASE 1 - Attribution initiale :\n"
+                                    //           "• Marquer 'RE' les weekends (vendredi/samedi) pour TOUS\n"
+                                    //           "• Marquer '-' les jours normaux pour les équipes A,B,C,D\n"
+                                    //           "• Marquer 'N' les jours normaux pour les autres staff\n"
+                                    //           "\nPHASE 2 - Application des congés :\n"
+                                    //           "• Les congés existants vont ÉCRASER les planifications\n"
+                                    //           "• Aucun congé ne sera perdu\n"
+                                    //           "\nMois: $_selectedMonthName $_selectedYear\n"
+                                    //           "Continuer ?",
+                                    //         ),
+                                    //         actions: [
+                                    //           TextButton(
+                                    //             onPressed: () =>
+                                    //                 Navigator.of(context)
+                                    //                     .pop(false),
+                                    //             child: const Text("Annuler"),
+                                    //           ),
+                                    //           ElevatedButton(
+                                    //             style: ElevatedButton.styleFrom(
+                                    //               backgroundColor:
+                                    //                   Colors.purple,
+                                    //               foregroundColor: Colors.white,
+                                    //             ),
+                                    //             onPressed: () =>
+                                    //                 Navigator.of(context)
+                                    //                     .pop(true),
+                                    //             child: const Text("Confirmer"),
+                                    //           ),
+                                    //         ],
+                                    //       );
+                                    //     },
+                                    //   );
+                                    //
+                                    //   if (confirm != true) return;
+                                    //
+                                    //   try {
+                                    //     final staffProvider =
+                                    //         Provider.of<StaffProvider>(context,
+                                    //             listen: false);
+                                    //     final activiteProvider =
+                                    //         ActiviteProvider();
+                                    //     final objectBox = ObjectBox();
+                                    //
+                                    //     final daysInMonth =
+                                    //         _daysInSelectedMonth;
+                                    //     int weekendDaysCount = 0;
+                                    //     int normalDaysCount = 0;
+                                    //     int totalModifications = 0;
+                                    //     int staffEquipeABCD = 0;
+                                    //     int staffAutres = 0;
+                                    //     int congesAppliques = 0;
+                                    //     int gardesEcrasees = 0;
+                                    //
+                                    //     print(
+                                    //         "🔄 PHASE 1: Attribution automatique (ignorant les congés)");
+                                    //
+                                    //     // PHASE 1: ATTRIBUTION AUTOMATIQUE (ignorer les congés temporairement)
+                                    //     for (final staff
+                                    //         in staffProvider.staffs) {
+                                    //       // Ignorer certains groupes
+                                    //       if (staff.groupe == "Garde 12H") {
+                                    //         print(
+                                    //             "⏩ ${staff.nom} ignoré car groupe = Garde 12H");
+                                    //         continue;
+                                    //       }
+                                    //       if (staff.grade ==
+                                    //           "Agent d'hygiène") {
+                                    //         print(
+                                    //             "⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
+                                    //         continue;
+                                    //       }
+                                    //
+                                    //       final equipe =
+                                    //           staff.equipe?.toUpperCase();
+                                    //       final isEquipeABCD = equipe != null &&
+                                    //           ['A', 'B', 'C', 'D']
+                                    //               .contains(equipe);
+                                    //
+                                    //       if (isEquipeABCD) {
+                                    //         staffEquipeABCD++;
+                                    //       } else {
+                                    //         staffAutres++;
+                                    //       }
+                                    //
+                                    //       for (int day = 1;
+                                    //           day <= daysInMonth;
+                                    //           day++) {
+                                    //         final date = DateTime(_selectedYear,
+                                    //             _selectedMonth, day);
+                                    //
+                                    //         String statutAAffecter;
+                                    //         if (date.weekday ==
+                                    //                 DateTime.friday ||
+                                    //             date.weekday ==
+                                    //                 DateTime.saturday) {
+                                    //           // Week-end : marquer 'RE' pour TOUS
+                                    //           statutAAffecter = "RE";
+                                    //           if (staff ==
+                                    //               staffProvider.staffs.first) {
+                                    //             weekendDaysCount++;
+                                    //           }
+                                    //         } else {
+                                    //           // Jours normaux
+                                    //           if (isEquipeABCD) {
+                                    //             statutAAffecter = "-";
+                                    //           } else {
+                                    //             statutAAffecter = "N";
+                                    //           }
+                                    //           if (staff ==
+                                    //               staffProvider.staffs.first) {
+                                    //             normalDaysCount++;
+                                    //           }
+                                    //         }
+                                    //
+                                    //         // UTILISER forceUpdateActiviteIgnoringLeave pour ignorer les congés
+                                    //         await activiteProvider
+                                    //             .forceUpdateActiviteIgnoringLeave(
+                                    //           staff.id,
+                                    //           day,
+                                    //           statutAAffecter,
+                                    //           year: _selectedYear,
+                                    //           month: _selectedMonth,
+                                    //         );
+                                    //         totalModifications++;
+                                    //       }
+                                    //     }
+                                    //
+                                    //     print(
+                                    //         "🔄 PHASE 2: Application des congés (écrasement)");
+                                    //
+                                    //     // PHASE 2: APPLIQUER LES CONGÉS PAR-DESSUS (écraser les planifications)
+                                    //     for (final staff
+                                    //         in staffProvider.staffs) {
+                                    //       // Ignorer les mêmes groupes que dans la Phase 1
+                                    //       if (staff.groupe == "Garde 12H"
+                                    //           // ||
+                                    //           // staff.grade ==
+                                    //           //     "Agent d'hygiène"
+                                    //           ) {
+                                    //         continue;
+                                    //       }
+                                    //
+                                    //       print(
+                                    //           "  Traitement congés pour ${staff.nom}...");
+                                    //
+                                    //       // Récupérer TimeOff via requête directe
+                                    //       final timeOffQuery = objectBox
+                                    //           .timeOffBox
+                                    //           .query(TimeOff_.staff
+                                    //               .equals(staff.id))
+                                    //           .build();
+                                    //       final timeOffs = timeOffQuery.find();
+                                    //       timeOffQuery.close();
+                                    //
+                                    //       if (timeOffs.isNotEmpty) {
+                                    //         print(
+                                    //             "    ${timeOffs.length} TimeOff(s) trouvé(s)");
+                                    //
+                                    //         for (var timeOff in timeOffs) {
+                                    //           DateTime currentDate =
+                                    //               timeOff.debut;
+                                    //           while (currentDate.isBefore(
+                                    //               timeOff.fin.add(
+                                    //                   Duration(days: 1)))) {
+                                    //             if (currentDate.year ==
+                                    //                     _selectedYear &&
+                                    //                 currentDate.month ==
+                                    //                     _selectedMonth) {
+                                    //               int jour = currentDate.day;
+                                    //
+                                    //               // Vérifier si c'était une planification qui va être écrasée
+                                    //               final activiteQuery =
+                                    //                   objectBox.activiteBox
+                                    //                       .query(ActiviteJour_
+                                    //                               .staff
+                                    //                               .equals(staff
+                                    //                                   .id) &
+                                    //                           ActiviteJour_.jour
+                                    //                               .equals(jour))
+                                    //                       .build();
+                                    //               final activites =
+                                    //                   activiteQuery.find();
+                                    //               activiteQuery.close();
+                                    //
+                                    //               if (activites.isNotEmpty) {
+                                    //                 String ancienStatut =
+                                    //                     activites.first.statut;
+                                    //                 if (ancienStatut != 'C' &&
+                                    //                     ancienStatut != 'CM') {
+                                    //                   gardesEcrasees++;
+                                    //                   print(
+                                    //                       "      Jour $jour: $ancienStatut → C (TimeOff)");
+                                    //                 }
+                                    //               }
+                                    //
+                                    //               // Déterminer le statut de congé
+                                    //               String statutConge =
+                                    //                   _getStatutCongeFromTimeOff(
+                                    //                       timeOff);
+                                    //
+                                    //               // Écraser avec le congé
+                                    //               await activiteProvider
+                                    //                   .forceUpdateActiviteIgnoringLeave(
+                                    //                 staff.id,
+                                    //                 jour,
+                                    //                 statutConge,
+                                    //                 year: _selectedYear,
+                                    //                 month: _selectedMonth,
+                                    //               );
+                                    //               congesAppliques++;
+                                    //             }
+                                    //             currentDate = currentDate
+                                    //                 .add(Duration(days: 1));
+                                    //           }
+                                    //         }
+                                    //       }
+                                    //
+                                    //       // Récupérer et réappliquer les activités de congé existantes
+                                    //       final activiteQuery = objectBox
+                                    //           .activiteBox
+                                    //           .query(ActiviteJour_.staff
+                                    //               .equals(staff.id))
+                                    //           .build();
+                                    //       final activites =
+                                    //           activiteQuery.find();
+                                    //       activiteQuery.close();
+                                    //
+                                    //       List<ActiviteJour> congesActivites =
+                                    //           activites
+                                    //               .where((activite) =>
+                                    //                   (activite.statut == 'C' ||
+                                    //                       activite.statut ==
+                                    //                           'CM') &&
+                                    //                   activite.jour >= 1 &&
+                                    //                   activite.jour <=
+                                    //                       daysInMonth)
+                                    //               .toList();
+                                    //
+                                    //       for (var activite
+                                    //           in congesActivites) {
+                                    //         await activiteProvider
+                                    //             .forceUpdateActiviteIgnoringLeave(
+                                    //           staff.id,
+                                    //           activite.jour,
+                                    //           activite.statut,
+                                    //           year: _selectedYear,
+                                    //           month: _selectedMonth,
+                                    //         );
+                                    //         congesAppliques++;
+                                    //         print(
+                                    //             "      Congé activité réappliqué: J${activite.jour}=${activite.statut}");
+                                    //       }
+                                    //     }
+                                    //
+                                    //     // Rafraîchir les données
+                                    //     await staffProvider.fetchStaffs();
+                                    //
+                                    //     ScaffoldMessenger.of(context)
+                                    //         .showSnackBar(
+                                    //       SnackBar(
+                                    //         backgroundColor: Colors.green,
+                                    //         duration:
+                                    //             const Duration(seconds: 8),
+                                    //         content: SingleChildScrollView(
+                                    //           child: Column(
+                                    //             crossAxisAlignment:
+                                    //                 CrossAxisAlignment.start,
+                                    //             children: [
+                                    //               Row(
+                                    //                 children: [
+                                    //                   Icon(Icons.check_circle,
+                                    //                       color: Colors.white,
+                                    //                       size: 20),
+                                    //                   SizedBox(width: 8),
+                                    //                   Text(
+                                    //                     "Planification automatique terminée !",
+                                    //                     style: TextStyle(
+                                    //                       fontWeight:
+                                    //                           FontWeight.bold,
+                                    //                       fontSize: 16,
+                                    //                       color: Colors.white,
+                                    //                     ),
+                                    //                   ),
+                                    //                 ],
+                                    //               ),
+                                    //               SizedBox(height: 8),
+                                    //               Text(
+                                    //                 "Phase 1 - Attribution initiale :",
+                                    //                 style: TextStyle(
+                                    //                     color: Colors.white,
+                                    //                     fontWeight:
+                                    //                         FontWeight.w600),
+                                    //               ),
+                                    //               Text(
+                                    //                   "• $weekendDaysCount jours de weekend marqués 'RE'",
+                                    //                   style: TextStyle(
+                                    //                       color: Colors.white,
+                                    //                       fontSize: 12)),
+                                    //               Text(
+                                    //                   "• $normalDaysCount jours normaux traités",
+                                    //                   style: TextStyle(
+                                    //                       color: Colors.white,
+                                    //                       fontSize: 12)),
+                                    //               Text(
+                                    //                   "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux",
+                                    //                   style: TextStyle(
+                                    //                       color: Colors.white,
+                                    //                       fontSize: 12)),
+                                    //               Text(
+                                    //                   "• $staffAutres autres staff → 'N' jours normaux",
+                                    //                   style: TextStyle(
+                                    //                       color: Colors.white,
+                                    //                       fontSize: 12)),
+                                    //               SizedBox(height: 4),
+                                    //               Text(
+                                    //                 "Phase 2 - Congés appliqués :",
+                                    //                 style: TextStyle(
+                                    //                     color: Colors.white,
+                                    //                     fontWeight:
+                                    //                         FontWeight.w600),
+                                    //               ),
+                                    //               if (gardesEcrasees > 0)
+                                    //                 Text(
+                                    //                     "• $gardesEcrasees planifications écrasées par des congés",
+                                    //                     style: TextStyle(
+                                    //                         color: Colors.yellow
+                                    //                             .shade200,
+                                    //                         fontSize: 12)),
+                                    //               Text(
+                                    //                   "• $congesAppliques jours de congé appliqués",
+                                    //                   style: TextStyle(
+                                    //                       color: Colors.white,
+                                    //                       fontSize: 12)),
+                                    //               SizedBox(height: 4),
+                                    //               Text(
+                                    //                   "✅ Total: $totalModifications modifications",
+                                    //                   style: TextStyle(
+                                    //                       color: Colors.white)),
+                                    //             ],
+                                    //           ),
+                                    //         ),
+                                    //         action: SnackBarAction(
+                                    //           label: "OK",
+                                    //           textColor: Colors.white,
+                                    //           onPressed: () =>
+                                    //               ScaffoldMessenger.of(context)
+                                    //                   .hideCurrentSnackBar(),
+                                    //         ),
+                                    //       ),
+                                    //     );
+                                    //   } catch (e) {
+                                    //     ScaffoldMessenger.of(context)
+                                    //         .showSnackBar(
+                                    //       SnackBar(
+                                    //         content: Text(
+                                    //             "❌ Erreur lors de la planification: $e"),
+                                    //         backgroundColor: Colors.red,
+                                    //         duration: Duration(seconds: 3),
+                                    //       ),
+                                    //     );
+                                    //   }
+                                    // },
                                   ),
                                   ElevatedButton.icon(
                                     icon: const Icon(Icons.medical_services,
@@ -1280,9 +1285,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                                           return DataCell(
                                             Container(
-                                              color: estEnConge
-                                                  ? Colors.green.shade100
-                                                  : Colors.transparent,
+                                              color: Colors.transparent,
                                               child: _buildEditableCell(
                                                   staff, jourIndex, statutJour),
                                             ),
@@ -2210,19 +2213,355 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
+// SOLUTION 1 : Forcer le rechargement du cache ToMany après chaque opération
+
+// Dans _saveTimeOff - AJOUTER après objectBox.timeOffBox.put(timeOff)
+  Future<void> _saveTimeOff(
+      Staff staff, DateTime debut, DateTime fin, String statut) async {
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+      final objectBox = ObjectBox();
+      int joursModifies = 0;
+
+      // 1. CRÉER L'ENTITÉ TIMEOFF
+      final timeOff = TimeOff(
+        debut: debut,
+        fin: fin,
+        motif: _getStatutName(statut),
+      )..staff.target = staff;
+
+      objectBox.timeOffBox.put(timeOff);
+      print("📅 TimeOff créé ID:${timeOff.id} pour ${staff.nom}");
+
+      // 2. ⭐ FORCER LE RECHARGEMENT DU CACHE ToMany
+      await _refreshStaffTimeOffCache(staff);
+
+      // 3. Marquer les jours...
+      DateTime currentDate = debut;
+      while (currentDate.isBefore(fin.add(Duration(days: 1)))) {
+        if (currentDate.year == _selectedYear &&
+            currentDate.month == _selectedMonth) {
+          int jour = currentDate.day;
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            jour,
+            statut,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          joursModifies++;
+        }
+        currentDate = currentDate.add(Duration(days: 1));
+      }
+
+      // 4. Rafraîchir les données
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✅ ${_getStatutName(statut)} ajouté pour ${staff.nom}\n"
+              "Cache actualisé : ${staff.timeOff.length} congé(s) total\n"
+              "$joursModifies jours modifiés"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      print("❌ Erreur _saveTimeOff: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de l'enregistrement: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+// Dans _deleteTimeOff - AJOUTER après objectBox.timeOffBox.remove
+  Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
+    try {
+      final objectBox = ObjectBox();
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+
+      print(
+          "🗑️ AVANT suppression : staff.timeOff (cache) = ${staff.timeOff.length}");
+
+      // 1. Supprimer de la base
+      bool removed = objectBox.timeOffBox.remove(timeOff.id);
+      print("🗑️ Suppression base : $removed");
+
+      // 2. ⭐ FORCER LE RECHARGEMENT DU CACHE ToMany
+      await _refreshStaffTimeOffCache(staff);
+      print(
+          "🔄 APRÈS rechargement : staff.timeOff (cache) = ${staff.timeOff.length}");
+
+      // 3. Restaurer les jours
+      DateTime currentDate = timeOff.debut;
+      int joursRestaures = 0;
+      while (currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
+        if (currentDate.year == _selectedYear &&
+            currentDate.month == _selectedMonth) {
+          int jour = currentDate.day;
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            jour,
+            '-',
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          joursRestaures++;
+        }
+        currentDate = currentDate.add(const Duration(days: 1));
+      }
+
+      // 4. Nettoyer les obs
+      if (staff.obs != null &&
+          staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
+        staff.obs = null;
+        await staffProvider.updateStaff(staff);
+      }
+
+      // 5. Rafraîchir
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✅ Congé supprimé pour ${staff.nom}\n"
+              "Cache actualisé : ${staff.timeOff.length} congé(s) restant(s)\n"
+              "$joursRestaures jours restaurés"),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      print("❌ Erreur _deleteTimeOff: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de la suppression: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+// ⭐ MÉTHODE CLÉE : Forcer le rechargement du cache ToMany
+  Future<void> _refreshStaffTimeOffCache(Staff staff) async {
+    try {
+      final objectBox = ObjectBox();
+
+      print("🔄 Rechargement cache ToMany pour ${staff.nom}...");
+
+      // Méthode 1 : Vider et recharger explicitement
+      staff.timeOff.clear(); // Vider le cache
+
+      // Recharger depuis la base
+      final freshTimeOffs = objectBox.timeOffBox
+          .query(TimeOff_.staff.equals(staff.id))
+          .build()
+          .find();
+
+      // Reconstruire le cache
+      for (var timeOff in freshTimeOffs) {
+        staff.timeOff.add(timeOff);
+      }
+
+      print("✅ Cache rechargé : ${staff.timeOff.length} congés dans le cache");
+
+      // Optionnel : forcer la sauvegarde du staff pour synchroniser
+      objectBox.staffBox.put(staff);
+    } catch (e) {
+      print("❌ Erreur _refreshStaffTimeOffCache: $e");
+    }
+  }
+
+// SOLUTION 2 : Modifier _buildCongesListView pour lire DIRECTEMENT depuis la base
+  Widget _buildCongesListView(Staff staff, StateSetter setState) {
+    final objectBox = ObjectBox();
+
+    // ⭐ LIRE DIRECTEMENT DEPUIS LA BASE (ignorer le cache ToMany)
+    final freshTimeOffs = objectBox.timeOffBox
+        .query(TimeOff_.staff.equals(staff.id))
+        .build()
+        .find();
+
+    print(
+        "📊 _buildCongesListView : ${freshTimeOffs.length} congés depuis la base VS ${staff.timeOff.length} depuis le cache");
+
+    // Récupérer les activités de congé
+    final congesActivites = staff.activites
+        .where((a) =>
+            (a.statut == 'C' || a.statut == 'CM') &&
+            a.jour >= 1 &&
+            a.jour <= _daysInSelectedMonth)
+        .toList();
+
+    final groupedConges =
+        _groupActiviteConges(congesActivites, _selectedYear, _selectedMonth);
+
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // TimeOff congés - utiliser freshTimeOffs au lieu de staff.timeOff
+          if (freshTimeOffs.isNotEmpty) ...[
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_month,
+                      size: 16, color: Colors.blue.shade600),
+                  SizedBox(width: 8),
+                  Text(
+                    "Congés planifiés (${freshTimeOffs.length}) - Données fraîches",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue.shade600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 8),
+            ...freshTimeOffs
+                .map((timeOff) => _buildTimeOffCard(timeOff, staff, setState)),
+            SizedBox(height: 16),
+          ],
+
+          // // Activités congés...
+          // if (groupedConges.isNotEmpty) ...[
+          //   Container(
+          //     padding: EdgeInsets.all(8),
+          //     decoration: BoxDecoration(
+          //       color: Colors.purple.shade50,
+          //       borderRadius: BorderRadius.circular(6),
+          //     ),
+          //     child: Row(
+          //       children: [
+          //         Icon(Icons.today, size: 16, color: Colors.purple.shade600),
+          //         SizedBox(width: 8),
+          //         Text(
+          //           "Congés ponctuels (${groupedConges.length})",
+          //           style: TextStyle(
+          //             fontWeight: FontWeight.bold,
+          //             color: Colors.purple.shade600,
+          //             fontSize: 13,
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          //   SizedBox(height: 8),
+          //   ...groupedConges.map(
+          //     (g) => _buildActivitePeriodeCard(g, staff, setState),
+          //   ),
+          // ],
+        ],
+      ),
+    );
+  }
+
+// MÉTHODE DE DEBUG AMÉLIORÉE
+  Future<void> _listStaffWithTimeOff() async {
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs(); // Rafraîchir d'abord
+
+      final objectBox = ObjectBox();
+      final staffs = objectBox.staffBox.getAll();
+      final allTimeOffs = objectBox.timeOffBox.getAll();
+
+      String result = "=== ANALYSE CACHE vs BASE ===\n";
+      result += "Timestamp: ${DateTime.now()}\n";
+      result += "Total TimeOff en base: ${allTimeOffs.length}\n\n";
+
+      for (var staff in staffs) {
+        final cacheCount = staff.timeOff.length; // Cache ToMany
+        final baseCount = objectBox.timeOffBox
+            .query(TimeOff_.staff.equals(staff.id))
+            .build()
+            .find()
+            .length; // Base directe
+
+        if (cacheCount > 0 || baseCount > 0) {
+          result += "👤 ${staff.nom} (ID: ${staff.id})\n";
+          result += "  📦 Cache ToMany : $cacheCount congés\n";
+          result += "  🗄️ Base directe : $baseCount congés\n";
+          result +=
+              "  🔄 Synchronisé ? ${cacheCount == baseCount ? '✅ OUI' : '❌ NON - PROBLÈME !'}\n";
+
+          if (cacheCount != baseCount) {
+            result += "  ⚠️ DÉSYNCHRONISATION DÉTECTÉE !\n";
+          }
+
+          // Liste des congés depuis la base
+          final baseTimeOffs = objectBox.timeOffBox
+              .query(TimeOff_.staff.equals(staff.id))
+              .build()
+              .find();
+          for (var timeOff in baseTimeOffs) {
+            final debut = DateFormat('dd/MM/yyyy').format(timeOff.debut);
+            final fin = DateFormat('dd/MM/yyyy').format(timeOff.fin);
+            result +=
+                "    - ID:${timeOff.id} ${timeOff.motif ?? 'Congé'} : $debut → $fin\n";
+          }
+          result += "\n";
+        }
+      }
+
+      print(result);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Debug - Analyse Cache vs Base"),
+          content: Container(
+            width: double.maxFinite,
+            height: 400,
+            child: SingleChildScrollView(
+              child: Text(result,
+                  style: TextStyle(fontFamily: 'monospace', fontSize: 12)),
+            ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context), child: Text("Fermer")),
+            ElevatedButton(
+              onPressed: () async {
+                // Forcer le rechargement de tous les caches
+                for (var staff in staffs) {
+                  await _refreshStaffTimeOffCache(staff);
+                }
+                Navigator.pop(context);
+                await _listStaffWithTimeOff(); // Relancer le debug
+              },
+              child: Text("Forcer Sync"),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      print("❌ Erreur debug: $e");
+    }
+  }
+
+// CORRIGER _updateTimeOff aussi
   Future<void> _updateTimeOff(Staff staff, TimeOff timeOff,
       DateTime nouveauDebut, DateTime nouvelleFin, String nouveauMotif) async {
     try {
       final objectBox = ObjectBox();
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final activiteProvider = ActiviteProvider(); // Utiliser le provider
+      final activiteProvider = ActiviteProvider();
 
       // 1. Remettre à '-' les anciens jours
       DateTime currentDate = timeOff.debut;
       while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
-          // UTILISER LA NOUVELLE MÉTHODE
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
             staff.id,
             currentDate.day,
@@ -2238,15 +2577,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       timeOff.debut = nouveauDebut;
       timeOff.fin = nouvelleFin;
       timeOff.motif = nouveauMotif;
-      objectBox.timeOffBox.put(timeOff);
+      objectBox.timeOffBox.put(timeOff); // Sauvegarder les changements
 
-      // 3. Appliquer les nouveaux jours
+      // 3. ⭐ SYNCHRONISER - pas besoin de re-add car l'objet existe déjà dans la relation
+      // Juste sauvegarder les changements de relations si nécessaire
+      objectBox.staffBox.put(staff);
+
+      // 4. Appliquer les nouveaux jours
       currentDate = nouveauDebut;
       int joursModifies = 0;
       while (currentDate.isBefore(nouvelleFin.add(Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
-          // UTILISER LA NOUVELLE MÉTHODE pour forcer l'écrasement
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
             staff.id,
             currentDate.day,
@@ -2259,160 +2601,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         currentDate = currentDate.add(Duration(days: 1));
       }
 
-      // 4. Mettre à jour l'observation
+      // 5. Mettre à jour l'observation
       staff.obs =
           "$nouveauMotif du ${DateFormat('dd/MM/yyyy').format(nouveauDebut)} au ${DateFormat('dd/MM/yyyy').format(nouvelleFin)}";
       await staffProvider.updateStaff(staff);
 
-      // 5. Rafraîchir
+      // 6. Rafraîchir
       await staffProvider.fetchStaffs();
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              "✅ Congé modifié pour ${staff.nom}\n$joursModifies jours mis à jour"),
+              "✅ Congé modifié pour ${staff.nom}\n$joursModifies jours mis à jour\nRelations OK : ${staff.timeOff.length} congé(s)"),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
       );
     } catch (e) {
+      print("❌ Erreur lors de la modification: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("❌ Erreur lors de la modification: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-// CORRIGER la méthode _saveTimeOff - utiliser la nouvelle méthode
-  Future<void> _saveTimeOff(
-      Staff staff, DateTime debut, DateTime fin, String statut) async {
-    try {
-      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final activiteProvider = ActiviteProvider(); // Utiliser le provider
-      int joursModifies = 0;
-
-      // 1. CRÉER L'ENTITÉ TIMEOFF DANS LA BASE DE DONNÉES
-      final objectBox = ObjectBox();
-      final timeOff = TimeOff(
-        debut: debut,
-        fin: fin,
-        motif: _getStatutName(statut),
-      )..staff.target = staff;
-
-      objectBox.timeOffBox.put(timeOff);
-      print(
-          "📅 TimeOff créé pour ${staff.nom} du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}");
-
-      // 2. Marquer chaque jour du congé avec le statut choisi
-      DateTime currentDate = debut;
-      while (currentDate.isBefore(fin.add(Duration(days: 1)))) {
-        // Vérifier si le jour est dans le mois sélectionné
-        if (currentDate.year == _selectedYear &&
-            currentDate.month == _selectedMonth) {
-          int jour = currentDate.day;
-
-          // UTILISER LA NOUVELLE MÉTHODE pour forcer l'écrasement
-          await activiteProvider.forceUpdateActiviteIgnoringLeave(
-            staff.id,
-            jour,
-            statut,
-            year: _selectedYear,
-            month: _selectedMonth,
-          );
-          joursModifies++;
-        }
-        currentDate = currentDate.add(Duration(days: 1));
-      }
-
-      // 3. Mettre à jour l'observation du staff
-      // staff.obs =
-      //     "${_getStatutName(statut)} du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}";
-      await staffProvider.updateStaff(staff);
-
-      // 4. Rafraîchir les données
-      await staffProvider.fetchStaffs();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              "✅ ${_getStatutName(statut)} planifié pour ${staff.nom}\n"
-              "Du ${DateFormat('dd/MM/yyyy').format(debut)} au ${DateFormat('dd/MM/yyyy').format(fin)}\n"
-              "$joursModifies jours modifiés avec le statut '$statut'\n"
-              "TimeOff créé dans la base de données"),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 4),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Erreur lors de l'enregistrement: $e"),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
-  Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
-    try {
-      final objectBox = ObjectBox();
-      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final activiteProvider = ActiviteProvider();
-      final timeOffProvider =
-          Provider.of<TimeOffProvider>(context, listen: false);
-
-      // 1. Supprimer l'entité TimeOff
-      objectBox.timeOffBox.remove(timeOff.id);
-
-      // 2. Restaurer les jours dans ActiviteJour
-      DateTime currentDate = timeOff.debut;
-      int joursRestaures = 0;
-
-      while (currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
-        if (currentDate.year == _selectedYear &&
-            currentDate.month == _selectedMonth) {
-          int jour = currentDate.day;
-
-          await activiteProvider.forceUpdateActiviteIgnoringLeave(
-            staff.id,
-            jour,
-            '-',
-            year: _selectedYear,
-            month: _selectedMonth,
-          );
-
-          joursRestaures++;
-        }
-        currentDate = currentDate.add(const Duration(days: 1));
-      }
-
-      // 3. Nettoyer les obs
-      if (staff.obs != null &&
-          staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
-        staff.obs = null;
-        await staffProvider.updateStaff(staff);
-      }
-
-      // 4. Rafraîchir les données
-      await staffProvider.fetchStaffs();
-      await timeOffProvider.fetchTimeOffs(); // 🔹 Important pour vider la liste
-
-      // 5. Feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              "✅ Congé supprimé pour ${staff.nom}\n$joursRestaures jours restaurés"),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Erreur lors de la suppression: $e"),
           backgroundColor: Colors.red,
         ),
       );
@@ -3879,71 +4088,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-  Future<void> _listStaffWithTimeOff() async {
-    try {
-      final objectBox = ObjectBox();
-      final staffs = objectBox.staffBox.getAll();
-      final timeOffs = objectBox.timeOffBox.getAll();
-
-      // Grouper les TimeOff par staffId
-      final Map<int, List<TimeOff>> timeOffsByStaff = {};
-      for (var timeOff in timeOffs) {
-        if (timeOff.staff.target != null) {
-          final staffId = timeOff.staff.target!.id;
-          timeOffsByStaff.putIfAbsent(staffId, () => []);
-          timeOffsByStaff[staffId]!.add(timeOff);
-        }
-      }
-
-      // Construire le résultat : uniquement les staffs qui ont au moins 1 congé
-      String result = "=== Liste des congés (TimeOff) ===\n";
-      for (var staff in staffs) {
-        final staffTimeOffs = timeOffsByStaff[staff.id];
-        if (staffTimeOffs != null && staffTimeOffs.isNotEmpty) {
-          result += "\n👤 ${staff.nom} (ID: ${staff.id})\n";
-          for (var timeOff in staffTimeOffs) {
-            final debut = DateFormat('dd/MM/yyyy').format(timeOff.debut);
-            final fin = DateFormat('dd/MM/yyyy').format(timeOff.fin);
-            final motif = timeOff.motif ?? "Congé";
-            result += "   - $motif : du $debut au $fin\n";
-          }
-        }
-      }
-
-      if (result.trim() == "=== Liste des congés (TimeOff) ===") {
-        result += "\n(Aucun staff n'a de congé enregistré)";
-      }
-
-      // Afficher dans la console
-      print(result);
-
-      // Afficher dans un dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text("Liste des congés (TimeOff)"),
-          content: SingleChildScrollView(
-            child: Text(result),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Fermer"),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      print("Erreur lors de la récupération des congés : $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur : $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   /// Fonction utilitaire pour déterminer le statut de congé (si pas déjà définie)
   String _getStatutCongeFromTimeOff(TimeOff timeOff) {
     if (timeOff.motif == null) return 'C';
@@ -4550,7 +4694,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final congesActivites =
         activites.where((a) => a.statut == 'C' || a.statut == 'CM').length;
 
-    final totalConges = timeOffs.length + congesActivites;
+    final totalConges = timeOffs.length;
     final hasConges = totalConges > 0;
 
     return Container(
@@ -4725,122 +4869,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           },
         );
       },
-    );
-  }
-
-// MÉTHODE : Liste des congés avec CRUD
-  Widget _buildCongesListView(Staff staff, StateSetter setState) {
-    // Récupérer les TimeOff
-    final timeOffs = staff.timeOff.toList();
-
-    // Récupérer les activités de congé
-    final activites = staff.activites.toList();
-    // Récupère les congés depuis ActiviteJour (C ou CM)
-    final congesActivites = staff.activites
-        .where((a) =>
-            (a.statut == 'C' || a.statut == 'CM') &&
-            a.jour >= 1 &&
-            a.jour <= _daysInSelectedMonth)
-        .toList();
-
-// Regrouper les jours consécutifs en plages
-    final groupedConges =
-        _groupActiviteConges(congesActivites, _selectedYear, _selectedMonth);
-
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // TimeOff congés
-          if (timeOffs.isNotEmpty) ...[
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_month,
-                      size: 16, color: Colors.blue.shade600),
-                  SizedBox(width: 8),
-                  Text(
-                    "Congés planifiés (${timeOffs.length})",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8),
-            ...timeOffs
-                .map((timeOff) => _buildTimeOffCard(timeOff, staff, setState)),
-            SizedBox(height: 16),
-          ],
-          if (groupedConges.isNotEmpty) ...[
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.calendar_month,
-                      size: 16, color: Colors.blue.shade600),
-                  SizedBox(width: 8),
-                  Text(
-                    "Congés planifiés (${groupedConges.length})",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue.shade600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 8),
-
-            // On affiche chaque plage regroupée
-            ...groupedConges.map(
-              (g) => _buildActivitePeriodeCard(g, staff, setState),
-            ),
-
-            SizedBox(height: 16),
-          ]
-          // // Activités congés
-          // if (congesActivites.isNotEmpty) ...[
-          //   Container(
-          //     padding: EdgeInsets.all(8),
-          //     decoration: BoxDecoration(
-          //       color: Colors.purple.shade50,
-          //       borderRadius: BorderRadius.circular(6),
-          //     ),
-          //     child: Row(
-          //       children: [
-          //         Icon(Icons.today, size: 16, color: Colors.purple.shade600),
-          //         SizedBox(width: 8),
-          //         Text(
-          //           "Congés ponctuels (${congesActivites.length})",
-          //           style: TextStyle(
-          //             fontWeight: FontWeight.bold,
-          //             color: Colors.purple.shade600,
-          //             fontSize: 13,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          //   SizedBox(height: 8),
-          //   ...congesActivites.map((activite) =>
-          //       _buildActiviteCongeCard(activite, staff, setState)),
-          //
-          // ],
-        ],
-      ),
     );
   }
 
@@ -5206,6 +5234,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                 if (confirm == true) {
                   await _deleteTimeOff(staff, timeOff);
+                  await runPlanificationAutomatique(context);
+                  await _showPlanificationAgentsHygieneDialog();
+                  await _showSimplePlanificationDialog();
                   setState(() {}); // Rafraîchir la liste
                 }
               },
@@ -5215,5 +5246,231 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         ),
       ),
     );
+  }
+
+  Future<void> runPlanificationAutomatique(BuildContext context) async {
+    // Demander confirmation
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirmation"),
+          content: Text(
+            "Cette action va :\n"
+            "PHASE 1 - Attribution initiale :\n"
+            "• Marquer 'RE' les weekends (vendredi/samedi) pour TOUS\n"
+            "• Marquer '-' les jours normaux pour les équipes A,B,C,D\n"
+            "• Marquer 'N' les jours normaux pour les autres staff\n"
+            "\nPHASE 2 - Application des congés :\n"
+            "• Les congés existants vont ÉCRASER les planifications\n"
+            "• Aucun congé ne sera perdu\n"
+            "\nMois: $_selectedMonthName $_selectedYear\n"
+            "Continuer ?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Annuler"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text("Confirmer"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+      final objectBox = ObjectBox();
+
+      final daysInMonth = _daysInSelectedMonth;
+      int weekendDaysCount = 0;
+      int normalDaysCount = 0;
+      int totalModifications = 0;
+      int staffEquipeABCD = 0;
+      int staffAutres = 0;
+      int congesAppliques = 0;
+      int gardesEcrasees = 0;
+
+      print("🔄 PHASE 1: Attribution automatique (ignorant les congés)");
+
+      // PHASE 1: ATTRIBUTION AUTOMATIQUE
+      for (final staff in staffProvider.staffs) {
+        if (staff.groupe == "Garde 12H") {
+          print("⏩ ${staff.nom} ignoré car groupe = Garde 12H");
+          continue;
+        }
+        if (staff.grade == "Agent d'hygiène") {
+          print("⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
+          continue;
+        }
+
+        final equipe = staff.equipe?.toUpperCase();
+        final isEquipeABCD =
+            equipe != null && ['A', 'B', 'C', 'D'].contains(equipe);
+
+        if (isEquipeABCD) {
+          staffEquipeABCD++;
+        } else {
+          staffAutres++;
+        }
+
+        for (int day = 1; day <= daysInMonth; day++) {
+          final date = DateTime(_selectedYear, _selectedMonth, day);
+
+          String statutAAffecter;
+          if (date.weekday == DateTime.friday ||
+              date.weekday == DateTime.saturday) {
+            statutAAffecter = "RE";
+            if (staff == staffProvider.staffs.first) {
+              weekendDaysCount++;
+            }
+          } else {
+            statutAAffecter = isEquipeABCD ? "-" : "N";
+            if (staff == staffProvider.staffs.first) {
+              normalDaysCount++;
+            }
+          }
+
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            day,
+            statutAAffecter,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          totalModifications++;
+        }
+      }
+
+      print("🔄 PHASE 2: Application des congés (écrasement)");
+
+      // PHASE 2: APPLIQUER LES CONGÉS
+      for (final staff in staffProvider.staffs) {
+        if (staff.groupe == "Garde 12H") continue;
+
+        print("  Traitement congés pour ${staff.nom}...");
+
+        final timeOffQuery =
+            objectBox.timeOffBox.query(TimeOff_.staff.equals(staff.id)).build();
+        final timeOffs = timeOffQuery.find();
+        timeOffQuery.close();
+
+        if (timeOffs.isNotEmpty) {
+          print("    ${timeOffs.length} TimeOff(s) trouvé(s)");
+
+          for (var timeOff in timeOffs) {
+            DateTime currentDate = timeOff.debut;
+            while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+              if (currentDate.year == _selectedYear &&
+                  currentDate.month == _selectedMonth) {
+                int jour = currentDate.day;
+
+                final activiteQuery = objectBox.activiteBox
+                    .query(ActiviteJour_.staff.equals(staff.id) &
+                        ActiviteJour_.jour.equals(jour))
+                    .build();
+                final activites = activiteQuery.find();
+                activiteQuery.close();
+
+                if (activites.isNotEmpty) {
+                  String ancienStatut = activites.first.statut;
+                  if (ancienStatut != 'C' && ancienStatut != 'CM') {
+                    gardesEcrasees++;
+                    print("      Jour $jour: $ancienStatut → C (TimeOff)");
+                  }
+                }
+
+                String statutConge = _getStatutCongeFromTimeOff(timeOff);
+
+                await activiteProvider.forceUpdateActiviteIgnoringLeave(
+                  staff.id,
+                  jour,
+                  statutConge,
+                  year: _selectedYear,
+                  month: _selectedMonth,
+                );
+                congesAppliques++;
+              }
+              currentDate = currentDate.add(Duration(days: 1));
+            }
+          }
+        }
+
+        final activiteQuery = objectBox.activiteBox
+            .query(ActiviteJour_.staff.equals(staff.id))
+            .build();
+        final activites = activiteQuery.find();
+        activiteQuery.close();
+
+        List<ActiviteJour> congesActivites = activites
+            .where((activite) =>
+                (activite.statut == 'C' || activite.statut == 'CM') &&
+                activite.jour >= 1 &&
+                activite.jour <= daysInMonth)
+            .toList();
+
+        for (var activite in congesActivites) {
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            activite.jour,
+            activite.statut,
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          congesAppliques++;
+          print(
+              "      Congé activité réappliqué: J${activite.jour}=${activite.statut}");
+        }
+      }
+
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 8),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Planification automatique terminée !",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                // ... afficher les compteurs comme dans ton code
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de la planification: $e"),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 }

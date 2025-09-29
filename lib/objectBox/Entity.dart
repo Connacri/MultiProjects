@@ -1280,14 +1280,14 @@ class Staff {
 class ActiviteJour {
   int id;
   int jour; // 1 à 31
-  String statut; // G, RE, C, CM, N
+  // String statut; // G, RE, C, CM, N
 
   final staff = ToOne<Staff>();
 
   ActiviteJour({
     this.id = 0,
     required this.jour,
-    required this.statut,
+    //   required this.statut,
   });
 }
 
@@ -1305,7 +1305,7 @@ class TimeOff {
   int id;
   DateTime debut;
   DateTime fin;
-  String? motif;
+  String? motif; // G, RE, C, CM, N
 
   final staff = ToOne<Staff>();
 

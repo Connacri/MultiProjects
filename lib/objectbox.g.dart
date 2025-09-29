@@ -1707,12 +1707,6 @@ final _entities = <obx_int.ModelEntity>[
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 5555651851425204294),
-        name: 'statut',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
         id: const obx_int.IdUid(4, 2576819619403990954),
         name: 'staffId',
         type: 11,
@@ -2364,6 +2358,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       9186702705855549324,
       6543905351124105609,
       8573314322817892672,
+      5555651851425204294,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -4499,11 +4494,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
         object.id = id;
       },
       objectToFB: (ActiviteJour object, fb.Builder fbb) {
-        final statutOffset = fbb.writeString(object.statut);
         fbb.startTable(5);
         fbb.addInt64(0, object.id);
         fbb.addInt64(1, object.jour);
-        fbb.addOffset(2, statutOffset);
         fbb.addInt64(3, object.staff.targetId);
         fbb.finish(fbb.endTable());
         return object.id;
@@ -4523,14 +4516,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           6,
           0,
         );
-        final statutParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final object = ActiviteJour(
-          id: idParam,
-          jour: jourParam,
-          statut: statutParam,
-        );
+        final object = ActiviteJour(id: idParam, jour: jourParam);
         object.staff.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -5922,14 +5908,9 @@ class ActiviteJour_ {
     _entities[21].properties[1],
   );
 
-  /// See [ActiviteJour.statut].
-  static final statut = obx.QueryStringProperty<ActiviteJour>(
-    _entities[21].properties[2],
-  );
-
   /// See [ActiviteJour.staff].
   static final staff = obx.QueryRelationToOne<ActiviteJour, Staff>(
-    _entities[21].properties[3],
+    _entities[21].properties[2],
   );
 }
 
