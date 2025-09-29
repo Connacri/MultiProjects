@@ -1691,7 +1691,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(60, 1632757783293151936),
     name: 'ActiviteJour',
-    lastPropertyId: const obx_int.IdUid(4, 2576819619403990954),
+    lastPropertyId: const obx_int.IdUid(5, 6145709618723973282),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1713,6 +1713,12 @@ final _entities = <obx_int.ModelEntity>[
         flags: 520,
         indexId: const obx_int.IdUid(142, 6706610394050757592),
         relationTarget: 'Staff',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 6145709618723973282),
+        name: 'statut',
+        type: 9,
+        flags: 0,
       ),
     ],
     relations: <obx_int.ModelRelation>[],
@@ -4494,10 +4500,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
         object.id = id;
       },
       objectToFB: (ActiviteJour object, fb.Builder fbb) {
-        fbb.startTable(5);
+        final statutOffset = fbb.writeString(object.statut);
+        fbb.startTable(6);
         fbb.addInt64(0, object.id);
         fbb.addInt64(1, object.jour);
         fbb.addInt64(3, object.staff.targetId);
+        fbb.addOffset(4, statutOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -4516,7 +4524,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           6,
           0,
         );
-        final object = ActiviteJour(id: idParam, jour: jourParam);
+        final statutParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 12, '');
+        final object = ActiviteJour(
+          id: idParam,
+          jour: jourParam,
+          statut: statutParam,
+        );
         object.staff.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -5911,6 +5926,11 @@ class ActiviteJour_ {
   /// See [ActiviteJour.staff].
   static final staff = obx.QueryRelationToOne<ActiviteJour, Staff>(
     _entities[21].properties[2],
+  );
+
+  /// See [ActiviteJour.statut].
+  static final statut = obx.QueryStringProperty<ActiviteJour>(
+    _entities[21].properties[3],
   );
 }
 

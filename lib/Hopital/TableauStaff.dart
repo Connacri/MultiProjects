@@ -4694,7 +4694,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final congesActivites =
         activites.where((a) => a.statut == 'C' || a.statut == 'CM').length;
 
-    final totalConges = timeOffs.length;
+    final totalConges = timeOffs.length + congesActivites;
     final hasConges = totalConges > 0;
 
     return Container(

@@ -1405,7 +1405,7 @@
     },
     {
       "id": "60:1632757783293151936",
-      "lastPropertyId": "4:2576819619403990954",
+      "lastPropertyId": "5:6145709618723973282",
       "name": "ActiviteJour",
       "properties": [
         {
@@ -1426,6 +1426,11 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "Staff"
+        },
+        {
+          "id": "5:6145709618723973282",
+          "name": "statut",
+          "type": 9
         }
       ],
       "relations": []
