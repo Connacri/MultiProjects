@@ -46,7 +46,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   @override
   void initState() {
     super.initState();
-    // Charger les données au démarrage
+
+    context
+        .read<ActiviteProvider>()
+        .clearAllActivites(context); // Charger les données au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<StaffProvider>(context, listen: false);
       provider.fetchStaffs();
@@ -177,6 +180,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         _editingCells.clear();
                         _tempValues.clear();
                       });
+                      await context
+                          .read<ActiviteProvider>()
+                          .clearAllActivites(context);
                       await runPlanificationAutomatique(context);
                       await _showPlanificationAgentsHygieneDialog();
                       await _showSimplePlanificationDialog();
@@ -1086,17 +1092,19 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                       },
                                     ),
                                   ],
+                                  // Dans la méthode build() qui génère les DataRow
                                   rows: groupStaffs.map<DataRow>((staffData) {
                                     final staff = staffData['staff'] as Staff;
                                     final numero = staffData['numero'] as int;
                                     final equipe =
                                         staffData['equipe'] as String;
 
-                                    // Charger les activités
+                                    // ⭐ CORRECTION : Charger les activités ET filtrer les TimeOff par mois
                                     final activites = staff.activites.toList();
-                                    // ⭐ MISE À JOUR : Adapter la taille selon le mois
                                     List<String> jours =
                                         List.filled(_daysInSelectedMonth, '-');
+
+                                    // Remplir avec les activités existantes
                                     for (var activite in activites) {
                                       if (activite.jour >= 1 &&
                                           activite.jour <=
@@ -1106,7 +1114,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                       }
                                     }
 
-                                    // Charger les congés
+                                    // ⭐ CORRECTION CRITIQUE : Filtrer les congés par le mois sélectionné
                                     final timeOffs = staff.timeOff.toList();
 
                                     return DataRow(
@@ -1195,7 +1203,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 12)),
                                         )),
-                                        // CELLULE OBS MODIFIÉE - Juste pour les observations
                                         DataCell(
                                           GestureDetector(
                                             onTap: () async {
@@ -1255,8 +1262,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             ),
                                           ),
                                         ),
-
-                                        // NOUVELLE CELLULE CONGÉS - Avec icône et compteur
                                         DataCell(
                                           GestureDetector(
                                             onTap: () async {
@@ -1267,21 +1272,28 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             child: _buildCongesIndicator(staff),
                                           ),
                                         ),
+
+                                        // ⭐ CORRECTION : Générer les cellules avec vérification du mois
                                         ...List.generate(jours.length, (index) {
                                           final jourIndex = index + 1;
                                           final statutJour = jours[index];
 
-                                          // Vérifier si ce jour est un congé
-                                          // ⭐ MISE À JOUR : Vérifier les congés selon le mois sélectionné
+                                          // ⭐ VÉRIFICATION CORRECTE : Ne vérifier que les congés du mois actuel
                                           final dateJour = DateTime(
                                               _selectedYear,
                                               _selectedMonth,
                                               jourIndex);
-                                          final estEnConge = timeOffs.any((c) =>
-                                              dateJour.isAfter(c.debut.subtract(
-                                                  Duration(days: 1))) &&
-                                              dateJour.isBefore(c.fin
-                                                  .add(Duration(days: 1))));
+
+                                          // Filtrer les TimeOff qui chevauchent ce jour précis
+                                          final estEnConge =
+                                              timeOffs.any((timeOff) {
+                                            // Vérifier si dateJour est entre debut et fin
+                                            return dateJour.isAfter(
+                                                    timeOff.debut.subtract(
+                                                        Duration(days: 1))) &&
+                                                dateJour.isBefore(timeOff.fin
+                                                    .add(Duration(days: 1)));
+                                          });
 
                                           return DataCell(
                                             Container(
@@ -2102,6 +2114,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     DateTime dateFin = timeOff.fin;
     String motif = timeOff.motif ?? 'Congé';
 
+    // 🔹 Liste de motifs possibles (à personnaliser selon ton besoin)
+    final List<String> motifsDisponibles = [
+      'Congé',
+      'Congé annuel',
+      'Congé maladie',
+      'Absence justifiée',
+      'Autre'
+    ];
+
     await showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -2177,14 +2198,26 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ),
                   SizedBox(height: 15),
 
-                  // Motif
-                  TextField(
+                  // 🔹 Dropdown Motif
+                  DropdownButtonFormField<String>(
                     decoration: InputDecoration(
                       labelText: "Motif",
                       border: OutlineInputBorder(),
                     ),
-                    controller: TextEditingController(text: motif),
-                    onChanged: (value) => motif = value,
+                    value: motifsDisponibles.contains(motif) ? motif : 'Congé',
+                    items: motifsDisponibles
+                        .map((m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(m),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          motif = value;
+                        });
+                      }
+                    },
                   ),
                 ],
               ),
@@ -2199,9 +2232,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () async {
-                    await _updateTimeOff(
-                        staff, timeOff, dateDebut, dateFin, motif);
+                    // Fermer le dialog AVANT
                     Navigator.of(context).pop();
+
+                    // Utiliser le contexte parent (le state de ta page) pour lancer l’update
+                    if (mounted) {
+                      await _updateTimeOff(
+                          staff, timeOff, dateDebut, dateFin, motif);
+                    }
                   },
                   child: Text("Sauvegarder"),
                 ),
@@ -2380,16 +2418,24 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Widget _buildCongesListView(Staff staff, StateSetter setState) {
     final objectBox = ObjectBox();
 
-    // ⭐ LIRE DIRECTEMENT DEPUIS LA BASE (ignorer le cache ToMany)
+    // ⭐ CORRECTION : Filtrer les TimeOff par mois/année sélectionnés
     final freshTimeOffs = objectBox.timeOffBox
         .query(TimeOff_.staff.equals(staff.id))
         .build()
-        .find();
+        .find()
+        .where((timeOff) {
+      // Vérifier si le congé chevauche le mois sélectionné
+      final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
+      final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
+
+      return (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+          timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1))));
+    }).toList();
 
     print(
-        "📊 _buildCongesListView : ${freshTimeOffs.length} congés depuis la base VS ${staff.timeOff.length} depuis le cache");
+        "📊 _buildCongesListView : ${freshTimeOffs.length} congés pour $_selectedMonthName $_selectedYear");
 
-    // Récupérer les activités de congé
+    // Récupérer les activités de congé pour le mois sélectionné uniquement
     final congesActivites = staff.activites
         .where((a) =>
             (a.statut == 'C' || a.statut == 'CM') &&
@@ -2403,7 +2449,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // TimeOff congés - utiliser freshTimeOffs au lieu de staff.timeOff
+          // TimeOff congés - filtrés par mois
           if (freshTimeOffs.isNotEmpty) ...[
             Container(
               padding: EdgeInsets.all(8),
@@ -2417,7 +2463,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       size: 16, color: Colors.blue.shade600),
                   SizedBox(width: 8),
                   Text(
-                    "Congés planifiés (${freshTimeOffs.length}) - Données fraîches",
+                    "Congés planifiés\n${freshTimeOffs.length} - $_selectedMonthName $_selectedYear",
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.blue.shade600,
@@ -2432,35 +2479,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 .map((timeOff) => _buildTimeOffCard(timeOff, staff, setState)),
             SizedBox(height: 16),
           ],
-
-          // // Activités congés...
-          // if (groupedConges.isNotEmpty) ...[
-          //   Container(
-          //     padding: EdgeInsets.all(8),
-          //     decoration: BoxDecoration(
-          //       color: Colors.purple.shade50,
-          //       borderRadius: BorderRadius.circular(6),
-          //     ),
-          //     child: Row(
-          //       children: [
-          //         Icon(Icons.today, size: 16, color: Colors.purple.shade600),
-          //         SizedBox(width: 8),
-          //         Text(
-          //           "Congés ponctuels (${groupedConges.length})",
-          //           style: TextStyle(
-          //             fontWeight: FontWeight.bold,
-          //             color: Colors.purple.shade600,
-          //             fontSize: 13,
-          //           ),
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          //   SizedBox(height: 8),
-          //   ...groupedConges.map(
-          //     (g) => _buildActivitePeriodeCard(g, staff, setState),
-          //   ),
-          // ],
         ],
       ),
     );
@@ -2476,70 +2494,112 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final staffs = objectBox.staffBox.getAll();
       final allTimeOffs = objectBox.timeOffBox.getAll();
 
-      String result = "=== ANALYSE CACHE vs BASE ===\n";
-      result += "Timestamp: ${DateTime.now()}\n";
-      result += "Total TimeOff en base: ${allTimeOffs.length}\n\n";
-
-      for (var staff in staffs) {
-        final cacheCount = staff.timeOff.length; // Cache ToMany
-        final baseCount = objectBox.timeOffBox
-            .query(TimeOff_.staff.equals(staff.id))
-            .build()
-            .find()
-            .length; // Base directe
-
-        if (cacheCount > 0 || baseCount > 0) {
-          result += "👤 ${staff.nom} (ID: ${staff.id})\n";
-          result += "  📦 Cache ToMany : $cacheCount congés\n";
-          result += "  🗄️ Base directe : $baseCount congés\n";
-          result +=
-              "  🔄 Synchronisé ? ${cacheCount == baseCount ? '✅ OUI' : '❌ NON - PROBLÈME !'}\n";
-
-          if (cacheCount != baseCount) {
-            result += "  ⚠️ DÉSYNCHRONISATION DÉTECTÉE !\n";
-          }
-
-          // Liste des congés depuis la base
-          final baseTimeOffs = objectBox.timeOffBox
-              .query(TimeOff_.staff.equals(staff.id))
-              .build()
-              .find();
-          for (var timeOff in baseTimeOffs) {
-            final debut = DateFormat('dd/MM/yyyy').format(timeOff.debut);
-            final fin = DateFormat('dd/MM/yyyy').format(timeOff.fin);
-            result +=
-                "    - ID:${timeOff.id} ${timeOff.motif ?? 'Congé'} : $debut → $fin\n";
-          }
-          result += "\n";
-        }
-      }
-
-      print(result);
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Debug - Analyse Cache vs Base"),
-          content: Container(
-            width: double.maxFinite,
-            height: 400,
-            child: SingleChildScrollView(
-              child: Text(result,
-                  style: TextStyle(fontFamily: 'monospace', fontSize: 12)),
+          title: const Text("Analyse Cache vs Base"),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: 500, // limite verticale
+            ),
+            child: IntrinsicWidth(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      title:
+                          Text("Total TimeOff en base: ${allTimeOffs.length}"),
+                      subtitle: Text("Timestamp: ${DateTime.now()}"),
+                    ),
+                    const Divider(),
+                    ...staffs.map((staff) {
+                      final cacheCount = staff.timeOff.length;
+                      final baseTimeOffs = objectBox.timeOffBox
+                          .query(TimeOff_.staff.equals(staff.id))
+                          .build()
+                          .find();
+                      final baseCount = baseTimeOffs.length;
+
+                      if (cacheCount == 0 && baseCount == 0) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final syncOk = cacheCount == baseCount;
+
+                      return ExpansionTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.black54,
+                          child: Text(
+                            "$cacheCount",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w300),
+                          ),
+                        ),
+                        title: Text(staff.nom,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text("$cacheCount Congé(s)"),
+                        children: [
+                          ListTile(title: Text("🗄️ Base directe: $baseCount")),
+                          ListTile(
+                            title: Text(
+                              "🔄 Synchronisé ? ${syncOk ? '✅ OUI' : '❌ NON - PROBLÈME !'}",
+                              style: TextStyle(
+                                color: syncOk ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.w300,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          if (!syncOk)
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                "⚠️ Désynchronisation détectée !",
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w300,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ...baseTimeOffs.map((timeOff) {
+                            final debut =
+                                DateFormat('dd/MM/yyyy').format(timeOff.debut);
+                            final fin =
+                                DateFormat('dd/MM/yyyy').format(timeOff.fin);
+                            return ListTile(
+                              leading: const Icon(Icons.event_note),
+                              title: Text(timeOff.motif ?? 'Congé'),
+                              subtitle: Text("$debut → $fin"),
+                              trailing: Text("ID:${timeOff.id}"),
+                            );
+                          }).toList(),
+                        ],
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
             ),
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context), child: Text("Fermer")),
-            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Fermer"),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.sync),
               onPressed: () async {
-                // Forcer le rechargement de tous les caches
                 for (var staff in staffs) {
                   await _refreshStaffTimeOffCache(staff);
                 }
                 Navigator.pop(context);
-                await _listStaffWithTimeOff(); // Relancer le debug
+                await _listStaffWithTimeOff();
               },
-              child: Text("Forcer Sync"),
+              label: const Text("Forcer Sync"),
             ),
           ],
         ),
@@ -3472,339 +3532,345 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ),
                 ],
               ),
-              content: Container(
-                width: double.maxFinite,
-                constraints: BoxConstraints(maxHeight: 500),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Informations du mois
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.teal.shade50, Colors.teal.shade100],
+              content: SizedBox(
+                width: 420, // 👈 largeur fixe pour éviter le bug
+                height: 500,
+                child: IntrinsicWidth(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Informations du mois
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.teal.shade50,
+                                Colors.teal.shade100
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.teal.shade200),
                           ),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.teal.shade200),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              "Mois: $_selectedMonthName $_selectedYear",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.teal.shade700,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                "Mois: $_selectedMonthName $_selectedYear",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal.shade700,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              "${equipesDisponibles.length} équipes détectées: ${equipesDisponibles.join(', ')}",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.teal.shade600,
+                              SizedBox(height: 4),
+                              Text(
+                                "${equipesDisponibles.length} équipes détectées: ${equipesDisponibles.join(', ')}",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.teal.shade600,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade100,
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.info,
-                                      size: 14, color: Colors.blue.shade700),
-                                  SizedBox(width: 4),
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        "La rotation commence automatiquement le 1er jour",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.blue.shade700,
-                                          fontWeight: FontWeight.w500,
+                              SizedBox(height: 8),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.info,
+                                        size: 14, color: Colors.blue.shade700),
+                                    SizedBox(width: 4),
+                                    Expanded(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          "La rotation commence automatiquement le 1er jour",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.blue.shade700,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20),
+
+                        // Instructions
+                        Text(
+                          "Organisez l'ordre de rotation :",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Glissez les équipes pour définir l'ordre de rotation. L'équipe en première position commencera sa garde le 1er jour du mois.",
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey.shade600),
+                        ),
+                        SizedBox(height: 12),
+
+                        // Liste réorganisable des équipes
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ReorderableListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: equipesOrdonnees.length,
+                            onReorder: (oldIndex, newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) newIndex -= 1;
+                                final item =
+                                    equipesOrdonnees.removeAt(oldIndex);
+                                equipesOrdonnees.insert(newIndex, item);
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final equipe = equipesOrdonnees[index];
+                              final isFirst = index == 0;
+
+                              return Container(
+                                key: ValueKey('equipe_${equipe}_$index'),
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 2),
+                                child: Card(
+                                  elevation: isFirst ? 3 : 1,
+                                  color: isFirst
+                                      ? Colors.teal.shade50
+                                      : Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: BorderSide(
+                                      color: isFirst
+                                          ? Colors.teal.shade300
+                                          : Colors.grey.shade200,
+                                      width: isFirst ? 2 : 1,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: Container(
+                                      width: 35,
+                                      height: 35,
+                                      decoration: BoxDecoration(
+                                        color: _getEquipeColor(equipe),
+                                        shape: BoxShape.circle,
+                                        boxShadow: isFirst
+                                            ? [
+                                                BoxShadow(
+                                                  color: _getEquipeColor(equipe)
+                                                      .withOpacity(0.4),
+                                                  blurRadius: 4,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ]
+                                            : [],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          equipe,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        Text(
+                                          "Équipe $equipe",
+                                          style: TextStyle(
+                                            fontWeight: isFirst
+                                                ? FontWeight.bold
+                                                : FontWeight.w600,
+                                            color: isFirst
+                                                ? Colors.teal.shade700
+                                                : Colors.grey.shade700,
+                                          ),
+                                        ),
+                                        if (isFirst) ...[
+                                          SizedBox(width: 8),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.teal.shade200,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              "1ère",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.teal.shade800,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                    subtitle: Text(
+                                      isFirst
+                                          ? "Commence la garde le 1er jour"
+                                          : "Jour ${index + 1} de rotation",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: isFirst
+                                            ? Colors.teal.shade600
+                                            : Colors.grey.shade500,
+                                        fontWeight: isFirst
+                                            ? FontWeight.w500
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    // trailing: Icon(
+                                    //   Icons.drag_handle,
+                                    //   color: isFirst
+                                    //       ? Colors.teal.shade400
+                                    //       : Colors.grey.shade400,
+                                    // ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(height: 16),
+
+                        // Aperçu de la rotation
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.preview,
+                                      color: Colors.blue.shade700, size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    "Aperçu des premiers jours",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue.shade700,
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 20),
+                              SizedBox(height: 8),
+                              ...List.generate(
+                                math.min(equipesOrdonnees.length, 4),
+                                (index) {
+                                  final jour = index + 1;
+                                  final equipe = equipesOrdonnees[index];
+                                  final date = DateTime(
+                                      _selectedYear, _selectedMonth, jour);
+                                  final nomJour =
+                                      DateFormat('EEEE', 'fr_FR').format(date);
 
-                      // Instructions
-                      Text(
-                        "Organisez l'ordre de rotation :",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "Glissez les équipes pour définir l'ordre de rotation. L'équipe en première position commencera sa garde le 1er jour du mois.",
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade600),
-                      ),
-                      SizedBox(height: 12),
-
-                      // Liste réorganisable des équipes
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ReorderableListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: equipesOrdonnees.length,
-                          onReorder: (oldIndex, newIndex) {
-                            setState(() {
-                              if (newIndex > oldIndex) newIndex -= 1;
-                              final item = equipesOrdonnees.removeAt(oldIndex);
-                              equipesOrdonnees.insert(newIndex, item);
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            final equipe = equipesOrdonnees[index];
-                            final isFirst = index == 0;
-
-                            return Container(
-                              key: ValueKey('equipe_${equipe}_$index'),
-                              margin: EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 2),
-                              child: Card(
-                                elevation: isFirst ? 3 : 1,
-                                color: isFirst
-                                    ? Colors.teal.shade50
-                                    : Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  side: BorderSide(
-                                    color: isFirst
-                                        ? Colors.teal.shade300
-                                        : Colors.grey.shade200,
-                                    width: isFirst ? 2 : 1,
-                                  ),
-                                ),
-                                child: ListTile(
-                                  dense: true,
-                                  leading: Container(
-                                    width: 35,
-                                    height: 35,
-                                    decoration: BoxDecoration(
-                                      color: _getEquipeColor(equipe),
-                                      shape: BoxShape.circle,
-                                      boxShadow: isFirst
-                                          ? [
-                                              BoxShadow(
-                                                color: _getEquipeColor(equipe)
-                                                    .withOpacity(0.4),
-                                                blurRadius: 4,
-                                                offset: Offset(0, 2),
-                                              ),
-                                            ]
-                                          : [],
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        equipe,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  title: Row(
-                                    children: [
-                                      Text(
-                                        "Équipe $equipe",
-                                        style: TextStyle(
-                                          fontWeight: isFirst
-                                              ? FontWeight.bold
-                                              : FontWeight.w600,
-                                          color: isFirst
-                                              ? Colors.teal.shade700
-                                              : Colors.grey.shade700,
-                                        ),
-                                      ),
-                                      if (isFirst) ...[
-                                        SizedBox(width: 8),
+                                  return Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 2),
+                                    child: Row(
+                                      children: [
                                         Container(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
+                                          width: 20,
+                                          height: 20,
                                           decoration: BoxDecoration(
-                                            color: Colors.teal.shade200,
-                                            borderRadius:
-                                                BorderRadius.circular(10),
+                                            color: _getEquipeColor(equipe),
+                                            shape: BoxShape.circle,
                                           ),
-                                          child: Text(
-                                            "1ère",
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.teal.shade800,
-                                              fontWeight: FontWeight.bold,
+                                          child: Center(
+                                            child: Text(
+                                              equipe,
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          "Jour $jour ($nomJour) → Équipe $equipe en garde",
+                                          style: TextStyle(fontSize: 12),
                                         ),
                                       ],
-                                    ],
-                                  ),
-                                  subtitle: Text(
-                                    isFirst
-                                        ? "Commence la garde le 1er jour"
-                                        : "Jour ${index + 1} de rotation",
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (equipesOrdonnees.length > 4)
+                                Padding(
+                                  padding: EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    "... rotation continue pour le reste du mois",
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: isFirst
-                                          ? Colors.teal.shade600
-                                          : Colors.grey.shade500,
-                                      fontWeight: isFirst
-                                          ? FontWeight.w500
-                                          : FontWeight.normal,
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.blue.shade600,
                                     ),
                                   ),
-                                  trailing: Icon(
-                                    Icons.drag_handle,
-                                    color: isFirst
-                                        ? Colors.teal.shade400
-                                        : Colors.grey.shade400,
-                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 16),
+                        SizedBox(height: 12),
 
-                      // Aperçu de la rotation
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.preview,
-                                    color: Colors.blue.shade700, size: 18),
-                                SizedBox(width: 8),
-                                Text(
-                                  "Aperçu des premiers jours",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            ...List.generate(
-                              math.min(equipesOrdonnees.length, 4),
-                              (index) {
-                                final jour = index + 1;
-                                final equipe = equipesOrdonnees[index];
-                                final date = DateTime(
-                                    _selectedYear, _selectedMonth, jour);
-                                final nomJour =
-                                    DateFormat('EEEE', 'fr_FR').format(date);
-
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 2),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 20,
-                                        height: 20,
-                                        decoration: BoxDecoration(
-                                          color: _getEquipeColor(equipe),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            equipe,
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        "Jour $jour ($nomJour) → Équipe $equipe en garde",
-                                        style: TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                            if (equipesOrdonnees.length > 4)
-                              Padding(
-                                padding: EdgeInsets.only(top: 4),
+                        // Note importante
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.amber.shade200),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.info_outline,
+                                  color: Colors.amber.shade700, size: 16),
+                              SizedBox(width: 8),
+                              Expanded(
                                 child: Text(
-                                  "... rotation continue pour le reste du mois",
+                                  "Les congés existants (TimeOff et activités C/CM) seront automatiquement préservés.",
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontStyle: FontStyle.italic,
-                                    color: Colors.blue.shade600,
+                                    color: Colors.amber.shade700,
                                   ),
                                 ),
                               ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 12),
-
-                      // Note importante
-                      Container(
-                        padding: EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.amber.shade200),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(Icons.info_outline,
-                                color: Colors.amber.shade700, size: 16),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                "Les congés existants (TimeOff et activités C/CM) seront automatiquement préservés.",
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.amber.shade700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -3882,11 +3948,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             "Aucun personnel médical trouvé avec les équipes sélectionnées");
       }
 
-      // ✅ 3. Collecter TOUS les congés (TimeOff + activités C/CM)
+      // ✅ 3. Collecter TOUS les congés (TimeOff + activités C/CM) pour le mois sélectionné
       Map<int, Map<int, String>> congesParStaff =
           {}; // {staffId: {jour: statut}}
 
-      // --- TimeOff
+      // --- TimeOff : ⭐ CORRECTION - Ne traiter que les congés du mois sélectionné
       final allTimeOffs = objectBox.timeOffBox.getAll();
       for (var timeOff in allTimeOffs) {
         if (timeOff.staff.target != null) {
@@ -3896,6 +3962,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           DateTime currentDate = timeOff.debut;
           while (
               currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
+            // ⭐ FILTRE CRUCIAL : Vérifier année ET mois
             if (currentDate.year == _selectedYear &&
                 currentDate.month == _selectedMonth) {
               congesParStaff[staff.id]![currentDate.day] =
@@ -4158,6 +4225,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // MÉTHODE : Analyser les congés des agents
+// MÉTHODE : Analyser les congés des agents pour le mois sélectionné
   Future<Map<Staff, List<int>>> _analyserCongesAgents(
       List<Staff> agents) async {
     final objectBox = ObjectBox();
@@ -4166,7 +4234,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     for (final agent in agents) {
       final joursConge = <int>[];
 
-      // TimeOff
+      // ⭐ CORRECTION : Filtrer TimeOff par année/mois
       final timeOffQuery =
           objectBox.timeOffBox.query(TimeOff_.staff.equals(agent.id)).build();
       final timeOffs = timeOffQuery.find();
@@ -4175,6 +4243,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       for (var timeOff in timeOffs) {
         DateTime currentDate = timeOff.debut;
         while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+          // ⭐ Ne garder que les jours du mois sélectionné
           if (currentDate.year == _selectedYear &&
               currentDate.month == _selectedMonth) {
             joursConge.add(currentDate.day);
@@ -4183,7 +4252,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         }
       }
 
-      // Activités de congé
+      // Activités de congé - déjà filtrées par le nombre de jours du mois
       final activiteQuery = objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(agent.id))
           .build();
@@ -4192,6 +4261,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       for (var activite in activites) {
         if ((activite.statut == 'C' || activite.statut == 'CM') &&
+            activite.jour >= 1 &&
+            activite.jour <= _daysInSelectedMonth &&
             !joursConge.contains(activite.jour)) {
           joursConge.add(activite.jour);
         }
@@ -4686,15 +4757,30 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// NOUVELLE MÉTHODE : Indicateur de congés
+// NOUVELLE MÉTHODE : Indicateur de congés filtré par mois
   Widget _buildCongesIndicator(Staff staff) {
-    // Compter les congés pour ce staff
+    // ⭐ CORRECTION : Compter seulement les congés du mois sélectionné
     final timeOffs = staff.timeOff.toList();
     final activites = staff.activites.toList();
-    final congesActivites =
-        activites.where((a) => a.statut == 'C' || a.statut == 'CM').length;
 
-    final totalConges = timeOffs.length + congesActivites;
+    // Filtrer TimeOff qui chevauchent le mois sélectionné
+    final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
+    final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
+
+    final timeOffsDuMois = timeOffs.where((timeOff) {
+      return timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+          timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)));
+    }).length;
+
+    // Compter les congés activités du mois
+    final congesActivites = activites
+        .where((a) =>
+            (a.statut == 'C' || a.statut == 'CM') &&
+            a.jour >= 1 &&
+            a.jour <= _daysInSelectedMonth)
+        .length;
+
+    final totalConges = timeOffsDuMois + congesActivites;
     final hasConges = totalConges > 0;
 
     return Container(
@@ -5192,60 +5278,73 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             ),
           ],
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Bouton Éditer
-            IconButton(
-              icon: Icon(Icons.edit, color: Colors.blue, size: 18),
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _showEditTimeOffDialog(context, staff, timeOff);
-                await _showCongesManagementDialog(context, staff,
-                    parentContext: context);
-              },
-              tooltip: "Modifier",
-            ),
-            // Bouton Supprimer
-            IconButton(
-              icon: Icon(Icons.delete, color: Colors.red, size: 18),
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: Text("Confirmer la suppression"),
-                    content: Text(
-                        "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(false),
-                        child: Text("Annuler"),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white),
-                        onPressed: () => Navigator.of(ctx).pop(true),
-                        child: Text("Supprimer"),
-                      ),
-                    ],
-                  ),
-                );
+        onTap: () async {
+          await _showTimeOffOptionsDialog(timeOff, staff, setState);
+        },
+        onLongPress: () async {
+          await _showTimeOffOptionsDialog(timeOff, staff, setState);
+        },
+      ),
+    );
+  }
 
-                if (confirm == true) {
-                  await _deleteTimeOff(staff, timeOff);
-                  await runPlanificationAutomatique(context);
-                  await _showPlanificationAgentsHygieneDialog();
-                  await _showSimplePlanificationDialog();
-                  setState(() {}); // Rafraîchir la liste
-                }
-              },
-              tooltip: "Supprimer",
+  Future<void> _showTimeOffOptionsDialog(
+      TimeOff timeOff, Staff staff, StateSetter setState) async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("Choisir une action"),
+        content: Text(
+            "${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop("edit"),
+            child: Text("Modifier"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.of(ctx).pop("delete"),
+            child: Text("Supprimer"),
+          ),
+        ],
+      ),
+    );
+
+    if (choice == "edit") {
+      Navigator.of(context).pop();
+      await _showEditTimeOffDialog(context, staff, timeOff);
+      await _showCongesManagementDialog(context, staff, parentContext: context);
+    } else if (choice == "delete") {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text("Confirmer la suppression"),
+          content: Text(
+              "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text("Annuler"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text("Supprimer"),
             ),
           ],
         ),
-      ),
-    );
+      );
+
+      if (confirm == true) {
+        await _deleteTimeOff(staff, timeOff);
+        await runPlanificationAutomatique(context);
+        await _showPlanificationAgentsHygieneDialog();
+        await _showSimplePlanificationDialog();
+        setState(() {}); // Rafraîchir la liste
+      }
+    }
   }
 
   Future<void> runPlanificationAutomatique(BuildContext context) async {
@@ -5255,17 +5354,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Confirmation"),
-          content: Text(
-            "Cette action va :\n"
-            "PHASE 1 - Attribution initiale :\n"
-            "• Marquer 'RE' les weekends (vendredi/samedi) pour TOUS\n"
-            "• Marquer '-' les jours normaux pour les équipes A,B,C,D\n"
-            "• Marquer 'N' les jours normaux pour les autres staff\n"
-            "\nPHASE 2 - Application des congés :\n"
-            "• Les congés existants vont ÉCRASER les planifications\n"
-            "• Aucun congé ne sera perdu\n"
-            "\nMois: $_selectedMonthName $_selectedYear\n"
-            "Continuer ?",
+          content: FittedBox(
+            child: Text(
+              "Cette action va :\n"
+              "PHASE 1 - Attribution initiale :\n"
+              "• Planification Réussite pour Tout Le STaff\n"
+              "PHASE 2 - Application des congés :\n"
+              "• Les congés existants vont etre assigné\n"
+              "• Aucun congé ne sera perdu\n"
+              "\nMois: $_selectedMonthName $_selectedYear\n",
+            ),
           ),
           actions: [
             TextButton(
@@ -5371,6 +5469,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           for (var timeOff in timeOffs) {
             DateTime currentDate = timeOff.debut;
             while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+              // ⭐ CORRECTION CRUCIALE : Vérifier année ET mois
               if (currentDate.year == _selectedYear &&
                   currentDate.month == _selectedMonth) {
                 int jour = currentDate.day;
@@ -5404,32 +5503,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               currentDate = currentDate.add(Duration(days: 1));
             }
           }
-        }
-
-        final activiteQuery = objectBox.activiteBox
-            .query(ActiviteJour_.staff.equals(staff.id))
-            .build();
-        final activites = activiteQuery.find();
-        activiteQuery.close();
-
-        List<ActiviteJour> congesActivites = activites
-            .where((activite) =>
-                (activite.statut == 'C' || activite.statut == 'CM') &&
-                activite.jour >= 1 &&
-                activite.jour <= daysInMonth)
-            .toList();
-
-        for (var activite in congesActivites) {
-          await activiteProvider.forceUpdateActiviteIgnoringLeave(
-            staff.id,
-            activite.jour,
-            activite.statut,
-            year: _selectedYear,
-            month: _selectedMonth,
-          );
-          congesAppliques++;
-          print(
-              "      Congé activité réappliqué: J${activite.jour}=${activite.statut}");
         }
       }
 

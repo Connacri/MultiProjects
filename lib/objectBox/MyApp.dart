@@ -14,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
 import '../Hopital/StaffProvider.dart';
+import '../Hopital/TableauStaff.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import '../objectBox/pages/ClientListScreen.dart';
@@ -32,7 +33,6 @@ import 'pages/facturation/FacturePage.dart';
 import 'pages/facturation/FacturesListPage.dart';
 import 'pages/invoice/FacturationPageUI.dart';
 import 'pages/invoice/providers.dart';
-import 'tests/timelines/mistral/claude.dart';
 
 class MyMain extends StatelessWidget {
   @override
@@ -151,13 +151,15 @@ class MyApp9 extends StatelessWidget {
             //   objectBox: objectBox,
             // ),
             //   home: FacturationPageUI(),
-            home: Platform.isAndroid || Platform.isIOS
-                ? Hotel_Management() //HomePage3()
-                : /*showPlatform*/
-                Hotel_Management() //
-            // adaptiveHome(
-            //         objectBox: objectBox,
-            //       ),
+            home: TableauStaffPage()
+
+            // Platform.isAndroid || Platform.isIOS
+            //     ? Hotel_Management() //HomePage3()
+            //     : /*showPlatform*/
+            //     Hotel_Management() //
+            // // adaptiveHome(
+            // //         objectBox: objectBox,
+            // //       ),
             );
       }),
     );

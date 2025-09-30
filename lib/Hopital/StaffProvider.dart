@@ -31,31 +31,6 @@ class StaffProvider with ChangeNotifier {
   Future<void> fetchStaffs() async {
     try {
       _staffs = _objectBox.staffBox.getAll();
-      //  print('Nombre de staffs récupérés: ${_staffs.length}');
-
-      for (final staff in _staffs) {
-        // print("\n--- STAFF ${staff.id} ---");
-        // print(
-        //     "Nom: ${staff.nom}, Grade: ${staff.grade}, Groupe: ${staff.groupe}");
-        // print("Équipe: ${staff.equipe ?? "-"}");
-        // print("Branch: ${staff.branch.target?.branchNom ?? "Non assigné"}");
-
-        // Activités liées
-        final activites = _objectBox.activiteBox
-            .query(ActiviteJour_.staff.equals(staff.id))
-            .build()
-            .find();
-        //  print("Activités: ${activites.length}");
-
-        // Congés liés
-        final timeOffs = staff.timeOff.toList();
-        // print("Congés: ${timeOffs.length}");
-        for (var timeOff in timeOffs) {
-          // print(
-          //     " - ${timeOff.debut} -> ${timeOff.fin} (${timeOff.motif ?? "aucun"})");
-        }
-      }
-
       notifyListeners();
     } catch (e) {
       print("Erreur fetchStaffs: $e");
@@ -397,8 +372,8 @@ class ActiviteProvider with ChangeNotifier {
       _objectBox.activiteBox.removeAll();
 
       print("✅ Toutes les activités ont été supprimées.");
-      _objectBox.timeOffBox.removeAll();
-      print("✅ Toutes les Congés ont été supprimées.");
+      // _objectBox.timeOffBox.removeAll();
+      //print("✅ Toutes les Congés ont été supprimées.");
       // 2️⃣ Réinitialiser les obs des staffs
       final staffs = _objectBox.staffBox.getAll();
       for (var staff in staffs) {
