@@ -141,7 +141,8 @@ class InteractiveTableWrapper extends StatelessWidget {
     return InteractiveViewer(
       // Permet le pan/zoom avec la souris
       panEnabled: true,
-      scaleEnabled: false, // Désactiver le zoom si non souhaité
+      scaleEnabled: false,
+      // Désactiver le zoom si non souhaité
       minScale: 1.0,
       maxScale: 1.0,
       // Limites de défilement
@@ -3721,7 +3722,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                     SizedBox(width: 4),
                                     Expanded(
                                       child: FittedBox(
-                                        fit: BoxFit.scaleDown,
+                                        fit: BoxFit.cover,
                                         child: Text(
                                           "La rotation commence automatiquement le 1er jour",
                                           style: TextStyle(
@@ -4454,218 +4455,234 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   Icon(Icons.cleaning_services, color: Colors.brown),
                   SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      "Planification Agents d'Hygiène",
-                      style: TextStyle(color: Colors.brown.shade700),
+                    child: FittedBox(
+                      child: Text(
+                        "Planification Agents d'Hygiène",
+                        style: TextStyle(color: Colors.brown.shade700),
+                      ),
                     ),
                   ),
                 ],
               ),
-              content: Container(
-                width: double.maxFinite,
-                constraints: BoxConstraints(maxHeight: 600),
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Informations générales
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.brown.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.brown.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Mois: $_selectedMonthName $_selectedYear",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.brown.shade700,
-                              ),
-                            ),
-                            SizedBox(height: 8),
-                            Text("${agents.length} agents d'hygiène détectés"),
-                            Text(
-                                "$nombreJoursOuvrables jours ouvrables (hors weekends)"),
-                            Text(
-                                "${repartition['joursParAgent']} jours/agent + ${repartition['joursSupplementaires']} jour(s) supplémentaire(s)"),
-                            SizedBox(height: 8),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade100,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                "Règle: Un seul agent travaille par jour (statut N)",
+              content: Center(
+                child: Container(
+                  width: double.maxFinite,
+                  constraints: BoxConstraints(
+                    minWidth: 300, // Largeur minimale
+                    maxWidth: 300, // Largeur maximale (optionnel)
+                    maxHeight: 600,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Informations générales
+                        Container(
+                          width: double.maxFinite,
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.brown.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.brown.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.max,
+                            children: [
+                              Text(
+                                "Mois: $_selectedMonthName $_selectedYear",
                                 style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.blue.shade700,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.brown.shade700,
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      SizedBox(height: 20),
-
-                      // Ordre des agents
-                      Text(
-                        "Ordre de rotation :",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        "Glissez pour réorganiser. Le 1er agent commence au 1er jour ouvrable.",
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey.shade600),
-                      ),
-                      SizedBox(height: 12),
-
-                      // Liste réorganisable
-                      Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: ReorderableListView.builder(
-                          shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
-                          itemCount: agentsOrdonnes.length,
-                          onReorder: (oldIndex, newIndex) {
-                            setState(() {
-                              if (newIndex > oldIndex) newIndex -= 1;
-                              final item = agentsOrdonnes.removeAt(oldIndex);
-                              agentsOrdonnes.insert(newIndex, item);
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            final agent = agentsOrdonnes[index];
-                            final conges =
-                                repartition['joursDisponiblesParAgent']
-                                        [agent] ??
-                                    0;
-                            final isFirst = index == 0;
-
-                            return Container(
-                              key: ValueKey('agent_${agent.id}_$index'),
-                              margin: EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 2),
-                              child: Card(
-                                elevation: isFirst ? 2 : 1,
-                                color: isFirst
-                                    ? Colors.brown.shade50
-                                    : Colors.white,
-                                child: ListTile(
-                                  dense: true,
-                                  leading: Container(
-                                    width: 30,
-                                    height: 30,
-                                    decoration: BoxDecoration(
-                                      color: Colors.brown.shade400,
-                                      shape: BoxShape.circle,
+                              SizedBox(height: 8),
+                              Text(
+                                  "${agents.length} agents d'hygiène détectés"),
+                              Text(
+                                  "$nombreJoursOuvrables jours ouvrables (hors weekends)"),
+                              Text(
+                                  "${repartition['joursParAgent']} jours/agent + ${repartition['joursSupplementaires']} jour(s) supplémentaire(s)"),
+                              SizedBox(height: 8),
+                              Container(
+                                width: double.maxFinite,
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: FittedBox(
+                                  child: Text(
+                                    "Règle: Un seul agent travaille par jour (statut N)",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    child: Center(
-                                      child: Text(
-                                        "${index + 1}",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 20),
+
+                        // Ordre des agents
+                        Text(
+                          "Ordre de rotation :",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Glissez pour réorganiser. Le 1er agent commence au 1er jour ouvrable.",
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey.shade600),
+                        ),
+                        SizedBox(height: 12),
+
+                        // Liste réorganisable
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ReorderableListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: agentsOrdonnes.length,
+                            onReorder: (oldIndex, newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) newIndex -= 1;
+                                final item = agentsOrdonnes.removeAt(oldIndex);
+                                agentsOrdonnes.insert(newIndex, item);
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final agent = agentsOrdonnes[index];
+                              final conges =
+                                  repartition['joursDisponiblesParAgent']
+                                          [agent] ??
+                                      0;
+                              final isFirst = index == 0;
+
+                              return Container(
+                                key: ValueKey('agent_${agent.id}_$index'),
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 2),
+                                child: Card(
+                                  elevation: isFirst ? 2 : 1,
+                                  color: isFirst
+                                      ? Colors.brown.shade50
+                                      : Colors.white,
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: Container(
+                                      width: 30,
+                                      height: 30,
+                                      decoration: BoxDecoration(
+                                        color: Colors.brown.shade400,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          "${index + 1}",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  title: Text(
-                                    agent.nom,
-                                    style: TextStyle(
-                                      fontWeight: isFirst
-                                          ? FontWeight.bold
-                                          : FontWeight.w600,
-                                      fontSize: 14,
+                                    title: Text(
+                                      agent.nom,
+                                      style: TextStyle(
+                                        fontWeight: isFirst
+                                            ? FontWeight.bold
+                                            : FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    "$conges jours disponibles",
-                                    style: TextStyle(fontSize: 11),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (isFirst)
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                              horizontal: 4, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: Colors.brown.shade200,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            "1er",
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: Colors.brown.shade800,
-                                              fontWeight: FontWeight.bold,
+                                    subtitle: Text(
+                                      "$conges jours disponibles",
+                                      style: TextStyle(fontSize: 11),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (isFirst)
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 4, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: Colors.brown.shade200,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              "1er",
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.brown.shade800,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.drag_handle,
-                                          color: Colors.grey.shade400),
-                                    ],
+                                        SizedBox(width: 8),
+                                        // Icon(Icons.drag_handle,
+                                        //     color: Colors.grey.shade400),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 16),
+                        SizedBox(height: 16),
 
-                      // Aperçu de la répartition
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.shade200),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Logique de répartition intelligente :",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue.shade700,
+                        // Aperçu de la répartition
+                        Container(
+                          width: double.maxFinite,
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.blue.shade200),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Logique de répartition intelligente :",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue.shade700,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            Text("• Un seul agent par jour ouvrable",
-                                style: TextStyle(fontSize: 12)),
-                            Text("• Weekends: tous en 'RE'",
-                                style: TextStyle(fontSize: 12)),
-                            Text("• Congés automatiquement exclus",
-                                style: TextStyle(fontSize: 12)),
-                            Text("• Répartition équitable malgré les congés",
-                                style: TextStyle(fontSize: 12)),
-                            Text("• Rotation cyclique selon l'ordre défini",
-                                style: TextStyle(fontSize: 12)),
-                          ],
+                              SizedBox(height: 8),
+                              Text("• Un seul agent par jour ouvrable",
+                                  style: TextStyle(fontSize: 12)),
+                              Text("• Weekends: tous en 'RE'",
+                                  style: TextStyle(fontSize: 12)),
+                              Text("• Congés automatiquement exclus",
+                                  style: TextStyle(fontSize: 12)),
+                              Text("• Répartition équitable malgré les congés",
+                                  style: TextStyle(fontSize: 12)),
+                              Text("• Rotation cyclique selon l'ordre défini",
+                                  style: TextStyle(fontSize: 12)),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
