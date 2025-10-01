@@ -1504,10 +1504,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               ),
             );
           }).toList(),
-          onChanged: (newValue) {
+          // onChanged: (newValue) {
+          //   if (newValue != null) {
+          //     setState(() {
+          //       _tempValues[cellKey] = newValue;
+          //     });
+          //   }
+          // },
+          onChanged: (newValue) async {
             if (newValue != null) {
+              // ✅ Sauvegarder immédiatement
+              await _saveActiviteModification(staff, jour, newValue);
+
+              // ✅ Nettoyer les états d'édition
               setState(() {
-                _tempValues[cellKey] = newValue;
+                _editingCells.remove(cellKey);
+                _tempValues.remove(cellKey);
               });
             }
           },
