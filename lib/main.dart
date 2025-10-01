@@ -9,10 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:splash_master/core/source.dart';
-import 'package:splash_master/core/splash_master.dart';
-import 'package:splash_master/enums/splash_master_enums.dart';
-import 'package:splash_master/splashes/lottie/lottie_config.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -70,7 +66,7 @@ Future<void> main() async {
     print("Google Mobile Ads n'est pas supporté sur cette plateforme");
   }
 
-  SplashMaster.initialize();
+  // SplashMaster.initialize();
   // Future.delayed(const Duration(seconds: 2)).then(
   //   (value) {
   //     SplashMaster.resume();
@@ -168,9 +164,9 @@ Future<void> initializeSupabase() async {
 // }
 //FlutterNativeSplash.remove();
 
-Future initialization(BuildContext? context) async {
-  Future.delayed(Duration(seconds: 5));
-}
+// Future initialization(BuildContext? context) async {
+//   Future.delayed(Duration(seconds: 5));
+// }
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -266,26 +262,27 @@ class _MyAppState extends State<MyApp> {
       ),
       home: //LicenseCheckScreen(),
           // Platform.isAndroid || Platform.isIOS
-          //     ?
-          SplashMaster.lottie(
-        source: AssetSource('assets/lotties/1 (104).json'),
-        lottieConfig: LottieConfig(
-          fit: BoxFit.contain,
-          // conserve le ratio original
-          overrideBoxFit: false,
-          // empêche SplashMaster de forcer le BoxFit
-          alignment: Alignment.center,
-          //centre l’animation
-          repeat: true,
-          // si tu veux que ça boucle
-          animate: true,
-          // démarre automatiquement
-          filterQuality: FilterQuality.high,
-          // meilleure qualité d’affichage
-          visibilityEnum: VisibilityEnum.none,
-        ),
-        nextScreen: MyMain(),
-      ),
+          //     ?.
+          MyMain(),
+      //     SplashMaster.lottie(
+      //   source: AssetSource('assets/lotties/1 (104).json'),
+      //   lottieConfig: LottieConfig(
+      //     fit: BoxFit.contain,
+      //     // conserve le ratio original
+      //     overrideBoxFit: false,
+      //     // empêche SplashMaster de forcer le BoxFit
+      //     alignment: Alignment.center,
+      //     //centre l’animation
+      //     repeat: true,
+      //     // si tu veux que ça boucle
+      //     animate: true,
+      //     // démarre automatiquement
+      //     filterQuality: FilterQuality.high,
+      //     // meilleure qualité d’affichage
+      //     visibilityEnum: VisibilityEnum.none,
+      //   ),
+      //   nextScreen: MyMain(),
+      // ),
 
       //     : _isLicenseValidated || _isLicenseDemoValidated
       //         ? MyMain()
