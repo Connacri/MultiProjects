@@ -190,9 +190,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   void initState() {
     super.initState();
 
-    context
-        .read<ActiviteProvider>()
-        .clearAllActivites(context); // Charger les données au démarrage
+    // context
+    //     .read<ActiviteProvider>()
+    //     .clearAllActivites(context); // Charger les données au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = Provider.of<StaffProvider>(context, listen: false);
       provider.fetchStaffs();
@@ -323,12 +323,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         _editingCells.clear();
                         _tempValues.clear();
                       });
-                      await context
-                          .read<ActiviteProvider>()
-                          .clearAllActivites(context);
-                      await runPlanificationAutomatique(context);
-                      await _showPlanificationAgentsHygieneDialog();
-                      await _showSimplePlanificationDialog();
+                      // await context
+                      //     .read<ActiviteProvider>()
+                      //     .clearAllActivites(context);
+                      // await runPlanificationAutomatique(context);
+                      // await _showPlanificationAgentsHygieneDialog();
+                      // await _showSimplePlanificationDialog();
                     }
                   },
                 ),
