@@ -631,6 +631,42 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           }
 
           final groupedStaffs = _groupStaffs(staffs);
+          Map<String, String> groupNameToImage = {
+            "Personnel Médical": "assets/photos/hopital/m1 (12).jpg",
+            "Personnel Paramédical (08h-08h)":
+                "assets/photos/hopital/m1 (10).jpg",
+            "Agents d'hygiène (08h-12h)": "assets/photos/hopital/s2 (6).jpg",
+            "Personnel Administratif (08h-16h)":
+                "assets/photos/hopital/s2 (10).jpg",
+          };
+          Map<String, List<Color>> groupNameToGradient = {
+            "Personnel Médical": [Color(0x6636E3FF), Color(0x6613D6B4)],
+            "Personnel Paramédical (08h-08h)": [
+              Color(0x66FF9A9E),
+              Color(0x66FAD0C4)
+            ],
+            "Agents d'hygiène (08h-12h)": [
+              Color(0x66A8E6CF),
+              Color(0x66FFD3A5)
+            ],
+            "Personnel Administratif (08h-16h)": [
+              Color(0x66FFB75E),
+              Color(0x66ED8F03)
+            ],
+          };
+          Map<String, VoidCallback> groupNameToOnPressed = {
+            "Personnel Médical": () async {
+              await runPlanificationAutomatique(context);
+            },
+            "Personnel Paramédical (08h-08h)": () =>
+                _showSimplePlanificationDialog(),
+            "Agents d'hygiène (08h-12h)": () async {
+              await _showPlanificationAgentsHygieneDialog();
+            },
+            "Personnel Administratif (08h-16h)": () async {
+              await runPlanificationAutomatique(context);
+            },
+          };
 
           return SingleChildScrollView(
             child: Padding(
@@ -752,423 +788,423 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 'N', _getStatusColor('N'), 'Normal'),
                             _buildLegendItem(
                                 '-', _getStatusColor('-'), 'Aucun'),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.auto_awesome, size: 16),
-                              label: const Text("Planification automatique"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.purple,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () =>
-                                  runPlanificationAutomatique(context),
-                              // onPressed: () async {
-                              //   // Demander confirmation
-                              //   final confirm = await showDialog<bool>(
-                              //     context: context,
-                              //     builder: (BuildContext context) {
-                              //       return AlertDialog(
-                              //         title: const Text("Confirmation"),
-                              //         content: Text(
-                              //           "Cette action va :\n"
-                              //           "PHASE 1 - Attribution initiale :\n"
-                              //           "• Marquer 'RE' les weekends (vendredi/samedi) pour TOUS\n"
-                              //           "• Marquer '-' les jours normaux pour les équipes A,B,C,D\n"
-                              //           "• Marquer 'N' les jours normaux pour les autres staff\n"
-                              //           "\nPHASE 2 - Application des congés :\n"
-                              //           "• Les congés existants vont ÉCRASER les planifications\n"
-                              //           "• Aucun congé ne sera perdu\n"
-                              //           "\nMois: $_selectedMonthName $_selectedYear\n"
-                              //           "Continuer ?",
-                              //         ),
-                              //         actions: [
-                              //           TextButton(
-                              //             onPressed: () =>
-                              //                 Navigator.of(context)
-                              //                     .pop(false),
-                              //             child: const Text("Annuler"),
-                              //           ),
-                              //           ElevatedButton(
-                              //             style: ElevatedButton.styleFrom(
-                              //               backgroundColor:
-                              //                   Colors.purple,
-                              //               foregroundColor: Colors.white,
-                              //             ),
-                              //             onPressed: () =>
-                              //                 Navigator.of(context)
-                              //                     .pop(true),
-                              //             child: const Text("Confirmer"),
-                              //           ),
-                              //         ],
-                              //       );
-                              //     },
-                              //   );
-                              //
-                              //   if (confirm != true) return;
-                              //
-                              //   try {
-                              //     final staffProvider =
-                              //         Provider.of<StaffProvider>(context,
-                              //             listen: false);
-                              //     final activiteProvider =
-                              //         ActiviteProvider();
-                              //     final objectBox = ObjectBox();
-                              //
-                              //     final daysInMonth =
-                              //         _daysInSelectedMonth;
-                              //     int weekendDaysCount = 0;
-                              //     int normalDaysCount = 0;
-                              //     int totalModifications = 0;
-                              //     int staffEquipeABCD = 0;
-                              //     int staffAutres = 0;
-                              //     int congesAppliques = 0;
-                              //     int gardesEcrasees = 0;
-                              //
-                              //     print(
-                              //         "🔄 PHASE 1: Attribution automatique (ignorant les congés)");
-                              //
-                              //     // PHASE 1: ATTRIBUTION AUTOMATIQUE (ignorer les congés temporairement)
-                              //     for (final staff
-                              //         in staffProvider.staffs) {
-                              //       // Ignorer certains groupes
-                              //       if (staff.groupe == "Garde 12H") {
-                              //         print(
-                              //             "⏩ ${staff.nom} ignoré car groupe = Garde 12H");
-                              //         continue;
-                              //       }
-                              //       if (staff.grade ==
-                              //           "Agent d'hygiène") {
-                              //         print(
-                              //             "⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
-                              //         continue;
-                              //       }
-                              //
-                              //       final equipe =
-                              //           staff.equipe?.toUpperCase();
-                              //       final isEquipeABCD = equipe != null &&
-                              //           ['A', 'B', 'C', 'D']
-                              //               .contains(equipe);
-                              //
-                              //       if (isEquipeABCD) {
-                              //         staffEquipeABCD++;
-                              //       } else {
-                              //         staffAutres++;
-                              //       }
-                              //
-                              //       for (int day = 1;
-                              //           day <= daysInMonth;
-                              //           day++) {
-                              //         final date = DateTime(_selectedYear,
-                              //             _selectedMonth, day);
-                              //
-                              //         String statutAAffecter;
-                              //         if (date.weekday ==
-                              //                 DateTime.friday ||
-                              //             date.weekday ==
-                              //                 DateTime.saturday) {
-                              //           // Week-end : marquer 'RE' pour TOUS
-                              //           statutAAffecter = "RE";
-                              //           if (staff ==
-                              //               staffProvider.staffs.first) {
-                              //             weekendDaysCount++;
-                              //           }
-                              //         } else {
-                              //           // Jours normaux
-                              //           if (isEquipeABCD) {
-                              //             statutAAffecter = "-";
-                              //           } else {
-                              //             statutAAffecter = "N";
-                              //           }
-                              //           if (staff ==
-                              //               staffProvider.staffs.first) {
-                              //             normalDaysCount++;
-                              //           }
-                              //         }
-                              //
-                              //         // UTILISER forceUpdateActiviteIgnoringLeave pour ignorer les congés
-                              //         await activiteProvider
-                              //             .forceUpdateActiviteIgnoringLeave(
-                              //           staff.id,
-                              //           day,
-                              //           statutAAffecter,
-                              //           year: _selectedYear,
-                              //           month: _selectedMonth,
-                              //         );
-                              //         totalModifications++;
-                              //       }
-                              //     }
-                              //
-                              //     print(
-                              //         "🔄 PHASE 2: Application des congés (écrasement)");
-                              //
-                              //     // PHASE 2: APPLIQUER LES CONGÉS PAR-DESSUS (écraser les planifications)
-                              //     for (final staff
-                              //         in staffProvider.staffs) {
-                              //       // Ignorer les mêmes groupes que dans la Phase 1
-                              //       if (staff.groupe == "Garde 12H"
-                              //           // ||
-                              //           // staff.grade ==
-                              //           //     "Agent d'hygiène"
-                              //           ) {
-                              //         continue;
-                              //       }
-                              //
-                              //       print(
-                              //           "  Traitement congés pour ${staff.nom}...");
-                              //
-                              //       // Récupérer TimeOff via requête directe
-                              //       final timeOffQuery = objectBox
-                              //           .timeOffBox
-                              //           .query(TimeOff_.staff
-                              //               .equals(staff.id))
-                              //           .build();
-                              //       final timeOffs = timeOffQuery.find();
-                              //       timeOffQuery.close();
-                              //
-                              //       if (timeOffs.isNotEmpty) {
-                              //         print(
-                              //             "    ${timeOffs.length} TimeOff(s) trouvé(s)");
-                              //
-                              //         for (var timeOff in timeOffs) {
-                              //           DateTime currentDate =
-                              //               timeOff.debut;
-                              //           while (currentDate.isBefore(
-                              //               timeOff.fin.add(
-                              //                   Duration(days: 1)))) {
-                              //             if (currentDate.year ==
-                              //                     _selectedYear &&
-                              //                 currentDate.month ==
-                              //                     _selectedMonth) {
-                              //               int jour = currentDate.day;
-                              //
-                              //               // Vérifier si c'était une planification qui va être écrasée
-                              //               final activiteQuery =
-                              //                   objectBox.activiteBox
-                              //                       .query(ActiviteJour_
-                              //                               .staff
-                              //                               .equals(staff
-                              //                                   .id) &
-                              //                           ActiviteJour_.jour
-                              //                               .equals(jour))
-                              //                       .build();
-                              //               final activites =
-                              //                   activiteQuery.find();
-                              //               activiteQuery.close();
-                              //
-                              //               if (activites.isNotEmpty) {
-                              //                 String ancienStatut =
-                              //                     activites.first.statut;
-                              //                 if (ancienStatut != 'C' &&
-                              //                     ancienStatut != 'CM') {
-                              //                   gardesEcrasees++;
-                              //                   print(
-                              //                       "      Jour $jour: $ancienStatut → C (TimeOff)");
-                              //                 }
-                              //               }
-                              //
-                              //               // Déterminer le statut de congé
-                              //               String statutConge =
-                              //                   _getStatutCongeFromTimeOff(
-                              //                       timeOff);
-                              //
-                              //               // Écraser avec le congé
-                              //               await activiteProvider
-                              //                   .forceUpdateActiviteIgnoringLeave(
-                              //                 staff.id,
-                              //                 jour,
-                              //                 statutConge,
-                              //                 year: _selectedYear,
-                              //                 month: _selectedMonth,
-                              //               );
-                              //               congesAppliques++;
-                              //             }
-                              //             currentDate = currentDate
-                              //                 .add(Duration(days: 1));
-                              //           }
-                              //         }
-                              //       }
-                              //
-                              //       // Récupérer et réappliquer les activités de congé existantes
-                              //       final activiteQuery = objectBox
-                              //           .activiteBox
-                              //           .query(ActiviteJour_.staff
-                              //               .equals(staff.id))
-                              //           .build();
-                              //       final activites =
-                              //           activiteQuery.find();
-                              //       activiteQuery.close();
-                              //
-                              //       List<ActiviteJour> congesActivites =
-                              //           activites
-                              //               .where((activite) =>
-                              //                   (activite.statut == 'C' ||
-                              //                       activite.statut ==
-                              //                           'CM') &&
-                              //                   activite.jour >= 1 &&
-                              //                   activite.jour <=
-                              //                       daysInMonth)
-                              //               .toList();
-                              //
-                              //       for (var activite
-                              //           in congesActivites) {
-                              //         await activiteProvider
-                              //             .forceUpdateActiviteIgnoringLeave(
-                              //           staff.id,
-                              //           activite.jour,
-                              //           activite.statut,
-                              //           year: _selectedYear,
-                              //           month: _selectedMonth,
-                              //         );
-                              //         congesAppliques++;
-                              //         print(
-                              //             "      Congé activité réappliqué: J${activite.jour}=${activite.statut}");
-                              //       }
-                              //     }
-                              //
-                              //     // Rafraîchir les données
-                              //     await staffProvider.fetchStaffs();
-                              //
-                              //     ScaffoldMessenger.of(context)
-                              //         .showSnackBar(
-                              //       SnackBar(
-                              //         backgroundColor: Colors.green,
-                              //         duration:
-                              //             const Duration(seconds: 8),
-                              //         content: SingleChildScrollView(
-                              //           child: Column(
-                              //             crossAxisAlignment:
-                              //                 CrossAxisAlignment.start,
-                              //             children: [
-                              //               Row(
-                              //                 children: [
-                              //                   Icon(Icons.check_circle,
-                              //                       color: Colors.white,
-                              //                       size: 20),
-                              //                   SizedBox(width: 8),
-                              //                   Text(
-                              //                     "Planification automatique terminée !",
-                              //                     style: TextStyle(
-                              //                       fontWeight:
-                              //                           FontWeight.bold,
-                              //                       fontSize: 16,
-                              //                       color: Colors.white,
-                              //                     ),
-                              //                   ),
-                              //                 ],
-                              //               ),
-                              //               SizedBox(height: 8),
-                              //               Text(
-                              //                 "Phase 1 - Attribution initiale :",
-                              //                 style: TextStyle(
-                              //                     color: Colors.white,
-                              //                     fontWeight:
-                              //                         FontWeight.w600),
-                              //               ),
-                              //               Text(
-                              //                   "• $weekendDaysCount jours de weekend marqués 'RE'",
-                              //                   style: TextStyle(
-                              //                       color: Colors.white,
-                              //                       fontSize: 12)),
-                              //               Text(
-                              //                   "• $normalDaysCount jours normaux traités",
-                              //                   style: TextStyle(
-                              //                       color: Colors.white,
-                              //                       fontSize: 12)),
-                              //               Text(
-                              //                   "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux",
-                              //                   style: TextStyle(
-                              //                       color: Colors.white,
-                              //                       fontSize: 12)),
-                              //               Text(
-                              //                   "• $staffAutres autres staff → 'N' jours normaux",
-                              //                   style: TextStyle(
-                              //                       color: Colors.white,
-                              //                       fontSize: 12)),
-                              //               SizedBox(height: 4),
-                              //               Text(
-                              //                 "Phase 2 - Congés appliqués :",
-                              //                 style: TextStyle(
-                              //                     color: Colors.white,
-                              //                     fontWeight:
-                              //                         FontWeight.w600),
-                              //               ),
-                              //               if (gardesEcrasees > 0)
-                              //                 Text(
-                              //                     "• $gardesEcrasees planifications écrasées par des congés",
-                              //                     style: TextStyle(
-                              //                         color: Colors.yellow
-                              //                             .shade200,
-                              //                         fontSize: 12)),
-                              //               Text(
-                              //                   "• $congesAppliques jours de congé appliqués",
-                              //                   style: TextStyle(
-                              //                       color: Colors.white,
-                              //                       fontSize: 12)),
-                              //               SizedBox(height: 4),
-                              //               Text(
-                              //                   "✅ Total: $totalModifications modifications",
-                              //                   style: TextStyle(
-                              //                       color: Colors.white)),
-                              //             ],
-                              //           ),
-                              //         ),
-                              //         action: SnackBarAction(
-                              //           label: "OK",
-                              //           textColor: Colors.white,
-                              //           onPressed: () =>
-                              //               ScaffoldMessenger.of(context)
-                              //                   .hideCurrentSnackBar(),
-                              //         ),
-                              //       ),
-                              //     );
-                              //   } catch (e) {
-                              //     ScaffoldMessenger.of(context)
-                              //         .showSnackBar(
-                              //       SnackBar(
-                              //         content: Text(
-                              //             "❌ Erreur lors de la planification: $e"),
-                              //         backgroundColor: Colors.red,
-                              //         duration: Duration(seconds: 3),
-                              //       ),
-                              //     );
-                              //   }
-                              // },
-                            ),
-                            ElevatedButton.icon(
-                              icon:
-                                  const Icon(Icons.medical_services, size: 16),
-                              label: const Text("Planifier gardes médical"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.teal,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () async {
-                                await _showSimplePlanificationDialog();
-                              },
-                            ),
                             // ElevatedButton.icon(
-                            //   icon: Icon(Icons.edit, color: Colors.white),
-                            //   label: Text("Éditer planification"),
+                            //   icon: const Icon(Icons.auto_awesome, size: 16),
+                            //   label: const Text("Planification automatique"),
                             //   style: ElevatedButton.styleFrom(
-                            //       backgroundColor: Colors.blue),
+                            //     backgroundColor: Colors.purple,
+                            //     foregroundColor: Colors.white,
+                            //   ),
+                            //   onPressed: () =>
+                            //       runPlanificationAutomatique(context),
+                            //   // onPressed: () async {
+                            //   //   // Demander confirmation
+                            //   //   final confirm = await showDialog<bool>(
+                            //   //     context: context,
+                            //   //     builder: (BuildContext context) {
+                            //   //       return AlertDialog(
+                            //   //         title: const Text("Confirmation"),
+                            //   //         content: Text(
+                            //   //           "Cette action va :\n"
+                            //   //           "PHASE 1 - Attribution initiale :\n"
+                            //   //           "• Marquer 'RE' les weekends (vendredi/samedi) pour TOUS\n"
+                            //   //           "• Marquer '-' les jours normaux pour les équipes A,B,C,D\n"
+                            //   //           "• Marquer 'N' les jours normaux pour les autres staff\n"
+                            //   //           "\nPHASE 2 - Application des congés :\n"
+                            //   //           "• Les congés existants vont ÉCRASER les planifications\n"
+                            //   //           "• Aucun congé ne sera perdu\n"
+                            //   //           "\nMois: $_selectedMonthName $_selectedYear\n"
+                            //   //           "Continuer ?",
+                            //   //         ),
+                            //   //         actions: [
+                            //   //           TextButton(
+                            //   //             onPressed: () =>
+                            //   //                 Navigator.of(context)
+                            //   //                     .pop(false),
+                            //   //             child: const Text("Annuler"),
+                            //   //           ),
+                            //   //           ElevatedButton(
+                            //   //             style: ElevatedButton.styleFrom(
+                            //   //               backgroundColor:
+                            //   //                   Colors.purple,
+                            //   //               foregroundColor: Colors.white,
+                            //   //             ),
+                            //   //             onPressed: () =>
+                            //   //                 Navigator.of(context)
+                            //   //                     .pop(true),
+                            //   //             child: const Text("Confirmer"),
+                            //   //           ),
+                            //   //         ],
+                            //   //       );
+                            //   //     },
+                            //   //   );
+                            //   //
+                            //   //   if (confirm != true) return;
+                            //   //
+                            //   //   try {
+                            //   //     final staffProvider =
+                            //   //         Provider.of<StaffProvider>(context,
+                            //   //             listen: false);
+                            //   //     final activiteProvider =
+                            //   //         ActiviteProvider();
+                            //   //     final objectBox = ObjectBox();
+                            //   //
+                            //   //     final daysInMonth =
+                            //   //         _daysInSelectedMonth;
+                            //   //     int weekendDaysCount = 0;
+                            //   //     int normalDaysCount = 0;
+                            //   //     int totalModifications = 0;
+                            //   //     int staffEquipeABCD = 0;
+                            //   //     int staffAutres = 0;
+                            //   //     int congesAppliques = 0;
+                            //   //     int gardesEcrasees = 0;
+                            //   //
+                            //   //     print(
+                            //   //         "🔄 PHASE 1: Attribution automatique (ignorant les congés)");
+                            //   //
+                            //   //     // PHASE 1: ATTRIBUTION AUTOMATIQUE (ignorer les congés temporairement)
+                            //   //     for (final staff
+                            //   //         in staffProvider.staffs) {
+                            //   //       // Ignorer certains groupes
+                            //   //       if (staff.groupe == "Garde 12H") {
+                            //   //         print(
+                            //   //             "⏩ ${staff.nom} ignoré car groupe = Garde 12H");
+                            //   //         continue;
+                            //   //       }
+                            //   //       if (staff.grade ==
+                            //   //           "Agent d'hygiène") {
+                            //   //         print(
+                            //   //             "⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
+                            //   //         continue;
+                            //   //       }
+                            //   //
+                            //   //       final equipe =
+                            //   //           staff.equipe?.toUpperCase();
+                            //   //       final isEquipeABCD = equipe != null &&
+                            //   //           ['A', 'B', 'C', 'D']
+                            //   //               .contains(equipe);
+                            //   //
+                            //   //       if (isEquipeABCD) {
+                            //   //         staffEquipeABCD++;
+                            //   //       } else {
+                            //   //         staffAutres++;
+                            //   //       }
+                            //   //
+                            //   //       for (int day = 1;
+                            //   //           day <= daysInMonth;
+                            //   //           day++) {
+                            //   //         final date = DateTime(_selectedYear,
+                            //   //             _selectedMonth, day);
+                            //   //
+                            //   //         String statutAAffecter;
+                            //   //         if (date.weekday ==
+                            //   //                 DateTime.friday ||
+                            //   //             date.weekday ==
+                            //   //                 DateTime.saturday) {
+                            //   //           // Week-end : marquer 'RE' pour TOUS
+                            //   //           statutAAffecter = "RE";
+                            //   //           if (staff ==
+                            //   //               staffProvider.staffs.first) {
+                            //   //             weekendDaysCount++;
+                            //   //           }
+                            //   //         } else {
+                            //   //           // Jours normaux
+                            //   //           if (isEquipeABCD) {
+                            //   //             statutAAffecter = "-";
+                            //   //           } else {
+                            //   //             statutAAffecter = "N";
+                            //   //           }
+                            //   //           if (staff ==
+                            //   //               staffProvider.staffs.first) {
+                            //   //             normalDaysCount++;
+                            //   //           }
+                            //   //         }
+                            //   //
+                            //   //         // UTILISER forceUpdateActiviteIgnoringLeave pour ignorer les congés
+                            //   //         await activiteProvider
+                            //   //             .forceUpdateActiviteIgnoringLeave(
+                            //   //           staff.id,
+                            //   //           day,
+                            //   //           statutAAffecter,
+                            //   //           year: _selectedYear,
+                            //   //           month: _selectedMonth,
+                            //   //         );
+                            //   //         totalModifications++;
+                            //   //       }
+                            //   //     }
+                            //   //
+                            //   //     print(
+                            //   //         "🔄 PHASE 2: Application des congés (écrasement)");
+                            //   //
+                            //   //     // PHASE 2: APPLIQUER LES CONGÉS PAR-DESSUS (écraser les planifications)
+                            //   //     for (final staff
+                            //   //         in staffProvider.staffs) {
+                            //   //       // Ignorer les mêmes groupes que dans la Phase 1
+                            //   //       if (staff.groupe == "Garde 12H"
+                            //   //           // ||
+                            //   //           // staff.grade ==
+                            //   //           //     "Agent d'hygiène"
+                            //   //           ) {
+                            //   //         continue;
+                            //   //       }
+                            //   //
+                            //   //       print(
+                            //   //           "  Traitement congés pour ${staff.nom}...");
+                            //   //
+                            //   //       // Récupérer TimeOff via requête directe
+                            //   //       final timeOffQuery = objectBox
+                            //   //           .timeOffBox
+                            //   //           .query(TimeOff_.staff
+                            //   //               .equals(staff.id))
+                            //   //           .build();
+                            //   //       final timeOffs = timeOffQuery.find();
+                            //   //       timeOffQuery.close();
+                            //   //
+                            //   //       if (timeOffs.isNotEmpty) {
+                            //   //         print(
+                            //   //             "    ${timeOffs.length} TimeOff(s) trouvé(s)");
+                            //   //
+                            //   //         for (var timeOff in timeOffs) {
+                            //   //           DateTime currentDate =
+                            //   //               timeOff.debut;
+                            //   //           while (currentDate.isBefore(
+                            //   //               timeOff.fin.add(
+                            //   //                   Duration(days: 1)))) {
+                            //   //             if (currentDate.year ==
+                            //   //                     _selectedYear &&
+                            //   //                 currentDate.month ==
+                            //   //                     _selectedMonth) {
+                            //   //               int jour = currentDate.day;
+                            //   //
+                            //   //               // Vérifier si c'était une planification qui va être écrasée
+                            //   //               final activiteQuery =
+                            //   //                   objectBox.activiteBox
+                            //   //                       .query(ActiviteJour_
+                            //   //                               .staff
+                            //   //                               .equals(staff
+                            //   //                                   .id) &
+                            //   //                           ActiviteJour_.jour
+                            //   //                               .equals(jour))
+                            //   //                       .build();
+                            //   //               final activites =
+                            //   //                   activiteQuery.find();
+                            //   //               activiteQuery.close();
+                            //   //
+                            //   //               if (activites.isNotEmpty) {
+                            //   //                 String ancienStatut =
+                            //   //                     activites.first.statut;
+                            //   //                 if (ancienStatut != 'C' &&
+                            //   //                     ancienStatut != 'CM') {
+                            //   //                   gardesEcrasees++;
+                            //   //                   print(
+                            //   //                       "      Jour $jour: $ancienStatut → C (TimeOff)");
+                            //   //                 }
+                            //   //               }
+                            //   //
+                            //   //               // Déterminer le statut de congé
+                            //   //               String statutConge =
+                            //   //                   _getStatutCongeFromTimeOff(
+                            //   //                       timeOff);
+                            //   //
+                            //   //               // Écraser avec le congé
+                            //   //               await activiteProvider
+                            //   //                   .forceUpdateActiviteIgnoringLeave(
+                            //   //                 staff.id,
+                            //   //                 jour,
+                            //   //                 statutConge,
+                            //   //                 year: _selectedYear,
+                            //   //                 month: _selectedMonth,
+                            //   //               );
+                            //   //               congesAppliques++;
+                            //   //             }
+                            //   //             currentDate = currentDate
+                            //   //                 .add(Duration(days: 1));
+                            //   //           }
+                            //   //         }
+                            //   //       }
+                            //   //
+                            //   //       // Récupérer et réappliquer les activités de congé existantes
+                            //   //       final activiteQuery = objectBox
+                            //   //           .activiteBox
+                            //   //           .query(ActiviteJour_.staff
+                            //   //               .equals(staff.id))
+                            //   //           .build();
+                            //   //       final activites =
+                            //   //           activiteQuery.find();
+                            //   //       activiteQuery.close();
+                            //   //
+                            //   //       List<ActiviteJour> congesActivites =
+                            //   //           activites
+                            //   //               .where((activite) =>
+                            //   //                   (activite.statut == 'C' ||
+                            //   //                       activite.statut ==
+                            //   //                           'CM') &&
+                            //   //                   activite.jour >= 1 &&
+                            //   //                   activite.jour <=
+                            //   //                       daysInMonth)
+                            //   //               .toList();
+                            //   //
+                            //   //       for (var activite
+                            //   //           in congesActivites) {
+                            //   //         await activiteProvider
+                            //   //             .forceUpdateActiviteIgnoringLeave(
+                            //   //           staff.id,
+                            //   //           activite.jour,
+                            //   //           activite.statut,
+                            //   //           year: _selectedYear,
+                            //   //           month: _selectedMonth,
+                            //   //         );
+                            //   //         congesAppliques++;
+                            //   //         print(
+                            //   //             "      Congé activité réappliqué: J${activite.jour}=${activite.statut}");
+                            //   //       }
+                            //   //     }
+                            //   //
+                            //   //     // Rafraîchir les données
+                            //   //     await staffProvider.fetchStaffs();
+                            //   //
+                            //   //     ScaffoldMessenger.of(context)
+                            //   //         .showSnackBar(
+                            //   //       SnackBar(
+                            //   //         backgroundColor: Colors.green,
+                            //   //         duration:
+                            //   //             const Duration(seconds: 8),
+                            //   //         content: SingleChildScrollView(
+                            //   //           child: Column(
+                            //   //             crossAxisAlignment:
+                            //   //                 CrossAxisAlignment.start,
+                            //   //             children: [
+                            //   //               Row(
+                            //   //                 children: [
+                            //   //                   Icon(Icons.check_circle,
+                            //   //                       color: Colors.white,
+                            //   //                       size: 20),
+                            //   //                   SizedBox(width: 8),
+                            //   //                   Text(
+                            //   //                     "Planification automatique terminée !",
+                            //   //                     style: TextStyle(
+                            //   //                       fontWeight:
+                            //   //                           FontWeight.bold,
+                            //   //                       fontSize: 16,
+                            //   //                       color: Colors.white,
+                            //   //                     ),
+                            //   //                   ),
+                            //   //                 ],
+                            //   //               ),
+                            //   //               SizedBox(height: 8),
+                            //   //               Text(
+                            //   //                 "Phase 1 - Attribution initiale :",
+                            //   //                 style: TextStyle(
+                            //   //                     color: Colors.white,
+                            //   //                     fontWeight:
+                            //   //                         FontWeight.w600),
+                            //   //               ),
+                            //   //               Text(
+                            //   //                   "• $weekendDaysCount jours de weekend marqués 'RE'",
+                            //   //                   style: TextStyle(
+                            //   //                       color: Colors.white,
+                            //   //                       fontSize: 12)),
+                            //   //               Text(
+                            //   //                   "• $normalDaysCount jours normaux traités",
+                            //   //                   style: TextStyle(
+                            //   //                       color: Colors.white,
+                            //   //                       fontSize: 12)),
+                            //   //               Text(
+                            //   //                   "• $staffEquipeABCD staff équipes A,B,C,D → '-' jours normaux",
+                            //   //                   style: TextStyle(
+                            //   //                       color: Colors.white,
+                            //   //                       fontSize: 12)),
+                            //   //               Text(
+                            //   //                   "• $staffAutres autres staff → 'N' jours normaux",
+                            //   //                   style: TextStyle(
+                            //   //                       color: Colors.white,
+                            //   //                       fontSize: 12)),
+                            //   //               SizedBox(height: 4),
+                            //   //               Text(
+                            //   //                 "Phase 2 - Congés appliqués :",
+                            //   //                 style: TextStyle(
+                            //   //                     color: Colors.white,
+                            //   //                     fontWeight:
+                            //   //                         FontWeight.w600),
+                            //   //               ),
+                            //   //               if (gardesEcrasees > 0)
+                            //   //                 Text(
+                            //   //                     "• $gardesEcrasees planifications écrasées par des congés",
+                            //   //                     style: TextStyle(
+                            //   //                         color: Colors.yellow
+                            //   //                             .shade200,
+                            //   //                         fontSize: 12)),
+                            //   //               Text(
+                            //   //                   "• $congesAppliques jours de congé appliqués",
+                            //   //                   style: TextStyle(
+                            //   //                       color: Colors.white,
+                            //   //                       fontSize: 12)),
+                            //   //               SizedBox(height: 4),
+                            //   //               Text(
+                            //   //                   "✅ Total: $totalModifications modifications",
+                            //   //                   style: TextStyle(
+                            //   //                       color: Colors.white)),
+                            //   //             ],
+                            //   //           ),
+                            //   //         ),
+                            //   //         action: SnackBarAction(
+                            //   //           label: "OK",
+                            //   //           textColor: Colors.white,
+                            //   //           onPressed: () =>
+                            //   //               ScaffoldMessenger.of(context)
+                            //   //                   .hideCurrentSnackBar(),
+                            //   //         ),
+                            //   //       ),
+                            //   //     );
+                            //   //   } catch (e) {
+                            //   //     ScaffoldMessenger.of(context)
+                            //   //         .showSnackBar(
+                            //   //       SnackBar(
+                            //   //         content: Text(
+                            //   //             "❌ Erreur lors de la planification: $e"),
+                            //   //         backgroundColor: Colors.red,
+                            //   //         duration: Duration(seconds: 3),
+                            //   //       ),
+                            //   //     );
+                            //   //   }
+                            //   // },
+                            // ),
+                            // ElevatedButton.icon(
+                            //   icon:
+                            //       const Icon(Icons.medical_services, size: 16),
+                            //   label: const Text("Planifier gardes médical"),
+                            //   style: ElevatedButton.styleFrom(
+                            //     backgroundColor: Colors.teal,
+                            //     foregroundColor: Colors.white,
+                            //   ),
                             //   onPressed: () async {
-                            //     await _showEditPlanificationDialog(
-                            //         context,
-                            //         _selectedMonth,
-                            //         _selectedYear);
+                            //     await _showSimplePlanificationDialog();
                             //   },
                             // ),
-                            ElevatedButton.icon(
-                              icon:
-                                  const Icon(Icons.cleaning_services, size: 16),
-                              label: const Text("Planifier agents d'hygiène"),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.brown,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () async {
-                                await _showPlanificationAgentsHygieneDialog();
-                              },
-                            ),
+                            // // ElevatedButton.icon(
+                            // //   icon: Icon(Icons.edit, color: Colors.white),
+                            // //   label: Text("Éditer planification"),
+                            // //   style: ElevatedButton.styleFrom(
+                            // //       backgroundColor: Colors.blue),
+                            // //   onPressed: () async {
+                            // //     await _showEditPlanificationDialog(
+                            // //         context,
+                            // //         _selectedMonth,
+                            // //         _selectedYear);
+                            // //   },
+                            // // ),
+                            // ElevatedButton.icon(
+                            //   icon:
+                            //       const Icon(Icons.cleaning_services, size: 16),
+                            //   label: const Text("Planifier agents d'hygiène"),
+                            //   style: ElevatedButton.styleFrom(
+                            //     backgroundColor: Colors.brown,
+                            //     foregroundColor: Colors.white,
+                            //   ),
+                            //   onPressed: () async {
+                            //     await _showPlanificationAgentsHygieneDialog();
+                            //   },
+                            // ),
                             FilledButton.tonalIcon(
                                 onPressed: () => _listStaffWithTimeOff(),
                                 label: Text('List Congé debug')),
@@ -1177,72 +1213,55 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       ],
                     ),
                   ),
-                  Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: GridView.count(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 24),
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 24,
-                        mainAxisSpacing: 24,
-                        childAspectRatio: 0.65,
-                        children: const [
-                          ProductCard(
-                            title: 'Collarless Faux\nSuede Jacket',
-                            price: null,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1544006659-f0b21884ce1d?q=80&w=1200&auto=format&fit=crop',
-                            overlayColors: [
-                              Color(0x6636E3FF),
-                              Color(0x6613D6B4)
-                            ],
-                            buttonLabel: 'Buy Now',
-                            imageAlignment: Alignment.centerLeft,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      double cardWidth = constraints.maxWidth > 500
+                          ? (constraints.maxWidth - 48) /
+                              4 // 4 cartes sur desktop
+                          : (constraints.maxWidth - 16 - 8) /
+                              2; // 2 cartes sur mobile (marges: 16, espacement: 8)
+
+                      return SingleChildScrollView(
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: groupedStaffs.entries.map((entry) {
+                              String groupeName = entry.key;
+                              String imageUrl = groupNameToImage[groupeName] ??
+                                  "assets/photos/hopital/m1 (5).jpg";
+                              List<Color> overlayColors =
+                                  groupNameToGradient[groupeName] ??
+                                      [Color(0x6636E3FF), Colors.black87];
+                              // Récupère la méthode onPressed
+                              VoidCallback? onPressed =
+                                  groupNameToOnPressed[groupeName] ??
+                                      () {
+                                        print(
+                                            "Aucune action définie pour $groupeName");
+                                      };
+
+                              return SizedBox(
+                                width: cardWidth,
+                                height: 400,
+                                child: CardBtn(
+                                  title: groupeName,
+                                  nombrePersonne: entry.value.length,
+                                  imageUrl: imageUrl,
+                                  overlayColors: overlayColors,
+                                  buttonLabel: 'Planifier',
+                                  imageAlignment: Alignment.centerLeft,
+                                  onPressed: onPressed,
+                                ),
+                              );
+                            }).toList(),
                           ),
-                          ProductCard(
-                            title: 'Mens Washed\nOversized Hoodie',
-                            price: 256,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1516280030429-27679b3dc9cf?q=80&w=1200&auto=format&fit=crop',
-                            overlayColors: [
-                              Color(0x66B4FFDE),
-                              Color(0x66FFE38F)
-                            ],
-                            buttonLabel: 'Buy Now',
-                            imageAlignment: Alignment.centerRight,
-                          ),
-                          ProductCard(
-                            title: 'Mens Washed\nOversized Hoodie',
-                            price: 128,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1542060748-10c28b62716b?q=80&w=1200&auto=format&fit=crop',
-                            overlayColors: [
-                              Color(0x66B7C6FF),
-                              Color(0x339AA6B2)
-                            ],
-                            buttonLabel: 'Buy Now',
-                            imageAlignment: Alignment.topCenter,
-                            grayscaleImage: true,
-                          ),
-                          ProductCard(
-                            title: 'Mens Washed\nOversized Hoodie',
-                            price: null,
-                            imageUrl:
-                                'https://images.unsplash.com/photo-1520975922373-a83ca6c0557a?q=80&w=1200&auto=format&fit=crop',
-                            overlayColors: [
-                              Color(0x66FF9D3C),
-                              Color(0x33F3D2C1)
-                            ],
-                            buttonLabel: 'Buy Now',
-                            imageAlignment: Alignment.center,
-                            warmGlow: true,
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   ),
+
                   const SizedBox(height: 24),
 
                   // Tableaux pour chaque groupe
