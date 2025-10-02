@@ -1329,10 +1329,15 @@ class Planification {
   // 🔹 Optionnel : lier à une branche/service
   final branch = ToOne<Branch>();
 
+  // 🆕 NOUVEAU : Sauvegarder les activités du mois
+  String?
+      activitesJson; // Format: "staffId:jour:statut,staffId:jour:statut,..."
+
   Planification({
     this.id = 0,
     required this.mois,
     required this.annee,
     required this.ordreEquipes,
+    this.activitesJson,
   });
 }

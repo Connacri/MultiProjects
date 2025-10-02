@@ -1791,7 +1791,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(65, 4929433361385066189),
     name: 'Planification',
-    lastPropertyId: const obx_int.IdUid(5, 461988957453692681),
+    lastPropertyId: const obx_int.IdUid(6, 936065242258029342),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1825,6 +1825,12 @@ final _entities = <obx_int.ModelEntity>[
         flags: 520,
         indexId: const obx_int.IdUid(147, 51939098627082601),
         relationTarget: 'Branch',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 936065242258029342),
+        name: 'activitesJson',
+        type: 9,
+        flags: 0,
       ),
     ],
     relations: <obx_int.ModelRelation>[],
@@ -4640,12 +4646,16 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (Planification object, fb.Builder fbb) {
         final ordreEquipesOffset = fbb.writeString(object.ordreEquipes);
-        fbb.startTable(6);
+        final activitesJsonOffset = object.activitesJson == null
+            ? null
+            : fbb.writeString(object.activitesJson!);
+        fbb.startTable(7);
         fbb.addInt64(0, object.id);
         fbb.addInt64(1, object.mois);
         fbb.addInt64(2, object.annee);
         fbb.addOffset(3, ordreEquipesOffset);
         fbb.addInt64(4, object.branch.targetId);
+        fbb.addOffset(5, activitesJsonOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -4673,11 +4683,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final ordreEquipesParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 10, '');
+        final activitesJsonParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 14);
         final object = Planification(
           id: idParam,
           mois: moisParam,
           annee: anneeParam,
           ordreEquipes: ordreEquipesParam,
+          activitesJson: activitesJsonParam,
         );
         object.branch.targetId = const fb.Int64Reader().vTableGet(
           buffer,
@@ -6000,5 +6014,10 @@ class Planification_ {
   /// See [Planification.branch].
   static final branch = obx.QueryRelationToOne<Planification, Branch>(
     _entities[24].properties[4],
+  );
+
+  /// See [Planification.activitesJson].
+  static final activitesJson = obx.QueryStringProperty<Planification>(
+    _entities[24].properties[5],
   );
 }

@@ -92,6 +92,113 @@ class StaffProvider with ChangeNotifier {
       print("Erreur deleteStaff: $e");
     }
   }
+
+  // 🆕 NOUVELLE MÉTHODE : Sauvegarder automatiquement les activités du mois
+  Future<void> saveMonthActivities(int year, int month) async {
+    try {
+      final objectBox = ObjectBox();
+
+      // Récupérer toutes les activités du mois
+      final allActivites = objectBox.activiteBox.getAll();
+
+      // Construire la chaîne JSON
+      final activitesData = allActivites
+          .map((a) => "${a.staff.targetId}:${a.jour}:${a.statut}")
+          .join(",");
+
+      // Chercher ou créer la planification
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(month) &
+              Planification_.annee.equals(year))
+          .build();
+
+      Planification? planif = query.findFirst();
+      query.close();
+
+      if (planif != null) {
+        // Mettre à jour
+        planif.activitesJson = activitesData;
+        objectBox.planificationBox.put(planif);
+        print("✅ Activités sauvegardées pour $month/$year");
+      } else {
+        // Créer nouvelle planification
+        final newPlanif = Planification(
+          mois: month,
+          annee: year,
+          ordreEquipes: "",
+          activitesJson: activitesData,
+        );
+        objectBox.planificationBox.put(newPlanif);
+        print("✅ Nouvelle sauvegarde créée pour $month/$year");
+      }
+    } catch (e) {
+      print("❌ Erreur saveMonthActivities: $e");
+    }
+  }
+
+  // 🆕 NOUVELLE MÉTHODE : Charger les activités d'un mois
+  /// Charge les activités d'un mois sauvegardé
+  Future<bool> loadMonthActivities(int year, int month) async {
+    try {
+      // Chercher la planification
+      final query = _objectBox.planificationBox
+          .query(Planification_.mois.equals(month) &
+              Planification_.annee.equals(year))
+          .build();
+
+      final planif = query.findFirst();
+      query.close();
+
+      // Toujours vider les activités existantes
+      _objectBox.activiteBox.removeAll();
+
+      if (planif == null ||
+          planif.activitesJson == null ||
+          planif.activitesJson!.isEmpty) {
+        print("ℹ️ Nouveau mois : $month/$year (tableau vide)");
+        await fetchStaffs();
+        return false;
+      }
+
+      print("🔄 Restauration des activités pour $month/$year");
+
+      // Restaurer depuis la sauvegarde
+      final activitesData = planif.activitesJson!.split(",");
+      int restored = 0;
+
+      for (final data in activitesData) {
+        final parts = data.split(":");
+        if (parts.length != 3) continue;
+
+        final staffId = int.tryParse(parts[0]);
+        final jour = int.tryParse(parts[1]);
+        final statut = parts[2];
+
+        if (staffId == null || jour == null) continue;
+
+        final staff = _objectBox.staffBox.get(staffId);
+        if (staff == null) {
+          print("⚠️ Staff $staffId non trouvé, ignoré");
+          continue;
+        }
+
+        final activite = ActiviteJour(
+          jour: jour,
+          statut: statut,
+        )..staff.target = staff;
+
+        _objectBox.activiteBox.put(activite);
+        restored++;
+      }
+
+      await fetchStaffs();
+      print("✅ $restored activités restaurées pour $month/$year");
+      return true;
+    } catch (e) {
+      print("❌ Erreur loadMonthActivities: $e");
+      return false;
+    }
+  }
 }
 
 /// Provider pour gérer les activités - VERSION AMÉLIORÉE

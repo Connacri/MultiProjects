@@ -1493,7 +1493,7 @@
     },
     {
       "id": "65:4929433361385066189",
-      "lastPropertyId": "5:461988957453692681",
+      "lastPropertyId": "6:936065242258029342",
       "name": "Planification",
       "properties": [
         {
@@ -1524,6 +1524,11 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "Branch"
+        },
+        {
+          "id": "6:936065242258029342",
+          "name": "activitesJson",
+          "type": 9
         }
       ],
       "relations": []
