@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:cached_network_image/cached_network_image.dart';
-
 // import 'package:calendar_timeline/calendar_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -205,28 +204,28 @@ class _FactureDetailState extends State<FactureDetail> {
                     SizedBox(
                       height: 8,
                     ),
-                    StreamBuilder<List<MarqueeData>>(
-                      stream: _marqueeDataStream,
-                      initialData: const [],
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }
-                        if (snapshot.hasError) {
-                          return Center(
-                              child: Text('Erreur: ${snapshot.error}'));
-                        }
-                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                          return const Center(child: Icon(Icons.error_outline));
-                        }
-
-                        return MarqueeWidget(
-                            marqueeData: snapshot.data!,
-                            controller: _controller);
-                      },
-                    ),
+                    // StreamBuilder<List<MarqueeData>>(
+                    //   stream: _marqueeDataStream,
+                    //   initialData: const [],
+                    //   builder: (context, snapshot) {
+                    //     if (snapshot.connectionState ==
+                    //         ConnectionState.waiting) {
+                    //       return const Center(
+                    //           child: CircularProgressIndicator());
+                    //     }
+                    //     if (snapshot.hasError) {
+                    //       return Center(
+                    //           child: Text('Erreur: ${snapshot.error}'));
+                    //     }
+                    //     if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    //       return const Center(child: Icon(Icons.error_outline));
+                    //     }
+                    //
+                    //     return MarqueeWidget(
+                    //         marqueeData: snapshot.data!,
+                    //         controller: _controller);
+                    //   },
+                    // ),
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ClientInfos(),
@@ -1145,8 +1144,7 @@ class _FactureListState extends State<FactureList> {
               ),
               Expanded(
                   flex: 2,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Wrap(
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(8.0),
@@ -1585,7 +1583,7 @@ Widget _buildInfoCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                Wrap(
                   children: [
                     Icon(
                       icon,
