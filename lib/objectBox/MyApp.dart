@@ -14,9 +14,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
 import '../Hopital/StaffProvider.dart';
-import '../Hopital/TableauStaff.dart';
+import '../Hopital/test.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
+import '../licence2.dart';
 import '../objectBox/pages/ClientListScreen.dart';
 import '../objectBox/pages/addProduct.dart';
 import '../objectBox/tests/cruds.dart' as cruds;
@@ -71,36 +72,39 @@ class MyApp9 extends StatelessWidget {
       return Center(child: CircularProgressIndicator());
     }
 
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
-        ChangeNotifierProvider(create: (_) => CommerceProvider(objectBox)),
-        ChangeNotifierProvider(create: (_) => CartProvider(objectBox)),
-        ChangeNotifierProvider(create: (_) => ClientProvider(objectBox)),
-        ChangeNotifierProvider(create: (_) => AdProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        //////////////////////////////////////////////////////////////////
-        ChangeNotifierProvider(create: (_) => ConnectionStatusProvider()),
-        ChangeNotifierProvider(create: (_) => FacturationProvider()),
-        ChangeNotifierProvider(create: (_) => EditableFieldProvider()),
-        ChangeNotifierProvider(
-          create: (_) => SignalementProvider(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => SignalementProviderSupabase(),
-        ),
+    return LicenseProtectedApp(
+      activationScreen: const LicenseActivationScreen(),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
+          ChangeNotifierProvider(create: (_) => CommerceProvider(objectBox)),
+          ChangeNotifierProvider(create: (_) => CartProvider(objectBox)),
+          ChangeNotifierProvider(create: (_) => ClientProvider(objectBox)),
+          ChangeNotifierProvider(create: (_) => AdProvider()),
+          ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          //////////////////////////////////////////////////////////////////
+          ChangeNotifierProvider(create: (_) => ConnectionStatusProvider()),
+          ChangeNotifierProvider(create: (_) => FacturationProvider()),
+          ChangeNotifierProvider(create: (_) => EditableFieldProvider()),
+          ChangeNotifierProvider(
+            create: (_) => SignalementProvider(),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => SignalementProviderSupabase(),
+          ),
 
-        ChangeNotifierProvider(
-          create: (context) => HotelProvider(objectBox),
-        ),
+          ChangeNotifierProvider(
+            create: (context) => HotelProvider(objectBox),
+          ),
 
-        ChangeNotifierProvider(create: (_) => StaffProvider()),
-        ChangeNotifierProvider(create: (_) => ActiviteProvider()),
-        ChangeNotifierProvider(
-            create: (_) => TimeOffProvider()..fetchTimeOffs()),
-      ],
-      child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
-        return MaterialApp(
+          ChangeNotifierProvider(create: (_) => StaffProvider()),
+          ChangeNotifierProvider(create: (_) => ActiviteProvider()),
+          ChangeNotifierProvider(
+              create: (_) => TimeOffProvider()..fetchTimeOffs()),
+        ],
+        child:
+            Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
+          return MaterialApp(
             title: 'POS',
             theme: ThemeData(
               fontFamily: 'oswald',
@@ -147,21 +151,25 @@ class MyApp9 extends StatelessWidget {
 
             //darkTheme: ThemeData.dark(),
             // home: Scaffold(body: FactureList()),
-            /// hada houwa tali         // home: /*showPlatform*/ adaptiveHome(
+            /// hada houwa tali
+            // home: /*showPlatform*/ adaptiveHome(
             //   objectBox: objectBox,
             // ),
             //   home: FacturationPageUI(),
-            home: TableauStaffPage()
+            home: CardSelectionScreen(),
+
+            //  TableauStaffPage()
 
             // Platform.isAndroid || Platform.isIOS
             //     ? Hotel_Management() //HomePage3()
             //     : /*showPlatform*/
             //     Hotel_Management() //
-            // // adaptiveHome(
-            // //         objectBox: objectBox,
-            // //       ),
-            );
-      }),
+            // adaptiveHome(
+            //         objectBox: objectBox,
+            //       ),
+          );
+        }),
+      ),
     );
   }
 }
