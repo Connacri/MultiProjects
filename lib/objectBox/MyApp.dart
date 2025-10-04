@@ -14,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
 import '../Hopital/StaffProvider.dart';
-import '../Hopital/test.dart';
+import '../Hopital/license/MyAppBlackHole.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import '../objectBox/pages/ClientListScreen.dart';
@@ -152,7 +152,8 @@ class MyApp9 extends StatelessWidget {
           //   objectBox: objectBox,
           // ),
           //   home: FacturationPageUI(),
-          home: CardSelectionScreen(),
+          home: MyAppBlackHole(),
+          //CardSelectionScreen(),
 
           //  TableauStaffPage()
 
