@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../LicenseInfoPage.dart';
 import '../StorageService.dart';
+import 'DesktopEntryScreen.dart';
 import 'LicenseActivationScreen.dart';
 
 class MainApp extends StatelessWidget {
@@ -21,6 +22,16 @@ class MainApp extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.info, color: Colors.blue),
+              title: const Text('Voir les détails DesktopEntryScreen'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const DesktopEntryScreen()),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.info, color: Colors.blue),
               title: const Text('Voir les détails'),

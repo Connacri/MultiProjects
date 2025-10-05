@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:kenzy/Hopital/test.dart';
 
-import 'CardSelectionScreen.dart';
 import 'admin/AdminLicenseApp.dart';
 
 class MobileEntryScreen extends StatelessWidget {
@@ -69,7 +69,7 @@ class MobileEntryScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => CardSelectionScreen(),
+                          builder: (_) => CardSelectionScreen1(),
                         ),
                       );
                     },

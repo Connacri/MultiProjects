@@ -28,10 +28,10 @@ class PageCardData {
 }
 
 // Le widget de l'interface de sélection
-class CardSelectionScreen extends StatelessWidget {
+class CardSelectionScreen1 extends StatelessWidget {
   // Passez votre objectBox si nécessaire
 
-  const CardSelectionScreen({
+  const CardSelectionScreen1({
     super.key,
   });
 
@@ -44,7 +44,7 @@ class CardSelectionScreen extends StatelessWidget {
     // Données pour vos 5 pages
     final List<PageCardData> cardData = [
       PageCardData(
-        title: 'Tableau Staff',
+        title: 'Staff Hopital',
         subtitle: 'Gestion du personnel',
         imageUrl: 'assets/photos/nav (1).jpg',
         gradientColors: [
@@ -54,7 +54,7 @@ class CardSelectionScreen extends StatelessWidget {
         destination: TableauStaffPage(),
       ),
       PageCardData(
-        title: 'Facturation',
+        title: 'POS',
         subtitle: 'Gestion des factures',
         imageUrl: 'assets/photos/nav (2).jpg',
         gradientColors: [
@@ -80,9 +80,19 @@ class CardSelectionScreen extends StatelessWidget {
             : Hotel_Management(),
       ),
       PageCardData(
+        title: ' Hotel Management',
+        subtitle: 'Interface adaptative',
+        imageUrl: 'assets/photos/nav (4).jpg',
+        gradientColors: [
+          Colors.green.shade800.withOpacity(0.8),
+          Colors.teal.shade800.withOpacity(0.8)
+        ],
+        destination: Hotel_Management(),
+      ),
+      PageCardData(
         title: 'Adaptive Home',
         subtitle: 'Interface adaptative',
-        imageUrl: 'assets/photos/nav (1).jpg',
+        imageUrl: 'assets/photos/nav (5).jpg',
         gradientColors: [
           Colors.green.shade800.withOpacity(0.8),
           Colors.teal.shade800.withOpacity(0.8)

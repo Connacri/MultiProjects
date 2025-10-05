@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../StorageService.dart';
 import '../TestPinValidation.dart';
+import 'MainApp.dart';
 
 class LicenseActivationScreen extends StatefulWidget {
   const LicenseActivationScreen({Key? key}) : super(key: key);
@@ -127,7 +128,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MainAppScreen()),
+            MaterialPageRoute(builder: (_) => const MainApp()),
           );
         }
       } else {
@@ -580,19 +581,6 @@ Cordialement
           ),
         ),
       ],
-    );
-  }
-}
-
-class MainAppScreen extends StatelessWidget {
-  const MainAppScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Application Activée')),
-      body: const Center(
-          child: Text('Bienvenue ! Votre application est activée.')),
     );
   }
 }

@@ -11,25 +11,9 @@ class MyAppBlackHole extends StatelessWidget {
     final bool isMobilePlatform = Platform.isAndroid || Platform.isIOS;
 
     if (isMobilePlatform) {
-      return MaterialApp(
-        title: 'Mon Application',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-        ),
-        home: MobileEntryScreen(),
-        debugShowCheckedModeBanner: false,
-      );
+      return MobileEntryScreen();
     } else {
-      return MaterialApp(
-        title: 'Mon Application',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-        ),
-        home: DesktopEntryScreen(),
-        debugShowCheckedModeBanner: false,
-      );
+      return DesktopEntryScreen();
     }
   }
 }

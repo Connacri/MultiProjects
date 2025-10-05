@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../test.dart';
 import '../LicenseService.dart';
 import 'LicenseActivationScreen.dart';
-import 'MainApp.dart';
 
 class DesktopEntryScreen extends StatefulWidget {
   const DesktopEntryScreen({Key? key}) : super(key: key);
@@ -44,7 +44,7 @@ class _DesktopEntryScreenState extends State<DesktopEntryScreen> {
         Future.delayed(Duration(milliseconds: 500), () {
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => MainApp()),
+              MaterialPageRoute(builder: (_) => CardSelectionScreen1()),
             );
           }
         });

@@ -10,6 +10,7 @@ import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
 import 'ActivitePersonne.dart';
 import 'StaffProvider.dart';
+import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
 
 /// Widget qui permet le drag-to-scroll pour desktop
@@ -433,6 +434,73 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 return Row(
                   children: [
                     //_buildEditControls(),
+                    IconButton(
+                      icon: const Icon(Icons.save_alt),
+                      tooltip: 'Sauvegarder le planning en PDF',
+                      onPressed: () async {
+                        // Afficher un indicateur de chargement
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext dialogContext) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+
+                        try {
+                          final filePath =
+                              await generateAndSaveMonthPlanningPDF(
+                            context,
+                            year: _selectedYear,
+                            month: _selectedMonth,
+                          );
+
+                          // Fermer le dialogue de chargement - utilisez le contexte racine
+                          if (Navigator.canPop(context)) {
+                            Navigator.of(context, rootNavigator: true).pop();
+                          }
+
+                          if (filePath != null) {
+                            // Afficher un message de succès
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    '✅ PDF sauvegardé avec succès !\n📁 $filePath'),
+                                duration: const Duration(seconds: 4),
+                                action: SnackBarAction(
+                                  label: 'OK',
+                                  onPressed: () {},
+                                ),
+                              ),
+                            );
+                          } else {
+                            // Afficher un message d'erreur
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    '❌ Erreur lors de la sauvegarde du PDF'),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // Fermer le dialogue de chargement en cas d'erreur
+                          if (Navigator.canPop(context)) {
+                            Navigator.of(context, rootNavigator: true).pop();
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Erreur : $e'),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+
                     IconButton(
                       icon: const Icon(Icons.delete_forever, color: Colors.red),
                       tooltip: "Vider toutes les activités",

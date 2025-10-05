@@ -1289,6 +1289,11 @@ class ActiviteJour {
     required this.jour,
     required this.statut,
   });
+
+  /// Factory for creating an empty/default activity
+  factory ActiviteJour.empty() {
+    return ActiviteJour(jour: 0, statut: '');
+  }
 }
 
 @Entity()
