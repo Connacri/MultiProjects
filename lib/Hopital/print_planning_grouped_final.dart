@@ -51,12 +51,17 @@ Future<String?> generateAndSaveMonthPlanningPDF(
   // Pour chaque groupe, on crée une page par sous-groupe (médecins / autres pour 08H-16H)
   grouped.forEach((groupe, membres) {
     List<List<dynamic>> subGroups = [];
-    if (groupe.toUpperCase().contains('08H') &&
-        groupe.toUpperCase().contains('12H')) {
-      subGroups.add(membres);
-    }
 
+    // ✅ Groupe 08H-12H (Agents d'hygiène)
     if (groupe.toUpperCase().contains('08H') &&
+        groupe.toUpperCase().contains('12H') &&
+        !groupe.toUpperCase().contains('16H')) {
+      // ⭐ Exclusion importante
+      subGroups.add(membres);
+      print("✅ Groupe 08H-12H détecté: $groupe avec ${membres.length} membres");
+    }
+    // ✅ Groupe 08H-16H (Médecins/Administratifs)
+    else if (groupe.toUpperCase().contains('08H') &&
         groupe.toUpperCase().contains('16H')) {
       final medecins = membres.where((s) {
         final grade = (s.grade ?? '').toString().toUpperCase();
@@ -74,13 +79,17 @@ Future<String?> generateAndSaveMonthPlanningPDF(
 
       if (medecins.isNotEmpty) subGroups.add(medecins);
       if (autres.isNotEmpty) subGroups.add(autres);
-    } else {
+    }
+    // ✅ Tous les autres groupes
+    else {
       subGroups.add(membres);
+      print("✅ Autre groupe détecté: $groupe avec ${membres.length} membres");
     }
 
+    // Génération des pages
     for (var list in subGroups) {
-      // Titre spécifique selon si la liste contient des médecins (on détecte par le grade du 1er élément)
-      final bool isMedecinsGroup = (list.isNotEmpty &&
+      // ⭐ Titre corrigé
+      final bool isMedecinsGroup = list.isNotEmpty &&
           ((list.first.grade ?? '')
                   .toString()
                   .toUpperCase()
@@ -92,14 +101,30 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               (list.first.grade ?? '')
                   .toString()
                   .toUpperCase()
-                  .contains('RHUMATOLOGUE')));
+                  .contains('RHUMATOLOGUE'));
 
-      final title = isMedecinsGroup
-          ? '08h–16h — (Personnel Médical)'
-          : (groupe.toUpperCase().contains('08H') &&
-                  groupe.toUpperCase().contains('16H'))
-              ? '08h–16h — (Autres personnels)'
-              : '$groupe';
+      // ⭐ Détecter si c'est un groupe d'agents d'hygiène
+      final bool isAgentsHygiene = list.isNotEmpty &&
+          ((list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('HYGIÈNE') ||
+              (list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('HYGIENE'));
+
+      String title;
+      if (isAgentsHygiene) {
+        title = "Agents d'Hygiène (08h–12h)"; // ⭐ Titre explicite
+      } else if (isMedecinsGroup) {
+        title = '08h–16h — (Personnel Médical)';
+      } else if (groupe.toUpperCase().contains('08H') &&
+          groupe.toUpperCase().contains('16H')) {
+        title = '08h–16h — (Autres personnels)';
+      } else {
+        title = groupe; // Utiliser le nom du groupe tel quel
+      }
 
       pdf.addPage(
         pw.MultiPage(
@@ -127,30 +152,11 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                         'Établissement Hospitalier d\'Aïn El Türck - Dr. Medjber Tami',
                         style: baseStyle),
                     pw.SizedBox(height: 24),
-                    pw.Text('Unité : Service de Rhumatologie',
-                        style: baseStyle),
-                    pw.SizedBox(height: 4),
                   ]),
             ],
           ),
-          // Footer : légende, NB et signatures (la date est placée JUSTE sous le tableau)
-          footer: (ctx) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.SizedBox(height: 14),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Le Médecin Chef', style: baseStyle),
-                  pw.Text('Le Surveillant Médical', style: baseStyle),
-                  pw.Text('DAPM', style: baseStyle),
-                  pw.Text('Le Directeur Général', style: baseStyle),
-                ],
-              ),
-              pw.SizedBox(height: 100),
-            ],
-          ),
           build: (ctx) => [
+            pw.Spacer(),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.start,
               children: [
@@ -167,24 +173,15 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               ),
             ),
             pw.SizedBox(height: 4),
-            pw.Center(
-              child: pw.Text('GARDE 12H',
-                  style: baseStyle.copyWith(
-                      fontSize: 11, fontWeight: pw.FontWeight.normal)),
-            ),
-            pw.SizedBox(height: 10),
 
-            pw.SizedBox(height: 8),
             pw.Center(
                 child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
             pw.SizedBox(height: 8),
 
             // Le tableau
-            pw.Container(
-              alignment: pw.Alignment.center,
+            pw.Center(
               child: _buildGroupTable(list, daysInMonth, oswald, year, month),
             ),
-
             // Date JUSTE sous le tableau (format JJ/MM/AAAA)
             pw.SizedBox(height: 8),
             pw.Row(
@@ -204,8 +201,27 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                 'N.B : Toutes modifications de programme ne doivent se faire qu’après accord de la direction',
                 style: baseStyle),
             // Petit espace pour que le footer apparaisse en bas proprement
-            pw.SizedBox(height: 10),
+            // pw.SizedBox(height: 10),
+            pw.Spacer(),
           ],
+
+          // Footer : légende, NB et signatures (la date est placée JUSTE sous le tableau)
+          footer: (ctx) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.SizedBox(height: 14),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                children: [
+                  pw.Text('Le Médecin Chef', style: baseStyle),
+                  pw.Text('Le Surveillant Médical', style: baseStyle),
+                  pw.Text('DAPM', style: baseStyle),
+                  pw.Text('Le Directeur Général', style: baseStyle),
+                ],
+              ),
+              pw.SizedBox(height: 80),
+            ],
+          ),
         ),
       );
     }
@@ -336,7 +352,7 @@ pw.Widget _buildGroupTable(
     2: const pw.FlexColumnWidth(1.7),
   };
   for (int i = 0; i < daysInMonth; i++) {
-    columnWidths[3 + i] = const pw.FixedColumnWidth(14);
+    columnWidths[3 + i] = const pw.FixedColumnWidth(18);
   }
 
   // Préparer les lignes du header
@@ -350,8 +366,8 @@ pw.Widget _buildGroupTable(
       isWeekend =
           date.weekday == DateTime.friday || date.weekday == DateTime.saturday;
     }
-    final bg = isWeekend ? PdfColors.blue : PdfColors.grey300;
-    final txtColor = isWeekend ? PdfColors.white : PdfColors.blue;
+    final bg = isWeekend ? PdfColors.black : PdfColors.grey300;
+    final txtColor = isWeekend ? PdfColors.white : PdfColors.black;
 
     headerCells.add(
       pw.Container(
@@ -386,8 +402,8 @@ pw.Widget _buildGroupTable(
             date.weekday == DateTime.saturday;
       }
 
-      final bg = isWeekend ? PdfColors.black : PdfColors.white;
-      final txtColor = isWeekend ? PdfColors.white : PdfColors.black;
+      final bg = isWeekend ? PdfColors.grey900 : PdfColors.white;
+      final txtColor = isWeekend ? PdfColors.white : PdfColors.grey900;
 
       cells.add(
         pw.Container(
