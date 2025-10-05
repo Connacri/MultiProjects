@@ -209,7 +209,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
           footer: (ctx) => pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.SizedBox(height: 14),
+              // pw.SizedBox(height: 14),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
@@ -219,7 +219,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                   pw.Text('Le Directeur Général', style: baseStyle),
                 ],
               ),
-              pw.SizedBox(height: 80),
+              pw.SizedBox(height: 100),
             ],
           ),
         ),

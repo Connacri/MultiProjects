@@ -1276,6 +1276,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             FilledButton.tonalIcon(
                                 onPressed: () => _listStaffWithTimeOff(),
                                 label: Text('List Congé debug')),
+                            IconButton(
+                              icon: const Icon(Icons.person_add),
+                              tooltip: 'Ajouter un nouveau staff',
+                              onPressed: () => _showAddStaffDialog(),
+                            ),
                           ],
                         ),
                       ],
@@ -1549,7 +1554,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                     listen: false);
                                             await staffProvider
                                                 .deleteStaff(staff);
-                                            Navigator.pop(context);
+                                            //  Navigator.pop(context);
                                           }
                                         },
                                         child: Text(
@@ -1962,64 +1967,149 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }) async {
     final nomCtrl = TextEditingController(text: staff.nom);
     final gradeCtrl = TextEditingController(text: staff.grade);
-    final groupeCtrl = TextEditingController(text: staff.groupe);
     final obsCtrl = TextEditingController(text: staff.obs ?? "");
 
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
-    // Déterminer le groupe d'affichage
-    String groupeAffichage;
-    if (staff.grade.toLowerCase().contains('médecin') ||
-        staff.grade.toLowerCase().contains('rhumatologue')) {
-      groupeAffichage = 'Personnel Médical';
-    } else if (staff.groupe == '08H-16H') {
-      groupeAffichage = 'Personnel Administratif (08h-16h)';
-    } else if (staff.groupe == '08H-08H' || staff.groupe == 'Garde 12H') {
-      groupeAffichage = 'Personnel Paramédical (08h-08h)';
-    } else if (staff.grade.toLowerCase().contains('hygiène')) {
-      groupeAffichage = 'Agents d\'hygiène (08h-12h)';
-    } else {
-      groupeAffichage = 'Personnel Administratif (08h-16h)';
-    }
+    // ⭐ Récupérer les groupes existants
+    final Set<String> groupesExistants = staffProvider.staffs
+        .where((s) => s.groupe != null && s.groupe!.isNotEmpty)
+        .map((s) => s.groupe!)
+        .toSet();
 
+    final List<String> groupesDisponibles = groupesExistants.toList()..sort();
+    groupesDisponibles.add("➕ Nouveau groupe...");
+
+    String? selectedGroupe = staff.groupe;
     String? selectedEquipe = staff.equipe;
+    bool isCreatingNewGroupe = false;
+    final newGroupeCtrl = TextEditingController();
 
     await showDialog(
       context: context,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setState) {
+            // Déterminer si on affiche l'équipe
+            bool showEquipe = false;
+            if (!isCreatingNewGroupe && selectedGroupe != null) {
+              showEquipe = selectedGroupe!.toUpperCase().contains('08H-08H') ||
+                  selectedGroupe!.toUpperCase().contains('GARDE 12H');
+            } else if (isCreatingNewGroupe) {
+              final newText = newGroupeCtrl.text.toUpperCase();
+              showEquipe =
+                  newText.contains('08H-08H') || newText.contains('GARDE 12H');
+            }
+
             return AlertDialog(
               title: Text("Modifier / Supprimer ${staff.nom}"),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Nom
                     TextField(
                       controller: nomCtrl,
-                      decoration: const InputDecoration(labelText: "Nom"),
+                      decoration: InputDecoration(
+                        labelText: "Nom",
+                        border: OutlineInputBorder(),
+                      ),
                     ),
+                    SizedBox(height: 12),
+
+                    // Grade
                     TextField(
                       controller: gradeCtrl,
-                      decoration: const InputDecoration(labelText: "Grade"),
+                      decoration: InputDecoration(
+                        labelText: "Grade",
+                        border: OutlineInputBorder(),
+                      ),
                     ),
-                    TextField(
-                      controller: groupeCtrl,
-                      decoration: const InputDecoration(labelText: "Groupe"),
-                    ),
+                    SizedBox(height: 12),
 
-                    // Afficher Équipe uniquement pour le groupe Paramédical
-                    if (groupeAffichage == 'Personnel Paramédical (08h-08h)' &&
-                        equipesActives) ...[
-                      const SizedBox(height: 10),
-                      const Text("Équipe :",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    // ⭐ DROPDOWN GROUPE
+                    if (!isCreatingNewGroupe) ...[
+                      DropdownButtonFormField<String>(
+                        value: selectedGroupe,
+                        decoration: InputDecoration(
+                          labelText: "Groupe",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.group),
+                        ),
+                        items: groupesDisponibles.map((groupe) {
+                          return DropdownMenuItem(
+                            value: groupe,
+                            child: Text(
+                              groupe,
+                              style: groupe.startsWith("➕")
+                                  ? TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold)
+                                  : null,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == "➕ Nouveau groupe...") {
+                              isCreatingNewGroupe = true;
+                              selectedGroupe = null;
+                            } else {
+                              selectedGroupe = value;
+                              // Reset équipe si on change de groupe
+                              if (!value!.toUpperCase().contains('08H-08H') &&
+                                  !value.toUpperCase().contains('GARDE 12H')) {
+                                selectedEquipe = null;
+                              }
+                            }
+                          });
+                        },
+                      ),
+                    ],
+
+                    // ⭐ Champ pour créer un nouveau groupe
+                    if (isCreatingNewGroupe) ...[
+                      TextField(
+                        controller: newGroupeCtrl,
+                        decoration: InputDecoration(
+                          labelText: "Nom du nouveau groupe",
+                          hintText: "Ex: 08H-16H, 08H-08H...",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.group_add),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.cancel),
+                            onPressed: () {
+                              setState(() {
+                                isCreatingNewGroupe = false;
+                                newGroupeCtrl.clear();
+                                selectedGroupe = staff.groupe;
+                              });
+                            },
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {});
+                        },
+                      ),
+                    ],
+
+                    SizedBox(height: 12),
+
+                    // Afficher Équipe si nécessaire
+                    if (showEquipe && equipesActives) ...[
+                      Text(
+                        "Équipe :",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         children: ["A", "B", "C", "D"].map((equipe) {
                           return ChoiceChip(
                             label: Text(equipe),
                             selected: selectedEquipe == equipe,
+                            selectedColor: _getEquipeColor(equipe),
                             onSelected: (bool selected) {
                               setState(() {
                                 selectedEquipe = selected ? equipe : null;
@@ -2028,33 +2118,50 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           );
                         }).toList(),
                       ),
+                      SizedBox(height: 12),
                     ],
 
+                    // Observations
                     TextField(
                       controller: obsCtrl,
-                      decoration:
-                          const InputDecoration(labelText: "Observation"),
+                      decoration: InputDecoration(
+                        labelText: "Observation",
+                        border: OutlineInputBorder(),
+                      ),
                     ),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
-                  onPressed: () async {
-                    Navigator.pop(ctx);
-                  },
-                  child: const Text(
-                    "Annuler",
-                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text("Annuler"),
                 ),
                 ElevatedButton(
                   onPressed: () async {
+                    // Déterminer le groupe final
+                    String? finalGroupe;
+                    if (isCreatingNewGroupe) {
+                      if (newGroupeCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Le nom du groupe est obligatoire"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      finalGroupe = newGroupeCtrl.text.trim();
+                    } else {
+                      finalGroupe = selectedGroupe;
+                    }
+
                     staff.nom = nomCtrl.text;
                     staff.grade = gradeCtrl.text;
-                    staff.groupe = groupeCtrl.text;
+                    staff.groupe = finalGroupe!;
 
-                    if (groupeAffichage == 'Personnel Paramédical (08h-08h)' &&
-                        equipesActives) {
+                    // Gérer l'équipe
+                    if (showEquipe && equipesActives) {
                       staff.equipe = selectedEquipe;
                     } else {
                       staff.equipe = null;
@@ -2064,8 +2171,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                     await staffProvider.updateStaff(staff);
                     Navigator.pop(ctx);
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("✅ ${staff.nom} modifié avec succès"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   },
-                  child: const Text("Enregistrer"),
+                  child: Text("Enregistrer"),
                 ),
               ],
             );
@@ -5945,5 +6059,369 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         ),
       );
     }
+  }
+
+  Future<void> _showAddStaffDialog() async {
+    final nomCtrl = TextEditingController();
+    final gradeCtrl = TextEditingController();
+    final obsCtrl = TextEditingController();
+
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+
+    // ⭐ Récupérer les groupes existants
+    final Set<String> groupesExistants = staffProvider.staffs
+        .where((staff) => staff.groupe != null && staff.groupe!.isNotEmpty)
+        .map((staff) => staff.groupe!)
+        .toSet();
+
+    final List<String> groupesDisponibles = groupesExistants.toList()..sort();
+    groupesDisponibles.add("➕ Nouveau groupe...");
+
+    String? selectedGroupe =
+        groupesDisponibles.isNotEmpty ? groupesDisponibles.first : null;
+    String? selectedEquipe;
+    String? selectedCategorie08h16h; // ⭐ NOUVEAU: Médical ou Administratif
+    bool showEquipe = false;
+    bool show08h16hCategorie = false; // ⭐ NOUVEAU
+    bool isCreatingNewGroupe = false;
+    final newGroupeCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            // Déterminer si on affiche l'équipe ou la catégorie
+            if (selectedGroupe != null && !isCreatingNewGroupe) {
+              showEquipe = selectedGroupe!.toUpperCase().contains('08H-08H') ||
+                  selectedGroupe!.toUpperCase().contains('GARDE 12H');
+
+              // ⭐ NOUVEAU: Détecter le groupe 08H-16H
+              show08h16hCategorie =
+                  selectedGroupe!.toUpperCase().contains('08H-16H');
+            } else if (isCreatingNewGroupe) {
+              final newGroupeText = newGroupeCtrl.text.toUpperCase();
+              showEquipe = newGroupeText.contains('08H-08H') ||
+                  newGroupeText.contains('GARDE 12H');
+              show08h16hCategorie = newGroupeText.contains('08H-16H');
+            }
+
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.person_add, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text("Ajouter un nouveau staff"),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Nom
+                    TextField(
+                      controller: nomCtrl,
+                      decoration: InputDecoration(
+                        labelText: "Nom et Prénom *",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+
+                    // Grade
+                    TextField(
+                      controller: gradeCtrl,
+                      decoration: InputDecoration(
+                        labelText: "Grade/Fonction *",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.work),
+                      ),
+                    ),
+                    SizedBox(height: 12),
+
+                    // Dropdown Groupe
+                    if (!isCreatingNewGroupe) ...[
+                      DropdownButtonFormField<String>(
+                        value: selectedGroupe,
+                        decoration: InputDecoration(
+                          labelText: "Groupe *",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.group),
+                        ),
+                        items: groupesDisponibles.map((groupe) {
+                          return DropdownMenuItem(
+                            value: groupe,
+                            child: Text(
+                              groupe,
+                              style: groupe.startsWith("➕")
+                                  ? TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold)
+                                  : null,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == "➕ Nouveau groupe...") {
+                              isCreatingNewGroupe = true;
+                              selectedGroupe = null;
+                            } else {
+                              selectedGroupe = value;
+                              selectedEquipe = null;
+                              selectedCategorie08h16h = null; // ⭐ Reset
+                            }
+                          });
+                        },
+                      ),
+                    ],
+
+                    // Champ nouveau groupe
+                    if (isCreatingNewGroupe) ...[
+                      TextField(
+                        controller: newGroupeCtrl,
+                        decoration: InputDecoration(
+                          labelText: "Nom du nouveau groupe *",
+                          hintText: "Ex: 08H-16H, 08H-08H...",
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.group_add),
+                          suffixIcon: IconButton(
+                            icon: Icon(Icons.cancel),
+                            onPressed: () {
+                              setState(() {
+                                isCreatingNewGroupe = false;
+                                newGroupeCtrl.clear();
+                                selectedGroupe = groupesDisponibles.first;
+                              });
+                            },
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setState(() {});
+                        },
+                      ),
+                    ],
+
+                    SizedBox(height: 12),
+
+                    // ⭐ NOUVEAU: Catégorie pour 08H-16H
+                    if (show08h16hCategorie) ...[
+                      Text(
+                        "Catégorie (08H-16H) :",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          {
+                            'label': 'Personnel Médical',
+                            'value': 'medical',
+                            'icon': Icons.medical_services,
+                            'color': Colors.blue,
+                          },
+                          {
+                            'label': 'Personnel Administratif',
+                            'value': 'administratif',
+                            'icon': Icons.admin_panel_settings,
+                            'color': Colors.orange,
+                          },
+                        ].map((cat) {
+                          final isSelected =
+                              selectedCategorie08h16h == cat['value'];
+                          return FilterChip(
+                            avatar: Icon(
+                              cat['icon'] as IconData,
+                              size: 16,
+                              color: isSelected
+                                  ? Colors.white
+                                  : cat['color'] as Color,
+                            ),
+                            label: Text(cat['label'] as String),
+                            selected: isSelected,
+                            selectedColor: cat['color'] as Color,
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.white : Colors.black87,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            onSelected: (selected) {
+                              setState(() {
+                                selectedCategorie08h16h =
+                                    selected ? cat['value'] as String : null;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 12),
+                    ],
+
+                    // Équipe (pour 08H-08H et Garde 12H)
+                    if (showEquipe) ...[
+                      Text(
+                        "Équipe :",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: ["A", "B", "C", "D"].map((equipe) {
+                          return ChoiceChip(
+                            label: Text(equipe),
+                            selected: selectedEquipe == equipe,
+                            selectedColor: _getEquipeColor(equipe),
+                            onSelected: (selected) {
+                              setState(() {
+                                selectedEquipe = selected ? equipe : null;
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 12),
+                    ],
+
+                    // Observations
+                    TextField(
+                      controller: obsCtrl,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        labelText: "Observations",
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.note),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text("Annuler"),
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.save, size: 16),
+                  label: Text("Ajouter"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    // Validation
+                    if (nomCtrl.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Le nom est obligatoire"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    if (gradeCtrl.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("Le grade est obligatoire"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Déterminer le groupe final
+                    String? finalGroupe;
+                    if (isCreatingNewGroupe) {
+                      if (newGroupeCtrl.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Le nom du groupe est obligatoire"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      finalGroupe = newGroupeCtrl.text.trim();
+                    } else {
+                      if (selectedGroupe == null ||
+                          selectedGroupe == "➕ Nouveau groupe...") {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Le groupe est obligatoire"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      finalGroupe = selectedGroupe;
+                    }
+
+                    // ⭐ Validation catégorie 08H-16H
+                    if (show08h16hCategorie &&
+                        selectedCategorie08h16h == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              "Veuillez choisir une catégorie (Médical ou Administratif)"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // ⭐ Ajuster le grade selon la catégorie
+                    String finalGrade = gradeCtrl.text.trim();
+                    if (show08h16hCategorie &&
+                        selectedCategorie08h16h == 'medical') {
+                      // Ajouter un indicateur pour forcer le regroupement médical
+                      if (!finalGrade.toUpperCase().contains('MÉDECIN')) {
+                        finalGrade = "Médecin - $finalGrade";
+                      }
+                    }
+
+                    // Créer le nouveau staff
+                    final newStaff = Staff(
+                      nom: nomCtrl.text.trim(),
+                      grade: finalGrade,
+                      groupe: finalGroupe!,
+                      equipe: selectedEquipe,
+                      obs: obsCtrl.text.trim().isEmpty
+                          ? null
+                          : obsCtrl.text.trim(),
+                    );
+
+                    // Assigner la branche
+                    if (staffProvider.staffs.isNotEmpty) {
+                      newStaff.branch.target =
+                          staffProvider.staffs.first.branch.target;
+                    }
+
+                    await staffProvider.addStaff(newStaff, []);
+
+                    Navigator.of(ctx).pop();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("✅ ${newStaff.nom} ajouté avec succès"),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }
