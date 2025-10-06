@@ -473,7 +473,7 @@ class ActiviteProvider with ChangeNotifier {
 
   /// 🔹 Supprimer toutes les activités
   /// 🔹 Supprimer toutes les activités et réinitialiser les obs des staffs
-  Future<void> clearAllActivites(BuildContext context) async {
+  Future<void> clearAllActivitesAncien(BuildContext context) async {
     try {
       // 1️⃣ Supprimer toutes les activités
       _objectBox.activiteBox.removeAll();
@@ -498,6 +498,152 @@ class ActiviteProvider with ChangeNotifier {
       await staffProvider.fetchStaffs();
     } catch (e) {
       print("❌ Erreur clearAllActivitesEtObs: $e");
+    }
+  }
+
+  Future<void> clearAllActivites(BuildContext context) async {
+    try {
+      // 1️⃣ Supprimer toutes les activités
+      _objectBox.activiteBox.removeAll();
+      print("✅ Toutes les activités supprimées.");
+
+      // 2️⃣ Supprimer tous les TimeOff (congés)
+      _objectBox.timeOffBox.removeAll();
+      print("✅ Tous les TimeOff supprimés.");
+
+      // 3️⃣ Supprimer toutes les planifications
+      _objectBox.planificationBox.removeAll();
+      print("✅ Toutes les planifications supprimées.");
+
+      // 4️⃣ Réinitialiser les obs et équipes des staffs
+      final staffs = _objectBox.staffBox.getAll();
+      for (var staff in staffs) {
+        staff.obs = null;
+        staff.equipe = null; // Optionnel : réinitialiser les équipes
+
+        // Vider les relations ToMany
+        staff.activites.clear();
+        staff.timeOff.clear();
+
+        _objectBox.staffBox.put(staff);
+      }
+      print("✅ Tous les staffs réinitialisés (obs, équipes, relations).");
+
+      notifyListeners();
+
+      // 5️⃣ Rafraîchir l'interface
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs();
+    } catch (e) {
+      print("❌ Erreur clearAllActivites: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> clearAllDB(BuildContext context) async {
+    try {
+      // 1️⃣ Supprimer toutes les activités
+      _objectBox.activiteBox.removeAll();
+      print("✅ Toutes les activités supprimées.");
+
+      // 2️⃣ Supprimer tous les TimeOff (congés)
+      _objectBox.timeOffBox.removeAll();
+      print("✅ Tous les TimeOff supprimés.");
+
+      // 3️⃣ Supprimer toutes les planifications
+      _objectBox.planificationBox.removeAll();
+      print("✅ Toutes les planifications supprimées.");
+
+      // 4️⃣ Supprimer tous les staffs
+      _objectBox.staffBox.removeAll();
+      print("✅ Tous les staffs supprimés.");
+
+      // 5️⃣ Supprimer toutes les branches
+      _objectBox.branchBox.removeAll();
+      print("✅ Toutes les branches supprimées.");
+
+      print("🎉 Base de données complètement vidée.");
+
+      notifyListeners();
+
+      // 6️⃣ Rafraîchir l'interface
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final branchProvider =
+          Provider.of<BranchProvider>(context, listen: false);
+
+      await staffProvider.fetchStaffs();
+      await branchProvider.fetchBranches();
+    } catch (e) {
+      print("❌ Erreur clearAllActivites: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> clearEntireDatabase(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red),
+            SizedBox(width: 8),
+            Text("⚠️ ATTENTION"),
+          ],
+        ),
+        content: Text(
+          "Cette action va TOUT supprimer :\n\n"
+          "• Tous les staffs\n"
+          "• Toutes les activités\n"
+          "• Tous les congés\n"
+          "• Toutes les planifications\n"
+          "• Toutes les branches\n\n"
+          "Cette action est IRRÉVERSIBLE !",
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text("Annuler"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text("TOUT SUPPRIMER"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      _objectBox.activiteBox.removeAll();
+      _objectBox.timeOffBox.removeAll();
+      _objectBox.planificationBox.removeAll();
+      _objectBox.staffBox.removeAll();
+      _objectBox.branchBox.removeAll();
+
+      notifyListeners();
+
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("🗑️ Base de données complètement vidée"),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur : $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -643,4 +789,88 @@ class PlanificationResult {
     this.recuperationsParEquipe = const {},
     this.personnelConcerne = 0,
   });
+}
+
+class BranchProvider with ChangeNotifier {
+  List<Branch> _branches = [];
+  late final ObjectBox _objectBox;
+
+  List<Branch> get branches => _branches;
+
+  BranchProvider() {
+    _initObjectBox();
+  }
+
+  Future<void> _initObjectBox() async {
+    try {
+      _objectBox = ObjectBox();
+      await fetchBranches();
+    } catch (e) {
+      print('Erreur initialisation ObjectBox (BranchProvider): $e');
+    }
+  }
+
+  /// 🔹 Récupérer toutes les branches
+  Future<void> fetchBranches() async {
+    try {
+      _branches = _objectBox.branchBox.getAll();
+      notifyListeners();
+    } catch (e) {
+      print("Erreur fetchBranches: $e");
+    }
+  }
+
+  /// 🔹 Créer une nouvelle branche
+  Future<void> addBranch(String name) async {
+    try {
+      final branch = Branch(branchNom: name.trim());
+      _objectBox.branchBox.put(branch);
+      await fetchBranches();
+    } catch (e) {
+      print("Erreur addBranch: $e");
+    }
+  }
+
+  /// 🔹 Modifier une branche
+  Future<void> updateBranch(Branch branch, String newName) async {
+    try {
+      branch.branchNom = newName.trim();
+      _objectBox.branchBox.put(branch);
+      await fetchBranches();
+    } catch (e) {
+      print("Erreur updateBranch: $e");
+    }
+  }
+
+  /// 🔹 Supprimer une branche
+  Future<void> deleteBranch(Branch branch) async {
+    try {
+      // On détache les staffs liés avant suppression
+      final staffs = _objectBox.staffBox
+          .getAll()
+          .where((s) => s.branch.target?.id == branch.id)
+          .toList();
+
+      for (var s in staffs) {
+        s.branch.target = null;
+        _objectBox.staffBox.put(s);
+      }
+
+      _objectBox.branchBox.remove(branch.id);
+      await fetchBranches();
+    } catch (e) {
+      print("Erreur deleteBranch: $e");
+    }
+  }
+
+  /// 🔹 Lier une branche à un staff
+  Future<void> assignBranchToStaff(Staff staff, Branch branch) async {
+    try {
+      staff.branch.target = branch;
+      _objectBox.staffBox.put(staff);
+      await fetchBranches(); // pour rafraîchir si besoin
+    } catch (e) {
+      print("Erreur assignBranchToStaff: $e");
+    }
+  }
 }

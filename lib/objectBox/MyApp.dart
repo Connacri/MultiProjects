@@ -98,6 +98,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ActiviteProvider()),
         ChangeNotifierProvider(
             create: (_) => TimeOffProvider()..fetchTimeOffs()),
+        ChangeNotifierProvider(create: (_) => BranchProvider()),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(

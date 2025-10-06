@@ -358,442 +358,318 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text('Medical Staff Planning - '),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: _selectedMonth,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  dropdownColor: Colors.blue.shade700,
+                  items: List.generate(12, (index) {
+                    return DropdownMenuItem<int>(
+                      value: index + 1,
+                      child: Text(
+                        _moisNoms[index],
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }),
+                  // onChanged: (value) async {
+                  //   if (value != null) {
+                  //     // await context
+                  //     //     .read<ActiviteProvider>()
+                  //     //     .clearAllActivites(context);
+                  //     setState(() {
+                  //       _selectedMonth = value;
+                  //       _editingCells.clear();
+                  //       _tempValues.clear();
+                  //     });
+                  //     // await context
+                  //     //     .read<ActiviteProvider>()
+                  //     //     .clearAllActivites(context);
+                  //     // await runPlanificationAutomatique(context);
+                  //     // await _showPlanificationAgentsHygieneDialog();
+                  //     // await _showSimplePlanificationDialog();
+                  //   }
+                  // },
+                  onChanged: (value) async {
+                    if (value != null && value != _selectedMonth) {
+                      // 🆕 Sauvegarder l'ancien mois
+                      await _saveCurrentMonth();
+
+                      // Changer de mois
+                      setState(() {
+                        _selectedMonth = value;
+                        _editingCells.clear();
+                        _tempValues.clear();
+                      });
+
+                      // 🆕 Charger le nouveau mois
+                      await _loadMonth(_selectedYear, value);
+                    }
+                  },
+                ),
+              ),
+            ),
+            Text('$_selectedYear'),
+          ],
+        ),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          _buildMobileActions(context),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth > 500) {
+                // ✅ Desktop : toutes les icônes visibles
+                return Row(
+                  children: [
+                    //_buildEditControls(),
+                    IconButton(
+                      icon: const Icon(Icons.save_alt),
+                      tooltip: 'Sauvegarder le planning en PDF',
+                      onPressed: () async {
+                        // Afficher un indicateur de chargement
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext dialogContext) => const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
 
-          SizedBox(
-            width: 20,
+                        try {
+                          final filePath =
+                              await generateAndSaveMonthPlanningPDF(
+                            context,
+                            year: _selectedYear,
+                            month: _selectedMonth,
+                          );
+
+                          // Fermer le dialogue de chargement - utilisez le contexte racine
+                          if (Navigator.canPop(context)) {
+                            Navigator.of(context, rootNavigator: true).pop();
+                          }
+
+                          if (filePath != null) {
+                            // Afficher un message de succès
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    '✅ PDF sauvegardé avec succès !\n📁 $filePath'),
+                                duration: const Duration(seconds: 4),
+                                action: SnackBarAction(
+                                  label: 'OK',
+                                  onPressed: () {},
+                                ),
+                              ),
+                            );
+                          } else {
+                            // Afficher un message d'erreur
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    '❌ Erreur lors de la sauvegarde du PDF'),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 3),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // Fermer le dialogue de chargement en cas d'erreur
+                          if (Navigator.canPop(context)) {
+                            Navigator.of(context, rootNavigator: true).pop();
+                          }
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('❌ Erreur : $e'),
+                              backgroundColor: Colors.red,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+
+                    IconButton(
+                      icon: const Icon(Icons.delete_forever, color: Colors.red),
+                      tooltip: "Vider toutes les activités",
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Confirmation"),
+                            content: const Text(
+                                "Voulez-vous vraiment supprimer toutes les activités ?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text("Annuler"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text("Oui, vider"),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          // Appel via le Provider
+                          await context
+                              .read<ActiviteProvider>()
+                              .clearAllActivites(context);
+                          // Feedback utilisateur
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text(
+                                    "Toutes les activités ont été supprimées.")),
+                          );
+                        }
+                      },
+                    ),
+                    Tooltip(
+                      message: "Ajouter toutes les activités",
+                      child: IconButton(
+                        icon: const Icon(Icons.add, color: Colors.blue),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.blue,
+                        ),
+                        onPressed: () async {
+                          // Demander confirmation avant de vider la base
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text("Confirmation"),
+                                content: const Text(
+                                  "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: const Text("Annuler"),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text("Confirmer"),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (confirm != true) return;
+
+                          try {
+                            final activiteProvider = ActiviteProvider();
+                            await activiteProvider.insertActivites(activites,
+                                year: _selectedYear, month: _selectedMonth);
+
+                            // Rafraîchir les données
+                            final staffProvider = Provider.of<StaffProvider>(
+                                context,
+                                listen: false);
+                            await staffProvider.fetchStaffs();
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    "Toutes les activités ont été ajoutées avec succès !"),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Erreur lors de l'insertion: $e"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    Tooltip(
+                      message: 'Fetch Staff',
+                      child: IconButton(
+                        icon: const Icon(Icons.refresh),
+                        onPressed: () {
+                          final provider = Provider.of<StaffProvider>(context,
+                              listen: false);
+                          provider.fetchStaffs();
+                        },
+                      ),
+                    )
+                  ],
+                );
+              } else {
+                // ✅ Mobile : menu dropdown
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert, color: Colors.white),
+                  onSelected: (value) async {
+                    switch (value) {
+                      case 'edit':
+                        //_buildEditControls(); // ⚠️ si tu veux l’action directe, il faut transformer en fonction
+                        break;
+                      case 'clear':
+                        await context
+                            .read<ActiviteProvider>()
+                            .clearAllActivites(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text(
+                                  "Toutes les activités ont été supprimées.")),
+                        );
+                        break;
+                      case 'insert':
+                        final activiteProvider = ActiviteProvider();
+                        await activiteProvider.insertActivites(
+                          activites,
+                          year: _selectedYear,
+                          month: _selectedMonth,
+                        );
+                        await context.read<StaffProvider>().fetchStaffs();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text(
+                                  "Toutes les activités ont été ajoutées avec succès !")),
+                        );
+                        break;
+                      case 'refresh':
+                        context.read<StaffProvider>().fetchStaffs();
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(value: 'edit', child: Text("Modifier")),
+                    const PopupMenuItem(
+                        value: 'clear', child: Text("Vider les activités")),
+                    const PopupMenuItem(
+                        value: 'insert', child: Text("Ajouter les activités")),
+                    const PopupMenuItem(
+                        value: 'refresh', child: Text("Rafraîchir")),
+                  ],
+                );
+              }
+            },
           ),
-          //  _buildDesktopActions(context),
         ],
       ),
-
-      // appBar: AppBar(
-      //   title: Wrap(
-      //     spacing: 8,
-      //     runSpacing: 4,
-      //     crossAxisAlignment: WrapCrossAlignment.center,
-      //     children: [
-      //       Text('Medical Staff Planning - '),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      //         decoration: BoxDecoration(
-      //           color: Colors.white.withOpacity(0.2),
-      //           borderRadius: BorderRadius.circular(8),
-      //         ),
-      //         child: DropdownButtonHideUnderline(
-      //           child: DropdownButton<int>(
-      //             value: _selectedMonth,
-      //             style: const TextStyle(color: Colors.white, fontSize: 16),
-      //             dropdownColor: Colors.blue.shade700,
-      //             items: List.generate(12, (index) {
-      //               return DropdownMenuItem<int>(
-      //                 value: index + 1,
-      //                 child: Text(
-      //                   _moisNoms[index],
-      //                   style: const TextStyle(color: Colors.white),
-      //                 ),
-      //               );
-      //             }),
-      //             // onChanged: (value) async {
-      //             //   if (value != null) {
-      //             //     // await context
-      //             //     //     .read<ActiviteProvider>()
-      //             //     //     .clearAllActivites(context);
-      //             //     setState(() {
-      //             //       _selectedMonth = value;
-      //             //       _editingCells.clear();
-      //             //       _tempValues.clear();
-      //             //     });
-      //             //     // await context
-      //             //     //     .read<ActiviteProvider>()
-      //             //     //     .clearAllActivites(context);
-      //             //     // await runPlanificationAutomatique(context);
-      //             //     // await _showPlanificationAgentsHygieneDialog();
-      //             //     // await _showSimplePlanificationDialog();
-      //             //   }
-      //             // },
-      //             onChanged: (value) async {
-      //               if (value != null && value != _selectedMonth) {
-      //                 // 🆕 Sauvegarder l'ancien mois
-      //                 await _saveCurrentMonth();
-      //
-      //                 // Changer de mois
-      //                 setState(() {
-      //                   _selectedMonth = value;
-      //                   _editingCells.clear();
-      //                   _tempValues.clear();
-      //                 });
-      //
-      //                 // 🆕 Charger le nouveau mois
-      //                 await _loadMonth(_selectedYear, value);
-      //               }
-      //             },
-      //           ),
-      //         ),
-      //       ),
-      //       Text('$_selectedYear'),
-      //     ],
-      //   ),
-      //   backgroundColor: Colors.blue.shade700,
-      //   foregroundColor: Colors.white,
-      //   actions: [
-      //     LayoutBuilder(
-      //       builder: (context, constraints) {
-      //         if (constraints.maxWidth > 500) {
-      //           // ✅ Desktop : toutes les icônes visibles
-      //           return Row(
-      //             children: [
-      //               //_buildEditControls(),
-      //               IconButton(
-      //                 icon: const Icon(Icons.save_alt),
-      //                 tooltip: 'Sauvegarder le planning en PDF',
-      //                 onPressed: () async {
-      //                   // Afficher un indicateur de chargement
-      //                   showDialog(
-      //                     context: context,
-      //                     barrierDismissible: false,
-      //                     builder: (BuildContext dialogContext) => const Center(
-      //                       child: CircularProgressIndicator(),
-      //                     ),
-      //                   );
-      //
-      //                   try {
-      //                     final filePath =
-      //                         await generateAndSaveMonthPlanningPDF(
-      //                       context,
-      //                       year: _selectedYear,
-      //                       month: _selectedMonth,
-      //                     );
-      //
-      //                     // Fermer le dialogue de chargement - utilisez le contexte racine
-      //                     if (Navigator.canPop(context)) {
-      //                       Navigator.of(context, rootNavigator: true).pop();
-      //                     }
-      //
-      //                     if (filePath != null) {
-      //                       // Afficher un message de succès
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         SnackBar(
-      //                           content: Text(
-      //                               '✅ PDF sauvegardé avec succès !\n📁 $filePath'),
-      //                           duration: const Duration(seconds: 4),
-      //                           action: SnackBarAction(
-      //                             label: 'OK',
-      //                             onPressed: () {},
-      //                           ),
-      //                         ),
-      //                       );
-      //                     } else {
-      //                       // Afficher un message d'erreur
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         const SnackBar(
-      //                           content: Text(
-      //                               '❌ Erreur lors de la sauvegarde du PDF'),
-      //                           backgroundColor: Colors.red,
-      //                           duration: Duration(seconds: 3),
-      //                         ),
-      //                       );
-      //                     }
-      //                   } catch (e) {
-      //                     // Fermer le dialogue de chargement en cas d'erreur
-      //                     if (Navigator.canPop(context)) {
-      //                       Navigator.of(context, rootNavigator: true).pop();
-      //                     }
-      //
-      //                     ScaffoldMessenger.of(context).showSnackBar(
-      //                       SnackBar(
-      //                         content: Text('❌ Erreur : $e'),
-      //                         backgroundColor: Colors.red,
-      //                         duration: const Duration(seconds: 3),
-      //                       ),
-      //                     );
-      //                   }
-      //                 },
-      //               ),
-      //               IconButton(
-      //                 icon:
-      //                     const Icon(Icons.delete_sweep, color: Colors.orange),
-      //                 tooltip: 'Vider les données du mois sélectionné',
-      //                 onPressed: () => _clearCurrentMonthData(),
-      //               ),
-      //               IconButton(
-      //                 icon: const Icon(Icons.delete_forever, color: Colors.red),
-      //                 tooltip: "Vider toutes les activités",
-      //                 onPressed: () async {
-      //                   final confirm = await showDialog<bool>(
-      //                     context: context,
-      //                     builder: (context) => AlertDialog(
-      //                       title: const Text("Confirmation"),
-      //                       content: const Text(
-      //                           "Voulez-vous vraiment supprimer toutes les activités ?"),
-      //                       actions: [
-      //                         TextButton(
-      //                           onPressed: () => Navigator.pop(context, false),
-      //                           child: const Text("Annuler"),
-      //                         ),
-      //                         ElevatedButton(
-      //                           onPressed: () => Navigator.pop(context, true),
-      //                           child: const Text("Oui, vider"),
-      //                         ),
-      //                       ],
-      //                     ),
-      //                   );
-      //                   if (confirm == true) {
-      //                     // Appel via le Provider
-      //                     await context
-      //                         .read<ActiviteProvider>()
-      //                         .clearAllActivites(context);
-      //                     // Feedback utilisateur
-      //                     ScaffoldMessenger.of(context).showSnackBar(
-      //                       const SnackBar(
-      //                           content: Text(
-      //                               "Toutes les activités ont été supprimées.")),
-      //                     );
-      //                   }
-      //                 },
-      //               ),
-      //               IconButton(
-      //                 icon: const Icon(Icons.delete_sweep_outlined,
-      //                     color: Colors.red),
-      //                 tooltip: "Vider DB",
-      //                 onPressed: () async {
-      //                   final confirm = await showDialog<bool>(
-      //                     context: context,
-      //                     builder: (context) => AlertDialog(
-      //                       title: const Text("Confirmation"),
-      //                       content: const Text(
-      //                           "Voulez-vous vraiment supprimer la DB ?"),
-      //                       actions: [
-      //                         TextButton(
-      //                           onPressed: () => Navigator.pop(context, false),
-      //                           child: const Text("Annuler"),
-      //                         ),
-      //                         ElevatedButton(
-      //                           onPressed: () => Navigator.pop(context, true),
-      //                           child: const Text("Oui, vider"),
-      //                         ),
-      //                       ],
-      //                     ),
-      //                   );
-      //                   if (confirm == true) {
-      //                     // Appel via le Provider
-      //                     await context
-      //                         .read<ActiviteProvider>()
-      //                         .clearAllDB(context);
-      //                     // Feedback utilisateur
-      //                     ScaffoldMessenger.of(context).showSnackBar(
-      //                       const SnackBar(
-      //                           content: Text(
-      //                               "Toutes les activités ont été supprimées.")),
-      //                     );
-      //                   }
-      //                 },
-      //               ),
-      //               Tooltip(
-      //                 message: "Ajouter toutes les activités",
-      //                 child: IconButton(
-      //                   icon: const Icon(Icons.add, color: Colors.blue),
-      //                   style: ElevatedButton.styleFrom(
-      //                     backgroundColor: Colors.white,
-      //                     foregroundColor: Colors.blue,
-      //                   ),
-      //                   onPressed: () async {
-      //                     // Demander confirmation avant de vider la base
-      //                     final confirm = await showDialog<bool>(
-      //                       context: context,
-      //                       builder: (BuildContext context) {
-      //                         return AlertDialog(
-      //                           title: const Text("Confirmation"),
-      //                           content: const Text(
-      //                             "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
-      //                           ),
-      //                           actions: [
-      //                             TextButton(
-      //                               onPressed: () =>
-      //                                   Navigator.of(context).pop(false),
-      //                               child: const Text("Annuler"),
-      //                             ),
-      //                             ElevatedButton(
-      //                               onPressed: () =>
-      //                                   Navigator.of(context).pop(true),
-      //                               child: const Text("Confirmer"),
-      //                             ),
-      //                           ],
-      //                         );
-      //                       },
-      //                     );
-      //
-      //                     if (confirm != true) return;
-      //
-      //                     try {
-      //                       final activiteProvider = ActiviteProvider();
-      //                       await activiteProvider.insertActivites(activites,
-      //                           year: _selectedYear, month: _selectedMonth);
-      //
-      //                       // Rafraîchir les données
-      //                       final staffProvider = Provider.of<StaffProvider>(
-      //                           context,
-      //                           listen: false);
-      //                       await staffProvider.fetchStaffs();
-      //
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         const SnackBar(
-      //                           content: Text(
-      //                               "Toutes les activités ont été ajoutées avec succès !"),
-      //                           backgroundColor: Colors.green,
-      //                         ),
-      //                       );
-      //                     } catch (e) {
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         SnackBar(
-      //                           content: Text("Erreur lors de l'insertion: $e"),
-      //                           backgroundColor: Colors.red,
-      //                         ),
-      //                       );
-      //                     }
-      //                   },
-      //                 ),
-      //               ),
-      //               Tooltip(
-      //                 message: 'Fetch Staff',
-      //                 child: IconButton(
-      //                   icon: const Icon(Icons.refresh),
-      //                   onPressed: () {
-      //                     final provider = Provider.of<StaffProvider>(context,
-      //                         listen: false);
-      //                     provider.fetchStaffs();
-      //                   },
-      //                 ),
-      //               )
-      //             ],
-      //           );
-      //         } else {
-      //           // ✅ Mobile : menu dropdown
-      //           return PopupMenuButton<String>(
-      //             icon: const Icon(Icons.more_vert, color: Colors.white),
-      //             onSelected: (value) async {
-      //               switch (value) {
-      //                 case 'edit':
-      //                   //_buildEditControls(); // ⚠️ si tu veux l’action directe, il faut transformer en fonction
-      //                   break;
-      //                 case 'clear_month':
-      //                   await _clearCurrentMonthData();
-      //                   break;
-      //                 case 'clear DB':
-      //                   () async {
-      //                     final confirm = await showDialog<bool>(
-      //                       context: context,
-      //                       builder: (context) => AlertDialog(
-      //                         title: const Text("Confirmation"),
-      //                         content: const Text(
-      //                             "Voulez-vous vraiment supprimer la DB ?"),
-      //                         actions: [
-      //                           TextButton(
-      //                             onPressed: () =>
-      //                                 Navigator.pop(context, false),
-      //                             child: const Text("Annuler"),
-      //                           ),
-      //                           ElevatedButton(
-      //                             onPressed: () => Navigator.pop(context, true),
-      //                             child: const Text("Oui, vider"),
-      //                           ),
-      //                         ],
-      //                       ),
-      //                     );
-      //                     if (confirm == true) {
-      //                       // Appel via le Provider
-      //                       await context
-      //                           .read<ActiviteProvider>()
-      //                           .clearAllDB(context);
-      //                       // Feedback utilisateur
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         const SnackBar(
-      //                             content: Text(
-      //                                 "Toutes les activités ont été supprimées.")),
-      //                       );
-      //                     }
-      //                   };
-      //                   break;
-      //                 case 'clear':
-      //                   await context
-      //                       .read<ActiviteProvider>()
-      //                       .clearAllActivites(context);
-      //                   ScaffoldMessenger.of(context).showSnackBar(
-      //                     const SnackBar(
-      //                         content: Text(
-      //                             "Toutes les activités ont été supprimées.")),
-      //                   );
-      //                   break;
-      //                 case 'insert':
-      //                   final activiteProvider = ActiviteProvider();
-      //                   await activiteProvider.insertActivites(
-      //                     activites,
-      //                     year: _selectedYear,
-      //                     month: _selectedMonth,
-      //                   );
-      //                   await context.read<StaffProvider>().fetchStaffs();
-      //                   ScaffoldMessenger.of(context).showSnackBar(
-      //                     const SnackBar(
-      //                         content: Text(
-      //                             "Toutes les activités ont été ajoutées avec succès !")),
-      //                   );
-      //                   break;
-      //                 case 'refresh':
-      //                   context.read<StaffProvider>().fetchStaffs();
-      //                   break;
-      //               }
-      //             },
-      //             itemBuilder: (context) => [
-      //               const PopupMenuItem(value: 'edit', child: Text("Modifier")),
-      //               PopupMenuItem(
-      //                 value: 'clear_month',
-      //                 child: Row(
-      //                   children: [
-      //                     Icon(Icons.delete_sweep,
-      //                         color: Colors.orange, size: 20),
-      //                     SizedBox(width: 8),
-      //                     Text("Vider le mois actuel"),
-      //                   ],
-      //                 ),
-      //               ),
-      //               PopupMenuItem(
-      //                 value: 'clear',
-      //                 child: Row(
-      //                   children: [
-      //                     const Icon(Icons.delete_sweep_outlined,
-      //                         color: Colors.red),
-      //                     SizedBox(width: 8),
-      //                     Text("Vider DB"),
-      //                   ],
-      //                 ),
-      //               ),
-      //               PopupMenuItem(
-      //                 value: 'clear',
-      //                 child: Row(
-      //                   children: [
-      //                     Icon(Icons.delete_forever,
-      //                         color: Colors.red, size: 20),
-      //                     SizedBox(width: 8),
-      //                     Text("Vider toutes les activités"),
-      //                   ],
-      //                 ),
-      //               ),
-      //               const PopupMenuItem(
-      //                   value: 'insert', child: Text("Ajouter les activités")),
-      //               const PopupMenuItem(
-      //                   value: 'refresh', child: Text("Rafraîchir")),
-      //             ],
-      //           );
-      //         }
-      //       },
-      //     ),
-      //   ],
-      // ),
-      body: Consumer2<StaffProvider, BranchProvider>(
-        builder: (context, provider, branchProvider, child) {
+      body: Consumer<StaffProvider>(
+        builder: (context, provider, child) {
           final staffs = provider.staffs;
 
           if (staffs.isEmpty) {
@@ -813,21 +689,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Appuyez sur "Ajouter Le Staff Au Dessous" pour commencer',
+                    'Appuyez sur "Ajouter toutes les activités" pour commencer',
                     style: TextStyle(color: Colors.grey, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: 500,
-                    height: 300,
-                    child: CardBtn(
-                        title: 'Ajouter Un Membre',
-                        onPressed: () => _showAddStaffDialog(),
-                        imageUrl: 'assets/photos/hopital/tt (6).jpg',
-                        overlayColors: [Colors.transparent, Colors.black],
-                        buttonLabel: 'Add'),
-                  )
                 ],
               ),
             );
@@ -898,18 +763,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
-                        // Text(
-                        //   'Service : ${(staffs.first.branch.target?.branchNom ?? 'non identifié').toUpperCase()}',
-                        //   style: TextStyle(
-                        //     fontSize: 20,
-                        //     fontWeight: FontWeight.bold,
-                        //     color: Colors.blue.shade800,
-                        //   ),
-                        //   textAlign: TextAlign.center,
-                        // ),
-                        StaffBranchText(
-                          staff: staffs.first,
-                          provider: branchProvider, // 👈 on le passe ici
+                        Text(
+                          'Branch : ${staffs.first.branch.target!.branchNom.toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue.shade800,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -925,7 +786,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _buildAppBarTitle(), const SizedBox(height: 24),
+
                   // Légende des statuts
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -1427,12 +1288,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ),
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final bool isMobile = constraints.maxWidth < 600;
-                      final double cardHeight = isMobile
-                          ? 300
-                          : 400; // 🔹 moitié moins haut sur mobile
-                      final double cardWidth =
-                          isMobile ? constraints.maxWidth / 1.1 : 320;
+                      double cardWidth = constraints.maxWidth > 500
+                          ? (constraints.maxWidth - 48) /
+                              4 // 4 cartes sur desktop
+                          : (constraints.maxWidth - 16 - 8) /
+                              2; // 2 cartes sur mobile (marges: 16, espacement: 8)
+
                       return SingleChildScrollView(
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
@@ -1456,7 +1317,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                               return SizedBox(
                                 width: cardWidth,
-                                height: cardHeight,
+                                height: 400,
                                 child: CardBtn(
                                   title: groupeName,
                                   nombrePersonne: entry.value.length,
@@ -1838,468 +1699,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         },
       ),
     );
-  }
-
-  /// Construit le titre de l'AppBar avec le sélecteur de mois
-  Widget _buildAppBarTitle() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        const Text('Medical Staff Planning - '),
-        _buildMonthSelector(),
-        _buildYearSelector(),
-        //  Text('$_selectedYear'),
-      ],
-    );
-  }
-
-  /// Construit le sélecteur de mois
-  Widget _buildMonthSelector() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _selectedMonth,
-          //  style: const TextStyle(color: Colors.black, fontSize: 16),
-          // dropdownColor: Colors.blue.shade700,
-          items: _buildMonthDropdownItems(),
-          onChanged: _onMonthChanged,
-        ),
-      ),
-    );
-  }
-
-  /// Construit le sélecteur d'année
-  Widget _buildYearSelector() {
-    final currentYear = DateTime.now().year;
-    final years = List.generate(10, (index) => currentYear - 5 + index);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: _selectedYear,
-          dropdownColor: Colors.blue.shade700,
-          items: years.map((year) {
-            return DropdownMenuItem<int>(
-              value: year,
-              child: Text(
-                '$year',
-              ),
-            );
-          }).toList(),
-          onChanged: _onYearChanged,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _onYearChanged(int? value) async {
-    if (value != null && value != _selectedYear) {
-      // Sauvegarder l'ancien mois/année
-      await _saveCurrentMonth();
-
-      // Changer d'année
-      setState(() {
-        _selectedYear = value;
-        _editingCells.clear();
-        _tempValues.clear();
-      });
-
-      // Charger le mois avec la nouvelle année
-      await _loadMonth(value, _selectedMonth);
-    }
-  }
-
-  /// Génère les éléments du dropdown de mois
-  List<DropdownMenuItem<int>> _buildMonthDropdownItems() {
-    return List.generate(12, (index) {
-      return DropdownMenuItem<int>(
-        value: index + 1,
-        child: Text(
-          _moisNoms[index],
-        ),
-      );
-    });
-  }
-
-  /// Gère le changement de mois
-  Future<void> _onMonthChanged(int? value) async {
-    if (value != null && value != _selectedMonth) {
-      // Sauvegarder l'ancien mois
-      await _saveCurrentMonth();
-
-      // Changer de mois
-      setState(() {
-        _selectedMonth = value;
-        _editingCells.clear();
-        _tempValues.clear();
-      });
-
-      // Charger le nouveau mois
-      await _loadMonth(_selectedYear, value);
-    }
-  }
-
-  /// Construit les actions pour Desktop
-  Widget _buildDesktopActions(BuildContext context) {
-    return Row(
-      children: [
-        _buildSavePdfButton(context),
-        _buildClearMonthButton(context),
-        _buildClearAllActivitiesButton(context),
-        _buildClearDatabaseButton(context),
-        _buildInsertActivitiesButton(context),
-        _buildRefreshButton(context),
-      ],
-    );
-  }
-
-  /// Construit les actions pour Mobile (menu dropdown)
-  Widget _buildMobileActions(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert, color: Colors.white),
-      onSelected: (value) => _handleMobileMenuAction(context, value),
-      itemBuilder: (context) => [
-        const PopupMenuItem(
-          value: 'save_pdf',
-          child: Row(
-            children: [
-              Icon(Icons.save_alt, size: 20),
-              SizedBox(width: 8),
-              Text("Sauvegarder en PDF"),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'clear_month',
-          child: Row(
-            children: [
-              Icon(Icons.delete_sweep, color: Colors.orange, size: 20),
-              SizedBox(width: 8),
-              Text("Vider le mois actuel"),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'clear_all',
-          child: Row(
-            children: [
-              Icon(Icons.delete_forever, color: Colors.red, size: 20),
-              SizedBox(width: 8),
-              Text("Vider toutes les activités"),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'clear_db',
-          child: Row(
-            children: [
-              Icon(Icons.delete_sweep_outlined, color: Colors.red, size: 20),
-              SizedBox(width: 8),
-              Text("Vider DB"),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'insert',
-          child: Row(
-            children: [
-              Icon(Icons.add, color: Colors.blue, size: 20),
-              SizedBox(width: 8),
-              Text("Ajouter les activités"),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'refresh',
-          child: Row(
-            children: [
-              Icon(Icons.refresh, size: 20),
-              SizedBox(width: 8),
-              Text("Rafraîchir"),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Gère les actions du menu mobile
-  Future<void> _handleMobileMenuAction(
-      BuildContext context, String value) async {
-    switch (value) {
-      case 'save_pdf':
-        await _savePlanningToPdf(context);
-        break;
-      case 'clear_month':
-        await _clearCurrentMonthData();
-        break;
-      case 'clear_all':
-        await _clearAllActivitiesWithConfirmation(context);
-        break;
-      case 'clear_db':
-        await _clearDatabaseWithConfirmation(context);
-        break;
-      case 'insert':
-        await _insertActivitiesWithConfirmation(context);
-        break;
-      case 'refresh':
-        await context.read<StaffProvider>().fetchStaffs();
-        break;
-    }
-  }
-
-// ═══════════════════════════════════════════════════════════════
-// 🔘 BOUTONS D'ACTION DESKTOP
-// ═══════════════════════════════════════════════════════════════
-
-  /// Bouton de sauvegarde PDF
-  Widget _buildSavePdfButton(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.save_alt),
-      tooltip: 'Sauvegarder le planning en PDF',
-      onPressed: () => _savePlanningToPdf(context),
-    );
-  }
-
-  /// Bouton de suppression du mois actuel
-  Widget _buildClearMonthButton(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.delete_sweep, color: Colors.orange),
-      tooltip: 'Vider les données du mois sélectionné',
-      onPressed: () => _clearCurrentMonthData(),
-    );
-  }
-
-  /// Bouton de suppression de toutes les activités
-  Widget _buildClearAllActivitiesButton(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.delete_forever, color: Colors.red),
-      tooltip: "Vider toutes les activités",
-      onPressed: () => _clearAllActivitiesWithConfirmation(context),
-    );
-  }
-
-  /// Bouton de suppression de la base de données
-  Widget _buildClearDatabaseButton(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
-      tooltip: "Vider DB",
-      onPressed: () => _clearDatabaseWithConfirmation(context),
-    );
-  }
-
-  /// Bouton d'insertion des activités
-  Widget _buildInsertActivitiesButton(BuildContext context) {
-    return Tooltip(
-      message: "Ajouter toutes les activités",
-      child: IconButton(
-        icon: const Icon(Icons.add, color: Colors.blue),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
-        ),
-        onPressed: () => _insertActivitiesWithConfirmation(context),
-      ),
-    );
-  }
-
-  /// Bouton de rafraîchissement
-  Widget _buildRefreshButton(BuildContext context) {
-    return Tooltip(
-      message: 'Fetch Staff',
-      child: IconButton(
-        icon: const Icon(Icons.refresh),
-        onPressed: () {
-          context.read<StaffProvider>().fetchStaffs();
-        },
-      ),
-    );
-  }
-
-// ═══════════════════════════════════════════════════════════════
-// ⚙️ ACTIONS MÉTIERS
-// ═══════════════════════════════════════════════════════════════
-
-  /// Sauvegarde le planning en PDF
-  Future<void> _savePlanningToPdf(BuildContext context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dialogContext) => const Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
-
-    try {
-      final filePath = await generateAndSaveMonthPlanningPDF(
-        context,
-        year: _selectedYear,
-        month: _selectedMonth,
-      );
-
-      if (context.mounted && Navigator.canPop(context)) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-
-      if (context.mounted) {
-        if (filePath != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ PDF sauvegardé avec succès !\n📁 $filePath'),
-              duration: const Duration(seconds: 4),
-              action: SnackBarAction(label: 'OK', onPressed: () {}),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Erreur lors de la sauvegarde du PDF'),
-              backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (context.mounted && Navigator.canPop(context)) {
-        Navigator.of(context, rootNavigator: true).pop();
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Erreur : $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  /// Supprime toutes les activités avec confirmation
-  Future<void> _clearAllActivitiesWithConfirmation(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirmation"),
-        content:
-            const Text("Voulez-vous vraiment supprimer toutes les activités ?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Annuler"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Oui, vider"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      await context.read<ActiviteProvider>().clearAllActivites(context);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Toutes les activités ont été supprimées.")),
-        );
-      }
-    }
-  }
-
-  /// Supprime la base de données avec confirmation
-  Future<void> _clearDatabaseWithConfirmation(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirmation"),
-        content: const Text("Voulez-vous vraiment supprimer la DB ?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Annuler"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Oui, vider"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      await context.read<ActiviteProvider>().clearAllDB(context);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("La base de données a été vidée.")),
-        );
-      }
-    }
-  }
-
-  /// Insère les activités avec confirmation
-  Future<void> _insertActivitiesWithConfirmation(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Confirmation"),
-          content: const Text(
-            "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text("Annuler"),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text("Confirmer"),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final activiteProvider = ActiviteProvider();
-      await activiteProvider.insertActivites(
-        activites,
-        year: _selectedYear,
-        month: _selectedMonth,
-      );
-
-      if (context.mounted) {
-        final staffProvider =
-            Provider.of<StaffProvider>(context, listen: false);
-        await staffProvider.fetchStaffs();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text("Toutes les activités ont été ajoutées avec succès !"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur lors de l'insertion: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   // Feedback visuel pendant l'édition
@@ -6668,12 +6067,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final obsCtrl = TextEditingController();
 
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-    final branchProvider = Provider.of<BranchProvider>(context, listen: false);
 
     // ⭐ Récupérer les groupes existants
     final Set<String> groupesExistants = staffProvider.staffs
-        .where((staff) => staff.groupe.isNotEmpty)
-        .map((staff) => staff.groupe)
+        .where((staff) => staff.groupe != null && staff.groupe!.isNotEmpty)
+        .map((staff) => staff.groupe!)
         .toSet();
 
     final List<String> groupesDisponibles = groupesExistants.toList()..sort();
@@ -6687,13 +6085,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     bool show08h16hCategorie = false; // ⭐ NOUVEAU
     bool isCreatingNewGroupe = false;
     final newGroupeCtrl = TextEditingController();
-    final TextEditingController newBranchController = TextEditingController();
-
-    // 🔹 Si aucune branche n’existe encore
-    bool noBranches = branchProvider.branches.isEmpty;
-
-    // 🔹 Branche sélectionnée par défaut (la première si elle existe)
-    Branch? selectedBranch = noBranches ? null : branchProvider.branches.first;
 
     await showDialog(
       context: context,
@@ -6899,36 +6290,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       ),
                       SizedBox(height: 12),
                     ],
-                    SizedBox(height: 20),
 
-                    // 🔹 Choix ou création de la branche
-                    if (!noBranches)
-                      DropdownButtonFormField<Branch>(
-                        decoration: const InputDecoration(
-                          labelText: 'Sélectionnez une branche',
-                          border: OutlineInputBorder(),
-                        ),
-                        value: selectedBranch, // ✅ branche par défaut
-                        items: branchProvider.branches.map((b) {
-                          return DropdownMenuItem(
-                            value: b,
-                            child: Text(b.branchNom),
-                          );
-                        }).toList(),
-                        onChanged: (val) =>
-                            setState(() => selectedBranch = val),
-                      )
-                    else
-                      //🔹 Si aucune branche n’existe
-                      TextField(
-                        controller: newBranchController,
-                        decoration: const InputDecoration(
-                          labelText: 'Créer une nouvelle branche',
-                          hintText: 'Ex: Médecins, Infirmiers...',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    SizedBox(height: 12),
                     // Observations
                     TextField(
                       controller: obsCtrl,
@@ -7026,26 +6388,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       }
                     }
 
-                    // 🔹 Détermination de la branche à associer
-                    Branch branchToAssign;
-                    if (noBranches) {
-                      final newName = newBranchController.text.trim();
-                      if (newName.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text('Veuillez entrer le nom de la branche'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-                      await branchProvider.addBranch(newName);
-                      branchToAssign = branchProvider.branches.last;
-                    } else {
-                      branchToAssign = selectedBranch!;
-                    }
-
                     // Créer le nouveau staff
                     final newStaff = Staff(
                       nom: nomCtrl.text.trim(),
@@ -7062,7 +6404,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       newStaff.branch.target =
                           staffProvider.staffs.first.branch.target;
                     }
-                    newStaff.branch.target = branchToAssign;
+
                     await staffProvider.addStaff(newStaff, []);
 
                     Navigator.of(ctx).pop();
@@ -7081,161 +6423,5 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         );
       },
     );
-
-    // Libère les contrôleurs
-    nomCtrl.dispose();
-    gradeCtrl.dispose();
-    obsCtrl.dispose();
-    newBranchController.dispose();
-  }
-
-  Future<void> _clearCurrentMonthData() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.delete_sweep, color: Colors.orange),
-            SizedBox(width: 8),
-            Text("Vider ${_moisNoms[_selectedMonth - 1]} $_selectedYear"),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Cette action va supprimer pour ce mois uniquement :",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text("• Toutes les activités (G, RE, C, CM, N)"),
-            Text("• Tous les congés (TimeOff)"),
-            Text("• La planification sauvegardée"),
-            SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Les staffs seront conservés",
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.blue.shade700),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text("Annuler"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text("Vider ce mois"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final objectBox = ObjectBox();
-
-      int activitesSupprimes = 0;
-      int congesSupprimes = 0;
-
-      // 1. Supprimer les activités du mois
-      for (final staff in staffProvider.staffs) {
-        final activitesToDelete = staff.activites
-            .where((a) => a.jour >= 1 && a.jour <= _daysInSelectedMonth)
-            .toList();
-
-        for (var activite in activitesToDelete) {
-          objectBox.activiteBox.remove(activite.id);
-          activitesSupprimes++;
-        }
-      }
-
-      // 2. Supprimer les TimeOff qui chevauchent le mois
-      final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
-      final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
-
-      final allTimeOffs = objectBox.timeOffBox.getAll();
-      for (var timeOff in allTimeOffs) {
-        // Vérifier si le TimeOff chevauche le mois sélectionné
-        if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
-            timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
-          objectBox.timeOffBox.remove(timeOff.id);
-          congesSupprimes++;
-        }
-      }
-
-      // 3. Supprimer la planification du mois
-      final planifQuery = objectBox.planificationBox
-          .query(Planification_.mois.equals(_selectedMonth) &
-              Planification_.annee.equals(_selectedYear))
-          .build();
-      final existingPlanif = planifQuery.findFirst();
-      planifQuery.close();
-
-      if (existingPlanif != null) {
-        objectBox.planificationBox.remove(existingPlanif.id);
-      }
-
-      // 4. Nettoyer les obs des staffs
-      for (final staff in staffProvider.staffs) {
-        if (staff.obs != null && staff.obs!.isNotEmpty) {
-          staff.obs = null;
-          objectBox.staffBox.put(staff);
-        }
-      }
-
-      // 5. Rafraîchir
-      await staffProvider.fetchStaffs();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 5),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Données de ${_moisNoms[_selectedMonth - 1]} $_selectedYear supprimées",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 4),
-              Text("$activitesSupprimes activités supprimées"),
-              Text("$congesSupprimes congés supprimés"),
-            ],
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur : $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
   }
 }
