@@ -9,8 +9,11 @@ import 'ActivitePersonne.dart';
 class StaffProvider with ChangeNotifier {
   List<Staff> _staffs = [];
   late final ObjectBox _objectBox;
+  bool _initialized = false; // 🆕 AJOUT
 
   List<Staff> get staffs => _staffs;
+
+  bool get isInitialized => _initialized; // 🆕 AJOUT
 
   StaffProvider() {
     _initObjectBox();
@@ -22,6 +25,8 @@ class StaffProvider with ChangeNotifier {
     try {
       _objectBox = ObjectBox();
       await fetchStaffs();
+      _initialized = true; // 🆕 AJOUT
+      notifyListeners(); // 🆕 AJOUT
     } catch (e) {
       print('Erreur initialisation ObjectBox: $e');
     }
@@ -794,40 +799,69 @@ class PlanificationResult {
 class BranchProvider with ChangeNotifier {
   List<Branch> _branches = [];
   late final ObjectBox _objectBox;
+  bool _initialized = false;
 
   List<Branch> get branches => _branches;
+
+  bool get isInitialized => _initialized; // 🆕 AJOUT
 
   BranchProvider() {
     _initObjectBox();
   }
 
+  /// 🔹 Initialisation d’ObjectBox et chargement des branches
   Future<void> _initObjectBox() async {
     try {
       _objectBox = ObjectBox();
       await fetchBranches();
-    } catch (e) {
-      print('Erreur initialisation ObjectBox (BranchProvider): $e');
+      _initialized = true;
+      notifyListeners(); // ✅ CRUCIAL : notifier après le chargement
+    } catch (e, stack) {
+      debugPrint(
+          '❌ Erreur initialisation ObjectBox (BranchProvider): $e\n$stack');
     }
   }
 
-  /// 🔹 Récupérer toutes les branches
   Future<void> fetchBranches() async {
     try {
       _branches = _objectBox.branchBox.getAll();
-      notifyListeners();
+      print("🔍 Branches chargées : ${_branches.length}"); // 🆕 DEBUG
+      for (var b in _branches) {
+        print("  - ${b.branchNom} (ID: ${b.id})"); // 🆕 DEBUG
+      }
+      notifyListeners(); // ✅ CRUCIAL
     } catch (e) {
-      print("Erreur fetchBranches: $e");
+      debugPrint("❌ Erreur fetchBranches: $e");
     }
   }
 
   /// 🔹 Créer une nouvelle branche
-  Future<void> addBranch(String name) async {
+  Future<Branch?> addBranch(String name) async {
     try {
-      final branch = Branch(branchNom: name.trim());
-      _objectBox.branchBox.put(branch);
-      await fetchBranches();
+      if (name.trim().isEmpty) return null;
+
+      // Vérifie si une branche du même nom existe déjà
+      final existing = _objectBox.branchBox
+          .query(Branch_.branchNom.equals(name.trim()))
+          .build()
+          .findFirst();
+
+      if (existing != null) {
+        debugPrint("⚠️ Branche '$name' existe déjà (ID: ${existing.id})");
+        return existing;
+      }
+
+      final newBranch = Branch(branchNom: name.trim());
+      _objectBox.branchBox.put(newBranch);
+
+      _branches.add(newBranch);
+      notifyListeners();
+
+      debugPrint("✅ Nouvelle branche ajoutée: ${newBranch.branchNom}");
+      return newBranch;
     } catch (e) {
-      print("Erreur addBranch: $e");
+      debugPrint("❌ Erreur addBranch: $e");
+      return null;
     }
   }
 
@@ -836,16 +870,20 @@ class BranchProvider with ChangeNotifier {
     try {
       branch.branchNom = newName.trim();
       _objectBox.branchBox.put(branch);
-      await fetchBranches();
+
+      final index = _branches.indexWhere((b) => b.id == branch.id);
+      if (index != -1) _branches[index] = branch;
+
+      notifyListeners();
+      debugPrint("✏️ Branche mise à jour: ${branch.branchNom}");
     } catch (e) {
-      print("Erreur updateBranch: $e");
+      debugPrint("❌ Erreur updateBranch: $e");
     }
   }
 
-  /// 🔹 Supprimer une branche
+  /// 🔹 Supprimer une branche (et détacher ses staffs)
   Future<void> deleteBranch(Branch branch) async {
     try {
-      // On détache les staffs liés avant suppression
       final staffs = _objectBox.staffBox
           .getAll()
           .where((s) => s.branch.target?.id == branch.id)
@@ -857,20 +895,26 @@ class BranchProvider with ChangeNotifier {
       }
 
       _objectBox.branchBox.remove(branch.id);
-      await fetchBranches();
+      _branches.removeWhere((b) => b.id == branch.id);
+      notifyListeners();
+
+      debugPrint("🗑️ Branche supprimée: ${branch.branchNom}");
     } catch (e) {
-      print("Erreur deleteBranch: $e");
+      debugPrint("❌ Erreur deleteBranch: $e");
     }
   }
 
-  /// 🔹 Lier une branche à un staff
+  /// 🔹 Assigner une branche à un staff
   Future<void> assignBranchToStaff(Staff staff, Branch branch) async {
     try {
       staff.branch.target = branch;
       _objectBox.staffBox.put(staff);
-      await fetchBranches(); // pour rafraîchir si besoin
+
+      // Pas besoin de rafraîchir toute la liste
+      debugPrint("👤 ${staff.nom} → ${branch.branchNom}");
+      notifyListeners();
     } catch (e) {
-      print("Erreur assignBranchToStaff: $e");
+      debugPrint("❌ Erreur assignBranchToStaff: $e");
     }
   }
 }

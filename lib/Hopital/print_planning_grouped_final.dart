@@ -48,6 +48,23 @@ Future<String?> generateAndSaveMonthPlanningPDF(
     grouped.putIfAbsent(g, () => []).add(s);
   }
 
+  // ✅ NOUVEAU : Fonction pour obtenir la priorité de l'équipe
+  int getEquipePriority(String? equipe) {
+    if (equipe == null) return 5;
+    switch (equipe.toUpperCase()) {
+      case 'A':
+        return 1;
+      case 'B':
+        return 2;
+      case 'C':
+        return 3;
+      case 'D':
+        return 4;
+      default:
+        return 5;
+    }
+  }
+
   // Pour chaque groupe, on crée une page par sous-groupe (médecins / autres pour 08H-16H)
   grouped.forEach((groupe, membres) {
     List<List<dynamic>> subGroups = [];
@@ -56,7 +73,9 @@ Future<String?> generateAndSaveMonthPlanningPDF(
     if (groupe.toUpperCase().contains('08H') &&
         groupe.toUpperCase().contains('12H') &&
         !groupe.toUpperCase().contains('16H')) {
-      // ⭐ Exclusion importante
+      // ✅ Trier par nom pour ce groupe
+      membres.sort((a, b) =>
+          (a.nom ?? '').toString().compareTo((b.nom ?? '').toString()));
       subGroups.add(membres);
       print("✅ Groupe 08H-12H détecté: $groupe avec ${membres.length} membres");
     }
@@ -77,13 +96,42 @@ Future<String?> generateAndSaveMonthPlanningPDF(
             grade.contains('RHUMATOLOGUE'));
       }).toList();
 
+      // ✅ Trier chaque sous-groupe par équipe puis par nom
+      medecins.sort((a, b) {
+        int priorityA = getEquipePriority(a.equipe);
+        int priorityB = getEquipePriority(b.equipe);
+        if (priorityA != priorityB) {
+          return priorityA.compareTo(priorityB);
+        }
+        return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
+      });
+
+      autres.sort((a, b) {
+        int priorityA = getEquipePriority(a.equipe);
+        int priorityB = getEquipePriority(b.equipe);
+        if (priorityA != priorityB) {
+          return priorityA.compareTo(priorityB);
+        }
+        return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
+      });
+
       if (medecins.isNotEmpty) subGroups.add(medecins);
       if (autres.isNotEmpty) subGroups.add(autres);
     }
-    // ✅ Tous les autres groupes
+    // ✅ Tous les autres groupes (08H-08H, Garde 12H, etc.)
     else {
+      // ✅ Trier par équipe puis par nom
+      membres.sort((a, b) {
+        int priorityA = getEquipePriority(a.equipe);
+        int priorityB = getEquipePriority(b.equipe);
+        if (priorityA != priorityB) {
+          return priorityA.compareTo(priorityB);
+        }
+        return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
+      });
       subGroups.add(membres);
-      print("✅ Autre groupe détecté: $groupe avec ${membres.length} membres");
+      print(
+          "✅ Autre groupe détecté: $groupe avec ${membres.length} membres (trié par équipe)");
     }
 
     // Génération des pages
@@ -116,21 +164,20 @@ Future<String?> generateAndSaveMonthPlanningPDF(
 
       String title;
       if (isAgentsHygiene) {
-        title = "Agents d'Hygiène (08h–12h)"; // ⭐ Titre explicite
+        title = "Agents d'Hygiène (08h–12h)";
       } else if (isMedecinsGroup) {
         title = '08h–16h — (Personnel Médical)';
       } else if (groupe.toUpperCase().contains('08H') &&
           groupe.toUpperCase().contains('16H')) {
         title = '08h–16h — (Autres personnels)';
       } else {
-        title = groupe; // Utiliser le nom du groupe tel quel
+        title = groupe;
       }
 
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4.landscape,
           margin: const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          // En-tête (sans pagination visible)
           header: (ctx) => pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -165,7 +212,6 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               ],
             ),
             pw.SizedBox(height: 6),
-
             pw.Center(
               child: pw.Text(
                 'TABLEAU D\'ACTIVITÉ DU MOIS D\'${monthName.toUpperCase()} $year',
@@ -173,16 +219,12 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               ),
             ),
             pw.SizedBox(height: 4),
-
             pw.Center(
                 child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
             pw.SizedBox(height: 8),
-
-            // Le tableau
             pw.Center(
               child: _buildGroupTable(list, daysInMonth, oswald, year, month),
             ),
-            // Date JUSTE sous le tableau (format JJ/MM/AAAA)
             pw.SizedBox(height: 8),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -195,21 +237,15 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                     style: baseStyle),
               ],
             ),
-
             pw.SizedBox(height: 6),
             pw.Text(
-                'N.B : Toutes modifications de programme ne doivent se faire qu’après accord de la direction',
+                'N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction',
                 style: baseStyle),
-            // Petit espace pour que le footer apparaisse en bas proprement
-            // pw.SizedBox(height: 10),
             pw.Spacer(),
           ],
-
-          // Footer : légende, NB et signatures (la date est placée JUSTE sous le tableau)
           footer: (ctx) => pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // pw.SizedBox(height: 14),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
@@ -219,7 +255,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                   pw.Text('Le Directeur Général', style: baseStyle),
                 ],
               ),
-              pw.SizedBox(height: 100),
+              pw.SizedBox(height: 90),
             ],
           ),
         ),
@@ -242,10 +278,8 @@ Future<String?> generateAndSaveMonthPlanningPDF(
   }
 }
 
-/// Sauvegarde sur Android (dossier Documents)
 Future<String?> _saveToAndroid(List<int> pdfBytes, String fileName) async {
   try {
-    // Demander la permission de stockage
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       status = await Permission.storage.request();
@@ -255,19 +289,15 @@ Future<String?> _saveToAndroid(List<int> pdfBytes, String fileName) async {
       }
     }
 
-    // Android 10+ utilise scoped storage
     Directory? directory;
 
     if (Platform.isAndroid) {
-      // Pour Android 10+, utiliser le dossier Documents
       directory = Directory('/storage/emulated/0/Documents');
 
-      // Si le dossier Documents n'existe pas, créer un dossier dans Downloads
       if (!await directory.exists()) {
         directory = Directory('/storage/emulated/0/Download');
       }
 
-      // Créer un sous-dossier pour l'application
       final appFolder = Directory('${directory.path}/Plannings');
       if (!await appFolder.exists()) {
         await appFolder.create(recursive: true);
@@ -287,13 +317,10 @@ Future<String?> _saveToAndroid(List<int> pdfBytes, String fileName) async {
   return null;
 }
 
-/// Sauvegarde sur PC (Windows/Linux/Mac)
 Future<String?> _saveToDesktop(List<int> pdfBytes, String fileName) async {
   try {
-    // Obtenir le dossier Documents
     final directory = await getApplicationDocumentsDirectory();
 
-    // Créer un sous-dossier pour les plannings
     final planningsFolder = Directory('${directory.path}/Plannings');
     if (!await planningsFolder.exists()) {
       await planningsFolder.create(recursive: true);
@@ -319,7 +346,6 @@ pw.Widget _buildGroupTable(
   final headers = <String>['N°', 'Nom et Prénom', 'Grade'] +
       List.generate(daysInMonth, (i) => '${i + 1}');
 
-  // Préparer les données
   final data = <List<String>>[];
   int index = 1;
   for (var s in membres) {
@@ -336,7 +362,6 @@ pw.Widget _buildGroupTable(
           (a) => (a.jour ?? -1) == d + 1,
           orElse: () => ActiviteJour.empty(),
         );
-        // si ActiviteJour.empty() renvoie un objet, on protège au cas où statut soit null
         final statut = (act?.statut ?? '')?.toString() ?? '';
         return statut;
       }),
@@ -345,7 +370,6 @@ pw.Widget _buildGroupTable(
     index++;
   }
 
-  // Column widths : N°, Nom, Grade, puis jours fixes
   final columnWidths = <int, pw.TableColumnWidth>{
     0: const pw.FixedColumnWidth(13),
     1: const pw.FlexColumnWidth(2),
@@ -355,13 +379,11 @@ pw.Widget _buildGroupTable(
     columnWidths[3 + i] = const pw.FixedColumnWidth(18);
   }
 
-  // Préparer les lignes du header
   final headerCells = <pw.Widget>[];
   for (int ci = 0; ci < headers.length; ci++) {
-    // pour les colonnes de jours, déterminer si c'est un weekend (vendredi/samedi)
     bool isWeekend = false;
     if (ci >= 3) {
-      final day = ci - 2; // car 3->1
+      final day = ci - 2;
       final date = DateTime(year, month, day);
       isWeekend =
           date.weekday == DateTime.friday || date.weekday == DateTime.saturday;
@@ -386,7 +408,6 @@ pw.Widget _buildGroupTable(
     );
   }
 
-  // Construire les lignes de données
   final rows = <pw.TableRow>[];
   rows.add(pw.TableRow(children: headerCells));
 

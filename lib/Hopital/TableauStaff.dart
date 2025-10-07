@@ -9,6 +9,7 @@ import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
 import 'ActivitePersonne.dart';
+import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
@@ -261,18 +262,19 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     for (var staff in staffs) {
       String groupeAffichage;
 
-      // Déterminer le groupe d'affichage selon les grades
       if (staff.grade.toLowerCase().contains('médecin') ||
           staff.grade.toLowerCase().contains('rhumatologue')) {
         groupeAffichage = 'Personnel Médical';
+      } else if (staff.groupe == '08H-12H' ||
+          staff.grade.toLowerCase().contains('hygiène')) {
+        groupeAffichage =
+            'Agents d\'hygiène (08h-12h)'; // 🔥 AVANT le else if 08H-16H
       } else if (staff.groupe == '08H-16H') {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
       } else if (staff.groupe == '08H-08H' || staff.groupe == 'Garde 12H') {
         groupeAffichage = 'Personnel Paramédical (08h-08h)';
-      } else if (staff.grade.toLowerCase().contains('hygiène')) {
-        groupeAffichage = 'Agents d\'hygiène (08h-12h)';
       } else {
-        groupeAffichage = 'Personnel Administratif (08h-16h)'; // Par défaut
+        groupeAffichage = 'Personnel Administratif (08h-16h)';
       }
 
       // Déterminer l'équipe
@@ -282,6 +284,42 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         'staff': staff,
         'numero': numeroGlobal++,
         'equipe': equipe,
+      });
+    }
+
+    // ✅ NOUVEAU : Trier chaque groupe par équipe (A, B, C, D d'abord, puis les autres)
+    for (var groupe in groupedStaffs.keys) {
+      groupedStaffs[groupe]!.sort((a, b) {
+        String equipeA = a['equipe'] as String;
+        String equipeB = b['equipe'] as String;
+
+        // Définir l'ordre de priorité : A=1, B=2, C=3, D=4, autres=5
+        int getPriority(String equipe) {
+          switch (equipe.toUpperCase()) {
+            case 'A':
+              return 1;
+            case 'B':
+              return 2;
+            case 'C':
+              return 3;
+            case 'D':
+              return 4;
+            default:
+              return 5;
+          }
+        }
+
+        int priorityA = getPriority(equipeA);
+        int priorityB = getPriority(equipeB);
+
+        // Si même priorité, trier par nom
+        if (priorityA == priorityB) {
+          Staff staffA = a['staff'] as Staff;
+          Staff staffB = b['staff'] as Staff;
+          return staffA.nom.compareTo(staffB.nom);
+        }
+
+        return priorityA.compareTo(priorityB);
       });
     }
 
@@ -369,429 +407,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           //  _buildDesktopActions(context),
         ],
       ),
-
-      // appBar: AppBar(
-      //   title: Wrap(
-      //     spacing: 8,
-      //     runSpacing: 4,
-      //     crossAxisAlignment: WrapCrossAlignment.center,
-      //     children: [
-      //       Text('Medical Staff Planning - '),
-      //       Container(
-      //         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      //         decoration: BoxDecoration(
-      //           color: Colors.white.withOpacity(0.2),
-      //           borderRadius: BorderRadius.circular(8),
-      //         ),
-      //         child: DropdownButtonHideUnderline(
-      //           child: DropdownButton<int>(
-      //             value: _selectedMonth,
-      //             style: const TextStyle(color: Colors.white, fontSize: 16),
-      //             dropdownColor: Colors.blue.shade700,
-      //             items: List.generate(12, (index) {
-      //               return DropdownMenuItem<int>(
-      //                 value: index + 1,
-      //                 child: Text(
-      //                   _moisNoms[index],
-      //                   style: const TextStyle(color: Colors.white),
-      //                 ),
-      //               );
-      //             }),
-      //             // onChanged: (value) async {
-      //             //   if (value != null) {
-      //             //     // await context
-      //             //     //     .read<ActiviteProvider>()
-      //             //     //     .clearAllActivites(context);
-      //             //     setState(() {
-      //             //       _selectedMonth = value;
-      //             //       _editingCells.clear();
-      //             //       _tempValues.clear();
-      //             //     });
-      //             //     // await context
-      //             //     //     .read<ActiviteProvider>()
-      //             //     //     .clearAllActivites(context);
-      //             //     // await runPlanificationAutomatique(context);
-      //             //     // await _showPlanificationAgentsHygieneDialog();
-      //             //     // await _showSimplePlanificationDialog();
-      //             //   }
-      //             // },
-      //             onChanged: (value) async {
-      //               if (value != null && value != _selectedMonth) {
-      //                 // 🆕 Sauvegarder l'ancien mois
-      //                 await _saveCurrentMonth();
-      //
-      //                 // Changer de mois
-      //                 setState(() {
-      //                   _selectedMonth = value;
-      //                   _editingCells.clear();
-      //                   _tempValues.clear();
-      //                 });
-      //
-      //                 // 🆕 Charger le nouveau mois
-      //                 await _loadMonth(_selectedYear, value);
-      //               }
-      //             },
-      //           ),
-      //         ),
-      //       ),
-      //       Text('$_selectedYear'),
-      //     ],
-      //   ),
-      //   backgroundColor: Colors.blue.shade700,
-      //   foregroundColor: Colors.white,
-      //   actions: [
-      //     LayoutBuilder(
-      //       builder: (context, constraints) {
-      //         if (constraints.maxWidth > 500) {
-      //           // ✅ Desktop : toutes les icônes visibles
-      //           return Row(
-      //             children: [
-      //               //_buildEditControls(),
-      //               IconButton(
-      //                 icon: const Icon(Icons.save_alt),
-      //                 tooltip: 'Sauvegarder le planning en PDF',
-      //                 onPressed: () async {
-      //                   // Afficher un indicateur de chargement
-      //                   showDialog(
-      //                     context: context,
-      //                     barrierDismissible: false,
-      //                     builder: (BuildContext dialogContext) => const Center(
-      //                       child: CircularProgressIndicator(),
-      //                     ),
-      //                   );
-      //
-      //                   try {
-      //                     final filePath =
-      //                         await generateAndSaveMonthPlanningPDF(
-      //                       context,
-      //                       year: _selectedYear,
-      //                       month: _selectedMonth,
-      //                     );
-      //
-      //                     // Fermer le dialogue de chargement - utilisez le contexte racine
-      //                     if (Navigator.canPop(context)) {
-      //                       Navigator.of(context, rootNavigator: true).pop();
-      //                     }
-      //
-      //                     if (filePath != null) {
-      //                       // Afficher un message de succès
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         SnackBar(
-      //                           content: Text(
-      //                               '✅ PDF sauvegardé avec succès !\n📁 $filePath'),
-      //                           duration: const Duration(seconds: 4),
-      //                           action: SnackBarAction(
-      //                             label: 'OK',
-      //                             onPressed: () {},
-      //                           ),
-      //                         ),
-      //                       );
-      //                     } else {
-      //                       // Afficher un message d'erreur
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         const SnackBar(
-      //                           content: Text(
-      //                               '❌ Erreur lors de la sauvegarde du PDF'),
-      //                           backgroundColor: Colors.red,
-      //                           duration: Duration(seconds: 3),
-      //                         ),
-      //                       );
-      //                     }
-      //                   } catch (e) {
-      //                     // Fermer le dialogue de chargement en cas d'erreur
-      //                     if (Navigator.canPop(context)) {
-      //                       Navigator.of(context, rootNavigator: true).pop();
-      //                     }
-      //
-      //                     ScaffoldMessenger.of(context).showSnackBar(
-      //                       SnackBar(
-      //                         content: Text('❌ Erreur : $e'),
-      //                         backgroundColor: Colors.red,
-      //                         duration: const Duration(seconds: 3),
-      //                       ),
-      //                     );
-      //                   }
-      //                 },
-      //               ),
-      //               IconButton(
-      //                 icon:
-      //                     const Icon(Icons.delete_sweep, color: Colors.orange),
-      //                 tooltip: 'Vider les données du mois sélectionné',
-      //                 onPressed: () => _clearCurrentMonthData(),
-      //               ),
-      //               IconButton(
-      //                 icon: const Icon(Icons.delete_forever, color: Colors.red),
-      //                 tooltip: "Vider toutes les activités",
-      //                 onPressed: () async {
-      //                   final confirm = await showDialog<bool>(
-      //                     context: context,
-      //                     builder: (context) => AlertDialog(
-      //                       title: const Text("Confirmation"),
-      //                       content: const Text(
-      //                           "Voulez-vous vraiment supprimer toutes les activités ?"),
-      //                       actions: [
-      //                         TextButton(
-      //                           onPressed: () => Navigator.pop(context, false),
-      //                           child: const Text("Annuler"),
-      //                         ),
-      //                         ElevatedButton(
-      //                           onPressed: () => Navigator.pop(context, true),
-      //                           child: const Text("Oui, vider"),
-      //                         ),
-      //                       ],
-      //                     ),
-      //                   );
-      //                   if (confirm == true) {
-      //                     // Appel via le Provider
-      //                     await context
-      //                         .read<ActiviteProvider>()
-      //                         .clearAllActivites(context);
-      //                     // Feedback utilisateur
-      //                     ScaffoldMessenger.of(context).showSnackBar(
-      //                       const SnackBar(
-      //                           content: Text(
-      //                               "Toutes les activités ont été supprimées.")),
-      //                     );
-      //                   }
-      //                 },
-      //               ),
-      //               IconButton(
-      //                 icon: const Icon(Icons.delete_sweep_outlined,
-      //                     color: Colors.red),
-      //                 tooltip: "Vider DB",
-      //                 onPressed: () async {
-      //                   final confirm = await showDialog<bool>(
-      //                     context: context,
-      //                     builder: (context) => AlertDialog(
-      //                       title: const Text("Confirmation"),
-      //                       content: const Text(
-      //                           "Voulez-vous vraiment supprimer la DB ?"),
-      //                       actions: [
-      //                         TextButton(
-      //                           onPressed: () => Navigator.pop(context, false),
-      //                           child: const Text("Annuler"),
-      //                         ),
-      //                         ElevatedButton(
-      //                           onPressed: () => Navigator.pop(context, true),
-      //                           child: const Text("Oui, vider"),
-      //                         ),
-      //                       ],
-      //                     ),
-      //                   );
-      //                   if (confirm == true) {
-      //                     // Appel via le Provider
-      //                     await context
-      //                         .read<ActiviteProvider>()
-      //                         .clearAllDB(context);
-      //                     // Feedback utilisateur
-      //                     ScaffoldMessenger.of(context).showSnackBar(
-      //                       const SnackBar(
-      //                           content: Text(
-      //                               "Toutes les activités ont été supprimées.")),
-      //                     );
-      //                   }
-      //                 },
-      //               ),
-      //               Tooltip(
-      //                 message: "Ajouter toutes les activités",
-      //                 child: IconButton(
-      //                   icon: const Icon(Icons.add, color: Colors.blue),
-      //                   style: ElevatedButton.styleFrom(
-      //                     backgroundColor: Colors.white,
-      //                     foregroundColor: Colors.blue,
-      //                   ),
-      //                   onPressed: () async {
-      //                     // Demander confirmation avant de vider la base
-      //                     final confirm = await showDialog<bool>(
-      //                       context: context,
-      //                       builder: (BuildContext context) {
-      //                         return AlertDialog(
-      //                           title: const Text("Confirmation"),
-      //                           content: const Text(
-      //                             "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
-      //                           ),
-      //                           actions: [
-      //                             TextButton(
-      //                               onPressed: () =>
-      //                                   Navigator.of(context).pop(false),
-      //                               child: const Text("Annuler"),
-      //                             ),
-      //                             ElevatedButton(
-      //                               onPressed: () =>
-      //                                   Navigator.of(context).pop(true),
-      //                               child: const Text("Confirmer"),
-      //                             ),
-      //                           ],
-      //                         );
-      //                       },
-      //                     );
-      //
-      //                     if (confirm != true) return;
-      //
-      //                     try {
-      //                       final activiteProvider = ActiviteProvider();
-      //                       await activiteProvider.insertActivites(activites,
-      //                           year: _selectedYear, month: _selectedMonth);
-      //
-      //                       // Rafraîchir les données
-      //                       final staffProvider = Provider.of<StaffProvider>(
-      //                           context,
-      //                           listen: false);
-      //                       await staffProvider.fetchStaffs();
-      //
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         const SnackBar(
-      //                           content: Text(
-      //                               "Toutes les activités ont été ajoutées avec succès !"),
-      //                           backgroundColor: Colors.green,
-      //                         ),
-      //                       );
-      //                     } catch (e) {
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         SnackBar(
-      //                           content: Text("Erreur lors de l'insertion: $e"),
-      //                           backgroundColor: Colors.red,
-      //                         ),
-      //                       );
-      //                     }
-      //                   },
-      //                 ),
-      //               ),
-      //               Tooltip(
-      //                 message: 'Fetch Staff',
-      //                 child: IconButton(
-      //                   icon: const Icon(Icons.refresh),
-      //                   onPressed: () {
-      //                     final provider = Provider.of<StaffProvider>(context,
-      //                         listen: false);
-      //                     provider.fetchStaffs();
-      //                   },
-      //                 ),
-      //               )
-      //             ],
-      //           );
-      //         } else {
-      //           // ✅ Mobile : menu dropdown
-      //           return PopupMenuButton<String>(
-      //             icon: const Icon(Icons.more_vert, color: Colors.white),
-      //             onSelected: (value) async {
-      //               switch (value) {
-      //                 case 'edit':
-      //                   //_buildEditControls(); // ⚠️ si tu veux l’action directe, il faut transformer en fonction
-      //                   break;
-      //                 case 'clear_month':
-      //                   await _clearCurrentMonthData();
-      //                   break;
-      //                 case 'clear DB':
-      //                   () async {
-      //                     final confirm = await showDialog<bool>(
-      //                       context: context,
-      //                       builder: (context) => AlertDialog(
-      //                         title: const Text("Confirmation"),
-      //                         content: const Text(
-      //                             "Voulez-vous vraiment supprimer la DB ?"),
-      //                         actions: [
-      //                           TextButton(
-      //                             onPressed: () =>
-      //                                 Navigator.pop(context, false),
-      //                             child: const Text("Annuler"),
-      //                           ),
-      //                           ElevatedButton(
-      //                             onPressed: () => Navigator.pop(context, true),
-      //                             child: const Text("Oui, vider"),
-      //                           ),
-      //                         ],
-      //                       ),
-      //                     );
-      //                     if (confirm == true) {
-      //                       // Appel via le Provider
-      //                       await context
-      //                           .read<ActiviteProvider>()
-      //                           .clearAllDB(context);
-      //                       // Feedback utilisateur
-      //                       ScaffoldMessenger.of(context).showSnackBar(
-      //                         const SnackBar(
-      //                             content: Text(
-      //                                 "Toutes les activités ont été supprimées.")),
-      //                       );
-      //                     }
-      //                   };
-      //                   break;
-      //                 case 'clear':
-      //                   await context
-      //                       .read<ActiviteProvider>()
-      //                       .clearAllActivites(context);
-      //                   ScaffoldMessenger.of(context).showSnackBar(
-      //                     const SnackBar(
-      //                         content: Text(
-      //                             "Toutes les activités ont été supprimées.")),
-      //                   );
-      //                   break;
-      //                 case 'insert':
-      //                   final activiteProvider = ActiviteProvider();
-      //                   await activiteProvider.insertActivites(
-      //                     activites,
-      //                     year: _selectedYear,
-      //                     month: _selectedMonth,
-      //                   );
-      //                   await context.read<StaffProvider>().fetchStaffs();
-      //                   ScaffoldMessenger.of(context).showSnackBar(
-      //                     const SnackBar(
-      //                         content: Text(
-      //                             "Toutes les activités ont été ajoutées avec succès !")),
-      //                   );
-      //                   break;
-      //                 case 'refresh':
-      //                   context.read<StaffProvider>().fetchStaffs();
-      //                   break;
-      //               }
-      //             },
-      //             itemBuilder: (context) => [
-      //               const PopupMenuItem(value: 'edit', child: Text("Modifier")),
-      //               PopupMenuItem(
-      //                 value: 'clear_month',
-      //                 child: Row(
-      //                   children: [
-      //                     Icon(Icons.delete_sweep,
-      //                         color: Colors.orange, size: 20),
-      //                     SizedBox(width: 8),
-      //                     Text("Vider le mois actuel"),
-      //                   ],
-      //                 ),
-      //               ),
-      //               PopupMenuItem(
-      //                 value: 'clear',
-      //                 child: Row(
-      //                   children: [
-      //                     const Icon(Icons.delete_sweep_outlined,
-      //                         color: Colors.red),
-      //                     SizedBox(width: 8),
-      //                     Text("Vider DB"),
-      //                   ],
-      //                 ),
-      //               ),
-      //               PopupMenuItem(
-      //                 value: 'clear',
-      //                 child: Row(
-      //                   children: [
-      //                     Icon(Icons.delete_forever,
-      //                         color: Colors.red, size: 20),
-      //                     SizedBox(width: 8),
-      //                     Text("Vider toutes les activités"),
-      //                   ],
-      //                 ),
-      //               ),
-      //               const PopupMenuItem(
-      //                   value: 'insert', child: Text("Ajouter les activités")),
-      //               const PopupMenuItem(
-      //                   value: 'refresh', child: Text("Rafraîchir")),
-      //             ],
-      //           );
-      //         }
-      //       },
-      //     ),
-      //   ],
-      // ),
       body: Consumer2<StaffProvider, BranchProvider>(
         builder: (context, provider, branchProvider, child) {
           final staffs = provider.staffs;
@@ -1527,14 +1142,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 border: TableBorder.all(
                                     color: Colors.grey.shade300, width: 0.5),
                                 columns: [
-                                  const DataColumn(
-                                    label: Center(
-                                      child: Text('N°',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14)),
-                                    ),
-                                  ),
+                                  // const DataColumn(
+                                  //   label: Center(
+                                  //     child: Text('N°',
+                                  //         style: TextStyle(
+                                  //             fontWeight: FontWeight.bold,
+                                  //             fontSize: 14)),
+                                  //   ),
+                                  // ),
                                   const DataColumn(
                                     label: Text('Nom et Prénom',
                                         style: TextStyle(
@@ -1645,11 +1260,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               : null,
                                     ),
                                     cells: [
-                                      DataCell(Text('$numero',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blue,
-                                              fontSize: 14))),
+                                      // DataCell(Text('$numero',
+                                      //     style: const TextStyle(
+                                      //         fontWeight: FontWeight.bold,
+                                      //         color: Colors.blue,
+                                      //         fontSize: 14))),
                                       DataCell(InkWell(
                                         onDoubleTap: () async =>
                                             await _showCrudDialog(
@@ -2140,7 +1755,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         year: _selectedYear,
         month: _selectedMonth,
       );
+// Générer les pages 2 et 3
+      final path = await generatePersonnelListsPDF(
+        context,
+        year: 2025,
+        month: 10,
+      );
 
+      if (path != null) {
+        print('✅ PDF sauvegardé : $path');
+      }
       if (context.mounted && Navigator.canPop(context)) {
         Navigator.of(context, rootNavigator: true).pop();
       }
@@ -6663,36 +6287,37 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   Future<void> _showAddStaffDialog() async {
-    final nomCtrl = TextEditingController();
-    final gradeCtrl = TextEditingController();
-    final obsCtrl = TextEditingController();
-
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
     final branchProvider = Provider.of<BranchProvider>(context, listen: false);
 
-    // ⭐ Récupérer les groupes existants
-    final Set<String> groupesExistants = staffProvider.staffs
-        .where((staff) => staff.groupe.isNotEmpty)
-        .map((staff) => staff.groupe)
-        .toSet();
+    // 🔥 SOLUTION : FORCER LE RECHARGEMENT AVANT LE DIALOG
+    await branchProvider.fetchBranches();
 
-    final List<String> groupesDisponibles = groupesExistants.toList()..sort();
-    groupesDisponibles.add("➕ Nouveau groupe...");
+    // Maintenant que les branches sont chargées, on peut continuer
+    final nomCtrl = TextEditingController();
+    final gradeCtrl = TextEditingController();
+    final obsCtrl = TextEditingController();
+    final newGroupeCtrl = TextEditingController();
+    final newBranchCtrl = TextEditingController();
+
+    // Groupes existants
+    final groupesExistants = staffProvider.staffs
+        .where((s) => s.groupe.isNotEmpty)
+        .map((s) => s.groupe)
+        .toSet()
+        .toList()
+      ..sort();
+
+    groupesExistants.add("➕ Nouveau groupe...");
 
     String? selectedGroupe =
-        groupesDisponibles.isNotEmpty ? groupesDisponibles.first : null;
+        groupesExistants.isNotEmpty ? groupesExistants.first : null;
     String? selectedEquipe;
-    String? selectedCategorie08h16h; // ⭐ NOUVEAU: Médical ou Administratif
-    bool showEquipe = false;
-    bool show08h16hCategorie = false; // ⭐ NOUVEAU
+    String? selectedCategorie08h16h;
     bool isCreatingNewGroupe = false;
-    final newGroupeCtrl = TextEditingController();
-    final TextEditingController newBranchController = TextEditingController();
 
-    // 🔹 Si aucune branche n’existe encore
+    // Branches existantes - 🔄 CORRECTION
     bool noBranches = branchProvider.branches.isEmpty;
-
-    // 🔹 Branche sélectionnée par défaut (la première si elle existe)
     Branch? selectedBranch = noBranches ? null : branchProvider.branches.first;
 
     await showDialog(
@@ -6700,24 +6325,20 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setState) {
-            // Déterminer si on affiche l'équipe ou la catégorie
-            if (selectedGroupe != null && !isCreatingNewGroupe) {
-              showEquipe = selectedGroupe!.toUpperCase().contains('08H-08H') ||
-                  selectedGroupe!.toUpperCase().contains('GARDE 12H');
+            // Déterminer les options d'affichage dynamiques
+            final groupeTexte = isCreatingNewGroupe
+                ? newGroupeCtrl.text.toUpperCase()
+                : (selectedGroupe ?? "").toUpperCase();
 
-              // ⭐ NOUVEAU: Détecter le groupe 08H-16H
-              show08h16hCategorie =
-                  selectedGroupe!.toUpperCase().contains('08H-16H');
-            } else if (isCreatingNewGroupe) {
-              final newGroupeText = newGroupeCtrl.text.toUpperCase();
-              showEquipe = newGroupeText.contains('08H-08H') ||
-                  newGroupeText.contains('GARDE 12H');
-              show08h16hCategorie = newGroupeText.contains('08H-16H');
-            }
+            final showEquipe = groupeTexte.contains('08H-08H') ||
+                groupeTexte.contains('GARDE 12H');
+            final show08h16hCategorie = groupeTexte.contains('08H-16H');
+            final show08h12h = groupeTexte.contains('08H-12H'); // 🆕 AJOUTT
 
+            // Widget principal
             return AlertDialog(
               title: Row(
-                children: [
+                children: const [
                   Icon(Icons.person_add, color: Colors.blue),
                   SizedBox(width: 8),
                   Text("Ajouter un nouveau staff"),
@@ -6728,187 +6349,91 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Nom
-                    TextField(
-                      controller: nomCtrl,
-                      decoration: InputDecoration(
-                        labelText: "Nom et Prénom *",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                    ),
-                    SizedBox(height: 12),
+                    // NOM
+                    _buildTextField(nomCtrl, "Nom et Prénom *",
+                        icon: Icons.person),
+                    const SizedBox(height: 12),
 
-                    // Grade
-                    TextField(
-                      controller: gradeCtrl,
-                      decoration: InputDecoration(
-                        labelText: "Grade/Fonction *",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.work),
-                      ),
-                    ),
-                    SizedBox(height: 12),
+                    // GRADE
+                    _buildTextField(gradeCtrl, "Grade/Fonction *",
+                        icon: Icons.work),
+                    const SizedBox(height: 12),
 
-                    // Dropdown Groupe
-                    if (!isCreatingNewGroupe) ...[
+                    // GROUPE EXISTANT / NOUVEAU
+                    if (!isCreatingNewGroupe)
                       DropdownButtonFormField<String>(
                         value: selectedGroupe,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: "Groupe *",
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.group),
                         ),
-                        items: groupesDisponibles.map((groupe) {
+                        items: groupesExistants.map((g) {
+                          final isNew = g.startsWith("➕");
                           return DropdownMenuItem(
-                            value: groupe,
+                            value: g,
                             child: Text(
-                              groupe,
-                              style: groupe.startsWith("➕")
-                                  ? TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold)
-                                  : null,
+                              g,
+                              style: TextStyle(
+                                color: isNew ? Colors.green : null,
+                                fontWeight:
+                                    isNew ? FontWeight.bold : FontWeight.normal,
+                              ),
                             ),
                           );
                         }).toList(),
-                        onChanged: (value) {
+                        onChanged: (val) {
                           setState(() {
-                            if (value == "➕ Nouveau groupe...") {
+                            if (val == "➕ Nouveau groupe...") {
                               isCreatingNewGroupe = true;
                               selectedGroupe = null;
                             } else {
-                              selectedGroupe = value;
-                              selectedEquipe = null;
-                              selectedCategorie08h16h = null; // ⭐ Reset
+                              selectedGroupe = val;
                             }
                           });
                         },
-                      ),
-                    ],
-
-                    // Champ nouveau groupe
-                    if (isCreatingNewGroupe) ...[
-                      TextField(
-                        controller: newGroupeCtrl,
-                        decoration: InputDecoration(
-                          labelText: "Nom du nouveau groupe *",
-                          hintText: "Ex: 08H-16H, 08H-08H...",
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.group_add),
-                          suffixIcon: IconButton(
-                            icon: Icon(Icons.cancel),
+                      )
+                    else
+                      _buildTextField(newGroupeCtrl, "Nom du nouveau groupe *",
+                          icon: Icons.group_add,
+                          hint: "Ex: 08H-16H, 08H-08H...",
+                          suffix: IconButton(
+                            icon: const Icon(Icons.cancel),
                             onPressed: () {
                               setState(() {
                                 isCreatingNewGroupe = false;
                                 newGroupeCtrl.clear();
-                                selectedGroupe = groupesDisponibles.first;
+                                selectedGroupe = groupesExistants.first;
                               });
                             },
-                          ),
-                        ),
-                        onChanged: (value) {
-                          setState(() {});
-                        },
-                      ),
-                    ],
+                          )),
+                    const SizedBox(height: 12),
 
-                    SizedBox(height: 12),
+                    // Catégorie 08H-16H
+                    if (show08h16hCategorie)
+                      _buildCategorieSelector(
+                        selectedCategorie08h16h,
+                        (v) => setState(() => selectedCategorie08h16h = v),
+                      ),
+                    if (show08h16hCategorie) const SizedBox(height: 12),
 
-                    // ⭐ NOUVEAU: Catégorie pour 08H-16H
-                    if (show08h16hCategorie) ...[
-                      Text(
-                        "Catégorie (08H-16H) :",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                    // Équipe
+                    if (showEquipe)
+                      _buildEquipeSelector(
+                        selectedEquipe,
+                        (v) => setState(() => selectedEquipe = v),
                       ),
-                      SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          {
-                            'label': 'Personnel Médical',
-                            'value': 'medical',
-                            'icon': Icons.medical_services,
-                            'color': Colors.blue,
-                          },
-                          {
-                            'label': 'Personnel Administratif',
-                            'value': 'administratif',
-                            'icon': Icons.admin_panel_settings,
-                            'color': Colors.orange,
-                          },
-                        ].map((cat) {
-                          final isSelected =
-                              selectedCategorie08h16h == cat['value'];
-                          return FilterChip(
-                            avatar: Icon(
-                              cat['icon'] as IconData,
-                              size: 16,
-                              color: isSelected
-                                  ? Colors.white
-                                  : cat['color'] as Color,
-                            ),
-                            label: Text(cat['label'] as String),
-                            selected: isSelected,
-                            selectedColor: cat['color'] as Color,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black87,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedCategorie08h16h =
-                                    selected ? cat['value'] as String : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 12),
-                    ],
+                    if (showEquipe) const SizedBox(height: 12),
 
-                    // Équipe (pour 08H-08H et Garde 12H)
-                    if (showEquipe) ...[
-                      Text(
-                        "Équipe :",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: ["A", "B", "C", "D"].map((equipe) {
-                          return ChoiceChip(
-                            label: Text(equipe),
-                            selected: selectedEquipe == equipe,
-                            selectedColor: _getEquipeColor(equipe),
-                            onSelected: (selected) {
-                              setState(() {
-                                selectedEquipe = selected ? equipe : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 12),
-                    ],
-                    SizedBox(height: 20),
-
-                    // 🔹 Choix ou création de la branche
+                    // BRANCHE
                     if (!noBranches)
                       DropdownButtonFormField<Branch>(
+                        value: selectedBranch,
                         decoration: const InputDecoration(
-                          labelText: 'Sélectionnez une branche',
+                          labelText: 'Branche *',
                           border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.account_tree),
                         ),
-                        value: selectedBranch, // ✅ branche par défaut
                         items: branchProvider.branches.map((b) {
                           return DropdownMenuItem(
                             value: b,
@@ -6919,152 +6444,92 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             setState(() => selectedBranch = val),
                       )
                     else
-                      //🔹 Si aucune branche n’existe
-                      TextField(
-                        controller: newBranchController,
-                        decoration: const InputDecoration(
-                          labelText: 'Créer une nouvelle branche',
-                          hintText: 'Ex: Médecins, Infirmiers...',
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    SizedBox(height: 12),
-                    // Observations
-                    TextField(
-                      controller: obsCtrl,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        labelText: "Observations",
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.note),
-                      ),
-                    ),
+                      _buildTextField(
+                          newBranchCtrl, "Créer une nouvelle branche *",
+                          icon: Icons.account_tree),
+                    const SizedBox(height: 12),
+
+                    // OBSERVATIONS
+                    _buildTextField(obsCtrl, "Observations",
+                        icon: Icons.note, lines: 2),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: Text("Annuler"),
+                  child: const Text("Annuler"),
                 ),
                 ElevatedButton.icon(
-                  icon: Icon(Icons.save, size: 16),
-                  label: Text("Ajouter"),
+                  icon: const Icon(Icons.save, size: 16),
+                  label: const Text("Ajouter"),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
                   ),
                   onPressed: () async {
-                    // Validation
-                    if (nomCtrl.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Le nom est obligatoire"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                    // ✅ VALIDATION
+                    if (nomCtrl.text.trim().isEmpty ||
+                        gradeCtrl.text.trim().isEmpty) {
+                      _showError("Nom et grade sont obligatoires");
                       return;
                     }
 
-                    if (gradeCtrl.text.trim().isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Le grade est obligatoire"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                    final groupeFinal = isCreatingNewGroupe
+                        ? newGroupeCtrl.text.trim()
+                        : selectedGroupe;
+
+                    if (groupeFinal == null || groupeFinal.isEmpty) {
+                      _showError("Le groupe est obligatoire");
                       return;
                     }
 
-                    // Déterminer le groupe final
-                    String? finalGroupe;
-                    if (isCreatingNewGroupe) {
-                      if (newGroupeCtrl.text.trim().isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Le nom du groupe est obligatoire"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-                      finalGroupe = newGroupeCtrl.text.trim();
-                    } else {
-                      if (selectedGroupe == null ||
-                          selectedGroupe == "➕ Nouveau groupe...") {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Le groupe est obligatoire"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-                      finalGroupe = selectedGroupe;
-                    }
-
-                    // ⭐ Validation catégorie 08H-16H
                     if (show08h16hCategorie &&
                         selectedCategorie08h16h == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              "Veuillez choisir une catégorie (Médical ou Administratif)"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      _showError(
+                          "Choisissez une catégorie (Médical ou Administratif)");
                       return;
                     }
 
-                    // ⭐ Ajuster le grade selon la catégorie
+                    // 📹 Ajuster le grade si Médical
                     String finalGrade = gradeCtrl.text.trim();
                     if (show08h16hCategorie &&
-                        selectedCategorie08h16h == 'medical') {
-                      // Ajouter un indicateur pour forcer le regroupement médical
-                      if (!finalGrade.toUpperCase().contains('MÉDECIN')) {
-                        finalGrade = "Médecin - $finalGrade";
-                      }
+                        selectedCategorie08h16h == 'medical' &&
+                        !finalGrade.toUpperCase().contains('MÉDECIN')) {
+                      finalGrade = "Médecin $finalGrade";
                     }
 
-                    // 🔹 Détermination de la branche à associer
+// 🆕 AJOUT : Forcer le grade pour 08H-12H
+                    if (show08h12h &&
+                        !finalGrade.toLowerCase().contains('hygiène')) {
+                      finalGrade = "Agent d'hygiène $finalGrade";
+                    }
+                    // 🔹 Déterminer la branche
                     Branch branchToAssign;
                     if (noBranches) {
-                      final newName = newBranchController.text.trim();
-                      if (newName.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text('Veuillez entrer le nom de la branche'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                      final name = newBranchCtrl.text.trim();
+                      if (name.isEmpty) {
+                        _showError("Veuillez entrer le nom de la branche");
                         return;
                       }
-                      await branchProvider.addBranch(newName);
+                      await branchProvider.addBranch(name);
                       branchToAssign = branchProvider.branches.last;
                     } else {
                       branchToAssign = selectedBranch!;
                     }
 
-                    // Créer le nouveau staff
+                    // 🔹 Création du staff
                     final newStaff = Staff(
                       nom: nomCtrl.text.trim(),
                       grade: finalGrade,
-                      groupe: finalGroupe!,
+                      groupe: groupeFinal,
                       equipe: selectedEquipe,
                       obs: obsCtrl.text.trim().isEmpty
                           ? null
                           : obsCtrl.text.trim(),
-                    );
+                    )..branch.target = branchToAssign;
 
-                    // Assigner la branche
-                    if (staffProvider.staffs.isNotEmpty) {
-                      newStaff.branch.target =
-                          staffProvider.staffs.first.branch.target;
-                    }
-                    newStaff.branch.target = branchToAssign;
                     await staffProvider.addStaff(newStaff, []);
-
                     Navigator.of(ctx).pop();
 
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -7082,11 +6547,103 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       },
     );
 
-    // Libère les contrôleurs
     nomCtrl.dispose();
     gradeCtrl.dispose();
     obsCtrl.dispose();
-    newBranchController.dispose();
+    newGroupeCtrl.dispose();
+    newBranchCtrl.dispose();
+  }
+
+  /// 🔸 Helper - TextField standardisé
+  Widget _buildTextField(TextEditingController ctrl, String label,
+      {IconData? icon, String? hint, Widget? suffix, int lines = 1}) {
+    return TextField(
+      controller: ctrl,
+      maxLines: lines,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        border: const OutlineInputBorder(),
+        prefixIcon: icon != null ? Icon(icon) : null,
+        suffixIcon: suffix,
+      ),
+    );
+  }
+
+  /// 🔸 Helper - Sélecteur de catégorie
+  Widget _buildCategorieSelector(String? selected, Function(String?) onChange) {
+    final cats = [
+      {
+        'label': 'Personnel Médical',
+        'value': 'medical',
+        'icon': Icons.medical_services,
+        'color': Colors.blue
+      },
+      {
+        'label': 'Personnel Administratif',
+        'value': 'administratif',
+        'icon': Icons.admin_panel_settings,
+        'color': Colors.orange
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Catégorie (08H-16H) :",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: cats.map((c) {
+            final isSelected = selected == c['value'];
+            return FilterChip(
+              avatar: Icon(c['icon'] as IconData,
+                  color: isSelected ? Colors.white : c['color'] as Color),
+              label: Text(c['label'] as String),
+              selected: isSelected,
+              selectedColor: c['color'] as Color,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              onSelected: (v) => onChange(v ? c['value'] as String : null),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  /// 🔸 Helper - Sélecteur d’équipe
+  Widget _buildEquipeSelector(String? selected, Function(String?) onChange) {
+    const equipes = ['A', 'B', 'C', 'D'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Équipe :", style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: equipes.map((e) {
+            final isSelected = selected == e;
+            return ChoiceChip(
+              label: Text(e),
+              selected: isSelected,
+              selectedColor: _getEquipeColor(e),
+              onSelected: (v) => onChange(v ? e : null),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  /// 🔸 Snackbar d’erreur
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   Future<void> _clearCurrentMonthData() async {
