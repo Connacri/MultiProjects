@@ -5562,13 +5562,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-// NOUVELLE MÉTHODE : Dialog des observations seulement
   Future<void> _showObservationDialog(BuildContext context, Staff staff) async {
     final obsController = TextEditingController(text: staff.obs ?? '');
 
+    // ✅ Capturer le provider avant d’ouvrir le dialog
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+
     await showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Row(
             children: [
@@ -5588,13 +5590,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   hintText: "Saisir les observations pour ce staff...",
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.edit_note),
+                  // ✅ Icône pour vider le champ
+                  suffixIcon: obsController.text.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear),
+                          tooltip: "Effacer le texte",
+                          onPressed: () {
+                            obsController.clear();
+                          },
+                        )
+                      : null,
                 ),
+                onChanged: (_) {
+                  // ✅ Redessine le widget pour faire apparaître/disparaître l’icône
+                  (dialogContext as Element).markNeedsBuild();
+                },
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text("Annuler"),
             ),
             ElevatedButton.icon(
@@ -5605,13 +5621,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
-                final staffProvider =
-                    Provider.of<StaffProvider>(context, listen: false);
                 staff.obs = obsController.text.trim().isEmpty
                     ? null
                     : obsController.text.trim();
                 await staffProvider.updateStaff(staff);
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
             ),
           ],
