@@ -1555,6 +1555,62 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // Charger le nouveau mois
       await _loadMonth(_selectedYear, value);
+      //////////////////////////////////////////////////////////
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final objectBox = ObjectBox();
+
+      // int activitesSupprimes = 0;
+      // int congesSupprimes = 0;
+      //
+      // // 1. Supprimer les activités du mois
+      // for (final staff in staffProvider.staffs) {
+      //   final activitesToDelete = staff.activites
+      //       .where((a) => a.jour >= 1 && a.jour <= _daysInSelectedMonth)
+      //       .toList();
+      //
+      //   for (var activite in activitesToDelete) {
+      //     objectBox.activiteBox.remove(activite.id);
+      //     activitesSupprimes++;
+      //   }
+      // }
+      //
+      // // 2. Supprimer les TimeOff qui chevauchent le mois
+      // final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
+      // final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
+      //
+      // final allTimeOffs = objectBox.timeOffBox.getAll();
+      // for (var timeOff in allTimeOffs) {
+      //   // Vérifier si le TimeOff chevauche le mois sélectionné
+      //   if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+      //       timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
+      //     objectBox.timeOffBox.remove(timeOff.id);
+      //     congesSupprimes++;
+      //   }
+      // }
+
+      // 3. Supprimer la planification du mois
+      final planifQuery = objectBox.planificationBox
+          .query(Planification_.mois.equals(_selectedMonth) &
+              Planification_.annee.equals(_selectedYear))
+          .build();
+      final existingPlanif = planifQuery.findFirst();
+      planifQuery.close();
+
+      if (existingPlanif != null) {
+        objectBox.planificationBox.remove(existingPlanif.id);
+      }
+
+      // // 4. Nettoyer les obs des staffs
+      // for (final staff in staffProvider.staffs) {
+      //   if (staff.obs != null && staff.obs!.isNotEmpty) {
+      //     staff.obs = null;
+      //     objectBox.staffBox.put(staff);
+      //   }
+      // }
+
+      // 5. Rafraîchir
+      await staffProvider.fetchStaffs();
+      ///////////////////////////////////////////////////
     }
   }
 
@@ -1758,8 +1814,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 // Générer les pages 2 et 3
       final path = await generatePersonnelListsPDF(
         context,
-        year: 2025,
-        month: 10,
+        year: _selectedYear,
+        month: _selectedMonth,
       );
 
       if (path != null) {

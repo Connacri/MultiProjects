@@ -53,7 +53,6 @@ Future<String?> generatePersonnelListsPDF(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         build: (ctx) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildHeader(logo, bold, baseStyle),
             pw.SizedBox(height: 25),
@@ -83,7 +82,6 @@ Future<String?> generatePersonnelListsPDF(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _buildHeader(logo, bold, baseStyle),
           pw.SizedBox(height: 20),
@@ -98,7 +96,7 @@ Future<String?> generatePersonnelListsPDF(
             child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 10)),
           ),
           pw.SizedBox(height: 10),
-          _buildMedicalStaffTable(medecins, oswald),
+          _buildMedicalStaffTable(medecins, oswald, month, year),
 
           pw.Spacer(),
           _buildFooter(baseStyle),
@@ -113,18 +111,18 @@ Future<String?> generatePersonnelListsPDF(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           _buildHeader(logo, bold, baseStyle),
           pw.SizedBox(height: 20),
 
           // SECTION 2 : Personnel Paramédical
-          pw.Text(
-            'Planning du Personnel Paramédical du Mois D\' ${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
+          pw.Center(
+              child: pw.Text(
+            'Planning du Personnel Paramédical du Mois D\'${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
             style: bold.copyWith(fontSize: 11),
-          ),
+          )),
           pw.SizedBox(height: 10),
-          _buildParamedicalStaffTable(staffs, oswald),
+          _buildParamedicalStaffTable(staffs, oswald, month, year),
 
           pw.Spacer(),
           _buildFooter(baseStyle),
@@ -152,38 +150,41 @@ Future<String?> generatePersonnelListsPDF(
 
 pw.Widget _buildHeader(
     pw.MemoryImage logo, pw.TextStyle bold, pw.TextStyle baseStyle) {
-  return pw.Row(
-    crossAxisAlignment: pw.CrossAxisAlignment.start,
-    children: [
-      pw.Container(
-        width: 45,
-        height: 45,
-        margin: const pw.EdgeInsets.only(right: 8),
-        child: pw.Image(logo, fit: pw.BoxFit.contain),
-      ),
-      pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text('RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE',
-              style: bold),
-          pw.Text(
-            'MINISTÈRE DE LA SANTÉ, DE LA POPULATION ET DE LA RÉFORME HOSPITALIÈRE',
-            style: baseStyle,
-          ),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            'Établissement Hospitalier d\'Aïn El Türck - Dr. Medjber Tami',
-            style: baseStyle,
-          ),
-          pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-        ],
-      ),
-    ],
-  );
+  return pw.Column(mainAxisAlignment: pw.MainAxisAlignment.start, children: [
+    pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Container(
+          width: 45,
+          height: 45,
+          margin: const pw.EdgeInsets.only(right: 8),
+          child: pw.Image(logo, fit: pw.BoxFit.contain),
+        ),
+        pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text('RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE',
+                style: bold),
+            pw.Text(
+              'MINISTÈRE DE LA SANTÉ, DE LA POPULATION ET DE LA RÉFORME HOSPITALIÈRE',
+              style: baseStyle,
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Établissement Hospitalier d\'Aïn El Türck - Dr. Medjber Tami',
+              style: baseStyle,
+            ),
+          ],
+        ),
+      ],
+    ),
+    pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+  ]);
 }
 
 pw.Widget _buildFooter(pw.TextStyle baseStyle) {
   return pw.Column(
+    mainAxisAlignment: pw.MainAxisAlignment.end,
     children: [
       pw.Text(
         'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
@@ -199,6 +200,7 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
           pw.Text('Le Directeur Général', style: baseStyle),
         ],
       ),
+      pw.SizedBox(height: 80),
     ],
   );
 }
@@ -312,7 +314,8 @@ pw.Widget _buildWeeklyScheduleTable(List medecins, pw.Font oswald) {
 
 // ========== TABLEAU PERSONNEL MÉDICAL ==========
 
-pw.Widget _buildMedicalStaffTable(List medecins, pw.Font oswald) {
+pw.Widget _buildMedicalStaffTable(
+    List medecins, pw.Font oswald, int month, int year) {
   final rows = <pw.TableRow>[];
 
   // En-tête
@@ -336,7 +339,8 @@ pw.Widget _buildMedicalStaffTable(List medecins, pw.Font oswald) {
               alignment: pw.Alignment.centerLeft),
           _buildCell((medecin.grade ?? '').toString(), oswald, 8.5,
               alignment: pw.Alignment.centerLeft),
-          _buildCell('8h 16h', oswald, 9),
+          _buildCell(
+              _getObservationWithTimeOff(medecin, month, year), oswald, 9),
         ],
       ),
     );
@@ -353,8 +357,8 @@ pw.Widget _buildMedicalStaffTable(List medecins, pw.Font oswald) {
   );
 }
 
-// Fonction pour récupérer les observations d'un staff avec OBS et TimeOff
-String _getObservationWithTimeOff(dynamic staff) {
+// Fonction pour récupérer les observations d'un staff avec OBS et TimeOff filtrés par mois/année
+String _getObservationWithTimeOff(dynamic staff, int month, int year) {
   final List<String> observations = [];
 
   // Récupérer OBS si existe
@@ -363,20 +367,36 @@ String _getObservationWithTimeOff(dynamic staff) {
     observations.add(obs);
   }
 
-  // Récupérer TimeOff si existe (c'est une relation ToMany<TimeOff>)
+  // Récupérer TimeOff si existe et filtrer par mois/année
   try {
-    // Accéder directement à la collection timeOff
     final timeOffList = staff.timeOff;
 
     if (timeOffList != null && timeOffList.isNotEmpty) {
-      // Pour chaque congé, récupérer le motif avec les dates
+      // Créer les dates de début et fin du mois sélectionné
+      final startOfMonth = DateTime(year, month, 1);
+      final endOfMonth = DateTime(year, month + 1, 0, 23, 59, 59);
+
       for (var timeOff in timeOffList) {
-        final motif = timeOff.motif ?? '';
-        if (motif.isNotEmpty) {
-          // Formater : Motif (date début - date fin)
-          final debut = DateFormat('dd/MM').format(timeOff.debut);
-          final fin = DateFormat('dd/MM').format(timeOff.fin);
-          observations.add('$motif ($debut-$fin)');
+        final debut = timeOff.debut;
+        final fin = timeOff.fin;
+
+        // Vérifier si le congé chevauche le mois sélectionné
+        // Un congé est inclus si:
+        // - Il commence dans le mois OU
+        // - Il se termine dans le mois OU
+        // - Il englobe complètement le mois
+        final isInMonth = (debut.isBefore(endOfMonth) ||
+                debut.isAtSameMomentAs(endOfMonth)) &&
+            (fin.isAfter(startOfMonth) || fin.isAtSameMomentAs(startOfMonth));
+
+        if (isInMonth) {
+          final motif = timeOff.motif ?? '';
+          if (motif.isNotEmpty) {
+            // Formater : Motif (date début - date fin)
+            final debutStr = DateFormat('dd/MM').format(debut);
+            final finStr = DateFormat('dd/MM').format(fin);
+            observations.add('$motif ($debutStr-$finStr)');
+          }
         }
       }
     }
@@ -395,7 +415,8 @@ String _getObservationWithTimeOff(dynamic staff) {
 
 // ========== TABLEAU PERSONNEL PARAMÉDICAL ==========
 
-pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
+pw.Widget _buildParamedicalStaffTable(
+    List staffs, pw.Font oswald, int month, int year) {
   final paramedical = staffs.where((s) {
     final grade = (s.grade ?? '').toString().toUpperCase();
     return !(grade.contains('MÉDECIN') ||
@@ -437,12 +458,12 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
     }
   }
 
-  const double rowHeight = 16.0;
-  const double headerHeight = 22.0;
+  const double rowHeight = 14.0;
+  const double headerHeight = 19.0;
 
   // Fonction helper pour calculer la hauteur d'une ligne selon le nombre d'observations
   double getRowHeight(dynamic staff) {
-    final obsText = _getObservationWithTimeOff(staff);
+    final obsText = _getObservationWithTimeOff(staff, month, year);
     if (obsText.isEmpty) return rowHeight;
 
     // Compter le nombre de lignes (nombre de \n + 1)
@@ -457,7 +478,7 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
     for (var member in members) {
       total += getRowHeight(member);
     }
-    return total.roundToDouble();
+    return total;
   }
 
   double getTotalHeightFor08h08h(
@@ -471,7 +492,7 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
         }
       }
     }
-    return total.roundToDouble();
+    return total;
   }
 
   // Construction du tableau avec Row/Column
@@ -545,8 +566,12 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
                         ),
                         pw.Expanded(
                           flex: 2,
-                          child: _buildMergedCell(_getObservationWithTimeOff(m),
-                              oswald, 7, null, dynamicHeight,
+                          child: _buildMergedCell(
+                              _getObservationWithTimeOff(m, month, year),
+                              oswald,
+                              7,
+                              null,
+                              dynamicHeight,
                               isHoraireBoundary: index == 0),
                         ),
                       ],
@@ -554,7 +579,7 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
                   }),
                   // Trait de séparation après 08h-16h
                   pw.Container(
-                    height: 0.5,
+                    height: 0,
                     width: double.infinity,
                     color: PdfColors.grey800,
                   ),
@@ -621,7 +646,7 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
                             pw.Expanded(
                               flex: 2,
                               child: _buildMergedCell(
-                                  _getObservationWithTimeOff(m),
+                                  _getObservationWithTimeOff(m, month, year),
                                   oswald,
                                   7,
                                   null,
@@ -634,7 +659,7 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
                   }),
                   // Trait de séparation après 08h-08h
                   pw.Container(
-                    height: 0.5,
+                    height: 0,
                     width: double.infinity,
                     color: PdfColors.grey800,
                   ),
@@ -661,18 +686,22 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
                         ),
                         pw.Expanded(
                           flex: 2,
-                          child: _buildMergedCell(_getObservationWithTimeOff(m),
-                              oswald, 7, null, dynamicHeight,
+                          child: _buildMergedCell(
+                              _getObservationWithTimeOff(m, month, year),
+                              oswald,
+                              7,
+                              null,
+                              dynamicHeight,
                               isHoraireBoundary: index == 0),
                         ),
                       ],
                     );
                   }),
-                  // Trait de séparation après 08h-12h (optionnel si c'est le dernier groupe)
+                  // Trait de séparation après 08h-12h
                   pw.Container(
-                    height: 0.5,
+                    height: 1,
                     width: double.infinity,
-                    color: PdfColors.grey800,
+                    color: PdfColors.black,
                   ),
                 ],
               ],
@@ -680,7 +709,6 @@ pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald) {
           ),
         ],
       ),
-      // Ligne de fermeture finale en bas du tableau (supprimée car déjà gérée)
     ],
   );
 }
@@ -700,20 +728,19 @@ pw.Widget _buildMergedCell(
   bool isHoraireBoundary = false,
 }) {
   final backgroundColor =
-      isGroupHeader ? PdfColors.black : (header ? PdfColors.grey300 : null);
+      isGroupHeader ? PdfColors.black : (header ? PdfColors.white : null);
 
   final textColor = isGroupHeader ? PdfColors.white : PdfColors.black;
 
   // Trait du haut : visible pour header, fullBorder, groupHeader, et première ligne (isHoraireBoundary)
   final borderColorTop =
       (header || fullBorder || isGroupHeader || isHoraireBoundary)
-          ? PdfColors.grey800
+          ? PdfColors.black
           : PdfColors.white;
 
   // Trait du bas : visible uniquement pour header, fullBorder, et groupHeader
-  // MAIS PAS pour isHoraireBoundary (première ligne de section)
   final borderColorBottom = (header || fullBorder || isGroupHeader)
-      ? PdfColors.grey800
+      ? PdfColors.black
       : PdfColors.white;
 
   // Alignement vertical : en haut pour les cellules de contenu, centré pour header/horaire
@@ -724,18 +751,16 @@ pw.Widget _buildMergedCell(
   return pw.Container(
     width: width,
     height: height.roundToDouble(),
-    // Arrondir pour éviter les décalages
     decoration: pw.BoxDecoration(
       border: pw.Border(
-        left: pw.BorderSide(width: 0.5, color: PdfColors.grey800),
-        right: pw.BorderSide(width: 0.5, color: PdfColors.grey800),
-        top: pw.BorderSide(width: 0.5, color: borderColorTop),
-        bottom: pw.BorderSide(width: 0.5, color: borderColorBottom),
+        left: pw.BorderSide(width: 1, color: PdfColors.grey800),
+        right: pw.BorderSide(width: 1, color: PdfColors.grey800),
+        top: pw.BorderSide(width: 1, color: borderColorTop),
+        bottom: pw.BorderSide(width: 1, color: borderColorBottom),
       ),
       color: backgroundColor,
     ),
-    padding: const pw.EdgeInsets.all(3),
-    // Padding uniforme pour éviter les décalages
+    padding: const pw.EdgeInsets.symmetric(horizontal: 3),
     alignment: verticalAlignment,
     child: pw.Text(
       text,
@@ -746,7 +771,7 @@ pw.Widget _buildMergedCell(
         color: textColor,
       ),
       textAlign: alignLeft ? pw.TextAlign.left : pw.TextAlign.center,
-      maxLines: header ? null : 10, // Augmenté pour permettre plus de lignes
+      maxLines: header ? null : 10,
       overflow: pw.TextOverflow.clip,
     ),
   );
