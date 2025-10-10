@@ -1686,6 +1686,11 @@ final _entities = <obx_int.ModelEntity>[
         srcEntity: 'ActiviteJour',
         srcField: 'staff',
       ),
+      obx_int.ModelBacklink(
+        name: 'planningsHebdo',
+        srcEntity: 'PlanningHebdo',
+        srcField: 'staff',
+      ),
     ],
   ),
   obx_int.ModelEntity(
@@ -1836,6 +1841,124 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(66, 2133857694054394805),
+    name: 'PlanningHebdo',
+    lastPropertyId: const obx_int.IdUid(11, 1727050637846303899),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 5791694103916015229),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 4116119930786891909),
+        name: 'staffId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(148, 1808765289227918884),
+        relationTarget: 'Staff',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 3939060121171724845),
+        name: 'dimanche',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 4941341543843136788),
+        name: 'lundi',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 7441751232417510266),
+        name: 'mardi',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 134243836745998626),
+        name: 'mercredi',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 2623983698415199785),
+        name: 'jeudi',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 690377551775321548),
+        name: 'vendredi',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 4681044308484978952),
+        name: 'samedi',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(10, 5388006133506746721),
+        name: 'dateDebut',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 1727050637846303899),
+        name: 'dateFin',
+        type: 10,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(67, 8687022429842144867),
+    name: 'TypeActivite',
+    lastPropertyId: const obx_int.IdUid(5, 7663215378098680851),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 1661068837455088411),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 8446311274044770115),
+        name: 'code',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 6161524609933954781),
+        name: 'libelle',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 9175215416399424206),
+        name: 'description',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 7663215378098680851),
+        name: 'couleurHex',
+        type: 6,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -1876,8 +1999,8 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(65, 4929433361385066189),
-    lastIndexId: const obx_int.IdUid(147, 51939098627082601),
+    lastEntityId: const obx_int.IdUid(67, 8687022429842144867),
+    lastIndexId: const obx_int.IdUid(148, 1808765289227918884),
     lastRelationId: const obx_int.IdUid(11, 6355601734277678121),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -4415,6 +4538,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
           object.id,
           (ActiviteJour srcObject) => srcObject.staff,
         ): object.activites,
+        obx_int.RelInfo<PlanningHebdo>.toOneBacklink(
+          2,
+          object.id,
+          (PlanningHebdo srcObject) => srcObject.staff,
+        ): object.planningsHebdo,
       },
       getId: (Staff object) => object.id,
       setId: (Staff object, int id) {
@@ -4492,6 +4620,15 @@ obx_int.ModelDefinition getObjectBoxModel() {
             4,
             object.id,
             (ActiviteJour srcObject) => srcObject.staff,
+          ),
+        );
+        obx_int.InternalToManyAccess.setRelInfo<Staff>(
+          object.planningsHebdo,
+          store,
+          obx_int.RelInfo<PlanningHebdo>.toOneBacklink(
+            2,
+            object.id,
+            (PlanningHebdo srcObject) => srcObject.staff,
           ),
         );
         return object;
@@ -4700,6 +4837,176 @@ obx_int.ModelDefinition getObjectBoxModel() {
           0,
         );
         object.branch.attach(store);
+        return object;
+      },
+    ),
+    PlanningHebdo: obx_int.EntityDefinition<PlanningHebdo>(
+      model: _entities[25],
+      toOneRelations: (PlanningHebdo object) => [object.staff],
+      toManyRelations: (PlanningHebdo object) => {},
+      getId: (PlanningHebdo object) => object.id,
+      setId: (PlanningHebdo object, int id) {
+        object.id = id;
+      },
+      objectToFB: (PlanningHebdo object, fb.Builder fbb) {
+        final dimancheOffset = object.dimanche == null
+            ? null
+            : fbb.writeString(object.dimanche!);
+        final lundiOffset = object.lundi == null
+            ? null
+            : fbb.writeString(object.lundi!);
+        final mardiOffset = object.mardi == null
+            ? null
+            : fbb.writeString(object.mardi!);
+        final mercrediOffset = object.mercredi == null
+            ? null
+            : fbb.writeString(object.mercredi!);
+        final jeudiOffset = object.jeudi == null
+            ? null
+            : fbb.writeString(object.jeudi!);
+        final vendrediOffset = object.vendredi == null
+            ? null
+            : fbb.writeString(object.vendredi!);
+        final samediOffset = object.samedi == null
+            ? null
+            : fbb.writeString(object.samedi!);
+        fbb.startTable(12);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(1, object.staff.targetId);
+        fbb.addOffset(2, dimancheOffset);
+        fbb.addOffset(3, lundiOffset);
+        fbb.addOffset(4, mardiOffset);
+        fbb.addOffset(5, mercrediOffset);
+        fbb.addOffset(6, jeudiOffset);
+        fbb.addOffset(7, vendrediOffset);
+        fbb.addOffset(8, samediOffset);
+        fbb.addInt64(9, object.dateDebut?.millisecondsSinceEpoch);
+        fbb.addInt64(10, object.dateFin?.millisecondsSinceEpoch);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final dateDebutValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          22,
+        );
+        final dateFinValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          24,
+        );
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final dimancheParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 8);
+        final lundiParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 10);
+        final mardiParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 12);
+        final mercrediParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 14);
+        final jeudiParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 16);
+        final vendrediParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 18);
+        final samediParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 20);
+        final dateDebutParam = dateDebutValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(dateDebutValue);
+        final dateFinParam = dateFinValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(dateFinValue);
+        final object = PlanningHebdo(
+          id: idParam,
+          dimanche: dimancheParam,
+          lundi: lundiParam,
+          mardi: mardiParam,
+          mercredi: mercrediParam,
+          jeudi: jeudiParam,
+          vendredi: vendrediParam,
+          samedi: samediParam,
+          dateDebut: dateDebutParam,
+          dateFin: dateFinParam,
+        );
+        object.staff.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          6,
+          0,
+        );
+        object.staff.attach(store);
+        return object;
+      },
+    ),
+    TypeActivite: obx_int.EntityDefinition<TypeActivite>(
+      model: _entities[26],
+      toOneRelations: (TypeActivite object) => [],
+      toManyRelations: (TypeActivite object) => {},
+      getId: (TypeActivite object) => object.id,
+      setId: (TypeActivite object, int id) {
+        object.id = id;
+      },
+      objectToFB: (TypeActivite object, fb.Builder fbb) {
+        final codeOffset = fbb.writeString(object.code);
+        final libelleOffset = fbb.writeString(object.libelle);
+        final descriptionOffset = object.description == null
+            ? null
+            : fbb.writeString(object.description!);
+        fbb.startTable(6);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, codeOffset);
+        fbb.addOffset(2, libelleOffset);
+        fbb.addOffset(3, descriptionOffset);
+        fbb.addInt64(4, object.couleurHex);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final codeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 6, '');
+        final libelleParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final descriptionParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 10);
+        final couleurHexParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          12,
+        );
+        final object = TypeActivite(
+          id: idParam,
+          code: codeParam,
+          libelle: libelleParam,
+          description: descriptionParam,
+          couleurHex: couleurHexParam,
+        );
+
         return object;
       },
     ),
@@ -5923,6 +6230,11 @@ class Staff_ {
   static final activites = obx.QueryBacklinkToMany<ActiviteJour, Staff>(
     ActiviteJour_.staff,
   );
+
+  /// see [Staff.planningsHebdo]
+  static final planningsHebdo = obx.QueryBacklinkToMany<PlanningHebdo, Staff>(
+    PlanningHebdo_.staff,
+  );
 }
 
 /// [ActiviteJour] entity fields to define ObjectBox queries.
@@ -6019,5 +6331,91 @@ class Planification_ {
   /// See [Planification.activitesJson].
   static final activitesJson = obx.QueryStringProperty<Planification>(
     _entities[24].properties[5],
+  );
+}
+
+/// [PlanningHebdo] entity fields to define ObjectBox queries.
+class PlanningHebdo_ {
+  /// See [PlanningHebdo.id].
+  static final id = obx.QueryIntegerProperty<PlanningHebdo>(
+    _entities[25].properties[0],
+  );
+
+  /// See [PlanningHebdo.staff].
+  static final staff = obx.QueryRelationToOne<PlanningHebdo, Staff>(
+    _entities[25].properties[1],
+  );
+
+  /// See [PlanningHebdo.dimanche].
+  static final dimanche = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[2],
+  );
+
+  /// See [PlanningHebdo.lundi].
+  static final lundi = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[3],
+  );
+
+  /// See [PlanningHebdo.mardi].
+  static final mardi = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[4],
+  );
+
+  /// See [PlanningHebdo.mercredi].
+  static final mercredi = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[5],
+  );
+
+  /// See [PlanningHebdo.jeudi].
+  static final jeudi = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[6],
+  );
+
+  /// See [PlanningHebdo.vendredi].
+  static final vendredi = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[7],
+  );
+
+  /// See [PlanningHebdo.samedi].
+  static final samedi = obx.QueryStringProperty<PlanningHebdo>(
+    _entities[25].properties[8],
+  );
+
+  /// See [PlanningHebdo.dateDebut].
+  static final dateDebut = obx.QueryDateProperty<PlanningHebdo>(
+    _entities[25].properties[9],
+  );
+
+  /// See [PlanningHebdo.dateFin].
+  static final dateFin = obx.QueryDateProperty<PlanningHebdo>(
+    _entities[25].properties[10],
+  );
+}
+
+/// [TypeActivite] entity fields to define ObjectBox queries.
+class TypeActivite_ {
+  /// See [TypeActivite.id].
+  static final id = obx.QueryIntegerProperty<TypeActivite>(
+    _entities[26].properties[0],
+  );
+
+  /// See [TypeActivite.code].
+  static final code = obx.QueryStringProperty<TypeActivite>(
+    _entities[26].properties[1],
+  );
+
+  /// See [TypeActivite.libelle].
+  static final libelle = obx.QueryStringProperty<TypeActivite>(
+    _entities[26].properties[2],
+  );
+
+  /// See [TypeActivite.description].
+  static final description = obx.QueryStringProperty<TypeActivite>(
+    _entities[26].properties[3],
+  );
+
+  /// See [TypeActivite.couleurHex].
+  static final couleurHex = obx.QueryIntegerProperty<TypeActivite>(
+    _entities[26].properties[4],
   );
 }

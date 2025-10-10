@@ -1266,6 +1266,10 @@ class Staff {
   @Backlink('staff')
   final activites = ToMany<ActiviteJour>();
 
+  // 🆕 Lien vers planning hebdomadaire
+  @Backlink('staff')
+  final planningsHebdo = ToMany<PlanningHebdo>();
+
   Staff({
     this.id = 0,
     required this.nom,
@@ -1344,5 +1348,105 @@ class Planification {
     required this.annee,
     required this.ordreEquipes,
     this.activitesJson,
+  });
+}
+
+@Entity()
+class PlanningHebdo {
+  int id;
+
+  // Référence au staff concerné
+  final staff = ToOne<Staff>();
+
+  // Activités par jour de la semaine (0=Dimanche, 1=Lundi, ..., 6=Samedi)
+  String? dimanche;
+  String? lundi;
+  String? mardi;
+  String? mercredi;
+  String? jeudi;
+  String? vendredi;
+  String? samedi;
+
+  // Période de validité (optionnel)
+  DateTime? dateDebut;
+  DateTime? dateFin;
+
+  PlanningHebdo({
+    this.id = 0,
+    this.dimanche,
+    this.lundi,
+    this.mardi,
+    this.mercredi,
+    this.jeudi,
+    this.vendredi,
+    this.samedi,
+    this.dateDebut,
+    this.dateFin,
+  });
+
+  /// Obtenir l'activité d'un jour spécifique (0-6)
+  String? getActiviteJour(int jourSemaine) {
+    switch (jourSemaine) {
+      case 0:
+        return dimanche;
+      case 1:
+        return lundi;
+      case 2:
+        return mardi;
+      case 3:
+        return mercredi;
+      case 4:
+        return jeudi;
+      case 5:
+        return vendredi;
+      case 6:
+        return samedi;
+      default:
+        return null;
+    }
+  }
+
+  /// Définir l'activité d'un jour spécifique
+  void setActiviteJour(int jourSemaine, String? activite) {
+    switch (jourSemaine) {
+      case 0:
+        dimanche = activite;
+        break;
+      case 1:
+        lundi = activite;
+        break;
+      case 2:
+        mardi = activite;
+        break;
+      case 3:
+        mercredi = activite;
+        break;
+      case 4:
+        jeudi = activite;
+        break;
+      case 5:
+        vendredi = activite;
+        break;
+      case 6:
+        samedi = activite;
+        break;
+    }
+  }
+}
+
+@Entity()
+class TypeActivite {
+  int id;
+  String code; // DMO, VG, SERV, etc.
+  String libelle; // "Visite Générale", "Service", etc.
+  String? description;
+  int? couleurHex; // Pour l'affichage
+
+  TypeActivite({
+    this.id = 0,
+    required this.code,
+    required this.libelle,
+    this.description,
+    this.couleurHex,
   });
 }

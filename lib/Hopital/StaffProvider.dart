@@ -918,3 +918,465 @@ class BranchProvider with ChangeNotifier {
     }
   }
 }
+
+class PlanningHebdoProvider with ChangeNotifier {
+  final ObjectBox _objectBox;
+  List<PlanningHebdo> _plannings = [];
+
+  List<PlanningHebdo> get plannings => _plannings;
+
+  PlanningHebdoProvider(this._objectBox) {
+    fetchPlannings();
+  }
+
+  Future<void> fetchPlannings() async {
+    try {
+      _plannings = _objectBox.planningHebdoBox.getAll();
+      notifyListeners();
+    } catch (e) {
+      print('❌ Erreur fetchPlannings: $e');
+    }
+  }
+
+  bool hasPlanning(int staffId) {
+    return _plannings.any((p) => p.staff.targetId == staffId);
+  }
+
+  /// CRUD - CREATE : Créer un nouveau planning
+  Future<void> createPlanning({required int staffId}) async {
+    try {
+      final newPlanning = PlanningHebdo();
+      newPlanning.staff.targetId = staffId;
+      _objectBox.planningHebdoBox.put(newPlanning);
+      await fetchPlannings();
+      print('✅ Planning créé pour staff ID: $staffId');
+    } catch (e) {
+      print('❌ Erreur createPlanning: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - READ : Obtenir le planning d'un staff
+  PlanningHebdo? getPlanningByStaff(int staffId) {
+    try {
+      return _plannings.firstWhereOrNull((p) => p.staff.targetId == staffId);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// CRUD - READ : Obtenir tous les plannings d'une équipe
+  List<PlanningHebdo> getPlanningsByEquipe(String equipe) {
+    try {
+      return _plannings.where((p) {
+        final staff = p.staff.target;
+        return staff?.equipe == equipe;
+      }).toList();
+    } catch (e) {
+      print('❌ Erreur getPlanningsByEquipe: $e');
+      return [];
+    }
+  }
+
+  /// CRUD - READ : Obtenir l'activité d'un jour spécifique
+  String? getActiviteForStaffAndDay(int staffId, int jourSemaine) {
+    try {
+      final planning = getPlanningByStaff(staffId);
+      return planning?.getActiviteJour(jourSemaine);
+    } catch (e) {
+      print('❌ Erreur getActiviteForStaffAndDay: $e');
+      return null;
+    }
+  }
+
+  /// CRUD - UPDATE : Mettre à jour une activité
+  Future<void> updateActiviteJour({
+    required int staffId,
+    required int jourSemaine,
+    String? activite,
+  }) async {
+    try {
+      final planning = getPlanningByStaff(staffId);
+      if (planning != null) {
+        planning.setActiviteJour(jourSemaine, activite);
+        _objectBox.planningHebdoBox.put(planning);
+        await fetchPlannings();
+        print(
+            '✅ Activité mise à jour pour staff $staffId, jour $jourSemaine: $activite');
+      }
+    } catch (e) {
+      print('❌ Erreur updateActiviteJour: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - UPDATE : Mettre à jour plusieurs activités en une fois
+  Future<void> updateActivitesSemaine({
+    required int staffId,
+    required Map<int, String?> activites, // Map<jour, activite>
+  }) async {
+    try {
+      final planning = getPlanningByStaff(staffId);
+      if (planning != null) {
+        activites.forEach((jour, activite) {
+          planning.setActiviteJour(jour, activite);
+        });
+        _objectBox.planningHebdoBox.put(planning);
+        await fetchPlannings();
+        print(
+            '✅ ${activites.length} activités mises à jour pour staff $staffId');
+      }
+    } catch (e) {
+      print('❌ Erreur updateActivitesSemaine: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - DELETE : Supprimer un planning
+  Future<void> deletePlanning(int planningId) async {
+    try {
+      _objectBox.planningHebdoBox.remove(planningId);
+      await fetchPlannings();
+      print('🗑️ Planning supprimé ID: $planningId');
+    } catch (e) {
+      print('❌ Erreur deletePlanning: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - DELETE : Supprimer le planning d'un staff
+  Future<void> deletePlanningByStaff(int staffId) async {
+    try {
+      final planning = getPlanningByStaff(staffId);
+      if (planning != null) {
+        await deletePlanning(planning.id);
+      }
+    } catch (e) {
+      print('❌ Erreur deletePlanningByStaff: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - DELETE : Effacer toutes les activités d'un planning
+  Future<void> clearPlanningActivities(int staffId) async {
+    try {
+      final planning = getPlanningByStaff(staffId);
+      if (planning != null) {
+        for (int i = 0; i < 7; i++) {
+          planning.setActiviteJour(i, null);
+        }
+        _objectBox.planningHebdoBox.put(planning);
+        await fetchPlannings();
+        print('✅ Activités effacées pour staff $staffId');
+      }
+    } catch (e) {
+      print('❌ Erreur clearPlanningActivities: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - DELETE : Effacer toutes les activités de tous les plannings
+  Future<void> clearAllActivities() async {
+    try {
+      for (var planning in _plannings) {
+        for (int i = 0; i < 7; i++) {
+          planning.setActiviteJour(i, null);
+        }
+        _objectBox.planningHebdoBox.put(planning);
+      }
+      await fetchPlannings();
+      print('✅ Toutes les activités effacées');
+    } catch (e) {
+      print('❌ Erreur clearAllActivities: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - UTILITAIRE : Dupliquer un planning vers d'autres staffs
+  Future<void> duplicatePlanning({
+    required int sourceStaffId,
+    required List<int> targetStaffIds,
+  }) async {
+    try {
+      final sourcePlanning = getPlanningByStaff(sourceStaffId);
+      if (sourcePlanning == null) {
+        throw Exception('Planning source non trouvé');
+      }
+
+      for (var targetStaffId in targetStaffIds) {
+        var targetPlanning = getPlanningByStaff(targetStaffId);
+        if (targetPlanning == null) {
+          targetPlanning = PlanningHebdo();
+          targetPlanning.staff.targetId = targetStaffId;
+        }
+
+        // Copier toutes les activités
+        for (int i = 0; i < 7; i++) {
+          targetPlanning.setActiviteJour(i, sourcePlanning.getActiviteJour(i));
+        }
+
+        _objectBox.planningHebdoBox.put(targetPlanning);
+      }
+
+      await fetchPlannings();
+      print('✅ Planning dupliqué vers ${targetStaffIds.length} staff(s)');
+    } catch (e) {
+      print('❌ Erreur duplicatePlanning: $e');
+      rethrow;
+    }
+  }
+
+  /// CRUD - UTILITAIRE : Statistiques des activités
+  Map<String, int> getActiviteStats(int staffId) {
+    try {
+      final planning = getPlanningByStaff(staffId);
+      final stats = <String, int>{};
+
+      if (planning != null) {
+        for (int i = 0; i < 7; i++) {
+          final activite = planning.getActiviteJour(i);
+          if (activite != null && activite.isNotEmpty) {
+            stats[activite] = (stats[activite] ?? 0) + 1;
+          }
+        }
+      }
+
+      return stats;
+    } catch (e) {
+      print('❌ Erreur getActiviteStats: $e');
+      return {};
+    }
+  }
+
+  /// CRUD - UTILITAIRE : Valider un planning
+  List<String> validatePlanning(int staffId) {
+    final errors = <String>[];
+    try {
+      final planning = getPlanningByStaff(staffId);
+      final staff = planning?.staff.target;
+
+      if (planning == null) {
+        errors.add('Planning non trouvé');
+        return errors;
+      }
+
+      if (staff == null) {
+        errors.add('Staff non associé au planning');
+      }
+
+      // Vérifier si au moins une activité est définie
+      final hasActivite = List.generate(7, (i) => planning.getActiviteJour(i))
+          .any((activite) => activite != null && activite.isNotEmpty);
+
+      if (!hasActivite) {
+        errors.add('Aucune activité définie pour la semaine');
+      }
+
+      return errors;
+    } catch (e) {
+      errors.add('Erreur de validation: $e');
+      return errors;
+    }
+  }
+}
+
+extension FirstWhereOrNullExtension<E> on Iterable<E> {
+  E? firstWhereOrNull(bool Function(E element) test) {
+    for (var element in this) {
+      if (test(element)) return element;
+    }
+    return null;
+  }
+}
+
+extension PlanningHebdoProviderExtension on PlanningHebdoProvider {
+  ObjectBox get objectBox => _objectBox;
+}
+
+class TypeActiviteProvider with ChangeNotifier {
+  final ObjectBox _objectBox;
+  List<TypeActivite> _typesActivites = [];
+
+  List<TypeActivite> get typesActivites => _typesActivites;
+
+  TypeActiviteProvider(this._objectBox) {
+    fetchTypesActivites();
+  }
+
+  /// Récupérer tous les types d'activités
+  Future<void> fetchTypesActivites() async {
+    try {
+      _typesActivites = _objectBox.typeActiviteBox.getAll();
+      notifyListeners();
+      print('✅ ${_typesActivites.length} types d\'activités chargés');
+    } catch (e) {
+      print('❌ Erreur fetchTypesActivites: $e');
+    }
+  }
+
+  /// Créer un nouveau type d'activité
+  Future<void> createTypeActivite({
+    required String code,
+    required String libelle,
+    String? description,
+    int? couleurHex,
+  }) async {
+    try {
+      // Vérifier si le code existe déjà
+      final existing = _typesActivites.firstWhere(
+        (t) => t.code.toUpperCase() == code.toUpperCase(),
+        orElse: () => TypeActivite(code: '', libelle: ''),
+      );
+
+      if (existing.code.isNotEmpty) {
+        throw Exception('Un type avec le code "$code" existe déjà');
+      }
+
+      final newType = TypeActivite(
+        code: code.toUpperCase(),
+        libelle: libelle,
+        description: description,
+        couleurHex: couleurHex,
+      );
+
+      _objectBox.typeActiviteBox.put(newType);
+      await fetchTypesActivites();
+      print('✅ Type créé: $libelle ($code)');
+    } catch (e) {
+      print('❌ Erreur createTypeActivite: $e');
+      rethrow;
+    }
+  }
+
+  /// Mettre à jour un type existant
+  Future<void> updateTypeActivite(TypeActivite type) async {
+    try {
+      _objectBox.typeActiviteBox.put(type);
+      await fetchTypesActivites();
+      print('✅ Type mis à jour: ${type.libelle}');
+    } catch (e) {
+      print('❌ Erreur updateTypeActivite: $e');
+      rethrow;
+    }
+  }
+
+  /// Supprimer un type
+  Future<void> deleteTypeActivite(int typeId) async {
+    try {
+      _objectBox.typeActiviteBox.remove(typeId);
+      await fetchTypesActivites();
+      print('🗑️ Type supprimé');
+    } catch (e) {
+      print('❌ Erreur deleteTypeActivite: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtenir un type par son code
+  TypeActivite? getTypeByCode(String code) {
+    try {
+      return _typesActivites.firstWhere(
+        (t) => t.code.toUpperCase() == code.toUpperCase(),
+      );
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Créer les types par défaut
+  Future<void> createDefaultTypes() async {
+    try {
+      if (_typesActivites.isNotEmpty) return;
+
+      final defaultTypes = [
+        TypeActivite(
+          code: 'SERV',
+          libelle: 'Service',
+          description: 'Service normal',
+          couleurHex: 0xFFE0E0E0,
+        ),
+        TypeActivite(
+          code: 'DMO',
+          libelle: 'Demi-journée',
+          description: 'Demi-journée de travail',
+          couleurHex: 0xFFBBDEFB,
+        ),
+        TypeActivite(
+          code: 'VG',
+          libelle: 'Visite Générale',
+          description: 'Visite générale des patients',
+          couleurHex: 0xFFC8E6C9,
+        ),
+        TypeActivite(
+          code: 'CONSULT',
+          libelle: 'Consultation',
+          description: 'Consultation médicale',
+          couleurHex: 0xFFE1BEE7,
+        ),
+        TypeActivite(
+          code: 'JP',
+          libelle: 'Journée Pédagogique',
+          description: 'Formation/Journée pédagogique',
+          couleurHex: 0xFFFFE0B2,
+        ),
+        TypeActivite(
+          code: 'BIO',
+          libelle: 'Biothérapie',
+          description: 'Séance de biothérapie',
+          couleurHex: 0xFFB2DFDB,
+        ),
+        // TypeActivite(
+        //   code: 'G',
+        //   libelle: 'Garde',
+        //   description: 'Garde',
+        //   couleurHex: 0xFFFFE082,
+        // ),
+        // TypeActivite(
+        //   code: 'RE',
+        //   libelle: 'Repos',
+        //   description: 'Jour de repos',
+        //   couleurHex: 0xFFB0BEC5,
+        // ),
+        // TypeActivite(
+        //   code: 'C',
+        //   libelle: 'Congé',
+        //   description: 'Congé',
+        //   couleurHex: 0xFFFFCDD2,
+        // ),
+        // TypeActivite(
+        //   code: 'CM',
+        //   libelle: 'Congé Maladie',
+        //   description: 'Congé maladie',
+        //   couleurHex: 0xFFF8BBD0,
+        // ),
+        // TypeActivite(
+        //   code: 'N',
+        //   libelle: 'Nuit',
+        //   description: 'Garde de nuit',
+        //   couleurHex: 0xFFC5CAE9,
+        // ),
+      ];
+
+      for (var type in defaultTypes) {
+        _objectBox.typeActiviteBox.put(type);
+      }
+
+      await fetchTypesActivites();
+      print('✅ Types par défaut créés');
+    } catch (e) {
+      print('❌ Erreur createDefaultTypes: $e');
+    }
+  }
+
+  /// Vider tous les types
+  Future<void> clearAllTypes() async {
+    try {
+      _objectBox.typeActiviteBox.removeAll();
+      await fetchTypesActivites();
+      print('🗑️ Tous les types supprimés');
+    } catch (e) {
+      print('❌ Erreur clearAllTypes: $e');
+      rethrow;
+    }
+  }
+}

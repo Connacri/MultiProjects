@@ -1532,10 +1532,111 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "66:2133857694054394805",
+      "lastPropertyId": "11:1727050637846303899",
+      "name": "PlanningHebdo",
+      "properties": [
+        {
+          "id": "1:5791694103916015229",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4116119930786891909",
+          "name": "staffId",
+          "indexId": "148:1808765289227918884",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Staff"
+        },
+        {
+          "id": "3:3939060121171724845",
+          "name": "dimanche",
+          "type": 9
+        },
+        {
+          "id": "4:4941341543843136788",
+          "name": "lundi",
+          "type": 9
+        },
+        {
+          "id": "5:7441751232417510266",
+          "name": "mardi",
+          "type": 9
+        },
+        {
+          "id": "6:134243836745998626",
+          "name": "mercredi",
+          "type": 9
+        },
+        {
+          "id": "7:2623983698415199785",
+          "name": "jeudi",
+          "type": 9
+        },
+        {
+          "id": "8:690377551775321548",
+          "name": "vendredi",
+          "type": 9
+        },
+        {
+          "id": "9:4681044308484978952",
+          "name": "samedi",
+          "type": 9
+        },
+        {
+          "id": "10:5388006133506746721",
+          "name": "dateDebut",
+          "type": 10
+        },
+        {
+          "id": "11:1727050637846303899",
+          "name": "dateFin",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "67:8687022429842144867",
+      "lastPropertyId": "5:7663215378098680851",
+      "name": "TypeActivite",
+      "properties": [
+        {
+          "id": "1:1661068837455088411",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8446311274044770115",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "3:6161524609933954781",
+          "name": "libelle",
+          "type": 9
+        },
+        {
+          "id": "4:9175215416399424206",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "5:7663215378098680851",
+          "name": "couleurHex",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "65:4929433361385066189",
-  "lastIndexId": "147:51939098627082601",
+  "lastEntityId": "67:8687022429842144867",
+  "lastIndexId": "148:1808765289227918884",
   "lastRelationId": "11:6355601734277678121",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

@@ -383,31 +383,6 @@ void insertActivites(List<ActivitePersonne> liste) {
   }
 }
 
-// Future<void> assignRhumatologieToAllStaffs() async {
-//   final objectBox = ObjectBox();
-//
-//   // Vérifier si la branche "Rhumatologie" existe déjà
-//   final branchQuery = objectBox.branchBox
-//       .query(Branch_.branchNom.equals("Rhumatologie"))
-//       .build();
-//   Branch? branch = branchQuery.findFirst();
-//   branchQuery.close();
-//
-//   // Si elle n'existe pas, la créer
-//   branch ??= Branch(branchNom: "Rhumatologie");
-//   final branchId = objectBox.branchBox.put(branch);
-//   print("✅ Branche Rhumatologie ID: $branchId");
-//
-//   // Assigner la branche à tous les staffs
-//   final staffs = objectBox.staffBox.getAll();
-//   for (var staff in staffs) {
-//     staff.branch.target = branch;
-//     objectBox.staffBox.put(staff);
-//     print("👤 ${staff.nom} lié à Rhumatologie");
-//   }
-//
-//   print("--- ✅ Tous les staffs ont été assignés à Rhumatologie ---");
-// }
 Future<void> assignRhumatologieToAllStaffs() async {
   final objectBox = ObjectBox();
   final branchBox = objectBox.branchBox;
@@ -450,4 +425,141 @@ Future<void> assignRhumatologieToAllStaffs() async {
       staffBox.getAll().where((s) => s.branch.target?.id == branch!.id).length;
   print(
       "--- ✅ Tous les staffs (${count}) sont assignés à ${branch.branchNom} ---");
+}
+
+class PlanningHebdoData {
+  static List<Map<String, dynamic>> getExamplePlanning() {
+    return [
+      {
+        'nom': 'Medjadi Mohsine',
+        'grade': 'Médecin Chef Rhumatologue',
+        'dimanche': 'Service Biothérapie',
+        'lundi': 'DMO',
+        'mardi': 'Visite Générale',
+        'mercredi': 'Consultation E.P.S.P Ben Smir',
+        'jeudi': 'Journée Pédagogique',
+      },
+      {
+        'nom': 'Ouadah Souad',
+        'grade': 'Médecin Principale En Rhumatologie',
+        'dimanche': 'Journée Pédagogique',
+        'lundi': 'Consultation E.P.S.P Mers El Kebir',
+        'mardi': 'Visite Générale',
+        'mercredi': 'DMO',
+        'jeudi': 'Service Biothérapie',
+      },
+      {
+        'nom': 'Bouziane Kheira',
+        'grade': 'Médecin Généraliste Principale',
+        'dimanche': 'Consultation E.P.S.P Ben Smir',
+        'lundi': 'Journée Pédagogique',
+        'mardi': 'Visite Générale',
+        'mercredi': 'Service',
+        'jeudi': 'DMO',
+      },
+      {
+        'nom': 'Tlemsani Naziha',
+        'grade': 'Médecin Généraliste Principale',
+        'dimanche': 'Service',
+        'lundi': 'Service',
+        'mardi': 'Consultation E.P.S.P Ben Smir',
+        'mercredi': 'Service',
+        'jeudi': 'Service',
+      },
+      {
+        'nom': 'Boumazouzi Hind',
+        'grade': 'Médecin Généraliste Principale',
+        'dimanche': 'Service',
+        'lundi': 'Service',
+        'mardi': 'Visite Générale',
+        'mercredi': 'Service',
+        'jeudi': 'Consultation E.P.S.P Ben Smir',
+      },
+    ];
+  }
+
+  /// Fonction pour insérer les données exemple dans ObjectBox
+  static Future<void> insertExampleData(
+      Store store, Box<Staff> staffBox, Box<PlanningHebdo> planningBox) async {
+    final data = getExamplePlanning();
+
+    for (var item in data) {
+      // Créer ou récupérer le staff
+      Staff? staff = staffBox
+          .query(Staff_.nom.equals(item['nom'] as String))
+          .build()
+          .findFirst();
+
+      if (staff == null) {
+        staff = Staff(
+          nom: item['nom'] as String,
+          grade: item['grade'] as String,
+          groupe: '08H-16H',
+        );
+        staffBox.put(staff);
+      }
+
+      // Créer le planning hebdo
+      final planning = PlanningHebdo(
+        dimanche: item['dimanche'] as String?,
+        lundi: item['lundi'] as String?,
+        mardi: item['mardi'] as String?,
+        mercredi: item['mercredi'] as String?,
+        jeudi: item['jeudi'] as String?,
+        vendredi: item['vendredi'] as String?,
+        samedi: item['samedi'] as String?,
+      );
+
+      planning.staff.target = staff;
+      planningBox.put(planning);
+
+      print('✅ Planning créé pour ${staff.nom}');
+    }
+  }
+
+  /// Types d'activités courants
+  static List<TypeActivite> getTypesActivites() {
+    return [
+      TypeActivite(
+        code: 'DMO',
+        libelle: 'DMO',
+        description: 'Densitométrie Osseuse',
+        couleurHex: 0xFF2196F3,
+      ),
+      TypeActivite(
+        code: 'VG',
+        libelle: 'Visite Générale',
+        couleurHex: 0xFF4CAF50,
+      ),
+      TypeActivite(
+        code: 'CONS',
+        libelle: 'Consultation',
+        description: 'Consultation externe',
+        couleurHex: 0xFFFF9800,
+      ),
+      TypeActivite(
+        code: 'CONS_EPSP',
+        libelle: 'Consultation E.P.S.P',
+        description: 'Consultation Établissement Public de Santé de Proximité',
+        couleurHex: 0xFF9C27B0,
+      ),
+      TypeActivite(
+        code: 'SERV',
+        libelle: 'Service',
+        description: 'Service hospitalier',
+        couleurHex: 0xFF607D8B,
+      ),
+      TypeActivite(
+        code: 'JP',
+        libelle: 'Journée Pédagogique',
+        couleurHex: 0xFFE91E63,
+      ),
+      TypeActivite(
+        code: 'BIOTHER',
+        libelle: 'Biothérapie',
+        description: 'Service Biothérapie',
+        couleurHex: 0xFF00BCD4,
+      ),
+    ];
+  }
 }

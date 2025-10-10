@@ -40,6 +40,10 @@ class ObjectBox {
   late final Box<TimeOff> timeOffBox;
   late final Box<Planification> planificationBox;
 
+  // 🆕 BOX MANQUANTE AJOUTÉE
+  late final Box<PlanningHebdo> planningHebdoBox;
+  late final Box<TypeActivite> typeActiviteBox;
+
   Admin? admin; // Admin optionnel
 
   static final ObjectBox _singleton = ObjectBox._internal();
@@ -83,6 +87,9 @@ class ObjectBox {
       branchBox = Box<Branch>(store);
       timeOffBox = Box<TimeOff>(store);
       planificationBox = Box<Planification>(store);
+      // 🆕 BOXES MANQUANTES INITIALISÉES
+      planningHebdoBox = Box<PlanningHebdo>(store);
+      typeActiviteBox = Box<TypeActivite>(store);
 
       // ✅ CORRECTION 2: Initialisez Admin correctement
       await _initializeAdmin();

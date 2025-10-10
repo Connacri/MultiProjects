@@ -4,11 +4,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:string_extensions/string_extensions.dart';
 
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
 import 'ActivitePersonne.dart';
+import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
 import 'print_planning_grouped_final.dart';
@@ -399,6 +401,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+              onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PlanningHebdoWidget(),
+                    ),
+                  ),
+              icon: Icon(Icons.calendar_month)),
           _buildMobileActions(context),
 
           SizedBox(
@@ -528,14 +538,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          // ⭐ MISE À JOUR : Utiliser le mois et année sélectionnés
-                          'Mois de $_selectedMonthName $_selectedYear',
+                          'Mois ${monthPrefix}${_selectedMonthName.capitalize} $_selectedYear',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.blue.shade600,
                           ),
                           textAlign: TextAlign.center,
-                        ),
+                        )
                       ],
                     ),
                   ),
@@ -2499,362 +2508,375 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
             return AlertDialog(
               title: Text("Gestion des congés - ${staff.nom}"),
-              content: Container(
-                width: double.maxFinite,
-                height: 600, // Hauteur fixe pour éviter le débordement
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // SECTION 1 : Congés existants
-                      if (timeOffs.isNotEmpty) ...[
-                        Text("Congés existants:",
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.red.shade700)),
-                        SizedBox(height: 8),
-                        Container(
-                          height: 150,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ListView.builder(
-                            itemCount: timeOffs.length,
-                            itemBuilder: (context, index) {
-                              final timeOff = timeOffs[index];
-                              final duree =
-                                  timeOff.fin.difference(timeOff.debut).inDays +
-                                      1;
-
-                              return Card(
-                                margin: EdgeInsets.all(4),
-                                child: ListTile(
-                                  dense: true,
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.orange,
-                                    child: Text(
-                                      timeOff.motif
-                                              ?.substring(0, 1)
-                                              .toUpperCase() ??
-                                          'C',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  title: Text(
-                                    "${timeOff.motif ?? 'Congé'} ($duree jour${duree > 1 ? 's' : ''})",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13),
-                                  ),
-                                  subtitle: Text(
-                                    "Du ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}",
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      // Bouton éditer
-                                      IconButton(
-                                        icon: Icon(Icons.edit,
-                                            color: Colors.blue, size: 18),
-                                        onPressed: () async {
-                                          await _showEditTimeOffDialog(
-                                              context, staff, timeOff);
-                                          setState(() {
-                                            // Refresh de la liste
-                                          });
-                                        },
-                                      ),
-                                      // Bouton supprimer
-                                      IconButton(
-                                        icon: Icon(Icons.delete,
-                                            color: Colors.red, size: 18),
-                                        onPressed: () async {
-                                          final confirm =
-                                              await showDialog<bool>(
-                                            context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              title: Text(
-                                                  "Confirmer la suppression"),
-                                              content: Text(
-                                                  "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(false),
-                                                  child: Text("Annuler"),
-                                                ),
-                                                ElevatedButton(
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                          backgroundColor:
-                                                              Colors.red,
-                                                          foregroundColor:
-                                                              Colors.white),
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(true),
-                                                  child: Text("Supprimer"),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-
-                                          if (confirm == true) {
-                                            await _deleteTimeOff(
-                                                staff, timeOff);
-                                            setState(() {
-                                              // Refresh de la liste après suppression
-                                              timeOffs.removeAt(index);
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Divider(thickness: 2),
-                        SizedBox(height: 10),
-                      ],
-
-                      // SECTION 2 : Nouveau congé
-                      Text("Nouveau congé:",
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // SECTION 1 : Congés existants
+                    if (timeOffs.isNotEmpty) ...[
+                      Text("Congés existants:",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Colors.green.shade700)),
-                      SizedBox(height: 15),
+                              color: Colors.red.shade700)),
+                      SizedBox(height: 8),
+                      Container(
+                        height: 150,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: timeOffs.length,
+                          itemBuilder: (context, index) {
+                            final timeOff = timeOffs[index];
+                            final duree =
+                                timeOff.fin.difference(timeOff.debut).inDays +
+                                    1;
 
-                      // Mode de saisie
+                            return Card(
+                              margin: EdgeInsets.all(4),
+                              child: ListTile(
+                                dense: true,
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.orange,
+                                  child: Text(
+                                    timeOff.motif
+                                            ?.substring(0, 1)
+                                            .toUpperCase() ??
+                                        'C',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                title: Text(
+                                  "${timeOff.motif ?? 'Congé'} ($duree jour${duree > 1 ? 's' : ''})",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13),
+                                ),
+                                subtitle: Text(
+                                  "Du ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}",
+                                  style: TextStyle(fontSize: 12),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Bouton éditer
+                                    IconButton(
+                                      icon: Icon(Icons.edit,
+                                          color: Colors.blue, size: 18),
+                                      onPressed: () async {
+                                        await _showEditTimeOffDialog(
+                                            context, staff, timeOff);
+                                        setState(() {
+                                          // Refresh de la liste
+                                        });
+                                      },
+                                    ),
+                                    // Bouton supprimer
+                                    IconButton(
+                                      icon: Icon(Icons.delete,
+                                          color: Colors.red, size: 18),
+                                      onPressed: () async {
+                                        final confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text(
+                                                "Confirmer la suppression"),
+                                            content: Text(
+                                                "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx)
+                                                        .pop(false),
+                                                child: Text("Annuler"),
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.red,
+                                                    foregroundColor:
+                                                        Colors.white),
+                                                onPressed: () =>
+                                                    Navigator.of(ctx).pop(true),
+                                                child: Text("Supprimer"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+
+                                        if (confirm == true) {
+                                          await _deleteTimeOff(staff, timeOff);
+                                          setState(() {
+                                            // Refresh de la liste après suppression
+                                            timeOffs.removeAt(index);
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Divider(thickness: 2),
+                      SizedBox(height: 10),
+                    ],
+
+                    // SECTION 2 : Nouveau congé
+                    Text("Nouveau congé:",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.green.shade700)),
+                    SizedBox(height: 15),
+
+                    // Mode de saisie
+                    Row(
+                      children: [
+                        Text("Mode de saisie:",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: SegmentedButton<bool>(
+                            segments: [
+                              ButtonSegment(
+                                  value: false, label: Text("Date à Date")),
+                              ButtonSegment(
+                                  value: true, label: Text("Début + Jours")),
+                            ],
+                            selected: {useNombreJours},
+                            onSelectionChanged: (Set<bool> selection) {
+                              setState(() {
+                                useNombreJours = selection.first;
+                                nombreJours = null;
+                                dateFin = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+
+                    // Date de début
+                    Row(
+                      children: [
+                        Text("Date début:",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            icon: Icon(Icons.calendar_month),
+                            label: Text(dateDebut != null
+                                ? DateFormat('dd/MM/yyyy').format(dateDebut!)
+                                : 'Sélectionner'),
+                            onPressed: () async {
+                              final firstDate =
+                                  DateTime(_selectedYear, _selectedMonth, 1);
+                              final lastDate = DateTime(
+                                  _selectedYear, _selectedMonth + 1, 0);
+                              final now = DateTime.now();
+
+                              DateTime initialDate;
+                              if (dateDebut != null) {
+                                initialDate = dateDebut!;
+                              } else if (now.isAfter(firstDate) &&
+                                  now.isBefore(
+                                      lastDate.add(Duration(days: 1)))) {
+                                initialDate = now;
+                              } else {
+                                initialDate = firstDate;
+                              }
+
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: initialDate,
+                                firstDate: firstDate,
+                                lastDate: lastDate,
+                              );
+                              if (date != null) {
+                                setState(() {
+                                  dateDebut = date;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    // Mode dates : Date de fin OU Mode début + jours : Nombre de jours
+                    if (!useNombreJours) ...[
                       Row(
                         children: [
-                          Text("Mode de saisie:",
+                          Text("Date fin:",
                               style: TextStyle(fontWeight: FontWeight.bold)),
                           SizedBox(width: 10),
                           Expanded(
-                            child: SegmentedButton<bool>(
-                              segments: [
-                                ButtonSegment(
-                                    value: false, label: Text("Dates")),
-                                ButtonSegment(
-                                    value: true, label: Text("Début + Jours")),
-                              ],
-                              selected: {useNombreJours},
-                              onSelectionChanged: (Set<bool> selection) {
+                            child: OutlinedButton.icon(
+                              icon: Icon(Icons.calendar_month),
+                              label: Text(dateFin != null
+                                  ? DateFormat('dd/MM/yyyy').format(dateFin!)
+                                  : 'Sélectionner'),
+                              onPressed: dateDebut == null
+                                  ? null
+                                  : () async {
+                                      final date = await showDatePicker(
+                                        context: context,
+                                        initialDate: dateFin ??
+                                            dateDebut!.add(Duration(days: 1)),
+                                        firstDate: dateDebut!,
+                                        lastDate: DateTime(2100),
+                                        // DateTime(_selectedYear,
+                                        //     _selectedMonth + 1, 0),
+                                      );
+                                      if (date != null) {
+                                        setState(() {
+                                          dateFin = date;
+                                        });
+                                      }
+                                    },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    if (useNombreJours) ...[
+                      Row(
+                        children: [
+                          Text("Nb jours:",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: TextFormField(
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                hintText: "Ex: 5",
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 8),
+                              ),
+                              onChanged: (value) {
                                 setState(() {
-                                  useNombreJours = selection.first;
-                                  nombreJours = null;
-                                  dateFin = null;
+                                  nombreJours = int.tryParse(value);
                                 });
                               },
                             ),
                           ),
                         ],
                       ),
-                      SizedBox(height: 20),
-
-                      // Date de début
-                      Row(
-                        children: [
-                          Text("Date début:",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              icon: Icon(Icons.calendar_month),
-                              label: Text(dateDebut != null
-                                  ? DateFormat('dd/MM/yyyy').format(dateDebut!)
-                                  : 'Sélectionner'),
-                              onPressed: () async {
-                                final firstDate =
-                                    DateTime(_selectedYear, _selectedMonth, 1);
-                                final lastDate = DateTime(
-                                    _selectedYear, _selectedMonth + 1, 0);
-                                final now = DateTime.now();
-
-                                DateTime initialDate;
-                                if (dateDebut != null) {
-                                  initialDate = dateDebut!;
-                                } else if (now.isAfter(firstDate) &&
-                                    now.isBefore(
-                                        lastDate.add(Duration(days: 1)))) {
-                                  initialDate = now;
-                                } else {
-                                  initialDate = firstDate;
-                                }
-
-                                final date = await showDatePicker(
-                                  context: context,
-                                  initialDate: initialDate,
-                                  firstDate: firstDate,
-                                  lastDate: lastDate,
-                                );
-                                if (date != null) {
-                                  setState(() {
-                                    dateDebut = date;
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 15),
-
-                      // Mode dates : Date de fin OU Mode début + jours : Nombre de jours
-                      if (!useNombreJours) ...[
-                        Row(
-                          children: [
-                            Text("Date fin:",
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                icon: Icon(Icons.calendar_month),
-                                label: Text(dateFin != null
-                                    ? DateFormat('dd/MM/yyyy').format(dateFin!)
-                                    : 'Sélectionner'),
-                                onPressed: dateDebut == null
-                                    ? null
-                                    : () async {
-                                        final date = await showDatePicker(
-                                          context: context,
-                                          initialDate: dateFin ??
-                                              dateDebut!.add(Duration(days: 1)),
-                                          firstDate: dateDebut!,
-                                          lastDate: DateTime(2100),
-                                          // DateTime(_selectedYear,
-                                          //     _selectedMonth + 1, 0),
-                                        );
-                                        if (date != null) {
-                                          setState(() {
-                                            dateFin = date;
-                                          });
-                                        }
-                                      },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-
-                      if (useNombreJours) ...[
-                        Row(
-                          children: [
-                            Text("Nb jours:",
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            SizedBox(width: 10),
-                            Expanded(
-                              child: TextFormField(
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  hintText: "Ex: 5",
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    nombreJours = int.tryParse(value);
-                                  });
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-
-                      SizedBox(height: 15),
-
-                      // Résumé du nouveau congé
-                      if (dateDebut != null &&
-                          ((dateFin != null && !useNombreJours) ||
-                              (nombreJours != null && useNombreJours))) ...[
-                        Container(
-                          padding: EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.shade200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Résumé du nouveau congé:",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue.shade700)),
-                              Text(
-                                  "Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
-                              Text(
-                                  "Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
-                              Text(
-                                  "Durée: ${nombreJours!} jour${nombreJours! > 1 ? 's' : ''}"),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 15),
-                      ],
-
-                      // Type de congé pour le nouveau congé
-                      Text("Type de congé:",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: ['C', 'CM', 'G', 'RE', '-'].map((statut) {
-                          String label;
-                          Color color;
-                          switch (statut) {
-                            case 'C':
-                              label = 'Congé';
-                              color = Colors.orange;
-                              break;
-                            case 'CM':
-                              label = 'Congé Maladie';
-                              color = Colors.purple;
-                              break;
-                            case 'G':
-                              label = 'Garde';
-                              color = Colors.green;
-                              break;
-                            case 'RE':
-                              label = 'Récupération';
-                              color = Colors.blue;
-                              break;
-                            case '-':
-                              label = 'Repos';
-                              color = Colors.grey;
-                              break;
-                            default:
-                              label = statut;
-                              color = Colors.grey;
-                          }
-
-                          return ChoiceChip(
-                            label: Text("$statut - $label"),
-                            selected: selectedStatut == statut,
-                            selectedColor: color.withOpacity(0.3),
-                            onSelected: (bool selected) {
-                              setState(() {
-                                selectedStatut = selected ? statut : 'C';
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
                     ],
-                  ),
+
+                    SizedBox(height: 15),
+
+                    // Résumé du nouveau congé
+                    if (dateDebut != null &&
+                        ((dateFin != null && !useNombreJours) ||
+                            (nombreJours != null && useNombreJours))) ...[
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Résumé du nouveau congé:",
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade700)),
+                            Text(
+                                "Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
+                            Text(
+                                "Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
+                            Text(
+                                "Durée: ${nombreJours!} jour${nombreJours! > 1 ? 's' : ''}"),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 15),
+                    ],
+
+                    // Type de congé pour le nouveau congé
+                    Text("Type de congé:",
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: ['C', 'CM', 'AU'].map((statut) {
+                        String label;
+                        Color color;
+                        switch (statut) {
+                          case 'C':
+                            label = 'Congé';
+                            color = Colors.orange;
+                            break;
+                          case 'CM':
+                            label = 'Congé Maladie';
+                            color = Colors.purple;
+                            break;
+                          case 'AU':
+                            label = 'Autorisé';
+                            color = Colors.green;
+                            break;
+
+                          default:
+                            label = statut;
+                            color = Colors.grey;
+                        }
+
+                        return ChoiceChip(
+                          label: Text(
+                            "$statut - $label",
+                            style: TextStyle(
+                              color: selectedStatut == statut
+                                  ? Colors.white
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurface, // texte selon le thème
+                            ),
+                          ),
+                          selected: selectedStatut == statut,
+
+                          // Couleur quand sélectionné (s’adapte au thème)
+                          selectedColor: Theme.of(context).colorScheme.primary,
+
+                          // Couleur de fond quand non sélectionné
+                          backgroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
+
+                          // Bordure douce
+                          shape: StadiumBorder(
+                            side: BorderSide(
+                              color: selectedStatut == statut
+                                  ? Theme.of(context).colorScheme.primary
+                                  : Colors.grey.withOpacity(0.4),
+                            ),
+                          ),
+
+                          onSelected: (bool selected) {
+                            setState(() {
+                              selectedStatut = selected ? statut : 'C';
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ),
               ),
               actions: [
@@ -5709,10 +5731,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 ],
               ),
               content: Container(
-                width: double.maxFinite,
                 height: 600,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // SECTION 1: Liste des congés existants
                     Row(
@@ -6863,6 +6885,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  String get monthPrefix {
+    final vowels = ['a', 'e', 'i', 'o', 'u', 'h'];
+    final firstLetter = _selectedMonthName[0].toLowerCase();
+    if (vowels.contains(firstLetter)) {
+      return "d’"; // apostrophe typographique
+    } else {
+      return "de ";
     }
   }
 }
