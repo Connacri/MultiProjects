@@ -10,6 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../objectBox/Entity.dart';
+import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
 
 /// Génère et sauvegarde le planning mensuel complet en PDF
@@ -174,6 +175,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
         title = groupe;
       }
 
+      final prefix = getMonthPrefix(monthName);
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4.landscape,
@@ -214,7 +216,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
             pw.SizedBox(height: 6),
             pw.Center(
               child: pw.Text(
-                'TABLEAU D\'ACTIVITÉ DU MOIS D\'${monthName.toUpperCase()} $year',
+                'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year',
                 style: bold.copyWith(fontSize: 14),
               ),
             ),

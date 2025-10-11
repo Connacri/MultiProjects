@@ -215,6 +215,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          const Center(child: AjouterActivitesButton()),
           // Bouton Clear Activités
           IconButton(
             icon: const Icon(Icons.clear_all),
@@ -364,20 +365,20 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      'Médecin',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(height: 4),
+                    // Text(
+                    //   'Médecin',
+                    //   style: TextStyle(
+                    //     fontWeight: FontWeight.bold,
+                    //     fontSize: 14,
+                    //   ),
+                    // ),
+                    // SizedBox(height: 4),
                     Text(
                       'Grade - Équipe',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 14,
                         color: Colors.grey,
                       ),
                     ),
@@ -423,7 +424,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                           staff.nom,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -432,7 +433,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                         Text(
                           staff.grade,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: Colors.grey.shade600,
                           ),
                           maxLines: 2,
@@ -452,7 +453,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                             child: Text(
                               'Équipe ${staff.equipe}',
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: Colors.blue.shade700,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -470,56 +471,59 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                       onTap: () => _showEditDialog(staff, index, activite,
                           planning, typeActiviteProvider),
                       borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 120,
-                        height: double.infinity,
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color:
-                              _getActiviteColor(activite, typeActiviteProvider),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Text(
-                            //   _getActiviteLabel(activite, typeActiviteProvider),
-                            //   style: TextStyle(
-                            //     fontSize: 12,
-                            //     fontWeight: activite != null
-                            //         ? FontWeight.w600
-                            //         : FontWeight.normal,
-                            //     color: activite != null
-                            //         ? Colors.grey.shade800
-                            //         : Colors.grey.shade400,
-                            //   ),
-                            //   textAlign: TextAlign.center,
-                            //   maxLines: 3,
-                            //   overflow: TextOverflow.ellipsis,
-                            // ),
-                            Text(
-                              _getActiviteDescription(
-                                  activite, typeActiviteProvider),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: activite != null
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                color: activite != null
-                                    ? Colors.grey.shade800
-                                    : Colors.grey.shade400,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Container(
+                          width: double.infinity,
+                          height: double.infinity,
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _getActiviteColor(
+                                activite, typeActiviteProvider),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              // Text(
+                              //   _getActiviteLabel(activite, typeActiviteProvider),
+                              //   style: TextStyle(
+                              //     fontSize: 12,
+                              //     fontWeight: activite != null
+                              //         ? FontWeight.w600
+                              //         : FontWeight.normal,
+                              //     color: activite != null
+                              //         ? Colors.grey.shade800
+                              //         : Colors.grey.shade400,
+                              //   ),
+                              //   textAlign: TextAlign.center,
+                              //   maxLines: 3,
+                              //   overflow: TextOverflow.ellipsis,
+                              // ),
+                              Text(
+                                _getActiviteDescription(
+                                    activite, typeActiviteProvider),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: activite != null
+                                      ? FontWeight.w600
+                                      : FontWeight.normal,
+                                  color: activite != null
+                                      ? Colors.white
+                                      : Colors.grey.shade400,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              textAlign: TextAlign.center,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (activite == null)
-                              Icon(
-                                Icons.add_circle_outline,
-                                size: 16,
-                                color: Colors.grey.shade400,
-                              ),
-                          ],
+                              if (activite == null)
+                                Icon(
+                                  Icons.add_circle_outline,
+                                  size: 16,
+                                  color: Colors.grey.shade400,
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -746,7 +750,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
       builder: (dialogContext) => AlertDialog(
         title: const Text('Gestion des Types d\'Activités'),
         content: SizedBox(
-          width: double.maxFinite,
+          width: 350,
           // ❌ NE PAS UTILISER Consumer ICI - utiliser directement le provider
           child: ListenableBuilder(
             listenable: typeActiviteProvider,
@@ -754,6 +758,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
               return SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Bouton pour créer un nouveau type
                     Align(
@@ -788,6 +793,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                               return Card(
                                 margin: const EdgeInsets.symmetric(vertical: 4),
                                 child: ListTile(
+                                  dense: true,
                                   leading: Container(
                                     width: 40,
                                     height: 40,
@@ -998,37 +1004,63 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                   spacing: 8,
                   children: [
                     _buildColorOption(
-                        0xFFBBDEFB, 'Bleu', selectedColor, setDialogState,
+                        0xFF2196F3, 'Bleu', selectedColor, setDialogState,
                         (color) {
                       selectedColor = color;
                     }),
                     _buildColorOption(
-                        0xFFC8E6C9, 'Vert', selectedColor, setDialogState,
+                        0xFF4CAF50, 'Vert', selectedColor, setDialogState,
                         (color) {
                       selectedColor = color;
                     }),
                     _buildColorOption(
-                        0xFFE1BEE7, 'Violet', selectedColor, setDialogState,
+                        0xFF9C27B0, 'Violet', selectedColor, setDialogState,
                         (color) {
                       selectedColor = color;
                     }),
                     _buildColorOption(
-                        0xFFFFE0B2, 'Orange', selectedColor, setDialogState,
+                        0xFFFF9800, 'Orange', selectedColor, setDialogState,
                         (color) {
                       selectedColor = color;
                     }),
                     _buildColorOption(
-                        0xFFB2DFDB, 'Turquoise', selectedColor, setDialogState,
+                        0xFF009688, 'Turquoise', selectedColor, setDialogState,
                         (color) {
                       selectedColor = color;
                     }),
                     _buildColorOption(
-                        0xFFFFCDD2, 'Rouge', selectedColor, setDialogState,
+                        0xFFF44336, 'Rouge', selectedColor, setDialogState,
                         (color) {
+                      selectedColor = color;
+                    }),
+
+                    // 🔹 5 nouvelles couleurs intenses
+                    _buildColorOption(
+                        0xFFFFEB3B, 'Jaune', selectedColor, setDialogState,
+                        (color) {
+                      selectedColor = color;
+                    }),
+                    _buildColorOption(
+                        0xFF673AB7, 'Lavande', selectedColor, setDialogState,
+                        (color) {
+                      selectedColor = color;
+                    }),
+                    _buildColorOption(
+                        0xFF8BC34A, 'Vert clair', selectedColor, setDialogState,
+                        (color) {
+                      selectedColor = color;
+                    }),
+                    _buildColorOption(
+                        0xFFFF7043, 'Saumon', selectedColor, setDialogState,
+                        (color) {
+                      selectedColor = color;
+                    }),
+                    _buildColorOption(0xFF607D8B, 'Gris bleuté', selectedColor,
+                        setDialogState, (color) {
                       selectedColor = color;
                     }),
                   ],
-                ),
+                )
               ],
             ),
           ),
@@ -1189,13 +1221,74 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
               color: Color(colorValue),
               borderRadius: BorderRadius.circular(8),
               border:
-                  isSelected ? Border.all(color: Colors.blue, width: 3) : null,
+                  isSelected ? Border.all(color: Colors.white, width: 3) : null,
             ),
           ),
           const SizedBox(height: 4),
           Text(label, style: const TextStyle(fontSize: 10)),
         ],
       ),
+    );
+  }
+}
+
+class AjouterActivitesButton extends StatelessWidget {
+  const AjouterActivitesButton({Key? key}) : super(key: key);
+
+  // 🔹 Liste nettoyée (sans répétitions)
+  final List<String> activites = const [
+    'Service Biothérapie',
+    'DMO',
+    'Visite Générale',
+    'Consultation',
+    'E.P.S.P Ben Smir',
+    'Journée Pédagogique',
+    'E.P.S.P Mers El Kebir',
+    'Service',
+  ];
+
+  // 🔹 Génère un code court à partir du libellé
+  String _generateCode(String libelle) {
+    final mots = libelle.split(' ');
+    if (mots.length == 1) return libelle.substring(0, 3).toUpperCase();
+    return mots.map((m) => m[0]).take(3).join().toUpperCase();
+  }
+
+  Future<void> _ajouterActivites(BuildContext context) async {
+    final provider = Provider.of<TypeActiviteProvider>(context, listen: false);
+
+    int ajoutes = 0;
+    for (final libelle in activites) {
+      final code = _generateCode(libelle);
+
+      // Vérifie si déjà existant
+      final existe = provider.typesActivites.any(
+        (t) => t.libelle.toLowerCase() == libelle.toLowerCase(),
+      );
+
+      if (!existe) {
+        await provider.createTypeActivite(
+            code: code, libelle: libelle, description: libelle);
+        ajoutes++;
+      }
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ $ajoutes nouvelles activités ajoutées sans doublons'),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      icon: const Icon(Icons.add),
+      label: const Text('Ajouter les activités'),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      ),
+      onPressed: () => _ajouterActivites(context),
     );
   }
 }

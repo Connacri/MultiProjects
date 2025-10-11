@@ -6170,9 +6170,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       if (confirm == true) {
         await _deleteTimeOff(staff, timeOff);
-        await runPlanificationAutomatique(context);
-        await _showPlanificationAgentsHygieneDialog();
-        await _showSimplePlanificationDialog();
+        // await runPlanificationAutomatique(context);
+        // await _showPlanificationAgentsHygieneDialog();
+        // await _showSimplePlanificationDialog();
         setState(() {}); // Rafraîchir la liste
       }
     }

@@ -21,6 +21,11 @@ Future<String?> generatePersonnelListsPDF(
   await staffProvider.fetchStaffs();
   final staffs = staffProvider.staffs ?? [];
 
+  // 🆕 RÉCUPÉRER LE PROVIDER TypeActivite
+  final typeActiviteProvider =
+      Provider.of<TypeActiviteProvider>(context, listen: false);
+  await typeActiviteProvider.fetchTypesActivites();
+
   if (staffs.isEmpty) return null;
 
   final monthName = DateFormat.MMMM('fr_FR').format(DateTime(year, month));
@@ -38,6 +43,7 @@ Future<String?> generatePersonnelListsPDF(
     fontWeight: pw.FontWeight.bold,
   );
 
+  final prefix = getMonthPrefix(monthName);
   // Filtrer les médecins
   final medecins = staffs.where((s) {
     final grade = (s.grade ?? '').toString().toUpperCase();
@@ -46,19 +52,166 @@ Future<String?> generatePersonnelListsPDF(
         grade.contains('RHUMATOLOGUE');
   }).toList();
 
-  // ========== PAGE 2 : PLANNING HEBDOMADAIRE DES MÉDECINS ==========
+  pw.Widget _buildScheduleCell(
+    String text,
+    pw.Font oswald,
+    double fontSize, {
+    pw.Alignment alignment = pw.Alignment.center,
+    bool bold = false,
+  }) {
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 5),
+      alignment: alignment,
+      constraints: const pw.BoxConstraints(minHeight: 35),
+      child: pw.Text(
+        text,
+        style: pw.TextStyle(
+          font: oswald,
+          fontSize: fontSize,
+          fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+        ),
+        textAlign: alignment == pw.Alignment.centerLeft
+            ? pw.TextAlign.left
+            : pw.TextAlign.center,
+        maxLines: 3,
+        overflow: pw.TextOverflow.clip,
+      ),
+    );
+  }
+// ========== TABLEAU HEBDOMADAIRE DES MÉDECINS - VERSION AMÉLIORÉE ==========
+
+  pw.Widget _buildWeeklyScheduleTableImproved(List medecins, pw.Font oswald) {
+    final headers = [
+      'Nom et Prénom',
+      'Dimanche',
+      'Lundi',
+      'Mardi',
+      'Mercredi',
+      'Jeudi'
+    ];
+
+    final rows = <pw.TableRow>[];
+
+    // En-tête avec style amélioré
+    rows.add(
+      pw.TableRow(
+        decoration: pw.BoxDecoration(
+          color: PdfColors.grey800,
+        ),
+        children: headers.map((h) {
+          return pw.Container(
+            padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+            alignment: pw.Alignment.center,
+            child: pw.Text(
+              h,
+              style: pw.TextStyle(
+                font: oswald,
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              textAlign: pw.TextAlign.center,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+
+    // Lignes de données avec alternance de couleurs
+    // Lignes de données
+    for (int i = 0; i < medecins.length; i++) {
+      final medecin = medecins[i];
+      final nom = (medecin.nom ?? '').toString();
+
+      // Variables pour stocker les LIBELLÉS
+      String dimanche = '';
+      String lundi = '';
+      String mardi = '';
+      String mercredi = '';
+      String jeudi = '';
+
+      try {
+        if (medecin.planningsHebdo != null &&
+            medecin.planningsHebdo.isNotEmpty) {
+          final planning = medecin.planningsHebdo.first;
+
+          // 🆕 CONVERSION CODE → LIBELLÉ AVEC LE PROVIDER
+          // Au lieu de récupérer directement le code, on le convertit
+          final codeDimanche = planning.dimanche ?? '';
+          final codeLundi = planning.lundi ?? '';
+          final codeMardi = planning.mardi ?? '';
+          final codeMercredi = planning.mercredi ?? '';
+          final codeJeudi = planning.jeudi ?? '';
+
+          // Conversion en utilisant le Provider
+          dimanche = _getActivityLabel(codeDimanche, typeActiviteProvider);
+          lundi = _getActivityLabel(codeLundi, typeActiviteProvider);
+          mardi = _getActivityLabel(codeMardi, typeActiviteProvider);
+          mercredi = _getActivityLabel(codeMercredi, typeActiviteProvider);
+          jeudi = _getActivityLabel(codeJeudi, typeActiviteProvider);
+        }
+      } catch (e) {
+        print('⚠️ Erreur lecture planning hebdo pour $nom: $e');
+      }
+
+      final isEven = i % 2 == 0;
+
+      rows.add(
+        pw.TableRow(
+          decoration: pw.BoxDecoration(
+            color: isEven ? PdfColors.grey100 : PdfColors.white,
+          ),
+          children: [
+            _buildScheduleCell(
+              nom,
+              oswald,
+              9.5,
+              alignment: pw.Alignment.centerLeft,
+              bold: true,
+            ),
+            // ⭐ MAINTENANT ON AFFICHE LES LIBELLÉS
+            _buildScheduleCell(dimanche, oswald, 8.5),
+            _buildScheduleCell(lundi, oswald, 8.5),
+            _buildScheduleCell(mardi, oswald, 8.5),
+            _buildScheduleCell(mercredi, oswald, 8.5),
+            _buildScheduleCell(jeudi, oswald, 8.5),
+          ],
+        ),
+      );
+    }
+
+    return pw.Table(
+      border: pw.TableBorder.all(
+        width: 0.8,
+        color: PdfColors.grey700,
+      ),
+      columnWidths: const {
+        0: pw.FlexColumnWidth(2.8),
+        1: pw.FlexColumnWidth(1.8),
+        2: pw.FlexColumnWidth(1.8),
+        3: pw.FlexColumnWidth(1.8),
+        4: pw.FlexColumnWidth(1.8),
+        5: pw.FlexColumnWidth(1.8),
+      },
+      children: rows,
+    );
+  }
+
   if (medecins.isNotEmpty) {
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         build: (ctx) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildHeader(logo, bold, baseStyle),
-            pw.SizedBox(height: 25),
+            pw.SizedBox(height: 50),
+            pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+            pw.SizedBox(height: 20),
             pw.Center(
               child: pw.Text(
-                'Planning des Médecins « Mois D\'${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year »',
+                'Planning des Médecins « Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year »',
                 style: bold.copyWith(fontSize: 12),
               ),
             ),
@@ -66,8 +219,8 @@ Future<String?> generatePersonnelListsPDF(
             pw.Center(
               child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 11)),
             ),
-            pw.SizedBox(height: 20),
-            _buildWeeklyScheduleTable(medecins, oswald),
+            pw.Spacer(),
+            _buildWeeklyScheduleTableImproved(medecins, oswald),
             pw.Spacer(),
             _buildFooter(baseStyle),
           ],
@@ -82,20 +235,24 @@ Future<String?> generatePersonnelListsPDF(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       build: (ctx) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          _buildHeader(logo, bold, baseStyle),
+          _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
+          pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
           pw.SizedBox(height: 20),
 
           // SECTION 1 : Personnel Médical
-          pw.Text(
-            'La liste du personnel médical du mois d\'${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
-            style: bold.copyWith(fontSize: 11),
+          pw.Center(
+            child: pw.Text(
+              'La liste du personnel médical du mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
+              style: bold.copyWith(fontSize: 11),
+            ),
           ),
           pw.SizedBox(height: 4),
           pw.Center(
             child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 10)),
           ),
-          pw.SizedBox(height: 10),
+          pw.Spacer(),
           _buildMedicalStaffTable(medecins, oswald, month, year),
 
           pw.Spacer(),
@@ -106,22 +263,25 @@ Future<String?> generatePersonnelListsPDF(
   );
 
   // ========== PAGE 4 : PERSONNEL PARAMÉDICAL ==========
+
   pdf.addPage(
     pw.Page(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
       build: (ctx) => pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          _buildHeader(logo, bold, baseStyle),
+          _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
+          pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
           pw.SizedBox(height: 20),
 
           // SECTION 2 : Personnel Paramédical
           pw.Center(
               child: pw.Text(
-            'Planning du Personnel Paramédical du Mois D\'${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
+            'Planning du Personnel Paramédical du Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
             style: bold.copyWith(fontSize: 11),
           )),
-          pw.SizedBox(height: 10),
+          pw.Spacer(),
           _buildParamedicalStaffTable(staffs, oswald, month, year),
 
           pw.Spacer(),
@@ -178,7 +338,6 @@ pw.Widget _buildHeader(
         ),
       ],
     ),
-    pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
   ]);
 }
 
@@ -186,9 +345,12 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
   return pw.Column(
     mainAxisAlignment: pw.MainAxisAlignment.end,
     children: [
-      pw.Text(
-        'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-        style: baseStyle,
+      pw.Align(
+        alignment: pw.Alignment.centerRight,
+        child: pw.Text(
+          'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+          style: baseStyle,
+        ),
       ),
       pw.SizedBox(height: 15),
       pw.Row(
@@ -202,113 +364,6 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
       ),
       pw.SizedBox(height: 80),
     ],
-  );
-}
-
-// ========== TABLEAU HEBDOMADAIRE DES MÉDECINS ==========
-
-pw.Widget _buildWeeklyScheduleTable(List medecins, pw.Font oswald) {
-  final headers = [
-    'Nom et Prénom',
-    'Dimanche',
-    'Lundi',
-    'Mardi',
-    'Mercredi',
-    'Jeudi'
-  ];
-
-  // Mapping des activités hebdomadaires réelles
-  final Map<String, Map<String, String>> activitesHebdo = {
-    'Medjadi Mohsine': {
-      'Dimanche': 'Service Biothérapie',
-      'Lundi': 'DMO',
-      'Mardi': 'Visite Générale',
-      'Mercredi': 'Consultation\nE.P.S.P Ben Smir',
-      'Jeudi': 'Journée Pédagogique',
-    },
-    'Ouadah Souad': {
-      'Dimanche': 'Journée Pédagogique',
-      'Lundi': 'Consultation\nE.P.S.P Mers El Kebir',
-      'Mardi': 'Visite Générale',
-      'Mercredi': 'DMO',
-      'Jeudi': 'Service Biothérapie',
-    },
-    'Bouziane Kheira': {
-      'Dimanche': 'Consultation\nE.P.S.P Ben Smir',
-      'Lundi': 'Journée Pédagogique',
-      'Mardi': 'Visite Générale',
-      'Mercredi': 'Service',
-      'Jeudi': 'DMO',
-    },
-    'Tlemsani Naziha': {
-      'Dimanche': 'Service',
-      'Lundi': 'Service',
-      'Mardi': 'Consultation\nE.P.S.P Ben Smir',
-      'Mercredi': 'Service',
-      'Jeudi': 'Service',
-    },
-    'Boumazouzi.Hind': {
-      'Dimanche': 'Service',
-      'Lundi': 'Service',
-      'Mardi': 'Visite Générale',
-      'Mercredi': 'Service',
-      'Jeudi': 'Consultation\nE.P.S.P Ben Smir',
-    },
-  };
-
-  final rows = <pw.TableRow>[];
-
-  // En-tête
-  rows.add(
-    pw.TableRow(
-      decoration: const pw.BoxDecoration(color: PdfColors.grey300),
-      children: headers
-          .map((h) => pw.Container(
-                padding: const pw.EdgeInsets.all(6),
-                alignment: pw.Alignment.center,
-                child: pw.Text(
-                  h,
-                  style: pw.TextStyle(
-                      font: oswald,
-                      fontSize: 9,
-                      fontWeight: pw.FontWeight.bold),
-                  textAlign: pw.TextAlign.center,
-                ),
-              ))
-          .toList(),
-    ),
-  );
-
-  // Lignes de données
-  for (var medecin in medecins) {
-    final nom = (medecin.nom ?? '').toString();
-    final activites = activitesHebdo[nom] ?? {};
-
-    rows.add(
-      pw.TableRow(
-        children: [
-          _buildCell(nom, oswald, 9, alignment: pw.Alignment.centerLeft),
-          _buildCell(activites['Dimanche'] ?? '', oswald, 8),
-          _buildCell(activites['Lundi'] ?? '', oswald, 8),
-          _buildCell(activites['Mardi'] ?? '', oswald, 8),
-          _buildCell(activites['Mercredi'] ?? '', oswald, 8),
-          _buildCell(activites['Jeudi'] ?? '', oswald, 8),
-        ],
-      ),
-    );
-  }
-
-  return pw.Table(
-    border: pw.TableBorder.all(width: 0.5, color: PdfColors.grey800),
-    columnWidths: const {
-      0: pw.FlexColumnWidth(2.5),
-      1: pw.FlexColumnWidth(1.8),
-      2: pw.FlexColumnWidth(1.8),
-      3: pw.FlexColumnWidth(1.8),
-      4: pw.FlexColumnWidth(1.8),
-      5: pw.FlexColumnWidth(1.8),
-    },
-    children: rows,
   );
 }
 
@@ -340,7 +395,12 @@ pw.Widget _buildMedicalStaffTable(
           _buildCell((medecin.grade ?? '').toString(), oswald, 8.5,
               alignment: pw.Alignment.centerLeft),
           _buildCell(
-              _getObservationWithTimeOff(medecin, month, year), oswald, 9),
+            _getObservationWithTimeOff(medecin, month, year).length == 0
+                ? '08h-16h'
+                : _getObservationWithTimeOff(medecin, month, year),
+            oswald,
+            9,
+          )
         ],
       ),
     );
@@ -855,4 +915,26 @@ Future<String?> _saveToDesktop(List<int> pdfBytes, String fileName) async {
     print('❌ Erreur Desktop : $e');
   }
   return null;
+}
+
+/// Retourne le préfixe approprié selon la première lettre du mois
+String getMonthPrefix(String monthName) {
+  final vowels = ['a', 'e', 'i', 'o', 'u', 'h'];
+  final firstLetter = monthName[0].toLowerCase();
+  if (vowels.contains(firstLetter)) {
+    return "d'"; // apostrophe typographique
+  } else {
+    return "de ";
+  }
+}
+
+String _getActivityLabel(
+    String? code, TypeActiviteProvider typeActiviteProvider) {
+  if (code == null || code.isEmpty) return '';
+
+  // Utiliser la méthode du Provider pour trouver le type
+  final type = typeActiviteProvider.getTypeByCode(code);
+
+  // Retourner le libellé ou le code si non trouvé
+  return type?.libelle ?? code;
 }
