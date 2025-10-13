@@ -1625,7 +1625,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(59, 7892213973742006565),
     name: 'Staff',
-    lastPropertyId: const obx_int.IdUid(40, 7268369681695897981),
+    lastPropertyId: const obx_int.IdUid(41, 1222208436961999428),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -1671,6 +1671,12 @@ final _entities = <obx_int.ModelEntity>[
         flags: 520,
         indexId: const obx_int.IdUid(145, 3025151161047139801),
         relationTarget: 'Branch',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(41, 1222208436961999428),
+        name: 'ordre',
+        type: 6,
+        flags: 0,
       ),
     ],
     relations: <obx_int.ModelRelation>[
@@ -4558,7 +4564,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final obsOffset = object.obs == null
             ? null
             : fbb.writeString(object.obs!);
-        fbb.startTable(41);
+        fbb.startTable(42);
         fbb.addInt64(0, object.id);
         fbb.addOffset(5, gradeOffset);
         fbb.addOffset(32, nomOffset);
@@ -4566,6 +4572,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(34, equipeOffset);
         fbb.addOffset(37, obsOffset);
         fbb.addInt64(39, object.branch.targetId);
+        fbb.addInt64(40, object.ordre);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -4593,14 +4600,20 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final obsParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 78);
-        final object = Staff(
-          id: idParam,
-          nom: nomParam,
-          grade: gradeParam,
-          groupe: groupeParam,
-          equipe: equipeParam,
-          obs: obsParam,
-        );
+        final object =
+            Staff(
+                id: idParam,
+                nom: nomParam,
+                grade: gradeParam,
+                groupe: groupeParam,
+                equipe: equipeParam,
+                obs: obsParam,
+              )
+              ..ordre = const fb.Int64Reader().vTableGetNullable(
+                buffer,
+                rootOffset,
+                84,
+              );
         object.branch.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -6219,6 +6232,11 @@ class Staff_ {
   /// See [Staff.branch].
   static final branch = obx.QueryRelationToOne<Staff, Branch>(
     _entities[20].properties[6],
+  );
+
+  /// See [Staff.ordre].
+  static final ordre = obx.QueryIntegerProperty<Staff>(
+    _entities[20].properties[7],
   );
 
   /// see [Staff.timeOff]

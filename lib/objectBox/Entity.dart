@@ -1257,6 +1257,7 @@ class Staff {
   String? obs; // observations particulières
 
   // 🔹 Lien vers la branche (service)
+  int? ordre; // Pour l'ordre personnalisé
   final branch = ToOne<Branch>();
 
   // 🔹 Lien vers les congés

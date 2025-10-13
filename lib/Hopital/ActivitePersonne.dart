@@ -89,6 +89,15 @@ final List<ActivitePersonne> activites = [
     horaire: "08h-16h",
     jours: [],
   ),
+  ActivitePersonne(
+    nom: "Benrahal Yasmina",
+    grade: "Médecin Généraliste",
+    groupe: "08H-16H",
+    mois: "Octobre 2025",
+    horaire: "08h-16h",
+    jours: [],
+  ),
+
   // 08H-16H - Personnel administratif
   ActivitePersonne(
     nom: "Kerarma Djelloul",
@@ -469,6 +478,15 @@ class PlanningHebdoData {
       {
         'nom': 'Boumazouzi Hind',
         'grade': 'Médecin Généraliste Principale',
+        'dimanche': 'Service',
+        'lundi': 'Service',
+        'mardi': 'Visite Générale',
+        'mercredi': 'Service',
+        'jeudi': 'Consultation E.P.S.P Ben Smir',
+      },
+      {
+        'nom': 'Benrahal Yasmina',
+        'grade': 'Médecin Généraliste',
         'dimanche': 'Service',
         'lundi': 'Service',
         'mardi': 'Visite Générale',

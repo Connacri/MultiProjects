@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:string_extensions/string_extensions.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
@@ -243,10 +245,97 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
+  // Map<String, List<dynamic>> _groupStaffs(List<Staff> staffs) {
+  //   Map<String, List<dynamic>> groupedStaffs = {};
+  //
+  //   // Définir les groupes dans l'ordre souhaité
+  //   final ordreGroupes = [
+  //     'Personnel Médical',
+  //     'Personnel Administratif (08h-16h)',
+  //     'Personnel Paramédical (08h-08h)',
+  //     'Agents d\'hygiène (08h-12h)',
+  //   ];
+  //
+  //   // Initialiser les groupes
+  //   for (String groupe in ordreGroupes) {
+  //     groupedStaffs[groupe] = [];
+  //   }
+  //
+  //   int numeroGlobal = 1;
+  //
+  //   for (var staff in staffs) {
+  //     String groupeAffichage;
+  //
+  //     if (staff.grade.toLowerCase().contains('médecin') ||
+  //         staff.grade.toLowerCase().contains('rhumatologue')) {
+  //       groupeAffichage = 'Personnel Médical';
+  //     } else if (staff.groupe == '08H-12H' ||
+  //         staff.grade.toLowerCase().contains('hygiène')) {
+  //       groupeAffichage =
+  //           'Agents d\'hygiène (08h-12h)'; // 🔥 AVANT le else if 08H-16H
+  //     } else if (staff.groupe == '08H-16H') {
+  //       groupeAffichage = 'Personnel Administratif (08h-16h)';
+  //     } else if (staff.groupe == '08H-08H' || staff.groupe == 'Garde 12H') {
+  //       groupeAffichage = 'Personnel Paramédical (08h-08h)';
+  //     } else {
+  //       groupeAffichage = 'Personnel Administratif (08h-16h)';
+  //     }
+  //
+  //     // Déterminer l'équipe
+  //     String equipe = staff.equipe ?? '-';
+  //
+  //     groupedStaffs[groupeAffichage]!.add({
+  //       'staff': staff,
+  //       'numero': numeroGlobal++,
+  //       'equipe': equipe,
+  //     });
+  //   }
+  //
+  //   // ✅ NOUVEAU : Trier chaque groupe par équipe (A, B, C, D d'abord, puis les autres)
+  //   for (var groupe in groupedStaffs.keys) {
+  //     groupedStaffs[groupe]!.sort((a, b) {
+  //       String equipeA = a['equipe'] as String;
+  //       String equipeB = b['equipe'] as String;
+  //
+  //       // Définir l'ordre de priorité : A=1, B=2, C=3, D=4, autres=5
+  //       int getPriority(String equipe) {
+  //         switch (equipe.toUpperCase()) {
+  //           case 'A':
+  //             return 1;
+  //           case 'B':
+  //             return 2;
+  //           case 'C':
+  //             return 3;
+  //           case 'D':
+  //             return 4;
+  //           default:
+  //             return 5;
+  //         }
+  //       }
+  //
+  //       int priorityA = getPriority(equipeA);
+  //       int priorityB = getPriority(equipeB);
+  //
+  //       // Si même priorité, trier par nom
+  //       if (priorityA == priorityB) {
+  //         Staff staffA = a['staff'] as Staff;
+  //         Staff staffB = b['staff'] as Staff;
+  //         return staffA.nom.compareTo(staffB.nom);
+  //       }
+  //
+  //       return priorityA.compareTo(priorityB);
+  //     });
+  //   }
+  //
+  //   // Supprimer les groupes vides
+  //   groupedStaffs.removeWhere((key, value) => value.isEmpty);
+  //
+  //   return groupedStaffs;
+  // }
+// 3. Modifiez votre méthode _groupStaffs pour utiliser l'ordre sauvegardé
   Map<String, List<dynamic>> _groupStaffs(List<Staff> staffs) {
     Map<String, List<dynamic>> groupedStaffs = {};
 
-    // Définir les groupes dans l'ordre souhaité
     final ordreGroupes = [
       'Personnel Médical',
       'Personnel Administratif (08h-16h)',
@@ -254,7 +343,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       'Agents d\'hygiène (08h-12h)',
     ];
 
-    // Initialiser les groupes
     for (String groupe in ordreGroupes) {
       groupedStaffs[groupe] = [];
     }
@@ -269,8 +357,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         groupeAffichage = 'Personnel Médical';
       } else if (staff.groupe == '08H-12H' ||
           staff.grade.toLowerCase().contains('hygiène')) {
-        groupeAffichage =
-            'Agents d\'hygiène (08h-12h)'; // 🔥 AVANT le else if 08H-16H
+        groupeAffichage = 'Agents d\'hygiène (08h-12h)';
       } else if (staff.groupe == '08H-16H') {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
       } else if (staff.groupe == '08H-08H' || staff.groupe == 'Garde 12H') {
@@ -279,7 +366,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
       }
 
-      // Déterminer l'équipe
       String equipe = staff.equipe ?? '-';
 
       groupedStaffs[groupeAffichage]!.add({
@@ -289,13 +375,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       });
     }
 
-    // ✅ NOUVEAU : Trier chaque groupe par équipe (A, B, C, D d'abord, puis les autres)
+    // ✅ NOUVEAU : Trier par ordre sauvegardé OU par équipe/nom
     for (var groupe in groupedStaffs.keys) {
       groupedStaffs[groupe]!.sort((a, b) {
+        Staff staffA = a['staff'] as Staff;
+        Staff staffB = b['staff'] as Staff;
+
+        // Si les deux ont un ordre défini, utiliser cet ordre
+        if (staffA.ordre != null && staffB.ordre != null) {
+          return staffA.ordre!.compareTo(staffB.ordre!);
+        }
+
+        // Sinon, trier par équipe puis par nom (comportement par défaut)
         String equipeA = a['equipe'] as String;
         String equipeB = b['equipe'] as String;
 
-        // Définir l'ordre de priorité : A=1, B=2, C=3, D=4, autres=5
         int getPriority(String equipe) {
           switch (equipe.toUpperCase()) {
             case 'A':
@@ -314,10 +408,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         int priorityA = getPriority(equipeA);
         int priorityB = getPriority(equipeB);
 
-        // Si même priorité, trier par nom
         if (priorityA == priorityB) {
-          Staff staffA = a['staff'] as Staff;
-          Staff staffB = b['staff'] as Staff;
           return staffA.nom.compareTo(staffB.nom);
         }
 
@@ -325,7 +416,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       });
     }
 
-    // Supprimer les groupes vides
     groupedStaffs.removeWhere((key, value) => value.isEmpty);
 
     return groupedStaffs;
@@ -396,20 +486,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   @override
   Widget build(BuildContext context) {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: true);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-              onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PlanningHebdoWidget(),
-                    ),
-                  ),
-              icon: Icon(Icons.calendar_month)),
-          _buildMobileActions(context),
+          staffProvider.staffs.isEmpty
+              ? SizedBox.shrink()
+              : IconButton(
+                  onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlanningHebdoWidget(),
+                        ),
+                      ),
+                  icon: Icon(Icons.calendar_month)),
+          staffProvider.staffs.isEmpty
+              ? IconButton(
+                  onPressed: () => _insertActivitiesWithConfirmation(context),
+                  icon: Icon(Icons.add_road_outlined))
+              : _buildMobileActions(context),
 
           SizedBox(
             width: 20,
@@ -422,48 +519,51 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           final staffs = provider.staffs;
 
           if (staffs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline,
-                      size: 80, color: Colors.blue.shade300),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Aucun personnel trouvé',
-                    style: TextStyle(
-                        fontSize: 22,
-                        color: Colors.blue.shade700,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Appuyez sur "Ajouter Le Staff Au Dessous" pour commencer',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: 500,
-                    height: 300,
-                    child: CardBtn(
-                        title: 'Ajouter Un Membre',
-                        onPressed: () => _showAddStaffDialog(),
-                        imageUrl: 'assets/photos/hopital/tt (6).jpg',
-                        overlayColors: [Colors.transparent, Colors.black],
-                        buttonLabel: 'Add'),
-                  )
-                ],
+            return SingleChildScrollView(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Icon(Icons.people_outline,
+                    //     size: 80, color: Colors.blue.shade300),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Aucun personnel trouvé',
+                      style: TextStyle(
+                          fontSize: 22,
+                          color: Colors.blue.shade700,
+                          fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Appuyez sur "Ajouter Le Staff Au Dessous" pour commencer',
+                      style: TextStyle(color: Colors.grey, fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: 500,
+                      height: 500,
+                      child: CardBtn(
+                          title: 'Ajouter Le Staff',
+                          onPressed: () =>
+                              _insertActivitiesWithConfirmation(context),
+                          imageUrl: 'assets/photos/hopital/tt (8).jpg',
+                          overlayColors: [Colors.transparent, Colors.black],
+                          buttonLabel: 'Add'),
+                    )
+                  ],
+                ),
               ),
             );
           }
 
           final groupedStaffs = _groupStaffs(staffs);
           Map<String, String> groupNameToImage = {
-            "Personnel Médical": "assets/photos/hopital/m1 (12).jpg",
+            "Personnel Médical": "assets/photos/hopital/d (1).jpg",
             "Personnel Paramédical (08h-08h)":
-                "assets/photos/hopital/m1 (10).jpg",
-            "Agents d'hygiène (08h-12h)": "assets/photos/hopital/s2 (6).jpg",
+                "assets/photos/hopital/d (8).jpg",
+            "Agents d'hygiène (08h-12h)": "assets/photos/hopital/q (1).jpg",
             "Personnel Administratif (08h-16h)":
                 "assets/photos/hopital/s2 (10).jpg",
           };
@@ -1066,7 +1166,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             children: groupedStaffs.entries.map((entry) {
                               String groupeName = entry.key;
                               String imageUrl = groupNameToImage[groupeName] ??
-                                  "assets/photos/hopital/m1 (5).jpg";
+                                  "assets/photos/hopital/q (2).jpg";
                               List<Color> overlayColors =
                                   groupNameToGradient[groupeName] ??
                                       [Color(0x6636E3FF), Colors.black87];
@@ -1109,6 +1209,31 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Header du groupe
+
+                        // Container(
+                        //   width: double.infinity,
+                        //   padding: const EdgeInsets.symmetric(
+                        //       vertical: 12, horizontal: 16),
+                        //   decoration: BoxDecoration(
+                        //     gradient: LinearGradient(
+                        //       colors: [
+                        //         Colors.blue.shade600,
+                        //         Colors.blue.shade400
+                        //       ],
+                        //     ),
+                        //     borderRadius: BorderRadius.circular(8),
+                        //   ),
+                        //   child: Text(
+                        //     '$groupeName (${groupStaffs.length} personnes)',
+                        //     style: const TextStyle(
+                        //       fontSize: 18,
+                        //       fontWeight: FontWeight.bold,
+                        //       color: Colors.white,
+                        //     ),
+                        //   ),
+                        // ),
+
+                        // NOUVEAU CODE AVEC BOUTON :
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(
@@ -1122,13 +1247,31 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             ),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            '$groupeName (${groupStaffs.length} personnes)',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '$groupeName (${groupStaffs.length} personnes)',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              // ⭐ NOUVEAU BOUTON
+                              IconButton(
+                                icon: Icon(Icons.reorder,
+                                    color: Colors.white, size: 22),
+                                tooltip: 'Réorganiser l\'ordre d\'affichage',
+                                onPressed: () => _showReorderStaffDialog(
+                                  context,
+                                  groupeName,
+                                  groupStaffs,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -1151,14 +1294,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 border: TableBorder.all(
                                     color: Colors.grey.shade300, width: 0.5),
                                 columns: [
-                                  // const DataColumn(
-                                  //   label: Center(
-                                  //     child: Text('N°',
-                                  //         style: TextStyle(
-                                  //             fontWeight: FontWeight.bold,
-                                  //             fontSize: 14)),
-                                  //   ),
-                                  // ),
+                                  const DataColumn(
+                                    label: Center(
+                                      child: Text('N°',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14)),
+                                    ),
+                                  ),
                                   const DataColumn(
                                     label: Text('Nom et Prénom',
                                         style: TextStyle(
@@ -1269,11 +1412,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               : null,
                                     ),
                                     cells: [
-                                      // DataCell(Text('$numero',
-                                      //     style: const TextStyle(
-                                      //         fontWeight: FontWeight.bold,
-                                      //         color: Colors.blue,
-                                      //         fontSize: 14))),
+                                      DataCell(Text('$numero',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue,
+                                              fontSize: 14))),
                                       DataCell(InkWell(
                                         onDoubleTap: () async =>
                                             await _showCrudDialog(
@@ -1462,6 +1605,228 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         },
       ),
     );
+  }
+
+  /// Affiche un dialog pour réorganiser manuellement l'ordre des staffs d'un groupe
+  Future<void> _showReorderStaffDialog(
+    BuildContext context,
+    String groupeName,
+    List<dynamic> groupStaffs,
+  ) async {
+    List<dynamic> reorderedStaffs = List.from(groupStaffs);
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.reorder, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Réorganiser - $groupeName",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              content: Container(
+                width: double.maxFinite,
+                height: 500,
+                child: Column(
+                  children: [
+                    // Instructions
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              size: 16, color: Colors.blue.shade700),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "Glissez pour réorganiser l'ordre d'affichage",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 12),
+
+                    // Liste réorganisable
+                    Expanded(
+                      child: ReorderableListView.builder(
+                        itemCount: reorderedStaffs.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex -= 1;
+                            final item = reorderedStaffs.removeAt(oldIndex);
+                            reorderedStaffs.insert(newIndex, item);
+
+                            // Mettre à jour les numéros
+                            for (int i = 0; i < reorderedStaffs.length; i++) {
+                              reorderedStaffs[i]['numero'] = i + 1;
+                            }
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          final staffData = reorderedStaffs[index];
+                          final staff = staffData['staff'] as Staff;
+                          final numero = staffData['numero'] as int;
+                          final equipe = staffData['equipe'] as String;
+
+                          return Container(
+                            key: ValueKey('staff_${staff.id}_$index'),
+                            margin: EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            child: Card(
+                              elevation: 1,
+                              child: ListTile(
+                                // Numéro
+                                leading: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade100,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.blue.shade300,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '$numero',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue.shade700,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Nom et grade
+                                title: Text(
+                                  staff.nom,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      staff.grade,
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    if (equipe != '-')
+                                      Text(
+                                        'Équipe $equipe',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: _getEquipeColor(equipe),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+
+                                // Icône de drag
+                                trailing: Icon(
+                                  Icons.drag_handle,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text("Annuler"),
+                ),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.save, size: 16),
+                  label: Text("Enregistrer l'ordre"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    // Sauvegarder l'ordre dans la base de données
+                    await _saveStaffOrder(groupeName, reorderedStaffs);
+                    Navigator.of(context).pop();
+
+                    // Rafraîchir l'affichage
+                    setState(() {});
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+// 2. Ajoutez cette méthode pour sauvegarder l'ordre
+  Future<void> _saveStaffOrder(
+    String groupeName,
+    List<dynamic> orderedStaffs,
+  ) async {
+    try {
+      final objectBox = ObjectBox();
+
+      // Mettre à jour l'ordre de tri pour chaque staff
+      for (int i = 0; i < orderedStaffs.length; i++) {
+        final staffData = orderedStaffs[i];
+        final staff = staffData['staff'] as Staff;
+
+        // Ajouter/mettre à jour un champ 'ordre' dans votre entité Staff
+        staff.ordre = i; // ⚠️ Vous devrez ajouter ce champ à votre entité
+        objectBox.staffBox.put(staff);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("✅ Ordre sauvegardé pour $groupeName"),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Rafraîchir les données
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur lors de la sauvegarde: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   /// Construit le titre de l'AppBar avec le sélecteur de mois
@@ -1820,16 +2185,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         year: _selectedYear,
         month: _selectedMonth,
       );
-// Générer les pages 2 et 3
+
+      // Générer les pages 2 et 3
       final path = await generatePersonnelListsPDF(
         context,
         year: _selectedYear,
         month: _selectedMonth,
       );
 
-      if (path != null) {
-        print('✅ PDF sauvegardé : $path');
-      }
       if (context.mounted && Navigator.canPop(context)) {
         Navigator.of(context, rootNavigator: true).pop();
       }
@@ -1840,15 +2203,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             SnackBar(
               content: Text('✅ PDF sauvegardé avec succès !\n📁 $filePath'),
               duration: const Duration(seconds: 4),
-              action: SnackBarAction(label: 'OK', onPressed: () {}),
+              action: SnackBarAction(
+                label: 'OUVRIR',
+                onPressed: () {
+                  _openFileLocation(filePath);
+                },
+              ),
             ),
           );
+
+          // Ouvrir automatiquement le dossier après la sauvegarde
+          _openFileLocation(filePath);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('❌ Erreur lors de la sauvegarde du PDF'),
               backgroundColor: Colors.red,
-              duration: Duration(seconds: 3),
+              duration: const Duration(seconds: 3),
             ),
           );
         }
@@ -1867,6 +2238,26 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           ),
         );
       }
+    }
+  }
+
+  /// Ouvre l'emplacement du fichier dans l'explorateur de fichiers
+  void _openFileLocation(String filePath) async {
+    try {
+      final file = File(filePath);
+      final directory = file.parent;
+
+      if (await directory.exists()) {
+        // Utiliser le package url_launcher pour ouvrir le dossier
+        final uri = directory.uri.toString();
+        if (await canLaunchUrl(Uri.parse(uri))) {
+          await launchUrl(Uri.parse(uri));
+        } else {
+          print('Impossible d\'ouvrir le dossier: $uri');
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de l\'ouverture du dossier: $e');
     }
   }
 

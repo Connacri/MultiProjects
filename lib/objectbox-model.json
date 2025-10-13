@@ -1352,7 +1352,7 @@
     },
     {
       "id": "59:7892213973742006565",
-      "lastPropertyId": "40:7268369681695897981",
+      "lastPropertyId": "41:1222208436961999428",
       "name": "Staff",
       "properties": [
         {
@@ -1393,6 +1393,11 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "Branch"
+        },
+        {
+          "id": "41:1222208436961999428",
+          "name": "ordre",
+          "type": 6
         }
       ],
       "relations": [
