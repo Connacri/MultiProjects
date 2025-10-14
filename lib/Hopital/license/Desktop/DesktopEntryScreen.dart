@@ -1,8 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
-import '../../test.dart';
+import '../../TableauStaff.dart';
 import '../LicenseService.dart';
 import 'LicenseActivationScreen.dart';
 
@@ -44,7 +45,10 @@ class _DesktopEntryScreenState extends State<DesktopEntryScreen> {
         Future.delayed(Duration(milliseconds: 500), () {
           if (mounted) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => CardSelectionScreen1()),
+              MaterialPageRoute(
+                builder: (_) => TableauStaffPage(),
+                //CardSelectionScreen()
+              ),
             );
           }
         });
@@ -178,6 +182,8 @@ class _DesktopEntryScreenState extends State<DesktopEntryScreen> {
             ),
             SizedBox(height: 8),
             Text('Chargement de l\'application...'),
+            SizedBox(height: 8),
+            // Lottie.asset('assets/lotties/1 (2).json', width: 250),
             // Dans AdminLoginScreen.dart, ajoutez ce bouton après le container orange
           ],
         ),

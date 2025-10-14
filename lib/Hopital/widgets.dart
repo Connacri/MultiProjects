@@ -450,7 +450,7 @@ class _StaffBranchTextState extends State<StaffBranchText> {
       return Text(
         'Service : ${branchName.toUpperCase()}',
         style: TextStyle(
-          fontSize: 20,
+          fontSize: 30,
           fontWeight: FontWeight.bold,
           color: Colors.blue.shade800,
         ),

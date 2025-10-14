@@ -1,13 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../checkit/HomePage.dart';
-import '../objectBox/MyApp.dart';
 import '../objectBox/classeObjectBox.dart';
-import '../objectBox/pages/invoice/FacturationPageUI.dart';
-import '../objectBox/tests/timelines/mistral/claude.dart';
 import 'TableauStaff.dart';
 
 // 1. Définir le modèle de données pour vos cartes
@@ -28,10 +22,10 @@ class PageCardData {
 }
 
 // Le widget de l'interface de sélection
-class CardSelectionScreen1 extends StatelessWidget {
+class CardSelectionScreen extends StatelessWidget {
   // Passez votre objectBox si nécessaire
 
-  const CardSelectionScreen1({
+  const CardSelectionScreen({
     super.key,
   });
 
@@ -44,61 +38,61 @@ class CardSelectionScreen1 extends StatelessWidget {
     // Données pour vos 5 pages
     final List<PageCardData> cardData = [
       PageCardData(
-        title: 'Staff Hopital',
+        title: 'Planning Staff\nRhumatologie',
         subtitle: 'Gestion du personnel',
-        imageUrl: 'assets/photos/nav (1).jpg',
+        imageUrl: 'assets/photos/hopital/d (6).jpg',
         gradientColors: [
           Colors.blue.shade800.withOpacity(0.8),
-          Colors.cyan.shade800.withOpacity(0.8)
+          Colors.black.withOpacity(0.5)
         ],
         destination: TableauStaffPage(),
       ),
-      PageCardData(
-        title: 'POS',
-        subtitle: 'Gestion des factures',
-        imageUrl: 'assets/photos/nav (2).jpg',
-        gradientColors: [
-          Colors.purple.shade800.withOpacity(0.8),
-          Colors.pink.shade800.withOpacity(0.8)
-        ],
-        destination: FacturationPageUI(),
-      ),
-      PageCardData(
-        title: Platform.isAndroid || Platform.isIOS
-            ? 'Mobile Home'
-            : 'Hotel Management',
-        subtitle: Platform.isAndroid || Platform.isIOS
-            ? 'Interface mobile'
-            : 'Gestion hôtelière',
-        imageUrl: 'assets/photos/nav (3).jpg',
-        gradientColors: [
-          Colors.orange.shade800.withOpacity(0.8),
-          Colors.red.shade800.withOpacity(0.8)
-        ],
-        destination: Platform.isAndroid || Platform.isIOS
-            ? HomePage3()
-            : Hotel_Management(),
-      ),
-      PageCardData(
-        title: ' Hotel Management',
-        subtitle: 'Interface adaptative',
-        imageUrl: 'assets/photos/nav (4).jpg',
-        gradientColors: [
-          Colors.green.shade800.withOpacity(0.8),
-          Colors.teal.shade800.withOpacity(0.8)
-        ],
-        destination: Hotel_Management(),
-      ),
-      PageCardData(
-        title: 'Adaptive Home',
-        subtitle: 'Interface adaptative',
-        imageUrl: 'assets/photos/nav (5).jpg',
-        gradientColors: [
-          Colors.green.shade800.withOpacity(0.8),
-          Colors.teal.shade800.withOpacity(0.8)
-        ],
-        destination: adaptiveHome(objectBox: objectBox),
-      ),
+      // PageCardData(
+      //   title: 'POS',
+      //   subtitle: 'Gestion des factures',
+      //   imageUrl: 'assets/photos/nav (2).jpg',
+      //   gradientColors: [
+      //     Colors.purple.shade800.withOpacity(0.8),
+      //     Colors.pink.shade800.withOpacity(0.8)
+      //   ],
+      //   destination: FacturationPageUI(),
+      // ),
+      // PageCardData(
+      //   title: Platform.isAndroid || Platform.isIOS
+      //       ? 'Mobile Home'
+      //       : 'Hotel Management',
+      //   subtitle: Platform.isAndroid || Platform.isIOS
+      //       ? 'Interface mobile'
+      //       : 'Gestion hôtelière',
+      //   imageUrl: 'assets/photos/nav (3).jpg',
+      //   gradientColors: [
+      //     Colors.orange.shade800.withOpacity(0.8),
+      //     Colors.red.shade800.withOpacity(0.8)
+      //   ],
+      //   destination: Platform.isAndroid || Platform.isIOS
+      //       ? HomePage3()
+      //       : Hotel_Management(),
+      // ),
+      // PageCardData(
+      //   title: ' Hotel Management',
+      //   subtitle: 'Interface adaptative',
+      //   imageUrl: 'assets/photos/nav (4).jpg',
+      //   gradientColors: [
+      //     Colors.green.shade800.withOpacity(0.8),
+      //     Colors.teal.shade800.withOpacity(0.8)
+      //   ],
+      //   destination: Hotel_Management(),
+      // ),
+      // PageCardData(
+      //   title: 'Adaptive Home',
+      //   subtitle: 'Interface adaptative',
+      //   imageUrl: 'assets/photos/nav (5).jpg',
+      //   gradientColors: [
+      //     Colors.green.shade800.withOpacity(0.8),
+      //     Colors.teal.shade800.withOpacity(0.8)
+      //   ],
+      //   destination: adaptiveHome(objectBox: objectBox),
+      // ),
     ];
 
     return Scaffold(

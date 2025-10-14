@@ -197,7 +197,7 @@ final List<ActivitePersonne> activites = [
     equipe: "A",
     mois: "Septembre 2025",
     horaire: "08h-08h",
-    obs: "congé du 14/09/2025 au 5/10/2025",
+
     jours: [],
   ),
   ActivitePersonne(
@@ -312,7 +312,7 @@ final List<ActivitePersonne> activites = [
     groupe: "08h-12h",
     mois: "Octobre 2025",
     horaire: "08h-12h",
-    obs: "congé du 15/09/2025 au 04/10/2025",
+
     jours: [],
   ),
   ActivitePersonne(
@@ -321,7 +321,7 @@ final List<ActivitePersonne> activites = [
     groupe: "08h-12h",
     mois: "Octobre 2025",
     horaire: "08h-12h",
-    obs: "congé du 15/09/2025 au 04/10/2025",
+
     jours: [],
   ),
 ];
@@ -343,9 +343,9 @@ void insertActivites(List<ActivitePersonne> liste) {
   for (var e in liste) {
     // 1️⃣ Vérifier/créer la Branch (service)
     Branch branch = branchBox
-            .query(Branch_.branchNom.equals(e.branchNom!))
-            .build()
-            .findFirst() ??
+        .query(Branch_.branchNom.equals(e.branchNom!))
+        .build()
+        .findFirst() ??
         Branch(branchNom: e.branchNom!);
 
     branchBox.put(branch);
@@ -363,7 +363,8 @@ void insertActivites(List<ActivitePersonne> liste) {
     final staffId = staffBox.put(staff);
 
     print(
-        "✅ Staff inséré: ${staff.nom}, ID: $staffId, Branch: ${branch.branchNom}");
+        "✅ Staff inséré: ${staff.nom}, ID: $staffId, Branch: ${branch
+            .branchNom}");
 
     // 3️⃣ Insérer les activités (planning des jours)
     for (int i = 0; i < e.jours.length && i < 31; i++) {
@@ -399,7 +400,7 @@ Future<void> assignRhumatologieToAllStaffs() async {
 
   // 1️⃣ Vérifier si la branche "Rhumatologie" existe déjà
   final query =
-      branchBox.query(Branch_.branchNom.equals("Rhumatologie")).build();
+  branchBox.query(Branch_.branchNom.equals("Rhumatologie")).build();
   Branch? branch = query.findFirst();
   query.close();
 
@@ -431,9 +432,13 @@ Future<void> assignRhumatologieToAllStaffs() async {
 
   // 5️⃣ Vérification de cohérence (optionnelle)
   final count =
-      staffBox.getAll().where((s) => s.branch.target?.id == branch!.id).length;
+      staffBox
+          .getAll()
+          .where((s) => s.branch.target?.id == branch!.id)
+          .length;
   print(
-      "--- ✅ Tous les staffs (${count}) sont assignés à ${branch.branchNom} ---");
+      "--- ✅ Tous les staffs (${count}) sont assignés à ${branch
+          .branchNom} ---");
 }
 
 class PlanningHebdoData {
@@ -497,8 +502,8 @@ class PlanningHebdoData {
   }
 
   /// Fonction pour insérer les données exemple dans ObjectBox
-  static Future<void> insertExampleData(
-      Store store, Box<Staff> staffBox, Box<PlanningHebdo> planningBox) async {
+  static Future<void> insertExampleData(Store store, Box<Staff> staffBox,
+      Box<PlanningHebdo> planningBox) async {
     final data = getExamplePlanning();
 
     for (var item in data) {

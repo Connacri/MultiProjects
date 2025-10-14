@@ -1,5 +1,5 @@
 name: kenzy
-description: "A new Hötel DZ project."
+description: "A new Hospital DZ project."
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
@@ -113,8 +113,7 @@ dependencies:
   flutter_card_swiper: ^7.0.2
   dynamic_flutter_form: ^1.0.2
   syncfusion_flutter_calendar: ^30.2.7
-  #  flutter_native_splash: ^2.4.6
-  splash_master: ^0.0.3
+  flutter_native_splash: ^2.4.6
   fl_chart: ^0.70.0
   syncfusion_flutter_datagrid: ^30.2.7
   pdf: ^3.11.3
@@ -138,74 +137,40 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/icon/icon.png"
+  image_path: "assets/images/logo_hopital.png"
   #  image_path: "assets/images/ic_launcher/1024.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
-    image_path: "assets/images/ic_launcher/icon.png"
+    image_path: "assets/images/logo_hopital.png"
     #    image_path: "assets/images/ic_launcher/1024.png"
-    adaptive_icon_foreground: "assets/images/ic_launcher/icon.png"
+    adaptive_icon_foreground: "assets/images/logo_hopital.png"
     background_color: "#hexcode"
     theme_color: "#hexcode"
   windows:
     generate: true
-    image_path: "assets/images/ic_launcher/icon.png"
+    image_path: "assets/images/logo_hopital.png"
     icon_size: 48 # min:48, max:256, default: 48
   macos:
     generate: true
-    image_path: "assets/images/ic_launcher/icon.png"
+    image_path: "assets/images/logo_hopital.png"
 
-#flutter_native_splash:
-#  # Configuration Android
-#  android: true
-#  background_image: assets/icon/splash3.png
-#  android_12:
-#    image: assets/icon/splash3.png
-#    icon_background_color: "#2C2C2C"
-#
-#
-#  # Configuration iOS
-#  ios: true
-#  image: assets/icon/splash3.png
-#  color: "#2C2C2C"
+flutter_native_splash:
+  # Configuration Android
+  android: true
+  background_image: assets/icon/splash3.png
+  android_12:
+    image: assets/icon/splash3.png
+    icon_background_color: "#FFFFFF"
 
 
-splash_master:
-  # Use to specifies the color for the splash screen
-  color: '#FFFFFF'
-  # Use to specifies the splash image
-  image: 'assets/splash.png'
-  # Provides content mode for splash image in iOS
-  # iOS content mode options: scaleToFill, scaleAspectFit, scaleAspectFill, redraw, center, top, bottom,
-  # left, right, topLeft, topRight, bottomLeft, bottomRight.
-  ios_content_mode: 'center'
-  # Provides gravity for splash image in Android
-  # Android gravity options: center, clip_horizontal, clip_vertical, fill_horizontal, fill, center_vertical,
-  # bottom, fill_vertical, center_horizontal, top, end, left, right, start
-  android_gravity: 'center'
-  # Use to specifies the splash image
-  background_image: 'assets/background_image.png'
-  # Provided content mode for splash image in background for iOS
-  ios_background_content_mode: 'scaleToFill'
-  # Provides gravity for background image in Android
-  # Android gravity options: center, clip_horizontal, clip_vertical, fill_horizontal, fill, center_vertical,
-  # bottom, fill_vertical, center_horizontal, top, end, left, right, start
-  android_background_image_gravity: 'fill'
-  # Use to specifies image for android in dark mode
-  image_dark_android: 'assets/splash_dark.png'
-  # Provides gravity for splash image for Android in dark mode
-  android_dark_gravity_key: 'center'
-  # Use to specifies the color for the splash screen for Android in dark mode
-  color_dark_android: '#000000'
-  # Section to specifies the configuration for the splash in Android 12+
-  android_12_and_above:
-    # Provides the background color of splash screen
-    color: '#FFFFFF'
-    # Provides custom icon to replace the default app icon
-    image: 'assets/splash_12.png'
-    # Provides branding image which is shown under main icon image.
-    branding_image: 'assets/branding_image.png'
+  # Configuration iOS
+  ios: true
+  image: assets/icon/splash3.png
+  color: "#FFFFFF"
+
+
+
 
 flutter:
 
@@ -255,8 +220,12 @@ flutter:
     - assets/splash_logo.png
     - assets/seasons/
     - assets/photos/
+    - assets/images/logo_hopital.png
     - assets/photos/hopital/
     - assets/photos/hopital/d (1).jpg
     - assets/photos/hopital/m1 (5).jpg
+    - assets/photos/hopital/tt (7).jpg
+    - assets/lotties/1 (2).json
+
 
 

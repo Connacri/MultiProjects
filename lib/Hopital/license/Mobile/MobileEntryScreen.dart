@@ -69,7 +69,7 @@ class MobileEntryScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => CardSelectionScreen1(),
+                          builder: (_) => CardSelectionScreen(),
                         ),
                       );
                     },

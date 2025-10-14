@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:dart_date/dart_date.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -168,6 +169,7 @@ class TableauStaffPage extends StatefulWidget {
 class _TableauStaffPageState extends State<TableauStaffPage> {
   // ⭐ NOUVEAU : Variables pour la gestion du mois et année
   int _selectedMonth = DateTime.now().month;
+  int _selectedMonthNext = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
 
   // Variables pour gérer l'édition
@@ -492,6 +494,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          _buildSavePdfButton(context),
           staffProvider.staffs.isEmpty
               ? SizedBox.shrink()
               : IconButton(
@@ -548,8 +551,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           title: 'Ajouter Le Staff',
                           onPressed: () =>
                               _insertActivitiesWithConfirmation(context),
-                          imageUrl: 'assets/photos/hopital/tt (8).jpg',
-                          overlayColors: [Colors.transparent, Colors.black],
+                          imageUrl: 'assets/photos/hopital/w (3).jpg',
+                          overlayColors: [Colors.transparent, Colors.black12],
                           buttonLabel: 'Add'),
                     )
                   ],
@@ -605,7 +608,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   // En-tête général
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade50,
                       borderRadius: BorderRadius.circular(8),
@@ -613,6 +616,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     ),
                     child: Column(
                       children: [
+                        Text(
+                          // 'République Algérienne Démocratique Et Populaire\n'
+                          // 'Ministère De La Sante De Population Et De Réforme Hospitalier\n'
+                          'Etablissement Hospitalier D’Aîn El Türck Dr Medjber Tami',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.blue.shade800,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
                         Text(
                           'PLANNING DU PERSONNEL MÉDICAL ET PARAMÉDICAL',
                           style: TextStyle(
@@ -648,11 +663,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  _buildAppBarTitle(), const SizedBox(height: 24),
+
+                  _buildAppBarTitle(),
+
                   // Légende des statuts
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(8),
@@ -1136,14 +1152,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             //     await _showPlanificationAgentsHygieneDialog();
                             //   },
                             // ),
-                            FilledButton.tonalIcon(
-                                onPressed: () => _listStaffWithTimeOff(),
-                                label: Text('List Congé debug')),
-                            IconButton(
-                              icon: const Icon(Icons.person_add),
-                              tooltip: 'Ajouter un nouveau staff',
-                              onPressed: () => _showAddStaffDialog(),
-                            ),
+                            // FilledButton.tonalIcon(
+                            //     onPressed: () => _listStaffWithTimeOff(),
+                            //     label: Text('List Congé debug')),
                           ],
                         ),
                       ],
@@ -1250,6 +1261,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.person_add,
+                                  color: Colors.white,
+                                ),
+                                tooltip: 'Ajouter un nouveau staff',
+                                onPressed: () => _showAddStaffDialog(),
+                              ),
                               Expanded(
                                 child: Text(
                                   '$groupeName (${groupStaffs.length} personnes)',
@@ -1634,9 +1653,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 ],
               ),
               content: Container(
-                width: double.maxFinite,
+                width: double.minPositive,
                 height: 500,
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     // Instructions
                     Container(
@@ -1748,10 +1768,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 ),
 
                                 // Icône de drag
-                                trailing: Icon(
-                                  Icons.drag_handle,
-                                  color: Colors.grey.shade400,
-                                ),
+                                // trailing: Icon(
+                                //   Icons.drag_handle,
+                                //   color: Colors.grey.shade400,
+                                // ),
                               ),
                             ),
                           );
@@ -2106,7 +2126,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     return IconButton(
       icon: const Icon(Icons.save_alt),
       tooltip: 'Sauvegarder le planning en PDF',
-      onPressed: () => _savePlanningToPdf(context),
+      onPressed: () => _savePlanningToPdf2(context),
     );
   }
 
@@ -2241,6 +2261,77 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
+  Future<void> _savePlanningToPdf2(BuildContext context) async {
+    BuildContext? dialogContext;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dContext) {
+        dialogContext = dContext;
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      final filePath = await generateAndSaveMonthPlanningPDF(
+        context,
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+
+      final path = await generatePersonnelListsPDF(
+        context,
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+
+      // ✅ Fermer le bon dialogue
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!, rootNavigator: true).pop();
+      }
+
+      if (context.mounted) {
+        if (filePath != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ PDF sauvegardé avec succès !\n📁 $filePath'),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'OUVRIR',
+                onPressed: () {
+                  _openFileLocation(filePath);
+                },
+              ),
+            ),
+          );
+
+          _openFileLocation(filePath);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Erreur lors de la sauvegarde du PDF'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!, rootNavigator: true).pop();
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur : $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   /// Ouvre l'emplacement du fichier dans l'explorateur de fichiers
   void _openFileLocation(String filePath) async {
     try {
@@ -2258,127 +2349,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
     } catch (e) {
       print('Erreur lors de l\'ouverture du dossier: $e');
-    }
-  }
-
-  /// Supprime toutes les activités avec confirmation
-  Future<void> _clearAllActivitiesWithConfirmation(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirmation"),
-        content:
-            const Text("Voulez-vous vraiment supprimer toutes les activités ?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Annuler"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Oui, vider"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      await context.read<ActiviteProvider>().clearAllActivites(context);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("Toutes les activités ont été supprimées.")),
-        );
-      }
-    }
-  }
-
-  /// Supprime la base de données avec confirmation
-  Future<void> _clearDatabaseWithConfirmation(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirmation"),
-        content: const Text("Voulez-vous vraiment supprimer la DB ?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Annuler"),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text("Oui, vider"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      await context.read<ActiviteProvider>().clearAllDB(context);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("La base de données a été vidée.")),
-        );
-      }
-    }
-  }
-
-  /// Insère les activités avec confirmation
-  Future<void> _insertActivitiesWithConfirmation(BuildContext context) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Confirmation"),
-          content: const Text(
-            "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text("Annuler"),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text("Confirmer"),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final activiteProvider = ActiviteProvider();
-      await activiteProvider.insertActivites(
-        activites,
-        year: _selectedYear,
-        month: _selectedMonth,
-      );
-
-      if (context.mounted) {
-        final staffProvider =
-            Provider.of<StaffProvider>(context, listen: false);
-        await staffProvider.fetchStaffs();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text("Toutes les activités ont été ajoutées avec succès !"),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Erreur lors de l'insertion: $e"),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     }
   }
 
@@ -3090,7 +3060,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               final date = await showDatePicker(
                                 context: context,
                                 initialDate: initialDate,
-                                firstDate: firstDate,
+                                firstDate: firstDate.previousMonth,
                                 lastDate: lastDate,
                               );
                               if (date != null) {
@@ -4040,7 +4010,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // NOUVELLE MÉTHODE : Dialog de planification avancé
-  Future<Map<String, dynamic>?> _showPlanificationAvanceeDialog({
+  Future<Map<String, dynamic>?> _showPlanificationAvanceeDialog3({
     required List<String> equipesDisponibles,
     required List<int> joursDisponibles,
   }) async {
@@ -4685,6 +4655,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       List<String> equipesDisponibles) async {
     final objectBox = ObjectBox();
 
+    // // 🧹 Correction temporaire des planifications vides
+    // final allPlanifs = objectBox.planificationBox.getAll();
+    // for (var p in allPlanifs) {
+    //   if (p.ordreEquipes.isEmpty) {
+    //     // Tu peux aussi utiliser List.from(equipesDisponibles).join(',')
+    //     p.ordreEquipes = equipesDisponibles.join(',');
+    //     objectBox.planificationBox.put(p);
+    //     print("✅ Correction appliquée à la planification ${p.id}");
+    //   }
+    // }
     // Vérifier si une planification existe déjà
     final query = objectBox.planificationBox
         .query(Planification_.mois.equals(_selectedMonth) &
@@ -4696,13 +4676,31 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     List<String> equipesOrdonnees;
 
-    if (existingPlanif != null) {
-      equipesOrdonnees = existingPlanif.ordreEquipes.split(',');
+    if (existingPlanif != null &&
+        existingPlanif.ordreEquipes.isNotEmpty &&
+        existingPlanif.ordreEquipes.contains(',')) {
+      equipesOrdonnees = existingPlanif.ordreEquipes
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    } else if (existingPlanif != null &&
+        existingPlanif.ordreEquipes.isNotEmpty &&
+        !existingPlanif.ordreEquipes.contains(',')) {
+      // Cas où il y a une seule équipe sauvegardée sans virgule
+      equipesOrdonnees = [existingPlanif.ordreEquipes.trim()];
     } else {
       equipesOrdonnees = List.from(equipesDisponibles);
     }
     // List<String> equipesOrdonnees = List.from(equipesDisponibles);
-
+    print(equipesDisponibles.length);
+    print(
+      equipesOrdonnees.length,
+    );
+    print(equipesDisponibles);
+    print(
+      equipesOrdonnees,
+    );
     return await showDialog<List<String>>(
       context: context,
       builder: (BuildContext context) {
@@ -7239,13 +7237,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         objectBox.planificationBox.remove(existingPlanif.id);
       }
 
-      // 4. Nettoyer les obs des staffs
-      for (final staff in staffProvider.staffs) {
-        if (staff.obs != null && staff.obs!.isNotEmpty) {
-          staff.obs = null;
-          objectBox.staffBox.put(staff);
-        }
-      }
+      // // 4. Nettoyer les obs des staffs
+      // for (final staff in staffProvider.staffs) {
+      //   if (staff.obs != null && staff.obs!.isNotEmpty) {
+      //     staff.obs = null;
+      //     objectBox.staffBox.put(staff);
+      //   }
+      // }
 
       // 5. Rafraîchir
       await staffProvider.fetchStaffs();
@@ -7276,6 +7274,128 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  /// Supprime toutes les activités avec confirmation
+  Future<void> _clearAllActivitiesWithConfirmation(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmation"),
+        content:
+            const Text("Voulez-vous vraiment supprimer toutes les activités ?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Annuler"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Oui, vider"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await context.read<ActiviteProvider>().clearAllActivites(context);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Toutes les activités ont été supprimées.")),
+        );
+      }
+    }
+  }
+
+  /// Supprime la base de données avec confirmation
+  Future<void> _clearDatabaseWithConfirmation(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmation"),
+        content:
+            const Text("Voulez-vous vraiment supprimer la base de données ?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Annuler"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Oui, vider"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      await context.read<ActiviteProvider>().clearAllDB(context);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("La base de données a été vidée.")),
+        );
+      }
+    }
+  }
+
+  /// Insère les activités avec confirmation
+  Future<void> _insertActivitiesWithConfirmation(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Confirmation"),
+          content: const Text(
+            "Cette action va supprimer toutes les données existantes et les remplacer par les nouvelles. Continuer ?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Annuler"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text("Confirmer"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final activiteProvider = ActiviteProvider();
+      await activiteProvider.insertActivites(
+        activites,
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+
+      if (context.mounted) {
+        final staffProvider =
+            Provider.of<StaffProvider>(context, listen: false);
+        await staffProvider.fetchStaffs();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text("Toutes les activités ont été ajoutées avec succès !"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur lors de l'insertion: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

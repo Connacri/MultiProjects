@@ -513,7 +513,7 @@ class ActiviteProvider with ChangeNotifier {
       print("✅ Toutes les activités supprimées.");
 
       // 2️⃣ Supprimer tous les TimeOff (congés)
-      _objectBox.timeOffBox.removeAll();
+      // _objectBox.timeOffBox.removeAll();
       print("✅ Tous les TimeOff supprimés.");
 
       // 3️⃣ Supprimer toutes les planifications
@@ -523,12 +523,12 @@ class ActiviteProvider with ChangeNotifier {
       // 4️⃣ Réinitialiser les obs et équipes des staffs
       final staffs = _objectBox.staffBox.getAll();
       for (var staff in staffs) {
-        staff.obs = null;
-        staff.equipe = null; // Optionnel : réinitialiser les équipes
+        // staff.obs = null;
+        // staff.equipe = null; // Optionnel : réinitialiser les équipes
 
         // Vider les relations ToMany
         staff.activites.clear();
-        staff.timeOff.clear();
+        // staff.timeOff.clear();
 
         _objectBox.staffBox.put(staff);
       }
@@ -649,6 +649,102 @@ class ActiviteProvider with ChangeNotifier {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  Future<void> clearAllExceptStaffs(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.orange),
+            SizedBox(width: 8),
+            Text("⚠️ Confirmation"),
+          ],
+        ),
+        content: Text(
+          "Cette action va supprimer :\n\n"
+          "• Toutes les activités\n"
+          "• Tous les congés\n"
+          "• Toutes les planifications\n"
+          "• Toutes les branches\n\n"
+          "Les staffs seront conservés mais réinitialisés.\n\n"
+          "Cette action est IRRÉVERSIBLE !",
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text("Annuler"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text("CONFIRMER"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // 1️⃣ Supprimer toutes les activités
+      _objectBox.activiteBox.removeAll();
+      print("✅ Toutes les activités supprimées.");
+
+      // 2️⃣ Supprimer tous les TimeOff (congés)
+      _objectBox.timeOffBox.removeAll();
+      print("✅ Tous les TimeOff supprimés.");
+
+      // 3️⃣ Supprimer toutes les planifications
+      _objectBox.planificationBox.removeAll();
+      print("✅ Toutes les planifications supprimées.");
+
+      // 4️⃣ Supprimer toutes les branches
+      _objectBox.branchBox.removeAll();
+      print("✅ Toutes les branches supprimées.");
+
+      // 5️⃣ Réinitialiser les staffs (sans les supprimer)
+      final staffs = _objectBox.staffBox.getAll();
+      for (var staff in staffs) {
+        staff.obs = null;
+        staff.equipe = null;
+
+        // Vider les relations ToMany
+        staff.activites.clear();
+        staff.timeOff.clear();
+
+        _objectBox.staffBox.put(staff);
+      }
+      print("✅ Tous les staffs réinitialisés (obs, équipes, relations).");
+
+      notifyListeners();
+
+      // 6️⃣ Rafraîchir l'interface
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("🗑️ Base de données nettoyée (staffs conservés)"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print("❌ Erreur clearAllExceptStaffs: $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur : $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      rethrow;
     }
   }
 
