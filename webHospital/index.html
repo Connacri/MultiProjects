@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>MediPlan Pro - Logiciel de Planning Hospitalier</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1976d2;
+            --primary-dark: #1565c0;
+            --primary-light: #e3f2fd;
+            --secondary: #ff9800;
+            --secondary-dark: #f57c00;
+            --text: #333333;
+            --text-light: #666666;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --radius: 10px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            line-height: 1.6;
+            background-color: var(--light);
+            overflow-x: hidden;
+        }
+
+        /* Header & Navigation */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        nav a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            left: 0;
+            background-color: var(--primary);
+            transition: var(--transition);
+        }
+
+        nav a:hover:after {
+            width: 100%;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: var(--transition);
+        }
+
+        .lang-btn.active {
+            background-color: var(--primary);
+            color: var(--white);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 10rem 0 5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff" fill-opacity="0.1" d="M0,96L48,112C96,128,192,160,288,186.7C384,213,480,235,576,213.3C672,192,768,128,864,128C960,128,1056,192,1152,192C1248,192,1344,128,1392,96L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--secondary);
+            color: var(--white);
+            padding: 12px 30px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
+
+        .btn:hover {
+            background-color: var(--secondary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--white);
+            margin-left: 10px;
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Sections communes */
+        section {
+            padding: 5rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .section-title p {
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--text-light);
+        }
+
+        /* Features Section */
+        .features {
+            background-color: var(--white);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            padding: 2.5rem 2rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            text-align: center;
+            border-top: 4px solid var(--primary);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        /* Screenshots Section */
+        .screenshots {
+            background-color: var(--primary-light);
+        }
+
+        .screenshots-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .screenshot {
+            max-width: 100%;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .screenshot:hover {
+            transform: scale(1.03);
+        }
+
+        /* Download Section */
+        .download {
+            text-align: center;
+            background-color: var(--white);
+        }
+
+        .download-options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .download-card {
+            background-color: var(--primary-light);
+            border-radius: var(--radius);
+            padding: 2.5rem 2rem;
+            width: 300px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border-top: 4px solid var(--secondary);
+        }
+
+        .download-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .download-card h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .download-card .price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+        }
+
+        .download-card ul {
+            list-style: none;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .download-card li {
+            margin-bottom: 0.8rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .download-card li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .download-card.featured {
+            transform: scale(1.05);
+            border-top: 4px solid var(--secondary);
+            position: relative;
+        }
+
+        .download-card.featured:before {
+            content: "Populaire";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--secondary);
+            color: var(--white);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            background-color: var(--light);
+        }
+
+        .testimonials-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            max-width: 350px;
+            transition: var(--transition);
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .testimonial-text:before {
+            content: """;
+            font-size: 4rem;
+            color: var(--primary-light);
+            position: absolute;
+            top: -20px;
+            left: -10px;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: bold;
+        }
+
+        .author-info h4 {
+            margin-bottom: 0.2rem;
+        }
+
+        .author-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* FAQ Section */
+        .faq {
+            background-color: var(--white);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 1.5rem;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .faq-item:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-question {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .faq-question:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .faq-answer {
+            padding: 1.5rem;
+            background-color: var(--primary-light);
+            display: none;
+        }
+
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+
+        /* Contact Section */
+        .contact {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            text-align: center;
+        }
+
+        .contact .section-title h2,
+        .contact .section-title p {
+            color: var(--white);
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+
+        .contact-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .contact-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            padding: 3rem 0 1.5rem;
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-column {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .footer-column h3 {
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-column a {
+            color: var(--white);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer-column a:hover {
+            opacity: 0.8;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            background-color: var(--secondary);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .download-card.featured {
+                transform: scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+                position: absolute;
+                right: 15px;
+                top: 15px;
+            }
+
+            nav {
+                display: none;
+                width: 100%;
+                margin-top: 1rem;
+            }
+
+            nav.active {
+                display: block;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .hero {
+                padding: 8rem 0 4rem;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .btn {
+                display: block;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .btn-secondary {
+                margin-left: 0;
+            }
+
+            .section-title h2 {
+                font-size: 2rem;
+            }
+        }
+
+        /* RTL Support for Arabic */
+        .rtl {
+            direction: rtl;
+            text-align: right;
+        }
+
+        .rtl .logo {
+            flex-direction: row-reverse;
+        }
+
+        .rtl .testimonial-author {
+            flex-direction: row-reverse;
+        }
+
+        .rtl .author-avatar {
+            margin-right: 0;
+            margin-left: 1rem;
+        }
+
+        .rtl .download-card li {
+            padding-left: 0;
+            padding-right: 1.5rem;
+        }
+
+        .rtl .download-card li:before {
+            left: auto;
+            right: 0;
+        }
+
+        .rtl .faq-question {
+            flex-direction: row-reverse;
+        }
+
+        .rtl nav a:after {
+            left: auto;
+            right: 0;
+        }
+
+        .rtl nav a:hover:after {
+            width: 100%;
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏥</div>
+                <div class="logo-text">MediPlan Pro</div>
+            </div>
+
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav>
+                <ul>
+                    <li><a data-key="nav-features" href="#features">Fonctionnalités</a></li>
+                    <li><a data-key="nav-screenshots" href="#screenshots">Captures</a></li>
+                    <li><a data-key="nav-download" href="#download">Télécharger</a></li>
+                    <li><a data-key="nav-testimonials" href="#testimonials">Témoignages</a></li>
+                    <li><a data-key="nav-contact" href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+
+            <div class="language-selector">
+                <button class="lang-btn active" data-lang="fr">FR</button>
+                <button class="lang-btn" data-lang="en">EN</button>
+                <button class="lang-btn" data-lang="ar">AR</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1 data-key="hero-title">Logiciel de Planning Hospitalier Complet</h1>
+            <p data-key="hero-description">Optimisez la gestion des plannings de votre personnel
+                médical avec notre solution complète et intuitive. Gagnez du temps et améliorez
+                l'organisation de votre établissement.</p>
+            <a class="btn" data-key="hero-cta" href="#download">Télécharger maintenant</a>
+            <a class="btn btn-secondary" data-key="hero-learn" href="#features">En savoir plus</a>
+        </div>
+    </div>
+</section>
+
+<section class="features" id="features">
+    <div class="container">
+        <div class="section-title">
+            <h2 data-key="features-title">Fonctionnalités principales</h2>
+            <p data-key="features-description">Découvrez les fonctionnalités qui font de MediPlan
+                Pro la solution idéale pour la gestion des plannings hospitaliers</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3 data-key="feature1-title">Gestion des plannings</h3>
+                <p data-key="feature1-description">Créez et modifiez facilement les plannings de
+                    votre personnel médical avec une interface intuitive et des outils de
+                    glisser-déposer.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3 data-key="feature2-title">Gestion du personnel</h3>
+                <p data-key="feature2-description">Organisez votre personnel par services, équipes
+                    et spécialités. Attribuez facilement les gardes et congés.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3 data-key="feature3-title">Planification automatique</h3>
+                <p data-key="feature3-description">Automatisez la création des plannings avec des
+                    algorithmes intelligents qui respectent les contraintes et préférences.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 data-key="feature4-title">Tableaux de bord</h3>
+                <p data-key="feature4-description">Visualisez les données importantes avec des
+                    tableaux de bord personnalisables et des rapports détaillés.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3 data-key="feature5-title">Application mobile</h3>
+                <p data-key="feature5-description">Accédez aux plannings et gérez les modifications
+                    depuis votre smartphone ou tablette.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3 data-key="feature6-title">Sécurité des données</h3>
+                <p data-key="feature6-description">Protégez les données sensibles de votre
+                    établissement avec un système de sécurité robuste et conforme aux normes.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="screenshots" id="screenshots">
+    <div class="container">
+        <div class="section-title">
+            <h2 data-key="screenshots-title">Captures d'écran</h2>
+            <p data-key="screenshots-description">Découvrez l'interface conviviale de MediPlan
+                Pro</p>
+        </div>
+        <div class="screenshots-container">
+            <img alt="Interface principale"
+                 class="screenshot" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='250' viewBox='0 0 400 250'><rect width='400' height='250' fill='%231976d2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='18' data-key='screenshot1'>Interface principale</text></svg>">
+            <img alt="Gestion du personnel"
+                 class="screenshot" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='250' viewBox='0 0 400 250'><rect width='400' height='250' fill='%231565c0'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='18' data-key='screenshot2'>Gestion du personnel</text></svg>">
+            <img alt="Tableaux de bord"
+                 class="screenshot" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='250' viewBox='0 0 400 250'><rect width='400' height='250' fill='%230d47a1'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-size='18' data-key='screenshot3'>Tableaux de bord</text></svg>">
+        </div>
+    </div>
+</section>
+
+<section class="download" id="download">
+    <div class="container">
+        <div class="section-title">
+            <h2 data-key="download-title">Télécharger MediPlan Pro</h2>
+            <p data-key="download-description">Choisissez la version qui correspond à vos
+                besoins</p>
+        </div>
+        <div class="download-options">
+            <div class="download-card">
+                <h3 data-key="plan1-title">Version Gratuite</h3>
+                <div class="price" data-key="plan1-price">Gratuit</div>
+                <ul>
+                    <li data-key="plan1-feature1">Gestion basique des plannings</li>
+                    <li data-key="plan1-feature2">Jusqu'à 20 membres du personnel</li>
+                    <li data-key="plan1-feature3">Export PDF des plannings</li>
+                    <li data-key="plan1-feature4">Support par email</li>
+                </ul>
+                <a class="btn" data-key="plan1-cta" href="#">Télécharger</a>
+            </div>
+            <div class="download-card featured">
+                <h3 data-key="plan2-title">Version Pro</h3>
+                <div class="price" data-key="plan2-price">49€/mois</div>
+                <ul>
+                    <li data-key="plan2-feature1">Toutes les fonctionnalités de la version
+                        gratuite
+                    </li>
+                    <li data-key="plan2-feature2">Nombre illimité de personnel</li>
+                    <li data-key="plan2-feature3">Planification automatique avancée</li>
+                    <li data-key="plan2-feature4">Tableaux de bord complets</li>
+                    <li data-key="plan2-feature5">Support prioritaire</li>
+                </ul>
+                <a class="btn" data-key="plan2-cta" href="#">Acheter maintenant</a>
+            </div>
+            <div class="download-card">
+                <h3 data-key="plan3-title">Version Entreprise</h3>
+                <div class="price" data-key="plan3-price">Sur devis</div>
+                <ul>
+                    <li data-key="plan3-feature1">Toutes les fonctionnalités Pro</li>
+                    <li data-key="plan3-feature2">Intégration avec vos systèmes existants</li>
+                    <li data-key="plan3-feature3">Formation personnalisée</li>
+                    <li data-key="plan3-feature4">Support dédié 24/7</li>
+                    <li data-key="plan3-feature5">Hébergement sur vos serveurs</li>
+                </ul>
+                <a class="btn" data-key="plan3-cta" href="#contact">Nous contacter</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="testimonials" id="testimonials">
+    <div class="container">
+        <div class="section-title">
+            <h2 data-key="testimonials-title">Témoignages</h2>
+            <p data-key="testimonials-description">Découvrez ce que disent les établissements qui
+                utilisent MediPlan Pro</p>
+        </div>
+        <div class="testimonials-container">
+            <div class="testimonial-card">
+                <div class="testimonial-text" data-key="testimonial1-text">
+                    "MediPlan Pro a révolutionné notre gestion des plannings. Nous avons réduit de
+                    70% le temps passé à organiser les gardes et amélioré la satisfaction de notre
+                    personnel."
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">DM</div>
+                    <div class="author-info">
+                        <h4 data-key="testimonial1-author">Dr. Martin Dupont</h4>
+                        <p data-key="testimonial1-role">Chef de service, Hôpital Central</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-text" data-key="testimonial2-text">
+                    "La planification automatique nous fait gagner un temps précieux. L'interface
+                    est intuitive et notre personnel a rapidement adopté l'application mobile."
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">SL</div>
+                    <div class="author-info">
+                        <h4 data-key="testimonial2-author">Sarah Leroy</h4>
+                        <p data-key="testimonial2-role">Directrice administrative, Clinique
+                            Saint-Louis</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-text" data-key="testimonial3-text">
+                    "Les tableaux de bord nous permettent de prendre des décisions éclairées sur nos
+                    besoins en personnel. Un outil indispensable pour tout établissement de santé."
+                </div>
+                <div class="testimonial-author">
+                    <div class="author-avatar">PT</div>
+                    <div class="author-info">
+                        <h4 data-key="testimonial3-author">Pierre Thibault</h4>
+                        <p data-key="testimonial3-role">Directeur, Centre Hospitalier Régional</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="faq">
+    <div class="container">
+        <div class="section-title">
+            <h2 data-key="faq-title">Questions fréquentes</h2>
+            <p data-key="faq-description">Retrouvez les réponses aux questions les plus
+                courantes</p>
+        </div>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span data-key="faq1-question">MediPlan Pro est-il compatible avec tous les systèmes d'exploitation ?</span>
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    <p data-key="faq1-answer">Oui, MediPlan Pro est disponible pour Windows, macOS
+                        et Linux. Une version mobile est également disponible pour iOS et
+                        Android.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span data-key="faq2-question">Puis-je essayer MediPlan Pro avant de l'acheter ?</span>
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    <p data-key="faq2-answer">Absolument ! Notre version gratuite vous permet de
+                        tester les fonctionnalités de base avec jusqu'à 20 membres du personnel.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span data-key="faq3-question">Comment se passe la migration depuis notre système actuel ?</span>
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    <p data-key="faq3-answer">Notre équipe d'implémentation vous accompagne dans la
+                        migration de vos données depuis votre système actuel vers MediPlan Pro.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span data-key="faq4-question">MediPlan Pro respecte-t-il les réglementations sur la protection des données ?</span>
+                    <span>+</span>
+                </div>
+                <div class="faq-answer">
+                    <p data-key="faq4-answer">Oui, MediPlan Pro est entièrement conforme au RGPD et
+                        aux réglementations en vigueur dans le secteur de la santé.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="contact" id="contact">
+    <div class="container">
+        <div class="section-title">
+            <h2 data-key="contact-title">Contactez-nous</h2>
+            <p data-key="contact-description">Une question ? Notre équipe est là pour vous aider</p>
+        </div>
+        <div class="contact-info">
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h3 data-key="contact-email">Email</h3>
+                <p>contact@mediplanpro.com</p>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <h3 data-key="contact-phone">Téléphone</h3>
+                <p>+33 1 23 45 67 89</p>
+            </div>
+            <div class="contact-item">
+                <div class="contact-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h3 data-key="contact-address">Adresse</h3>
+                <p data-key="contact-address-value">123 Avenue de la Santé, 75015 Paris</p>
+            </div>
+        </div>
+        <a class="btn" data-key="contact-cta" href="mailto:contact@mediplanpro.com">Envoyer un
+            email</a>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3 data-key="footer-about">MediPlan Pro</h3>
+                <p data-key="footer-about-text">La solution complète pour la gestion des plannings
+                    hospitaliers.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer-column">
+                <h3 data-key="footer-links">Liens rapides</h3>
+                <ul>
+                    <li><a data-key="nav-features" href="#features">Fonctionnalités</a></li>
+                    <li><a data-key="nav-screenshots" href="#screenshots">Captures</a></li>
+                    <li><a data-key="nav-download" href="#download">Télécharger</a></li>
+                    <li><a data-key="nav-testimonials" href="#testimonials">Témoignages</a></li>
+                    <li><a data-key="nav-contact" href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-column">
+                <h3 data-key="footer-legal">Légal</h3>
+                <ul>
+                    <li><a data-key="footer-terms" href="#">Conditions d'utilisation</a></li>
+                    <li><a data-key="footer-privacy" href="#">Politique de confidentialité</a></li>
+                    <li><a data-key="footer-legal" href="#">Mentions légales</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2023 MediPlan Pro. <span data-key="footer-rights">Tous droits réservés.</span>
+            </p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Translations
+    const translations = {
+        fr: {
+            // Navigation
+            "nav-features": "Fonctionnalités",
+            "nav-screenshots": "Captures",
+            "nav-download": "Télécharger",
+            "nav-testimonials": "Témoignages",
+            "nav-contact": "Contact",
+
+            // Hero section
+            "hero-title": "Logiciel de Planning Hospitalier Complet",
+            "hero-description": "Optimisez la gestion des plannings de votre personnel médical avec notre solution complète et intuitive. Gagnez du temps et améliorez l'organisation de votre établissement.",
+            "hero-cta": "Télécharger maintenant",
+            "hero-learn": "En savoir plus",
+
+            // Features section
+            "features-title": "Fonctionnalités principales",
+            "features-description": "Découvrez les fonctionnalités qui font de MediPlan Pro la solution idéale pour la gestion des plannings hospitaliers",
+            "feature1-title": "Gestion des plannings",
+            "feature1-description": "Créez et modifiez facilement les plannings de votre personnel médical avec une interface intuitive et des outils de glisser-déposer.",
+            "feature2-title": "Gestion du personnel",
+            "feature2-description": "Organisez votre personnel par services, équipes et spécialités. Attribuez facilement les gardes et congés.",
+            "feature3-title": "Planification automatique",
+            "feature3-description": "Automatisez la création des plannings avec des algorithmes intelligents qui respectent les contraintes et préférences.",
+            "feature4-title": "Tableaux de bord",
+            "feature4-description": "Visualisez les données importantes avec des tableaux de bord personnalisables et des rapports détaillés.",
+            "feature5-title": "Application mobile",
+            "feature5-description": "Accédez aux plannings et gérez les modifications depuis votre smartphone ou tablette.",
+            "feature6-title": "Sécurité des données",
+            "feature6-description": "Protégez les données sensibles de votre établissement avec un système de sécurité robuste et conforme aux normes.",
+
+            // Screenshots section
+            "screenshots-title": "Captures d'écran",
+            "screenshots-description": "Découvrez l'interface conviviale de MediPlan Pro",
+            "screenshot1": "Interface principale",
+            "screenshot2": "Gestion du personnel",
+            "screenshot3": "Tableaux de bord",
+
+            // Download section
+            "download-title": "Télécharger MediPlan Pro",
+            "download-description": "Choisissez la version qui correspond à vos besoins",
+            "plan1-title": "Version Gratuite",
+            "plan1-price": "Gratuit",
+            "plan1-feature1": "Gestion basique des plannings",
+            "plan1-feature2": "Jusqu'à 20 membres du personnel",
+            "plan1-feature3": "Export PDF des plannings",
+            "plan1-feature4": "Support par email",
+            "plan1-cta": "Télécharger",
+            "plan2-title": "Version Pro",
+            "plan2-price": "49€/mois",
+            "plan2-feature1": "Toutes les fonctionnalités de la version gratuite",
+            "plan2-feature2": "Nombre illimité de personnel",
+            "plan2-feature3": "Planification automatique avancée",
+            "plan2-feature4": "Tableaux de bord complets",
+            "plan2-feature5": "Support prioritaire",
+            "plan2-cta": "Acheter maintenant",
+            "plan3-title": "Version Entreprise",
+            "plan3-price": "Sur devis",
+            "plan3-feature1": "Toutes les fonctionnalités Pro",
+            "plan3-feature2": "Intégration avec vos systèmes existants",
+            "plan3-feature3": "Formation personnalisée",
+            "plan3-feature4": "Support dédié 24/7",
+            "plan3-feature5": "Hébergement sur vos serveurs",
+            "plan3-cta": "Nous contacter",
+
+            // Testimonials section
+            "testimonials-title": "Témoignages",
+            "testimonials-description": "Découvrez ce que disent les établissements qui utilisent MediPlan Pro",
+            "testimonial1-text": "\"MediPlan Pro a révolutionné notre gestion des plannings. Nous avons réduit de 70% le temps passé à organiser les gardes et amélioré la satisfaction de notre personnel.\"",
+            "testimonial1-author": "Dr. Martin Dupont",
+            "testimonial1-role": "Chef de service, Hôpital Central",
+            "testimonial2-text": "\"La planification automatique nous fait gagner un temps précieux. L'interface est intuitive et notre personnel a rapidement adopté l'application mobile.\"",
+            "testimonial2-author": "Sarah Leroy",
+            "testimonial2-role": "Directrice administrative, Clinique Saint-Louis",
+            "testimonial3-text": "\"Les tableaux de bord nous permettent de prendre des décisions éclairées sur nos besoins en personnel. Un outil indispensable pour tout établissement de santé.\"",
+            "testimonial3-author": "Pierre Thibault",
+            "testimonial3-role": "Directeur, Centre Hospitalier Régional",
+
+            // FAQ section
+            "faq-title": "Questions fréquentes",
+            "faq-description": "Retrouvez les réponses aux questions les plus courantes",
+            "faq1-question": "MediPlan Pro est-il compatible avec tous les systèmes d'exploitation ?",
+            "faq1-answer": "Oui, MediPlan Pro est disponible pour Windows, macOS et Linux. Une version mobile est également disponible pour iOS et Android.",
+            "faq2-question": "Puis-je essayer MediPlan Pro avant de l'acheter ?",
+            "faq2-answer": "Absolument ! Notre version gratuite vous permet de tester les fonctionnalités de base avec jusqu'à 20 membres du personnel.",
+            "faq3-question": "Comment se passe la migration depuis notre système actuel ?",
+            "faq3-answer": "Notre équipe d'implémentation vous accompagne dans la migration de vos données depuis votre système actuel vers MediPlan Pro.",
+            "faq4-question": "MediPlan Pro respecte-t-il les réglementations sur la protection des données ?",
+            "faq4-answer": "Oui, MediPlan Pro est entièrement conforme au RGPD et aux réglementations en vigueur dans le secteur de la santé.",
+
+            // Contact section
+            "contact-title": "Contactez-nous",
+            "contact-description": "Une question ? Notre équipe est là pour vous aider",
+            "contact-email": "Email",
+            "contact-phone": "Téléphone",
+            "contact-address": "Adresse",
+            "contact-address-value": "123 Avenue de la Santé, 75015 Paris",
+            "contact-cta": "Envoyer un email",
+
+            // Footer
+            "footer-about": "MediPlan Pro",
+            "footer-about-text": "La solution complète pour la gestion des plannings hospitaliers.",
+            "footer-links": "Liens rapides",
+            "footer-legal": "Légal",
+            "footer-terms": "Conditions d'utilisation",
+            "footer-privacy": "Politique de confidentialité",
+            "footer-legal": "Mentions légales",
+            "footer-rights": "Tous droits réservés."
+        },
+        en: {
+            // Navigation
+            "nav-features": "Features",
+            "nav-screenshots": "Screenshots",
+            "nav-download": "Download",
+            "nav-testimonials": "Testimonials",
+            "nav-contact": "Contact",
+
+            // Hero section
+            "hero-title": "Complete Hospital Scheduling Software",
+            "hero-description": "Optimize the scheduling management of your medical staff with our complete and intuitive solution. Save time and improve the organization of your facility.",
+            "hero-cta": "Download Now",
+            "hero-learn": "Learn More",
+
+            // Features section
+            "features-title": "Main Features",
+            "features-description": "Discover the features that make MediPlan Pro the ideal solution for hospital scheduling management",
+            "feature1-title": "Schedule Management",
+            "feature1-description": "Easily create and modify your medical staff schedules with an intuitive interface and drag-and-drop tools.",
+            "feature2-title": "Staff Management",
+            "feature2-description": "Organize your staff by departments, teams and specialties. Easily assign shifts and leave.",
+            "feature3-title": "Automatic Planning",
+            "feature3-description": "Automate schedule creation with intelligent algorithms that respect constraints and preferences.",
+            "feature4-title": "Dashboards",
+            "feature4-description": "Visualize important data with customizable dashboards and detailed reports.",
+            "feature5-title": "Mobile App",
+            "feature5-description": "Access schedules and manage changes from your smartphone or tablet.",
+            "feature6-title": "Data Security",
+            "feature6-description": "Protect your facility's sensitive data with a robust security system compliant with standards.",
+
+            // Screenshots section
+            "screenshots-title": "Screenshots",
+            "screenshots-description": "Discover the user-friendly interface of MediPlan Pro",
+            "screenshot1": "Main Interface",
+            "screenshot2": "Staff Management",
+            "screenshot3": "Dashboards",
+
+            // Download section
+            "download-title": "Download MediPlan Pro",
+            "download-description": "Choose the version that fits your needs",
+            "plan1-title": "Free Version",
+            "plan1-price": "Free",
+            "plan1-feature1": "Basic schedule management",
+            "plan1-feature2": "Up to 20 staff members",
+            "plan1-feature3": "PDF schedule export",
+            "plan1-feature4": "Email support",
+            "plan1-cta": "Download",
+            "plan2-title": "Pro Version",
+            "plan2-price": "$49/month",
+            "plan2-feature1": "All Free version features",
+            "plan2-feature2": "Unlimited staff",
+            "plan2-feature3": "Advanced automatic planning",
+            "plan2-feature4": "Complete dashboards",
+            "plan2-feature5": "Priority support",
+            "plan2-cta": "Buy Now",
+            "plan3-title": "Enterprise Version",
+            "plan3-price": "Custom Quote",
+            "plan3-feature1": "All Pro features",
+            "plan3-feature2": "Integration with your existing systems",
+            "plan3-feature3": "Customized training",
+            "plan3-feature4": "Dedicated 24/7 support",
+            "plan3-feature5": "Hosting on your servers",
+            "plan3-cta": "Contact Us",
+
+            // Testimonials section
+            "testimonials-title": "Testimonials",
+            "testimonials-description": "Discover what facilities using MediPlan Pro say",
+            "testimonial1-text": "\"MediPlan Pro revolutionized our schedule management. We reduced time spent organizing shifts by 70% and improved staff satisfaction.\"",
+            "testimonial1-author": "Dr. Martin Dupont",
+            "testimonial1-role": "Department Head, Central Hospital",
+            "testimonial2-text": "\"Automatic planning saves us precious time. The interface is intuitive and our staff quickly adopted the mobile app.\"",
+            "testimonial2-author": "Sarah Leroy",
+            "testimonial2-role": "Administrative Director, Saint-Louis Clinic",
+            "testimonial3-text": "\"Dashboards allow us to make informed decisions about our staffing needs. An essential tool for any healthcare facility.\"",
+            "testimonial3-author": "Pierre Thibault",
+            "testimonial3-role": "Director, Regional Hospital Center",
+
+            // FAQ section
+            "faq-title": "Frequently Asked Questions",
+            "faq-description": "Find answers to the most common questions",
+            "faq1-question": "Is MediPlan Pro compatible with all operating systems?",
+            "faq1-answer": "Yes, MediPlan Pro is available for Windows, macOS and Linux. A mobile version is also available for iOS and Android.",
+            "faq2-question": "Can I try MediPlan Pro before buying?",
+            "faq2-answer": "Absolutely! Our free version lets you test basic features with up to 20 staff members.",
+            "faq3-question": "How does migration from our current system work?",
+            "faq3-answer": "Our implementation team assists you in migrating your data from your current system to MediPlan Pro.",
+            "faq4-question": "Does MediPlan Pro comply with data protection regulations?",
+            "faq4-answer": "Yes, MediPlan Pro is fully compliant with GDPR and regulations in force in the healthcare sector.",
+
+            // Contact section
+            "contact-title": "Contact Us",
+            "contact-description": "Have a question? Our team is here to help",
+            "contact-email": "Email",
+            "contact-phone": "Phone",
+            "contact-address": "Address",
+            "contact-address-value": "123 Health Avenue, 75015 Paris",
+            "contact-cta": "Send Email",
+
+            // Footer
+            "footer-about": "MediPlan Pro",
+            "footer-about-text": "The complete solution for hospital scheduling management.",
+            "footer-links": "Quick Links",
+            "footer-legal": "Legal",
+            "footer-terms": "Terms of Use",
+            "footer-privacy": "Privacy Policy",
+            "footer-legal": "Legal Notice",
+            "footer-rights": "All rights reserved."
+        },
+        ar: {
+            // Navigation
+            "nav-features": "الميزات",
+            "nav-screenshots": "لقطات الشاشة",
+            "nav-download": "تحميل",
+            "nav-testimonials": "شهادات",
+            "nav-contact": "اتصال",
+
+            // Hero section
+            "hero-title": "برنامج الجدولة المستشفى الكامل",
+            "hero-description": "قم بتحسين إدارة الجدولة لطاقمك الطبي مع حلنا الشامل والبديهي. وفر الوقت وحسن تنظيم منشأتك.",
+            "hero-cta": "تحميل الآن",
+            "hero-learn": "معرفة المزيد",
+
+            // Features section
+            "features-title": "الميزات الرئيسية",
+            "features-description": "اكتشف الميزات التي تجعل MediPlan Pro الحل المثالي لإدارة الجدولة في المستشفيات",
+            "feature1-title": "إدارة الجدولة",
+            "feature1-description": "أنشئ وعدل بسهولة جداول طاقمك الطبي مع واجهة بديهية وأدوات السحب والإفلات.",
+            "feature2-title": "إدارة الموظفين",
+            "feature2-description": "نظم طاقمك حسب الأقسام والفرق والتخصصات. عين بسهولة المناوبات والإجازات.",
+            "feature3-title": "التخطيط التلقائي",
+            "feature3-description": "أتمتة إنشاء الجداول بخوارزميات ذكية تحترم القيود والتفضيلات.",
+            "feature4-title": "لوحات التحكم",
+            "feature4-description": "تصور البيانات المهمة بلوحات تحكم قابلة للتخصيص وتقارير مفصلة.",
+            "feature5-title": "التطبيق المحمول",
+            "feature5-description": "الوصول إلى الجداول وإدارة التغييرات من هاتفك الذكي أو جهازك اللوحي.",
+            "feature6-title": "أمان البيانات",
+            "feature6-description": "احمِ البيانات الحساسة لمنشأتك بنظام أمان قوي ومتوافق مع المعايير.",
+
+            // Screenshots section
+            "screenshots-title": "لقطات الشاشة",
+            "screenshots-description": "اكتشف الواجهة سهلة الاستخدام لـ MediPlan Pro",
+            "screenshot1": "الواجهة الرئيسية",
+            "screenshot2": "إدارة الموظفين",
+            "screenshot3": "لوحات التحكم",
+
+            // Download section
+            "download-title": "تحميل MediPlan Pro",
+            "download-description": "اختر الإصدار الذي يناسب احتياجاتك",
+            "plan1-title": "الإصدار المجاني",
+            "plan1-price": "مجاني",
+            "plan1-feature1": "إدارة الجدولة الأساسية",
+            "plan1-feature2": "حتى 20 عضو من الموظفين",
+            "plan1-feature3": "تصدير الجدولة بصيغة PDF",
+            "plan1-feature4": "الدعم عبر البريد الإلكتروني",
+            "plan1-cta": "تحميل",
+            "plan2-title": "الإصدار المحترف",
+            "plan2-price": "49€/شهر",
+            "plan2-feature1": "جميع ميزات الإصدار المجاني",
+            "plan2-feature2": "عدد غير محدود من الموظفين",
+            "plan2-feature3": "التخطيط التلقائي المتقدم",
+            "plan2-feature4": "لوحات تحكم كاملة",
+            "plan2-feature5": "الدعم المفضل",
+            "plan2-cta": "اشتر الآن",
+            "plan3-title": "إصدار المؤسسات",
+            "plan3-price": "عرض سعر مخصص",
+            "plan3-feature1": "جميع ميزات الإصدار المحترف",
+            "plan3-feature2": "التكامل مع أنظمتك الحالية",
+            "plan3-feature3": "تدريب مخصص",
+            "plan3-feature4": "دعم مخصص 24/7",
+            "plan3-feature5": "استضافة على خوادمك",
+            "plan3-cta": "اتصل بنا",
+
+            // Testimonials section
+            "testimonials-title": "شهادات",
+            "testimonials-description": "اكتشف ما تقوله المنشآت التي تستخدم MediPlan Pro",
+            "testimonial1-text": "\"أحدث MediPlan Pro ثورة في إدارة الجدولة لدينا. قللنا الوقت المستغرق في تنظيم المناوبات بنسبة 70٪ وحسّنا رضا الموظفين.\"",
+            "testimonial1-author": "د. مارتن دوبون",
+            "testimonial1-role": "رئيس القسم، المستشفى المركزي",
+            "testimonial2-text": "\"يوفر لنا التخطيط التلقائي وقتًا ثمينًا. الواجهة بديهية وتبنى طاقمنا التطبيق المحمول بسرعة.\"",
+            "testimonial2-author": "سارة ليروي",
+            "testimonial2-role": "المديرة الإدارية، عيادة سانت لويس",
+            "testimonial3-text": "\"تسمح لنا لوحات التحكم باتخاذ قرارات مستنيرة حول احتياجاتنا من الموظفين. أداة أساسية لأي منشأة رعاية صحية.\"",
+            "testimonial3-author": "بيير تيبو",
+            "testimonial3-role": "المدير، المركز الاستشفائي الإقليمي",
+
+            // FAQ section
+            "faq-title": "الأسئلة الشائعة",
+            "faq-description": "ابحث عن إجابات للأسئلة الأكثر شيوعًا",
+            "faq1-question": "هل MediPlan Pro متوافق مع جميع أنظمة التشغيل؟",
+            "faq1-answer": "نعم، MediPlan Pro متوفر لأنظمة Windows وmacOS وLinux. الإصدار المحمول متاح أيضًا لأنظمة iOS وAndroid.",
+            "faq2-question": "هل يمكنني تجربة MediPlan Pro قبل الشراء؟",
+            "faq2-answer": "بالتأكيد! يتيح لك إصدارنا المجاني اختبار الميزات الأساسية مع ما يصل إلى 20 عضوًا من الموظفين.",
+            "faq3-question": "كيف تتم الهجرة من نظامنا الحالي؟",
+            "faq3-answer": "يساعدك فريق التنفيذ لدينا في نقل بياناتك من نظامك الحالي إلى MediPlan Pro.",
+            "faq4-question": "هل يلتزم MediPlan Pro بأنظمة حماية البيانات؟",
+            "faq4-answer": "نعم، يمتثل MediPlan Pro بالكامل للائحة العامة لحماية البيانات واللوائح السارية في قطاع الرعاية الصحية.",
+
+            // Contact section
+            "contact-title": "اتصل بنا",
+            "contact-description": "هل لديك سؤال؟ فريقنا هنا لمساعدتك",
+            "contact-email": "البريد الإلكتروني",
+            "contact-phone": "الهاتف",
+            "contact-address": "العنوان",
+            "contact-address-value": "123 جادة الصحة، 75015 باريس",
+            "contact-cta": "إرسال بريد إلكتروني",
+
+            // Footer
+            "footer-about": "MediPlan Pro",
+            "footer-about-text": "الحل الكامل لإدارة الجدولة في المستشفيات.",
+            "footer-links": "روابط سريعة",
+            "footer-legal": "قانوني",
+            "footer-terms": "شروط الاستخدام",
+            "footer-privacy": "سياسة الخصوصية",
+            "footer-legal": "إشعار قانوني",
+            "footer-rights": "جميع الحقوق محفوظة."
+        }
+    };
+
+    // Language switching functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const langButtons = document.querySelectorAll('.lang-btn');
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const nav = document.querySelector('nav');
+        const faqItems = document.querySelectorAll('.faq-item');
+
+        // Mobile menu toggle
+        mobileMenuBtn.addEventListener('click', function() {
+            nav.classList.toggle('active');
+        });
+
+        // FAQ accordion
+        faqItems.forEach(item => {
+            const question = item.querySelector('.faq-question');
+            question.addEventListener('click', () => {
+                item.classList.toggle('active');
+            });
+        });
+
+        // Language switching
+        langButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const lang = this.getAttribute('data-lang');
+
+                // Update active button
+                langButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update page direction for RTL languages
+                if (lang === 'ar') {
+                    document.body.classList.add('rtl');
+                } else {
+                    document.body.classList.remove('rtl');
+                }
+
+                // Update all translatable elements
+                const translatableElements = document.querySelectorAll('[data-key]');
+                translatableElements.forEach(element => {
+                    const key = element.getAttribute('data-key');
+                    if (translations[lang][key]) {
+                        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                            element.value = translations[lang][key];
+                        } else {
+                            element.textContent = translations[lang][key];
+                        }
+                    }
+                });
+            });
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    // Close mobile menu if open
+                    nav.classList.remove('active');
+
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = 1;
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements to animate
+        document.querySelectorAll('.feature-card, .download-card, .testimonial-card').forEach(el => {
+            el.style.opacity = 0;
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.5s, transform 0.5s';
+            observer.observe(el);
+        });
+    });
+</script>
+</body>
+</html>

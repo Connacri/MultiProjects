@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'LicenseGeneratorScreen.dart';
 
@@ -15,6 +17,7 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen> {
   bool hasScanned = false;
   MobileScannerController cameraController = MobileScannerController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void dispose() {
@@ -32,6 +35,45 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     }
   }
 
+  Future<void> _pickImageFromGallery() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+
+      if (image != null) {
+        setState(() => hasScanned = true);
+        await _scanImageFile(image);
+      }
+    } catch (e) {
+      _showError('Erreur lors de la sélection de l\'image: $e');
+    }
+  }
+
+  Future<void> _scanImageFile(XFile image) async {
+    try {
+      final BarcodeCapture? capture = await cameraController.analyzeImage(
+        image.path,
+      );
+
+      if (capture != null && capture.barcodes.isNotEmpty) {
+        final barcode = capture.barcodes.first;
+        if (barcode.rawValue != null) {
+          _processQRData(barcode.rawValue!);
+        } else {
+          _showError('Aucun QR Code détecté dans l\'image');
+          setState(() => hasScanned = false);
+        }
+      } else {
+        _showError('Aucun QR Code détecté dans l\'image');
+        setState(() => hasScanned = false);
+      }
+    } catch (e) {
+      _showError('Erreur lors de l\'analyse de l\'image: $e');
+      setState(() => hasScanned = false);
+    }
+  }
+
   void _processQRData(String qrData) {
     try {
       final data = jsonDecode(qrData);
@@ -42,23 +84,28 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
       if (deviceId == null || timestamp == null) {
         _showError('QR Code invalide');
+        setState(() => hasScanned = false);
         return;
       }
 
-      final now = DateTime.now().millisecondsSinceEpoch;
+      final now = DateTime
+          .now()
+          .millisecondsSinceEpoch;
       if (now - timestamp > 3600000) {
         _showError('QR Code expiré. Veuillez en générer un nouveau.');
+        setState(() => hasScanned = false);
         return;
       }
 
       Navigator.of(context)
           .push(
         MaterialPageRoute(
-          builder: (_) => LicenseGeneratorScreen(
-            deviceId: deviceId,
-            deviceHashShort: deviceHashShort ?? '',
-            appVersion: appVersion ?? 'Unknown',
-          ),
+          builder: (_) =>
+              LicenseGeneratorScreen(
+                deviceId: deviceId,
+                deviceHashShort: deviceHashShort ?? '',
+                appVersion: appVersion ?? 'Unknown',
+              ),
         ),
       )
           .then((_) {
@@ -82,6 +129,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       appBar: AppBar(
         title: const Text('Scanner QR Code'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.photo_library),
+            tooltip: 'Choisir depuis la galerie',
+            onPressed: hasScanned ? null : _pickImageFromGallery,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -106,7 +160,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     const Text(
                       'Scannez le QR Code de l\'application Windows',
                       style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'ou appuyez sur l\'icône galerie',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.deepPurple.shade600,
+                      ),
                     ),
                   ],
                 ),

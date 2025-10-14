@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kenzy/objectBox/MyApp.dart';
 
 import '../LicenseInfoPage.dart';
 import '../StorageService.dart';
@@ -286,6 +287,52 @@ class MainApp extends StatelessWidget {
               icon: const Icon(Icons.settings),
               label: const Text('Gérer la licence'),
             ),
+            const SizedBox(height: 30),
+            const Text(
+              'Application Activée avec Succès !',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 30),
+            const Text(
+              'Après la validation de votre licence, cliquez sur le bouton ci-dessous '
+              '« Réouvrir l’application » pour démarrer votre profil et accéder à toutes les fonctionnalités.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => MyApp9()),
+                  (route) => false,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black87,
+                // 🔹 Fond sombre
+                foregroundColor: Colors.white,
+                // 🔹 Couleur du texte et de l’icône
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4, // optionnel : légère ombre
+              ),
+              icon: const Icon(Icons.open_in_browser),
+              label: const Text(
+                'Réouvrir l\'Application',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )
           ],
         ),
       ),

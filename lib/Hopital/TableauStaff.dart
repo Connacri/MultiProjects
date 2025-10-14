@@ -16,6 +16,7 @@ import 'ActivitePersonne.dart';
 import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
+import 'license/LicenseInfoPage.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
 
@@ -494,6 +495,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: Icon(Icons.verified_user),
+            color: Colors.yellowAccent,
+            onPressed: () {
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => LicenseInfoPage()));
+            },
+          ),
           _buildSavePdfButton(context),
           staffProvider.staffs.isEmpty
               ? SizedBox.shrink()
