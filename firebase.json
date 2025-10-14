@@ -1,1 +1,51 @@
-{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"hosting":{"public":"delete_page","ignore":["firebase.json","**/.*","**/node_modules/**"],"rewrites":[{"source":"**","destination":"/index.html"}],"target":"delete_account"},"storage":{"rules":"storage.rules"},"database":{"rules":"database.rules.json"},"flutter":{"platforms":{"android":{"default":{"projectId":"hotel-f84db","appId":"1:536701149573:android:6e3f7c230003d4321924ec","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"hotel-f84db","configurations":{"android":"1:536701149573:android:6e3f7c230003d4321924ec","ios":"1:536701149573:ios:22251491404dd1711924ec","macos":"1:536701149573:ios:22251491404dd1711924ec","web":"1:536701149573:web:028c8807abb30fa11924ec","windows":"1:536701149573:web:6934771adcb3a53f1924ec"}}}}}}
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "europe-west9",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "webHospital",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "hotel-f84db",
+          "appId": "1:536701149573:android:6e3f7c230003d4321924ec",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "hotel-f84db",
+          "configurations": {
+            "android": "1:536701149573:android:6e3f7c230003d4321924ec",
+            "ios": "1:536701149573:ios:22251491404dd1711924ec",
+            "macos": "1:536701149573:ios:22251491404dd1711924ec",
+            "web": "1:536701149573:web:028c8807abb30fa11924ec",
+            "windows": "1:536701149573:web:6934771adcb3a53f1924ec"
+          }
+        }
+      }
+    }
+  }
+}

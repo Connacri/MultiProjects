@@ -226,6 +226,10 @@ flutter:
     - assets/photos/hopital/m1 (5).jpg
     - assets/photos/hopital/tt (7).jpg
     - assets/lotties/1 (2).json
+    - webHospital/img/logo_hopital.png
+    - webHospital/img/screenshot1.png
+    - webHospital/img/screenshot2.png
+    - webHospital/img/screenshot3.png
 
 
 

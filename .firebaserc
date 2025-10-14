@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "walletdz-d12e0"
+  },
   "targets": {
     "walletdz-d12e0": {
       "hosting": {
