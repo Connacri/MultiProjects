@@ -6,6 +6,7 @@
     <title>My Hospital - Logiciel de Planning Hospitalier</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
           rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #1976d2;
@@ -24,18 +25,144 @@
         }
 
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Bebas Neue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-        body {
-            color: var(--text);
-            line-height: 1.6;
-            background-color: var(--light);
-            overflow-x: hidden;
-        }
+body {
+    color: var(--text);
+    line-height: 1.6;
+    background-color: var(--light);
+    overflow-x: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Ajoutez ces nouvelles règles CSS */
+.logo-text, .hero h1, .section-title h2, .feature-card h3,
+.download-card h3, .testimonial-author h4, .faq-question,
+.modal h3, .footer-column h3, .btn {
+    font-family: 'Bebas Neue', cursive;
+    letter-spacing: 1px;
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+}
+
+.section-title h2 {
+    font-size: 2.8rem;
+}
+
+/* Styles pour les screenshots améliorés */
+.screenshot-item {
+    position: relative;
+    width: 300px;
+    height: 200px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+}
+
+.screenshot {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background-color: var(--white);
+    transition: var(--transition);
+}
+
+.screenshot-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.screenshot-overlay i {
+    color: var(--white);
+    font-size: 2rem;
+}
+
+.screenshot-item:hover .screenshot-overlay {
+    opacity: 1;
+}
+
+.screenshot-item:hover .screenshot {
+    transform: scale(1.05);
+}
+
+/* Styles pour le QR Code */
+.qr-code {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.qr-code img {
+    width: 120px;
+    height: 120px;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.qr-code p {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Modal pour screenshot agrandi */
+.screenshot-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.screenshot-modal-content {
+    max-width: 90%;
+    max-height: 90vh;
+    position: relative;
+}
+
+.screenshot-modal-content img {
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.close-screenshot-modal {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 2rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.close-screenshot-modal:hover {
+    color: var(--secondary);
+}
 
         /* Header & Navigation */
         header {
@@ -965,9 +1092,24 @@
             <p>Découvrez l'interface conviviale de My Hospital</p>
         </div>
         <div class="screenshots-container">
-            <img alt="Interface principale" class="screenshot" src="img/screenshot1.png">
-            <img alt="Gestion du personnel" class="screenshot" src="img/screenshot2.png">
-            <img alt="Tableaux de bord" class="screenshot" src="img/screenshot3.png">
+            <div class="screenshot-item">
+                <img alt="Interface principale" class="screenshot" src="img/screenshot1.png">
+                <div class="screenshot-overlay">
+                    <i class="fas fa-search-plus"></i>
+                </div>
+            </div>
+            <div class="screenshot-item">
+                <img alt="Gestion du personnel" class="screenshot" src="img/screenshot2.png">
+                <div class="screenshot-overlay">
+                    <i class="fas fa-search-plus"></i>
+                </div>
+            </div>
+            <div class="screenshot-item">
+                <img alt="Tableaux de bord" class="screenshot" src="img/screenshot3.png">
+                <div class="screenshot-overlay">
+                    <i class="fas fa-search-plus"></i>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -1138,6 +1280,10 @@
                 </div>
                 <h3>WhatsApp</h3>
                 <p>+696.410.953</p>
+                <div class="qr-code">
+                    <img alt="QR Code WhatsApp" src="img/whatsapp-qr.png">
+                    <p>Scannez pour nous contacter</p>
+                </div>
             </div>
             <div class="contact-item">
                 <div class="contact-icon">
@@ -1357,6 +1503,38 @@
             el.style.transition = 'opacity 0.5s, transform 0.5s';
             observer.observe(el);
         });
+        // Modal pour screenshots agrandis
+const screenshotItems = document.querySelectorAll('.screenshot-item');
+const screenshotModal = document.createElement('div');
+screenshotModal.className = 'screenshot-modal';
+screenshotModal.innerHTML = `
+    <div class="screenshot-modal-content">
+        <button class="close-screenshot-modal">&times;</button>
+        <img src="" alt="Screenshot agrandi">
+    </div>
+`;
+document.body.appendChild(screenshotModal);
+
+const closeScreenshotModal = screenshotModal.querySelector('.close-screenshot-modal');
+const screenshotModalImg = screenshotModal.querySelector('img');
+
+screenshotItems.forEach(item => {
+    item.addEventListener('click', function() {
+        const imgSrc = this.querySelector('img').src;
+        screenshotModalImg.src = imgSrc;
+        screenshotModal.style.display = 'flex';
+    });
+});
+
+closeScreenshotModal.addEventListener('click', () => {
+    screenshotModal.style.display = 'none';
+});
+
+screenshotModal.addEventListener('click', (e) => {
+    if (e.target === screenshotModal) {
+        screenshotModal.style.display = 'none';
+    }
+});
     });
 </script>
 </body>
