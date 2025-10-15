@@ -6,7 +6,10 @@
     <title>My Hospital - Logiciel de Planning Hospitalier</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
           rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500&display=swap"
+          rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --primary: #1976d2;
@@ -25,146 +28,151 @@
         }
 
         * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Bebas Neue', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Oswald', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-body {
-    color: var(--text);
-    line-height: 1.6;
-    background-color: var(--light);
-    overflow-x: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+        body {
+            color: var(--text);
+            line-height: 1.6;
+            background-color: var(--light);
+            overflow-x: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-/* Ajoutez ces nouvelles règles CSS */
-.logo-text, .hero h1, .section-title h2, .feature-card h3,
-.download-card h3, .testimonial-author h4, .faq-question,
-.modal h3, .footer-column h3, .btn {
-    font-family: 'Bebas Neue', cursive;
-    letter-spacing: 1px;
-}
+        .logo-text, .hero h1, .section-title h2, .feature-card h3, .download-card h3, .testimonial-author h4, .faq-question, .modal h3, .footer-column h3, .btn {
+            font-family: 'Bebas Neue', cursive;
+            letter-spacing: 1px;
+        }
 
-.hero h1 {
-    font-size: 3.5rem;
-}
+        body {
+            font-weight: 400;
+        }
 
-.section-title h2 {
-    font-size: 2.8rem;
-}
+        small, p, li, span {
+            font-weight: 300;
+        }
 
-/* Styles pour les screenshots améliorés */
-.screenshot-item {
-    position: relative;
-    width: 300px;
-    height: 200px;
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-}
+        h1, h2, h3, h4, h5, h6, .btn, .logo-text {
+            font-weight: 500;
+        }
 
-.screenshot {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    background-color: var(--white);
-    transition: var(--transition);
-}
+        .hero h1 {
+            font-size: 3.5rem;
+        }
 
-.screenshot-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: var(--transition);
-}
+        .section-title h2 {
+            font-size: 2.8rem;
+        }
 
-.screenshot-overlay i {
-    color: var(--white);
-    font-size: 2rem;
-}
+        .screenshot-item {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+        }
 
-.screenshot-item:hover .screenshot-overlay {
-    opacity: 1;
-}
+        .screenshot {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background-color: var(--white);
+            transition: var(--transition);
+        }
 
-.screenshot-item:hover .screenshot {
-    transform: scale(1.05);
-}
+        .screenshot-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: var(--transition);
+        }
 
-/* Styles pour le QR Code */
-.qr-code {
-    margin-top: 1rem;
-    text-align: center;
-}
+        .screenshot-overlay i {
+            color: var(--white);
+            font-size: 2rem;
+        }
 
-.qr-code img {
-    width: 120px;
-    height: 120px;
-    border-radius: 10px;
-    margin-bottom: 0.5rem;
-}
+        .screenshot-item:hover .screenshot-overlay {
+            opacity: 1;
+        }
 
-.qr-code p {
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.8);
-}
+        .screenshot-item:hover .screenshot {
+            transform: scale(1.05);
+        }
 
-/* Modal pour screenshot agrandi */
-.screenshot-modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    z-index: 3000;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-}
+        .qr-code {
+            margin-top: 1rem;
+            text-align: center;
+        }
 
-.screenshot-modal-content {
-    max-width: 90%;
-    max-height: 90vh;
-    position: relative;
-}
+        .qr-code img {
+            width: 120px;
+            height: 120px;
+            border-radius: 10px;
+            margin-bottom: 0.5rem;
+        }
 
-.screenshot-modal-content img {
-    width: 100%;
-    height: auto;
-    max-height: 80vh;
-    object-fit: contain;
-    border-radius: 10px;
-}
+        .qr-code p {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
 
-.close-screenshot-modal {
-    position: absolute;
-    top: -40px;
-    right: 0;
-    background: none;
-    border: none;
-    color: var(--white);
-    font-size: 2rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
+        .screenshot-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-.close-screenshot-modal:hover {
-    color: var(--secondary);
-}
+        .screenshot-modal-content {
+            max-width: 90%;
+            max-height: 90vh;
+            position: relative;
+        }
 
-        /* Header & Navigation */
+        .screenshot-modal-content img {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 10px;
+        }
+
+        .close-screenshot-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .close-screenshot-modal:hover {
+            color: var(--secondary);
+        }
+
         header {
             background-color: var(--white);
             box-shadow: var(--shadow);
@@ -176,8 +184,12 @@ body {
         }
 
         @keyframes slideDown {
-            from { transform: translateY(-100%); }
-            to { transform: translateY(0); }
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(0);
+            }
         }
 
         .container {
@@ -253,7 +265,6 @@ body {
             color: var(--primary);
         }
 
-        /* Hero Section */
         .hero {
             padding: 10rem 0 5rem;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -344,7 +355,6 @@ body {
             background-color: #388e3c;
         }
 
-        /* Sections communes */
         section {
             padding: 5rem 0;
         }
@@ -379,7 +389,6 @@ body {
             color: var(--text-light);
         }
 
-        /* Features Section */
         .features {
             background-color: var(--white);
         }
@@ -438,7 +447,6 @@ body {
             z-index: 1;
         }
 
-        /* Screenshots Section */
         .screenshots {
             background-color: var(--primary-light);
         }
@@ -450,22 +458,6 @@ body {
             flex-wrap: wrap;
         }
 
-        .screenshot {
-            width: 300px;
-            height: 200px;
-            object-fit: cover;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        .screenshot:hover {
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Download Section */
         .download {
             text-align: center;
             background-color: var(--white);
@@ -560,9 +552,9 @@ body {
             margin-bottom: 1rem;
         }
 
-        /* Testimonials Section */
         .testimonials {
             background-color: var(--light);
+            font-weight: 200;
         }
 
         .testimonials-container {
@@ -630,7 +622,6 @@ body {
             font-size: 0.9rem;
         }
 
-        /* FAQ Section */
         .faq {
             background-color: var(--white);
         }
@@ -679,11 +670,14 @@ body {
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
         }
 
-        /* Contact Section */
         .contact {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: var(--white);
@@ -720,7 +714,6 @@ body {
             margin-bottom: 0.5rem;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -817,7 +810,6 @@ body {
             resize: vertical;
         }
 
-        /* Footer */
         footer {
             background-color: var(--primary-dark);
             color: var(--white);
@@ -888,7 +880,6 @@ body {
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* Responsive Design */
         @media (max-width: 992px) {
             .hero h1 {
                 font-size: 2.5rem;
@@ -902,7 +893,7 @@ body {
                 gap: 1.5rem;
             }
 
-            .screenshot {
+            .screenshot-item {
                 width: 280px;
                 height: 180px;
             }
@@ -971,7 +962,7 @@ body {
                 align-items: center;
             }
 
-            .screenshot {
+            .screenshot-item {
                 width: 100%;
                 max-width: 400px;
                 height: 250px;
@@ -1271,17 +1262,24 @@ body {
                 <div class="contact-icon">
                     <i class="fas fa-envelope"></i>
                 </div>
-                <h3>Email</h3>
-                <p>oran.tirex@gmail.com</p>
+                <h3>Email Direct</h3>
+                <p>
+                    <a href="mailto:ramzi.guedouar@gmail.com"
+                       style="color: white; text-decoration: underline; font-size: 1.1rem;">
+                        ramzi.guedouar@gmail.com
+                    </a>
+                </p>
+                <p style="font-size: 0.9rem; margin-top: 0.5rem;">Cliquez pour nous envoyer un
+                    email</p>
             </div>
             <div class="contact-item">
                 <div class="contact-icon">
                     <i class="fab fa-whatsapp"></i>
                 </div>
                 <h3>WhatsApp</h3>
-                <p>+696.410.953</p>
+                <p>+213.696.410.953</p>
                 <div class="qr-code">
-                    <img alt="QR Code WhatsApp" src="img/whatsapp-qr.png">
+                    <img alt="QR Code WhatsApp" src="img/whatsapp-qr.jpg">
                     <p>Scannez pour nous contacter</p>
                 </div>
             </div>
@@ -1323,7 +1321,6 @@ body {
             <div class="footer-column">
                 <h3>Légal</h3>
                 <ul>
-
                     <li><a href="conditions.html">Conditions d'utilisation</a></li>
                     <li><a href="confidentialite.html">Politique de confidentialité</a></li>
                     <li><a href="mentions.html">Mentions légales</a></li>
@@ -1341,27 +1338,31 @@ body {
     <div class="modal-content">
         <button class="close-modal">&times;</button>
         <h3>Demande de Devis - Version Complète</h3>
-        <form id="quote-form">
+        <form action="https://formsubmit.co/ramzi.guedouar@gmail.com" method="POST">
+            <input name="_subject" type="hidden" value="Demande de devis My Hospital">
+            <input name="_captcha" type="hidden" value="false">
+            <input name="_template" type="hidden" value="table">
+            <input name="_next" type="hidden" value="merci.html">
+
             <div class="form-group">
-                <label for="name">Nom complet *</label>
-                <input id="name" name="name" required type="text">
+                <label for="quote-name">Nom complet *</label>
+                <input id="quote-name" name="Nom" required type="text">
             </div>
             <div class="form-group">
-                <label for="email">Email *</label>
-                <input id="email" name="email" required type="email">
+                <label for="quote-establishment">Établissement *</label>
+                <input id="quote-establishment" name="Etablissement" required type="text">
             </div>
             <div class="form-group">
-                <label for="phone">Téléphone</label>
-                <input id="phone" name="phone" type="tel">
+                <label for="quote-phone">Téléphone *</label>
+                <input id="quote-phone" name="Telephone" required type="tel">
             </div>
             <div class="form-group">
-                <label for="establishment">Établissement *</label>
-                <input id="establishment" name="establishment" required type="text">
+                <label for="quote-email">Email</label>
+                <input id="quote-email" name="Email" type="email">
             </div>
             <div class="form-group">
-                <label for="message">Message (optionnel)</label>
-                <textarea id="message" name="message"
-                          placeholder="Informations supplémentaires..."></textarea>
+                <label for="quote-message">Message</label>
+                <textarea id="quote-message" name="Message" rows="3"></textarea>
             </div>
             <button class="btn btn-accent" type="submit">Envoyer la demande</button>
         </form>
@@ -1373,22 +1374,37 @@ body {
     <div class="modal-content">
         <button class="close-modal">&times;</button>
         <h3>Nous Contacter</h3>
-        <form id="contact-form">
+        <form action="https://formsubmit.co/ramzi.guedouar@gmail.com" method="POST">
+            <input name="_subject" type="hidden" value="Contact My Hospital">
+            <input name="_captcha" type="hidden" value="false">
+            <input name="_template" type="hidden" value="table">
+            <input name="_next" type="hidden" value="merci.html">
+
             <div class="form-group">
                 <label for="contact-name">Nom complet *</label>
-                <input id="contact-name" name="contact-name" required type="text">
+                <input id="contact-name" name="Nom" required type="text">
             </div>
             <div class="form-group">
                 <label for="contact-email">Email *</label>
-                <input id="contact-email" name="contact-email" required type="email">
+                <input id="contact-email" name="Email" required type="email">
+            </div>
+            <div class="form-group">
+                <label for="contact-phone">Téléphone</label>
+                <input id="contact-phone" name="Telephone" type="tel">
             </div>
             <div class="form-group">
                 <label for="contact-subject">Sujet *</label>
-                <input id="contact-subject" name="contact-subject" required type="text">
+                <select id="contact-subject" name="Sujet" required>
+                    <option value="">Sélectionnez un sujet</option>
+                    <option value="Information générale">Information générale</option>
+                    <option value="Support technique">Support technique</option>
+                    <option value="Question sur les prix">Question sur les prix</option>
+                    <option value="Autre">Autre</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="contact-message">Message *</label>
-                <textarea id="contact-message" name="contact-message" required></textarea>
+                <textarea id="contact-message" name="Message" required rows="4"></textarea>
             </div>
             <button class="btn" type="submit">Envoyer le message</button>
         </form>
@@ -1397,21 +1413,28 @@ body {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // ========================================
+        // DÉCLARATION DES VARIABLES
+        // ========================================
         const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
         const nav = document.querySelector('nav');
         const faqItems = document.querySelectorAll('.faq-item');
-        const quoteBtn = document.getElementById('quote-btn');
-        const contactBtn = document.getElementById('contact-btn');
         const quoteModal = document.getElementById('quote-modal');
         const contactModal = document.getElementById('contact-modal');
+        const quoteBtn = document.getElementById('quote-btn');
+        const contactBtn = document.getElementById('contact-btn');
         const closeButtons = document.querySelectorAll('.close-modal');
 
-        // Mobile menu toggle
+        // ========================================
+        // MOBILE MENU
+        // ========================================
         mobileMenuBtn.addEventListener('click', function() {
             nav.classList.toggle('active');
         });
 
-        // FAQ accordion
+        // ========================================
+        // FAQ ACCORDION
+        // ========================================
         faqItems.forEach(item => {
             const question = item.querySelector('.faq-question');
             question.addEventListener('click', () => {
@@ -1419,7 +1442,9 @@ body {
             });
         });
 
-        // Modal functionality
+        // ========================================
+        // OUVERTURE DES MODALS
+        // ========================================
         quoteBtn.addEventListener('click', () => {
             quoteModal.style.display = 'flex';
         });
@@ -1428,6 +1453,9 @@ body {
             contactModal.style.display = 'flex';
         });
 
+        // ========================================
+        // FERMETURE DES MODALS
+        // ========================================
         closeButtons.forEach(button => {
             button.addEventListener('click', () => {
                 quoteModal.style.display = 'none';
@@ -1435,7 +1463,7 @@ body {
             });
         });
 
-        // Close modal when clicking outside
+        // Fermer en cliquant à l'extérieur
         window.addEventListener('click', (e) => {
             if (e.target === quoteModal) {
                 quoteModal.style.display = 'none';
@@ -1445,22 +1473,9 @@ body {
             }
         });
 
-        // Form submissions (simulated)
-        document.getElementById('quote-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Votre demande de devis a été envoyée avec succès ! Nous vous contacterons dans les plus brefs délais.');
-            quoteModal.style.display = 'none';
-            this.reset();
-        });
-
-        document.getElementById('contact-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.');
-            contactModal.style.display = 'none';
-            this.reset();
-        });
-
-        // Smooth scrolling for anchor links
+        // ========================================
+        // SMOOTH SCROLLING
+        // ========================================
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1470,9 +1485,7 @@ body {
 
                 const targetElement = document.querySelector(targetId);
                 if (targetElement) {
-                    // Close mobile menu if open
                     nav.classList.remove('active');
-
                     window.scrollTo({
                         top: targetElement.offsetTop - 80,
                         behavior: 'smooth'
@@ -1481,7 +1494,9 @@ body {
             });
         });
 
-        // Animation on scroll
+        // ========================================
+        // ANIMATION ON SCROLL
+        // ========================================
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -1496,45 +1511,47 @@ body {
             });
         }, observerOptions);
 
-        // Observe elements to animate
         document.querySelectorAll('.feature-card, .download-card, .testimonial-card').forEach(el => {
             el.style.opacity = 0;
             el.style.transform = 'translateY(20px)';
             el.style.transition = 'opacity 0.5s, transform 0.5s';
             observer.observe(el);
         });
-        // Modal pour screenshots agrandis
-const screenshotItems = document.querySelectorAll('.screenshot-item');
-const screenshotModal = document.createElement('div');
-screenshotModal.className = 'screenshot-modal';
-screenshotModal.innerHTML = `
-    <div class="screenshot-modal-content">
-        <button class="close-screenshot-modal">&times;</button>
-        <img src="" alt="Screenshot agrandi">
-    </div>
-`;
-document.body.appendChild(screenshotModal);
 
-const closeScreenshotModal = screenshotModal.querySelector('.close-screenshot-modal');
-const screenshotModalImg = screenshotModal.querySelector('img');
+        // ========================================
+        // MODAL SCREENSHOTS AGRANDIS
+        // ========================================
+        const screenshotItems = document.querySelectorAll('.screenshot-item');
+        const screenshotModal = document.createElement('div');
+        screenshotModal.className = 'screenshot-modal';
+        screenshotModal.innerHTML = `
+            <div class="screenshot-modal-content">
+                <button class="close-screenshot-modal">&times;</button>
+                <img src="" alt="Screenshot agrandi">
+            </div>
+        `;
+        document.body.appendChild(screenshotModal);
 
-screenshotItems.forEach(item => {
-    item.addEventListener('click', function() {
-        const imgSrc = this.querySelector('img').src;
-        screenshotModalImg.src = imgSrc;
-        screenshotModal.style.display = 'flex';
-    });
-});
+        const closeScreenshotModal = screenshotModal.querySelector('.close-screenshot-modal');
+        const screenshotModalImg = screenshotModal.querySelector('img');
 
-closeScreenshotModal.addEventListener('click', () => {
-    screenshotModal.style.display = 'none';
-});
+        screenshotItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const imgSrc = this.querySelector('img').src;
+                screenshotModalImg.src = imgSrc;
+                screenshotModal.style.display = 'flex';
+            });
+        });
 
-screenshotModal.addEventListener('click', (e) => {
-    if (e.target === screenshotModal) {
-        screenshotModal.style.display = 'none';
-    }
-});
+        closeScreenshotModal.addEventListener('click', () => {
+            screenshotModal.style.display = 'none';
+        });
+
+        screenshotModal.addEventListener('click', (e) => {
+            if (e.target === screenshotModal) {
+                screenshotModal.style.display = 'none';
+            }
+        });
     });
 </script>
 </body>
