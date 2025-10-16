@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
+import 'AboutAppPage.dart';
 import 'ActivitePersonne.dart';
 import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
@@ -496,6 +497,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: Icon(Icons.account_balance),
+            color: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AboutAppPage()),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.verified_user),
             color: Colors.yellowAccent,
             onPressed: () {
@@ -503,6 +514,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   .push(MaterialPageRoute(builder: (_) => LicenseInfoPage()));
             },
           ),
+
           _buildSavePdfButton(context),
           staffProvider.staffs.isEmpty
               ? SizedBox.shrink()

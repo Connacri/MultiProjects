@@ -198,6 +198,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     // initializeDefault();
+
     _checkLicenseStatus();
   }
 
@@ -288,11 +289,6 @@ class _MyAppState extends State<MyApp> {
       //         ? MyMain()
       //         : hashPage()
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }
 
