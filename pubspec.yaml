@@ -122,7 +122,9 @@ dependencies:
   window_manager: ^0.5.1
   flutter_single_instance: ^1.1.2
 
-
+  uuid: ^4.5.1
+  cryptography: ^2.7.0
+  collection: ^1.19.1
 
 
 

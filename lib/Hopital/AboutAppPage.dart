@@ -86,7 +86,8 @@ class _AboutAppPageState extends State<AboutAppPage>
                       title: Text(
                         'À Propos',
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -103,7 +104,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                         ),
                         child: Center(
                           child: Icon(
-                            Icons.medical_services_rounded,
+                            Icons.medical_services,
                             size: 80,
                             color: Colors.cyan.shade300,
                           ),
@@ -198,7 +199,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                             child: Column(
                               children: [
                                 _buildSectionTitle(
-                                  'Développeur',
+                                  'Project DevCode',
                                   Icons.person_rounded,
                                 ),
                                 SizedBox(height: 20),
@@ -226,7 +227,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                                       'RG',
                                       style: TextStyle(
                                         fontSize: 36,
-                                        fontWeight: FontWeight.bold,
+                                        fontWeight: FontWeight.w500,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -237,18 +238,18 @@ class _AboutAppPageState extends State<AboutAppPage>
                                   'Ramzi Guedouar',
                                   style: TextStyle(
                                     fontSize: 24,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w500,
                                     color: Colors.white,
                                     letterSpacing: 1.2,
                                   ),
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'Ingénieur Développeur Full Stack',
+                                  'Full Stack Dev',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.cyan.shade300,
-                                    fontStyle: FontStyle.italic,
+
                                   ),
                                 ),
                               ],
@@ -342,33 +343,33 @@ class _AboutAppPageState extends State<AboutAppPage>
 
                           SizedBox(height: 20),
 
-                          // Technologies utilisées
-                          _buildGlassCard(
-                            child: Column(
-                              children: [
-                                _buildSectionTitle(
-                                  'Technologies',
-                                  Icons.code_rounded,
-                                ),
-                                SizedBox(height: 20),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  alignment: WrapAlignment.center,
-                                  children: [
-                                    _buildTechChip('Flutter', Colors.blue),
-                                    _buildTechChip('Dart', Colors.cyan),
-                                    _buildTechChip('ObjectBox', Colors.green),
-                                    _buildTechChip('PDF', Colors.red),
-                                    _buildTechChip(
-                                        'Material Design', Colors.purple),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 30),
+                          // // Technologies utilisées
+                          // _buildGlassCard(
+                          //   child: Column(
+                          //     children: [
+                          //       _buildSectionTitle(
+                          //         'Technologies',
+                          //         Icons.code_rounded,
+                          //       ),
+                          //       SizedBox(height: 20),
+                          //       Wrap(
+                          //         spacing: 10,
+                          //         runSpacing: 10,
+                          //         alignment: WrapAlignment.center,
+                          //         children: [
+                          //           _buildTechChip('Flutter', Colors.blue),
+                          //           _buildTechChip('Dart', Colors.cyan),
+                          //           _buildTechChip('ObjectBox', Colors.green),
+                          //           _buildTechChip('PDF', Colors.red),
+                          //           _buildTechChip(
+                          //               'Material Design', Colors.purple),
+                          //         ],
+                          //       ),
+                          //     ],
+                          //   ),
+                          // ),
+                          //
+                          // SizedBox(height: 30),
 
                           // Footer
                           Text(
@@ -447,7 +448,7 @@ class _AboutAppPageState extends State<AboutAppPage>
           title,
           style: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w500,
             color: Colors.white,
             letterSpacing: 1.2,
           ),
@@ -476,7 +477,7 @@ class _AboutAppPageState extends State<AboutAppPage>
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 14,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -513,7 +514,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 SizedBox(height: 4),
@@ -532,12 +533,10 @@ class _AboutAppPageState extends State<AboutAppPage>
     );
   }
 
-  Widget _buildContactButton(
-    IconData icon,
-    String text,
-    String url,
-    Color color,
-  ) {
+  Widget _buildContactButton(IconData icon,
+      String text,
+      String url,
+      Color color,) {
     return InkWell(
       onTap: () => _launchUrl(url),
       borderRadius: BorderRadius.circular(15),
@@ -600,7 +599,7 @@ class _AboutAppPageState extends State<AboutAppPage>
         style: TextStyle(
           color: Colors.white,
           fontSize: 12,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

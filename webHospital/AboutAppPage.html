@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>FORSLOG LTD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            background: rgba(0, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            transform: translateX(5px);
+        }
+
+        .dev-avatar {
+            background: linear-gradient(135deg, #00E5FF 0%, #0062FF 100%);
+            box-shadow: 0 10px 20px rgba(0, 198, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+<!-- Animated Background -->
+<div class="fixed inset-0 -z-10" id="vanta-bg"></div>
+
+<!-- Main Content -->
+<div class="container mx-auto px-4 py-8">
+    <!-- App Bar -->
+    <div class="flex justify-between items-center mb-12">
+        <div class="flex items-center space-x-2">
+            <i class="text-cyan-400" data-feather="activity"></i>
+            <span class="text-xl font-semibold">FORSLOG LTD</span>
+        </div>
+        <button class="glass-card px-4 py-2 rounded-full flex items-center space-x-2">
+            <span>Back</span>
+            <i class="w-4 h-4" data-feather="arrow-left"></i>
+        </button>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="glass-card rounded-3xl p-8 mb-12 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">À Propos</h1>
+        <p class="text-lg text-gray-300 max-w-2xl mx-auto">Solution professionnelle de gestion et
+            planification du personnel médical</p>
+    </div>
+
+    <!-- App Info Section -->
+    <div class="glass-card rounded-2xl p-8 mb-8">
+        <div class="flex items-center justify-center space-x-3 mb-8">
+            <i class="text-cyan-400 w-8 h-8" data-feather="settings"></i>
+            <h2 class="text-2xl font-semibold">Medical Staff Planning</h2>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="flex items-center space-x-4">
+                <i class="text-cyan-400" data-feather="tag"></i>
+                <div>
+                    <p class="text-gray-400">Version</p>
+                    <p class="font-medium">1.0.0</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <i class="text-cyan-400" data-feather="calendar"></i>
+                <div>
+                    <p class="text-gray-400">Date de sortie</p>
+                    <p class="font-medium">Octobre 2025</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="mt-8 text-gray-300 text-center">
+            Solution professionnelle de gestion et planification du personnel médical et paramédical
+            pour les établissements hospitaliers.
+        </p>
+    </div>
+
+    <!-- Features Section -->
+    <div class="glass-card rounded-2xl p-8 mb-8">
+        <div class="flex items-center justify-center space-x-3 mb-8">
+            <i class="text-cyan-400 w-8 h-8" data-feather="star"></i>
+            <h2 class="text-2xl font-semibold">Fonctionnalités Principales</h2>
+        </div>
+
+        <div class="space-y-6">
+            <div class="flex space-x-4">
+                <div class="feature-icon p-3 rounded-xl">
+                    <i class="text-cyan-400 w-6 h-6" data-feather="clock"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Planification automatique</h3>
+                    <p class="text-gray-400 text-sm">Gestion intelligente des gardes et
+                        rotations</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="feature-icon p-3 rounded-xl">
+                    <i class="text-cyan-400 w-6 h-6" data-feather="users"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Gestion du personnel</h3>
+                    <p class="text-gray-400 text-sm">Suivi complet des équipes médicales</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="feature-icon p-3 rounded-xl">
+                    <i class="text-cyan-400 w-6 h-6" data-feather="briefcase"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Gestion des congés</h3>
+                    <p class="text-gray-400 text-sm">Système avancé de TimeOff</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="feature-icon p-3 rounded-xl">
+                    <i class="text-cyan-400 w-6 h-6" data-feather="file-text"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Export PDF</h3>
+                    <p class="text-gray-400 text-sm">Génération de plannings professionnels</p>
+                </div>
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="feature-icon p-3 rounded-xl">
+                    <i class="text-cyan-400 w-6 h-6" data-feather="bar-chart-2"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Statistiques</h3>
+                    <p class="text-gray-400 text-sm">Tableaux de bord et rapports</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Developer Section -->
+    <div class="glass-card rounded-2xl p-8 mb-8 text-center">
+        <div class="flex items-center justify-center space-x-3 mb-8">
+            <i class="text-cyan-400 w-8 h-8" data-feather="user"></i>
+            <h2 class="text-2xl font-semibold">Project DevCode</h2>
+        </div>
+
+        <div class="dev-avatar w-24 h-24 rounded-full mx-auto flex items-center justify-center text-4xl font-semibold mb-6">
+            RG
+        </div>
+
+        <h3 class="text-2xl font-semibold mb-2">Ramzi Guedouar</h3>
+        <p class="text-cyan-400 italic mb-8">Full Stack Dev</p>
+    </div>
+
+    <!-- Company Section -->
+    <div class="glass-card rounded-2xl p-8 mb-8 text-center">
+        <div class="flex items-center justify-center space-x-3 mb-8">
+            <i class="text-cyan-400 w-8 h-8" data-feather="home"></i>
+            <h2 class="text-2xl font-semibold">FORSLOG LTD</h2>
+        </div>
+
+        <div class="glass-card p-6 rounded-xl mb-6">
+            <i class="text-cyan-400 w-12 h-12 mx-auto mb-4" data-feather="briefcase"></i>
+            <p class="font-medium">
+                Solutions logicielles innovantes pour le secteur de la santé
+            </p>
+        </div>
+    </div>
+
+    <!-- Contact Section -->
+    <div class="glass-card rounded-2xl p-8 mb-8">
+        <div class="flex items-center justify-center space-x-3 mb-8">
+            <i class="text-cyan-400 w-8 h-8" data-feather="mail"></i>
+            <h2 class="text-2xl font-semibold">Contact</h2>
+        </div>
+
+        <div class="space-y-4">
+            <a class="contact-btn glass-card flex items-center justify-between p-4 rounded-xl transition-all"
+               href="tel:+213696410953">
+                <div class="flex items-center space-x-4">
+                    <i class="text-green-400" data-feather="phone"></i>
+                    <span>+213 696 410 953</span>
+                </div>
+                <i class="text-gray-400" data-feather="chevron-right"></i>
+            </a>
+
+            <a class="contact-btn glass-card flex items-center justify-between p-4 rounded-xl transition-all"
+               href="mailto:ramzi.guedouar@gmail.com">
+                <div class="flex items-center space-x-4">
+                    <i class="text-red-400" data-feather="mail"></i>
+                    <span>ramzi.guedouar@gmail.com</span>
+                </div>
+                <i class="text-gray-400" data-feather="chevron-right"></i>
+            </a>
+
+            <a class="contact-btn glass-card flex items-center justify-between p-4 rounded-xl transition-all"
+               href="https://maps.app.goo.gl/PpmeqfinpKZcErDk8"
+               target="_blank">
+                <div class="flex items-center space-x-4">
+                    <i class="text-blue-400" data-feather="map-pin"></i>
+                    <span>Bir el Djir, Oran, Algérie</span>
+                </div>
+                <i class="text-gray-400" data-feather="chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-500 text-sm py-8">
+        <p>© 2025 FORSLOG LTD. Tous droits réservés.</p>
+        <p class="mt-2 text-cyan-300 italic">Fait avec ❤️ en Algérie</p>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+<script>
+    VANTA.GLOBE({
+        el: "#vanta-bg",
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x00ffff,
+        backgroundColor: 0x0,
+        size: 0.8
+    });
+
+    feather.replace();
+</script>
+</body>
+</html>

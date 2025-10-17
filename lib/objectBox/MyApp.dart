@@ -14,6 +14,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../MyListLotties.dart';
 import '../Hopital/StaffProvider.dart';
+import '../Hopital/decentralized/connection_manager.dart';
+import '../Hopital/decentralized/p2p_managers.dart';
+import '../Hopital/decentralized/staff_provider_p2p.dart';
+import '../Hopital/decentralized/sync_manager.dart';
 import '../Hopital/license/MyAppBlackHole.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
@@ -106,6 +110,11 @@ class MyApp9 extends StatelessWidget {
             create: (context) => TypeActiviteProvider(objectBox)),
 
         ChangeNotifierProvider(create: (_) => PlanningHebdoProvider(objectBox)),
+        ///////////////////////////////////////////////////////
+        ChangeNotifierProvider(create: (context) => StaffProviderP2P()),
+        ChangeNotifierProvider(create: (context) => P2PManager()),
+        ChangeNotifierProvider(create: (context) => ConnectionManager()),
+        ChangeNotifierProvider(create: (context) => SyncManager()),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {
         return MaterialApp(

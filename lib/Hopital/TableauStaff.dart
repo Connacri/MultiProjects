@@ -17,6 +17,8 @@ import 'ActivitePersonne.dart';
 import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
+import 'decentralized/P2PStatusBanner.dart';
+import 'decentralized/p2p_managers.dart';
 import 'license/LicenseInfoPage.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
@@ -496,6 +498,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          // ✅ Indicateur P2P compact
+          Consumer<P2PManager>(
+            builder: (context, p2p, _) {
+              return IconButton(
+                icon: Icon(
+                  p2p.nodeId.isNotEmpty ? Icons.cloud_done : Icons.cloud_off,
+                  color: p2p.nodeId.isNotEmpty ? Colors.green : Colors.grey,
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => SimpleDiagnosticPage(),
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.account_balance),
             color: Colors.white,
@@ -551,6 +570,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     // Icon(Icons.people_outline,
                     //     size: 80, color: Colors.blue.shade300),
                     const SizedBox(height: 24),
+
+                    // ✅ Banner de statut en haut
+                    P2PStatusBanner(),
                     Text(
                       'Aucun personnel trouvé',
                       style: TextStyle(
@@ -626,6 +648,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // ✅ Banner de statut en haut
+                  P2PStatusBanner(),
                   // En-tête général
                   Container(
                     width: double.infinity,
