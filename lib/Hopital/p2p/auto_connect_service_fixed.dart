@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import 'connection_manager_fixed.dart';
 import 'udp_broadcast_discovery.dart';
+import 'p2p_manager_fixed.dart'; // ✅ AJOUT pour accéder au nodeId local
 
 /// Service d'auto-connexion aux nœuds découverts avec stratégies multiples
 class AutoConnectService with ChangeNotifier {
@@ -14,8 +15,9 @@ class AutoConnectService with ChangeNotifier {
   AutoConnectService._internal();
 
   final DiscoveryManagerBroadcast _discoveryManager =
-      DiscoveryManagerBroadcast();
+  DiscoveryManagerBroadcast();
   final ConnectionManager _connectionManager = ConnectionManager();
+  final P2PManager _p2pManager = P2PManager(); // ✅ AJOUT
 
   Timer? _autoConnectTimer;
   bool _isRunning = false;
@@ -28,7 +30,9 @@ class AutoConnectService with ChangeNotifier {
   int _totalFailedConnections = 0;
 
   int get totalConnectionAttempts => _totalConnectionAttempts;
+
   int get totalSuccessfulConnections => _totalSuccessfulConnections;
+
   int get totalFailedConnections => _totalFailedConnections;
 
   static const int autoConnectInterval = 5; // secondes
@@ -54,8 +58,8 @@ class AutoConnectService with ChangeNotifier {
     _autoConnectTimer?.cancel();
     _autoConnectTimer =
         Timer.periodic(Duration(seconds: autoConnectInterval), (_) {
-      _tryConnectToDiscoveredNodes();
-    });
+          _tryConnectToDiscoveredNodes();
+        });
 
     notifyListeners();
   }
@@ -73,6 +77,7 @@ class AutoConnectService with ChangeNotifier {
     try {
       final nodes = _discoveryManager.getDiscoveredNodesInfo();
       final currentConnections = _connectionManager.neighbors;
+      final localNodeId = _p2pManager.nodeId; // ✅ AJOUT : récupérer notre ID
 
       if (nodes.isEmpty) {
         print(
@@ -86,6 +91,12 @@ class AutoConnectService with ChangeNotifier {
         final nodeId = node['nodeId'] as String;
         final ip = node['ip'] as String;
         final port = node['port'] as int;
+
+        // ✅ CORRECTION : Skip si c'est nous-mêmes
+        if (nodeId == localNodeId) {
+          print('[AutoConnectService] 🚫 Skip self-connection: $nodeId');
+          continue;
+        }
 
         // Skip si déjà connecté
         if (currentConnections.contains(nodeId)) {
@@ -106,7 +117,8 @@ class AutoConnectService with ChangeNotifier {
         _totalConnectionAttempts++;
         try {
           print(
-              '[AutoConnectService] Tentative connexion #${retries + 1}: $nodeId ($ip:$port)');
+              '[AutoConnectService] Tentative connexion #${retries +
+                  1}: $nodeId ($ip:$port)');
 
           final success = await _connectionManager.connectToNode(
             nodeId,

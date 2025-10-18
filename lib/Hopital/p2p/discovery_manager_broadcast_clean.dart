@@ -285,7 +285,8 @@ class DiscoveryManager with ChangeNotifier {
       // Si nouveau nœud, l'ajouter
       if (!_discoveredNodes.contains(nodeKey)) {
         _discoveredNodes.add(nodeKey);
-        print('[Discovery] ✅ Nœud découvert: $remoteNodeId ($remoteIp:$remotePort)');
+        print(
+            '[Discovery] ✅ Nœud découvert: $remoteNodeId ($remoteIp:$remotePort)');
         notifyListeners();
       }
     } catch (e) {

@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
+import 'p2p_manager_fixed.dart';
+
 class ConnectionManager with ChangeNotifier {
   static final ConnectionManager _instance = ConnectionManager._internal();
 
@@ -38,6 +40,7 @@ class ConnectionManager with ChangeNotifier {
   int _successfulConnections = 0;
 
   int get failedConnections => _failedConnections;
+
   int get successfulConnections => _successfulConnections;
 
   /// Démarre le serveur avec retry automatique sur différents ports
@@ -142,6 +145,16 @@ class ConnectionManager with ChangeNotifier {
 
   /// Se connecte à un nœud distant
   Future<bool> connectToNode(String nodeId, String ip, int port) async {
+    // ✅ AJOUT : Ne pas se connecter à soi-même
+    if (nodeId == P2PManager().nodeId) {
+      print('[ConnectionManager] 🚫 Impossible de se connecter à soi-même');
+      return false;
+    }
+
+    if (_connections.containsKey(nodeId)) {
+      print('[ConnectionManager] Déjà connecté à $nodeId');
+      return true;
+    }
     if (_connections.containsKey(nodeId)) {
       print('[ConnectionManager] Déjà connecté à $nodeId');
       return true;

@@ -151,11 +151,19 @@ class P2PIntegration with ChangeNotifier {
         final type = message['type'];
         final nodeId = message['nodeId'];
 
+        // ✅ CORRECTION : Gérer les erreurs de parsing JSON
+        if (type == null) {
+          print('[P2PIntegration] ⚠️ Message sans type reçu');
+          return;
+        }
+
         if (type == 'delta' && nodeId != null) {
           await _handleDeltaMessage(nodeId, message);
+        } else if (type == 'hello') {
+          print('[P2PIntegration] 👋 Hello reçu de $nodeId');
         }
       } catch (e) {
-        print('[P2PIntegration] Erreur traitement message: $e');
+        print('[P2PIntegration] ❌ Erreur traitement message: $e');
       }
     });
 
@@ -169,12 +177,15 @@ class P2PIntegration with ChangeNotifier {
   ) async {
     try {
       final encrypted = message['payload'] as Map<String, dynamic>?;
-      if (encrypted == null) return;
+      if (encrypted == null) {
+        print('[P2PIntegration] ⚠️ Pas de payload dans le delta');
+        return;
+      }
 
       // Vérifier l'authentification
       final isValid = await _cryptoManager.verifyDelta(encrypted);
       if (!isValid) {
-        print('[P2PIntegration] Delta invalide de $nodeId');
+        print('[P2PIntegration] ⚠️ Delta invalide de $nodeId');
         return;
       }
 
@@ -189,7 +200,7 @@ class P2PIntegration with ChangeNotifier {
 
       print('[P2PIntegration] ✅ Delta appliqué: ${delta['entity']}');
     } catch (e) {
-      print('[P2PIntegration] Erreur traitement delta: $e');
+      print('[P2PIntegration] ❌ Erreur traitement delta: $e');
     }
   }
 
@@ -209,11 +220,17 @@ class P2PIntegration with ChangeNotifier {
   Future<void> _tryConnectToDiscoveredNodes() async {
     final discoveredNodes = _discoveryManager.getDiscoveredNodesInfo();
     final connectedNodes = _connectionManager.neighbors;
+    final localNodeId = _p2pManager.nodeId; // ✅ AJOUT
 
     for (final node in discoveredNodes) {
       final nodeId = node['nodeId'] as String;
       final ip = node['ip'] as String;
       final port = node['port'] as int;
+
+      // ✅ CORRECTION : Ne pas se connecter à soi-même
+      if (nodeId == localNodeId) {
+        continue;
+      }
 
       // Skip si déjà connecté
       if (connectedNodes.contains(nodeId)) {
@@ -225,10 +242,10 @@ class P2PIntegration with ChangeNotifier {
         final success =
             await _connectionManager.connectToNode(nodeId, ip, port);
         if (success) {
-          print('[P2PIntegration] Auto-connexion réussie: $nodeId');
+          print('[P2PIntegration] ✅ Auto-connexion réussie: $nodeId');
         }
       } catch (e) {
-        print('[P2PIntegration] Auto-connexion échouée pour $nodeId: $e');
+        print('[P2PIntegration] ⚠️ Auto-connexion échouée pour $nodeId: $e');
       }
     }
 
@@ -248,7 +265,7 @@ class P2PIntegration with ChangeNotifier {
       print(
           '[P2PIntegration] Delta broadcasté à ${_connectionManager.neighbors.length} pairs');
     } catch (e) {
-      print('[P2PIntegration] Erreur broadcast: $e');
+      print('[P2PIntegration] ❌ Erreur broadcast: $e');
     }
   }
 
@@ -290,7 +307,7 @@ class P2PIntegration with ChangeNotifier {
     print('[P2PIntegration] Arrêt du système P2P');
 
     _autoConnectTimer?.cancel();
-    _discoveryManager.stop(); // ✅ stop() retourne void
+    _discoveryManager.stop();
     await _connectionManager.stop();
 
     _initialized = false;
