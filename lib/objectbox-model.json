@@ -1893,10 +1893,448 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "73:4949588529531051093",
+      "lastPropertyId": "20:3833304579352436916",
+      "name": "Conversation",
+      "properties": [
+        {
+          "id": "1:99535752462277388",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:557618299998886842",
+          "name": "conversationId",
+          "indexId": "155:8133045372159784075",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:388125948157033181",
+          "name": "typeValue",
+          "type": 6
+        },
+        {
+          "id": "4:1838772717391889321",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "5:59181043385076698",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "6:8615880891325385390",
+          "name": "avatarPath",
+          "type": 9
+        },
+        {
+          "id": "7:7537712778606976884",
+          "name": "participantNodeIds",
+          "type": 9
+        },
+        {
+          "id": "8:2072562480417622341",
+          "name": "creatorNodeId",
+          "type": 9
+        },
+        {
+          "id": "9:6948502465832622508",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "10:4066658259581225026",
+          "name": "lastActivityTimestamp",
+          "type": 6
+        },
+        {
+          "id": "11:747594228262770852",
+          "name": "lastMessageId",
+          "type": 9
+        },
+        {
+          "id": "12:7169868399511554004",
+          "name": "lastMessagePreview",
+          "type": 9
+        },
+        {
+          "id": "13:1902890239787914377",
+          "name": "unreadCount",
+          "type": 6
+        },
+        {
+          "id": "14:4931759831926157813",
+          "name": "messageCount",
+          "type": 6
+        },
+        {
+          "id": "15:5116551113562688417",
+          "name": "isArchived",
+          "type": 1
+        },
+        {
+          "id": "16:507560022344691300",
+          "name": "isDeleted",
+          "type": 1
+        },
+        {
+          "id": "17:2397974266607899545",
+          "name": "isPinned",
+          "type": 1
+        },
+        {
+          "id": "18:5185643442378909980",
+          "name": "isMuted",
+          "type": 1
+        },
+        {
+          "id": "19:7139118367940606547",
+          "name": "lastSyncTimestamp",
+          "type": 6
+        },
+        {
+          "id": "20:3833304579352436916",
+          "name": "metadata",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "74:1606648018192761720",
+      "lastPropertyId": "10:8079536379158975693",
+      "name": "ConversationParticipant",
+      "properties": [
+        {
+          "id": "1:5932561079192470908",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1801307940923004866",
+          "name": "conversationId",
+          "type": 9
+        },
+        {
+          "id": "3:6032483604926378465",
+          "name": "nodeId",
+          "type": 9
+        },
+        {
+          "id": "4:2451264681460521229",
+          "name": "displayName",
+          "type": 9
+        },
+        {
+          "id": "5:4748325632112441409",
+          "name": "role",
+          "type": 9
+        },
+        {
+          "id": "6:1000110996621150243",
+          "name": "joinedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "7:4330047765566900986",
+          "name": "leftTimestamp",
+          "type": 6
+        },
+        {
+          "id": "8:2024025626707432993",
+          "name": "notificationsEnabled",
+          "type": 1
+        },
+        {
+          "id": "9:350112914340033834",
+          "name": "lastReadMessageId",
+          "type": 9
+        },
+        {
+          "id": "10:8079536379158975693",
+          "name": "lastAccessTimestamp",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "75:7880911800507633623",
+      "lastPropertyId": "24:2979366444072752280",
+      "name": "Message",
+      "properties": [
+        {
+          "id": "1:3166163555434044453",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1585221117123334633",
+          "name": "messageId",
+          "indexId": "156:8007834982858862884",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:7370546597363513945",
+          "name": "conversationId",
+          "type": 9
+        },
+        {
+          "id": "4:1518700547062313173",
+          "name": "fromNodeId",
+          "type": 9
+        },
+        {
+          "id": "5:3597654469678720062",
+          "name": "toNodeId",
+          "type": 9
+        },
+        {
+          "id": "6:2279893436055191249",
+          "name": "typeValue",
+          "type": 6
+        },
+        {
+          "id": "7:4068601580525673250",
+          "name": "content",
+          "type": 9
+        },
+        {
+          "id": "8:4214179531572574584",
+          "name": "mediaPath",
+          "type": 9
+        },
+        {
+          "id": "9:3260045337058664063",
+          "name": "mediaSize",
+          "type": 6
+        },
+        {
+          "id": "10:8698340225159272377",
+          "name": "mediaMimeType",
+          "type": 9
+        },
+        {
+          "id": "11:6725624215783605724",
+          "name": "mediaDuration",
+          "type": 6
+        },
+        {
+          "id": "12:2632773525836277807",
+          "name": "sentTimestamp",
+          "type": 6
+        },
+        {
+          "id": "13:3560494842200612573",
+          "name": "receivedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "14:7080008118114017363",
+          "name": "readTimestamp",
+          "type": 6
+        },
+        {
+          "id": "15:6571755006798699782",
+          "name": "statusValue",
+          "type": 6
+        },
+        {
+          "id": "16:2809192392658834746",
+          "name": "replyToMessageId",
+          "type": 9
+        },
+        {
+          "id": "17:6027594897090986430",
+          "name": "replyToContent",
+          "type": 9
+        },
+        {
+          "id": "18:6792370634510558338",
+          "name": "replyToFromNodeId",
+          "type": 9
+        },
+        {
+          "id": "19:5358706920662216721",
+          "name": "isFavorite",
+          "type": 1
+        },
+        {
+          "id": "20:1684140144508432224",
+          "name": "isDeleted",
+          "type": 1
+        },
+        {
+          "id": "21:8659667467777227783",
+          "name": "encryptionKeyId",
+          "type": 9
+        },
+        {
+          "id": "22:5568233211159177424",
+          "name": "contentHash",
+          "type": 9
+        },
+        {
+          "id": "23:3429313198937286234",
+          "name": "sendAttempts",
+          "type": 6
+        },
+        {
+          "id": "24:2979366444072752280",
+          "name": "lastErrorMessage",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "76:2109867429441744176",
+      "lastPropertyId": "6:8644251619592157281",
+      "name": "MessageReceipt",
+      "properties": [
+        {
+          "id": "1:6293262109409289747",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6129272501480169638",
+          "name": "messageId",
+          "type": 9
+        },
+        {
+          "id": "3:2139615052610653356",
+          "name": "recipientNodeId",
+          "type": 9
+        },
+        {
+          "id": "4:1537454313440961783",
+          "name": "statusValue",
+          "type": 6
+        },
+        {
+          "id": "5:8506051555458034277",
+          "name": "confirmedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "6:8644251619592157281",
+          "name": "messageHash",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "77:8286512320386958416",
+      "lastPropertyId": "6:3018341203361003422",
+      "name": "MessageSearchIndex",
+      "properties": [
+        {
+          "id": "1:8611130280034642880",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2305408892718533765",
+          "name": "messageId",
+          "type": 9
+        },
+        {
+          "id": "3:1324952724408104728",
+          "name": "conversationId",
+          "type": 9
+        },
+        {
+          "id": "4:5494600605461586306",
+          "name": "searchContent",
+          "type": 9
+        },
+        {
+          "id": "5:6264795209346296387",
+          "name": "messageTimestamp",
+          "type": 6
+        },
+        {
+          "id": "6:3018341203361003422",
+          "name": "typeValue",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "78:512390680340790874",
+      "lastPropertyId": "10:3910664573600207696",
+      "name": "MessageSyncQueue",
+      "properties": [
+        {
+          "id": "1:9201784988986451346",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2741444486629644751",
+          "name": "messageId",
+          "type": 9
+        },
+        {
+          "id": "3:5971051423726614130",
+          "name": "operation",
+          "type": 9
+        },
+        {
+          "id": "4:2546743631677061495",
+          "name": "targetNodeIds",
+          "type": 9
+        },
+        {
+          "id": "5:7277370430924849773",
+          "name": "attemptCount",
+          "type": 6
+        },
+        {
+          "id": "6:4305411924181660856",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "7:5742799915346562783",
+          "name": "nextRetryTimestamp",
+          "type": 6
+        },
+        {
+          "id": "8:3706887794579392245",
+          "name": "status",
+          "type": 9
+        },
+        {
+          "id": "9:6903019716323791780",
+          "name": "errorMessage",
+          "type": 9
+        },
+        {
+          "id": "10:3910664573600207696",
+          "name": "priority",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "72:5460189980320568024",
-  "lastIndexId": "154:3595739419239164296",
+  "lastEntityId": "78:512390680340790874",
+  "lastIndexId": "156:8007834982858862884",
   "lastRelationId": "11:6355601734277678121",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

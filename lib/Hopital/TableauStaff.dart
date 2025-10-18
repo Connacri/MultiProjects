@@ -18,8 +18,10 @@ import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
 import 'license/LicenseInfoPage.dart';
+import 'p2p/P2PDiagnosticPage.dart';
 import 'p2p/connection_manager_fixed.dart';
 import 'p2p/discovery_manager_broadcast_clean.dart';
+import 'p2p/messenger/messaging_ui_widgets.dart';
 import 'p2p/p2p_manager_fixed.dart';
 import 'p2p/p2p_status_widgets.dart';
 import 'p2p/sync_manager_complete.dart';
@@ -501,6 +503,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          MessengerIconWithBadge(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                builder: (_) => const ConversationsBottomSheet(),
+              );
+            },
+          ),
           // ✅ Indicateur P2P compact
           Consumer<P2PManager>(
             builder: (context, p2p, _) {
@@ -512,7 +523,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => SimpleDiagnosticPage(),
+                    builder: (_) => P2PDiagnosticPage(),
                   ),
                 ),
               );

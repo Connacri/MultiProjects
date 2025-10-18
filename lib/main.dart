@@ -14,10 +14,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
+import 'Hopital/p2p/connection_manager_fixed.dart';
+import 'Hopital/p2p/messenger/messaging_integration.dart';
+import 'Hopital/p2p/messenger/messaging_manager.dart';
+import 'Hopital/p2p/objectbox_sync_observer.dart';
 import 'Hopital/p2p/p2p_integration_fixed.dart';
+import 'Hopital/p2p/p2p_manager_fixed.dart';
 import 'firebase_options.dart';
 import 'objectBox/MyApp.dart';
 import 'objectBox/classeObjectBox.dart';
+
+// ============================================================================
+// GLOBAL VARIABLES - À initialiser dans main()
+// ============================================================================
+late ObjectBox objectBox;
+late P2PManager p2pManager;
+late P2PIntegration p2pIntegration;
+late ConnectionManager connectionManager;
+late MessagingManager messagingManager;
+late MessagingP2PIntegration messagingP2P;
 
 ///gere les gestu
 class CustomScrollBehavior extends MaterialScrollBehavior {
@@ -85,6 +100,49 @@ Future<void> main() async {
 
   // 2. Initialiser P2P
   await _initializeP2P();
+  // 2. ✅ DÉMARRER L'OBSERVER
+  final observer = ObjectBoxSyncObserver();
+  await observer.start();
+
+  print('✅ Observer démarré - Sync automatique active !');
+  var messagingManager = MessagingManager();
+  await messagingManager.initialize(objectBox, p2pManager.nodeId);
+
+  var messagingP2P = MessagingP2PIntegration();
+  await messagingP2P.initialize(
+      messagingManager, p2pIntegration, connectionManager);
+  messagingP2P.start();
+// ========================================================================
+  // INITIALISATION MESSAGING P2P
+  // ========================================================================
+  print('[Main] =========== Initialisation Messaging ===========');
+
+  try {
+    // 1. Initialiser MessagingManager
+    messagingManager = MessagingManager();
+    await messagingManager.initialize(objectBox, p2pManager.nodeId);
+    print('✅ MessagingManager initialisé');
+
+    // 2. Initialiser MessagingP2PIntegration
+    messagingP2P = MessagingP2PIntegration();
+    await messagingP2P.initialize(
+      messagingManager,
+      p2pIntegration,
+      connectionManager,
+    );
+    messagingP2P.start();
+    print('✅ MessagingP2PIntegration initialisé et démarré');
+
+    // 3. Initialiser sync observer pour messaging
+    final messagingSyncObserver = MessagingSyncObserver();
+    await messagingSyncObserver.initialize(objectBox, messagingP2P);
+    messagingSyncObserver.start();
+    print('✅ MessagingSyncObserver démarré');
+  } catch (e) {
+    print('[Main] ❌ Erreur initialisation Messaging: $e');
+  }
+
+  print('[Main] ======================================');
   //////////////////////////////////////////////////////////////////////////////
   runApp(MyApp()
       //P2PAdminDashboard(),
