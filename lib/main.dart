@@ -2,17 +2,19 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
-import 'Hopital/decentralized/p2p_integration.dart';
+import 'Hopital/p2p/p2p_integration_fixed.dart';
 import 'firebase_options.dart';
 import 'objectBox/MyApp.dart';
 import 'objectBox/classeObjectBox.dart';
@@ -78,35 +80,85 @@ Future<void> main() async {
 
   await ObjectBox().init();
   //////////////////////////////////////////////////////////////////////////////
+  // 1. Vérifier les permissions réseau
+  await _setupNetworkPermissions();
 
+  // 2. Initialiser P2P
+  await _initializeP2P();
   //////////////////////////////////////////////////////////////////////////////
   runApp(MyApp()
       //P2PAdminDashboard(),
       );
-  // ⚡ Initialiser P2P EN ARRIÈRE-PLAN (non-bloquant)
-  _initializeP2PAsync();
 }
 
-/// ⚡ Initialisation P2P asynchrone (ne bloque pas l'UI)
-Future<void> _initializeP2PAsync() async {
+/// Configure les permissions réseau nécessaires
+Future<void> _setupNetworkPermissions() async {
   try {
-    print('🔄 Initialisation P2P en arrière-plan...');
+    print('[Main] Vérification des permissions réseau...');
 
-    // Timeout pour éviter les blocages
-    await P2PIntegration.initializeP2PSystem().timeout(
-      const Duration(seconds: 10),
+    if (Platform.isAndroid) {
+      // Android: demander les permissions à l'exécution
+      final statuses = await [
+        Permission.location, // Remplace accessNetworkState
+        Permission.nearbyWifiDevices,
+      ].request();
+
+      bool allGranted = statuses.values.every((status) => status.isGranted);
+
+      if (!allGranted) {
+        print('[Main] ⚠️ Certaines permissions refusées sur Android');
+      } else {
+        print('[Main] ✅ Permissions Android accordées');
+      }
+    } else if (Platform.isIOS) {
+      // iOS: demander l'accès réseau local
+      final status = await Permission.nearbyWifiDevices.request();
+
+      if (status.isDenied) {
+        print('[Main] ⚠️ Permission réseau local refusée sur iOS');
+      } else if (status.isPermanentlyDenied) {
+        print('[Main] ⚠️ Permission réseau local définitivement refusée');
+        await openAppSettings();
+      } else {
+        print('[Main] ✅ Permissions iOS accordées');
+      }
+    }
+
+    // Vérifier la connectivité
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
+      print('[Main] ⚠️ Aucune connexion réseau disponible');
+    } else {
+      print('[Main] ✅ Connectivité réseau OK: $connectivity');
+    }
+  } catch (e) {
+    print('[Main] ❌ Erreur configuration permissions: $e');
+  }
+}
+
+/// Initialise le système P2P complet
+Future<void> _initializeP2P() async {
+  try {
+    print('[Main] =========== Initialisation P2P ===========');
+
+    final p2pIntegration = P2PIntegration();
+
+    // Initialiser P2P avec timeout global
+    await p2pIntegration.initializeP2PSystem().timeout(
+      const Duration(seconds: 30),
       onTimeout: () {
-        print('⚠️ Timeout P2P - Mode dégradé');
+        throw TimeoutException('Initialisation P2P timeout après 30 secondes');
       },
     );
 
-    // Démarrer la découverte
-    P2PIntegration.startDiscovery();
-
-    print('✅ P2P initialisé avec succès');
+    print('[Main] ✅ P2P System initialisé avec succès');
+    final stats = p2pIntegration.getNetworkStats();
+    print('[Main] Node ID: ${stats['nodeId']}');
+    print('[Main] Port serveur: ${stats['serverPort']}');
+    print('[Main] ========================================');
   } catch (e) {
-    print('⚠️ Erreur P2P (mode dégradé): $e');
-    // L'app continue de fonctionner sans P2P
+    print('[Main] ❌ Erreur initialisation P2P: $e');
+    print('[Main] Mode dégradé activé - fonctionnalité réduite');
   }
 }
 

@@ -2,23 +2,24 @@ import 'package:objectbox/objectbox.dart';
 
 import '../../objectBox/Entity.dart';
 
-// 🎯 ENTITÉS P2P SÉPARÉES - SANS TOUCHER AUX TON ENTITÉS EXISTANTES
+// 🎯 ENTITÉS P2P - À générer avec ObjectBox generator
+// Ces entités ne touchent PAS à vos entités existantes
 
-// 🔹 Métadonnées P2P pour Staff
+// Métadonnées P2P pour Staff
 @Entity()
 class StaffP2P {
   int id = 0;
 
   @Unique()
-  String staffUuid; // Référence à l'ID original si besoin, ou utiliser relation
+  String staffUuid;
 
-  String uuid; // UUID P2P
+  String uuid;
   int version = 1;
   String originId;
   bool deleted = false;
   int lastModified;
 
-  // Relation vers le Staff original (optionnel)
+  // Relation vers Staff original
   final staff = ToOne<Staff>();
 
   StaffP2P({
@@ -29,7 +30,7 @@ class StaffP2P {
   });
 }
 
-// 🔹 Métadonnées P2P pour ActiviteJour
+// Métadonnées P2P pour ActiviteJour
 @Entity()
 class ActiviteJourP2P {
   int id = 0;
@@ -53,7 +54,7 @@ class ActiviteJourP2P {
   });
 }
 
-// 🔹 Métadonnées P2P pour Branch
+// Métadonnées P2P pour Branch
 @Entity()
 class BranchP2P {
   int id = 0;
@@ -77,12 +78,12 @@ class BranchP2P {
   });
 }
 
-// 🔹 Table de synchronisation globale
+// État de synchronisation global
 @Entity()
 class SyncState {
   int id = 0;
 
-  String entityType; // 'Staff', 'ActiviteJour', 'Branch', etc.
+  String entityType;
   String entityUuid;
   int lastVersion;
   int lastSynced;
@@ -98,15 +99,15 @@ class SyncState {
   });
 }
 
-// 🔹 Journal des opérations P2P
+// Journal des opérations P2P
 @Entity()
 class P2PJournal {
   int id = 0;
 
-  String operation; // CREATE, UPDATE, DELETE
+  String operation;
   String entityType;
   String entityUuid;
-  String dataJson; // Données sérialisées
+  String dataJson;
   int timestamp;
   String originId;
   bool synced = false;

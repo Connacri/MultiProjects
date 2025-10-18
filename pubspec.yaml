@@ -125,6 +125,7 @@ dependencies:
   uuid: ^4.5.1
   cryptography: ^2.7.0
   collection: ^1.19.1
+  pointycastle: ^4.0.0
 
 
 

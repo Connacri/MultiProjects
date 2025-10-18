@@ -14,7 +14,7 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'Hopital/decentralized/p2p_entities.dart';
+import 'Hopital/p2p/p2p_entities_complete.dart';
 import 'objectBox/Entity.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
