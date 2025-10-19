@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
-import 'messaging_manager.dart';
+
+import '../../../objectBox/classeObjectBox.dart';
+import '../../../objectbox.g.dart';
+import '../connection_manager_fixed.dart';
+import '../p2p_integration_fixed.dart';
 import 'messaging_entities.dart';
-import 'p2p_integration_fixed.dart';
-import 'connection_manager_fixed.dart';
+import 'messaging_manager.dart';
 
 // ============================================================================
 // MESSAGING P2P INTEGRATION - Synchronisation P2P des messages
@@ -22,6 +26,7 @@ class MessagingP2PIntegration with ChangeNotifier {
   late MessagingManager _messagingManager;
   late P2PIntegration _p2pIntegration;
   late ConnectionManager _connectionManager;
+  late ObjectBox _objectBox;
 
   Timer? _syncTimer;
   Timer? _retryTimer;
@@ -35,7 +40,9 @@ class MessagingP2PIntegration with ChangeNotifier {
   int _lastSyncTimestamp = 0;
 
   int get messagesSynced => _messagesSynced;
+
   int get messagesFailed => _messagesFailed;
+
   int get lastSyncTimestamp => _lastSyncTimestamp;
 
   static const int syncInterval = 5; // secondes
@@ -46,11 +53,13 @@ class MessagingP2PIntegration with ChangeNotifier {
     MessagingManager messagingManager,
     P2PIntegration p2pIntegration,
     ConnectionManager connectionManager,
+    ObjectBox objectBox,
   ) async {
     try {
       _messagingManager = messagingManager;
       _p2pIntegration = p2pIntegration;
       _connectionManager = connectionManager;
+      _objectBox = objectBox;
 
       // Écouter les messages P2P entrants
       _connectionManager.onMessage.listen((message) {
@@ -97,7 +106,7 @@ class MessagingP2PIntegration with ChangeNotifier {
     _syncTimer?.cancel();
     _retryTimer?.cancel();
     _isRunning = false;
-    print('[MessagingP2P] ⏹️ Synchronisation arrêtée');
+    print('[MessagingP2P] ℹ️ Synchronisation arrêtée');
     notifyListeners();
   }
 
@@ -109,11 +118,13 @@ class MessagingP2PIntegration with ChangeNotifier {
   Future<void> _processSyncQueue() async {
     try {
       // Récupérer les messages en attente de sync
-      final pendingQueue = _messagingManager._objectBox.messageSyncQueueBox
+      final query = _objectBox.messageSyncQueueBox
           .query(MessageSyncQueue_.status.equals('pending'))
           .order(MessageSyncQueue_.priority, flags: Order.descending)
-          .build()
-          .find();
+          .build();
+
+      final pendingQueue = query.find();
+      query.close();
 
       if (pendingQueue.isEmpty) {
         return;
@@ -143,8 +154,7 @@ class MessagingP2PIntegration with ChangeNotifier {
       }
 
       final targetNodeIds =
-          (jsonDecode(syncItem.targetNodeIds) as List<dynamic>)
-              .cast<String>();
+          (jsonDecode(syncItem.targetNodeIds) as List<dynamic>).cast<String>();
 
       // Broadcaster le message à tous les nœuds cibles
       for (final nodeId in targetNodeIds) {
@@ -213,12 +223,15 @@ class MessagingP2PIntegration with ChangeNotifier {
   /// Réessaye les messages échoués
   Future<void> _retryFailedMessages() async {
     try {
-      final failedQueue = _objectBox.messageSyncQueueBox
-          .query(MessageSyncQueue_.status.equals('pending'))
-          .and(MessageSyncQueue_.nextRetryTimestamp
-              .lessOrEqual(DateTime.now().millisecondsSinceEpoch))
-          .build()
-          .find();
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      final query = _objectBox.messageSyncQueueBox
+          .query(MessageSyncQueue_.status.equals('pending') &
+              MessageSyncQueue_.nextRetryTimestamp.lessOrEqual(now))
+          .build();
+
+      final failedQueue = query.find();
+      query.close();
 
       if (failedQueue.isEmpty) return;
 
@@ -243,9 +256,11 @@ class MessagingP2PIntegration with ChangeNotifier {
       final type = messageData['type'] as String?;
 
       if (type == 'message') {
-        await _handleIncomingMessage(messageData['data'] as Map<String, dynamic>);
+        await _handleIncomingMessage(
+            messageData['data'] as Map<String, dynamic>);
       } else if (type == 'message_receipt') {
-        await _handleMessageReceipt(messageData['data'] as Map<String, dynamic>);
+        await _handleMessageReceipt(
+            messageData['data'] as Map<String, dynamic>);
       } else if (type == 'sync_request') {
         await _handleSyncRequest(messageData['data'] as Map<String, dynamic>);
       }
@@ -255,8 +270,7 @@ class MessagingP2PIntegration with ChangeNotifier {
   }
 
   /// Traite un message entrant
-  Future<void> _handleIncomingMessage(
-      Map<String, dynamic> messageData) async {
+  Future<void> _handleIncomingMessage(Map<String, dynamic> messageData) async {
     try {
       await _messagingManager.receiveMessage(messageData);
 
@@ -273,8 +287,7 @@ class MessagingP2PIntegration with ChangeNotifier {
   }
 
   /// Traite une confirmation de réception
-  Future<void> _handleMessageReceipt(
-      Map<String, dynamic> receiptData) async {
+  Future<void> _handleMessageReceipt(Map<String, dynamic> receiptData) async {
     try {
       final messageId = receiptData['messageId'] as String?;
       final status = receiptData['status'] as int?;
@@ -299,12 +312,14 @@ class MessagingP2PIntegration with ChangeNotifier {
       if (conversationId == null) return;
 
       // Récupérer les messages depuis le timestamp
-      final messages = _objectBox.messageBox
-          .query(Message_.conversationId.equals(conversationId))
-          .and(Message_.sentTimestamp.greaterOrEqual(fromTimestamp ?? 0))
+      final query = _objectBox.messageBox
+          .query(Message_.conversationId.equals(conversationId) &
+              Message_.sentTimestamp.greaterOrEqual(fromTimestamp ?? 0))
           .order(Message_.sentTimestamp)
-          .build()
-          .find();
+          .build();
+
+      final messages = query.find();
+      query.close();
 
       // Envoyer les messages
       for (final message in messages) {
@@ -328,7 +343,7 @@ class MessagingP2PIntegration with ChangeNotifier {
         'data': {
           'messageId': messageId,
           'conversationId': conversationId,
-          'recipientNodeId': _messagingManager._currentNodeId,
+          'recipientNodeId': _messagingManager.currentNodeId,
           'status': status.index,
           'confirmedTimestamp': DateTime.now().millisecondsSinceEpoch,
         }
@@ -365,7 +380,7 @@ class MessagingP2PIntegration with ChangeNotifier {
 
         // Broadcaster à tous les participants
         for (final nodeId in conversation.getParticipants()) {
-          if (nodeId != _messagingManager._currentNodeId) {
+          if (nodeId != _messagingManager.currentNodeId) {
             _connectionManager.sendMessage(nodeId, payload);
           }
         }
@@ -393,8 +408,10 @@ class MessagingP2PIntegration with ChangeNotifier {
     };
   }
 
+  @override
   void dispose() {
     stop();
+    super.dispose();
   }
 }
 
@@ -415,6 +432,7 @@ class MessagingSyncObserver {
   late MessagingP2PIntegration _messagingP2P;
 
   bool _isRunning = false;
+
   bool get isRunning => _isRunning;
 
   StreamSubscription? _messageSubscription;
@@ -456,7 +474,7 @@ class MessagingSyncObserver {
     _messageSubscription?.cancel();
     _conversationSubscription?.cancel();
     _isRunning = false;
-    print('[MessagesSyncObserver] ⏹️ Surveillance arrêtée');
+    print('[MessagesSyncObserver] ℹ️ Surveillance arrêtée');
   }
 
   void dispose() {

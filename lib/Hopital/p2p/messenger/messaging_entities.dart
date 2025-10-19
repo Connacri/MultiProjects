@@ -1,6 +1,5 @@
-import 'package:objectbox/objectbox.dart';
-
 import '../../../objectBox/classeObjectBox.dart';
+import '../../../objectbox.g.dart';
 
 // ============================================================================
 // ENTITIES MESSAGING P2P - À utiliser avec ObjectBox generator
@@ -411,69 +410,100 @@ extension MessageQueries on Box<Message> {
     int limit = 50,
     int offset = 0,
   }) {
-    return query(Message_.conversationId.equals(conversationId))
+    final query = this
+        .query(Message_.conversationId.equals(conversationId))
         .order(Message_.sentTimestamp, flags: Order.descending)
-        .offset(offset)
-        .limit(limit)
-        .build()
-        .find();
+        .build();
+
+    query.offset = offset;
+    query.limit = limit;
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Récupère les messages non lus d'une conversation
   List<Message> getUnreadMessages(String conversationId) {
-    return query(Message_.conversationId.equals(conversationId))
-        .and(Message_.statusValue.lessThan(MessageStatus.read.index))
+    final query = this
+        .query(Message_.conversationId.equals(conversationId) &
+            Message_.statusValue.lessThan(MessageStatus.read.index))
         .order(Message_.sentTimestamp)
-        .build()
-        .find();
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Récupère les messages d'un nœud spécifique
   List<Message> getMessagesFromNode(String nodeId) {
-    return query(Message_.fromNodeId.equals(nodeId))
+    final query = this
+        .query(Message_.fromNodeId.equals(nodeId))
         .order(Message_.sentTimestamp, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Récupère les messages en attente de confirmation
   List<Message> getPendingMessages() {
-    return query(Message_.statusValue.equals(MessageStatus.pending.index))
+    final query = this
+        .query(Message_.statusValue.equals(MessageStatus.pending.index))
         .order(Message_.sentTimestamp)
-        .build()
-        .find();
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Recherche par contenu
-  List<Message> searchMessages(String query, {String? conversationId}) {
-    var q = query(Message_.content.contains(query));
+  List<Message> searchMessages(String searchQuery, {String? conversationId}) {
+    Condition<Message> condition =
+        Message_.content.contains(searchQuery, caseSensitive: false);
+
     if (conversationId != null) {
-      q = q.and(Message_.conversationId.equals(conversationId));
+      condition = condition & Message_.conversationId.equals(conversationId);
     }
-    return q
+
+    final query = this
+        .query(condition)
         .order(Message_.sentTimestamp, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 }
 
 extension ConversationQueries on Box<Conversation> {
   /// Récupère les conversations triées par activité
   List<Conversation> getActiveConversations() {
-    return query()
-        .and(Conversation_.isDeleted.equals(false))
+    final query = this
+        .query(Conversation_.isDeleted.equals(false))
         .order(Conversation_.lastActivityTimestamp, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Récupère les conversations non archivées avec messages non lus
   List<Conversation> getConversationsWithUnread() {
-    return query(Conversation_.unreadCount.greaterThan(0))
-        .and(Conversation_.isArchived.equals(false))
+    final query = this
+        .query(Conversation_.unreadCount.greaterThan(0) &
+            Conversation_.isArchived.equals(false))
         .order(Conversation_.lastActivityTimestamp, flags: Order.descending)
-        .build()
-        .find();
+        .build();
+
+    final results = query.find();
+    query.close();
+    return results;
   }
 
   /// Récupère une conversation par participants (1-à-1)
@@ -481,10 +511,14 @@ extension ConversationQueries on Box<Conversation> {
     final participants = [nodeId1, nodeId2]..sort();
     final participantStr = participants.join(',');
 
-    return query(Conversation_.participantNodeIds.equals(participantStr))
-        .and(Conversation_.typeValue.equals(ConversationType.private.index))
-        .build()
-        .findFirst();
+    final query = this
+        .query(Conversation_.participantNodeIds.equals(participantStr) &
+            Conversation_.typeValue.equals(ConversationType.private.index))
+        .build();
+
+    final result = query.findFirst();
+    query.close();
+    return result;
   }
 }
 

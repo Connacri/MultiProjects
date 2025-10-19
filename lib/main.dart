@@ -93,7 +93,13 @@ Future<void> main() async {
   timeago.setLocaleMessages('fr', timeago.FrMessages());
   timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
 
-  await ObjectBox().init();
+  // ========================================================================
+  // 1️⃣ INITIALISER OBJECTBOX EN PREMIER - C'EST CRITIQUE
+  // ========================================================================
+  print('[Main] 1️⃣ Initialisation ObjectBox...');
+  objectBox = ObjectBox();
+  await objectBox.init(); // ⚠️ ATTENDRE LA FINALISATION
+  print('[Main] ✅ ObjectBox initialisé');
   //////////////////////////////////////////////////////////////////////////////
   // 1. Vérifier les permissions réseau
   await _setupNetworkPermissions();
@@ -105,20 +111,14 @@ Future<void> main() async {
   await observer.start();
 
   print('✅ Observer démarré - Sync automatique active !');
-  var messagingManager = MessagingManager();
-  await messagingManager.initialize(objectBox, p2pManager.nodeId);
 
-  var messagingP2P = MessagingP2PIntegration();
-  await messagingP2P.initialize(
-      messagingManager, p2pIntegration, connectionManager);
-  messagingP2P.start();
-// ========================================================================
+  // ========================================================================
   // INITIALISATION MESSAGING P2P
   // ========================================================================
   print('[Main] =========== Initialisation Messaging ===========');
 
   try {
-    // 1. Initialiser MessagingManager
+    // 1. Initialiser MessagingManager avec objectBox initialisé
     messagingManager = MessagingManager();
     await messagingManager.initialize(objectBox, p2pManager.nodeId);
     print('✅ MessagingManager initialisé');
@@ -126,10 +126,7 @@ Future<void> main() async {
     // 2. Initialiser MessagingP2PIntegration
     messagingP2P = MessagingP2PIntegration();
     await messagingP2P.initialize(
-      messagingManager,
-      p2pIntegration,
-      connectionManager,
-    );
+        messagingManager, p2pIntegration, connectionManager, objectBox);
     messagingP2P.start();
     print('✅ MessagingP2PIntegration initialisé et démarré');
 
@@ -208,6 +205,9 @@ Future<void> _initializeP2P() async {
         throw TimeoutException('Initialisation P2P timeout après 30 secondes');
       },
     );
+    // Récupérer les gestionnaires après initialisation P2P
+    p2pManager = P2PManager(); // ✅ Factory returns singleton
+    connectionManager = p2pIntegration.connectionManager; // ✅ Via getter
 
     print('[Main] ✅ P2P System initialisé avec succès');
     final stats = p2pIntegration.getNetworkStats();

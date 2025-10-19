@@ -37,6 +37,11 @@ class P2PIntegration with ChangeNotifier {
 
   String get initializationStatus => _initializationStatus;
 
+  ConnectionManager get connectionManager => _connectionManager;
+
+  P2PManager get p2pManager => _p2pManager;
+
+  // ... other managers
   // Auto-connexion
   Timer? _autoConnectTimer;
   static const int autoConnectInterval = 5; // secondes

@@ -10,39 +10,19 @@ import '../../../objectBox/classeObjectBox.dart';
 import '../../../objectbox.g.dart';
 import 'messaging_entities.dart';
 
-// ============================================================================
-// MESSAGING MANAGER - Singleton pour gérer tous les messages
-// ============================================================================
-class MessagingManager with ChangeNotifier {
-  static final MessagingManager _instance = MessagingManager._internal();
-
-  factory MessagingManager() => _instance;
-
-  MessagingManager._internal();
-
-  // Référence ObjectBox (à initialiser)
-  late ObjectBox _objectBox;
+/// 📱 MessagingProvider - Singleton avec ChangeNotifier
+class MessagingProvider with ChangeNotifier {
+  late final ObjectBox _objectBox;
   late String _currentNodeId;
-
-  // StreamControllers pour notifications
-  final _messageReceivedController = StreamController<Message>.broadcast();
-  final _conversationUpdateController =
-      StreamController<Conversation>.broadcast();
-  final _messageStatusChangeController =
-      StreamController<MessageStatusUpdate>.broadcast();
-
-  Stream<Message> get onMessageReceived => _messageReceivedController.stream;
-
-  Stream<Conversation> get onConversationUpdate =>
-      _conversationUpdateController.stream;
-
-  Stream<MessageStatusUpdate> get onMessageStatusChange =>
-      _messageStatusChangeController.stream;
+  bool _initialized = false;
 
   // Statistiques
   int _totalMessagesSent = 0;
   int _totalMessagesReceived = 0;
   int _totalUnreadMessages = 0;
+
+  // Getters
+  bool get initialized => _initialized;
 
   int get totalMessagesSent => _totalMessagesSent;
 
@@ -50,14 +30,41 @@ class MessagingManager with ChangeNotifier {
 
   int get totalUnreadMessages => _totalUnreadMessages;
 
-  String get currentNodeId => _currentNodeId;
+  // StreamControllers pour notifications
+  final _messageReceivedController = StreamController<Message>.broadcast();
+  final _conversationUpdateController =
+      StreamController<Conversation>.broadcast();
 
-  /// Initialise le manager
-  Future<void> initialize(ObjectBox objectBox, String currentNodeId) async {
-    _objectBox = objectBox;
-    _currentNodeId = currentNodeId;
-    print('[MessagingManager] ✅ Initialisé (Node: $_currentNodeId)');
-    _recalculateUnreadCount();
+  Stream<Message> get onMessageReceived => _messageReceivedController.stream;
+
+  Stream<Conversation> get onConversationUpdate =>
+      _conversationUpdateController.stream;
+
+  MessagingProvider() {
+    _initObjectBox();
+  }
+
+  /// Initialisation ObjectBox
+  Future<void> _initObjectBox() async {
+    try {
+      _objectBox = ObjectBox();
+      _initialized = true;
+      notifyListeners();
+      print('[MessagingProvider] ✅ Initialisé');
+    } catch (e) {
+      print('[MessagingProvider] ❌ Erreur initialisation: $e');
+    }
+  }
+
+  /// Initialise le provider avec le nodeId courant
+  Future<void> initialize(String nodeId) async {
+    try {
+      _currentNodeId = nodeId;
+      _recalculateUnreadCount();
+      print('[MessagingProvider] ✅ Initialisé avec nodeId: $_currentNodeId');
+    } catch (e) {
+      print('[MessagingProvider] ❌ Erreur: $e');
+    }
   }
 
   // ========================================================================
@@ -78,7 +85,7 @@ class MessagingManager with ChangeNotifier {
     );
   }
 
-  /// Envoie un message avec fichier (audio, vidéo, fichier)
+  /// Envoie un message avec fichier
   Future<Message> sendMediaMessage(
     String conversationId,
     MessageType type,
@@ -102,7 +109,7 @@ class MessagingManager with ChangeNotifier {
       'fileName': mediaFile.path.split('/').last,
     };
 
-    final message = await _sendMessage(
+    return _sendMessage(
       conversationId: conversationId,
       type: type,
       content: jsonEncode(contentJson),
@@ -112,8 +119,6 @@ class MessagingManager with ChangeNotifier {
       mediaDuration: durationSeconds,
       replyToMessageId: replyToMessageId,
     );
-
-    return message;
   }
 
   /// Méthode interne pour envoyer un message
@@ -128,11 +133,10 @@ class MessagingManager with ChangeNotifier {
     String? replyToMessageId,
   }) async {
     try {
-      // Créer le message
       final messageId = const Uuid().v4();
       final now = DateTime.now().millisecondsSinceEpoch;
 
-      Message message = Message(
+      final message = Message(
         messageId: messageId,
         conversationId: conversationId,
         fromNodeId: _currentNodeId,
@@ -147,25 +151,19 @@ class MessagingManager with ChangeNotifier {
         replyToMessageId: replyToMessageId,
       );
 
-      // Calculer hash du contenu
       message.contentHash = _calculateContentHash(message);
-
-      // Ajouter à la base de données
       _objectBox.messageBox.put(message);
 
-      // Mettre à jour la conversation
       await _updateConversationLastMessage(conversationId, message);
-
-      // Ajouter à la queue de synchronisation
       _queueMessageForSync(messageId, 'send', conversationId);
 
       _totalMessagesSent++;
       notifyListeners();
 
-      print('[MessagingManager] 📤 Message envoyé: $messageId');
+      print('[MessagingProvider] 📤 Message envoyé: $messageId');
       return message;
     } catch (e) {
-      print('[MessagingManager] ❌ Erreur envoi message: $e');
+      print('[MessagingProvider] ❌ Erreur envoi: $e');
       rethrow;
     }
   }
@@ -182,23 +180,16 @@ class MessagingManager with ChangeNotifier {
       final fromNodeId = messageData['fromNodeId'] as String?;
 
       if (messageId == null || conversationId == null || fromNodeId == null) {
-        print('[MessagingManager] ❌ Données de message invalides');
         return;
       }
 
-      // Vérifier si le message existe déjà
-      final query = _objectBox.messageBox
+      // Vérifier si existe déjà
+      final existing = _objectBox.messageBox
           .query(Message_.messageId.equals(messageId))
-          .build();
-      final existingMessage = query.findFirst();
-      query.close();
+          .build()
+          .findFirst();
+      if (existing != null) return;
 
-      if (existingMessage != null) {
-        print('[MessagingManager] ⭐ Message déjà reçu: $messageId');
-        return;
-      }
-
-      // Construire le message
       final message = Message(
         messageId: messageId,
         conversationId: conversationId,
@@ -217,116 +208,21 @@ class MessagingManager with ChangeNotifier {
         replyToContent: messageData['replyToContent'] as String?,
         replyToFromNodeId: messageData['replyToFromNodeId'] as String?,
         receivedTimestamp: DateTime.now().millisecondsSinceEpoch,
-        encryptionKeyId: messageData['encryptionKeyId'] as String?,
-        contentHash: messageData['contentHash'] as String?,
       );
 
-      // Sauvegarder
       _objectBox.messageBox.put(message);
-
-      // Mettre à jour la conversation
       await _updateConversationLastMessage(conversationId, message);
-
-      // Envoyer une confirmation de réception
       _queueReceiptForSync(messageId, conversationId, fromNodeId);
 
       _totalMessagesReceived++;
       _totalUnreadMessages++;
 
-      // Notifier
       _messageReceivedController.add(message);
       notifyListeners();
 
-      print('[MessagingManager] 📥 Message reçu: $messageId de $fromNodeId');
+      print('[MessagingProvider] 📥 Message reçu: $messageId');
     } catch (e) {
-      print('[MessagingManager] ❌ Erreur réception message: $e');
-    }
-  }
-
-  // ========================================================================
-  // GESTION DES STATUTS
-  // ========================================================================
-
-  /// Met à jour le statut d'un message
-  Future<void> updateMessageStatus(
-    String messageId,
-    MessageStatus status,
-  ) async {
-    try {
-      final query = _objectBox.messageBox
-          .query(Message_.messageId.equals(messageId))
-          .build();
-      final message = query.findFirst();
-      query.close();
-
-      if (message == null) {
-        print('[MessagingManager] ❌ Message non trouvé: $messageId');
-        return;
-      }
-
-      message.status = status;
-
-      if (status == MessageStatus.read) {
-        message.readTimestamp = DateTime.now().millisecondsSinceEpoch;
-      } else if (status == MessageStatus.delivered) {
-        message.receivedTimestamp = DateTime.now().millisecondsSinceEpoch;
-      }
-
-      _objectBox.messageBox.put(message);
-
-      // Notifier du changement de statut
-      _messageStatusChangeController.add(
-        MessageStatusUpdate(
-          messageId: messageId,
-          status: status,
-          timestamp: DateTime.now().millisecondsSinceEpoch,
-        ),
-      );
-
-      print('[MessagingManager] ✅ Statut mis à jour: $messageId -> $status');
-    } catch (e) {
-      print('[MessagingManager] ❌ Erreur mise à jour statut: $e');
-    }
-  }
-
-  /// Marque une conversation comme lue
-  Future<void> markConversationAsRead(String conversationId) async {
-    try {
-      final convQuery = _objectBox.conversationBox
-          .query(Conversation_.conversationId.equals(conversationId))
-          .build();
-      final conversation = convQuery.findFirst();
-      convQuery.close();
-
-      if (conversation == null) return;
-
-      // Marquer tous les messages comme lus
-      final msgQuery = _objectBox.messageBox
-          .query(Message_.conversationId.equals(conversationId) &
-              Message_.statusValue.lessThan(MessageStatus.read.index))
-          .build();
-      final messages = msgQuery.find();
-      msgQuery.close();
-
-      final now = DateTime.now().millisecondsSinceEpoch;
-      for (final msg in messages) {
-        msg.status = MessageStatus.read;
-        msg.readTimestamp = now;
-      }
-
-      _objectBox.messageBox.putMany(messages);
-
-      // Mettre à jour le compteur
-      conversation.unreadCount = 0;
-      _objectBox.conversationBox.put(conversation);
-
-      _recalculateUnreadCount();
-      _conversationUpdateController.add(conversation);
-      notifyListeners();
-
-      print('[MessagingManager] ✅ Conversation marquée lue: $conversationId');
-    } catch (e) {
-      print('[MessagingManager] ❌ Erreur marquage lecture: $e');
+      print('[MessagingProvider] ❌ Erreur réception: $e');
     }
   }
 
@@ -334,27 +230,22 @@ class MessagingManager with ChangeNotifier {
   // GESTION DES CONVERSATIONS
   // ========================================================================
 
-  /// Crée une nouvelle conversation 1-à-1
+  /// Crée une conversation privée 1-à-1
   Future<Conversation> createPrivateConversation(
     String otherNodeId, {
     String? displayName,
   }) async {
     try {
-      // Vérifier si conversation existe déjà
       final participants = [_currentNodeId, otherNodeId]..sort();
       final conversationId = participants.join('-');
 
-      final query = _objectBox.conversationBox
+      var existing = _objectBox.conversationBox
           .query(Conversation_.conversationId.equals(conversationId))
-          .build();
-      var existing = query.findFirst();
-      query.close();
+          .build()
+          .findFirst();
 
-      if (existing != null) {
-        return existing;
-      }
+      if (existing != null) return existing;
 
-      // Créer nouvelle conversation
       final now = DateTime.now().millisecondsSinceEpoch;
       final conversation = Conversation(
         conversationId: conversationId,
@@ -367,14 +258,13 @@ class MessagingManager with ChangeNotifier {
       );
 
       _objectBox.conversationBox.put(conversation);
-
       _conversationUpdateController.add(conversation);
       notifyListeners();
 
-      print('[MessagingManager] ✅ Conversation privée créée: $conversationId');
+      print('[MessagingProvider] ✅ Conversation privée créée: $conversationId');
       return conversation;
     } catch (e) {
-      print('[MessagingManager] ❌ Erreur création conversation: $e');
+      print('[MessagingProvider] ❌ Erreur création conversation: $e');
       rethrow;
     }
   }
@@ -405,29 +295,23 @@ class MessagingManager with ChangeNotifier {
 
       _objectBox.conversationBox.put(conversation);
 
-      // Ajouter les participants
       for (final nodeId in participants) {
         final participant = ConversationParticipant(
           conversationId: conversationId,
           nodeId: nodeId,
           role: nodeId == _currentNodeId ? 'admin' : 'member',
           joinedTimestamp: now,
-          displayName: null,
         );
         _objectBox.conversationParticipantBox.put(participant);
       }
 
-      // Ajouter message système
-      await _addSystemMessage(
-          conversationId, 'Groupe créé par $_currentNodeId');
-
       _conversationUpdateController.add(conversation);
       notifyListeners();
 
-      print('[MessagingManager] ✅ Groupe créé: $conversationId');
+      print('[MessagingProvider] ✅ Groupe créé: $conversationId');
       return conversation;
     } catch (e) {
-      print('[MessagingManager] ❌ Erreur création groupe: $e');
+      print('[MessagingProvider] ❌ Erreur création groupe: $e');
       rethrow;
     }
   }
@@ -461,31 +345,59 @@ class MessagingManager with ChangeNotifier {
 
   /// Récupère un message spécifique
   Message? getMessage(String messageId) {
-    final query = _objectBox.messageBox
+    return _objectBox.messageBox
         .query(Message_.messageId.equals(messageId))
-        .build();
-    final result = query.findFirst();
-    query.close();
-    return result;
+        .build()
+        .findFirst();
   }
 
   /// Récupère une conversation spécifique
   Conversation? getConversation(String conversationId) {
-    final query = _objectBox.conversationBox
+    return _objectBox.conversationBox
         .query(Conversation_.conversationId.equals(conversationId))
-        .build();
-    final result = query.findFirst();
-    query.close();
-    return result;
+        .build()
+        .findFirst();
   }
 
   /// Recherche les messages
-  List<Message> searchMessages(
-    String query, {
-    String? conversationId,
-  }) {
+  List<Message> searchMessages(String query, {String? conversationId}) {
     return _objectBox.messageBox
         .searchMessages(query, conversationId: conversationId);
+  }
+
+  /// Marque une conversation comme lue
+  Future<void> markConversationAsRead(String conversationId) async {
+    try {
+      final conversation = getConversation(conversationId);
+      if (conversation == null) return;
+
+      final msgQuery = _objectBox.messageBox
+          .query(Message_.conversationId.equals(conversationId) &
+              Message_.statusValue.lessThan(MessageStatus.read.index))
+          .build();
+
+      final messages = msgQuery.find();
+      msgQuery.close(); // ⚡ Important : toujours fermer la query
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      for (final msg in messages) {
+        msg.status = MessageStatus.read;
+        msg.readTimestamp = now;
+      }
+
+      _objectBox.messageBox.putMany(messages);
+
+      conversation.unreadCount = 0;
+      _objectBox.conversationBox.put(conversation);
+
+      _recalculateUnreadCount();
+      _conversationUpdateController.add(conversation);
+      notifyListeners();
+
+      print('[MessagingProvider] ✅ Conversation marquée lue: $conversationId');
+    } catch (e) {
+      print('[MessagingProvider] ❌ Erreur marquage lecture: $e');
+    }
   }
 
   // ========================================================================
@@ -497,10 +409,7 @@ class MessagingManager with ChangeNotifier {
     Message message,
   ) async {
     final conversation = getConversation(conversationId);
-    if (conversation == null) {
-      print('[MessagingManager] ⚠️ Conversation non trouvée: $conversationId');
-      return;
-    }
+    if (conversation == null) return;
 
     conversation.lastMessageId = message.messageId;
     conversation.lastMessagePreview = _getMessagePreview(message);
@@ -556,9 +465,9 @@ class MessagingManager with ChangeNotifier {
       );
 
       _objectBox.messageSyncQueueBox.put(syncQueue);
-      print('[MessagingManager] 📋 Message ajouté à la queue: $messageId');
+      print('[MessagingProvider] 📋 Message ajouté à la queue: $messageId');
     } catch (e) {
-      print('[MessagingManager] ❌ Erreur queue sync: $e');
+      print('[MessagingProvider] ❌ Erreur queue sync: $e');
     }
   }
 
@@ -576,31 +485,9 @@ class MessagingManager with ChangeNotifier {
       );
 
       _objectBox.messageReceiptBox.put(receipt);
-      print('[MessagingManager] ✅ Reçu créé: $messageId');
     } catch (e) {
-      print('[MessagingManager] ❌ Erreur création reçu: $e');
+      print('[MessagingProvider] ❌ Erreur création reçu: $e');
     }
-  }
-
-  Future<void> _addSystemMessage(
-    String conversationId,
-    String content,
-  ) async {
-    final messageId = const Uuid().v4();
-    final now = DateTime.now().millisecondsSinceEpoch;
-
-    final message = Message(
-      messageId: messageId,
-      conversationId: conversationId,
-      fromNodeId: 'system',
-      typeValue: MessageType.text.index,
-      content: content,
-      sentTimestamp: now,
-      statusValue: MessageStatus.delivered.index,
-    );
-
-    _objectBox.messageBox.put(message);
-    await _updateConversationLastMessage(conversationId, message);
   }
 
   String _calculateContentHash(Message message) {
@@ -627,11 +514,13 @@ class MessagingManager with ChangeNotifier {
   void _recalculateUnreadCount() {
     final query = _objectBox.messageBox
         .query(Message_.statusValue.lessThan(MessageStatus.read.index) &
-            Message_.fromNodeId.notEquals(_currentNodeId))
+                Message_.fromNodeId
+                    .notEquals(_currentNodeId) // ✅ notEquals avec 's'
+            )
         .build();
 
     final unreadMessages = query.find();
-    query.close();
+    query.close(); // ⚡ Important : toujours fermer la query
 
     _totalUnreadMessages = unreadMessages.length;
   }
@@ -647,24 +536,10 @@ class MessagingManager with ChangeNotifier {
     };
   }
 
+  @override
   void dispose() {
     _messageReceivedController.close();
     _conversationUpdateController.close();
-    _messageStatusChangeController.close();
+    super.dispose();
   }
-}
-
-// ============================================================================
-// MESSAGE STATUS UPDATE MODEL
-// ============================================================================
-class MessageStatusUpdate {
-  final String messageId;
-  final MessageStatus status;
-  final int timestamp;
-
-  MessageStatusUpdate({
-    required this.messageId,
-    required this.status,
-    required this.timestamp,
-  });
 }

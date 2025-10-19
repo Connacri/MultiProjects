@@ -8,6 +8,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../Hopital/p2p/messenger/messaging_entities.dart';
 import '../objectBox/Entity.dart';
 import '../objectbox.g.dart';
 
@@ -43,6 +44,14 @@ class ObjectBox {
   // 🆕 BOX MANQUANTE AJOUTÉE
   late final Box<PlanningHebdo> planningHebdoBox;
   late final Box<TypeActivite> typeActiviteBox;
+
+  // ✅ MESSAGING BOXES - NOUVELLES
+  late final Box<Message> messageBox;
+  late final Box<Conversation> conversationBox;
+  late final Box<MessageReceipt> messageReceiptBox;
+  late final Box<ConversationParticipant> conversationParticipantBox;
+  late final Box<MessageSyncQueue> messageSyncQueueBox;
+  late final Box<MessageSearchIndex> messageSearchIndexBox;
 
   Admin? admin; // Admin optionnel
 
@@ -90,6 +99,14 @@ class ObjectBox {
       // 🆕 BOXES MANQUANTES INITIALISÉES
       planningHebdoBox = Box<PlanningHebdo>(store);
       typeActiviteBox = Box<TypeActivite>(store);
+
+      // ✅ MESSAGING BOXES - INITIALISÉES
+      messageBox = Box<Message>(store);
+      conversationBox = Box<Conversation>(store);
+      messageReceiptBox = Box<MessageReceipt>(store);
+      conversationParticipantBox = Box<ConversationParticipant>(store);
+      messageSyncQueueBox = Box<MessageSyncQueue>(store);
+      messageSearchIndexBox = Box<MessageSearchIndex>(store);
 
       // ✅ CORRECTION 2: Initialisez Admin correctement
       await _initializeAdmin();

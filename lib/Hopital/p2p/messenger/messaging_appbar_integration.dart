@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../objectBox/classeObjectBox.dart';
-import '../connection_manager_fixed.dart';
-import '../p2p_integration_fixed.dart';
-import 'messaging_integration.dart';
+import 'NodesManager.dart';
 import 'messaging_manager.dart';
 import 'messaging_ui_widgets.dart';
 
@@ -73,7 +70,7 @@ class HomeScreenContent extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Quick Actions
-          _buildQuickActionsCard(),
+          _buildQuickActionsCard(context),
         ],
       ),
     );
@@ -184,7 +181,7 @@ class HomeScreenContent extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionsCard() {
+  Widget _buildQuickActionsCard(context) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -207,7 +204,10 @@ class HomeScreenContent extends StatelessWidget {
                 icon: const Icon(Icons.add_comment),
                 label: const Text('Nouveau message'),
                 onPressed: () {
-                  // Ouvrir dialog pour créer conversation
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SelectNodeDialog(),
+                  );
                 },
               ),
             ),
@@ -250,63 +250,6 @@ class HomeScreenContent extends StatelessWidget {
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ],
-    );
-  }
-}
-
-// ============================================================================
-// MAIN - Configuration complète
-// ============================================================================
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialiser ObjectBox
-  final objectBox = ObjectBox();
-
-  // Initialiser MessagingManager
-  final messagingManager = MessagingManager();
-  await messagingManager.initialize(
-    objectBox,
-    'node-system-hostname', // À remplacer par P2PManager().nodeId
-  );
-
-  // Initialiser MessagingP2PIntegration
-  final messagingP2P = MessagingP2PIntegration();
-  await messagingP2P.initialize(
-    messagingManager,
-    P2PIntegration(), // À initialiser
-    ConnectionManager(), // À initialiser
-  );
-  messagingP2P.start();
-
-  runApp(MyApp(messagingManager: messagingManager));
-}
-
-class MyApp extends StatelessWidget {
-  final MessagingManager messagingManager;
-
-  const MyApp({
-    Key? key,
-    required this.messagingManager,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider<MessagingManager>.value(
-          value: messagingManager,
-        ),
-      ],
-      child: MaterialApp(
-        title: 'Hôpital P2P',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
-        ),
-        home: const HomeScreenWithMessaging(),
-      ),
     );
   }
 }

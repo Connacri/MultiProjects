@@ -21,6 +21,7 @@ import 'license/LicenseInfoPage.dart';
 import 'p2p/P2PDiagnosticPage.dart';
 import 'p2p/connection_manager_fixed.dart';
 import 'p2p/discovery_manager_broadcast_clean.dart';
+import 'p2p/messenger/messaging_appbar_integration.dart';
 import 'p2p/messenger/messaging_ui_widgets.dart';
 import 'p2p/p2p_manager_fixed.dart';
 import 'p2p/p2p_status_widgets.dart';
@@ -503,6 +504,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: Icon(Icons.message),
+            color: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => HomeScreenWithMessaging(),
+                ),
+              );
+            },
+          ),
           MessengerIconWithBadge(
             onPressed: () {
               showModalBottomSheet(
