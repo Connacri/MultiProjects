@@ -310,18 +310,19 @@ Future<String?> generatePersonnelListsPDF(
 
 pw.Widget _buildHeader(
     pw.MemoryImage logo, pw.TextStyle bold, pw.TextStyle baseStyle) {
-  return pw.Column(mainAxisAlignment: pw.MainAxisAlignment.start, children: [
+  return pw.Column(mainAxisAlignment: pw.MainAxisAlignment.center, children: [
     pw.Row(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      mainAxisAlignment: pw.MainAxisAlignment.center,
       children: [
-        pw.Container(
-          width: 45,
-          height: 45,
-          margin: const pw.EdgeInsets.only(right: 8),
-          child: pw.Image(logo, fit: pw.BoxFit.contain),
-        ),
+        // pw.Container(
+        //   width: 45,
+        //   height: 45,
+        //   margin: const pw.EdgeInsets.only(right: 8),
+        //   child: pw.Image(logo, fit: pw.BoxFit.contain),
+        // ),
         pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
           children: [
             pw.Text('RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE',
                 style: bold),

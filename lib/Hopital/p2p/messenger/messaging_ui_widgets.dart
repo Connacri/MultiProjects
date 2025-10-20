@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'fonctions.dart';
 import 'messaging_entities.dart';
 import 'messaging_manager.dart';
 
@@ -203,62 +204,99 @@ class _ConversationsBottomSheetState extends State<ConversationsBottomSheet> {
       conv.lastActivityTimestamp,
     );
 
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.blue[700],
-        child: Text(
-          conv.title?.substring(0, 1).toUpperCase() ?? '?',
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
+    // Récupérer la plateforme et la branche
+    final participantId = conv.participantNodeIds.split(',').first;
+    final branch = getBranchForNode(participantId);
+
+    return FutureBuilder<String>(
+      future: getCurrentPlatform(),
+      builder: (context, platformSnapshot) {
+        final platform = platformSnapshot.data ?? 'Inconnu';
+
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: Colors.blue[700],
             child: Text(
-              conv.title ?? 'Conversation',
-              style: TextStyle(
-                fontWeight:
-                    conv.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
-              ),
-              overflow: TextOverflow.ellipsis,
+              conv.title?.substring(0, 1).toUpperCase() ?? '?',
+              style: const TextStyle(color: Colors.white),
             ),
           ),
-          if (conv.unreadCount > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                conv.unreadCount.toString(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      conv.title ?? 'Conversation',
+                      style: TextStyle(
+                        fontWeight: conv.unreadCount > 0
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.device_unknown, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          platform,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                        const SizedBox(width: 8),
+                        if (branch != null) ...[
+                          const Icon(Icons.account_tree, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            branch,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                 ),
               ),
+              if (conv.unreadCount > 0)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    conv.unreadCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          subtitle: Text(
+            conv.lastMessagePreview ?? 'Aucun message',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: conv.unreadCount > 0 ? Colors.black87 : Colors.grey,
+              fontWeight:
+                  conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
             ),
-        ],
-      ),
-      subtitle: Text(
-        conv.lastMessagePreview ?? 'Aucun message',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: conv.unreadCount > 0 ? Colors.black87 : Colors.grey,
-          fontWeight:
-              conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
-        ),
-      ),
-      trailing: Text(
-        timeFormat.format(lastTime),
-        style: const TextStyle(fontSize: 12, color: Colors.grey),
-      ),
-      onTap: () {
-        Navigator.pop(context);
-        _openConversationDialog(context, conv);
+          ),
+          trailing: Text(
+            timeFormat.format(lastTime),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          onTap: () {
+            Navigator.pop(context);
+            _openConversationDialog(context, conv);
+          },
+        );
       },
     );
   }
@@ -347,130 +385,164 @@ class _ConversationDialogState extends State<ConversationDialog> {
           limit: _pageSize,
           offset: _offset,
         );
+        // Récupérer la plateforme et la branche
+        final participantId =
+            widget.conversation.participantNodeIds.split(',').first;
+        final branch = getBranchForNode(participantId);
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(widget.conversation.title ?? 'Conversation'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                onPressed: () {
-                  // Afficher détails conversation
-                },
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              // Messages list
-              Expanded(
-                child: messages.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.chat_bubble_outline,
-                                size: 64, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
+        return FutureBuilder<String>(
+            future: getCurrentPlatform(),
+            builder: (context, platformSnapshot) {
+              final platform = platformSnapshot.data ?? 'Inconnu';
+              return Scaffold(
+                appBar: AppBar(
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.conversation.title ?? 'Conversation'),
+                      Row(
+                        children: [
+                          const Icon(Icons.device_unknown, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            platform,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          const SizedBox(width: 8),
+                          if (branch != null) ...[
+                            const Icon(Icons.account_tree, size: 12),
+                            const SizedBox(width: 4),
                             Text(
-                              'Aucun message',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Commencez la conversation !',
-                              style: TextStyle(
-                                color: Colors.grey[500],
-                                fontSize: 14,
-                              ),
+                              branch,
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ],
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        reverse: true,
-                        itemCount: messages.length,
-                        itemBuilder: (context, index) {
-                          final message = messages[index];
-                          return _buildMessageBubble(
-                              context, message, messagingManager);
-                        },
+                        ],
                       ),
-              ),
-              // Input area
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, -2),
+                    ],
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.info_outline),
+                      onPressed: () {
+                        // Afficher détails conversation
+                      },
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(12),
-                child: Row(
+                body: Column(
                   children: [
+                    // Messages list
                     Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: InputDecoration(
-                          hintText: 'Votre message...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          suffixIcon: PopupMenuButton(
-                            icon: const Icon(Icons.add),
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.image),
-                                    SizedBox(width: 12),
-                                    Text('Image'),
-                                  ],
-                                ),
-                                onTap: () => _attachImage(context),
+                      child: messages.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.chat_bubble_outline,
+                                      size: 64, color: Colors.grey[400]),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Aucun message',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Commencez la conversation !',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              PopupMenuItem(
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.mic),
-                                    SizedBox(width: 12),
-                                    Text('Audio'),
-                                  ],
-                                ),
-                                onTap: () => _attachAudio(context),
-                              ),
-                            ],
-                          ),
-                        ),
-                        maxLines: 4,
-                        minLines: 1,
-                      ),
+                            )
+                          : ListView.builder(
+                              controller: _scrollController,
+                              reverse: true,
+                              itemCount: messages.length,
+                              itemBuilder: (context, index) {
+                                final message = messages[index];
+                                return _buildMessageBubble(
+                                    context, message, messagingManager);
+                              },
+                            ),
                     ),
-                    const SizedBox(width: 8),
-                    // Send button
-                    FloatingActionButton(
-                      mini: true,
-                      onPressed: () => _sendMessage(context, messagingManager),
-                      child: const Icon(Icons.send),
+                    // Input area
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _messageController,
+                              decoration: InputDecoration(
+                                hintText: 'Votre message...',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                                suffixIcon: PopupMenuButton(
+                                  icon: const Icon(Icons.add),
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.image),
+                                          SizedBox(width: 12),
+                                          Text('Image'),
+                                        ],
+                                      ),
+                                      onTap: () => _attachImage(context),
+                                    ),
+                                    PopupMenuItem(
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.mic),
+                                          SizedBox(width: 12),
+                                          Text('Audio'),
+                                        ],
+                                      ),
+                                      onTap: () => _attachAudio(context),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              maxLines: 4,
+                              minLines: 1,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Send button
+                          FloatingActionButton(
+                            mini: true,
+                            onPressed: () =>
+                                _sendMessage(context, messagingManager),
+                            child: const Icon(Icons.send),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        );
+              );
+            });
       },
     );
   }

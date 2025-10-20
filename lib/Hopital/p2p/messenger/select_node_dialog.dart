@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../main.dart';
 import 'NodesManager.dart';
+import 'fonctions.dart';
 import 'messaging_entities.dart';
 import 'messaging_manager.dart';
 import 'messaging_ui_widgets.dart';
@@ -117,11 +119,11 @@ class _SelectNodePageState extends State<SelectNodePage> {
       BuildContext context, NetworkNode node) async {
     print('[SelectNodePage] 🔄 Création conversation avec ${node.displayName}');
 
-    // Show loading dialog
+    // Show loading dialog using global navigator key
     showDialog(
-      context: context,
+      context: navigatorKey.currentContext!,
       barrierDismissible: false,
-      builder: (loadingContext) => const Center(
+      builder: (context) => const Center(
         child: Card(
           child: Padding(
             padding: EdgeInsets.all(20),
@@ -141,9 +143,6 @@ class _SelectNodePageState extends State<SelectNodePage> {
     try {
       final messagingManager = context.read<MessagingManager>();
       print('[SelectNodePage] ✅ MessagingManager obtenu');
-
-      // Create or retrieve private conversation with timeout
-      print('[SelectNodePage] 🔄 Création de la conversation...');
       final conversation = await messagingManager
           .createPrivateConversation(
         node.nodeId,
@@ -157,96 +156,125 @@ class _SelectNodePageState extends State<SelectNodePage> {
           );
         },
       );
-
       print(
           '[SelectNodePage] ✅ Conversation créée: ${conversation.conversationId}');
 
-      if (mounted) {
-        // Close loading dialog
-        print('[SelectNodePage] 🔄 Fermeture du dialog de chargement');
-        Navigator.pop(context);
-
-        // Mark as read
-        print('[SelectNodePage] 🔄 Marquage de la conversation comme lue');
-        await messagingManager
-            .markConversationAsRead(conversation.conversationId);
-
-        print('[SelectNodePage] ✅ Ouverture du ConversationDialog');
-
-        // ✅ Navigate using ConversationDialogWithProvider
-        // Passer le MessagingManager en paramètre (pas via context.read dans la nouvelle route)
-        if (mounted) {
-          Navigator.of(context, rootNavigator: true).push(
-            MaterialPageRoute(
-              builder: (newContext) => ConversationDialogWithProvider(
-                conversation: conversation,
-                messagingManager: messagingManager, // ✅ Passer en paramètre
-              ),
-            ),
-          );
-        }
+      // Close loading dialog BEFORE navigating
+      if (navigatorKey.currentContext != null) {
+        Navigator.pop(navigatorKey.currentContext!);
       }
+
+      await messagingManager
+          .markConversationAsRead(conversation.conversationId);
+
+      await Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute(
+          builder: (newContext) => ConversationDialogWithProvider(
+            conversation: conversation,
+            messagingManager: messagingManager,
+          ),
+        ),
+      );
     } on TimeoutException catch (e) {
       print('[SelectNodePage] ⏱️ TimeoutException: $e');
-      if (mounted) {
-        Navigator.pop(context);
+      if (navigatorKey.currentContext != null) {
+        Navigator.pop(navigatorKey.currentContext!);
         _showError('Timeout: la conversation a pris trop de temps à créer');
       }
     } catch (e, stackTrace) {
       print('[SelectNodePage] ❌ Erreur: $e');
       print('[SelectNodePage] Stack: $stackTrace');
-      if (mounted) {
-        Navigator.pop(context);
+      if (navigatorKey.currentContext != null) {
+        Navigator.pop(navigatorKey.currentContext!);
         _showError('Erreur création conversation: $e');
+      }
+    } finally {
+      // Ensure dialog is always closed
+      if (navigatorKey.currentContext != null &&
+          Navigator.canPop(navigatorKey.currentContext!)) {
+        Navigator.pop(navigatorKey.currentContext!);
       }
     }
   }
 
   Widget _buildNodeTile(BuildContext context, NetworkNode node) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: node.statusColor.withOpacity(0.2),
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            Center(
-              child: Text(
-                node.displayName.isNotEmpty
-                    ? node.displayName.substring(0, 1).toUpperCase()
-                    : '?',
+    return FutureBuilder<String>(
+      future: getCurrentPlatform(),
+      builder: (context, platformSnapshot) {
+        final platform = platformSnapshot.data ?? 'Inconnu';
+        final branch = getBranchForNode(node.nodeId);
+
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor: node.statusColor.withOpacity(0.2),
+            child: Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                Center(
+                  child: Text(
+                    node.displayName.isNotEmpty
+                        ? node.displayName.substring(0, 1).toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                      color: node.statusColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: node.statusColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          title: Text(node.displayName),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                node.statusLabel,
                 style: TextStyle(
+                  fontSize: 11,
                   color: node.statusColor,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: node.statusColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.device_unknown, size: 12),
+                  const SizedBox(width: 4),
+                  Text(
+                    platform,
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  const SizedBox(width: 8),
+                  if (branch != null) ...[
+                    const Icon(Icons.account_tree, size: 12),
+                    const SizedBox(width: 4),
+                    Text(
+                      branch,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ],
               ),
-            ),
-          ],
-        ),
-      ),
-      title: Text(node.displayName),
-      subtitle: Text(
-        node.statusLabel,
-        style: TextStyle(
-          fontSize: 11,
-          color: node.statusColor,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: () => _createConversation(context, node),
+            ],
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          onTap: () => _createConversation(context, node),
+        );
+      },
     );
   }
 
