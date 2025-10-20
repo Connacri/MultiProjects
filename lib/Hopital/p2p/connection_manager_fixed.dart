@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'p2p_manager_fixed.dart';
 
@@ -31,7 +33,7 @@ class ConnectionManager with ChangeNotifier {
   bool get isRunning => _isRunning;
 
   final StreamController<Map<String, dynamic>> _messageController =
-      StreamController.broadcast();
+  StreamController.broadcast();
 
   Stream<Map<String, dynamic>> get onMessage => _messageController.stream;
 
@@ -42,6 +44,12 @@ class ConnectionManager with ChangeNotifier {
   int get failedConnections => _failedConnections;
 
   int get successfulConnections => _successfulConnections;
+
+  // ✅ NOUVEAU: Timer pour broadcast périodique des métadonnées
+  Timer? _metadataBroadcastTimer;
+
+  // ✅ NOUVEAU: Cache des métadonnées du nœud local
+  Map<String, dynamic>? _localMetadata;
 
   /// Démarre le serveur avec retry automatique sur différents ports
   Future<void> start() async {
@@ -58,6 +66,12 @@ class ConnectionManager with ChangeNotifier {
         _serverPort = port;
         _isRunning = true;
         notifyListeners();
+
+        // ✅ NOUVEAU: Broadcaster les métadonnées au démarrage
+        await Future.delayed(Duration(milliseconds: 500));
+        _broadcastNodeMetadata();
+        _startPeriodicMetadataBroadcast();
+
         print('[ConnectionManager] ✅ Serveur P2P démarré sur le port $port');
         return;
       } catch (e) {
@@ -101,16 +115,191 @@ class ConnectionManager with ChangeNotifier {
     }
   }
 
+  // ============================================================================
+  // ✅ BROADCAST MÉTADONNÉES - NOUVEAU
+  // ============================================================================
+
+  /// Prépare et cache les métadonnées du nœud local
+  Future<void> _prepareLocalMetadata() async {
+    try {
+      final platform = await _getCurrentPlatform();
+      final branch = _getBranchForNode(P2PManager().nodeId);
+      final displayName = _getDisplayName(P2PManager().nodeId);
+
+      _localMetadata = {
+        'type': 'node_metadata',
+        'nodeId': P2PManager().nodeId,
+        'displayName': displayName,
+        'platform': platform,
+        'branch': branch ?? 'Unknown',
+        'timestamp': DateTime
+            .now()
+            .millisecondsSinceEpoch,
+        'version': '1.0',
+      };
+
+      print('[ConnectionManager] ✅ Métadonnées locales préparées:');
+      print('  - Platform: $platform');
+      print('  - Branch: ${branch ?? "None"}');
+      print('  - Display Name: $displayName');
+    } catch (e) {
+      print('[ConnectionManager] ❌ Erreur préparation métadonnées: $e');
+    }
+  }
+
+  /// Envoie les métadonnées du nœud courant à tous les voisins
+  void _broadcastNodeMetadata() {
+    if (_localMetadata == null) {
+      print('[ConnectionManager] ⚠️  Métadonnées locales non disponibles');
+      return;
+    }
+
+    try {
+      // Broadcaster à tous les voisins découverts
+      for (final neighborId in _neighbors.toList()) {
+        try {
+          sendMessage(neighborId, _localMetadata!);
+        } catch (e) {
+          print(
+              '[ConnectionManager] ⚠️ Erreur envoi métadonnées à $neighborId: $e');
+        }
+      }
+
+      if (_neighbors.isNotEmpty) {
+        print(
+            '[ConnectionManager] ✅ Métadonnées broadcastées à ${_neighbors
+                .length} voisin(s)');
+      }
+    } catch (e) {
+      print('[ConnectionManager] ❌ Erreur broadcast métadonnées: $e');
+    }
+  }
+
+  /// Republisher les métadonnées périodiquement (toutes les 30 secondes)
+  void _startPeriodicMetadataBroadcast() {
+    _metadataBroadcastTimer?.cancel();
+
+    _metadataBroadcastTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      if (_isRunning && _neighbors.isNotEmpty) {
+        _broadcastNodeMetadata();
+      }
+    });
+
+    print('[ConnectionManager] ✅ Broadcast périodique de métadonnées activé');
+  }
+
+  // ============================================================================
+  // RÉCUPÉRATION DES INFORMATIONS DU NŒUD
+  // ============================================================================
+
+  /// Récupère la plateforme de l'appareil courant
+  Future<String> _getCurrentPlatform() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (kIsWeb) {
+        return 'Web';
+      } else {
+        if (Platform.isAndroid) {
+          final androidInfo = await deviceInfo.androidInfo;
+          return 'Android ${androidInfo.version.release}';
+        } else if (Platform.isIOS) {
+          final iosInfo = await deviceInfo.iosInfo;
+          return 'iOS ${iosInfo.systemVersion}';
+        } else if (Platform.isWindows) {
+          final windowsInfo = await deviceInfo.windowsInfo;
+          return 'Windows ${windowsInfo.productName}';
+        } else if (Platform.isMacOS) {
+          final macInfo = await deviceInfo.macOsInfo;
+          return 'macOS ${macInfo.osRelease}';
+        } else if (Platform.isLinux) {
+          final linuxInfo = await deviceInfo.linuxInfo;
+          return 'Linux ${linuxInfo.prettyName}';
+        } else {
+          return 'Inconnu';
+        }
+      }
+    } catch (e) {
+      print('[ConnectionManager] ⚠️ Erreur récupération plateforme: $e');
+      return 'Inconnu';
+    }
+  }
+
+  /// Récupère la branche associée au nœud
+  String? _getBranchForNode(String nodeId) {
+    try {
+      // À adapter selon votre logique métier
+      // Exemple: récupérer depuis ObjectBox si vous avez une table Staff/Branch
+      // final staffBox = objectBoxGlobal.store.box<Staff>();
+      // final staff = staffBox.get(int.tryParse(nodeId) ?? 0);
+      // return staff?.branch.target?.branchNom;
+
+      // Pour l'instant, retourner null
+      return null;
+    } catch (e) {
+      print('[ConnectionManager] ⚠️ Erreur récupération branche: $e');
+      return null;
+    }
+  }
+
+  /// Extrait le nom d'affichage du nodeId
+  String _getDisplayName(String nodeId) {
+    try {
+      final parts = nodeId.split('-');
+      if (parts.length >= 3) {
+        return parts.skip(2).join('-');
+      }
+      return nodeId;
+    } catch (e) {
+      return nodeId;
+    }
+  }
+
+  // ============================================================================
+  // GESTION DES VOISINS
+  // ============================================================================
+
+  /// Ajoute un voisin et broadcaster les métadonnées
+  void addNeighbor(String nodeId, String ip) {
+    if (!_neighbors.contains(nodeId)) {
+      _neighbors.add(nodeId);
+      _nodeIps[nodeId] = ip;
+      print('[ConnectionManager] ✅ Voisin ajouté: $nodeId ($ip)');
+      notifyListeners();
+
+      // ✅ NOUVEAU: Broadcaster les métadonnées quand un nouveau voisin se connecte
+      Future.delayed(Duration(milliseconds: 200), () {
+        _broadcastNodeMetadata();
+      });
+    }
+  }
+
+  /// Supprime un voisin
+  void removeNeighbor(String nodeId) {
+    if (_neighbors.remove(nodeId)) {
+      _nodeIps.remove(nodeId);
+      print('[ConnectionManager] ❌ Voisin supprimé: $nodeId');
+      notifyListeners();
+    }
+  }
+
+  Set<String> get neighbors => _neighbors;
+
+  Map<String, String> get nodeIps => Map.from(_nodeIps);
+
+  // ============================================================================
+  // GESTION DES CONNEXIONS
+  // ============================================================================
+
   /// Gère les nouvelles connexions entrantes
   void _handleConnection(Socket socket) {
     final remoteAddress = socket.remoteAddress.address;
     final remotePort = socket.remotePort;
 
     print(
-        '[ConnectionManager] 🔗 Connexion entrante de $remoteAddress:$remotePort');
+        '[ConnectionManager] 📞 Connexion entrante de $remoteAddress:$remotePort');
 
     socket.listen(
-      (data) => _handleData(socket, data),
+          (data) => _handleData(socket, data),
       onError: (error) => _handleError(socket, error),
       onDone: () => _handleDisconnection(socket),
       cancelOnError: true,
@@ -134,12 +323,13 @@ class ConnectionManager with ChangeNotifier {
         _nodeIps[nodeId] = socket.remoteAddress.address;
         _neighbors.add(nodeId);
         print(
-            '[ConnectionManager] ✅ Nouveau voisin enregistré: $nodeId (${socket.remoteAddress.address})');
+            '[ConnectionManager] ✅ Nouveau voisin enregistré: $nodeId (${socket
+                .remoteAddress.address})');
         notifyListeners();
       }
 
       print(
-          '[ConnectionManager] 📩 Message reçu de $nodeId: ${message['type']}');
+          '[ConnectionManager] 📨 Message reçu de $nodeId: ${message['type']}');
       _messageController.add(message);
     } catch (e) {
       print('[ConnectionManager] ❌ Erreur décodage message: $e');
@@ -176,13 +366,20 @@ class ConnectionManager with ChangeNotifier {
       // ✅ CORRECTION: Envoyer un message de présentation avec le vrai nodeId
       sendMessage(nodeId, {
         'type': 'hello',
-        'nodeId': P2PManager().nodeId, // ✅ CORRECTION: Utiliser le vrai nodeId
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'nodeId': P2PManager().nodeId,
+        'timestamp': DateTime
+            .now()
+            .millisecondsSinceEpoch,
+      });
+
+      // ✅ NOUVEAU: Broadcaster les métadonnées après connexion
+      Future.delayed(Duration(milliseconds: 300), () {
+        _broadcastNodeMetadata();
       });
 
       // Écouter les messages
       socket.listen(
-        (data) => _handleData(socket, data),
+            (data) => _handleData(socket, data),
         onError: (error) => _handleError(socket, error),
         onDone: () => _handleDisconnection(socket),
         cancelOnError: true,
@@ -251,7 +448,7 @@ class ConnectionManager with ChangeNotifier {
       _connections.remove(nodeId);
       _nodeIps.remove(nodeId);
       _neighbors.remove(nodeId);
-      print('[ConnectionManager] 🔌 Déconnexion de $nodeId');
+      print('[ConnectionManager] 📴 Déconnexion de $nodeId');
       notifyListeners();
     }
 
@@ -286,13 +483,11 @@ class ConnectionManager with ChangeNotifier {
     return null;
   }
 
-  Set<String> get neighbors => _neighbors;
-
-  Map<String, String> get nodeIps => Map.from(_nodeIps);
-
   /// Arrête le serveur
   Future<void> stop() async {
     print('[ConnectionManager] 🛑 Arrêt du serveur P2P');
+
+    _metadataBroadcastTimer?.cancel();
 
     for (final socket in _connections.values) {
       try {
@@ -333,10 +528,13 @@ class ConnectionManager with ChangeNotifier {
       'failedConnections': _failedConnections,
       'neighbors': _neighbors.toList(),
       'nodeIps': _nodeIps,
+      'localMetadata': _localMetadata,
     };
   }
 
   void dispose() {
+    _metadataBroadcastTimer?.cancel();
+    _messageController.close();
     stop();
   }
 }

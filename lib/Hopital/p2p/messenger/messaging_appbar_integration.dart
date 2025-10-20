@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'messaging_manager.dart';
 import 'messaging_ui_widgets.dart';
-import 'select_node_dialog.dart';
+import 'select_node.dart';
 
 // ============================================================================
 // EXAMPLE - Intégration Messaging dans AppBar

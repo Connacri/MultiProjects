@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../main.dart';
+import '../connection_manager_fixed.dart';
 import 'NodesManager.dart';
 import 'fonctions.dart';
 import 'messaging_entities.dart';
@@ -11,7 +12,6 @@ import 'messaging_manager.dart';
 import 'messaging_ui_widgets.dart';
 
 /// Wrapper pour ConversationDialog qui préserve le Provider
-/// Reçoit le MessagingManager en paramètre (pas de context.read !)
 class ConversationDialogWithProvider extends StatelessWidget {
   final Conversation conversation;
   final MessagingManager messagingManager;
@@ -24,8 +24,6 @@ class ConversationDialogWithProvider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Fournir le MessagingManager reçu en paramètre au nouvel écran
-    // ✅ Utiliser ChangeNotifierProvider.value car MessagingManager hérite de ChangeNotifier
     return ChangeNotifierProvider<MessagingManager>.value(
       value: messagingManager,
       child: ConversationDialog(
@@ -47,20 +45,57 @@ class _SelectNodePageState extends State<SelectNodePage> {
   List<NetworkNode> _filteredNodes = [];
   bool _isLoading = false;
 
+  // ✅ NOUVEAU: Cache des métadonnées des nœuds distants
+  final Map<String, Map<String, dynamic>> _nodeMetadata = {};
+  StreamSubscription? _metadataSubscription;
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchController.addListener(_filterNodes);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialNodes();
+      _setupMetadataListener(); // ✅ Écouter les métadonnées
     });
-    _searchController.addListener(_filterNodes);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _metadataSubscription?.cancel();
     super.dispose();
+  }
+
+  // ✅ NOUVEAU: Écouter les messages de métadonnées
+  void _setupMetadataListener() {
+    try {
+      final connectionManager = context.read<ConnectionManager>();
+
+      _metadataSubscription = connectionManager.onMessage.listen((message) {
+        if (message['type'] == 'node_metadata') {
+          final nodeId = message['nodeId'] as String?;
+          if (nodeId != null && mounted) {
+            setState(() {
+              _nodeMetadata[nodeId] = {
+                'displayName': message['displayName'] ?? 'Unknown',
+                'platform': message['platform'] ?? 'Unknown',
+                'branch': message['branch'] ?? 'No Branch',
+                'timestamp': message['timestamp'] ?? 0,
+              };
+            });
+            print('[SelectNodePage] 📥 Métadonnées reçues de $nodeId:');
+            print('   Platform: ${message['platform']}');
+            print('   Branch: ${message['branch']}');
+          }
+        }
+      });
+
+      print('[SelectNodePage] ✅ Listener de métadonnées configuré');
+    } catch (e) {
+      print('[SelectNodePage] ⚠️ Erreur setup listener: $e');
+    }
   }
 
   void _loadInitialNodes() {
@@ -114,12 +149,10 @@ class _SelectNodePageState extends State<SelectNodePage> {
     }
   }
 
-  /// ✅ Corrected: Use ConversationDialog instead of ConversationPage
   Future<void> _createConversation(
       BuildContext context, NetworkNode node) async {
     print('[SelectNodePage] 🔄 Création conversation avec ${node.displayName}');
 
-    // Show loading dialog using global navigator key
     showDialog(
       context: navigatorKey.currentContext!,
       barrierDismissible: false,
@@ -143,6 +176,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
     try {
       final messagingManager = context.read<MessagingManager>();
       print('[SelectNodePage] ✅ MessagingManager obtenu');
+
       final conversation = await messagingManager
           .createPrivateConversation(
         node.nodeId,
@@ -156,10 +190,10 @@ class _SelectNodePageState extends State<SelectNodePage> {
           );
         },
       );
+
       print(
           '[SelectNodePage] ✅ Conversation créée: ${conversation.conversationId}');
 
-      // Close loading dialog BEFORE navigating
       if (navigatorKey.currentContext != null) {
         Navigator.pop(navigatorKey.currentContext!);
       }
@@ -189,7 +223,6 @@ class _SelectNodePageState extends State<SelectNodePage> {
         _showError('Erreur création conversation: $e');
       }
     } finally {
-      // Ensure dialog is always closed
       if (navigatorKey.currentContext != null &&
           Navigator.canPop(navigatorKey.currentContext!)) {
         Navigator.pop(navigatorKey.currentContext!);
@@ -197,85 +230,134 @@ class _SelectNodePageState extends State<SelectNodePage> {
     }
   }
 
+  // ✅ CORRECTION: Utiliser les métadonnées du nœud distant
   Widget _buildNodeTile(BuildContext context, NetworkNode node) {
-    return FutureBuilder<String>(
-      future: getCurrentPlatform(),
-      builder: (context, platformSnapshot) {
-        final platform = platformSnapshot.data ?? 'Inconnu';
-        final branch = getBranchForNode(node.nodeId);
+    // Récupérer les métadonnées du nœud distant (pas du local!)
+    final metadata = _nodeMetadata[node.nodeId];
 
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: node.statusColor.withOpacity(0.2),
-            child: Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                Center(
-                  child: Text(
-                    node.displayName.isNotEmpty
-                        ? node.displayName.substring(0, 1).toUpperCase()
-                        : '?',
-                    style: TextStyle(
-                      color: node.statusColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+    // Si métadonnées disponibles, les utiliser
+    // Sinon, afficher "Détection..." en attendant
+    final platform = metadata?['platform'] ?? 'Détection...';
+    final branchFromMetadata = metadata?['branch'];
+
+    // Fallback sur getBranchForNode si pas de métadonnées
+    final branch = branchFromMetadata ?? getBranchForNode(node.nodeId);
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: node.statusColor.withOpacity(0.2),
+        child: Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Center(
+              child: Text(
+                node.displayName.isNotEmpty
+                    ? node.displayName.substring(0, 1).toUpperCase()
+                    : '?',
+                style: TextStyle(
+                  color: node.statusColor,
+                  fontWeight: FontWeight.bold,
                 ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: node.statusColor,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+              ),
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: node.statusColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      title: Text(node.displayName),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            node.statusLabel,
+            style: TextStyle(
+              fontSize: 11,
+              color: node.statusColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              // ✅ Icône adaptée à la plateforme
+              Icon(
+                _getPlatformIcon(platform),
+                size: 14,
+                color:
+                    platform == 'Détection...' ? Colors.grey : Colors.blue[700],
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  platform,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: platform != 'Détection...'
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                    color: platform == 'Détection...'
+                        ? Colors.grey
+                        : Colors.blue[700],
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (branch != null && branch != 'No Branch') ...[
+                const Icon(Icons.business, size: 12, color: Colors.green),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    branch,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
-            ),
-          ),
-          title: Text(node.displayName),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                node.statusLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: node.statusColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.device_unknown, size: 12),
-                  const SizedBox(width: 4),
-                  Text(
-                    platform,
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                  const SizedBox(width: 8),
-                  if (branch != null) ...[
-                    const Icon(Icons.account_tree, size: 12),
-                    const SizedBox(width: 4),
-                    Text(
-                      branch,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ],
-                ],
-              ),
             ],
           ),
-          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-          onTap: () => _createConversation(context, node),
-        );
-      },
+        ],
+      ),
+      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+      onTap: () => _createConversation(context, node),
     );
+  }
+
+  // ✅ NOUVEAU: Icône selon la plateforme
+  IconData _getPlatformIcon(String platform) {
+    final platformLower = platform.toLowerCase();
+
+    if (platformLower.contains('android')) {
+      return Icons.android;
+    } else if (platformLower.contains('ios')) {
+      return Icons.apple;
+    } else if (platformLower.contains('windows')) {
+      return Icons.desktop_windows;
+    } else if (platformLower.contains('macos')) {
+      return Icons.laptop_mac;
+    } else if (platformLower.contains('linux')) {
+      return Icons.computer;
+    } else if (platformLower.contains('web')) {
+      return Icons.language;
+    }
+
+    return Icons.device_unknown;
   }
 
   @override
@@ -284,6 +366,21 @@ class _SelectNodePageState extends State<SelectNodePage> {
       appBar: AppBar(
         title: const Text('Sélectionner un nœud'),
         actions: [
+          // ✅ Badge pour montrer combien de métadonnées reçues
+          if (_nodeMetadata.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Chip(
+                  label: Text(
+                    '${_nodeMetadata.length}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                  avatar: const Icon(Icons.info, size: 16),
+                  backgroundColor: Colors.green[100],
+                ),
+              ),
+            ),
           IconButton(
             icon: _isLoading
                 ? const SizedBox(

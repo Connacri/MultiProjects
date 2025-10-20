@@ -21,7 +21,7 @@ import 'StaffProvider.dart';
 import 'license/LicenseInfoPage.dart';
 import 'p2p/connection_manager_fixed.dart';
 import 'p2p/discovery_manager_broadcast_clean.dart';
-import 'p2p/messenger/select_node_dialog.dart';
+import 'p2p/messenger/select_node.dart';
 import 'p2p/p2p_manager_fixed.dart';
 import 'p2p/p2p_status_widgets.dart';
 import 'p2p/sync_manager_complete.dart';
@@ -177,15 +177,9 @@ class TableauStaffPage extends StatefulWidget {
 
 class _TableauStaffPageState extends State<TableauStaffPage> {
   // ⭐ NOUVEAU : Variables pour la gestion du mois et année
-  int _selectedMonth = DateTime
-      .now()
-      .month;
-  int _selectedMonthNext = DateTime
-      .now()
-      .month;
-  int _selectedYear = DateTime
-      .now()
-      .year;
+  int _selectedMonth = DateTime.now().month;
+  int _selectedMonthNext = DateTime.now().month;
+  int _selectedYear = DateTime.now().year;
 
   // Variables pour gérer l'édition
   Map<String, bool> _editingCells = {}; // Clé: "staffId-jour"
@@ -232,8 +226,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   String get _selectedMonthName => _moisNoms[_selectedMonth - 1];
 
 // 4. Modifier aussi la méthode _saveActiviteModification
-  Future<void> _saveActiviteModification(Staff staff, int jour,
-      String nouveauStatut) async {
+  Future<void> _saveActiviteModification(
+      Staff staff, int jour, String nouveauStatut) async {
     try {
       final activiteProvider = ActiviteProvider();
       await activiteProvider.updateActivite(staff.id, jour, nouveauStatut,
@@ -480,8 +474,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Mois ${_moisNoms[month -
-                        1]} $year chargé - Vous pouvez modifier",
+                    "Mois ${_moisNoms[month - 1]} $year chargé - Vous pouvez modifier",
                     style: TextStyle(fontSize: 13),
                   ),
                 ),
@@ -586,18 +579,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           staffProvider.staffs.isEmpty
               ? SizedBox.shrink()
               : IconButton(
-              onPressed: () =>
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PlanningHebdoWidget(),
-                    ),
-                  ),
-              icon: Icon(Icons.calendar_month)),
+                  onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlanningHebdoWidget(),
+                        ),
+                      ),
+                  icon: Icon(Icons.calendar_month)),
           staffProvider.staffs.isEmpty
               ? IconButton(
-              onPressed: () => _insertActivitiesWithConfirmation(context),
-              icon: Icon(Icons.add_road_outlined))
+                  onPressed: () => _insertActivitiesWithConfirmation(context),
+                  icon: Icon(Icons.add_road_outlined))
               : _buildMobileActions(context),
 
           SizedBox(
@@ -659,10 +651,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           Map<String, String> groupNameToImage = {
             "Personnel Médical": "assets/photos/hopital/d (1).jpg",
             "Personnel Paramédical (08h-08h)":
-            "assets/photos/hopital/d (8).jpg",
+                "assets/photos/hopital/d (8).jpg",
             "Agents d'hygiène (08h-12h)": "assets/photos/hopital/q (1).jpg",
             "Personnel Administratif (08h-16h)":
-            "assets/photos/hopital/s2 (10).jpg",
+                "assets/photos/hopital/s2 (10).jpg",
           };
           Map<String, List<Color>> groupNameToGradient = {
             "Personnel Médical": [Color(0x6636E3FF), Color(0x6613D6B4)],
@@ -757,8 +749,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Mois ${monthPrefix}${_selectedMonthName
-                              .capitalize} $_selectedYear',
+                          'Mois ${monthPrefix}${_selectedMonthName.capitalize} $_selectedYear',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.blue.shade600,
@@ -1272,7 +1263,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           ? 300
                           : 400; // 🔹 moitié moins haut sur mobile
                       final double cardWidth =
-                      isMobile ? constraints.maxWidth / 1.1 : 320;
+                          isMobile ? constraints.maxWidth / 1.1 : 320;
                       return SingleChildScrollView(
                         child: Padding(
                           padding: EdgeInsets.all(8.0),
@@ -1289,7 +1280,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               // Récupère la méthode onPressed
                               VoidCallback? onPressed =
                                   groupNameToOnPressed[groupeName] ??
-                                          () {
+                                      () {
                                         print(
                                             "Aucune action définie pour $groupeName");
                                       };
@@ -1376,8 +1367,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               ),
                               Expanded(
                                 child: Text(
-                                  '$groupeName (${groupStaffs
-                                      .length} personnes)',
+                                  '$groupeName (${groupStaffs.length} personnes)',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -1390,12 +1380,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 icon: Icon(Icons.reorder,
                                     color: Colors.white, size: 22),
                                 tooltip: 'Réorganiser l\'ordre d\'affichage',
-                                onPressed: () =>
-                                    _showReorderStaffDialog(
-                                      context,
-                                      groupeName,
-                                      groupStaffs,
-                                    ),
+                                onPressed: () => _showReorderStaffDialog(
+                                  context,
+                                  groupeName,
+                                  groupStaffs,
+                                ),
                               ),
                             ],
                           ),
@@ -1470,7 +1459,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   // ⭐ MISE À JOUR : Générer les colonnes selon le mois sélectionné
                                   ...List.generate(
                                     _daysInSelectedMonth,
-                                        (i) {
+                                    (i) {
                                       final jour = i + 1;
                                       final date = DateTime(
                                           _selectedYear, _selectedMonth, jour);
@@ -1483,15 +1472,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         bgColor = Colors.blue.shade100;
                                       }
                                       String nomDuJour =
-                                      DateFormat('EEE', 'fr_FR')
-                                          .format(date);
+                                          DateFormat('EEE', 'fr_FR')
+                                              .format(date);
                                       return DataColumn(
                                         label: Container(
                                           width: 28,
                                           decoration: BoxDecoration(
                                             color: bgColor,
                                             borderRadius:
-                                            BorderRadius.circular(4),
+                                                BorderRadius.circular(4),
                                           ),
                                           child: Text(
                                             '$jour\n${nomDuJour}',
@@ -1515,7 +1504,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   // ⭐ CORRECTION : Charger les activités ET filtrer les TimeOff par mois
                                   final activites = staff.activites.toList();
                                   List<String> jours =
-                                  List.filled(_daysInSelectedMonth, '-');
+                                      List.filled(_daysInSelectedMonth, '-');
 
                                   // Remplir avec les activités existantes
                                   for (var activite in activites) {
@@ -1531,11 +1520,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                                   return DataRow(
                                     color:
-                                    WidgetStateProperty.resolveWith<Color?>(
-                                          (states) =>
-                                      states.contains(WidgetState.hovered)
-                                          ? Colors.blue.shade50
-                                          : null,
+                                        WidgetStateProperty.resolveWith<Color?>(
+                                      (states) =>
+                                          states.contains(WidgetState.hovered)
+                                              ? Colors.blue.shade50
+                                              : null,
                                     ),
                                     cells: [
                                       DataCell(Text('$numero',
@@ -1545,47 +1534,45 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                               fontSize: 14))),
                                       DataCell(InkWell(
                                         onDoubleTap: () async =>
-                                        await _showCrudDialog(
-                                            context, staff),
+                                            await _showCrudDialog(
+                                                context, staff),
                                         onLongPress: () async {
                                           final confirm =
-                                          await showDialog<bool>(
+                                              await showDialog<bool>(
                                             context: context,
-                                            builder: (ctx) =>
-                                                AlertDialog(
-                                                  title: Text(
-                                                      "Confirmer la suppression"),
-                                                  content: Text(
-                                                      "Voulez-vous vraiment supprimer ${staff
-                                                          .nom} ?"),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () =>
-                                                          Navigator.of(ctx)
-                                                              .pop(false),
-                                                      child: Text("Annuler"),
-                                                    ),
-                                                    ElevatedButton(
-                                                      style:
+                                            builder: (ctx) => AlertDialog(
+                                              title: Text(
+                                                  "Confirmer la suppression"),
+                                              content: Text(
+                                                  "Voulez-vous vraiment supprimer ${staff.nom} ?"),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(ctx)
+                                                          .pop(false),
+                                                  child: Text("Annuler"),
+                                                ),
+                                                ElevatedButton(
+                                                  style:
                                                       ElevatedButton.styleFrom(
                                                           backgroundColor:
-                                                          Colors.red,
+                                                              Colors.red,
                                                           foregroundColor:
-                                                          Colors.white),
-                                                      onPressed: () =>
-                                                          Navigator.of(ctx)
-                                                              .pop(true),
-                                                      child: Text("Supprimer"),
-                                                    ),
-                                                  ],
+                                                              Colors.white),
+                                                  onPressed: () =>
+                                                      Navigator.of(ctx)
+                                                          .pop(true),
+                                                  child: Text("Supprimer"),
                                                 ),
+                                              ],
+                                            ),
                                           );
 
                                           if (confirm == true) {
                                             final staffProvider =
-                                            Provider.of<StaffProvider>(
-                                                context,
-                                                listen: false);
+                                                Provider.of<StaffProvider>(
+                                                    context,
+                                                    listen: false);
                                             await staffProvider
                                                 .deleteStaff(staff);
                                             //  Navigator.pop(context);
@@ -1611,7 +1598,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         decoration: BoxDecoration(
                                           color: _getEquipeColor(equipe),
                                           borderRadius:
-                                          BorderRadius.circular(12),
+                                              BorderRadius.circular(12),
                                         ),
                                         child: Text(equipe,
                                             style: const TextStyle(
@@ -1630,14 +1617,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                 horizontal: 6, vertical: 4),
                                             decoration: BoxDecoration(
                                               color: (staff.obs?.isNotEmpty ??
-                                                  false)
+                                                      false)
                                                   ? Colors.blue.shade50
                                                   : Colors.grey.shade50,
                                               borderRadius:
-                                              BorderRadius.circular(4),
+                                                  BorderRadius.circular(4),
                                               border: Border.all(
                                                 color: (staff.obs?.isNotEmpty ??
-                                                    false)
+                                                        false)
                                                     ? Colors.blue.shade200
                                                     : Colors.grey.shade300,
                                               ),
@@ -1649,23 +1636,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                                   Icons.note,
                                                   size: 12,
                                                   color: (staff.obs
-                                                      ?.isNotEmpty ??
-                                                      false)
+                                                              ?.isNotEmpty ??
+                                                          false)
                                                       ? Colors.blue.shade600
                                                       : Colors.grey.shade400,
                                                 ),
                                                 SizedBox(width: 4),
                                                 Text(
                                                   (staff.obs?.isNotEmpty ??
-                                                      false)
+                                                          false)
                                                       ? "OBS"
                                                       : "-",
                                                   style: TextStyle(
                                                     fontSize: 12,
                                                     fontWeight: FontWeight.w500,
                                                     color: (staff.obs
-                                                        ?.isNotEmpty ??
-                                                        false)
+                                                                ?.isNotEmpty ??
+                                                            false)
                                                         ? Colors.blue.shade600
                                                         : Colors.grey.shade400,
                                                   ),
@@ -1697,11 +1684,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                                         // Filtrer les TimeOff qui chevauchent ce jour précis
                                         final estEnConge =
-                                        timeOffs.any((timeOff) {
+                                            timeOffs.any((timeOff) {
                                           // Vérifier si dateJour est entre debut et fin
                                           return dateJour.isAfter(timeOff.debut
-                                              .subtract(
-                                              Duration(days: 1))) &&
+                                                  .subtract(
+                                                      Duration(days: 1))) &&
                                               dateJour.isBefore(timeOff.fin
                                                   .add(Duration(days: 1)));
                                         });
@@ -1736,9 +1723,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   /// Affiche un dialog pour réorganiser manuellement l'ordre des staffs d'un groupe
-  Future<void> _showReorderStaffDialog(BuildContext context,
-      String groupeName,
-      List<dynamic> groupStaffs,) async {
+  Future<void> _showReorderStaffDialog(
+    BuildContext context,
+    String groupeName,
+    List<dynamic> groupStaffs,
+  ) async {
     List<dynamic> reorderedStaffs = List.from(groupStaffs);
 
     await showDialog(
@@ -1918,8 +1907,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // 2. Ajoutez cette méthode pour sauvegarder l'ordre
-  Future<void> _saveStaffOrder(String groupeName,
-      List<dynamic> orderedStaffs,) async {
+  Future<void> _saveStaffOrder(
+    String groupeName,
+    List<dynamic> orderedStaffs,
+  ) async {
     try {
       final objectBox = ObjectBox();
 
@@ -1987,9 +1978,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   /// Construit le sélecteur d'année
   Widget _buildYearSelector() {
-    final currentYear = DateTime
-        .now()
-        .year;
+    final currentYear = DateTime.now().year;
     final years = List.generate(10, (index) => currentYear - 5 + index);
 
     return Container(
@@ -2092,7 +2081,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // 3. Supprimer la planification du mois
       final planifQuery = objectBox.planificationBox
           .query(Planification_.mois.equals(_selectedMonth) &
-      Planification_.annee.equals(_selectedYear))
+              Planification_.annee.equals(_selectedYear))
           .build();
       final existingPlanif = planifQuery.findFirst();
       planifQuery.close();
@@ -2134,8 +2123,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: Colors.white),
       onSelected: (value) => _handleMobileMenuAction(context, value),
-      itemBuilder: (context) =>
-      [
+      itemBuilder: (context) => [
         const PopupMenuItem(
           value: 'save_pdf',
           child: Row(
@@ -2201,8 +2189,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   /// Gère les actions du menu mobile
-  Future<void> _handleMobileMenuAction(BuildContext context,
-      String value) async {
+  Future<void> _handleMobileMenuAction(
+      BuildContext context, String value) async {
     switch (value) {
       case 'save_pdf':
         await _savePlanningToPdf(context);
@@ -2302,8 +2290,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext dialogContext) =>
-      const Center(
+      builder: (BuildContext dialogContext) => const Center(
         child: CircularProgressIndicator(),
       ),
     );
@@ -2607,7 +2594,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             ),
             onPressed: () async {
               final staffProvider =
-              Provider.of<StaffProvider>(context, listen: false);
+                  Provider.of<StaffProvider>(context, listen: false);
 
               // Sauvegarder toutes les modifications en cours
               for (var entry in _editingCells.entries) {
@@ -2620,7 +2607,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                   if (newValue != null) {
                     final staff =
-                    staffProvider.staffs.firstWhere((s) => s.id == staffId);
+                        staffProvider.staffs.firstWhere((s) => s.id == staffId);
                     await _saveActiviteModification(staff, jour, newValue);
                   }
                 }
@@ -2720,10 +2707,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-  Future<void> _showCrudDialog(BuildContext context,
-      Staff staff, {
-        bool equipesActives = true,
-      }) async {
+  Future<void> _showCrudDialog(
+    BuildContext context,
+    Staff staff, {
+    bool equipesActives = true,
+  }) async {
     final nomCtrl = TextEditingController(text: staff.nom);
     final gradeCtrl = TextEditingController(text: staff.grade);
     final obsCtrl = TextEditingController(text: staff.obs ?? "");
@@ -2736,8 +2724,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         .map((s) => s.groupe!)
         .toSet();
 
-    final List<String> groupesDisponibles = groupesExistants.toList()
-      ..sort();
+    final List<String> groupesDisponibles = groupesExistants.toList()..sort();
     groupesDisponibles.add("➕ Nouveau groupe...");
 
     String? selectedGroupe = staff.groupe;
@@ -2804,8 +2791,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               groupe,
                               style: groupe.startsWith("➕")
                                   ? TextStyle(
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.bold)
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold)
                                   : null,
                             ),
                           );
@@ -2902,9 +2889,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     // Déterminer le groupe final
                     String? finalGroupe;
                     if (isCreatingNewGroupe) {
-                      if (newGroupeCtrl.text
-                          .trim()
-                          .isEmpty) {
+                      if (newGroupeCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text("Le nom du groupe est obligatoire"),
@@ -3005,9 +2990,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           itemBuilder: (context, index) {
                             final timeOff = timeOffs[index];
                             final duree =
-                                timeOff.fin
-                                    .difference(timeOff.debut)
-                                    .inDays +
+                                timeOff.fin.difference(timeOff.debut).inDays +
                                     1;
 
                             return Card(
@@ -3018,8 +3001,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   backgroundColor: Colors.orange,
                                   child: Text(
                                     timeOff.motif
-                                        ?.substring(0, 1)
-                                        .toUpperCase() ??
+                                            ?.substring(0, 1)
+                                            .toUpperCase() ??
                                         'C',
                                     style: TextStyle(
                                         color: Colors.white,
@@ -3027,18 +3010,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   ),
                                 ),
                                 title: Text(
-                                  "${timeOff.motif ??
-                                      'Congé'} ($duree jour${duree > 1
-                                      ? 's'
-                                      : ''})",
+                                  "${timeOff.motif ?? 'Congé'} ($duree jour${duree > 1 ? 's' : ''})",
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 13),
                                 ),
                                 subtitle: Text(
-                                  "Du ${DateFormat('dd/MM/yyyy').format(
-                                      timeOff.debut)} au ${DateFormat(
-                                      'dd/MM/yyyy').format(timeOff.fin)}",
+                                  "Du ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}",
                                   style: TextStyle(fontSize: 12),
                                 ),
                                 trailing: Row(
@@ -3063,40 +3041,29 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                       onPressed: () async {
                                         final confirm = await showDialog<bool>(
                                           context: context,
-                                          builder: (ctx) =>
-                                              AlertDialog(
-                                                title: Text(
-                                                    "Confirmer la suppression"),
-                                                content: Text(
-                                                    "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff
-                                                        .motif ??
-                                                        'Congé'}\nDu ${DateFormat(
-                                                        'dd/MM/yyyy').format(
-                                                        timeOff
-                                                            .debut)} au ${DateFormat(
-                                                        'dd/MM/yyyy').format(
-                                                        timeOff.fin)}"),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(ctx)
-                                                            .pop(false),
-                                                    child: Text("Annuler"),
-                                                  ),
-                                                  ElevatedButton(
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                        backgroundColor: Colors
-                                                            .red,
-                                                        foregroundColor:
-                                                        Colors.white),
-                                                    onPressed: () =>
-                                                        Navigator.of(ctx).pop(
-                                                            true),
-                                                    child: Text("Supprimer"),
-                                                  ),
-                                                ],
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text(
+                                                "Confirmer la suppression"),
+                                            content: Text(
+                                                "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.of(ctx)
+                                                        .pop(false),
+                                                child: Text("Annuler"),
                                               ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.red,
+                                                    foregroundColor:
+                                                        Colors.white),
+                                                onPressed: () =>
+                                                    Navigator.of(ctx).pop(true),
+                                                child: Text("Supprimer"),
+                                              ),
+                                            ],
+                                          ),
                                         );
 
                                         if (confirm == true) {
@@ -3170,7 +3137,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 : 'Sélectionner'),
                             onPressed: () async {
                               final firstDate =
-                              DateTime(_selectedYear, _selectedMonth, 1);
+                                  DateTime(_selectedYear, _selectedMonth, 1);
                               final lastDate = DateTime(
                                   _selectedYear, _selectedMonth + 1, 0);
                               final now = DateTime.now();
@@ -3219,21 +3186,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               onPressed: dateDebut == null
                                   ? null
                                   : () async {
-                                final date = await showDatePicker(
-                                  context: context,
-                                  initialDate: dateFin ??
-                                      dateDebut!.add(Duration(days: 1)),
-                                  firstDate: dateDebut!,
-                                  lastDate: DateTime(2100),
-                                  // DateTime(_selectedYear,
-                                  //     _selectedMonth + 1, 0),
-                                );
-                                if (date != null) {
-                                  setState(() {
-                                    dateFin = date;
-                                  });
-                                }
-                              },
+                                      final date = await showDatePicker(
+                                        context: context,
+                                        initialDate: dateFin ??
+                                            dateDebut!.add(Duration(days: 1)),
+                                        firstDate: dateDebut!,
+                                        lastDate: DateTime(2100),
+                                        // DateTime(_selectedYear,
+                                        //     _selectedMonth + 1, 0),
+                                      );
+                                      if (date != null) {
+                                        setState(() {
+                                          dateFin = date;
+                                        });
+                                      }
+                                    },
                             ),
                           ),
                         ],
@@ -3287,15 +3254,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                     fontWeight: FontWeight.bold,
                                     color: Colors.blue.shade700)),
                             Text(
-                                "Du: ${DateFormat('dd/MM/yyyy').format(
-                                    dateDebut!)}"),
+                                "Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
                             Text(
-                                "Au: ${DateFormat('dd/MM/yyyy').format(
-                                    dateFin!)}"),
+                                "Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
                             Text(
-                                "Durée: ${nombreJours!} jour${nombreJours! > 1
-                                    ? 's'
-                                    : ''}"),
+                                "Durée: ${nombreJours!} jour${nombreJours! > 1 ? 's' : ''}"),
                           ],
                         ),
                       ),
@@ -3337,36 +3300,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             style: TextStyle(
                               color: selectedStatut == statut
                                   ? Colors.white
-                                  : Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .onSurface, // texte selon le thème
+                                  : Theme.of(context)
+                                      .colorScheme
+                                      .onSurface, // texte selon le thème
                             ),
                           ),
                           selected: selectedStatut == statut,
 
                           // Couleur quand sélectionné (s’adapte au thème)
-                          selectedColor: Theme
-                              .of(context)
-                              .colorScheme
-                              .primary,
+                          selectedColor: Theme.of(context).colorScheme.primary,
 
                           // Couleur de fond quand non sélectionné
                           backgroundColor:
-                          Theme
-                              .of(context)
-                              .brightness == Brightness.dark
-                              ? Colors.grey[800]
-                              : Colors.grey[200],
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
 
                           // Bordure douce
                           shape: StadiumBorder(
                             side: BorderSide(
                               color: selectedStatut == statut
-                                  ? Theme
-                                  .of(context)
-                                  .colorScheme
-                                  .primary
+                                  ? Theme.of(context).colorScheme.primary
                                   : Colors.grey.withOpacity(0.4),
                             ),
                           ),
@@ -3409,8 +3363,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // Méthode pour éditer un congé existant
-  Future<void> _showEditTimeOffDialog(BuildContext context, Staff staff,
-      TimeOff timeOff) async {
+  Future<void> _showEditTimeOffDialog(
+      BuildContext context, Staff staff, TimeOff timeOff) async {
     DateTime dateDebut = timeOff.debut;
     DateTime dateFin = timeOff.fin;
     String motif = timeOff.motif ?? 'Congé';
@@ -3444,13 +3398,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         child: OutlinedButton.icon(
                           icon: Icon(Icons.calendar_month),
                           label:
-                          Text(DateFormat('dd/MM/yyyy').format(dateDebut)),
+                              Text(DateFormat('dd/MM/yyyy').format(dateDebut)),
                           onPressed: () async {
                             final date = await showDatePicker(
                               context: context,
                               initialDate: dateDebut,
                               firstDate:
-                              DateTime(_selectedYear, _selectedMonth, 1),
+                                  DateTime(_selectedYear, _selectedMonth, 1),
                               lastDate: DateTime(
                                   _selectedYear, _selectedMonth + 1, 0),
                             );
@@ -3507,11 +3461,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     ),
                     value: motifsDisponibles.contains(motif) ? motif : 'Congé',
                     items: motifsDisponibles
-                        .map((m) =>
-                        DropdownMenuItem(
-                          value: m,
-                          child: Text(m),
-                        ))
+                        .map((m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(m),
+                            ))
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
@@ -3556,8 +3509,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 // SOLUTION 1 : Forcer le rechargement du cache ToMany après chaque opération
 
 // Dans _saveTimeOff - AJOUTER après objectBox.timeOffBox.put(timeOff)
-  Future<void> _saveTimeOff(Staff staff, DateTime debut, DateTime fin,
-      String statut) async {
+  Future<void> _saveTimeOff(
+      Staff staff, DateTime debut, DateTime fin, String statut) async {
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       final activiteProvider = ActiviteProvider();
@@ -3569,8 +3522,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         debut: debut,
         fin: fin,
         motif: _getStatutName(statut),
-      )
-        ..staff.target = staff;
+      )..staff.target = staff;
 
       objectBox.timeOffBox.put(timeOff);
       print("📅 TimeOff créé ID:${timeOff.id} pour ${staff.nom}");
@@ -3627,8 +3579,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final activiteProvider = ActiviteProvider();
 
       print(
-          "🗑️ AVANT suppression : staff.timeOff (cache) = ${staff.timeOff
-              .length}");
+          "🗑️ AVANT suppression : staff.timeOff (cache) = ${staff.timeOff.length}");
 
       // 1. Supprimer de la base
       bool removed = objectBox.timeOffBox.remove(timeOff.id);
@@ -3637,8 +3588,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // 2. ⭐ FORCER LE RECHARGEMENT DU CACHE ToMany
       await _refreshStaffTimeOffCache(staff);
       print(
-          "🔄 APRÈS rechargement : staff.timeOff (cache) = ${staff.timeOff
-              .length}");
+          "🔄 APRÈS rechargement : staff.timeOff (cache) = ${staff.timeOff.length}");
 
       // 3. Restaurer les jours
       DateTime currentDate = timeOff.debut;
@@ -3738,19 +3688,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }).toList();
 
     print(
-        "📊 _buildCongesListView : ${freshTimeOffs
-            .length} congés pour $_selectedMonthName $_selectedYear");
+        "📊 _buildCongesListView : ${freshTimeOffs.length} congés pour $_selectedMonthName $_selectedYear");
 
     // Récupérer les activités de congé pour le mois sélectionné uniquement
     final congesActivites = staff.activites
         .where((a) =>
-    (a.statut == 'C' || a.statut == 'CM') &&
-        a.jour >= 1 &&
-        a.jour <= _daysInSelectedMonth)
+            (a.statut == 'C' || a.statut == 'CM') &&
+            a.jour >= 1 &&
+            a.jour <= _daysInSelectedMonth)
         .toList();
 
     final groupedConges =
-    _groupActiviteConges(congesActivites, _selectedYear, _selectedMonth);
+        _groupActiviteConges(congesActivites, _selectedYear, _selectedMonth);
 
     return SingleChildScrollView(
       child: Column(
@@ -3769,8 +3718,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       size: 16, color: Colors.blue.shade600),
                   SizedBox(width: 8),
                   Text(
-                    "Congés planifiés\n${freshTimeOffs
-                        .length} - $_selectedMonthName $_selectedYear",
+                    "Congés planifiés\n${freshTimeOffs.length} - $_selectedMonthName $_selectedYear",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -3803,117 +3751,113 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       showDialog(
         context: context,
-        builder: (context) =>
-            AlertDialog(
-              title: const Text("Analyse Cache vs Base"),
-              content: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 500, // limite verticale
-                ),
-                child: IntrinsicWidth(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          title:
+        builder: (context) => AlertDialog(
+          title: const Text("Analyse Cache vs Base"),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: 500, // limite verticale
+            ),
+            child: IntrinsicWidth(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      title:
                           Text("Total TimeOff en base: ${allTimeOffs.length}"),
-                          subtitle: Text("Timestamp: ${DateTime.now()}"),
+                      subtitle: Text("Timestamp: ${DateTime.now()}"),
+                    ),
+                    const Divider(),
+                    ...staffs.map((staff) {
+                      final cacheCount = staff.timeOff.length;
+                      final baseTimeOffs = objectBox.timeOffBox
+                          .query(TimeOff_.staff.equals(staff.id))
+                          .build()
+                          .find();
+                      final baseCount = baseTimeOffs.length;
+
+                      if (cacheCount == 0 && baseCount == 0) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final syncOk = cacheCount == baseCount;
+
+                      return ExpansionTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.black54,
+                          child: Text(
+                            "$cacheCount",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w300),
+                          ),
                         ),
-                        const Divider(),
-                        ...staffs.map((staff) {
-                          final cacheCount = staff.timeOff.length;
-                          final baseTimeOffs = objectBox.timeOffBox
-                              .query(TimeOff_.staff.equals(staff.id))
-                              .build()
-                              .find();
-                          final baseCount = baseTimeOffs.length;
-
-                          if (cacheCount == 0 && baseCount == 0) {
-                            return const SizedBox.shrink();
-                          }
-
-                          final syncOk = cacheCount == baseCount;
-
-                          return ExpansionTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.black54,
-                              child: Text(
-                                "$cacheCount",
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w300),
+                        title: Text(staff.nom,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text("$cacheCount Congé(s)"),
+                        children: [
+                          ListTile(title: Text("🗄️ Base directe: $baseCount")),
+                          ListTile(
+                            title: Text(
+                              "🔄 Synchronisé ? ${syncOk ? '✅ OUI' : '❌ NON - PROBLÈME !'}",
+                              style: TextStyle(
+                                color: syncOk ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.w300,
+                                fontSize: 12,
                               ),
                             ),
-                            title: Text(staff.nom,
-                                style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text("$cacheCount Congé(s)"),
-                            children: [
-                              ListTile(
-                                  title: Text("🗄️ Base directe: $baseCount")),
-                              ListTile(
-                                title: Text(
-                                  "🔄 Synchronisé ? ${syncOk
-                                      ? '✅ OUI'
-                                      : '❌ NON - PROBLÈME !'}",
-                                  style: TextStyle(
-                                    color: syncOk ? Colors.green : Colors.red,
-                                    fontWeight: FontWeight.w300,
-                                    fontSize: 12,
-                                  ),
+                          ),
+                          if (!syncOk)
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                "⚠️ Désynchronisation détectée !",
+                                style: TextStyle(
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w300,
+                                  fontSize: 12,
                                 ),
                               ),
-                              if (!syncOk)
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    "⚠️ Désynchronisation détectée !",
-                                    style: TextStyle(
-                                      color: Colors.orange.shade700,
-                                      fontWeight: FontWeight.w300,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ...baseTimeOffs.map((timeOff) {
-                                final debut =
+                            ),
+                          ...baseTimeOffs.map((timeOff) {
+                            final debut =
                                 DateFormat('dd/MM/yyyy').format(timeOff.debut);
-                                final fin =
+                            final fin =
                                 DateFormat('dd/MM/yyyy').format(timeOff.fin);
-                                return ListTile(
-                                  leading: const Icon(Icons.event_note),
-                                  title: Text(timeOff.motif ?? 'Congé'),
-                                  subtitle: Text("$debut → $fin"),
-                                  trailing: Text("ID:${timeOff.id}"),
-                                );
-                              }).toList(),
-                            ],
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  ),
+                            return ListTile(
+                              leading: const Icon(Icons.event_note),
+                              title: Text(timeOff.motif ?? 'Congé'),
+                              subtitle: Text("$debut → $fin"),
+                              trailing: Text("ID:${timeOff.id}"),
+                            );
+                          }).toList(),
+                        ],
+                      );
+                    }).toList(),
+                  ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Fermer"),
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.sync),
-                  onPressed: () async {
-                    for (var staff in staffs) {
-                      await _refreshStaffTimeOffCache(staff);
-                    }
-                    Navigator.pop(context);
-                    await _listStaffWithTimeOff();
-                  },
-                  label: const Text("Forcer Sync"),
-                ),
-              ],
             ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Fermer"),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.sync),
+              onPressed: () async {
+                for (var staff in staffs) {
+                  await _refreshStaffTimeOffCache(staff);
+                }
+                Navigator.pop(context);
+                await _listStaffWithTimeOff();
+              },
+              label: const Text("Forcer Sync"),
+            ),
+          ],
+        ),
       );
     } catch (e) {
       print("❌ Erreur debug: $e");
@@ -3974,8 +3918,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // 5. Mettre à jour l'observation
       staff.obs =
-      "$nouveauMotif du ${DateFormat('dd/MM/yyyy').format(
-          nouveauDebut)} au ${DateFormat('dd/MM/yyyy').format(nouvelleFin)}";
+          "$nouveauMotif du ${DateFormat('dd/MM/yyyy').format(nouveauDebut)} au ${DateFormat('dd/MM/yyyy').format(nouvelleFin)}";
       await staffProvider.updateStaff(staff);
 
       // 6. Rafraîchir
@@ -3984,9 +3927,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              "✅ Congé modifié pour ${staff
-                  .nom}\n$joursModifies jours mis à jour\nRelations OK : ${staff
-                  .timeOff.length} congé(s)"),
+              "✅ Congé modifié pour ${staff.nom}\n$joursModifies jours mis à jour\nRelations OK : ${staff.timeOff.length} congé(s)"),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
@@ -4052,8 +3993,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   children: [
                     // Affichage du mois et de l'année
                     Text(
-                      "Mois: ${DateFormat.MMMM('fr_FR').format(DateTime(year,
-                          month))} $year",
+                      "Mois: ${DateFormat.MMMM('fr_FR').format(DateTime(year, month))} $year",
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 12),
@@ -4146,11 +4086,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 ),
                 ElevatedButton(
                   onPressed: (selectedDay != null)
-                      ? () =>
-                      Navigator.of(ctx).pop({
-                        'orderedEquipes': orderedEquipes,
-                        'selectedDay': selectedDay,
-                      })
+                      ? () => Navigator.of(ctx).pop({
+                            'orderedEquipes': orderedEquipes,
+                            'selectedDay': selectedDay,
+                          })
                       : null,
                   child: const Text("Confirmer"),
                   style: ElevatedButton.styleFrom(
@@ -4218,9 +4157,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             ),
                             SizedBox(height: 4),
                             Text(
-                              "${equipesDisponibles
-                                  .length} équipes détectées: ${equipesDisponibles
-                                  .join(', ')}",
+                              "${equipesDisponibles.length} équipes détectées: ${equipesDisponibles.join(', ')}",
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.teal.shade600,
@@ -4296,7 +4233,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   title: Text(
                                     "Équipe ${equipesOrdonnees[index]}",
                                     style:
-                                    TextStyle(fontWeight: FontWeight.w600),
+                                        TextStyle(fontWeight: FontWeight.w600),
                                   ),
                                   subtitle: Text(
                                     index == 0
@@ -4343,7 +4280,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           runSpacing: 8,
                           children: joursDisponibles.map((jour) {
                             final date =
-                            DateTime(_selectedYear, _selectedMonth, jour);
+                                DateTime(_selectedYear, _selectedMonth, jour);
                             final nomJour = _getNomJourCourt(date.weekday);
                             final isSelected = jourDepart == jour;
 
@@ -4355,7 +4292,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                     horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color:
-                                  isSelected ? Colors.teal : Colors.white,
+                                      isSelected ? Colors.teal : Colors.white,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
                                     color: isSelected
@@ -4365,12 +4302,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   ),
                                   boxShadow: isSelected
                                       ? [
-                                    BoxShadow(
-                                      color: Colors.teal.withOpacity(0.3),
-                                      blurRadius: 4,
-                                      offset: Offset(0, 2),
-                                    ),
-                                  ]
+                                          BoxShadow(
+                                            color: Colors.teal.withOpacity(0.3),
+                                            blurRadius: 4,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ]
                                       : [],
                                 ),
                                 child: Column(
@@ -4433,13 +4370,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               SizedBox(height: 8),
                               ...List.generate(
                                 math.min(equipesOrdonnees.length, 4),
-                                    (index) {
+                                (index) {
                                   final jour = jourDepart! + index;
                                   final equipe = equipesOrdonnees[index];
                                   final date = DateTime(
                                       _selectedYear, _selectedMonth, jour);
                                   final nomJour =
-                                  _getNomJourComplet(date.weekday);
+                                      _getNomJourComplet(date.weekday);
 
                                   return Padding(
                                     padding: EdgeInsets.symmetric(vertical: 2),
@@ -4533,11 +4470,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   ),
                   onPressed: (jourDepart != null)
-                      ? () =>
-                      Navigator.of(context).pop({
-                        'equipesOrdonnees': equipesOrdonnees,
-                        'jourDepart': jourDepart,
-                      })
+                      ? () => Navigator.of(context).pop({
+                            'equipesOrdonnees': equipesOrdonnees,
+                            'jourDepart': jourDepart,
+                          })
                       : null,
                 ),
               ],
@@ -4568,8 +4504,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // Personnel médical avec équipes
       final personnelMedical = staffProvider.staffs
           .where((staff) =>
-      staff.equipe != null &&
-          equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+              staff.equipe != null &&
+              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
           .toList();
 
       if (personnelMedical.isEmpty) {
@@ -4584,13 +4520,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         // Vérifier TimeOff
         final timeOffs = staff.timeOff.toList();
         bool enCongeTimeOff = timeOffs.any((timeOff) =>
-        dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+            dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
             dateJour.isBefore(timeOff.fin.add(Duration(days: 1))));
 
         // Vérifier activités existantes C/CM
         final activites = staff.activites.toList();
         bool enCongeActivite = activites.any((activite) =>
-        activite.jour == jour &&
+            activite.jour == jour &&
             (activite.statut == 'C' || activite.statut == 'CM'));
 
         return enCongeTimeOff || enCongeActivite;
@@ -4738,8 +4674,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // 1. Identifier les équipes médicales disponibles
     final equipesDisponibles = staffProvider.staffs
         .where((staff) =>
-    staff.equipe != null &&
-        ['A', 'B', 'C', 'D'].contains(staff.equipe!.toUpperCase()))
+            staff.equipe != null &&
+            ['A', 'B', 'C', 'D'].contains(staff.equipe!.toUpperCase()))
         .map((staff) => staff.equipe!.toUpperCase())
         .toSet()
         .toList();
@@ -4765,14 +4701,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     await _executerPlanificationGardesSimple(equipesOrdonnees);
   }
 
-  Future<void> _showEditPlanificationDialog(BuildContext context, int mois,
-      int annee) async {
+  Future<void> _showEditPlanificationDialog(
+      BuildContext context, int mois, int annee) async {
     final objectBox = ObjectBox();
 
     // Charger la planification existante
     final query = objectBox.planificationBox
         .query(Planification_.mois.equals(mois) &
-    Planification_.annee.equals(annee))
+            Planification_.annee.equals(annee))
         .build();
     Planification? planifExistante = query.findFirst();
     query.close();
@@ -4828,7 +4764,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // Vérifier si une planification existe déjà
     final query = objectBox.planificationBox
         .query(Planification_.mois.equals(_selectedMonth) &
-    Planification_.annee.equals(_selectedYear))
+            Planification_.annee.equals(_selectedYear))
         .build();
 
     final existingPlanif = query.findFirst();
@@ -4914,9 +4850,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               ),
                               SizedBox(height: 4),
                               Text(
-                                "${equipesDisponibles
-                                    .length} équipes détectées: ${equipesDisponibles
-                                    .join(', ')}",
+                                "${equipesDisponibles.length} équipes détectées: ${equipesDisponibles.join(', ')}",
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.teal.shade600,
@@ -4988,7 +4922,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               setState(() {
                                 if (newIndex > oldIndex) newIndex -= 1;
                                 final item =
-                                equipesOrdonnees.removeAt(oldIndex);
+                                    equipesOrdonnees.removeAt(oldIndex);
                                 equipesOrdonnees.insert(newIndex, item);
                               });
                             },
@@ -5024,13 +4958,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                         shape: BoxShape.circle,
                                         boxShadow: isFirst
                                             ? [
-                                          BoxShadow(
-                                            color: _getEquipeColor(equipe)
-                                                .withOpacity(0.4),
-                                            blurRadius: 4,
-                                            offset: Offset(0, 2),
-                                          ),
-                                        ]
+                                                BoxShadow(
+                                                  color: _getEquipeColor(equipe)
+                                                      .withOpacity(0.4),
+                                                  blurRadius: 4,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ]
                                             : [],
                                       ),
                                       child: Center(
@@ -5065,7 +4999,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             decoration: BoxDecoration(
                                               color: Colors.teal.shade200,
                                               borderRadius:
-                                              BorderRadius.circular(10),
+                                                  BorderRadius.circular(10),
                                             ),
                                             child: Text(
                                               "1ère",
@@ -5135,13 +5069,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               SizedBox(height: 8),
                               ...List.generate(
                                 math.min(equipesOrdonnees.length, 4),
-                                    (index) {
+                                (index) {
                                   final jour = index + 1;
                                   final equipe = equipesOrdonnees[index];
                                   final date = DateTime(
                                       _selectedYear, _selectedMonth, jour);
                                   final nomJour =
-                                  DateFormat('EEEE', 'fr_FR').format(date);
+                                      DateFormat('EEEE', 'fr_FR').format(date);
 
                                   return Padding(
                                     padding: EdgeInsets.symmetric(vertical: 2),
@@ -5266,9 +5200,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // ✅ 1. Sauvegarder l'ordre des équipes
       final query = objectBox.planificationBox
           .query(
-        Planification_.mois.equals(_selectedMonth) &
-        Planification_.annee.equals(_selectedYear),
-      )
+            Planification_.mois.equals(_selectedMonth) &
+                Planification_.annee.equals(_selectedYear),
+          )
           .build();
       Planification? existingPlanif = query.findFirst();
       query.close();
@@ -5288,8 +5222,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // ✅ 2. Sélectionner le personnel médical concerné
       final personnelMedical = staffProvider.staffs
           .where((staff) =>
-      staff.equipe != null &&
-          equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+              staff.equipe != null &&
+              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
           .toList();
 
       if (personnelMedical.isEmpty) {
@@ -5299,7 +5233,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // ✅ 3. Collecter TOUS les congés (TimeOff + activités C/CM) pour le mois sélectionné
       Map<int, Map<int, String>> congesParStaff =
-      {}; // {staffId: {jour: statut}}
+          {}; // {staffId: {jour: statut}}
 
       // --- TimeOff : ⭐ CORRECTION - Ne traiter que les congés du mois sélectionné
       final allTimeOffs = objectBox.timeOffBox.getAll();
@@ -5310,7 +5244,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
           DateTime currentDate = timeOff.debut;
           while (
-          currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
+              currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
             // ⭐ FILTRE CRUCIAL : Vérifier année ET mois
             if (currentDate.year == _selectedYear &&
                 currentDate.month == _selectedMonth) {
@@ -5343,7 +5277,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           if (congesParStaff[staff.id]!.containsKey(day)) continue;
 
           String nouveauStatut =
-          (staff.equipe!.toUpperCase() == equipeDeGarde) ? "G" : "RE";
+              (staff.equipe!.toUpperCase() == equipeDeGarde) ? "G" : "RE";
 
           await activiteProvider.updateActivite(
             staff.id,
@@ -5372,7 +5306,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
           final query = activiteProvider.activiteBox
               .query(ActiviteJour_.staff.equals(staff.id) &
-          ActiviteJour_.jour.equals(jour))
+                  ActiviteJour_.jour.equals(jour))
               .build();
           final activites = query.find();
           query.close();
@@ -5531,8 +5465,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // 1. Identifier les agents d'hygiène
     final agentsHygiene = staffProvider.staffs
         .where((staff) =>
-    staff.grade.toLowerCase().contains('hygiène') ||
-        staff.grade.toLowerCase().contains('hygiene'))
+            staff.grade.toLowerCase().contains('hygiène') ||
+            staff.grade.toLowerCase().contains('hygiene'))
         .toList();
 
     if (agentsHygiene.isEmpty) {
@@ -5588,7 +5522,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // ⭐ CORRECTION : Filtrer TimeOff par année/mois
       final timeOffQuery =
-      objectBox.timeOffBox.query(TimeOff_.staff.equals(agent.id)).build();
+          objectBox.timeOffBox.query(TimeOff_.staff.equals(agent.id)).build();
       final timeOffs = timeOffQuery.find();
       timeOffQuery.close();
 
@@ -5637,9 +5571,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     for (final agent in agents) {
       final conges = congesParAgent[agent] ?? [];
       final joursCongeOuvrables =
-          conges
-              .where((jour) => joursOuvrables.contains(jour))
-              .length;
+          conges.where((jour) => joursOuvrables.contains(jour)).length;
       joursDisponiblesParAgent[agent] =
           nombreJoursOuvrables - joursCongeOuvrables;
     }
@@ -5658,9 +5590,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // MÉTHODE : Dialog pour ordonner les agents
-  Future<List<Staff>?> _showOrderAgentsHygieneDialog(List<Staff> agents,
-      Map<String, dynamic> repartition,
-      int nombreJoursOuvrables,) async {
+  Future<List<Staff>?> _showOrderAgentsHygieneDialog(
+    List<Staff> agents,
+    Map<String, dynamic> repartition,
+    int nombreJoursOuvrables,
+  ) async {
     List<Staff> agentsOrdonnes = List.from(agents);
 
     return await showDialog<List<Staff>>(
@@ -5787,7 +5721,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               final agent = agentsOrdonnes[index];
                               final conges =
                                   repartition['joursDisponiblesParAgent']
-                                  [agent] ??
+                                          [agent] ??
                                       0;
                               final isFirst = index == 0;
 
@@ -5843,7 +5777,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                             decoration: BoxDecoration(
                                               color: Colors.brown.shade200,
                                               borderRadius:
-                                              BorderRadius.circular(8),
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               "1er",
@@ -5928,9 +5862,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // MÉTHODE : Exécution de la planification intelligente
-  Future<void> _executerPlanificationAgentsHygiene(List<Staff> agentsOrdonnes,
-      List<int> joursOuvrables,
-      Map<Staff, List<int>> congesParAgent,) async {
+  Future<void> _executerPlanificationAgentsHygiene(
+    List<Staff> agentsOrdonnes,
+    List<int> joursOuvrables,
+    Map<Staff, List<int>> congesParAgent,
+  ) async {
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       final activiteProvider = ActiviteProvider();
@@ -5999,8 +5935,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           } else {
             congesRespected++;
             print(
-                "  Jour $jourOuvrable: ${agentCandadat
-                    .nom} en congé, passage au suivant");
+                "  Jour $jourOuvrable: ${agentCandadat.nom} en congé, passage au suivant");
           }
 
           // Passer à l'agent suivant dans la rotation
@@ -6033,7 +5968,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       for (final agent in agentsOrdonnes) {
         // TimeOff
         final timeOffQuery =
-        objectBox.timeOffBox.query(TimeOff_.staff.equals(agent.id)).build();
+            objectBox.timeOffBox.query(TimeOff_.staff.equals(agent.id)).build();
         final timeOffs = timeOffQuery.find();
         timeOffQuery.close();
 
@@ -6142,9 +6077,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // Compter les congés activités du mois
     final congesActivites = activites
         .where((a) =>
-    (a.statut == 'C' || a.statut == 'CM') &&
-        a.jour >= 1 &&
-        a.jour <= _daysInSelectedMonth)
+            (a.statut == 'C' || a.statut == 'CM') &&
+            a.jour >= 1 &&
+            a.jour <= _daysInSelectedMonth)
         .length;
 
     final totalConges = timeOffsDuMois + congesActivites;
@@ -6221,12 +6156,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   // ✅ Icône pour vider le champ
                   suffixIcon: obsController.text.isNotEmpty
                       ? IconButton(
-                    icon: Icon(Icons.clear),
-                    tooltip: "Effacer le texte",
-                    onPressed: () {
-                      obsController.clear();
-                    },
-                  )
+                          icon: Icon(Icons.clear),
+                          tooltip: "Effacer le texte",
+                          onPressed: () {
+                            obsController.clear();
+                          },
+                        )
                       : null,
                 ),
                 onChanged: (_) {
@@ -6249,9 +6184,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 foregroundColor: Colors.white,
               ),
               onPressed: () async {
-                staff.obs = obsController.text
-                    .trim()
-                    .isEmpty
+                staff.obs = obsController.text.trim().isEmpty
                     ? null
                     : obsController.text.trim();
                 await staffProvider.updateStaff(staff);
@@ -6342,8 +6275,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // Regroupe les ActiviteJour consécutifs en périodes (du .. au ..)
-  List<Map<String, dynamic>> _groupActiviteConges(List<ActiviteJour> activites,
-      int year, int month) {
+  List<Map<String, dynamic>> _groupActiviteConges(
+      List<ActiviteJour> activites, int year, int month) {
     final List<Map<String, dynamic>> groupes = [];
     if (activites.isEmpty) return groupes;
 
@@ -6381,15 +6314,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // Card qui affiche une période (du .. au ..) + actions edit/delete
-  Widget _buildActivitePeriodeCard(Map<String, dynamic> groupe, Staff staff,
-      StateSetter setState) {
+  Widget _buildActivitePeriodeCard(
+      Map<String, dynamic> groupe, Staff staff, StateSetter setState) {
     final DateTime start = groupe['start'] as DateTime;
     final DateTime end = groupe['end'] as DateTime;
     final String statut = groupe['statut'] as String;
 
-    final int duree = end
-        .difference(start)
-        .inDays + 1;
+    final int duree = end.difference(start).inDays + 1;
     final String label = (statut == 'CM') ? "Congé Maladie" : "Congé";
 
     return Card(
@@ -6413,7 +6344,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         ),
         subtitle: Text(
           "Du ${DateFormat('dd/MM/yyyy').format(start)} "
-              "au ${DateFormat('dd/MM/yyyy').format(end)}",
+          "au ${DateFormat('dd/MM/yyyy').format(end)}",
           style: const TextStyle(fontSize: 11),
         ),
         trailing: Row(
@@ -6433,7 +6364,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 );
                 if (changed == true) {
                   final staffProvider =
-                  Provider.of<StaffProvider>(context, listen: false);
+                      Provider.of<StaffProvider>(context, listen: false);
                   await staffProvider.fetchStaffs();
                   setState(() {});
                 }
@@ -6447,26 +6378,25 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               onPressed: () async {
                 final confirm = await showDialog<bool>(
                   context: context,
-                  builder: (ctx) =>
-                      AlertDialog(
-                        title: const Text("Confirmer la suppression"),
-                        content: Text(
-                          "Supprimer le congé du "
-                              "${DateFormat('dd/MM/yyyy').format(start)} "
-                              "au ${DateFormat('dd/MM/yyyy').format(end)} ?",
-                        ),
-                        actions: [
-                          TextButton(
-                              onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text("Annuler")),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red),
-                            onPressed: () => Navigator.of(ctx).pop(true),
-                            child: const Text("Supprimer"),
-                          ),
-                        ],
+                  builder: (ctx) => AlertDialog(
+                    title: const Text("Confirmer la suppression"),
+                    content: Text(
+                      "Supprimer le congé du "
+                      "${DateFormat('dd/MM/yyyy').format(start)} "
+                      "au ${DateFormat('dd/MM/yyyy').format(end)} ?",
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(false),
+                          child: const Text("Annuler")),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red),
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text("Supprimer"),
                       ),
+                    ],
+                  ),
                 );
 
                 if (confirm == true) {
@@ -6481,7 +6411,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     );
                   }
                   final staffProvider =
-                  Provider.of<StaffProvider>(context, listen: false);
+                      Provider.of<StaffProvider>(context, listen: false);
                   await staffProvider.fetchStaffs();
                   setState(() {});
                 }
@@ -6494,11 +6424,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
 // Dialog d'édition d'une période (retourne true si modifié)
-  Future<bool?> _showEditActivitePeriodeDialog(BuildContext ctx,
-      Staff staff,
-      DateTime oldStart,
-      DateTime oldEnd,
-      String oldStatut,) {
+  Future<bool?> _showEditActivitePeriodeDialog(
+    BuildContext ctx,
+    Staff staff,
+    DateTime oldStart,
+    DateTime oldEnd,
+    String oldStatut,
+  ) {
     int startDay = oldStart.day;
     int endDay = oldEnd.day;
     String statut = oldStatut;
@@ -6545,8 +6477,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     DropdownButton<int>(
                       value: startDay,
                       items: List.generate(_daysInSelectedMonth, (i) => i + 1)
-                          .map((d) =>
-                          DropdownMenuItem(
+                          .map((d) => DropdownMenuItem(
                               value: d, child: Text(d.toString())))
                           .toList(),
                       onChanged: (v) {
@@ -6563,8 +6494,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     DropdownButton<int>(
                       value: endDay,
                       items: List.generate(_daysInSelectedMonth, (i) => i + 1)
-                          .map((d) =>
-                          DropdownMenuItem(
+                          .map((d) => DropdownMenuItem(
                               value: d, child: Text(d.toString())))
                           .toList(),
                       onChanged: (v) {
@@ -6628,9 +6558,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
 // MÉTHODE : Card pour TimeOff
   Widget _buildTimeOffCard(TimeOff timeOff, Staff staff, StateSetter setState) {
-    final duree = timeOff.fin
-        .difference(timeOff.debut)
-        .inDays + 1;
+    final duree = timeOff.fin.difference(timeOff.debut).inDays + 1;
 
     return Card(
       margin: EdgeInsets.symmetric(vertical: 4),
@@ -6653,9 +6581,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Du ${DateFormat('dd/MM/yyyy').format(
-                  timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(
-                  timeOff.fin)}",
+              "Du ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}",
               style: TextStyle(fontSize: 11),
             ),
             Text(
@@ -6678,30 +6604,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-  Future<void> _showTimeOffOptionsDialog(TimeOff timeOff, Staff staff,
-      StateSetter setState) async {
+  Future<void> _showTimeOffOptionsDialog(
+      TimeOff timeOff, Staff staff, StateSetter setState) async {
     final choice = await showDialog<String>(
       context: context,
-      builder: (ctx) =>
-          AlertDialog(
-            title: Text("Choisir une action"),
-            content: Text(
-                "${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy')
-                    .format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy')
-                    .format(timeOff.fin)}"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop("edit"),
-                child: Text("Modifier"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red, foregroundColor: Colors.white),
-                onPressed: () => Navigator.of(ctx).pop("delete"),
-                child: Text("Supprimer"),
-              ),
-            ],
+      builder: (ctx) => AlertDialog(
+        title: Text("Choisir une action"),
+        content: Text(
+            "${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop("edit"),
+            child: Text("Modifier"),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red, foregroundColor: Colors.white),
+            onPressed: () => Navigator.of(ctx).pop("delete"),
+            child: Text("Supprimer"),
+          ),
+        ],
+      ),
     );
 
     if (choice == "edit") {
@@ -6711,28 +6634,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     } else if (choice == "delete") {
       final confirm = await showDialog<bool>(
         context: context,
-        builder: (ctx) =>
-            AlertDialog(
-              title: Text("Confirmer la suppression"),
-              content: Text(
-                  "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff
-                      .motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(
-                      timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(
-                      timeOff.fin)}"),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: Text("Annuler"),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white),
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  child: Text("Supprimer"),
-                ),
-              ],
+        builder: (ctx) => AlertDialog(
+          title: Text("Confirmer la suppression"),
+          content: Text(
+              "Voulez-vous vraiment supprimer ce congé ?\n\n${timeOff.motif ?? 'Congé'}\nDu ${DateFormat('dd/MM/yyyy').format(timeOff.debut)} au ${DateFormat('dd/MM/yyyy').format(timeOff.fin)}"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text("Annuler"),
             ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red, foregroundColor: Colors.white),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text("Supprimer"),
+            ),
+          ],
+        ),
       );
 
       if (confirm == true) {
@@ -6755,12 +6673,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           content: FittedBox(
             child: Text(
               "Cette action va :\n"
-                  "PHASE 1 - Attribution initiale :\n"
-                  "• Planification Réussite pour Tout Le STaff\n"
-                  "PHASE 2 - Application des congés :\n"
-                  "• Les congés existants vont etre assigné\n"
-                  "• Aucun congé ne sera perdu\n"
-                  "\nMois: $_selectedMonthName $_selectedYear\n",
+              "PHASE 1 - Attribution initiale :\n"
+              "• Planification Réussite pour Tout Le STaff\n"
+              "PHASE 2 - Application des congés :\n"
+              "• Les congés existants vont etre assigné\n"
+              "• Aucun congé ne sera perdu\n"
+              "\nMois: $_selectedMonthName $_selectedYear\n",
             ),
           ),
           actions: [
@@ -6857,7 +6775,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         print("  Traitement congés pour ${staff.nom}...");
 
         final timeOffQuery =
-        objectBox.timeOffBox.query(TimeOff_.staff.equals(staff.id)).build();
+            objectBox.timeOffBox.query(TimeOff_.staff.equals(staff.id)).build();
         final timeOffs = timeOffQuery.find();
         timeOffQuery.close();
 
@@ -6874,7 +6792,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                 final activiteQuery = objectBox.activiteBox
                     .query(ActiviteJour_.staff.equals(staff.id) &
-                ActiviteJour_.jour.equals(jour))
+                        ActiviteJour_.jour.equals(jour))
                     .build();
                 final activites = activiteQuery.find();
                 activiteQuery.close();
@@ -6970,7 +6888,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     groupesExistants.add("➕ Nouveau groupe...");
 
     String? selectedGroupe =
-    groupesExistants.isNotEmpty ? groupesExistants.first : null;
+        groupesExistants.isNotEmpty ? groupesExistants.first : null;
     String? selectedEquipe;
     String? selectedCategorie08h16h;
     bool isCreatingNewGroupe = false;
@@ -7036,7 +6954,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               style: TextStyle(
                                 color: isNew ? Colors.green : null,
                                 fontWeight:
-                                isNew ? FontWeight.bold : FontWeight.normal,
+                                    isNew ? FontWeight.bold : FontWeight.normal,
                               ),
                             ),
                           );
@@ -7072,7 +6990,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     if (show08h16hCategorie)
                       _buildCategorieSelector(
                         selectedCategorie08h16h,
-                            (v) => setState(() => selectedCategorie08h16h = v),
+                        (v) => setState(() => selectedCategorie08h16h = v),
                       ),
                     if (show08h16hCategorie) const SizedBox(height: 12),
 
@@ -7080,7 +6998,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     if (showEquipe)
                       _buildEquipeSelector(
                         selectedEquipe,
-                            (v) => setState(() => selectedEquipe = v),
+                        (v) => setState(() => selectedEquipe = v),
                       ),
                     if (showEquipe) const SizedBox(height: 12),
 
@@ -7128,12 +7046,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ),
                   onPressed: () async {
                     // ✅ VALIDATION
-                    if (nomCtrl.text
-                        .trim()
-                        .isEmpty ||
-                        gradeCtrl.text
-                            .trim()
-                            .isEmpty) {
+                    if (nomCtrl.text.trim().isEmpty ||
+                        gradeCtrl.text.trim().isEmpty) {
                       _showError("Nom et grade sont obligatoires");
                       return;
                     }
@@ -7187,13 +7101,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       grade: finalGrade,
                       groupe: groupeFinal,
                       equipe: selectedEquipe,
-                      obs: obsCtrl.text
-                          .trim()
-                          .isEmpty
+                      obs: obsCtrl.text.trim().isEmpty
                           ? null
                           : obsCtrl.text.trim(),
-                    )
-                      ..branch.target = branchToAssign;
+                    )..branch.target = branchToAssign;
 
                     await staffProvider.addStaff(newStaff, []);
                     Navigator.of(ctx).pop();
@@ -7315,65 +7226,64 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<void> _clearCurrentMonthData() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) =>
-          AlertDialog(
-            title: Row(
-              children: [
-                Icon(Icons.delete_sweep, color: Colors.orange),
-                SizedBox(width: 8),
-                Text("Vider ${_moisNoms[_selectedMonth - 1]} $_selectedYear"),
-              ],
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.delete_sweep, color: Colors.orange),
+            SizedBox(width: 8),
+            Text("Vider ${_moisNoms[_selectedMonth - 1]} $_selectedYear"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Cette action va supprimer pour ce mois uniquement :",
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Cette action va supprimer pour ce mois uniquement :",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text("• Toutes les activités (G, RE, C, CM, N)"),
-                Text("• Tous les congés (TimeOff)"),
-                Text("• La planification sauvegardée"),
-                SizedBox(height: 12),
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          "Les staffs seront conservés",
-                          style:
+            SizedBox(height: 8),
+            Text("• Toutes les activités (G, RE, C, CM, N)"),
+            Text("• Tous les congés (TimeOff)"),
+            Text("• La planification sauvegardée"),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Les staffs seront conservés",
+                      style:
                           TextStyle(fontSize: 12, color: Colors.blue.shade700),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: Text("Annuler"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: Text("Vider ce mois"),
-              ),
-            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text("Annuler"),
           ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text("Vider ce mois"),
+          ),
+        ],
+      ),
     );
 
     if (confirm != true) return;
@@ -7414,7 +7324,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // 3. Supprimer la planification du mois
       final planifQuery = objectBox.planificationBox
           .query(Planification_.mois.equals(_selectedMonth) &
-      Planification_.annee.equals(_selectedYear))
+              Planification_.annee.equals(_selectedYear))
           .build();
       final existingPlanif = planifQuery.findFirst();
       planifQuery.close();
@@ -7443,8 +7353,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Données de ${_moisNoms[_selectedMonth -
-                    1]} $_selectedYear supprimées",
+                "Données de ${_moisNoms[_selectedMonth - 1]} $_selectedYear supprimées",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 4),
@@ -7468,22 +7377,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<void> _clearAllActivitiesWithConfirmation(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text("Confirmation"),
-            content:
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmation"),
+        content:
             const Text("Voulez-vous vraiment supprimer toutes les activités ?"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Annuler"),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Oui, vider"),
-              ),
-            ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Annuler"),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Oui, vider"),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true && context.mounted) {
@@ -7501,22 +7409,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<void> _clearDatabaseWithConfirmation(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text("Confirmation"),
-            content:
+      builder: (context) => AlertDialog(
+        title: const Text("Confirmation"),
+        content:
             const Text("Voulez-vous vraiment supprimer la base de données ?"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Annuler"),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Oui, vider"),
-              ),
-            ],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Annuler"),
           ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Oui, vider"),
+          ),
+        ],
+      ),
     );
 
     if (confirm == true && context.mounted) {
@@ -7565,13 +7472,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       if (context.mounted) {
         final staffProvider =
-        Provider.of<StaffProvider>(context, listen: false);
+            Provider.of<StaffProvider>(context, listen: false);
         await staffProvider.fetchStaffs();
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
-            Text("Toutes les activités ont été ajoutées avec succès !"),
+                Text("Toutes les activités ont été ajoutées avec succès !"),
             backgroundColor: Colors.green,
           ),
         );
@@ -7609,9 +7516,7 @@ class _P2PDetailPage extends StatelessWidget {
         title: const Text('Statut P2P Détaillé'),
         backgroundColor: Colors.blue[800],
       ),
-      body: Consumer4<P2PManager,
-          ConnectionManager,
-          SyncManager,
+      body: Consumer4<P2PManager, ConnectionManager, SyncManager,
           DiscoveryManager>(
         builder: (context, p2p, conn, sync, discovery, _) {
           return SingleChildScrollView(
@@ -7730,8 +7635,7 @@ class _P2PDetailPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Nœuds Découverts (${discovery.discoveredNodes
-                              .length})',
+                          'Nœuds Découverts (${discovery.discoveredNodes.length})',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
