@@ -21,9 +21,11 @@ class DiscoveryManager with ChangeNotifier {
 
   // État
   bool _running = false;
+
   bool get isRunning => _running;
 
   final Set<String> _discoveredNodes = {};
+
   Set<String> get discoveredNodes => Set.from(_discoveredNodes);
 
   // Sockets
@@ -80,21 +82,21 @@ class DiscoveryManager with ChangeNotifier {
   Future<void> _setupConnectivityListener() async {
     _connectivitySubscription =
         _connectivity.onConnectivityChanged.listen((result) {
-      print('[Discovery] Changement de connectivité: $result');
+          print('[Discovery] Changement de connectivité: $result');
 
-      if (result == ConnectivityResult.none) {
-        if (_running) {
-          print('[Discovery] ⚠️ Réseau perdu');
-          stop();
-        }
-      } else {
-        _detectNetworkInterfaces();
-        if (_running) {
-          print('[Discovery] ✅ Réseau rétabli - redémarrage sockets');
-          _restartSockets();
-        }
-      }
-    });
+          if (result == ConnectivityResult.none) {
+            if (_running) {
+              print('[Discovery] ⚠️ Réseau perdu');
+              stop();
+            }
+          } else {
+            _detectNetworkInterfaces();
+            if (_running) {
+              print('[Discovery] ✅ Réseau rétabli - redémarrage sockets');
+              _restartSockets();
+            }
+          }
+        });
   }
 
   /// Démarre la découverte: crée les sockets et lance les annonces
@@ -178,7 +180,7 @@ class DiscoveryManager with ChangeNotifier {
     _discoverySubscription?.cancel();
 
     _discoverySubscription = _discoverySocket!.asBroadcastStream().listen(
-      (RawSocketEvent event) {
+          (RawSocketEvent event) {
         if (event == RawSocketEvent.read && _running) {
           try {
             final datagram = _discoverySocket!.receive();
@@ -243,10 +245,13 @@ class DiscoveryManager with ChangeNotifier {
         'nodeId': nodeId,
         'port': p2pPort,
         'ip': _lastKnownIP ?? 'unknown',
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'timestamp': DateTime
+            .now()
+            .millisecondsSinceEpoch,
         'version': '1.0',
       };
-
+      print(
+          '[Discovery] ✅ IP détectée pour annonce: $_lastKnownIP'); // 👈 Ajout
       final message = jsonEncode(announcement);
       final data = utf8.encode(message);
 
@@ -280,7 +285,9 @@ class DiscoveryManager with ChangeNotifier {
       final nodeKey = '$remoteNodeId@$remoteIp:$remotePort';
 
       // Mettre à jour le timestamp
-      _nodeTimestamps[nodeKey] = DateTime.now().millisecondsSinceEpoch;
+      _nodeTimestamps[nodeKey] = DateTime
+          .now()
+          .millisecondsSinceEpoch;
 
       // Si nouveau nœud, l'ajouter
       if (!_discoveredNodes.contains(nodeKey)) {
@@ -305,7 +312,9 @@ class DiscoveryManager with ChangeNotifier {
 
   /// Supprime les nœuds qui n'ont pas communiqué depuis 30 secondes
   void _cleanupExpiredNodes() {
-    final now = DateTime.now().millisecondsSinceEpoch;
+    final now = DateTime
+        .now()
+        .millisecondsSinceEpoch;
     final toRemove = <String>[];
 
     _nodeTimestamps.forEach((nodeKey, timestamp) {
@@ -329,23 +338,23 @@ class DiscoveryManager with ChangeNotifier {
   List<Map<String, dynamic>> getDiscoveredNodesInfo() {
     return _discoveredNodes
         .map((nodeKey) {
-          final parts = nodeKey.split('@');
-          if (parts.length != 2) return null;
+      final parts = nodeKey.split('@');
+      if (parts.length != 2) return null;
 
-          final nodeId = parts[0];
-          final addressParts = parts[1].split(':');
-          if (addressParts.length != 2) return null;
+      final nodeId = parts[0];
+      final addressParts = parts[1].split(':');
+      if (addressParts.length != 2) return null;
 
-          final ip = addressParts[0];
-          final port = int.tryParse(addressParts[1]) ?? discoveryPort;
+      final ip = addressParts[0];
+      final port = int.tryParse(addressParts[1]) ?? discoveryPort;
 
-          return {
-            'nodeId': nodeId,
-            'ip': ip,
-            'port': port,
-            'key': nodeKey,
-          };
-        })
+      return {
+        'nodeId': nodeId,
+        'ip': ip,
+        'port': port,
+        'key': nodeKey,
+      };
+    })
         .whereType<Map<String, dynamic>>()
         .toList();
   }

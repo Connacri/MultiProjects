@@ -21,11 +21,15 @@ import 'license/LicenseInfoPage.dart';
 import 'p2p/P2PDiagnosticPage.dart';
 import 'p2p/connection_manager_fixed.dart';
 import 'p2p/discovery_manager_broadcast_clean.dart';
-import 'p2p/messenger/messaging_appbar_integration.dart';
-import 'p2p/messenger/messaging_ui_widgets.dart';
+import 'p2p/messenger/home_screen_with_nodes.dart';
+import 'p2p/messenger/message_listener_debug.dart';
+import 'p2p/messenger/messaging_manager.dart';
+
+import 'p2p/messenger/select_node_dialog.dart';
 import 'p2p/p2p_manager_fixed.dart';
 import 'p2p/p2p_status_widgets.dart';
 import 'p2p/sync_manager_complete.dart';
+import 'p2p_connection_test.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
 
@@ -511,20 +515,35 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => HomeScreenWithMessaging(),
+                  builder: (context) =>
+                      HomeScreenEnhanced(), // HomeScreenWithMessaging(),
                 ),
               );
             },
           ),
-          MessengerIconWithBadge(
+          // Dans un widget sous MultiProvider
+          IconButton(
+            icon: Icon(Icons.send),
+            color: Colors.lightGreen,
             onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                builder: (_) => const ConversationsBottomSheet(),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SelectNodePage(),
+                ),
               );
             },
           ),
+
+          // MessengerIconWithBadge(
+          //   onPressed: () {
+          //     showModalBottomSheet(
+          //       context: context,
+          //       isScrollControlled: true,
+          //       builder: (_) => const ConversationsBottomSheet(),
+          //     );
+          //   },
+          // ),
           // ✅ Indicateur P2P compact
           Consumer<P2PManager>(
             builder: (context, p2p, _) {
@@ -679,6 +698,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 children: [
                   // ✅ Banner de statut en haut
                   P2PStatusBanner(),
+                  // Dans votre HomeScreen ou page de test
+                  Column(
+                    children: [
+                      P2PConnectionTestWidget(), // Widget précédent
+                      MessageDebugWidget(), // ✅ NOUVEAU
+                    ],
+                  ),
                   // En-tête général
                   Container(
                     width: double.infinity,

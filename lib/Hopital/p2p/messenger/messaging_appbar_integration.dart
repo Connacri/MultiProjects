@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'NodesManager.dart';
 import 'messaging_manager.dart';
 import 'messaging_ui_widgets.dart';
+import 'select_node_dialog.dart';
 
 // ============================================================================
 // EXAMPLE - Intégration Messaging dans AppBar
@@ -204,9 +204,11 @@ class HomeScreenContent extends StatelessWidget {
                 icon: const Icon(Icons.add_comment),
                 label: const Text('Nouveau message'),
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => const SelectNodeDialog(),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SelectNodePage(),
+                    ),
                   );
                 },
               ),

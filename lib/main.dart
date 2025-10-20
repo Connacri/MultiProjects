@@ -15,6 +15,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
 import 'Hopital/p2p/connection_manager_fixed.dart';
+import 'Hopital/p2p/messenger/NodesManager.dart';
 import 'Hopital/p2p/messenger/messaging_integration.dart';
 import 'Hopital/p2p/messenger/messaging_manager.dart';
 import 'Hopital/p2p/objectbox_sync_observer.dart';
@@ -122,7 +123,12 @@ Future<void> main() async {
     messagingManager = MessagingManager();
     await messagingManager.initialize(objectBox, p2pManager.nodeId);
     print('✅ MessagingManager initialisé');
-
+    // ✅ AJOUTER CES LIGNES
+    // 2. Initialiser NodesManager avec les vrais nœuds
+    // Initialiser NodesManager
+    final nodesManager = NodesManager();
+    await nodesManager.initialize(p2pManager, connectionManager);
+    print('✅ NodesManager initialisé');
     // 2. Initialiser MessagingP2PIntegration
     messagingP2P = MessagingP2PIntegration();
     await messagingP2P.initialize(
@@ -141,6 +147,14 @@ Future<void> main() async {
 
   print('[Main] ======================================');
   //////////////////////////////////////////////////////////////////////////////
+
+  await messagingP2P.initialize(
+    messagingManager,
+    p2pIntegration,
+    connectionManager,
+    objectBox,
+  );
+  messagingP2P.start(); // Lance la synchronisation
   runApp(MyApp()
       //P2PAdminDashboard(),
       );
@@ -195,9 +209,7 @@ Future<void> _setupNetworkPermissions() async {
 Future<void> _initializeP2P() async {
   try {
     print('[Main] =========== Initialisation P2P ===========');
-
-    final p2pIntegration = P2PIntegration();
-
+    p2pIntegration = P2PIntegration(); // ✅ Affecter à la variable globale
     // Initialiser P2P avec timeout global
     await p2pIntegration.initializeP2PSystem().timeout(
       const Duration(seconds: 30),
@@ -208,7 +220,6 @@ Future<void> _initializeP2P() async {
     // Récupérer les gestionnaires après initialisation P2P
     p2pManager = P2PManager(); // ✅ Factory returns singleton
     connectionManager = p2pIntegration.connectionManager; // ✅ Via getter
-
     print('[Main] ✅ P2P System initialisé avec succès');
     final stats = p2pIntegration.getNetworkStats();
     print('[Main] Node ID: ${stats['nodeId']}');

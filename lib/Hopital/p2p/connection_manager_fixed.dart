@@ -107,7 +107,7 @@ class ConnectionManager with ChangeNotifier {
     final remotePort = socket.remotePort;
 
     print(
-        '[ConnectionManager] Connexion entrante de $remoteAddress:$remotePort');
+        '[ConnectionManager] 🔗 Connexion entrante de $remoteAddress:$remotePort');
 
     socket.listen(
       (data) => _handleData(socket, data),
@@ -124,44 +124,43 @@ class ConnectionManager with ChangeNotifier {
       final nodeId = message['nodeId'] as String?;
 
       if (nodeId == null) {
-        print('[ConnectionManager] Message reçu sans nodeId');
+        print('[ConnectionManager] ⚠️ Message reçu sans nodeId');
         return;
       }
 
+      // ✅ CORRECTION: Enregistrer la connexion dès le premier message
       if (!_connections.containsKey(nodeId)) {
         _connections[nodeId] = socket;
         _nodeIps[nodeId] = socket.remoteAddress.address;
         _neighbors.add(nodeId);
-        print('[ConnectionManager] Nouveau voisin enregistré: $nodeId');
+        print(
+            '[ConnectionManager] ✅ Nouveau voisin enregistré: $nodeId (${socket.remoteAddress.address})');
         notifyListeners();
       }
 
-      print('[ConnectionManager] Message reçu de $nodeId: ${message['type']}');
+      print(
+          '[ConnectionManager] 📩 Message reçu de $nodeId: ${message['type']}');
       _messageController.add(message);
     } catch (e) {
-      print('[ConnectionManager] Erreur décodage message: $e');
+      print('[ConnectionManager] ❌ Erreur décodage message: $e');
     }
   }
 
   /// Se connecte à un nœud distant
   Future<bool> connectToNode(String nodeId, String ip, int port) async {
-    // ✅ AJOUT : Ne pas se connecter à soi-même
+    // Ne pas se connecter à soi-même
     if (nodeId == P2PManager().nodeId) {
       print('[ConnectionManager] 🚫 Impossible de se connecter à soi-même');
       return false;
     }
 
     if (_connections.containsKey(nodeId)) {
-      print('[ConnectionManager] Déjà connecté à $nodeId');
-      return true;
-    }
-    if (_connections.containsKey(nodeId)) {
-      print('[ConnectionManager] Déjà connecté à $nodeId');
+      print('[ConnectionManager] ℹ️ Déjà connecté à $nodeId');
       return true;
     }
 
     try {
-      print('[ConnectionManager] Tentative connexion à $nodeId ($ip:$port)');
+      print('[ConnectionManager] 🔄 Tentative connexion à $nodeId ($ip:$port)');
 
       final socket = await Socket.connect(
         ip,
@@ -174,10 +173,10 @@ class ConnectionManager with ChangeNotifier {
       _neighbors.add(nodeId);
       _successfulConnections++;
 
-      // Envoyer un message de présentation
+      // ✅ CORRECTION: Envoyer un message de présentation avec le vrai nodeId
       sendMessage(nodeId, {
         'type': 'hello',
-        'nodeId': 'local-node', // À remplacer par votre P2PManager.nodeId
+        'nodeId': P2PManager().nodeId, // ✅ CORRECTION: Utiliser le vrai nodeId
         'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
 
@@ -205,16 +204,17 @@ class ConnectionManager with ChangeNotifier {
   void sendMessage(String nodeId, Map<String, dynamic> message) {
     final socket = _connections[nodeId];
     if (socket == null) {
-      print('[ConnectionManager] Pas de socket pour $nodeId');
+      print('[ConnectionManager] ⚠️ Pas de socket pour $nodeId');
       return;
     }
 
     try {
       final jsonData = jsonEncode(message);
       socket.add(utf8.encode(jsonData));
-      print('[ConnectionManager] Message envoyé à $nodeId');
+      print(
+          '[ConnectionManager] ✅ Message envoyé à $nodeId: ${message['type']}');
     } catch (e) {
-      print('[ConnectionManager] Erreur envoi à $nodeId: $e');
+      print('[ConnectionManager] ❌ Erreur envoi à $nodeId: $e');
       _handleDisconnection(socket);
     }
   }
@@ -228,18 +228,19 @@ class ConnectionManager with ChangeNotifier {
       try {
         _connections[nodeId]!.add(utf8.encode(jsonData));
         count++;
+        print('[ConnectionManager] ✅ Message envoyé à $nodeId');
       } catch (e) {
-        print('[ConnectionManager] Erreur broadcast à $nodeId: $e');
+        print('[ConnectionManager] ❌ Erreur broadcast à $nodeId: $e');
         _handleDisconnection(_connections[nodeId]!);
       }
     }
 
-    print('[ConnectionManager] Message broadcasté à $count pairs');
+    print('[ConnectionManager] 📡 Message broadcasté à $count pair(s)');
   }
 
   /// Gère les erreurs socket
   void _handleError(Socket socket, error) {
-    print('[ConnectionManager] Erreur socket: $error');
+    print('[ConnectionManager] ⚠️ Erreur socket: $error');
     _handleDisconnection(socket);
   }
 
@@ -250,27 +251,27 @@ class ConnectionManager with ChangeNotifier {
       _connections.remove(nodeId);
       _nodeIps.remove(nodeId);
       _neighbors.remove(nodeId);
-      print('[ConnectionManager] Déconnexion de $nodeId');
+      print('[ConnectionManager] 🔌 Déconnexion de $nodeId');
       notifyListeners();
     }
 
     try {
       socket.destroy();
     } catch (e) {
-      print('[ConnectionManager] Erreur destruction socket: $e');
+      print('[ConnectionManager] ⚠️ Erreur destruction socket: $e');
     }
   }
 
   /// Gère les erreurs du serveur
   void _handleServerError(error) {
-    print('[ConnectionManager] Erreur serveur: $error');
+    print('[ConnectionManager] ❌ Erreur serveur: $error');
     _isRunning = false;
     notifyListeners();
   }
 
   /// Gère la fermeture du serveur
   void _handleServerDone() {
-    print('[ConnectionManager] Serveur fermé');
+    print('[ConnectionManager] ⚠️ Serveur fermé');
     _isRunning = false;
     notifyListeners();
   }
@@ -291,13 +292,13 @@ class ConnectionManager with ChangeNotifier {
 
   /// Arrête le serveur
   Future<void> stop() async {
-    print('[ConnectionManager] Arrêt du serveur P2P');
+    print('[ConnectionManager] 🛑 Arrêt du serveur P2P');
 
     for (final socket in _connections.values) {
       try {
         socket.destroy();
       } catch (e) {
-        print('[ConnectionManager] Erreur fermeture socket: $e');
+        print('[ConnectionManager] ⚠️ Erreur fermeture socket: $e');
       }
     }
 
@@ -307,12 +308,12 @@ class ConnectionManager with ChangeNotifier {
     try {
       await _server?.close();
     } catch (e) {
-      print('[ConnectionManager] Erreur fermeture serveur: $e');
+      print('[ConnectionManager] ⚠️ Erreur fermeture serveur: $e');
     }
 
     _isRunning = false;
     notifyListeners();
-    print('[ConnectionManager] Serveur P2P arrêté');
+    print('[ConnectionManager] ✅ Serveur P2P arrêté');
   }
 
   /// Redémarre le serveur
@@ -330,6 +331,8 @@ class ConnectionManager with ChangeNotifier {
       'connectedNeighbors': _neighbors.length,
       'successfulConnections': _successfulConnections,
       'failedConnections': _failedConnections,
+      'neighbors': _neighbors.toList(),
+      'nodeIps': _nodeIps,
     };
   }
 

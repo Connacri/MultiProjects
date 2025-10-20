@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../../objectBox/classeObjectBox.dart';
 import '../../../objectbox.g.dart';
 import 'messaging_entities.dart';
+import 'messaging_integration.dart';
 
 // ============================================================================
 // MESSAGING MANAGER - Singleton pour gérer tous les messages
@@ -117,6 +118,8 @@ class MessagingManager with ChangeNotifier {
   }
 
   /// Méthode interne pour envoyer un message
+  /// Méthode interne pour envoyer un message
+  /// ✅ CORRECTED: Utilise MessagingP2PIntegration directement
   Future<Message> _sendMessage({
     required String conversationId,
     required MessageType type,
@@ -156,8 +159,18 @@ class MessagingManager with ChangeNotifier {
       // Mettre à jour la conversation
       await _updateConversationLastMessage(conversationId, message);
 
-      // Ajouter à la queue de synchronisation
-      _queueMessageForSync(messageId, 'send', conversationId);
+      // ✅ NOUVEAU: Broadcaster directement via P2P Integration
+      final conversation = getConversation(conversationId);
+      if (conversation != null) {
+        final participants = conversation.getParticipants();
+        final targetNodeIds =
+            participants.where((id) => id != _currentNodeId).toList();
+
+        if (targetNodeIds.isNotEmpty) {
+          // Broadcaster en arrière-plan (pas d'await pour ne pas bloquer l'UI)
+          _broadcastMessageP2P(message, targetNodeIds);
+        }
+      }
 
       _totalMessagesSent++;
       notifyListeners();
@@ -170,9 +183,26 @@ class MessagingManager with ChangeNotifier {
     }
   }
 
-  // ========================================================================
-  // RÉCEPTION DE MESSAGES
-  // ========================================================================
+  /// ✅ NOUVEAU: Broadcaster le message via P2P en arrière-plan
+  void _broadcastMessageP2P(Message message, List<String> targetNodeIds) {
+    try {
+      final messagingP2P = MessagingP2PIntegration();
+
+      // Envoyer en arrière-plan sans await
+      messagingP2P.broadcastMessageToAll(message, targetNodeIds).then(
+        (_) {
+          print(
+              '[MessagingManager] ✅ Message broadcasté: ${message.messageId}');
+        },
+        onError: (e) {
+          print('[MessagingManager] ⚠️ Erreur broadcast: $e');
+          // Continuer même si broadcast échoue (message est déjà en BD)
+        },
+      );
+    } catch (e) {
+      print('[MessagingManager] ❌ Erreur création broadcast: $e');
+    }
+  }
 
   /// Reçoit et stocke un message entrant
   Future<void> receiveMessage(Map<String, dynamic> messageData) async {

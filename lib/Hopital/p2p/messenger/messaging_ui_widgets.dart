@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'messaging_manager.dart';
+import 'package:provider/provider.dart';
+
 import 'messaging_entities.dart';
+import 'messaging_manager.dart';
 
 // ============================================================================
 // MESSENGER ICON WITH BADGE - AppBar Icon
@@ -38,7 +39,8 @@ class MessengerIconWithBadge extends StatelessWidget {
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                  constraints:
+                      const BoxConstraints(minWidth: 20, minHeight: 20),
                   child: Text(
                     unreadCount > 99 ? '99+' : unreadCount.toString(),
                     style: const TextStyle(
@@ -216,9 +218,8 @@ class _ConversationsBottomSheetState extends State<ConversationsBottomSheet> {
             child: Text(
               conv.title ?? 'Conversation',
               style: TextStyle(
-                fontWeight: conv.unreadCount > 0
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight:
+                    conv.unreadCount > 0 ? FontWeight.bold : FontWeight.normal,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -247,7 +248,8 @@ class _ConversationsBottomSheetState extends State<ConversationsBottomSheet> {
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
           color: conv.unreadCount > 0 ? Colors.black87 : Colors.grey,
-          fontWeight: conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
+          fontWeight:
+              conv.unreadCount > 0 ? FontWeight.w500 : FontWeight.normal,
         ),
       ),
       trailing: Text(
@@ -261,16 +263,24 @@ class _ConversationsBottomSheetState extends State<ConversationsBottomSheet> {
     );
   }
 
-  void _openConversationDialog(BuildContext context, Conversation conversation) {
-    showDialog(
-      context: context,
-      builder: (context) => ConversationDialog(conversation: conversation),
+  void _openConversationDialog(
+      BuildContext context, Conversation conversation) {
+    // ✅ Marquer comme lue avant d'ouvrir
+    context
+        .read<MessagingManager>()
+        .markConversationAsRead(conversation.conversationId);
+
+    // ✅ Utiliser Navigator.push avec MaterialPageRoute pour conserver le Provider
+    Navigator.of(context, rootNavigator: true).push(
+      MaterialPageRoute(
+        builder: (newContext) => ConversationDialog(conversation: conversation),
+      ),
     );
   }
 }
 
 // ============================================================================
-// CONVERSATION DIALOG
+// CONVERSATION DIALOG - Maintenant une page complète
 // ============================================================================
 class ConversationDialog extends StatefulWidget {
   final Conversation conversation;
@@ -298,7 +308,7 @@ class _ConversationDialogState extends State<ConversationDialog> {
     _scrollController.addListener(_onScroll);
 
     // Marquer comme lue
-    Future.delayed(const Duration(milliseconds: 500), () {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context
             .read<MessagingManager>()
@@ -329,22 +339,18 @@ class _ConversationDialogState extends State<ConversationDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final messagingManager = context.read<MessagingManager>();
-    final messages = messagingManager.getConversationMessages(
-      widget.conversation.conversationId,
-      limit: _pageSize,
-      offset: _offset,
-    );
+    // ✅ Utiliser Consumer pour accéder au Provider de manière sûre
+    return Consumer<MessagingManager>(
+      builder: (context, messagingManager, _) {
+        final messages = messagingManager.getConversationMessages(
+          widget.conversation.conversationId,
+          limit: _pageSize,
+          offset: _offset,
+        );
 
-    return Dialog(
-      insetPadding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          AppBar(
+        return Scaffold(
+          appBar: AppBar(
             title: Text(widget.conversation.title ?? 'Conversation'),
-            automaticallyImplyLeading: true,
             actions: [
               IconButton(
                 icon: const Icon(Icons.info_outline),
@@ -354,25 +360,61 @@ class _ConversationDialogState extends State<ConversationDialog> {
               ),
             ],
           ),
-          // Messages list
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              reverse: true,
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                return _buildMessageBubble(context, message, messagingManager);
-              },
-            ),
-          ),
-          // Input area
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                // Text input
-                Row(
+          body: Column(
+            children: [
+              // Messages list
+              Expanded(
+                child: messages.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.chat_bubble_outline,
+                                size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Aucun message',
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Commencez la conversation !',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        reverse: true,
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final message = messages[index];
+                          return _buildMessageBubble(
+                              context, message, messagingManager);
+                        },
+                      ),
+              ),
+              // Input area
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Row(
                   children: [
                     Expanded(
                       child: TextField(
@@ -409,26 +451,6 @@ class _ConversationDialogState extends State<ConversationDialog> {
                                 ),
                                 onTap: () => _attachAudio(context),
                               ),
-                              PopupMenuItem(
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.videocam),
-                                    SizedBox(width: 12),
-                                    Text('Vidéo'),
-                                  ],
-                                ),
-                                onTap: () => _attachVideo(context),
-                              ),
-                              PopupMenuItem(
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.attach_file),
-                                    SizedBox(width: 12),
-                                    Text('Fichier'),
-                                  ],
-                                ),
-                                onTap: () => _attachFile(context),
-                              ),
                             ],
                           ),
                         ),
@@ -440,16 +462,16 @@ class _ConversationDialogState extends State<ConversationDialog> {
                     // Send button
                     FloatingActionButton(
                       mini: true,
-                      onPressed: () => _sendMessage(context),
+                      onPressed: () => _sendMessage(context, messagingManager),
                       child: const Icon(Icons.send),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -470,53 +492,29 @@ class _ConversationDialogState extends State<ConversationDialog> {
         child: GestureDetector(
           onLongPress: () => _showMessageOptions(context, message),
           child: Column(
-            crossAxisAlignment: isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            crossAxisAlignment:
+                isFromMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.7,
+                ),
                 decoration: BoxDecoration(
                   color: isFromMe ? Colors.blue[700] : Colors.grey[300],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Affichage du message d'origine si reply
-                    if (message.replyToMessageId != null)
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        margin: const EdgeInsets.only(bottom: 8),
-                        decoration: BoxDecoration(
-                          border: Border(
-                            left: BorderSide(
-                              color: isFromMe ? Colors.white70 : Colors.grey,
-                              width: 3,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          '↪ ${message.replyToFromNodeId}: ${message.replyToContent}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isFromMe ? Colors.white70 : Colors.grey[700],
-                            fontStyle: FontStyle.italic,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    // Contenu du message
-                    Text(
-                      message.content,
-                      style: TextStyle(
-                        color: isFromMe ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  message.content,
+                  style: TextStyle(
+                    color: isFromMe ? Colors.white : Colors.black,
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -547,14 +545,15 @@ class _ConversationDialogState extends State<ConversationDialog> {
     );
   }
 
-  void _sendMessage(BuildContext context) async {
+  void _sendMessage(
+      BuildContext context, MessagingManager messagingManager) async {
     if (_messageController.text.isEmpty) return;
 
     try {
-      await context.read<MessagingManager>().sendTextMessage(
-            widget.conversation.conversationId,
-            _messageController.text,
-          );
+      await messagingManager.sendTextMessage(
+        widget.conversation.conversationId,
+        _messageController.text,
+      );
       _messageController.clear();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -572,22 +571,6 @@ class _ConversationDialogState extends State<ConversationDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.reply),
-              title: const Text('Répondre'),
-              onTap: () {
-                Navigator.pop(context);
-                // Implémenter la réponse
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Favori'),
-              onTap: () {
-                Navigator.pop(context);
-                // Marquer favori
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.copy),
               title: const Text('Copier'),
               onTap: () {
@@ -597,7 +580,8 @@ class _ConversationDialogState extends State<ConversationDialog> {
             ),
             ListTile(
               leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+              title:
+                  const Text('Supprimer', style: TextStyle(color: Colors.red)),
               onTap: () {
                 Navigator.pop(context);
                 // Supprimer message
@@ -615,13 +599,5 @@ class _ConversationDialogState extends State<ConversationDialog> {
 
   void _attachAudio(BuildContext context) {
     // Implémenter enregistrement audio
-  }
-
-  void _attachVideo(BuildContext context) {
-    // Implémenter enregistrement vidéo
-  }
-
-  void _attachFile(BuildContext context) {
-    // Implémenter sélection fichier
   }
 }

@@ -15,8 +15,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../MyListLotties.dart';
 import '../Hopital/StaffProvider.dart';
 import '../Hopital/license/MyAppBlackHole.dart';
+import '../Hopital/p2p/auto_connect_service_fixed.dart';
 import '../Hopital/p2p/connection_manager_fixed.dart';
+import '../Hopital/p2p/delta_generator_real.dart';
+import '../Hopital/p2p/discovery_manager_broadcast_clean.dart';
+import '../Hopital/p2p/messenger/messaging_integration.dart';
 import '../Hopital/p2p/messenger/messaging_manager.dart';
+import '../Hopital/p2p/messenger/messaging_provider_fixed.dart';
 import '../Hopital/p2p/p2p_integration_fixed.dart';
 import '../Hopital/p2p/p2p_manager_fixed.dart';
 import '../Hopital/p2p/sync_manager_complete.dart';
@@ -132,6 +137,21 @@ class MyApp9 extends StatelessWidget {
         // ✅ MESSAGING PROVIDER - À AJOUTER
         ChangeNotifierProvider<MessagingManager>(
           create: (_) => MessagingManager(),
+        ),
+        ChangeNotifierProvider<AutoConnectService>(
+          create: (_) => AutoConnectService(),
+        ),
+        ChangeNotifierProvider<DeltaGenerator>(
+          create: (_) => DeltaGenerator(),
+        ),
+        ChangeNotifierProvider<DiscoveryManager>(
+          create: (_) => DiscoveryManager(),
+        ),
+        ChangeNotifierProvider<MessagingP2PIntegration>(
+          create: (_) => MessagingP2PIntegration(),
+        ),
+        ChangeNotifierProvider<MessagingProvider>(
+          create: (_) => MessagingProvider(),
         ),
       ],
       child: Consumer<ThemeProvider>(builder: (context, themeProvider, child) {

@@ -354,7 +354,7 @@ class _P2PDiagnosticPageState extends State<P2PDiagnosticPage> {
                 'Node ID',
                 p2p.nodeId.isEmpty
                     ? 'Non initialisé'
-                    : '${p2p.nodeId.substring(0, 30)}...'),
+                    : '${p2p.nodeId.length > 30 ? p2p.nodeId.substring(0, 30) + "..." : p2p.nodeId}'),
             _buildInfoTile(
               'Serveur P2P',
               conn.isRunning ? '✅ Actif (Port ${conn.serverPort})' : '❌ Arrêté',

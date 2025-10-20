@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'auto_connect_service_fixed.dart'; // ✅ AJOUT
 import 'connection_manager_fixed.dart';
 import 'crypto_manager_complete.dart';
 import 'objectbox_p2p.dart';
@@ -24,8 +25,9 @@ class P2PIntegration with ChangeNotifier {
   final ConnectionManager _connectionManager = ConnectionManager();
   final CryptoManager _cryptoManager = CryptoManager();
   final DiscoveryManagerBroadcast _discoveryManager =
-      DiscoveryManagerBroadcast();
+  DiscoveryManagerBroadcast();
   final SyncManager _syncManager = SyncManager();
+  final AutoConnectService _autoConnectService = AutoConnectService(); // ✅ AJOUT
   late ObjectBoxP2P _objectBox;
 
   // État
@@ -40,11 +42,6 @@ class P2PIntegration with ChangeNotifier {
   ConnectionManager get connectionManager => _connectionManager;
 
   P2PManager get p2pManager => _p2pManager;
-
-  // ... other managers
-  // Auto-connexion
-  Timer? _autoConnectTimer;
-  static const int autoConnectInterval = 5; // secondes
 
   /// Initialise le système P2P complet avec gestion d'erreur robuste
   Future<void> initializeP2PSystem() async {
@@ -104,8 +101,10 @@ class P2PIntegration with ChangeNotifier {
       // 8. Écouter les messages entrants
       _setupMessageListener();
 
-      // 9. Démarrer l'auto-connexion
-      _startAutoConnect();
+      // ✅ 9. CORRECTION: Démarrer l'auto-connexion
+      _updateStatus('Démarrage de l\'auto-connexion...');
+      _autoConnectService.start();
+      print('[P2PIntegration] ✅ AutoConnectService démarré');
 
       _initialized = true;
       _updateStatus('P2P opérationnel');
@@ -124,10 +123,8 @@ class P2PIntegration with ChangeNotifier {
   }
 
   /// Exécute une fonction d'initialisation avec timeout
-  Future<void> _initWithTimeout(
-    String name,
-    Future<void> Function() fn,
-  ) async {
+  Future<void> _initWithTimeout(String name,
+      Future<void> Function() fn,) async {
     try {
       await fn().timeout(
         const Duration(seconds: 10),
@@ -156,7 +153,6 @@ class P2PIntegration with ChangeNotifier {
         final type = message['type'];
         final nodeId = message['nodeId'];
 
-        // ✅ CORRECTION : Gérer les erreurs de parsing JSON
         if (type == null) {
           print('[P2PIntegration] ⚠️ Message sans type reçu');
           return;
@@ -176,10 +172,8 @@ class P2PIntegration with ChangeNotifier {
   }
 
   /// Traite les messages delta reçus
-  Future<void> _handleDeltaMessage(
-    String nodeId,
-    Map<String, dynamic> message,
-  ) async {
+  Future<void> _handleDeltaMessage(String nodeId,
+      Map<String, dynamic> message,) async {
     try {
       final encrypted = message['payload'] as Map<String, dynamic>?;
       if (encrypted == null) {
@@ -209,54 +203,6 @@ class P2PIntegration with ChangeNotifier {
     }
   }
 
-  /// Démarre l'auto-connexion aux nœuds découverts
-  void _startAutoConnect() {
-    _autoConnectTimer?.cancel();
-
-    _autoConnectTimer =
-        Timer.periodic(Duration(seconds: autoConnectInterval), (_) async {
-      await _tryConnectToDiscoveredNodes();
-    });
-
-    print('[P2PIntegration] Auto-connexion lancée');
-  }
-
-  /// Essaie de se connecter aux nœuds découverts
-  Future<void> _tryConnectToDiscoveredNodes() async {
-    final discoveredNodes = _discoveryManager.getDiscoveredNodesInfo();
-    final connectedNodes = _connectionManager.neighbors;
-    final localNodeId = _p2pManager.nodeId; // ✅ AJOUT
-
-    for (final node in discoveredNodes) {
-      final nodeId = node['nodeId'] as String;
-      final ip = node['ip'] as String;
-      final port = node['port'] as int;
-
-      // ✅ CORRECTION : Ne pas se connecter à soi-même
-      if (nodeId == localNodeId) {
-        continue;
-      }
-
-      // Skip si déjà connecté
-      if (connectedNodes.contains(nodeId)) {
-        continue;
-      }
-
-      // Essayer de se connecter
-      try {
-        final success =
-            await _connectionManager.connectToNode(nodeId, ip, port);
-        if (success) {
-          print('[P2PIntegration] ✅ Auto-connexion réussie: $nodeId');
-        }
-      } catch (e) {
-        print('[P2PIntegration] ⚠️ Auto-connexion échouée pour $nodeId: $e');
-      }
-    }
-
-    notifyListeners();
-  }
-
   /// Broadcaster un delta à tous les pairs
   Future<void> broadcastDelta(Map<String, dynamic> delta) async {
     try {
@@ -268,7 +214,8 @@ class P2PIntegration with ChangeNotifier {
       });
 
       print(
-          '[P2PIntegration] Delta broadcasté à ${_connectionManager.neighbors.length} pairs');
+          '[P2PIntegration] Delta broadcasté à ${_connectionManager.neighbors
+              .length} pairs');
     } catch (e) {
       print('[P2PIntegration] ❌ Erreur broadcast: $e');
     }
@@ -289,6 +236,7 @@ class P2PIntegration with ChangeNotifier {
       'successfulSyncs': _syncManager.successfulSyncs,
       'failedSyncs': _syncManager.failedSyncs,
       'connectionStats': _connectionManager.getStats(),
+      'autoConnectStats': _autoConnectService.getStats(), // ✅ AJOUT
     };
   }
 
@@ -304,6 +252,17 @@ class P2PIntegration with ChangeNotifier {
     print('[P2PIntegration] Synchronisation: ${stats['isSyncing']}');
     print('[P2PIntegration] Syncs réussies: ${stats['successfulSyncs']}');
     print('[P2PIntegration] Syncs échouées: ${stats['failedSyncs']}');
+
+    // ✅ AJOUT: Stats auto-connect
+    final autoConnectStats = stats['autoConnectStats'] as Map<String, dynamic>;
+    print(
+        '[P2PIntegration] Auto-Connect actif: ${autoConnectStats['isRunning']}');
+    print(
+        '[P2PIntegration] Tentatives connexion: ${autoConnectStats['totalAttempts']}');
+    print(
+        '[P2PIntegration] Connexions réussies: ${autoConnectStats['successfulConnections']}');
+    print(
+        '[P2PIntegration] Connexions échouées: ${autoConnectStats['failedConnections']}');
     print('[P2PIntegration] =====================================');
   }
 
@@ -311,7 +270,7 @@ class P2PIntegration with ChangeNotifier {
   Future<void> shutdown() async {
     print('[P2PIntegration] Arrêt du système P2P');
 
-    _autoConnectTimer?.cancel();
+    _autoConnectService.stop(); // ✅ AJOUT
     _discoveryManager.stop();
     await _connectionManager.stop();
 
