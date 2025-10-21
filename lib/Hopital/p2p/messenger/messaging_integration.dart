@@ -8,7 +8,7 @@ import '../p2p_integration_fixed.dart';
 import 'messaging_entities.dart';
 import 'messaging_manager.dart';
 
-/// Version ULTRA-SIMPLIFIÉE : pas de polling, événementiel pur
+/// ✅ Version ULTRA-SIMPLIFIÉE : événementiel pur avec filtrage des métadonnées
 class MessagingP2PIntegration with ChangeNotifier {
   static MessagingP2PIntegration? _instance;
 
@@ -31,12 +31,17 @@ class MessagingP2PIntegration with ChangeNotifier {
   int _messagesFailed = 0;
 
   bool get isRunning => _isRunning;
+
   int get messagesSynced => _messagesSynced;
+
   int get messagesFailed => _messagesFailed;
+
+  // ✅ Getter pour accéder à ObjectBox depuis l'extérieur
+  ObjectBox get objectBox => _objectBox;
 
   Future<void> initialize(
     MessagingManager messagingManager,
-    P2PIntegration p2pIntegration,
+    P2PIntegration? p2pIntegration, // Nullable car plus utilisé
     ConnectionManager connectionManager,
     ObjectBox objectBox,
   ) async {
@@ -45,9 +50,9 @@ class MessagingP2PIntegration with ChangeNotifier {
       _connectionManager = connectionManager;
       _objectBox = objectBox;
 
-      print('[MessagingP2P] Initialisé');
+      print('[MessagingP2P] ✅ Initialisé');
     } catch (e) {
-      print('[MessagingP2P] Erreur init: $e');
+      print('[MessagingP2P] ❌ Erreur init: $e');
       rethrow;
     }
   }
@@ -56,25 +61,38 @@ class MessagingP2PIntegration with ChangeNotifier {
     if (_isRunning) return;
     _isRunning = true;
 
-    // Écouter DIRECTEMENT les messages P2P entrants
-    // Pas de polling, pas de boucles, juste événementiel
+    // ✅ CORRECTION CRITIQUE: Filtrage strict des messages de métadonnées
     _messageSubscription = _connectionManager.onMessage.listen(
-      (message) => _handleIncomingP2PMessage(message),
-      onError: (e) => print('[MessagingP2P] Erreur stream: $e'),
+      (message) {
+        // 🔥 Filtrer AVANT le traitement
+        final type = message['type'] as String?;
+
+        // ✅ Ignorer explicitement les messages de métadonnées
+        if (type == 'node_metadata' || type == 'metadata_request') {
+          print('[MessagingP2P] 🔇 Message de métadonnée ignoré: $type');
+          return; // Ne pas traiter
+        }
+
+        // ✅ Traiter uniquement les messages de messagerie
+        if (type == 'message' || type == 'message_receipt') {
+          _handleIncomingP2PMessage(message);
+        }
+      },
+      onError: (e) => print('[MessagingP2P] ❌ Erreur stream: $e'),
     );
 
-    print('[MessagingP2P] Démarré (mode événementiel)');
+    print('[MessagingP2P] ✅ Démarré (mode événementiel avec filtrage)');
     notifyListeners();
   }
 
   void stop() {
     _messageSubscription?.cancel();
     _isRunning = false;
-    print('[MessagingP2P] Arrêté');
+    print('[MessagingP2P] 🛑 Arrêté');
     notifyListeners();
   }
 
-  /// Traite les messages P2P entrants IMMÉDIATEMENT et directement
+  /// ✅ Traite les messages P2P entrants IMMÉDIATEMENT (déjà filtrés)
   Future<void> _handleIncomingP2PMessage(
       Map<String, dynamic> messageData) async {
     try {
@@ -88,7 +106,7 @@ class MessagingP2PIntegration with ChangeNotifier {
             messageData['data'] as Map<String, dynamic>);
       }
     } catch (e) {
-      print('[MessagingP2P] Erreur traitement: $e');
+      print('[MessagingP2P] ❌ Erreur traitement: $e');
       _messagesFailed++;
       notifyListeners();
     }
@@ -116,7 +134,7 @@ class MessagingP2PIntegration with ChangeNotifier {
       _messagesSynced++;
       notifyListeners();
     } catch (e) {
-      print('[MessagingP2P] Erreur réception: $e');
+      print('[MessagingP2P] ❌ Erreur réception: $e');
       _messagesFailed++;
       notifyListeners();
     }

@@ -25,6 +25,9 @@ class MessagingManager with ChangeNotifier {
   late ObjectBox _objectBox;
   late String _currentNodeId;
 
+  // ✅ CORRECTION: Exposer objectBox publiquement
+  ObjectBox get objectBox => _objectBox;
+
   // StreamControllers pour notifications
   final _messageReceivedController = StreamController<Message>.broadcast();
   final _conversationUpdateController =
@@ -117,9 +120,7 @@ class MessagingManager with ChangeNotifier {
     return message;
   }
 
-  /// Méthode interne pour envoyer un message
-  /// Méthode interne pour envoyer un message
-  /// ✅ CORRECTED: Utilise MessagingP2PIntegration directement
+  /// ✅ CORRECTION: Méthode interne pour envoyer un message
   Future<Message> _sendMessage({
     required String conversationId,
     required MessageType type,
@@ -159,7 +160,7 @@ class MessagingManager with ChangeNotifier {
       // Mettre à jour la conversation
       await _updateConversationLastMessage(conversationId, message);
 
-      // ✅ NOUVEAU: Broadcaster directement via P2P Integration
+      // ✅ Broadcaster directement via P2P Integration
       final conversation = getConversation(conversationId);
       if (conversation != null) {
         final participants = conversation.getParticipants();
@@ -183,7 +184,7 @@ class MessagingManager with ChangeNotifier {
     }
   }
 
-  /// ✅ NOUVEAU: Broadcaster le message via P2P en arrière-plan
+  /// ✅ Broadcaster le message via P2P en arrière-plan
   void _broadcastMessageP2P(Message message, List<String> targetNodeIds) {
     try {
       final messagingP2P = MessagingP2PIntegration();
@@ -224,7 +225,7 @@ class MessagingManager with ChangeNotifier {
       query.close();
 
       if (existingMessage != null) {
-        print('[MessagingManager] ⭐ Message déjà reçu: $messageId');
+        print('[MessagingManager] ⏭ Message déjà reçu: $messageId');
         return;
       }
 
@@ -358,6 +359,7 @@ class MessagingManager with ChangeNotifier {
     } catch (e) {
       print('[MessagingManager] ❌ Erreur marquage lecture: $e');
     }
+    notifyListeners();
   }
 
   // ========================================================================
@@ -675,6 +677,24 @@ class MessagingManager with ChangeNotifier {
       'conversationsCount': _objectBox.conversationBox.count(),
       'messagesCount': _objectBox.messageBox.count(),
     };
+  }
+
+  /// ✅ Getter pour le nombre total de messages non lus
+  int get totalUnreadCount {
+    try {
+      final conversations = _objectBox.conversationBox.getAll();
+
+      int total = 0;
+      for (final conv in conversations) {
+        total += conv.unreadCount;
+      }
+
+      print('[MessagingManager] 📊 Total unread: $total');
+      return total;
+    } catch (e) {
+      print('[MessagingManager] ❌ Erreur calcul unread: $e');
+      return 0;
+    }
   }
 
   void dispose() {

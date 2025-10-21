@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
@@ -478,6 +479,66 @@ class _StaffBranchTextState extends State<StaffBranchText> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Widget réutilisable pour badge sur icône
+class BadgeIcon extends StatelessWidget {
+  final IconData icon;
+  final int count;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+  final Color? badgeColor;
+
+  const BadgeIcon({
+    Key? key,
+    required this.icon,
+    required this.count,
+    this.onPressed,
+    this.tooltip,
+    this.badgeColor,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: Icon(icon),
+          onPressed: onPressed,
+          tooltip: tooltip,
+        ),
+        if (count > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: badgeColor ?? Colors.red,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 18,
+                minHeight: 18,
+              ),
+              child: Center(
+                child: Text(
+                  count > 99 ? '99+' : '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

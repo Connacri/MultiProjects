@@ -21,6 +21,7 @@ import 'StaffProvider.dart';
 import 'license/LicenseInfoPage.dart';
 import 'p2p/connection_manager_fixed.dart';
 import 'p2p/discovery_manager_broadcast_clean.dart';
+import 'p2p/messenger/messaging_manager.dart';
 import 'p2p/messenger/select_node.dart';
 import 'p2p/p2p_manager_fixed.dart';
 import 'p2p/p2p_status_widgets.dart';
@@ -517,15 +518,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           //   },
           // ),
           // Dans un widget sous MultiProvider
-          IconButton(
-            icon: Icon(FontAwesomeIcons.message),
-            color: Colors.cyanAccent,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SelectNodePage(),
-                ),
+          Consumer<MessagingManager>(
+            builder: (context, messagingManager, _) {
+              return BadgeIcon(
+                icon: FontAwesomeIcons.message,
+                count: messagingManager.totalUnreadCount,
+                badgeColor: Colors.red,
+                tooltip:
+                    'Messages (${messagingManager.totalUnreadCount} non lus)',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SelectNodePage(),
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -7503,288 +7511,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     } else {
       return "de ";
     }
-  }
-}
-
-class _P2PDetailPage extends StatelessWidget {
-  const _P2PDetailPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Statut P2P Détaillé'),
-        backgroundColor: Colors.blue[800],
-      ),
-      body: Consumer4<P2PManager, ConnectionManager, SyncManager,
-          DiscoveryManager>(
-        builder: (context, p2p, conn, sync, discovery, _) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Statut général
-                Card(
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'État du Système',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Divider(),
-                        _StatRow(
-                          'Node ID',
-                          p2p.nodeId.isEmpty
-                              ? 'Initialisation...'
-                              : '${p2p.nodeId.substring(0, 20)}...',
-                          p2p.nodeId.isNotEmpty,
-                        ),
-                        _StatRow(
-                          'Serveur P2P',
-                          conn.isRunning ? 'Port ${conn.serverPort}' : 'Arrêté',
-                          conn.isRunning,
-                        ),
-                        _StatRow(
-                          'Connexions Actives',
-                          '${conn.neighbors.length}',
-                          conn.neighbors.isNotEmpty,
-                        ),
-                        _StatRow(
-                          'Nœuds Découverts',
-                          '${discovery.discoveredNodes.length}',
-                          true,
-                        ),
-                        _StatRow(
-                          'Synchronisation',
-                          sync.isSyncing ? 'En cours...' : 'Au repos',
-                          !sync.isSyncing,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Voisins connectés
-                Card(
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Voisins Connectés (${conn.neighbors.length})',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Divider(),
-                        if (conn.neighbors.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                              child: Text(
-                                'Aucun voisin connecté',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ),
-                          )
-                        else
-                          ...conn.neighbors.map((nodeId) {
-                            final ip = conn.nodeIps[nodeId] ?? 'IP inconnue';
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.computer,
-                                color: Colors.green,
-                              ),
-                              title: Text(
-                                nodeId.length > 30
-                                    ? '${nodeId.substring(0, 30)}...'
-                                    : nodeId,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                              subtitle: Text(ip),
-                              trailing: const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                              ),
-                            );
-                          }).toList(),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Nœuds découverts
-                Card(
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Nœuds Découverts (${discovery.discoveredNodes.length})',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Divider(),
-                        if (discovery.discoveredNodes.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                              child: Text(
-                                'Recherche en cours...',
-                                style: TextStyle(color: Colors.grey),
-                              ),
-                            ),
-                          )
-                        else
-                          ...discovery.discoveredNodes.map((nodeKey) {
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.cloud,
-                                color: Colors.blue,
-                              ),
-                              title: Text(
-                                nodeKey.length > 40
-                                    ? '${nodeKey.substring(0, 40)}...'
-                                    : nodeKey,
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                              trailing: const Icon(
-                                Icons.search,
-                                color: Colors.orange,
-                              ),
-                            );
-                          }).toList(),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Statistiques de synchronisation
-                Card(
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Statistiques Sync',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Divider(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _StatBox(
-                              'Réussies',
-                              '${sync.successfulSyncs}',
-                              Colors.green,
-                            ),
-                            _StatBox(
-                              'Échouées',
-                              '${sync.failedSyncs}',
-                              Colors.red,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Actions rapides
-                Card(
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Actions Rapides',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Divider(),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Redémarrer Serveur'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () async {
-                                await conn.stop();
-                                await Future.delayed(
-                                    const Duration(seconds: 1));
-                                await conn.start();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Serveur redémarré'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.sync),
-                              label: const Text('Forcer Sync'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () {
-                                sync.triggerAntiEntropy();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Synchronisation lancée'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
   }
 }
 

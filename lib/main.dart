@@ -128,6 +128,7 @@ Future<void> main() async {
     // Initialiser NodesManager
     final nodesManager = NodesManager();
     await nodesManager.initialize(p2pManager, connectionManager);
+
     print('✅ NodesManager initialisé');
     // 2. Initialiser MessagingP2PIntegration
     messagingP2P = MessagingP2PIntegration();

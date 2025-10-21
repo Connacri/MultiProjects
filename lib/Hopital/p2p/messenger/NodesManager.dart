@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../connection_manager_fixed.dart';
 import '../p2p_manager_fixed.dart';
+import 'node_metadata_manager.dart';
 
 enum NodeStatus { online, offline, idle }
 
@@ -72,13 +73,11 @@ class NodesManager {
 
   List<NetworkNode> get availableNodes => _cachedNodes;
 
-  /// Récupère les nœuds voisins découverts
+  /// 🔄 Rafraîchit la liste des nœuds voisins découverts et met à jour leurs métadonnées
   Future<void> refreshNodes() async {
     try {
       print('[NodesManager] 🔄 Rafraîchissement des nœuds...');
 
-      // Récupérer les voisins depuis ConnectionManager
-      // ConnectionManager a une propriété: Set<String> get neighbors => _neighbors;
       final neighborsSet = _connectionManager.neighbors;
 
       if (neighborsSet.isEmpty) {
@@ -87,27 +86,48 @@ class NodesManager {
         return;
       }
 
-      // Convertir en NetworkNode
-      _cachedNodes = neighborsSet.map((nodeId) {
-        return NetworkNode(
-          nodeId: nodeId,
-          displayName: _getDisplayName(nodeId),
-          status: NodeStatus.online, // Les voisins sont par définition en ligne
-          lastSeen: DateTime.now(),
-        );
-      }).toList();
+      // Récupérer l'instance du gestionnaire des métadonnées
+      final metadataManager = NodeMetadataManager();
 
-      // Trier par nom d'affichage
-      _cachedNodes.sort((a, b) => a.displayName.compareTo(b.displayName));
+      final List<NetworkNode> nodes = [];
+
+      for (final nodeId in neighborsSet) {
+        // Vérifier si on possède déjà les métadonnées
+        NodeMetadata? metadata = metadataManager.getMetadata(nodeId);
+
+        // Si aucune métadonnée connue, envoyer une requête
+        if (metadata == null) {
+          print(
+              '[NodesManager] 📡 Métadonnées manquantes pour $nodeId → demande envoyée');
+          await metadataManager.requestMetadata(nodeId);
+        }
+
+        // Créer le NetworkNode avec les infos disponibles
+        nodes.add(
+          NetworkNode(
+            nodeId: nodeId,
+            displayName: metadata?.displayName ?? _getDisplayName(nodeId),
+            status: NodeStatus.online,
+            // Les voisins sont en ligne par définition
+            lastSeen: DateTime.now(),
+          ),
+        );
+      }
+
+      // Trier par nom
+      nodes.sort((a, b) => a.displayName.compareTo(b.displayName));
+      _cachedNodes = nodes;
 
       print('[NodesManager] ✅ ${_cachedNodes.length} nœud(s) découvert(s)');
-
-      // Afficher les nœuds pour debug
-      for (var node in _cachedNodes) {
+      for (final node in _cachedNodes) {
         print('[NodesManager]   - ${node.displayName} (${node.nodeId})');
       }
-    } catch (e) {
+
+      // Nettoyer les métadonnées obsolètes
+      metadataManager.cleanupStaleMetadata();
+    } catch (e, stack) {
       print('[NodesManager] ❌ Erreur rafraîchissement: $e');
+      print(stack);
       _cachedNodes = [];
     }
   }
