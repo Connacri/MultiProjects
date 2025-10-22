@@ -6,9 +6,9 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../objectBox/Entity.dart';
 import '../../../objectBox/classeObjectBox.dart';
 import '../../../objectbox.g.dart';
-import 'messaging_entities.dart';
 import 'messaging_integration.dart';
 
 // ============================================================================
