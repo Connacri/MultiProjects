@@ -11,12 +11,14 @@ class NetworkNode {
   final String displayName;
   final NodeStatus status;
   final DateTime lastSeen;
+  final String? platformNode;
 
   NetworkNode({
     required this.nodeId,
     required this.displayName,
     required this.status,
     required this.lastSeen,
+    required this.platformNode,
   });
 
   String get statusLabel {
@@ -105,12 +107,12 @@ class NodesManager {
         // Créer le NetworkNode avec les infos disponibles
         nodes.add(
           NetworkNode(
-            nodeId: nodeId,
-            displayName: metadata?.displayName ?? _getDisplayName(nodeId),
-            status: NodeStatus.online,
-            // Les voisins sont en ligne par définition
-            lastSeen: DateTime.now(),
-          ),
+              nodeId: nodeId,
+              displayName: metadata?.displayName ?? _getDisplayName(nodeId),
+              status: NodeStatus.online,
+              // Les voisins sont en ligne par définition
+              lastSeen: DateTime.now(),
+              platformNode: 'hihih'),
         );
       }
 

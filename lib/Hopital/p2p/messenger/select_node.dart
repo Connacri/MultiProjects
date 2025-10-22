@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../main.dart';
 import '../../../objectBox/Entity.dart';
 import '../../widgets.dart';
+import '../connection_manager_fixed.dart';
 import 'NodesManager.dart';
 import 'fonctions.dart';
 import 'messaging_manager.dart';
@@ -48,6 +49,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
 
   List<NetworkNode> _filteredNodes = [];
   bool _isLoading = false;
+  bool _metadataInitialized = false;
 
   @override
   void initState() {
@@ -57,26 +59,57 @@ class _SelectNodePageState extends State<SelectNodePage> {
     _metadataManager = NodeMetadataManager();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeMetadataManager();
       _loadInitialNodes();
-      _setupMetadataManager();
     });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _metadataManager.removeListener(_onMetadataChanged);
     super.dispose();
   }
 
-  /// ✅ Configuration du gestionnaire de métadonnées
-  void _setupMetadataManager() {
+  /// ✅ CORRECTION CRITIQUE : Initialiser le gestionnaire de métadonnées avec ConnectionManager
+  Future<void> _initializeMetadataManager() async {
     try {
-      // Écouter les changements de métadonnées
+      // Récupérer le MessagingManager depuis le Provider
+      final messagingManager = context.read<MessagingManager>();
+
+      // Récupérer le ConnectionManager depuis votre app
+      // ⚠️ IMPORTANT : Vous devez avoir accès au ConnectionManager
+      // Option 1 : Via un Provider
+      final connectionManager = context.read<ConnectionManager>();
+
+      // ✅ INITIALISER avec les bonnes dépendances
+      await _metadataManager.initialize(
+        connectionManager,
+        messagingManager.currentNodeId,
+      );
+
+      // Écouter les changements
       _metadataManager.addListener(_onMetadataChanged);
 
-      print('[SelectNodePage] ✅ Gestionnaire de métadonnées configuré');
-    } catch (e) {
-      print('[SelectNodePage] ⚠️ Erreur setup metadata manager: $e');
+      setState(() {
+        _metadataInitialized = true;
+      });
+
+      print('[SelectNodePage] ✅ Gestionnaire de métadonnées initialisé');
+      print('[SelectNodePage] 📡 NodeId: ${messagingManager.currentNodeId}');
+    } catch (e, stack) {
+      print('[SelectNodePage] ❌ Erreur initialisation metadata manager: $e');
+      print(stack);
+
+      // Afficher un message d'erreur
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur initialisation métadonnées: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -119,7 +152,9 @@ class _SelectNodePageState extends State<SelectNodePage> {
       await NodesManager().refreshNodes();
 
       // ✅ Demander les métadonnées de tous les nouveaux nœuds
-      await _metadataManager.refreshAllMetadata();
+      if (_metadataInitialized) {
+        await _metadataManager.refreshAllMetadata();
+      }
 
       if (mounted) {
         setState(() {
@@ -229,15 +264,16 @@ class _SelectNodePageState extends State<SelectNodePage> {
   /// ✅ Construction du tile avec métadonnées du gestionnaire
   Widget _buildNodeTile(BuildContext context, NetworkNode node) {
     // ✅ Récupérer les métadonnées depuis le gestionnaire
-    final metadata = _metadataManager.getMetadata(node.nodeId);
+    final metadata =
+        _metadataInitialized ? _metadataManager.getMetadata(node.nodeId) : null;
 
     // Si métadonnées disponibles, les utiliser
     final platform = metadata?.platform ?? 'Détection...';
     final branch = metadata?.branch ?? getBranchForNode(node.nodeId);
     final hasMetadata = metadata != null;
 
-    // ✅ Si pas de métadonnées, demander
-    if (!hasMetadata && !_isLoading) {
+    // ✅ Si pas de métadonnées ET initialisé, demander
+    if (!hasMetadata && _metadataInitialized && !_isLoading) {
       _metadataManager.requestMetadata(node.nodeId);
     }
 
@@ -278,20 +314,24 @@ class _SelectNodePageState extends State<SelectNodePage> {
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            node.statusLabel,
-            style: TextStyle(
-              fontSize: 11,
-              color: node.statusColor,
-              fontWeight: FontWeight.w500,
-            ),
+          Row(
+            children: [
+              Text(
+                node.statusLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: node.statusColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
               // ✅ Icône adaptée à la plateforme
               Icon(
-                _getPlatformIcon(platform),
+                getPlatformIcon(platform),
                 size: 14,
                 color: hasMetadata ? Colors.blue[700] : Colors.grey,
               ),
@@ -338,6 +378,18 @@ class _SelectNodePageState extends State<SelectNodePage> {
                   fontStyle: FontStyle.italic,
                 ),
               ),
+            )
+          else if (_metadataInitialized)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '⏳ En attente de métadonnées...',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.orange[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ),
         ],
       ),
@@ -346,33 +398,41 @@ class _SelectNodePageState extends State<SelectNodePage> {
     );
   }
 
-  /// ✅ Icône selon la plateforme
-  IconData _getPlatformIcon(String platform) {
-    final platformLower = platform.toLowerCase();
-
-    if (platformLower.contains('android')) {
-      return Icons.android;
-    } else if (platformLower.contains('ios')) {
-      return Icons.apple;
-    } else if (platformLower.contains('windows')) {
-      return Icons.desktop_windows;
-    } else if (platformLower.contains('macos')) {
-      return Icons.laptop_mac;
-    } else if (platformLower.contains('linux')) {
-      return Icons.computer;
-    } else if (platformLower.contains('web')) {
-      return Icons.language;
-    }
-
-    return Icons.device_unknown;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sélectionner un nœud'),
         actions: [
+          // ✅ Indicateur d'état du gestionnaire de métadonnées
+          if (!_metadataInitialized)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Center(
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.orange[300]!,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Init...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange[300],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.bug_report),
             onPressed: () {
@@ -402,8 +462,20 @@ class _SelectNodePageState extends State<SelectNodePage> {
           // ✅ Badge des métadonnées reçues
           BadgeIcon(
             icon: Icons.info_outline,
-            count: _metadataManager.remoteMetadata.length,
+            count: _metadataInitialized
+                ? _metadataManager.remoteMetadata.length
+                : 0,
             onPressed: () {
+              if (!_metadataInitialized) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Gestionnaire de métadonnées non initialisé'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+                return;
+              }
+
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
@@ -427,68 +499,78 @@ class _SelectNodePageState extends State<SelectNodePage> {
                           ),
                         ),
                         const Divider(),
-                        ..._metadataManager.remoteMetadata.values
-                            .map((metadata) {
-                          return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    metadata.displayName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(_getPlatformIcon(metadata.platform),
-                                          size: 12),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          metadata.platform,
-                                          style: const TextStyle(fontSize: 11),
-                                        ),
+                        if (_metadataManager.remoteMetadata.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              'Aucune métadonnée reçue pour le moment',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        else
+                          ..._metadataManager.remoteMetadata.values
+                              .map((metadata) {
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      metadata.displayName,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                       ),
-                                    ],
-                                  ),
-                                  if (metadata.branch != null) ...[
-                                    const SizedBox(height: 2),
+                                    ),
+                                    const SizedBox(height: 4),
                                     Row(
                                       children: [
-                                        const Icon(Icons.business,
-                                            size: 12, color: Colors.green),
+                                        Icon(getPlatformIcon(metadata.platform),
+                                            size: 12),
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
-                                            metadata.branch!,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.green,
-                                            ),
+                                            metadata.platform,
+                                            style:
+                                                const TextStyle(fontSize: 11),
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ],
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Maj: ${_formatTimestamp(metadata.lastUpdate)}',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey[600],
+                                    if (metadata.branch != null) ...[
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.business,
+                                              size: 12, color: Colors.green),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              metadata.branch!,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                color: Colors.green,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Maj: ${_formatTimestamp(metadata.lastUpdate)}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey[600],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
                       ],
                     ),
                   ),
@@ -508,8 +590,10 @@ class _SelectNodePageState extends State<SelectNodePage> {
                 ),
               );
             },
-            tooltip: 'Métadonnées (${_metadataManager.remoteMetadata.length})',
-            badgeColor: Colors.green,
+            tooltip: _metadataInitialized
+                ? 'Métadonnées (${_metadataManager.remoteMetadata.length})'
+                : 'Non initialisé',
+            badgeColor: _metadataInitialized ? Colors.green : Colors.grey,
           ),
           const SizedBox(width: 8),
           IconButton(

@@ -67,15 +67,19 @@ class NodeMetadataManager with ChangeNotifier {
 
       await _loadLocalMetadata();
       _setupMessageListener();
+
+      // ✅ CORRECTION : Marquer comme initialisé AVANT le broadcast
+      _initialized = true;
+      _addLog('✅ INIT', 'Initialisé, prêt à broadcaster');
+
       _startPeriodicBroadcast();
 
       _addLog('📡 INIT', 'Broadcast initial...');
-      await broadcastMetadata(); // Diffusion immédiate
+      await broadcastMetadata(); // Maintenant _initialized = true
 
-      _initialized = true;
-      _addLog('✅ INIT', 'Initialisation complète');
       print('[NodeMetadataManager] ✅ Initialisé pour $_currentNodeId');
     } catch (e, stack) {
+      _initialized = false; // Remettre à false en cas d'erreur
       _addLog('❌ INIT', 'Erreur: $e');
       print('[NodeMetadataManager] ❌ Erreur initialisation: $e');
       print(stack);
