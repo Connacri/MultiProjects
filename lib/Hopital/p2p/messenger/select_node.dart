@@ -59,8 +59,19 @@ class _SelectNodePageState extends State<SelectNodePage> {
     _metadataManager = NodeMetadataManager();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 🔥 Nettoyer AVANT de charger
+      print('[SelectNodePage] 🧹 Nettoyage initial...');
+      NodesManager().cleanupDisconnectedNodes();
+
       _initializeMetadataManager();
       _loadInitialNodes();
+
+      // 🔥 Rafraîchir automatiquement après 500ms pour s'assurer d'avoir les bons nœuds
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _refreshNodes();
+        }
+      });
     });
   }
 
@@ -149,19 +160,40 @@ class _SelectNodePageState extends State<SelectNodePage> {
     if (!mounted) return;
     setState(() => _isLoading = true);
     try {
+      print('[SelectNodePage] 🧹 Début refresh avec nettoyage complet...');
+
+      // 🔥 ÉTAPE 1: Nettoyer le cache local immédiatement
+      setState(() {
+        _filteredNodes.clear();
+      });
+
+      // 🔥 ÉTAPE 2: Nettoyer les métadonnées obsolètes
+      if (_metadataInitialized) {
+        _metadataManager.cleanupStaleMetadata();
+        print('[SelectNodePage] 🗑️ Métadonnées nettoyées');
+      }
+
+      // 🔥 ÉTAPE 3: Nettoyer NodesManager
+      NodesManager().cleanupDisconnectedNodes();
+      print('[SelectNodePage] 🗑️ NodesManager nettoyé');
+
+      // 🔥 ÉTAPE 4: Rafraîchir la liste depuis les voisins actifs
       await NodesManager().refreshNodes();
 
-      // ✅ Demander les métadonnées de tous les nouveaux nœuds
+      // 🔥 ÉTAPE 5: Demander les métadonnées des nouveaux nœuds
       if (_metadataInitialized) {
         await _metadataManager.refreshAllMetadata();
       }
 
+      // 🔥 ÉTAPE 6: Mettre à jour l'UI
       if (mounted) {
         setState(() {
           _filteredNodes = NodesManager().availableNodes;
         });
+        print('[SelectNodePage] ✅ ${_filteredNodes.length} nœud(s) actif(s)');
       }
     } catch (e) {
+      print('[SelectNodePage] ❌ Erreur refresh: $e');
       if (mounted) {
         _showError('Erreur: $e');
       }
@@ -261,6 +293,21 @@ class _SelectNodePageState extends State<SelectNodePage> {
     }
   }
 
+  IconData getPlatformIcon(String platform) {
+    switch (platform.toLowerCase()) {
+      case 'android':
+        return Icons.android;
+      case 'ios':
+        return Icons.apple;
+      case 'windows':
+        return Icons.window;
+      case 'linux':
+        return Icons.laptop;
+      default:
+        return Icons.device_unknown;
+    }
+  }
+
   /// ✅ Construction du tile avec métadonnées du gestionnaire
   Widget _buildNodeTile(BuildContext context, NetworkNode node) {
     // ✅ Récupérer les métadonnées depuis le gestionnaire
@@ -276,126 +323,322 @@ class _SelectNodePageState extends State<SelectNodePage> {
     if (!hasMetadata && _metadataInitialized && !_isLoading) {
       _metadataManager.requestMetadata(node.nodeId);
     }
-
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: node.statusColor.withOpacity(0.2),
-        child: Stack(
-          alignment: Alignment.bottomRight,
-          children: [
-            Center(
-              child: Text(
-                node.displayName.isNotEmpty
-                    ? node.displayName.substring(0, 1).toUpperCase()
-                    : '?',
-                style: TextStyle(
-                  color: node.statusColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: node.statusColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-              ),
+    final Color baseColor = node.statusColor;
+    final Color bgColor = baseColor.withOpacity(0.08);
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => _createConversation(context, node),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: baseColor.withOpacity(0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-      ),
-      title: Text(node.displayName),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                node.statusLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: node.statusColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              // ✅ Icône adaptée à la plateforme
-              Icon(
-                getPlatformIcon(platform),
-                size: 14,
-                color: hasMetadata ? Colors.blue[700] : Colors.grey,
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  platform,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight:
-                        hasMetadata ? FontWeight.bold : FontWeight.normal,
-                    color: hasMetadata ? Colors.blue[700] : Colors.grey,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (branch != null && branch != 'No Branch') ...[
-                const Icon(Icons.business, size: 12, color: Colors.green),
-                const SizedBox(width: 4),
-                Flexible(
+        child: Row(
+          children: [
+            // ✅ Avatar avec badge de statut
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: bgColor,
                   child: Text(
-                    branch,
-                    style: const TextStyle(
-                      fontSize: 11,
+                    node.displayName.isNotEmpty
+                        ? node.displayName.substring(0, 1).toUpperCase()
+                        : '?',
+                    style: TextStyle(
+                      color: baseColor,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green,
+                      fontSize: 20,
                     ),
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: baseColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
                   ),
                 ),
               ],
-            ],
-          ),
-          // ✅ Indicateur de métadonnées
-          if (hasMetadata)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                '✓ Métadonnées synchronisées',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.green[600],
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            )
-          else if (_metadataInitialized)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                '⏳ En attente de métadonnées...',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.orange[600],
-                  fontStyle: FontStyle.italic,
-                ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // ✅ Informations principales
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Ligne principale : nom + badge branche
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          node.displayName.isNotEmpty
+                              ? node.displayName
+                              : 'Nœud inconnu',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (branch != null && branch != 'No Branch') ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.green, width: 0.8),
+                          ),
+                          child: Text(
+                            branch!,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // ✅ Plateforme et métadonnées
+                  Row(
+                    children: [
+                      Icon(
+                        getPlatformIcon(platform),
+                        size: 14,
+                        color: hasMetadata
+                            ? Colors.blueAccent
+                            : Colors.grey.shade500,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        platform,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: hasMetadata
+                              ? Colors.blueAccent
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        node.statusLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: baseColor,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // ✅ Métadonnées
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: hasMetadata
+                        ? Text(
+                            '✓ Métadonnées synchronisées',
+                            key: const ValueKey('meta_ok'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.green.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          )
+                        : _metadataInitialized
+                            ? Text(
+                                '⏳ En attente de métadonnées...',
+                                key: const ValueKey('meta_wait'),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.orange.shade700,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                  ),
+                ],
               ),
             ),
-        ],
+
+            const SizedBox(width: 8),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 16, color: Colors.grey.shade400),
+          ],
+        ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: () => _createConversation(context, node),
     );
+    // return ListTile(
+    //   leading: CircleAvatar(
+    //     backgroundColor: node.statusColor.withOpacity(0.2),
+    //     child: Stack(
+    //       alignment: Alignment.bottomRight,
+    //       children: [
+    //         Center(
+    //           child: Text(
+    //             node.displayName.isNotEmpty
+    //                 ? node.displayName.substring(0, 1).toUpperCase()
+    //                 : '?',
+    //             style: TextStyle(
+    //               color: node.statusColor,
+    //               fontWeight: FontWeight.bold,
+    //             ),
+    //           ),
+    //         ),
+    //         Positioned(
+    //           right: 0,
+    //           bottom: 0,
+    //           child: Container(
+    //             width: 12,
+    //             height: 12,
+    //             decoration: BoxDecoration(
+    //               color: node.statusColor,
+    //               shape: BoxShape.circle,
+    //               border: Border.all(color: Colors.white, width: 2),
+    //             ),
+    //           ),
+    //         ),
+    //       ],
+    //     ),
+    //   ),
+    //   title: Row(
+    //     children: [
+    //       Icon(
+    //         getPlatformIcon(platform),
+    //         size: 16,
+    //         color: hasMetadata ? Colors.blue[700] : Colors.grey,
+    //       ),
+    //       SizedBox(
+    //         width: 4,
+    //       ),
+    //       // Text(node.displayName),
+    //       if (branch != null && branch != 'No Branch') ...[
+    //         Flexible(
+    //           child: Text(
+    //             branch,
+    //             style: const TextStyle(
+    //               fontSize: 13,
+    //               fontWeight: FontWeight.bold,
+    //               color: Colors.green,
+    //             ),
+    //             overflow: TextOverflow.ellipsis,
+    //           ),
+    //         ),
+    //       ],
+    //       SizedBox(
+    //         width: 4,
+    //       ),
+    //       if (hasMetadata) Icon(Icons.verified),
+    //       SizedBox(
+    //         width: 4,
+    //       ),
+    //       Text(
+    //         node.statusLabel,
+    //         style: TextStyle(
+    //           fontSize: 11,
+    //           color: node.statusColor,
+    //           fontWeight: FontWeight.w500,
+    //         ),
+    //       ),
+    //
+    //       const SizedBox(height: 4),
+    //     ],
+    //   ),
+    //   subtitle: Column(
+    //     crossAxisAlignment: CrossAxisAlignment.start,
+    //     children: [
+    //       Row(
+    //         children: [
+    //           // ✅ Icône adaptée à la plateforme
+    //           Icon(
+    //             getPlatformIcon(platform),
+    //             size: 14,
+    //             color: hasMetadata ? Colors.blue[700] : Colors.grey,
+    //           ),
+    //           const SizedBox(width: 4),
+    //           Flexible(
+    //             child: Text(
+    //               platform,
+    //               style: TextStyle(
+    //                 fontSize: 11,
+    //                 fontWeight:
+    //                     hasMetadata ? FontWeight.bold : FontWeight.normal,
+    //                 color: hasMetadata ? Colors.blue[700] : Colors.grey,
+    //               ),
+    //               overflow: TextOverflow.ellipsis,
+    //             ),
+    //           ),
+    //           // const SizedBox(width: 8),
+    //           // if (branch != null && branch != 'No Branch') ...[
+    //           //   const Icon(Icons.business, size: 12, color: Colors.green),
+    //           //   const SizedBox(width: 4),
+    //           //   Flexible(
+    //           //     child: Text(
+    //           //       branch,
+    //           //       style: const TextStyle(
+    //           //         fontSize: 11,
+    //           //         fontWeight: FontWeight.bold,
+    //           //         color: Colors.green,
+    //           //       ),
+    //           //       overflow: TextOverflow.ellipsis,
+    //           //     ),
+    //           //   ),
+    //           // ],
+    //         ],
+    //       ),
+    //       // ✅ Indicateur de métadonnées
+    //       if (hasMetadata)
+    //         Padding(
+    //           padding: const EdgeInsets.only(top: 2),
+    //           child: Text(
+    //             '✓ Métadonnées synchronisées',
+    //             style: TextStyle(
+    //               fontSize: 10,
+    //               color: Colors.green[600],
+    //               fontStyle: FontStyle.italic,
+    //             ),
+    //           ),
+    //         )
+    //       else if (_metadataInitialized)
+    //         Padding(
+    //           padding: const EdgeInsets.only(top: 2),
+    //           child: Text(
+    //             '⏳ En attente de métadonnées...',
+    //             style: TextStyle(
+    //               fontSize: 10,
+    //               color: Colors.orange[600],
+    //               fontStyle: FontStyle.italic,
+    //             ),
+    //           ),
+    //         ),
+    //     ],
+    //   ),
+    //   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+    //   onTap: () => _createConversation(context, node),
+    // );
   }
 
   @override
@@ -404,6 +647,85 @@ class _SelectNodePageState extends State<SelectNodePage> {
       appBar: AppBar(
         title: const Text('Sélectionner un nœud'),
         actions: [
+          // Ajoutez ce bouton dans l'AppBar de SelectNodePage, juste avant le bouton refresh
+          IconButton(
+            icon: const Icon(Icons.cleaning_services),
+            onPressed: () async {
+              if (!mounted) return;
+
+              // Montrer un dialog de confirmation
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.cleaning_services, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text('Nettoyage complet'),
+                    ],
+                  ),
+                  content: const Text(
+                    'Cela va supprimer tous les nœuds déconnectés '
+                    'et rafraîchir complètement la liste.\n\n'
+                    'Continuer ?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Annuler'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Nettoyer'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm != true || !mounted) return;
+
+              setState(() => _isLoading = true);
+
+              try {
+                print('[SelectNodePage] 🧹🔥 NETTOYAGE FORCÉ TOTAL');
+
+                // 1. Vider complètement le cache local
+                _filteredNodes.clear();
+                NodesManager().availableNodes.clear();
+
+                // 2. Nettoyer les métadonnées
+                if (_metadataInitialized) {
+                  _metadataManager.cleanupStaleMetadata();
+                }
+
+                // 3. Attendre 1 seconde pour laisser le réseau se stabiliser
+                await Future.delayed(const Duration(seconds: 1));
+
+                // 4. Rafraîchir complètement
+                await _refreshNodes();
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✅ Nettoyage complet effectué'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } catch (e) {
+                print('[SelectNodePage] ❌ Erreur nettoyage forcé: $e');
+                if (mounted) {
+                  _showError('Erreur nettoyage: $e');
+                }
+              } finally {
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                }
+              }
+            },
+            tooltip: 'Nettoyage forcé',
+          ),
           // ✅ Indicateur d'état du gestionnaire de métadonnées
           if (!_metadataInitialized)
             Padding(

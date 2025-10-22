@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../objectBox/Entity.dart';
 import 'StaffProvider.dart';
+// ou le fichier réel où Node est défini
 
 class CardsPage extends StatelessWidget {
   const CardsPage({super.key});

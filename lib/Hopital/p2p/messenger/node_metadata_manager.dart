@@ -74,6 +74,9 @@ class NodeMetadataManager with ChangeNotifier {
 
       _startPeriodicBroadcast();
 
+      // ✅ NOUVEAU : Écouter les changements de voisins
+      _connectionManager.addListener(_onNeighborsChanged);
+
       _addLog('📡 INIT', 'Broadcast initial...');
       await broadcastMetadata(); // Maintenant _initialized = true
 
@@ -84,6 +87,76 @@ class NodeMetadataManager with ChangeNotifier {
       print('[NodeMetadataManager] ❌ Erreur initialisation: $e');
       print(stack);
       rethrow;
+    }
+  }
+
+  /// ✅ NOUVEAU : Callback déclenché quand les voisins changent
+  void _onNeighborsChanged() {
+    if (!_initialized) return;
+
+    final currentCount = _connectionManager.neighbors.length;
+    _addLog('🔔 NEIGHBORS', 'Changement détecté: $currentCount voisin(s)');
+    print(
+        '[NodeMetadataManager] 🔔 Voisins: $currentCount, broadcast + requêtes...');
+
+    // 1️⃣ Nettoyer les nœuds qui ne sont plus voisins
+    _cleanupDisconnectedNodes();
+
+    // 2️⃣ Broadcaster nos métadonnées immédiatement
+    broadcastMetadata();
+
+    // 3️⃣ Demander les métadonnées des nouveaux voisins
+    _requestMetadataForNewNeighbors();
+  }
+
+  /// 🗑️ Nettoie les métadonnées des nœuds qui ne sont plus voisins
+  void _cleanupDisconnectedNodes() {
+    try {
+      final activeNeighbors = _connectionManager.neighbors;
+      final beforeCount = _remoteMetadata.length;
+
+      // Supprimer les nœuds qui ne sont plus dans la liste des voisins
+      _remoteMetadata.removeWhere((nodeId, metadata) {
+        final isDisconnected = !activeNeighbors.contains(nodeId);
+        if (isDisconnected) {
+          _addLog('🗑️ CLEANUP',
+              'Nœud déconnecté supprimé: ${metadata.displayName}');
+          print('[NodeMetadataManager] 🗑️ Nœud déconnecté: $nodeId');
+        }
+        return isDisconnected;
+      });
+
+      final removedCount = beforeCount - _remoteMetadata.length;
+      if (removedCount > 0) {
+        _addLog(
+            '🗑️ CLEANUP', '$removedCount nœud(s) déconnecté(s) supprimé(s)');
+        print('[NodeMetadataManager] 🗑️ Nettoyé $removedCount nœud(s)');
+        notifyListeners();
+      }
+    } catch (e) {
+      _addLog('❌ CLEANUP', 'Erreur nettoyage: $e');
+      print('[NodeMetadataManager] ❌ Erreur cleanup: $e');
+    }
+  }
+
+  /// ✅ Demande les métadonnées de tous les nouveaux voisins
+  void _requestMetadataForNewNeighbors() {
+    try {
+      final neighbors = _connectionManager.neighbors;
+
+      for (final nodeId in neighbors) {
+        // Si on n'a pas encore de métadonnées pour ce nœud, demander
+        if (!_remoteMetadata.containsKey(nodeId)) {
+          _addLog(
+              '🔍 AUTO-REQUEST', 'Demande auto pour nouveau voisin: $nodeId');
+          requestMetadata(nodeId);
+        }
+      }
+
+      print('[NodeMetadataManager] 🔍 Requêtes envoyées pour nouveaux voisins');
+    } catch (e) {
+      _addLog('❌ AUTO-REQUEST', 'Erreur: $e');
+      print('[NodeMetadataManager] ❌ Erreur requêtes auto: $e');
     }
   }
 

@@ -80,7 +80,17 @@ class NodesManager {
     try {
       print('[NodesManager] 🔄 Rafraîchissement des nœuds...');
 
+      // 🔥 ÉTAPE 1: Nettoyer AVANT tout (supprimer l'ancien cache)
+      _cachedNodes.clear();
+      print('[NodesManager] 🧹 Cache vidé');
+
+      // 🔥 ÉTAPE 2: Récupérer UNIQUEMENT les voisins actifs
       final neighborsSet = _connectionManager.neighbors;
+
+      print('[NodesManager] 📊 Voisins actifs: ${neighborsSet.length}');
+      for (final neighbor in neighborsSet) {
+        print('[NodesManager]   → $neighbor');
+      }
 
       if (neighborsSet.isEmpty) {
         print('[NodesManager] ⚠️ Aucun voisin découvert');
@@ -91,9 +101,22 @@ class NodesManager {
       // Récupérer l'instance du gestionnaire des métadonnées
       final metadataManager = NodeMetadataManager();
 
+      // 🔥 NETTOYAGE: Supprimer les métadonnées des nœuds qui ne sont plus voisins
+      metadataManager.cleanupStaleMetadata();
+
       final List<NetworkNode> nodes = [];
 
+      // 🔥 DÉDUPLICATION: Utiliser un Set pour éviter les doublons
+      final processedNodeIds = <String>{};
+
       for (final nodeId in neighborsSet) {
+        // Éviter les doublons
+        if (processedNodeIds.contains(nodeId)) {
+          print('[NodesManager] ⚠️ NodeId dupliqué ignoré: $nodeId');
+          continue;
+        }
+        processedNodeIds.add(nodeId);
+
         // Vérifier si on possède déjà les métadonnées
         NodeMetadata? metadata = metadataManager.getMetadata(nodeId);
 
@@ -107,12 +130,12 @@ class NodesManager {
         // Créer le NetworkNode avec les infos disponibles
         nodes.add(
           NetworkNode(
-              nodeId: nodeId,
-              displayName: metadata?.displayName ?? _getDisplayName(nodeId),
-              status: NodeStatus.online,
-              // Les voisins sont en ligne par définition
-              lastSeen: DateTime.now(),
-              platformNode: 'hihih'),
+            nodeId: nodeId,
+            displayName: metadata?.displayName ?? _getDisplayName(nodeId),
+            status: NodeStatus.online,
+            lastSeen: DateTime.now(),
+            platformNode: metadata?.platform ?? 'Détection...',
+          ),
         );
       }
 
@@ -124,9 +147,6 @@ class NodesManager {
       for (final node in _cachedNodes) {
         print('[NodesManager]   - ${node.displayName} (${node.nodeId})');
       }
-
-      // Nettoyer les métadonnées obsolètes
-      metadataManager.cleanupStaleMetadata();
     } catch (e, stack) {
       print('[NodesManager] ❌ Erreur rafraîchissement: $e');
       print(stack);
@@ -147,6 +167,26 @@ class NodesManager {
       return nodeId;
     } catch (e) {
       return nodeId;
+    }
+  }
+
+  /// 🧹 Nettoie manuellement les nœuds déconnectés
+  void cleanupDisconnectedNodes() {
+    final activeNeighbors = _connectionManager.neighbors;
+    final beforeCount = _cachedNodes.length;
+
+    _cachedNodes.removeWhere((node) {
+      final isDisconnected = !activeNeighbors.contains(node.nodeId);
+      if (isDisconnected) {
+        print(
+            '[NodesManager] 🗑️ Nœud déconnecté supprimé: ${node.displayName}');
+      }
+      return isDisconnected;
+    });
+
+    final removedCount = beforeCount - _cachedNodes.length;
+    if (removedCount > 0) {
+      print('[NodesManager] 🗑️ Nettoyé $removedCount nœud(s) déconnecté(s)');
     }
   }
 
