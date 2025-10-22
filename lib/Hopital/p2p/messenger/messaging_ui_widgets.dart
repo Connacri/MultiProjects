@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../objectBox/Entity.dart';
 import 'fonctions.dart';
-import 'messaging_entities.dart';
 import 'messaging_manager.dart';
 import 'node_metadata_manager.dart';
 

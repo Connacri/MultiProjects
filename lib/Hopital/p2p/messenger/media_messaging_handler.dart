@@ -1,14 +1,16 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:video_compress/video_compress.dart';
+
+import '../../../objectBox/Entity.dart';
 import 'messaging_manager.dart';
-import 'messaging_entities.dart';
 
 /// Gestionnaire des médias (photos, vidéos, fichiers) pour la messagerie
 class MediaMessagingHandler {
-  static final MediaMessagingHandler _instance = MediaMessagingHandler
-      ._internal();
+  static final MediaMessagingHandler _instance =
+      MediaMessagingHandler._internal();
 
   factory MediaMessagingHandler() => _instance;
 
@@ -18,9 +20,11 @@ class MediaMessagingHandler {
   static const int maxFileSize = 20 * 1024 * 1024;
 
   /// Sélectionner et envoyer une photo
-  Future<void> pickAndSendPhoto(BuildContext context,
-      MessagingManager messagingManager,
-      String conversationId,) async {
+  Future<void> pickAndSendPhoto(
+    BuildContext context,
+    MessagingManager messagingManager,
+    String conversationId,
+  ) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
@@ -45,9 +49,11 @@ class MediaMessagingHandler {
   }
 
   /// Sélectionner et envoyer une vidéo
-  Future<void> pickAndSendVideo(BuildContext context,
-      MessagingManager messagingManager,
-      String conversationId,) async {
+  Future<void> pickAndSendVideo(
+    BuildContext context,
+    MessagingManager messagingManager,
+    String conversationId,
+  ) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.video,
@@ -71,8 +77,7 @@ class MediaMessagingHandler {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) =>
-        const AlertDialog(
+        builder: (ctx) => const AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -106,9 +111,11 @@ class MediaMessagingHandler {
   }
 
   /// Sélectionner et envoyer un fichier
-  Future<void> pickAndSendFile(BuildContext context,
-      MessagingManager messagingManager,
-      String conversationId,) async {
+  Future<void> pickAndSendFile(
+    BuildContext context,
+    MessagingManager messagingManager,
+    String conversationId,
+  ) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.any,
@@ -133,12 +140,14 @@ class MediaMessagingHandler {
   }
 
   /// Envoyer un message média
-  Future<void> _sendMediaMessage(BuildContext context,
-      MessagingManager messagingManager,
-      String conversationId,
-      File mediaFile,
-      MessageType type,
-      String mediaType,) async {
+  Future<void> _sendMediaMessage(
+    BuildContext context,
+    MessagingManager messagingManager,
+    String conversationId,
+    File mediaFile,
+    MessageType type,
+    String mediaType,
+  ) async {
     try {
       // Vérifier la taille
       final fileSize = await mediaFile.length();
@@ -153,17 +162,16 @@ class MediaMessagingHandler {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) =>
-            AlertDialog(
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text('Envoi du $mediaType...'),
-                ],
-              ),
-            ),
+        builder: (ctx) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text('Envoi du $mediaType...'),
+            ],
+          ),
+        ),
       );
 
       // Envoyer via MessagingManager

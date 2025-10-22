@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../objectBox/Entity.dart';
 import '../../../objectBox/classeObjectBox.dart';
 import '../connection_manager_fixed.dart';
 import '../p2p_integration_fixed.dart';
-import 'messaging_entities.dart';
 import 'messaging_manager.dart';
 
 /// ✅ Version ULTRA-SIMPLIFIÉE : événementiel pur avec filtrage des métadonnées

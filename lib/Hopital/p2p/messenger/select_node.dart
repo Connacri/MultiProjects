@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../main.dart';
+import '../../../objectBox/Entity.dart';
 import '../../widgets.dart';
 import 'NodesManager.dart';
 import 'fonctions.dart';
-import 'messaging_entities.dart';
 import 'messaging_manager.dart';
 import 'messaging_ui_widgets.dart';
 import 'metadata_diagnostic_ui.dart';

@@ -7,7 +7,7 @@ import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-import '../../objectbox.g.dart';
+import '../objectbox.g.dart';
 import 'Entity.dart';
 import 'classeObjectBox.dart';
 

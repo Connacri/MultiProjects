@@ -8,9 +8,8 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../Hopital/p2p/messenger/messaging_entities.dart';
-import '../objectBox/Entity.dart';
 import '../objectbox.g.dart';
+import 'Entity.dart';
 
 class ObjectBox {
   late final Store store;
