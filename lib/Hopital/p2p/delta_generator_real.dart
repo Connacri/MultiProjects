@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
-import '../../objectBox/Entity.dart';
-import 'p2p_integration_fixed.dart';
-import 'p2p_manager_fixed.dart';
 
-/// Générateur de deltas pour la synchronisation P2P
-/// Adapté aux entités réelles du projet
+import '../../objectBox/Entity.dart';
+import 'p2p_manager.dart';
+
+/// ✅ CORRECTION : DeltaGenerator NE doit PAS créer P2PIntegration
+/// Il doit juste préparer les deltas, pas les broadcaster directement
 class DeltaGenerator with ChangeNotifier {
   static final DeltaGenerator _instance = DeltaGenerator._internal();
 
@@ -13,34 +13,67 @@ class DeltaGenerator with ChangeNotifier {
   DeltaGenerator._internal();
 
   final P2PManager _p2pManager = P2PManager();
-  final P2PIntegration _p2pIntegration = P2PIntegration();
+
+  // ❌ SUPPRIMÉ : Ne PAS créer P2PIntegration ici (cause circular dependency)
+  // final P2PIntegration _p2pIntegration = P2PIntegration();
+
+  // ✅ AJOUT : Callback pour broadcaster (sera défini par P2PIntegration)
+  Future<void> Function(Map<String, dynamic>)? _broadcastCallback;
+
+  /// ✅ NOUVEAU : Définir le callback de broadcast
+  void setBroadcastCallback(
+      Future<void> Function(Map<String, dynamic>) callback) {
+    _broadcastCallback = callback;
+    print('[DeltaGenerator] ✅ Callback de broadcast configuré');
+  }
+
+  /// ✅ AMÉLIORATION : Broadcaster via callback
+  Future<void> _broadcastDelta(Map<String, dynamic> delta) async {
+    if (_broadcastCallback == null) {
+      print(
+          '[DeltaGenerator] ⚠️ Callback de broadcast non configuré, delta en attente');
+      return;
+    }
+
+    try {
+      await _broadcastCallback!(delta);
+    } catch (e) {
+      print('[DeltaGenerator] ❌ Erreur broadcast: $e');
+    }
+  }
 
   /// Génère et broadcaste un delta pour Staff
   Future<void> syncStaff(Staff staff, String operation) async {
     try {
-      // Utiliser l'ID comme identifiant unique (puisqu'il n'y a pas d'UUID)
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('[DeltaGenerator] 🎯 DÉBUT syncStaff');
+      print('[DeltaGenerator] Staff: ${staff.nom} (ID: ${staff.id})');
+      print('[DeltaGenerator] Operation: $operation');
+
+      // ✅ CORRECTION: Utiliser toJson() et inclure branch.targetId
+      final staffData = staff.toJson();
+      print('[DeltaGenerator] 📊 Données Staff: $staffData');
+
       final delta = {
         'entity': 'Staff',
-        'operation': operation, // 'create', 'update', 'delete'
+        'operation': operation,
         'timestamp': DateTime.now().millisecondsSinceEpoch,
         'originId': _p2pManager.nodeId,
-        'data': {
-          'staffId': staff.id,
-          'nom': staff.nom,
-          'grade': staff.grade,
-          'groupe': staff.groupe,
-          'equipe': staff.equipe,
-          'obs': staff.obs,
-          'ordre': staff.ordre,
-          'branchId': staff.branch.targetId, // ID de la branche liée
-        },
+        'data': staffData, // ✅ Utiliser les données sérialisées
       };
 
-      print('[DeltaGenerator] 📤 Génération delta Staff: ${staff.nom} (ID: ${staff.id})');
-      await _p2pIntegration.broadcastDelta(delta);
-      print('[DeltaGenerator] ✅ Delta Staff broadcasté');
+      print('[DeltaGenerator] 📦 Delta créé: $delta');
+
+      if (_broadcastCallback == null) {
+        print('[DeltaGenerator] ❌ Callback de broadcast NULL !');
+        return;
+      }
+
+      await _broadcastCallback!(delta);
+      print('[DeltaGenerator] ✅ Delta broadcasté avec succès');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e) {
-      print('[DeltaGenerator] ❌ Erreur sync Staff: $e');
+      print('[DeltaGenerator] ❌ ERREUR syncStaff: $e');
     }
   }
 
@@ -56,12 +89,13 @@ class DeltaGenerator with ChangeNotifier {
           'activiteId': activite.id,
           'jour': activite.jour,
           'statut': activite.statut,
-          'staffId': activite.staff.targetId, // ID du staff lié
+          'staffId': activite.staff.targetId,
         },
       };
 
-      print('[DeltaGenerator] 📤 Génération delta ActiviteJour: Jour ${activite.jour}, Statut ${activite.statut}');
-      await _p2pIntegration.broadcastDelta(delta);
+      print(
+          '[DeltaGenerator] 📤 Génération delta ActiviteJour: Jour ${activite.jour}, Statut ${activite.statut}');
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta ActiviteJour broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync ActiviteJour: $e');
@@ -83,7 +117,7 @@ class DeltaGenerator with ChangeNotifier {
       };
 
       print('[DeltaGenerator] 📤 Génération delta Branch: ${branch.branchNom}');
-      await _p2pIntegration.broadcastDelta(delta);
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta Branch broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync Branch: $e');
@@ -108,7 +142,7 @@ class DeltaGenerator with ChangeNotifier {
       };
 
       print('[DeltaGenerator] 📤 Génération delta TimeOff');
-      await _p2pIntegration.broadcastDelta(delta);
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta TimeOff broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync TimeOff: $e');
@@ -133,8 +167,9 @@ class DeltaGenerator with ChangeNotifier {
         },
       };
 
-      print('[DeltaGenerator] 📤 Génération delta Planification: ${planif.mois}/${planif.annee}');
-      await _p2pIntegration.broadcastDelta(delta);
+      print(
+          '[DeltaGenerator] 📤 Génération delta Planification: ${planif.mois}/${planif.annee}');
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta Planification broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync Planification: $e');
@@ -142,7 +177,8 @@ class DeltaGenerator with ChangeNotifier {
   }
 
   /// Génère et broadcaste un delta pour PlanningHebdo
-  Future<void> syncPlanningHebdo(PlanningHebdo planning, String operation) async {
+  Future<void> syncPlanningHebdo(
+      PlanningHebdo planning, String operation) async {
     try {
       final delta = {
         'entity': 'PlanningHebdo',
@@ -165,7 +201,7 @@ class DeltaGenerator with ChangeNotifier {
       };
 
       print('[DeltaGenerator] 📤 Génération delta PlanningHebdo');
-      await _p2pIntegration.broadcastDelta(delta);
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta PlanningHebdo broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync PlanningHebdo: $e');
@@ -190,7 +226,7 @@ class DeltaGenerator with ChangeNotifier {
       };
 
       print('[DeltaGenerator] 📤 Génération delta TypeActivite: ${type.code}');
-      await _p2pIntegration.broadcastDelta(delta);
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta TypeActivite broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync TypeActivite: $e');
@@ -213,7 +249,7 @@ class DeltaGenerator with ChangeNotifier {
       };
 
       print('[DeltaGenerator] 📤 Génération delta $entityType');
-      await _p2pIntegration.broadcastDelta(delta);
+      await _broadcastDelta(delta);
       print('[DeltaGenerator] ✅ Delta $entityType broadcasté');
     } catch (e) {
       print('[DeltaGenerator] ❌ Erreur sync $entityType: $e');

@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'auto_connect_service_fixed.dart'; // ✅ AJOUT
-import 'connection_manager_fixed.dart';
+import 'auto_connect_service.dart';
+import 'connection_manager.dart';
 import 'crypto_manager_complete.dart';
+import 'delta_generator_real.dart';
 import 'objectbox_p2p.dart';
-import 'p2p_manager_fixed.dart';
-import 'sync_manager_complete.dart';
+import 'objectbox_sync_observer.dart'; // ✅ AJOUT
+import 'p2p_manager.dart';
+import 'sync_manager.dart';
 import 'udp_broadcast_discovery.dart';
 
 class P2PIntegration with ChangeNotifier {
@@ -25,12 +27,14 @@ class P2PIntegration with ChangeNotifier {
   final ConnectionManager _connectionManager = ConnectionManager();
   final CryptoManager _cryptoManager = CryptoManager();
   final DiscoveryManagerBroadcast _discoveryManager =
-  DiscoveryManagerBroadcast();
+      DiscoveryManagerBroadcast();
   final SyncManager _syncManager = SyncManager();
-  final AutoConnectService _autoConnectService = AutoConnectService(); // ✅ AJOUT
+  final AutoConnectService _autoConnectService = AutoConnectService();
+  final ObjectBoxSyncObserver _syncObserver =
+      ObjectBoxSyncObserver(); // ✅ AJOUT
+
   late ObjectBoxP2P _objectBox;
 
-  // État
   bool _initialized = false;
 
   bool get isInitialized => _initialized;
@@ -43,7 +47,7 @@ class P2PIntegration with ChangeNotifier {
 
   P2PManager get p2pManager => _p2pManager;
 
-  /// Initialise le système P2P complet avec gestion d'erreur robuste
+  /// ✅ CORRECTION MAJEURE : Initialise TOUT y compris l'observer
   Future<void> initializeP2PSystem() async {
     if (_initialized) {
       print('[P2PIntegration] Système déjà initialisé');
@@ -83,7 +87,7 @@ class P2PIntegration with ChangeNotifier {
         await _syncManager.initialize();
       });
 
-      // 6. Démarrer ConnectionManager (avec retry)
+      // 6. Démarrer ConnectionManager
       _updateStatus('Démarrage du serveur de connexion...');
       await _initWithTimeout('ConnectionManager', () async {
         await _connectionManager.start();
@@ -101,10 +105,24 @@ class P2PIntegration with ChangeNotifier {
       // 8. Écouter les messages entrants
       _setupMessageListener();
 
-      // ✅ 9. CORRECTION: Démarrer l'auto-connexion
+      // 9. Démarrer l'auto-connexion
       _updateStatus('Démarrage de l\'auto-connexion...');
       _autoConnectService.start();
       print('[P2PIntegration] ✅ AutoConnectService démarré');
+
+      // ✅ 10. CRITIQUE : CONFIGURER LE CALLBACK DE BROADCAST
+      _updateStatus('Configuration DeltaGenerator...');
+      final deltaGenerator = DeltaGenerator();
+      deltaGenerator.setBroadcastCallback((delta) => broadcastDelta(delta));
+      print('[P2PIntegration] ✅ DeltaGenerator configuré avec callback');
+
+      // ✅ 11. CRITIQUE : DÉMARRER L'OBSERVER AUTOMATIQUE !
+      _updateStatus('Démarrage de l\'observer automatique...');
+      await _initWithTimeout('SyncObserver', () async {
+        await _syncObserver.start();
+      });
+      print(
+          '[P2PIntegration] ✅ SyncObserver démarré - modifications détectées automatiquement');
 
       _initialized = true;
       _updateStatus('P2P opérationnel');
@@ -122,9 +140,7 @@ class P2PIntegration with ChangeNotifier {
     }
   }
 
-  /// Exécute une fonction d'initialisation avec timeout
-  Future<void> _initWithTimeout(String name,
-      Future<void> Function() fn,) async {
+  Future<void> _initWithTimeout(String name, Future<void> Function() fn) async {
     try {
       await fn().timeout(
         const Duration(seconds: 10),
@@ -139,15 +155,13 @@ class P2PIntegration with ChangeNotifier {
     }
   }
 
-  /// Met à jour le statut d'initialisation
   void _updateStatus(String status) {
     _initializationStatus = status;
     print('[P2PIntegration] Status: $status');
     notifyListeners();
   }
 
-  /// Configure l'écoute des messages entrants
-  void _setupMessageListener() {
+  Future<void> _setupMessageListener() async {
     _connectionManager.onMessage.listen((message) async {
       try {
         final type = message['type'];
@@ -159,6 +173,7 @@ class P2PIntegration with ChangeNotifier {
         }
 
         if (type == 'delta' && nodeId != null) {
+          print('[P2PIntegration] 📥 Delta reçu de $nodeId');
           await _handleDeltaMessage(nodeId, message);
         } else if (type == 'hello') {
           print('[P2PIntegration] 👋 Hello reçu de $nodeId');
@@ -171,9 +186,8 @@ class P2PIntegration with ChangeNotifier {
     print('[P2PIntegration] Écouteur de messages configuré');
   }
 
-  /// Traite les messages delta reçus
-  Future<void> _handleDeltaMessage(String nodeId,
-      Map<String, dynamic> message,) async {
+  Future<void> _handleDeltaMessage(
+      String nodeId, Map<String, dynamic> message) async {
     try {
       final encrypted = message['payload'] as Map<String, dynamic>?;
       if (encrypted == null) {
@@ -181,47 +195,74 @@ class P2PIntegration with ChangeNotifier {
         return;
       }
 
-      // Vérifier l'authentification
+      // Vérifier et déchiffrer
       final isValid = await _cryptoManager.verifyDelta(encrypted);
       if (!isValid) {
         print('[P2PIntegration] ⚠️ Delta invalide de $nodeId');
         return;
       }
 
-      // Déchiffrer
       final delta = await _cryptoManager.decryptDelta(encrypted);
+      print(
+          '[P2PIntegration] 🔓 Delta déchiffré: ${delta['entity']} - ${delta['operation']}');
 
-      // Appliquer localement
-      _objectBox.applyDelta(delta);
+      // ✅ CRITIQUE : Marquer qu'on applique un delta distant
+      _syncObserver.setApplyingRemoteDelta(true);
 
-      // Queue pour sync
-      _syncManager.queueForSync(delta);
-
-      print('[P2PIntegration] ✅ Delta appliqué: ${delta['entity']}');
+      try {
+        _objectBox.applyDelta(delta);
+        _syncManager.queueForSync(delta);
+        print('[P2PIntegration] ✅ Delta appliqué: ${delta['entity']}');
+      } finally {
+        // ✅ Réactiver après un délai
+        Future.delayed(Duration(seconds: 1), () {
+          _syncObserver.setApplyingRemoteDelta(false);
+        });
+      }
     } catch (e) {
       print('[P2PIntegration] ❌ Erreur traitement delta: $e');
+      _syncObserver.setApplyingRemoteDelta(false);
     }
   }
 
-  /// Broadcaster un delta à tous les pairs
   Future<void> broadcastDelta(Map<String, dynamic> delta) async {
     try {
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('[P2PIntegration] 🎯 DÉBUT broadcastDelta');
+      print('[P2PIntegration] Delta: $delta');
+      print(
+          '[P2PIntegration] Nombre de voisins: ${_connectionManager.neighbors.length}');
+      print(
+          '[P2PIntegration] Voisins: ${_connectionManager.neighbors.toList()}');
+
+      if (_connectionManager.neighbors.isEmpty) {
+        print('[P2PIntegration] ⚠️⚠️⚠️ AUCUN VOISIN CONNECTÉ !');
+        print('[P2PIntegration] ⚠️ Le delta ne sera envoyé à personne !');
+        return;
+      }
+
+      print('[P2PIntegration] 🔐 Chiffrement du delta...');
       final encrypted = await _cryptoManager.encryptDelta(delta);
-      _connectionManager.broadcastMessage({
+      print('[P2PIntegration] ✅ Delta chiffré');
+
+      final message = {
         'type': 'delta',
         'nodeId': _p2pManager.nodeId,
         'payload': encrypted,
-      });
+      };
+
+      print('[P2PIntegration] 📤 Envoi du message...');
+      _connectionManager.broadcastMessage(message);
 
       print(
-          '[P2PIntegration] Delta broadcasté à ${_connectionManager.neighbors
-              .length} pairs');
+          '[P2PIntegration] ✅ Delta broadcasté à ${_connectionManager.neighbors.length} pairs');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e) {
-      print('[P2PIntegration] ❌ Erreur broadcast: $e');
+      print('[P2PIntegration] ❌ ERREUR broadcast: $e');
+      print('[P2PIntegration] Stack trace: ${StackTrace.current}');
     }
   }
 
-  /// Obtient les statistiques réseau complètes
   Map<String, dynamic> getNetworkStats() {
     return {
       'nodeId': _p2pManager.nodeId,
@@ -236,11 +277,11 @@ class P2PIntegration with ChangeNotifier {
       'successfulSyncs': _syncManager.successfulSyncs,
       'failedSyncs': _syncManager.failedSyncs,
       'connectionStats': _connectionManager.getStats(),
-      'autoConnectStats': _autoConnectService.getStats(), // ✅ AJOUT
+      'autoConnectStats': _autoConnectService.getStats(),
+      'syncObserverStats': _syncObserver.getStats(), // ✅ AJOUT
     };
   }
 
-  /// Log le statut complet du système
   void _logSystemStatus() {
     final stats = getNetworkStats();
     print('[P2PIntegration] ========== STATUT SYSTÈME P2P ==========');
@@ -250,27 +291,16 @@ class P2PIntegration with ChangeNotifier {
     print('[P2PIntegration] Voisins connectés: ${stats['connectedNeighbors']}');
     print('[P2PIntegration] Nœuds découverts: ${stats['discoveredNodes']}');
     print('[P2PIntegration] Synchronisation: ${stats['isSyncing']}');
-    print('[P2PIntegration] Syncs réussies: ${stats['successfulSyncs']}');
-    print('[P2PIntegration] Syncs échouées: ${stats['failedSyncs']}');
-
-    // ✅ AJOUT: Stats auto-connect
-    final autoConnectStats = stats['autoConnectStats'] as Map<String, dynamic>;
     print(
-        '[P2PIntegration] Auto-Connect actif: ${autoConnectStats['isRunning']}');
-    print(
-        '[P2PIntegration] Tentatives connexion: ${autoConnectStats['totalAttempts']}');
-    print(
-        '[P2PIntegration] Connexions réussies: ${autoConnectStats['successfulConnections']}');
-    print(
-        '[P2PIntegration] Connexions échouées: ${autoConnectStats['failedConnections']}');
+        '[P2PIntegration] Observer actif: ${_syncObserver.isRunning}'); // ✅ AJOUT
     print('[P2PIntegration] =====================================');
   }
 
-  /// Arrête le système P2P
   Future<void> shutdown() async {
     print('[P2PIntegration] Arrêt du système P2P');
 
-    _autoConnectService.stop(); // ✅ AJOUT
+    _syncObserver.stop(); // ✅ AJOUT
+    _autoConnectService.stop();
     _discoveryManager.stop();
     await _connectionManager.stop();
 
@@ -281,7 +311,6 @@ class P2PIntegration with ChangeNotifier {
     print('[P2PIntegration] ✅ Système P2P arrêté');
   }
 
-  /// Redémarre le système P2P
   Future<void> restart() async {
     print('[P2PIntegration] Redémarrage du système P2P');
     await shutdown();

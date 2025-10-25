@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'connection_manager_fixed.dart';
-import 'p2p_manager_fixed.dart';
-import 'sync_manager_complete.dart';
+import 'connection_manager.dart';
+import 'p2p_manager.dart';
+import 'sync_manager.dart';
 import 'udp_broadcast_discovery.dart';
 
 /// Widget de bannière d'état P2P compact

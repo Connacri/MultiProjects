@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/animation.dart';
+
 import '../../objectBox/classeObjectBox.dart';
 import 'delta_generator_real.dart';
-import 'p2p_manager_fixed.dart';
 
-/// 🔥 Observateur automatique de synchronisation P2P
-/// CORRECTION: Évite les boucles infinies de synchronisation
+/// 🔥 Observateur automatique avec callbacks pour rafraîchir l'UI
 class ObjectBoxSyncObserver {
   static ObjectBoxSyncObserver? _instance;
 
@@ -18,11 +18,10 @@ class ObjectBoxSyncObserver {
 
   final ObjectBox _objectBox = ObjectBox();
   final DeltaGenerator _deltaGenerator = DeltaGenerator();
-  final P2PManager _p2pManager = P2PManager();
 
-  // Subscriptions pour chaque entité
+  // ========== STREAM SUBSCRIPTIONS ==========
   StreamSubscription? _staffSubscription;
-  StreamSubscription? _activiteSubscription;
+  StreamSubscription? _activiteJourSubscription;
   StreamSubscription? _branchSubscription;
   StreamSubscription? _timeOffSubscription;
   StreamSubscription? _planificationSubscription;
@@ -33,19 +32,50 @@ class ObjectBoxSyncObserver {
 
   bool get isRunning => _isRunning;
 
-  // ✅ CORRECTION: Cache robuste avec expiration automatique
-  final Map<String, DateTime> _ignoreUntil = {};
-  static const Duration ignoreDuration = Duration(seconds: 3);
+  // ========== ✅ NOUVEAU : CALLBACKS POUR RAFRAÎCHIR L'UI ==========
+  final List<VoidCallback> _onStaffChangedCallbacks = [];
+  final List<VoidCallback> _onActiviteChangedCallbacks = [];
+  final List<VoidCallback> _onBranchChangedCallbacks = [];
+  final List<VoidCallback> _onTimeOffChangedCallbacks = [];
+  final List<VoidCallback> _onPlanificationChangedCallbacks = [];
 
-  // ✅ CORRECTION: Throttle plus intelligent
+  /// ✅ Enregistrer un callback pour les changements Staff
+  void addStaffChangedListener(VoidCallback callback) {
+    if (!_onStaffChangedCallbacks.contains(callback)) {
+      _onStaffChangedCallbacks.add(callback);
+      print(
+          '[SyncObserver] 🎯 Callback Staff enregistré (${_onStaffChangedCallbacks.length} total)');
+    }
+  }
+
+  /// ✅ Enregistrer un callback pour les changements Activité
+  void addActiviteChangedListener(VoidCallback callback) {
+    if (!_onActiviteChangedCallbacks.contains(callback)) {
+      _onActiviteChangedCallbacks.add(callback);
+      print('[SyncObserver] 🎯 Callback Activité enregistré');
+    }
+  }
+
+  /// ✅ Retirer un callback
+  void removeStaffChangedListener(VoidCallback callback) {
+    _onStaffChangedCallbacks.remove(callback);
+  }
+
+  void removeActiviteChangedListener(VoidCallback callback) {
+    _onActiviteChangedCallbacks.remove(callback);
+  }
+
+  // ========== TRACKING DES DELTAS ==========
+  final Set<String> _recentlyAppliedDeltas = {};
+
+  // ========== THROTTLING ==========
   final Map<String, Timer> _throttleTimers = {};
-  final Map<String, List<int>> _pendingChanges = {};
-  static const Duration throttleDuration = Duration(milliseconds: 800);
+  static const Duration throttleDuration = Duration(milliseconds: 500);
 
-  // ✅ CORRECTION: Suivre l'origine des changements
+  // ========== FLAG DELTA DISTANT ==========
   bool _isApplyingRemoteDelta = false;
 
-  /// Démarre la surveillance automatique
+  /// ✅ Démarrer la surveillance automatique
   Future<void> start() async {
     if (_isRunning) {
       print('[SyncObserver] 🔄 Déjà en cours d\'exécution');
@@ -54,70 +84,95 @@ class ObjectBoxSyncObserver {
 
     _isRunning = true;
     print('[SyncObserver] 🚀 Démarrage de la surveillance automatique');
+    print('[SyncObserver] ⚡ Throttle: ${throttleDuration.inMilliseconds}ms');
 
-    // Surveiller Staff
+    // ========== SURVEILLER STAFF ==========
     _staffSubscription = _objectBox.staffBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handleStaffChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 Staff modifié détecté');
+        _handleStaffChanges();
+      } else {
+        print(
+            '[SyncObserver] 🔒 Changement Staff ignoré (delta distant en cours)');
+      }
     });
 
-    // Surveiller ActiviteJour
-    _activiteSubscription = _objectBox.activiteBox
+    // ========== SURVEILLER ACTIVITEJOUR ==========
+    _activiteJourSubscription = _objectBox.activiteBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handleActiviteChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 ActiviteJour modifiée détectée');
+        _handleActiviteJourChanges();
+      }
     });
 
-    // Surveiller Branch
+    // ========== SURVEILLER BRANCH ==========
     _branchSubscription = _objectBox.branchBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handleBranchChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 Branch modifiée détectée');
+        _handleBranchChanges();
+      }
     });
 
-    // Surveiller TimeOff
+    // ========== SURVEILLER TIMEOFF ==========
     _timeOffSubscription = _objectBox.timeOffBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handleTimeOffChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 TimeOff modifié détecté');
+        _handleTimeOffChanges();
+      }
     });
 
-    // Surveiller Planification
+    // ========== SURVEILLER PLANIFICATION ==========
     _planificationSubscription = _objectBox.planificationBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handlePlanificationChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 Planification modifiée détectée');
+        _handlePlanificationChanges();
+      }
     });
 
-    // Surveiller PlanningHebdo
+    // ========== SURVEILLER PLANNINGHEBDO ==========
     _planningHebdoSubscription = _objectBox.planningHebdoBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handlePlanningHebdoChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 PlanningHebdo modifié détecté');
+        _handlePlanningHebdoChanges();
+      }
     });
 
-    // Surveiller TypeActivite
+    // ========== SURVEILLER TYPEACTIVITE ==========
     _typeActiviteSubscription = _objectBox.typeActiviteBox
         .query()
         .watch(triggerImmediately: false)
         .listen((query) {
-      _handleTypeActiviteChanges();
+      if (!_isApplyingRemoteDelta) {
+        print('[SyncObserver] 📊 TypeActivite modifié détecté');
+        _handleTypeActiviteChanges();
+      }
     });
 
-    print('[SyncObserver] ✅ Surveillance active sur toutes les entités');
+    print('[SyncObserver] ✅ Surveillance active sur 7 entités');
   }
 
-  /// Arrête la surveillance
+  /// Arrêter la surveillance
   void stop() {
     _staffSubscription?.cancel();
-    _activiteSubscription?.cancel();
+    _activiteJourSubscription?.cancel();
     _branchSubscription?.cancel();
     _timeOffSubscription?.cancel();
     _planificationSubscription?.cancel();
@@ -126,149 +181,241 @@ class ObjectBoxSyncObserver {
 
     _throttleTimers.values.forEach((timer) => timer.cancel());
     _throttleTimers.clear();
-    _pendingChanges.clear();
-    _ignoreUntil.clear();
+    _recentlyAppliedDeltas.clear();
 
     _isRunning = false;
     print('[SyncObserver] 🛑 Surveillance arrêtée');
   }
 
-  /// ✅ CORRECTION: Vérifier si on doit ignorer un changement
-  bool _shouldIgnore(String entityType, int entityId) {
-    // Ignorer si on applique un delta distant
-    if (_isApplyingRemoteDelta) {
-      print(
-          '[SyncObserver] 🚫 Ignoring change (applying remote delta): $entityType-$entityId');
-      return true;
-    }
+  // ========================================================================
+  // HANDLERS POUR CHAQUE ENTITÉ
+  // ========================================================================
 
-    final key = '$entityType-$entityId';
-    final ignoreUntilTime = _ignoreUntil[key];
-
-    if (ignoreUntilTime != null && DateTime.now().isBefore(ignoreUntilTime)) {
-      print('[SyncObserver] 🚫 Ignoring change (cooldown): $key');
-      return true;
-    }
-
-    // Nettoyer les entrées expirées
-    _ignoreUntil.removeWhere((k, v) => DateTime.now().isAfter(v));
-
-    return false;
-  }
-
-  /// ✅ CORRECTION: Marquer une entité comme modifiée localement
-  void _markLocalChange(String entityType, int entityId) {
-    final key = '$entityType-$entityId';
-    _ignoreUntil[key] = DateTime.now().add(ignoreDuration);
-  }
-
-  /// Gestion des changements Staff
+  /// ✅ Gestion des changements Staff
   void _handleStaffChanges() {
     _throttledSync('staff', () async {
       final staffs = _objectBox.staffBox.getAll();
 
       for (final staff in staffs) {
-        if (_shouldIgnore('staff', staff.id)) continue;
+        final changeSignature = 'Staff-${staff.id}-${staff.nom}-${staff.grade}';
 
-        _markLocalChange('staff', staff.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip Staff ${staff.id} (vient d\'un delta distant)');
+          // ✅ NOUVEAU : Notifier les listeners même pour les changements distants
+          _notifyStaffListeners();
+          continue;
+        }
+
         await _deltaGenerator.syncStaff(staff, 'update');
-        print('[SyncObserver] 📤 Staff synchronisé: ${staff.nom}');
+        print(
+            '[SyncObserver] 📤 Staff synchronisé: ${staff.nom} (ID: ${staff.id})');
       }
+
+      // ✅ NOUVEAU : Notifier tous les listeners
+      _notifyStaffListeners();
     });
   }
 
-  /// Gestion des changements ActiviteJour
-  void _handleActiviteChanges() {
-    _throttledSync('activite', () async {
+  /// ✅ Gestion des changements ActiviteJour
+  void _handleActiviteJourChanges() {
+    _throttledSync('activiteJour', () async {
       final activites = _objectBox.activiteBox.getAll();
 
       for (final activite in activites) {
-        if (_shouldIgnore('activite', activite.id)) continue;
+        final changeSignature =
+            'ActiviteJour-${activite.id}-${activite.jour}-${activite.statut}';
 
-        _markLocalChange('activite', activite.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip ActiviteJour ${activite.id} (vient d\'un delta distant)');
+          _notifyActiviteListeners();
+          continue;
+        }
+
         await _deltaGenerator.syncActiviteJour(activite, 'update');
-        print('[SyncObserver] 📤 Activité synchronisée: Jour ${activite.jour}');
+        print('[SyncObserver] 📤 ActiviteJour synchronisée: ${activite.id}');
       }
+
+      _notifyActiviteListeners();
     });
   }
 
-  /// Gestion des changements Branch
+  /// ✅ Gestion des changements Branch
   void _handleBranchChanges() {
     _throttledSync('branch', () async {
       final branches = _objectBox.branchBox.getAll();
 
       for (final branch in branches) {
-        if (_shouldIgnore('branch', branch.id)) continue;
+        final changeSignature = 'Branch-${branch.id}-${branch.branchNom}';
 
-        _markLocalChange('branch', branch.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip Branch ${branch.id} (vient d\'un delta distant)');
+          _notifyBranchListeners();
+          continue;
+        }
+
         await _deltaGenerator.syncBranch(branch, 'update');
         print('[SyncObserver] 📤 Branch synchronisée: ${branch.branchNom}');
       }
+
+      _notifyBranchListeners();
     });
   }
 
-  /// Gestion des changements TimeOff
+  /// ✅ Gestion des changements TimeOff
   void _handleTimeOffChanges() {
-    _throttledSync('timeoff', () async {
+    _throttledSync('timeOff', () async {
       final timeOffs = _objectBox.timeOffBox.getAll();
 
       for (final timeOff in timeOffs) {
-        if (_shouldIgnore('timeoff', timeOff.id)) continue;
+        final changeSignature =
+            'TimeOff-${timeOff.id}-${timeOff.debut}-${timeOff.fin}';
 
-        _markLocalChange('timeoff', timeOff.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip TimeOff ${timeOff.id} (vient d\'un delta distant)');
+          _notifyTimeOffListeners();
+          continue;
+        }
+
         await _deltaGenerator.syncTimeOff(timeOff, 'update');
-        print('[SyncObserver] 📤 TimeOff synchronisé');
+        print('[SyncObserver] 📤 TimeOff synchronisé: ${timeOff.id}');
       }
+
+      _notifyTimeOffListeners();
     });
   }
 
-  /// Gestion des changements Planification
+  /// ✅ Gestion des changements Planification
   void _handlePlanificationChanges() {
     _throttledSync('planification', () async {
       final planifications = _objectBox.planificationBox.getAll();
 
       for (final planif in planifications) {
-        if (_shouldIgnore('planification', planif.id)) continue;
+        final changeSignature =
+            'Planification-${planif.id}-${planif.mois}-${planif.annee}';
 
-        _markLocalChange('planification', planif.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip Planification ${planif.id} (vient d\'un delta distant)');
+          _notifyPlanificationListeners();
+          continue;
+        }
+
         await _deltaGenerator.syncPlanification(planif, 'update');
-        print(
-            '[SyncObserver] 📤 Planification synchronisée: ${planif.mois}/${planif.annee}');
+        print('[SyncObserver] 📤 Planification synchronisée: ${planif.id}');
       }
+
+      _notifyPlanificationListeners();
     });
   }
 
-  /// Gestion des changements PlanningHebdo
+  /// ✅ Gestion des changements PlanningHebdo
   void _handlePlanningHebdoChanges() {
-    _throttledSync('planninghebdo', () async {
+    _throttledSync('planningHebdo', () async {
       final plannings = _objectBox.planningHebdoBox.getAll();
 
       for (final planning in plannings) {
-        if (_shouldIgnore('planninghebdo', planning.id)) continue;
+        final changeSignature =
+            'PlanningHebdo-${planning.id}-${planning.dimanche}';
 
-        _markLocalChange('planninghebdo', planning.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip PlanningHebdo ${planning.id} (vient d\'un delta distant)');
+          continue;
+        }
+
         await _deltaGenerator.syncPlanningHebdo(planning, 'update');
-        print('[SyncObserver] 📤 PlanningHebdo synchronisé');
+        print('[SyncObserver] 📤 PlanningHebdo synchronisé: ${planning.id}');
       }
     });
   }
 
-  /// Gestion des changements TypeActivite
+  /// ✅ Gestion des changements TypeActivite
   void _handleTypeActiviteChanges() {
-    _throttledSync('typeactivite', () async {
+    _throttledSync('typeActivite', () async {
       final types = _objectBox.typeActiviteBox.getAll();
 
       for (final type in types) {
-        if (_shouldIgnore('typeactivite', type.id)) continue;
+        final changeSignature = 'TypeActivite-${type.id}-${type.code}';
 
-        _markLocalChange('typeactivite', type.id);
+        if (_recentlyAppliedDeltas.contains(changeSignature)) {
+          print(
+              '[SyncObserver] ⭐ Skip TypeActivite ${type.id} (vient d\'un delta distant)');
+          continue;
+        }
+
         await _deltaGenerator.syncTypeActivite(type, 'update');
         print('[SyncObserver] 📤 TypeActivite synchronisé: ${type.code}');
       }
     });
   }
 
-  /// Throttle pour éviter trop de syncs rapides
+  // ========================================================================
+  // ✅ NOUVEAU : MÉTHODES POUR NOTIFIER LES LISTENERS
+  // ========================================================================
+
+  void _notifyStaffListeners() {
+    print(
+        '[SyncObserver] 🔔 Notification de ${_onStaffChangedCallbacks.length} listeners Staff');
+    for (final callback in _onStaffChangedCallbacks) {
+      try {
+        callback();
+      } catch (e) {
+        print('[SyncObserver] ❌ Erreur callback Staff: $e');
+      }
+    }
+  }
+
+  void _notifyActiviteListeners() {
+    print(
+        '[SyncObserver] 🔔 Notification de ${_onActiviteChangedCallbacks.length} listeners Activité');
+    for (final callback in _onActiviteChangedCallbacks) {
+      try {
+        callback();
+      } catch (e) {
+        print('[SyncObserver] ❌ Erreur callback Activité: $e');
+      }
+    }
+  }
+
+  void _notifyBranchListeners() {
+    for (final callback in _onBranchChangedCallbacks) {
+      try {
+        callback();
+      } catch (e) {
+        print('[SyncObserver] ❌ Erreur callback Branch: $e');
+      }
+    }
+  }
+
+  void _notifyTimeOffListeners() {
+    for (final callback in _onTimeOffChangedCallbacks) {
+      try {
+        callback();
+      } catch (e) {
+        print('[SyncObserver] ❌ Erreur callback TimeOff: $e');
+      }
+    }
+  }
+
+  void _notifyPlanificationListeners() {
+    for (final callback in _onPlanificationChangedCallbacks) {
+      try {
+        callback();
+      } catch (e) {
+        print('[SyncObserver] ❌ Erreur callback Planification: $e');
+      }
+    }
+  }
+
+  // ========================================================================
+  // MÉTHODES UTILITAIRES
+  // ========================================================================
+
+  /// ✅ Throttle pour éviter trop de syncs rapides
   void _throttledSync(String key, Future<void> Function() syncFunction) {
     _throttleTimers[key]?.cancel();
 
@@ -283,7 +430,47 @@ class ObjectBoxSyncObserver {
     });
   }
 
-  /// ✅ NOUVEAU: Marquer qu'on applique un delta distant
+  /// ✅ Marquer un delta comme récemment appliqué
+  void markDeltaAsApplied(String entityType, Map<String, dynamic> data) {
+    String signature = '';
+
+    switch (entityType) {
+      case 'Staff':
+        signature = 'Staff-${data['id']}-${data['nom']}-${data['grade']}';
+        break;
+      case 'ActiviteJour':
+        signature =
+            'ActiviteJour-${data['id']}-${data['jour']}-${data['statut']}';
+        break;
+      case 'Branch':
+        signature = 'Branch-${data['id']}-${data['branchNom']}';
+        break;
+      case 'TimeOff':
+        signature = 'TimeOff-${data['id']}-${data['debut']}-${data['fin']}';
+        break;
+      case 'Planification':
+        signature =
+            'Planification-${data['id']}-${data['mois']}-${data['annee']}';
+        break;
+      case 'PlanningHebdo':
+        signature = 'PlanningHebdo-${data['id']}-${data['dimanche']}';
+        break;
+      case 'TypeActivite':
+        signature = 'TypeActivite-${data['id']}-${data['code']}';
+        break;
+    }
+
+    _recentlyAppliedDeltas.add(signature);
+    print('[SyncObserver] 🏷️ Delta marqué: $signature');
+
+    // Nettoyer après 5 secondes
+    Future.delayed(Duration(seconds: 5), () {
+      _recentlyAppliedDeltas.remove(signature);
+      print('[SyncObserver] 🧹 Delta signature nettoyée: $signature');
+    });
+  }
+
+  /// ✅ Marquer qu'on applique un delta distant
   void setApplyingRemoteDelta(bool applying) {
     _isApplyingRemoteDelta = applying;
     if (applying) {
@@ -293,20 +480,32 @@ class ObjectBoxSyncObserver {
     }
   }
 
-  /// ✅ CORRECTION AMÉLIORÉE: Ignorer les changements pour une entité
-  void ignoreNextChange(String entityType, int entityId) {
-    final key = '$entityType-$entityId';
-    _ignoreUntil[key] = DateTime.now().add(ignoreDuration);
-    print('[SyncObserver] ⏰ Ignorer $key pendant ${ignoreDuration.inSeconds}s');
-  }
-
-  /// Obtenir les statistiques
+  /// Statistiques de l'observer
   Map<String, dynamic> getStats() {
     return {
       'isRunning': _isRunning,
       'activeThrottles': _throttleTimers.length,
-      'ignoredEntities': _ignoreUntil.length,
+      'recentlyAppliedDeltas': _recentlyAppliedDeltas.length,
       'isApplyingRemote': _isApplyingRemoteDelta,
+      'throttleDurationMs': throttleDuration.inMilliseconds,
+      'staffListeners': _onStaffChangedCallbacks.length,
+      'activiteListeners': _onActiviteChangedCallbacks.length,
     };
+  }
+
+  /// Nettoyer toutes les signatures trackées
+  void clearAllTracking() {
+    _recentlyAppliedDeltas.clear();
+    print('[SyncObserver] 🧹 Tous les trackings nettoyés');
+  }
+
+  /// Nettoyer tous les callbacks
+  void dispose() {
+    _onStaffChangedCallbacks.clear();
+    _onActiviteChangedCallbacks.clear();
+    _onBranchChangedCallbacks.clear();
+    _onTimeOffChangedCallbacks.clear();
+    _onPlanificationChangedCallbacks.clear();
+    stop();
   }
 }

@@ -5,15 +5,18 @@ import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
 import 'ActivitePersonne.dart';
+import 'p2p/delta_generator_real.dart';
+import 'p2p/objectbox_sync_observer.dart';
 
+/// ✅ StaffProvider CORRIGÉ - Synchronisation P2P automatique
 class StaffProvider with ChangeNotifier {
   List<Staff> _staffs = [];
   late final ObjectBox _objectBox;
-  bool _initialized = false; // 🆕 AJOUT
+  bool _initialized = false;
+  late final ObjectBoxSyncObserver _syncObserver;
 
   List<Staff> get staffs => _staffs;
-
-  bool get isInitialized => _initialized; // 🆕 AJOUT
+  bool get isInitialized => _initialized;
 
   StaffProvider() {
     _initObjectBox();
@@ -24,29 +27,85 @@ class StaffProvider with ChangeNotifier {
   Future<void> _initObjectBox() async {
     try {
       _objectBox = ObjectBox();
+      _syncObserver = ObjectBoxSyncObserver(); // Récupérer l'instance singleton
+
+      // ✅ NOUVEAU : S'enregistrer pour les notifications de changements
+      _syncObserver.addStaffChangedListener(_onRemoteStaffChanged);
+      _syncObserver.addActiviteChangedListener(_onRemoteActiviteChanged);
+
       await fetchStaffs();
-      _initialized = true; // 🆕 AJOUT
-      notifyListeners(); // 🆕 AJOUT
-    } catch (e) {
-      print('Erreur initialisation ObjectBox: $e');
-    }
-  }
-
-  /// 🔹 Récupère tous les staffs avec leurs activités, branch et congés
-  Future<void> fetchStaffs() async {
-    try {
-      _staffs = _objectBox.staffBox.getAll();
+      _initialized = true;
       notifyListeners();
+      print('[StaffProvider] ✅ Initialisé avec ${_staffs.length} staffs');
+      print(
+          '[StaffProvider] 🔔 Listeners enregistrés pour les changements distants');
     } catch (e) {
-      print("Erreur fetchStaffs: $e");
+      print('[StaffProvider] ❌ Erreur initialisation ObjectBox: $e');
     }
   }
 
-  /// 🔹 Ajoute un staff avec ses activités
-  Future<void> addStaff(Staff staff, List<String> activites) async {
+  /// ✅ NOUVEAU : Callback appelé quand un delta distant modifie un Staff
+  void _onRemoteStaffChanged() {
+    print(
+        '[StaffProvider] 🔔 Changement distant détecté - Rafraîchissement UI...');
+    fetchStaffs(); // Rafraîchit l'UI
+  }
+
+  /// ✅ NOUVEAU : Callback appelé quand un delta distant modifie une Activité
+  void _onRemoteActiviteChanged() {
+    print(
+        '[StaffProvider] 🔔 Changement Activité distant détecté - Rafraîchissement UI...');
+    fetchStaffs(); // Rafraîchit l'UI
+  }
+
+  /// ✅ NOUVEAU : Nettoyer les listeners lors de la destruction
+  @override
+  void dispose() {
+    _syncObserver.removeStaffChangedListener(_onRemoteStaffChanged);
+    _syncObserver.removeActiviteChangedListener(_onRemoteActiviteChanged);
+    print('[StaffProvider] 🧹 Listeners retirés');
+    super.dispose();
+  }
+
+  /// ✅ MÉTHODE 1 : Mettre à jour un staff
+  /// L'observer détecte automatiquement et synchronise
+  Future<void> updateStaff(Staff staff) async {
     try {
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print(
+          '[StaffProvider] 🔄 Mise à jour Staff: ${staff.nom} (ID: ${staff.id})');
+
+      // ✅ SIMPLE : Juste mettre à jour dans ObjectBox
       _objectBox.staffBox.put(staff);
 
+      print('[StaffProvider] ✅ Staff mis à jour dans ObjectBox');
+      print('[StaffProvider] ⏳ L\'observer va détecter et synchroniser...');
+
+      // Rafraîchir l'UI
+      await fetchStaffs();
+
+      print('[StaffProvider] ✅ UI rafraîchie');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    } catch (e) {
+      print("[StaffProvider] ❌ Erreur updateStaff: $e");
+      rethrow;
+    }
+  }
+
+  /// ✅ MÉTHODE 2 : Ajouter un staff avec activités
+  /// L'observer détecte automatiquement et synchronise
+  Future<void> addStaff(Staff staff, List<String> activites) async {
+    try {
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('[StaffProvider] 🆕 Création Staff: ${staff.nom}');
+
+      // 1️⃣ Créer le staff dans ObjectBox
+      final staffId = _objectBox.staffBox.put(staff);
+      staff.id = staffId;
+      print('[StaffProvider] ✅ Staff créé avec ID: $staffId');
+
+      // 2️⃣ Créer les activités
+      print('[StaffProvider] 📅 Création de ${activites.length} activités...');
       for (int i = 0; i < activites.length && i < 31; i++) {
         final activite = ActiviteJour(
           jour: i + 1,
@@ -55,56 +114,92 @@ class StaffProvider with ChangeNotifier {
 
         _objectBox.activiteBox.put(activite);
       }
+      print('[StaffProvider] ✅ ${activites.length} activités créées');
 
+      print('[StaffProvider] ⏳ L\'observer va détecter et synchroniser...');
+
+      // 3️⃣ Rafraîchir l'UI
       await fetchStaffs();
+
+      print('[StaffProvider] ✅ Staff et activités créés : ${staff.nom}');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e) {
-      print("Erreur addStaff: $e");
+      print("[StaffProvider] ❌ Erreur addStaff: $e");
+      rethrow;
     }
   }
 
-  /// 🔹 Mise à jour staff
-  Future<void> updateStaff(Staff staff) async {
-    try {
-      _objectBox.staffBox.put(staff);
-      await fetchStaffs();
-    } catch (e) {
-      print("Erreur updateStaff: $e");
-    }
-  }
-
-  /// 🔹 Suppression staff + relations
+  /// ✅ MÉTHODE 3 : Supprimer un staff
+  /// ATTENTION : La suppression nécessite un broadcast manuel
+  /// car l'observer ne peut pas détecter un objet qui n'existe plus
   Future<void> deleteStaff(Staff staff) async {
     try {
-      // Supprimer activités liées
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print(
+          '[StaffProvider] 🗑️ Suppression Staff: ${staff.nom} (ID: ${staff.id})');
+
+      // 1️⃣ Récupérer les activités liées
       final activites = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staff.id))
           .build()
           .find();
+      print('[StaffProvider] 📋 ${activites.length} activités liées trouvées');
+
+      // 2️⃣ Broadcaster la suppression du staff AVANT de le supprimer
+      print('[StaffProvider] 📡 Broadcasting suppression staff...');
+      await DeltaGenerator().syncStaff(staff, 'delete');
+
+      // 3️⃣ Supprimer et broadcaster chaque activité
       for (var act in activites) {
+        await DeltaGenerator().syncActiviteJour(act, 'delete');
         _objectBox.activiteBox.remove(act.id);
       }
+      print('[StaffProvider] ✅ ${activites.length} activités supprimées');
 
-      // Supprimer congés liés
-      for (var timeOff in staff.timeOff) {
+      // 4️⃣ Supprimer et broadcaster les congés
+      final timeOffs = staff.timeOff.toList();
+      for (var timeOff in timeOffs) {
+        await DeltaGenerator().syncTimeOff(timeOff, 'delete');
         _objectBox.timeOffBox.remove(timeOff.id);
       }
+      print('[StaffProvider] ✅ ${timeOffs.length} congés supprimés');
 
-      // Supprimer le staff
+      // 5️⃣ Supprimer le staff de la DB locale
       _objectBox.staffBox.remove(staff.id);
+      print('[StaffProvider] ✅ Staff supprimé de la DB locale');
 
+      // 6️⃣ Rafraîchir l'UI
       await fetchStaffs();
+
+      print('[StaffProvider] ✅ Staff supprimé et synchronisé: ${staff.nom}');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e) {
-      print("Erreur deleteStaff: $e");
+      print("[StaffProvider] ❌ Erreur deleteStaff: $e");
+      rethrow;
     }
   }
 
-  // 🆕 NOUVELLE MÉTHODE : Sauvegarder automatiquement les activités du mois
+  /// ✅ MÉTHODE 4 : Récupérer tous les staffs
+  Future<void> fetchStaffs() async {
+    try {
+      _staffs = _objectBox.staffBox.getAll();
+      notifyListeners();
+      print('[StaffProvider] 📊 ${_staffs.length} staffs chargés');
+    } catch (e) {
+      print("[StaffProvider] ❌ Erreur fetchStaffs: $e");
+    }
+  }
+
+  /// ✅ MÉTHODE 5 : Sauvegarder les activités du mois
   Future<void> saveMonthActivities(int year, int month) async {
     try {
-      final objectBox = ObjectBox();
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('[StaffProvider] 💾 Sauvegarde activités $month/$year');
 
-      // Récupérer toutes les activités du mois
-      final allActivites = objectBox.activiteBox.getAll();
+      // Récupérer toutes les activités
+      final allActivites = _objectBox.activiteBox.getAll();
+      print(
+          '[StaffProvider] 📋 ${allActivites.length} activités à sauvegarder');
 
       // Construire la chaîne JSON
       final activitesData = allActivites
@@ -112,7 +207,7 @@ class StaffProvider with ChangeNotifier {
           .join(",");
 
       // Chercher ou créer la planification
-      final query = objectBox.planificationBox
+      final query = _objectBox.planificationBox
           .query(Planification_.mois.equals(month) &
               Planification_.annee.equals(year))
           .build();
@@ -121,10 +216,10 @@ class StaffProvider with ChangeNotifier {
       query.close();
 
       if (planif != null) {
-        // Mettre à jour
+        // Mettre à jour la planification existante
         planif.activitesJson = activitesData;
-        objectBox.planificationBox.put(planif);
-        print("✅ Activités sauvegardées pour $month/$year");
+        _objectBox.planificationBox.put(planif);
+        print("[StaffProvider] ✅ Planification mise à jour pour $month/$year");
       } else {
         // Créer nouvelle planification
         final newPlanif = Planification(
@@ -133,18 +228,27 @@ class StaffProvider with ChangeNotifier {
           ordreEquipes: "",
           activitesJson: activitesData,
         );
-        objectBox.planificationBox.put(newPlanif);
-        print("✅ Nouvelle sauvegarde créée pour $month/$year");
+        _objectBox.planificationBox.put(newPlanif);
+        print(
+            "[StaffProvider] ✅ Nouvelle planification créée pour $month/$year");
       }
+
+      // ⏳ L'observer détectera et synchronisera automatiquement
+      print(
+          '[StaffProvider] ⏳ L\'observer va synchroniser la planification...');
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     } catch (e) {
-      print("❌ Erreur saveMonthActivities: $e");
+      print("[StaffProvider] ❌ Erreur saveMonthActivities: $e");
+      rethrow;
     }
   }
 
-  // 🆕 NOUVELLE MÉTHODE : Charger les activités d'un mois
-  /// Charge les activités d'un mois sauvegardé
+  /// ✅ MÉTHODE 6 : Charger les activités d'un mois
   Future<bool> loadMonthActivities(int year, int month) async {
     try {
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      print('[StaffProvider] 📂 Chargement activités $month/$year');
+
       // Chercher la planification
       final query = _objectBox.planificationBox
           .query(Planification_.mois.equals(month) &
@@ -155,17 +259,19 @@ class StaffProvider with ChangeNotifier {
       query.close();
 
       // Toujours vider les activités existantes
+      print('[StaffProvider] 🧹 Nettoyage activités existantes...');
       _objectBox.activiteBox.removeAll();
 
       if (planif == null ||
           planif.activitesJson == null ||
           planif.activitesJson!.isEmpty) {
-        print("ℹ️ Nouveau mois : $month/$year (tableau vide)");
+        print("[StaffProvider] ℹ️ Nouveau mois : $month/$year (tableau vide)");
         await fetchStaffs();
+        print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
         return false;
       }
 
-      print("🔄 Restauration des activités pour $month/$year");
+      print("[StaffProvider] 🔄 Restauration depuis sauvegarde...");
 
       // Restaurer depuis la sauvegarde
       final activitesData = planif.activitesJson!.split(",");
@@ -183,7 +289,7 @@ class StaffProvider with ChangeNotifier {
 
         final staff = _objectBox.staffBox.get(staffId);
         if (staff == null) {
-          print("⚠️ Staff $staffId non trouvé, ignoré");
+          print("[StaffProvider] ⚠️ Staff $staffId non trouvé, ignoré");
           continue;
         }
 
@@ -197,11 +303,64 @@ class StaffProvider with ChangeNotifier {
       }
 
       await fetchStaffs();
-      print("✅ $restored activités restaurées pour $month/$year");
+      print(
+          "[StaffProvider] ✅ $restored activités restaurées pour $month/$year");
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return true;
     } catch (e) {
-      print("❌ Erreur loadMonthActivities: $e");
+      print("[StaffProvider] ❌ Erreur loadMonthActivities: $e");
+      print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       return false;
+    }
+  }
+
+  /// ✅ MÉTHODE UTILITAIRE : Obtenir un staff par ID
+  Staff? getStaffById(int id) {
+    try {
+      return _objectBox.staffBox.get(id);
+    } catch (e) {
+      print("[StaffProvider] ❌ Erreur getStaffById: $e");
+      return null;
+    }
+  }
+
+  /// ✅ MÉTHODE UTILITAIRE : Filtrer par branche
+  List<Staff> getStaffsByBranch(int branchId) {
+    try {
+      return _staffs
+          .where((staff) => staff.branch.targetId == branchId)
+          .toList();
+    } catch (e) {
+      print("[StaffProvider] ❌ Erreur getStaffsByBranch: $e");
+      return [];
+    }
+  }
+
+  /// ✅ MÉTHODE UTILITAIRE : Filtrer par équipe
+  List<Staff> getStaffsByTeam(String? team) {
+    try {
+      if (team == null) return [];
+      return _staffs.where((staff) => staff.equipe == team).toList();
+    } catch (e) {
+      print("[StaffProvider] ❌ Erreur getStaffsByTeam: $e");
+      return [];
+    }
+  }
+
+  /// ✅ MÉTHODE UTILITAIRE : Rechercher des staffs
+  List<Staff> searchStaffs(String query) {
+    try {
+      if (query.isEmpty) return _staffs;
+
+      final lowerQuery = query.toLowerCase();
+      return _staffs
+          .where((staff) =>
+              staff.nom.toLowerCase().contains(lowerQuery) ||
+              staff.grade.toLowerCase().contains(lowerQuery))
+          .toList();
+    } catch (e) {
+      print("[StaffProvider] ❌ Erreur searchStaffs: $e");
+      return [];
     }
   }
 }
@@ -209,9 +368,11 @@ class StaffProvider with ChangeNotifier {
 /// Provider pour gérer les activités - VERSION AMÉLIORÉE
 class ActiviteProvider with ChangeNotifier {
   late final ObjectBox _objectBox;
+  late final DeltaGenerator _deltaGenerator; // ✅ AJOUTER
 
   ActiviteProvider() {
     _objectBox = ObjectBox();
+    _deltaGenerator = DeltaGenerator(); // ✅ INITIALISER
   }
 
   // Méthodes publiques pour accéder aux boxes
@@ -222,6 +383,7 @@ class ActiviteProvider with ChangeNotifier {
   Box<Staff> get staffBox => _objectBox.staffBox;
 
   /// 🔹 VERSION CORRIGÉE : Met à jour une activité en respectant la logique métier
+  /// ✅ CORRECTION : Synchroniser après modification
   Future<void> updateActivite(int staffId, int jour, String statut,
       {required int year, required int month}) async {
     try {
@@ -233,16 +395,14 @@ class ActiviteProvider with ChangeNotifier {
 
       final dateJour = DateTime(year, month, jour);
 
-      // VÉRIFICATION 1 : Congés TimeOff (plus prioritaires)
+      // Vérifications de congés...
       bool estEnCongeTimeOff = _isStaffOnLeaveTimeOff(staff, dateJour);
-
       if (estEnCongeTimeOff) {
-        print(
-            "🚫 ${staff.nom} est en congé TimeOff le $jour/$month/$year - Modification ignorée");
+        print("🚫 ${staff.nom} est en congé TimeOff - Modification ignorée");
         return;
       }
 
-      // VÉRIFICATION 2 : Activités de congé existantes (C, CM) - seulement si pas TimeOff
+      // Récupérer ou créer l'activité
       final query = _objectBox.activiteBox
           .query(ActiviteJour_.staff.equals(staffId) &
               ActiviteJour_.jour.equals(jour))
@@ -250,41 +410,23 @@ class ActiviteProvider with ChangeNotifier {
       final activites = query.find();
       query.close();
 
-      bool estEnCongeActivite = false;
       ActiviteJour? activiteExistante;
-
       if (activites.isNotEmpty) {
         activiteExistante = activites.first;
-        if (activiteExistante.statut == 'C' ||
-            activiteExistante.statut == 'CM') {
-          estEnCongeActivite = true;
-          print(
-              "🚫 ${staff.nom} a un congé activité le jour $jour (${activiteExistante.statut}) - Modification ignorée");
-        }
-      }
-
-      // Si en congé activité, ignorer SAUF si on veut forcer un autre type de congé
-      if (estEnCongeActivite && !['C', 'CM'].contains(statut)) {
-        print(
-            "⚠️ Modification IGNORÉE pour ${staff.nom} - jour $jour (congé activité existant)");
-        return;
-      }
-
-      // MODIFICATION AUTORISÉE : Procéder à la mise à jour
-      if (activiteExistante != null) {
-        // Mise à jour de l'activité existante
-        String ancienStatut = activiteExistante.statut;
         activiteExistante.statut = statut;
         _objectBox.activiteBox.put(activiteExistante);
-        print(
-            "✅ Activité mise à jour: ${staff.nom} jour $jour: $ancienStatut → $statut");
+        print("✅ Activité mise à jour: ${staff.nom} jour $jour = $statut");
       } else {
-        // Création d'une nouvelle activité
         final nouvelleActivite = ActiviteJour(jour: jour, statut: statut)
           ..staff.target = staff;
         _objectBox.activiteBox.put(nouvelleActivite);
+        activiteExistante = nouvelleActivite;
         print("➕ Nouvelle activité créée: ${staff.nom} jour $jour = $statut");
       }
+
+      // ✅ SYNCHRONISER L'ACTIVITÉ
+      await _deltaGenerator.syncActiviteJour(activiteExistante, 'update');
+      print("📤 Activité synchronisée");
 
       notifyListeners();
     } catch (e) {

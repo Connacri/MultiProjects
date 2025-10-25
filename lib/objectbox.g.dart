@@ -14,7 +14,6 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_flutter_libs/objectbox_flutter_libs.dart';
 
-import 'Hopital/p2p/p2p_entities_complete.dart';
 import 'objectBox/Entity.dart';
 
 export 'package:objectbox/objectbox.dart'; // so that callers only have to import this file
@@ -1967,299 +1966,6 @@ final _entities = <obx_int.ModelEntity>[
     backlinks: <obx_int.ModelBacklink>[],
   ),
   obx_int.ModelEntity(
-    id: const obx_int.IdUid(68, 221848585703696368),
-    name: 'ActiviteJourP2P',
-    lastPropertyId: const obx_int.IdUid(8, 889282668982577327),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 6313272294285574591),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 1025253388767702072),
-        name: 'activiteUuid',
-        type: 9,
-        flags: 2080,
-        indexId: const obx_int.IdUid(149, 1309737991781188592),
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 6323466948278403419),
-        name: 'uuid',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 5816316813052859296),
-        name: 'version',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 4096295312337046755),
-        name: 'originId',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 6068100768001242906),
-        name: 'deleted',
-        type: 1,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 705781185924574906),
-        name: 'lastModified',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(8, 889282668982577327),
-        name: 'activiteId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(150, 8099254561216703452),
-        relationTarget: 'ActiviteJour',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(69, 3455322588672139361),
-    name: 'BranchP2P',
-    lastPropertyId: const obx_int.IdUid(8, 3345249419972072876),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 2188037252492686353),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 7518220212655950604),
-        name: 'branchUuid',
-        type: 9,
-        flags: 2080,
-        indexId: const obx_int.IdUid(151, 3338875062265396784),
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 6345469929458604324),
-        name: 'uuid',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 7365419522295614790),
-        name: 'version',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 1041646324819417227),
-        name: 'originId',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 7684948545470074042),
-        name: 'deleted',
-        type: 1,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 613705619684699087),
-        name: 'lastModified',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(8, 3345249419972072876),
-        name: 'branchId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(152, 5329425843478948017),
-        relationTarget: 'Branch',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(70, 7478261893920421096),
-    name: 'P2PJournal',
-    lastPropertyId: const obx_int.IdUid(8, 8693498026159822845),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 7428880597746659940),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 7960744539902228369),
-        name: 'operation',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 4536415815915704139),
-        name: 'entityType',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 244667485649299592),
-        name: 'entityUuid',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 4961918772368604828),
-        name: 'dataJson',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 2504453926939683786),
-        name: 'timestamp',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 3766836233938344228),
-        name: 'originId',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(8, 8693498026159822845),
-        name: 'synced',
-        type: 1,
-        flags: 0,
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(71, 1187110423454994712),
-    name: 'StaffP2P',
-    lastPropertyId: const obx_int.IdUid(8, 8151707992790261774),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 5817110193658047368),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 6875082076050171623),
-        name: 'staffUuid',
-        type: 9,
-        flags: 2080,
-        indexId: const obx_int.IdUid(153, 3300366715471341972),
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 8211975747066600722),
-        name: 'uuid',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 2935337685815566446),
-        name: 'version',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 7794225881219156743),
-        name: 'originId',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 7644905541536374479),
-        name: 'deleted',
-        type: 1,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 1953262062209074462),
-        name: 'lastModified',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(8, 8151707992790261774),
-        name: 'staffId',
-        type: 11,
-        flags: 520,
-        indexId: const obx_int.IdUid(154, 3595739419239164296),
-        relationTarget: 'Staff',
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
-    id: const obx_int.IdUid(72, 5460189980320568024),
-    name: 'SyncState',
-    lastPropertyId: const obx_int.IdUid(7, 5236749634256751448),
-    flags: 0,
-    properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 625687689912646825),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(2, 2894606296271993211),
-        name: 'entityType',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(3, 7334670778643132426),
-        name: 'entityUuid',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(4, 7247710053128859076),
-        name: 'lastVersion',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(5, 1717935087724239407),
-        name: 'lastSynced',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 2599250494752144505),
-        name: 'lastOriginId',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 5236749634256751448),
-        name: 'pendingSync',
-        type: 1,
-        flags: 0,
-      ),
-    ],
-    relations: <obx_int.ModelRelation>[],
-    backlinks: <obx_int.ModelBacklink>[],
-  ),
-  obx_int.ModelEntity(
     id: const obx_int.IdUid(79, 335575276020234399),
     name: 'Conversation',
     lastPropertyId: const obx_int.IdUid(20, 6557728819474357646),
@@ -2868,6 +2574,11 @@ obx_int.ModelDefinition getObjectBoxModel() {
       2109867429441744176,
       8286512320386958416,
       512390680340790874,
+      221848585703696368,
+      3455322588672139361,
+      7478261893920421096,
+      1187110423454994712,
+      5460189980320568024,
     ],
     retiredIndexUids: const [
       7680843215305245682,
@@ -3394,6 +3105,45 @@ obx_int.ModelDefinition getObjectBoxModel() {
       3706887794579392245,
       6903019716323791780,
       3910664573600207696,
+      6313272294285574591,
+      1025253388767702072,
+      6323466948278403419,
+      5816316813052859296,
+      4096295312337046755,
+      6068100768001242906,
+      705781185924574906,
+      889282668982577327,
+      2188037252492686353,
+      7518220212655950604,
+      6345469929458604324,
+      7365419522295614790,
+      1041646324819417227,
+      7684948545470074042,
+      613705619684699087,
+      3345249419972072876,
+      7428880597746659940,
+      7960744539902228369,
+      4536415815915704139,
+      244667485649299592,
+      4961918772368604828,
+      2504453926939683786,
+      3766836233938344228,
+      8693498026159822845,
+      5817110193658047368,
+      6875082076050171623,
+      8211975747066600722,
+      2935337685815566446,
+      7794225881219156743,
+      7644905541536374479,
+      1953262062209074462,
+      8151707992790261774,
+      625687689912646825,
+      2894606296271993211,
+      7334670778643132426,
+      7247710053128859076,
+      1717935087724239407,
+      2599250494752144505,
+      5236749634256751448,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -5917,360 +5667,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
-    ActiviteJourP2P: obx_int.EntityDefinition<ActiviteJourP2P>(
-      model: _entities[27],
-      toOneRelations: (ActiviteJourP2P object) => [object.activite],
-      toManyRelations: (ActiviteJourP2P object) => {},
-      getId: (ActiviteJourP2P object) => object.id,
-      setId: (ActiviteJourP2P object, int id) {
-        object.id = id;
-      },
-      objectToFB: (ActiviteJourP2P object, fb.Builder fbb) {
-        final activiteUuidOffset = fbb.writeString(object.activiteUuid);
-        final uuidOffset = fbb.writeString(object.uuid);
-        final originIdOffset = fbb.writeString(object.originId);
-        fbb.startTable(9);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, activiteUuidOffset);
-        fbb.addOffset(2, uuidOffset);
-        fbb.addInt64(3, object.version);
-        fbb.addOffset(4, originIdOffset);
-        fbb.addBool(5, object.deleted);
-        fbb.addInt64(6, object.lastModified);
-        fbb.addInt64(7, object.activite.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final activiteUuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final uuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final originIdParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 12, '');
-        final lastModifiedParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          16,
-          0,
-        );
-        final object =
-            ActiviteJourP2P(
-                activiteUuid: activiteUuidParam,
-                uuid: uuidParam,
-                originId: originIdParam,
-                lastModified: lastModifiedParam,
-              )
-              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
-              ..version = const fb.Int64Reader().vTableGet(
-                buffer,
-                rootOffset,
-                10,
-                0,
-              )
-              ..deleted = const fb.BoolReader().vTableGet(
-                buffer,
-                rootOffset,
-                14,
-                false,
-              );
-        object.activite.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          18,
-          0,
-        );
-        object.activite.attach(store);
-        return object;
-      },
-    ),
-    BranchP2P: obx_int.EntityDefinition<BranchP2P>(
-      model: _entities[28],
-      toOneRelations: (BranchP2P object) => [object.branch],
-      toManyRelations: (BranchP2P object) => {},
-      getId: (BranchP2P object) => object.id,
-      setId: (BranchP2P object, int id) {
-        object.id = id;
-      },
-      objectToFB: (BranchP2P object, fb.Builder fbb) {
-        final branchUuidOffset = fbb.writeString(object.branchUuid);
-        final uuidOffset = fbb.writeString(object.uuid);
-        final originIdOffset = fbb.writeString(object.originId);
-        fbb.startTable(9);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, branchUuidOffset);
-        fbb.addOffset(2, uuidOffset);
-        fbb.addInt64(3, object.version);
-        fbb.addOffset(4, originIdOffset);
-        fbb.addBool(5, object.deleted);
-        fbb.addInt64(6, object.lastModified);
-        fbb.addInt64(7, object.branch.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final branchUuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final uuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final originIdParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 12, '');
-        final lastModifiedParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          16,
-          0,
-        );
-        final object =
-            BranchP2P(
-                branchUuid: branchUuidParam,
-                uuid: uuidParam,
-                originId: originIdParam,
-                lastModified: lastModifiedParam,
-              )
-              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
-              ..version = const fb.Int64Reader().vTableGet(
-                buffer,
-                rootOffset,
-                10,
-                0,
-              )
-              ..deleted = const fb.BoolReader().vTableGet(
-                buffer,
-                rootOffset,
-                14,
-                false,
-              );
-        object.branch.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          18,
-          0,
-        );
-        object.branch.attach(store);
-        return object;
-      },
-    ),
-    P2PJournal: obx_int.EntityDefinition<P2PJournal>(
-      model: _entities[29],
-      toOneRelations: (P2PJournal object) => [],
-      toManyRelations: (P2PJournal object) => {},
-      getId: (P2PJournal object) => object.id,
-      setId: (P2PJournal object, int id) {
-        object.id = id;
-      },
-      objectToFB: (P2PJournal object, fb.Builder fbb) {
-        final operationOffset = fbb.writeString(object.operation);
-        final entityTypeOffset = fbb.writeString(object.entityType);
-        final entityUuidOffset = fbb.writeString(object.entityUuid);
-        final dataJsonOffset = fbb.writeString(object.dataJson);
-        final originIdOffset = fbb.writeString(object.originId);
-        fbb.startTable(9);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, operationOffset);
-        fbb.addOffset(2, entityTypeOffset);
-        fbb.addOffset(3, entityUuidOffset);
-        fbb.addOffset(4, dataJsonOffset);
-        fbb.addInt64(5, object.timestamp);
-        fbb.addOffset(6, originIdOffset);
-        fbb.addBool(7, object.synced);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final operationParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final entityTypeParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final entityUuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 10, '');
-        final dataJsonParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 12, '');
-        final timestampParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          14,
-          0,
-        );
-        final originIdParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 16, '');
-        final object =
-            P2PJournal(
-                operation: operationParam,
-                entityType: entityTypeParam,
-                entityUuid: entityUuidParam,
-                dataJson: dataJsonParam,
-                timestamp: timestampParam,
-                originId: originIdParam,
-              )
-              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
-              ..synced = const fb.BoolReader().vTableGet(
-                buffer,
-                rootOffset,
-                18,
-                false,
-              );
-
-        return object;
-      },
-    ),
-    StaffP2P: obx_int.EntityDefinition<StaffP2P>(
-      model: _entities[30],
-      toOneRelations: (StaffP2P object) => [object.staff],
-      toManyRelations: (StaffP2P object) => {},
-      getId: (StaffP2P object) => object.id,
-      setId: (StaffP2P object, int id) {
-        object.id = id;
-      },
-      objectToFB: (StaffP2P object, fb.Builder fbb) {
-        final staffUuidOffset = fbb.writeString(object.staffUuid);
-        final uuidOffset = fbb.writeString(object.uuid);
-        final originIdOffset = fbb.writeString(object.originId);
-        fbb.startTable(9);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, staffUuidOffset);
-        fbb.addOffset(2, uuidOffset);
-        fbb.addInt64(3, object.version);
-        fbb.addOffset(4, originIdOffset);
-        fbb.addBool(5, object.deleted);
-        fbb.addInt64(6, object.lastModified);
-        fbb.addInt64(7, object.staff.targetId);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final staffUuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final uuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final originIdParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 12, '');
-        final lastModifiedParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          16,
-          0,
-        );
-        final object =
-            StaffP2P(
-                staffUuid: staffUuidParam,
-                uuid: uuidParam,
-                originId: originIdParam,
-                lastModified: lastModifiedParam,
-              )
-              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
-              ..version = const fb.Int64Reader().vTableGet(
-                buffer,
-                rootOffset,
-                10,
-                0,
-              )
-              ..deleted = const fb.BoolReader().vTableGet(
-                buffer,
-                rootOffset,
-                14,
-                false,
-              );
-        object.staff.targetId = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          18,
-          0,
-        );
-        object.staff.attach(store);
-        return object;
-      },
-    ),
-    SyncState: obx_int.EntityDefinition<SyncState>(
-      model: _entities[31],
-      toOneRelations: (SyncState object) => [],
-      toManyRelations: (SyncState object) => {},
-      getId: (SyncState object) => object.id,
-      setId: (SyncState object, int id) {
-        object.id = id;
-      },
-      objectToFB: (SyncState object, fb.Builder fbb) {
-        final entityTypeOffset = fbb.writeString(object.entityType);
-        final entityUuidOffset = fbb.writeString(object.entityUuid);
-        final lastOriginIdOffset = fbb.writeString(object.lastOriginId);
-        fbb.startTable(8);
-        fbb.addInt64(0, object.id);
-        fbb.addOffset(1, entityTypeOffset);
-        fbb.addOffset(2, entityUuidOffset);
-        fbb.addInt64(3, object.lastVersion);
-        fbb.addInt64(4, object.lastSynced);
-        fbb.addOffset(5, lastOriginIdOffset);
-        fbb.addBool(6, object.pendingSync);
-        fbb.finish(fbb.endTable());
-        return object.id;
-      },
-      objectFromFB: (obx.Store store, ByteData fbData) {
-        final buffer = fb.BufferContext(fbData);
-        final rootOffset = buffer.derefObject(0);
-        final entityTypeParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 6, '');
-        final entityUuidParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 8, '');
-        final lastVersionParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          10,
-          0,
-        );
-        final lastSyncedParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          12,
-          0,
-        );
-        final lastOriginIdParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 14, '');
-        final object =
-            SyncState(
-                entityType: entityTypeParam,
-                entityUuid: entityUuidParam,
-                lastVersion: lastVersionParam,
-                lastSynced: lastSyncedParam,
-                lastOriginId: lastOriginIdParam,
-              )
-              ..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0)
-              ..pendingSync = const fb.BoolReader().vTableGet(
-                buffer,
-                rootOffset,
-                16,
-                false,
-              );
-
-        return object;
-      },
-    ),
     Conversation: obx_int.EntityDefinition<Conversation>(
-      model: _entities[32],
+      model: _entities[27],
       toOneRelations: (Conversation object) => [],
       toManyRelations: (Conversation object) => {},
       getId: (Conversation object) => object.id,
@@ -6441,7 +5839,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     ConversationParticipant: obx_int.EntityDefinition<ConversationParticipant>(
-      model: _entities[33],
+      model: _entities[28],
       toOneRelations: (ConversationParticipant object) => [],
       toManyRelations: (ConversationParticipant object) => {},
       getId: (ConversationParticipant object) => object.id,
@@ -6525,7 +5923,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     Message: obx_int.EntityDefinition<Message>(
-      model: _entities[34],
+      model: _entities[29],
       toOneRelations: (Message object) => [],
       toManyRelations: (Message object) => {},
       getId: (Message object) => object.id,
@@ -6720,7 +6118,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     MessageReceipt: obx_int.EntityDefinition<MessageReceipt>(
-      model: _entities[35],
+      model: _entities[30],
       toOneRelations: (MessageReceipt object) => [],
       toManyRelations: (MessageReceipt object) => {},
       getId: (MessageReceipt object) => object.id,
@@ -6779,7 +6177,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     MessageSearchIndex: obx_int.EntityDefinition<MessageSearchIndex>(
-      model: _entities[36],
+      model: _entities[31],
       toOneRelations: (MessageSearchIndex object) => [],
       toManyRelations: (MessageSearchIndex object) => {},
       getId: (MessageSearchIndex object) => object.id,
@@ -6836,7 +6234,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
     ),
     MessageSyncQueue: obx_int.EntityDefinition<MessageSyncQueue>(
-      model: _entities[37],
+      model: _entities[32],
       toOneRelations: (MessageSyncQueue object) => [],
       toManyRelations: (MessageSyncQueue object) => {},
       getId: (MessageSyncQueue object) => object.id,
@@ -8333,316 +7731,106 @@ class TypeActivite_ {
   );
 }
 
-/// [ActiviteJourP2P] entity fields to define ObjectBox queries.
-class ActiviteJourP2P_ {
-  /// See [ActiviteJourP2P.id].
-  static final id = obx.QueryIntegerProperty<ActiviteJourP2P>(
-    _entities[27].properties[0],
-  );
-
-  /// See [ActiviteJourP2P.activiteUuid].
-  static final activiteUuid = obx.QueryStringProperty<ActiviteJourP2P>(
-    _entities[27].properties[1],
-  );
-
-  /// See [ActiviteJourP2P.uuid].
-  static final uuid = obx.QueryStringProperty<ActiviteJourP2P>(
-    _entities[27].properties[2],
-  );
-
-  /// See [ActiviteJourP2P.version].
-  static final version = obx.QueryIntegerProperty<ActiviteJourP2P>(
-    _entities[27].properties[3],
-  );
-
-  /// See [ActiviteJourP2P.originId].
-  static final originId = obx.QueryStringProperty<ActiviteJourP2P>(
-    _entities[27].properties[4],
-  );
-
-  /// See [ActiviteJourP2P.deleted].
-  static final deleted = obx.QueryBooleanProperty<ActiviteJourP2P>(
-    _entities[27].properties[5],
-  );
-
-  /// See [ActiviteJourP2P.lastModified].
-  static final lastModified = obx.QueryIntegerProperty<ActiviteJourP2P>(
-    _entities[27].properties[6],
-  );
-
-  /// See [ActiviteJourP2P.activite].
-  static final activite = obx.QueryRelationToOne<ActiviteJourP2P, ActiviteJour>(
-    _entities[27].properties[7],
-  );
-}
-
-/// [BranchP2P] entity fields to define ObjectBox queries.
-class BranchP2P_ {
-  /// See [BranchP2P.id].
-  static final id = obx.QueryIntegerProperty<BranchP2P>(
-    _entities[28].properties[0],
-  );
-
-  /// See [BranchP2P.branchUuid].
-  static final branchUuid = obx.QueryStringProperty<BranchP2P>(
-    _entities[28].properties[1],
-  );
-
-  /// See [BranchP2P.uuid].
-  static final uuid = obx.QueryStringProperty<BranchP2P>(
-    _entities[28].properties[2],
-  );
-
-  /// See [BranchP2P.version].
-  static final version = obx.QueryIntegerProperty<BranchP2P>(
-    _entities[28].properties[3],
-  );
-
-  /// See [BranchP2P.originId].
-  static final originId = obx.QueryStringProperty<BranchP2P>(
-    _entities[28].properties[4],
-  );
-
-  /// See [BranchP2P.deleted].
-  static final deleted = obx.QueryBooleanProperty<BranchP2P>(
-    _entities[28].properties[5],
-  );
-
-  /// See [BranchP2P.lastModified].
-  static final lastModified = obx.QueryIntegerProperty<BranchP2P>(
-    _entities[28].properties[6],
-  );
-
-  /// See [BranchP2P.branch].
-  static final branch = obx.QueryRelationToOne<BranchP2P, Branch>(
-    _entities[28].properties[7],
-  );
-}
-
-/// [P2PJournal] entity fields to define ObjectBox queries.
-class P2PJournal_ {
-  /// See [P2PJournal.id].
-  static final id = obx.QueryIntegerProperty<P2PJournal>(
-    _entities[29].properties[0],
-  );
-
-  /// See [P2PJournal.operation].
-  static final operation = obx.QueryStringProperty<P2PJournal>(
-    _entities[29].properties[1],
-  );
-
-  /// See [P2PJournal.entityType].
-  static final entityType = obx.QueryStringProperty<P2PJournal>(
-    _entities[29].properties[2],
-  );
-
-  /// See [P2PJournal.entityUuid].
-  static final entityUuid = obx.QueryStringProperty<P2PJournal>(
-    _entities[29].properties[3],
-  );
-
-  /// See [P2PJournal.dataJson].
-  static final dataJson = obx.QueryStringProperty<P2PJournal>(
-    _entities[29].properties[4],
-  );
-
-  /// See [P2PJournal.timestamp].
-  static final timestamp = obx.QueryIntegerProperty<P2PJournal>(
-    _entities[29].properties[5],
-  );
-
-  /// See [P2PJournal.originId].
-  static final originId = obx.QueryStringProperty<P2PJournal>(
-    _entities[29].properties[6],
-  );
-
-  /// See [P2PJournal.synced].
-  static final synced = obx.QueryBooleanProperty<P2PJournal>(
-    _entities[29].properties[7],
-  );
-}
-
-/// [StaffP2P] entity fields to define ObjectBox queries.
-class StaffP2P_ {
-  /// See [StaffP2P.id].
-  static final id = obx.QueryIntegerProperty<StaffP2P>(
-    _entities[30].properties[0],
-  );
-
-  /// See [StaffP2P.staffUuid].
-  static final staffUuid = obx.QueryStringProperty<StaffP2P>(
-    _entities[30].properties[1],
-  );
-
-  /// See [StaffP2P.uuid].
-  static final uuid = obx.QueryStringProperty<StaffP2P>(
-    _entities[30].properties[2],
-  );
-
-  /// See [StaffP2P.version].
-  static final version = obx.QueryIntegerProperty<StaffP2P>(
-    _entities[30].properties[3],
-  );
-
-  /// See [StaffP2P.originId].
-  static final originId = obx.QueryStringProperty<StaffP2P>(
-    _entities[30].properties[4],
-  );
-
-  /// See [StaffP2P.deleted].
-  static final deleted = obx.QueryBooleanProperty<StaffP2P>(
-    _entities[30].properties[5],
-  );
-
-  /// See [StaffP2P.lastModified].
-  static final lastModified = obx.QueryIntegerProperty<StaffP2P>(
-    _entities[30].properties[6],
-  );
-
-  /// See [StaffP2P.staff].
-  static final staff = obx.QueryRelationToOne<StaffP2P, Staff>(
-    _entities[30].properties[7],
-  );
-}
-
-/// [SyncState] entity fields to define ObjectBox queries.
-class SyncState_ {
-  /// See [SyncState.id].
-  static final id = obx.QueryIntegerProperty<SyncState>(
-    _entities[31].properties[0],
-  );
-
-  /// See [SyncState.entityType].
-  static final entityType = obx.QueryStringProperty<SyncState>(
-    _entities[31].properties[1],
-  );
-
-  /// See [SyncState.entityUuid].
-  static final entityUuid = obx.QueryStringProperty<SyncState>(
-    _entities[31].properties[2],
-  );
-
-  /// See [SyncState.lastVersion].
-  static final lastVersion = obx.QueryIntegerProperty<SyncState>(
-    _entities[31].properties[3],
-  );
-
-  /// See [SyncState.lastSynced].
-  static final lastSynced = obx.QueryIntegerProperty<SyncState>(
-    _entities[31].properties[4],
-  );
-
-  /// See [SyncState.lastOriginId].
-  static final lastOriginId = obx.QueryStringProperty<SyncState>(
-    _entities[31].properties[5],
-  );
-
-  /// See [SyncState.pendingSync].
-  static final pendingSync = obx.QueryBooleanProperty<SyncState>(
-    _entities[31].properties[6],
-  );
-}
-
 /// [Conversation] entity fields to define ObjectBox queries.
 class Conversation_ {
   /// See [Conversation.id].
   static final id = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[0],
+    _entities[27].properties[0],
   );
 
   /// See [Conversation.conversationId].
   static final conversationId = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[1],
+    _entities[27].properties[1],
   );
 
   /// See [Conversation.typeValue].
   static final typeValue = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[2],
+    _entities[27].properties[2],
   );
 
   /// See [Conversation.title].
   static final title = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[3],
+    _entities[27].properties[3],
   );
 
   /// See [Conversation.description].
   static final description = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[4],
+    _entities[27].properties[4],
   );
 
   /// See [Conversation.avatarPath].
   static final avatarPath = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[5],
+    _entities[27].properties[5],
   );
 
   /// See [Conversation.participantNodeIds].
   static final participantNodeIds = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[6],
+    _entities[27].properties[6],
   );
 
   /// See [Conversation.creatorNodeId].
   static final creatorNodeId = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[7],
+    _entities[27].properties[7],
   );
 
   /// See [Conversation.createdTimestamp].
   static final createdTimestamp = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[8],
+    _entities[27].properties[8],
   );
 
   /// See [Conversation.lastActivityTimestamp].
   static final lastActivityTimestamp = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[9],
+    _entities[27].properties[9],
   );
 
   /// See [Conversation.lastMessageId].
   static final lastMessageId = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[10],
+    _entities[27].properties[10],
   );
 
   /// See [Conversation.lastMessagePreview].
   static final lastMessagePreview = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[11],
+    _entities[27].properties[11],
   );
 
   /// See [Conversation.unreadCount].
   static final unreadCount = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[12],
+    _entities[27].properties[12],
   );
 
   /// See [Conversation.messageCount].
   static final messageCount = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[13],
+    _entities[27].properties[13],
   );
 
   /// See [Conversation.isArchived].
   static final isArchived = obx.QueryBooleanProperty<Conversation>(
-    _entities[32].properties[14],
+    _entities[27].properties[14],
   );
 
   /// See [Conversation.isDeleted].
   static final isDeleted = obx.QueryBooleanProperty<Conversation>(
-    _entities[32].properties[15],
+    _entities[27].properties[15],
   );
 
   /// See [Conversation.isPinned].
   static final isPinned = obx.QueryBooleanProperty<Conversation>(
-    _entities[32].properties[16],
+    _entities[27].properties[16],
   );
 
   /// See [Conversation.isMuted].
   static final isMuted = obx.QueryBooleanProperty<Conversation>(
-    _entities[32].properties[17],
+    _entities[27].properties[17],
   );
 
   /// See [Conversation.lastSyncTimestamp].
   static final lastSyncTimestamp = obx.QueryIntegerProperty<Conversation>(
-    _entities[32].properties[18],
+    _entities[27].properties[18],
   );
 
   /// See [Conversation.metadata].
   static final metadata = obx.QueryStringProperty<Conversation>(
-    _entities[32].properties[19],
+    _entities[27].properties[19],
   );
 }
 
@@ -8650,58 +7838,58 @@ class Conversation_ {
 class ConversationParticipant_ {
   /// See [ConversationParticipant.id].
   static final id = obx.QueryIntegerProperty<ConversationParticipant>(
-    _entities[33].properties[0],
+    _entities[28].properties[0],
   );
 
   /// See [ConversationParticipant.conversationId].
   static final conversationId =
       obx.QueryStringProperty<ConversationParticipant>(
-        _entities[33].properties[1],
+        _entities[28].properties[1],
       );
 
   /// See [ConversationParticipant.nodeId].
   static final nodeId = obx.QueryStringProperty<ConversationParticipant>(
-    _entities[33].properties[2],
+    _entities[28].properties[2],
   );
 
   /// See [ConversationParticipant.displayName].
   static final displayName = obx.QueryStringProperty<ConversationParticipant>(
-    _entities[33].properties[3],
+    _entities[28].properties[3],
   );
 
   /// See [ConversationParticipant.role].
   static final role = obx.QueryStringProperty<ConversationParticipant>(
-    _entities[33].properties[4],
+    _entities[28].properties[4],
   );
 
   /// See [ConversationParticipant.joinedTimestamp].
   static final joinedTimestamp =
       obx.QueryIntegerProperty<ConversationParticipant>(
-        _entities[33].properties[5],
+        _entities[28].properties[5],
       );
 
   /// See [ConversationParticipant.leftTimestamp].
   static final leftTimestamp =
       obx.QueryIntegerProperty<ConversationParticipant>(
-        _entities[33].properties[6],
+        _entities[28].properties[6],
       );
 
   /// See [ConversationParticipant.notificationsEnabled].
   static final notificationsEnabled =
       obx.QueryBooleanProperty<ConversationParticipant>(
-        _entities[33].properties[7],
+        _entities[28].properties[7],
       );
 
   /// See [ConversationParticipant.lastReadMessageId].
   static final lastReadMessageId =
       obx.QueryStringProperty<ConversationParticipant>(
-        _entities[33].properties[8],
+        _entities[28].properties[8],
       );
 
   /// See [ConversationParticipant.lastAccessTimestamp].
   static final lastAccessTimestamp =
       obx.QueryIntegerProperty<ConversationParticipant>(
-        _entities[33].properties[9],
+        _entities[28].properties[9],
       );
 }
 
@@ -8709,122 +7897,122 @@ class ConversationParticipant_ {
 class Message_ {
   /// See [Message.id].
   static final id = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[0],
+    _entities[29].properties[0],
   );
 
   /// See [Message.messageId].
   static final messageId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[1],
+    _entities[29].properties[1],
   );
 
   /// See [Message.conversationId].
   static final conversationId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[2],
+    _entities[29].properties[2],
   );
 
   /// See [Message.fromNodeId].
   static final fromNodeId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[3],
+    _entities[29].properties[3],
   );
 
   /// See [Message.toNodeId].
   static final toNodeId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[4],
+    _entities[29].properties[4],
   );
 
   /// See [Message.typeValue].
   static final typeValue = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[5],
+    _entities[29].properties[5],
   );
 
   /// See [Message.content].
   static final content = obx.QueryStringProperty<Message>(
-    _entities[34].properties[6],
+    _entities[29].properties[6],
   );
 
   /// See [Message.mediaPath].
   static final mediaPath = obx.QueryStringProperty<Message>(
-    _entities[34].properties[7],
+    _entities[29].properties[7],
   );
 
   /// See [Message.mediaSize].
   static final mediaSize = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[8],
+    _entities[29].properties[8],
   );
 
   /// See [Message.mediaMimeType].
   static final mediaMimeType = obx.QueryStringProperty<Message>(
-    _entities[34].properties[9],
+    _entities[29].properties[9],
   );
 
   /// See [Message.mediaDuration].
   static final mediaDuration = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[10],
+    _entities[29].properties[10],
   );
 
   /// See [Message.sentTimestamp].
   static final sentTimestamp = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[11],
+    _entities[29].properties[11],
   );
 
   /// See [Message.receivedTimestamp].
   static final receivedTimestamp = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[12],
+    _entities[29].properties[12],
   );
 
   /// See [Message.readTimestamp].
   static final readTimestamp = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[13],
+    _entities[29].properties[13],
   );
 
   /// See [Message.statusValue].
   static final statusValue = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[14],
+    _entities[29].properties[14],
   );
 
   /// See [Message.replyToMessageId].
   static final replyToMessageId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[15],
+    _entities[29].properties[15],
   );
 
   /// See [Message.replyToContent].
   static final replyToContent = obx.QueryStringProperty<Message>(
-    _entities[34].properties[16],
+    _entities[29].properties[16],
   );
 
   /// See [Message.replyToFromNodeId].
   static final replyToFromNodeId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[17],
+    _entities[29].properties[17],
   );
 
   /// See [Message.isFavorite].
   static final isFavorite = obx.QueryBooleanProperty<Message>(
-    _entities[34].properties[18],
+    _entities[29].properties[18],
   );
 
   /// See [Message.isDeleted].
   static final isDeleted = obx.QueryBooleanProperty<Message>(
-    _entities[34].properties[19],
+    _entities[29].properties[19],
   );
 
   /// See [Message.encryptionKeyId].
   static final encryptionKeyId = obx.QueryStringProperty<Message>(
-    _entities[34].properties[20],
+    _entities[29].properties[20],
   );
 
   /// See [Message.contentHash].
   static final contentHash = obx.QueryStringProperty<Message>(
-    _entities[34].properties[21],
+    _entities[29].properties[21],
   );
 
   /// See [Message.sendAttempts].
   static final sendAttempts = obx.QueryIntegerProperty<Message>(
-    _entities[34].properties[22],
+    _entities[29].properties[22],
   );
 
   /// See [Message.lastErrorMessage].
   static final lastErrorMessage = obx.QueryStringProperty<Message>(
-    _entities[34].properties[23],
+    _entities[29].properties[23],
   );
 }
 
@@ -8832,32 +8020,32 @@ class Message_ {
 class MessageReceipt_ {
   /// See [MessageReceipt.id].
   static final id = obx.QueryIntegerProperty<MessageReceipt>(
-    _entities[35].properties[0],
+    _entities[30].properties[0],
   );
 
   /// See [MessageReceipt.messageId].
   static final messageId = obx.QueryStringProperty<MessageReceipt>(
-    _entities[35].properties[1],
+    _entities[30].properties[1],
   );
 
   /// See [MessageReceipt.recipientNodeId].
   static final recipientNodeId = obx.QueryStringProperty<MessageReceipt>(
-    _entities[35].properties[2],
+    _entities[30].properties[2],
   );
 
   /// See [MessageReceipt.statusValue].
   static final statusValue = obx.QueryIntegerProperty<MessageReceipt>(
-    _entities[35].properties[3],
+    _entities[30].properties[3],
   );
 
   /// See [MessageReceipt.confirmedTimestamp].
   static final confirmedTimestamp = obx.QueryIntegerProperty<MessageReceipt>(
-    _entities[35].properties[4],
+    _entities[30].properties[4],
   );
 
   /// See [MessageReceipt.messageHash].
   static final messageHash = obx.QueryStringProperty<MessageReceipt>(
-    _entities[35].properties[5],
+    _entities[30].properties[5],
   );
 }
 
@@ -8865,32 +8053,32 @@ class MessageReceipt_ {
 class MessageSearchIndex_ {
   /// See [MessageSearchIndex.id].
   static final id = obx.QueryIntegerProperty<MessageSearchIndex>(
-    _entities[36].properties[0],
+    _entities[31].properties[0],
   );
 
   /// See [MessageSearchIndex.messageId].
   static final messageId = obx.QueryStringProperty<MessageSearchIndex>(
-    _entities[36].properties[1],
+    _entities[31].properties[1],
   );
 
   /// See [MessageSearchIndex.conversationId].
   static final conversationId = obx.QueryStringProperty<MessageSearchIndex>(
-    _entities[36].properties[2],
+    _entities[31].properties[2],
   );
 
   /// See [MessageSearchIndex.searchContent].
   static final searchContent = obx.QueryStringProperty<MessageSearchIndex>(
-    _entities[36].properties[3],
+    _entities[31].properties[3],
   );
 
   /// See [MessageSearchIndex.messageTimestamp].
   static final messageTimestamp = obx.QueryIntegerProperty<MessageSearchIndex>(
-    _entities[36].properties[4],
+    _entities[31].properties[4],
   );
 
   /// See [MessageSearchIndex.typeValue].
   static final typeValue = obx.QueryIntegerProperty<MessageSearchIndex>(
-    _entities[36].properties[5],
+    _entities[31].properties[5],
   );
 }
 
@@ -8898,51 +8086,51 @@ class MessageSearchIndex_ {
 class MessageSyncQueue_ {
   /// See [MessageSyncQueue.id].
   static final id = obx.QueryIntegerProperty<MessageSyncQueue>(
-    _entities[37].properties[0],
+    _entities[32].properties[0],
   );
 
   /// See [MessageSyncQueue.messageId].
   static final messageId = obx.QueryStringProperty<MessageSyncQueue>(
-    _entities[37].properties[1],
+    _entities[32].properties[1],
   );
 
   /// See [MessageSyncQueue.operation].
   static final operation = obx.QueryStringProperty<MessageSyncQueue>(
-    _entities[37].properties[2],
+    _entities[32].properties[2],
   );
 
   /// See [MessageSyncQueue.targetNodeIds].
   static final targetNodeIds = obx.QueryStringProperty<MessageSyncQueue>(
-    _entities[37].properties[3],
+    _entities[32].properties[3],
   );
 
   /// See [MessageSyncQueue.attemptCount].
   static final attemptCount = obx.QueryIntegerProperty<MessageSyncQueue>(
-    _entities[37].properties[4],
+    _entities[32].properties[4],
   );
 
   /// See [MessageSyncQueue.createdTimestamp].
   static final createdTimestamp = obx.QueryIntegerProperty<MessageSyncQueue>(
-    _entities[37].properties[5],
+    _entities[32].properties[5],
   );
 
   /// See [MessageSyncQueue.nextRetryTimestamp].
   static final nextRetryTimestamp = obx.QueryIntegerProperty<MessageSyncQueue>(
-    _entities[37].properties[6],
+    _entities[32].properties[6],
   );
 
   /// See [MessageSyncQueue.status].
   static final status = obx.QueryStringProperty<MessageSyncQueue>(
-    _entities[37].properties[7],
+    _entities[32].properties[7],
   );
 
   /// See [MessageSyncQueue.errorMessage].
   static final errorMessage = obx.QueryStringProperty<MessageSyncQueue>(
-    _entities[37].properties[8],
+    _entities[32].properties[8],
   );
 
   /// See [MessageSyncQueue.priority].
   static final priority = obx.QueryIntegerProperty<MessageSyncQueue>(
-    _entities[37].properties[9],
+    _entities[32].properties[9],
   );
 }

@@ -14,13 +14,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
-import 'Hopital/p2p/connection_manager_fixed.dart';
+import 'Hopital/p2p/connection_manager.dart';
+import 'Hopital/p2p/delta_generator_real.dart';
 import 'Hopital/p2p/messenger/NodesManager.dart';
 import 'Hopital/p2p/messenger/messaging_integration.dart';
 import 'Hopital/p2p/messenger/messaging_manager.dart';
-import 'Hopital/p2p/objectbox_sync_observer.dart';
-import 'Hopital/p2p/p2p_integration_fixed.dart';
-import 'Hopital/p2p/p2p_manager_fixed.dart';
+import 'Hopital/p2p/p2p_integration.dart';
+import 'Hopital/p2p/p2p_manager.dart';
 import 'firebase_options.dart';
 import 'objectBox/MyApp.dart';
 import 'objectBox/classeObjectBox.dart';
@@ -101,17 +101,11 @@ Future<void> main() async {
   objectBox = ObjectBox();
   await objectBox.init(); // ⚠️ ATTENDRE LA FINALISATION
   print('[Main] ✅ ObjectBox initialisé');
+  // 2️⃣ Initialiser P2P
+  await _initializeP2P();
   //////////////////////////////////////////////////////////////////////////////
   // 1. Vérifier les permissions réseau
   await _setupNetworkPermissions();
-
-  // 2. Initialiser P2P
-  await _initializeP2P();
-  // 2. ✅ DÉMARRER L'OBSERVER
-  final observer = ObjectBoxSyncObserver();
-  await observer.start();
-
-  print('✅ Observer démarré - Sync automatique active !');
 
   // ========================================================================
   // INITIALISATION MESSAGING P2P
@@ -210,25 +204,23 @@ Future<void> _setupNetworkPermissions() async {
 Future<void> _initializeP2P() async {
   try {
     print('[Main] =========== Initialisation P2P ===========');
-    p2pIntegration = P2PIntegration(); // ✅ Affecter à la variable globale
-    // Initialiser P2P avec timeout global
-    await p2pIntegration.initializeP2PSystem().timeout(
-      const Duration(seconds: 30),
-      onTimeout: () {
-        throw TimeoutException('Initialisation P2P timeout après 30 secondes');
-      },
-    );
-    // Récupérer les gestionnaires après initialisation P2P
-    p2pManager = P2PManager(); // ✅ Factory returns singleton
-    connectionManager = p2pIntegration.connectionManager; // ✅ Via getter
-    print('[Main] ✅ P2P System initialisé avec succès');
-    final stats = p2pIntegration.getNetworkStats();
-    print('[Main] Node ID: ${stats['nodeId']}');
-    print('[Main] Port serveur: ${stats['serverPort']}');
-    print('[Main] ========================================');
+    p2pIntegration = P2PIntegration();
+
+    await p2pIntegration.initializeP2PSystem();
+
+    // ✅ CRITIQUE : Configurer le callback APRÈS l'initialisation
+    print('[Main] 🔧 Configuration du callback de broadcast...');
+    final deltaGenerator = DeltaGenerator();
+    deltaGenerator
+        .setBroadcastCallback((delta) => p2pIntegration.broadcastDelta(delta));
+    print('[Main] ✅ Callback configuré');
+
+    p2pManager = P2PManager();
+    connectionManager = p2pIntegration.connectionManager;
+
+    print('[Main] ✅ P2P System initialisé');
   } catch (e) {
     print('[Main] ❌ Erreur initialisation P2P: $e');
-    print('[Main] Mode dégradé activé - fonctionnalité réduite');
   }
 }
 

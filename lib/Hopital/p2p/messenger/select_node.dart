@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../main.dart';
 import '../../../objectBox/Entity.dart';
 import '../../widgets.dart';
-import '../connection_manager_fixed.dart';
+import '../connection_manager.dart';
 import 'NodesManager.dart';
 import 'fonctions.dart';
 import 'messaging_manager.dart';

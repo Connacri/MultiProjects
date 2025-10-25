@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../objectBox/Entity.dart';
 import '../../../objectBox/classeObjectBox.dart';
-import '../connection_manager_fixed.dart';
-import '../p2p_integration_fixed.dart';
+import '../connection_manager.dart';
+import '../p2p_integration.dart';
 import 'messaging_manager.dart';
 
 /// ✅ Version ULTRA-SIMPLIFIÉE : événementiel pur avec filtrage des métadonnées

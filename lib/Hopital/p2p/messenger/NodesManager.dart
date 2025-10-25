@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../connection_manager_fixed.dart';
-import '../p2p_manager_fixed.dart';
+import '../connection_manager.dart';
+import '../p2p_manager.dart';
 import 'node_metadata_manager.dart';
 
 enum NodeStatus { online, offline, idle }

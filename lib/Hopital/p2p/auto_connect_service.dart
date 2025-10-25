@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'connection_manager_fixed.dart';
+import 'connection_manager.dart';
+import 'p2p_manager.dart';
 import 'udp_broadcast_discovery.dart';
-import 'p2p_manager_fixed.dart'; // ✅ AJOUT pour accéder au nodeId local
 
 /// Service d'auto-connexion aux nœuds découverts avec stratégies multiples
+/// ✅ CORRECTION : Évite les connexions multiples
 class AutoConnectService with ChangeNotifier {
   static final AutoConnectService _instance = AutoConnectService._internal();
 
@@ -15,9 +16,9 @@ class AutoConnectService with ChangeNotifier {
   AutoConnectService._internal();
 
   final DiscoveryManagerBroadcast _discoveryManager =
-  DiscoveryManagerBroadcast();
+      DiscoveryManagerBroadcast();
   final ConnectionManager _connectionManager = ConnectionManager();
-  final P2PManager _p2pManager = P2PManager(); // ✅ AJOUT
+  final P2PManager _p2pManager = P2PManager();
 
   Timer? _autoConnectTimer;
   bool _isRunning = false;
@@ -41,6 +42,9 @@ class AutoConnectService with ChangeNotifier {
   // Tracking des tentatives par nœud
   final Map<String, int> _nodeRetries = {};
 
+  // ✅ AJOUT : Set pour tracker les connexions en cours
+  final Set<String> _connectingNodes = {};
+
   /// Démarre le service d'auto-connexion
   void start() {
     if (_isRunning) {
@@ -58,8 +62,8 @@ class AutoConnectService with ChangeNotifier {
     _autoConnectTimer?.cancel();
     _autoConnectTimer =
         Timer.periodic(Duration(seconds: autoConnectInterval), (_) {
-          _tryConnectToDiscoveredNodes();
-        });
+      _tryConnectToDiscoveredNodes();
+    });
 
     notifyListeners();
   }
@@ -77,7 +81,7 @@ class AutoConnectService with ChangeNotifier {
     try {
       final nodes = _discoveryManager.getDiscoveredNodesInfo();
       final currentConnections = _connectionManager.neighbors;
-      final localNodeId = _p2pManager.nodeId; // ✅ AJOUT : récupérer notre ID
+      final localNodeId = _p2pManager.nodeId;
 
       if (nodes.isEmpty) {
         print(
@@ -92,16 +96,21 @@ class AutoConnectService with ChangeNotifier {
         final ip = node['ip'] as String;
         final port = node['port'] as int;
 
-        // ✅ CORRECTION : Skip si c'est nous-mêmes
+        // Skip si c'est nous-mêmes
         if (nodeId == localNodeId) {
-          print('[AutoConnectService] 🚫 Skip self-connection: $nodeId');
           continue;
         }
 
         // Skip si déjà connecté
         if (currentConnections.contains(nodeId)) {
-          print('[AutoConnectService] $nodeId déjà connecté');
           _nodeRetries.remove(nodeId); // Reset retries
+          _connectingNodes.remove(nodeId); // ✅ Nettoyer le tracking
+          continue;
+        }
+
+        // ✅ CORRECTION : Skip si connexion en cours
+        if (_connectingNodes.contains(nodeId)) {
+          print('[AutoConnectService] ⏳ Connexion déjà en cours pour $nodeId');
           continue;
         }
 
@@ -113,12 +122,22 @@ class AutoConnectService with ChangeNotifier {
           continue;
         }
 
+        // ✅ IMPORTANT : Comparer les NodeIDs pour éviter les connexions bidirectionnelles
+        // Seul le nœud avec le nodeId "plus petit" initie la connexion
+        if (localNodeId.compareTo(nodeId) > 0) {
+          print(
+              '[AutoConnectService] ⏭️ Skip $nodeId - il doit nous contacter (comparaison nodeId)');
+          continue;
+        }
+
+        // Marquer comme en cours de connexion
+        _connectingNodes.add(nodeId);
+
         // Essayer la connexion
         _totalConnectionAttempts++;
         try {
           print(
-              '[AutoConnectService] Tentative connexion #${retries +
-                  1}: $nodeId ($ip:$port)');
+              '[AutoConnectService] Tentative connexion #${retries + 1}: $nodeId ($ip:$port)');
 
           final success = await _connectionManager.connectToNode(
             nodeId,
@@ -129,7 +148,7 @@ class AutoConnectService with ChangeNotifier {
           if (success) {
             print('[AutoConnectService] ✅ Connexion réussie: $nodeId');
             _totalSuccessfulConnections++;
-            _nodeRetries.remove(nodeId); // Reset retries on success
+            _nodeRetries.remove(nodeId);
           } else {
             print('[AutoConnectService] ⚠️ Connexion échouée: $nodeId');
             _totalFailedConnections++;
@@ -139,6 +158,9 @@ class AutoConnectService with ChangeNotifier {
           print('[AutoConnectService] ❌ Erreur connexion $nodeId: $e');
           _totalFailedConnections++;
           _nodeRetries[nodeId] = retries + 1;
+        } finally {
+          // ✅ IMPORTANT : Toujours nettoyer après la tentative
+          _connectingNodes.remove(nodeId);
         }
       }
 
@@ -154,6 +176,7 @@ class AutoConnectService with ChangeNotifier {
       'isRunning': _isRunning,
       'discoveredCount': _discoveryManager.discoveredNodes.length,
       'connectedCount': _connectionManager.neighbors.length,
+      'connectingCount': _connectingNodes.length, // ✅ AJOUT
       'totalAttempts': _totalConnectionAttempts,
       'successfulConnections': _totalSuccessfulConnections,
       'failedConnections': _totalFailedConnections,
@@ -164,6 +187,7 @@ class AutoConnectService with ChangeNotifier {
   /// Réinitialise les retries pour un nœud
   void resetRetries(String nodeId) {
     _nodeRetries.remove(nodeId);
+    _connectingNodes.remove(nodeId); // ✅ AJOUT
     print('[AutoConnectService] Retries réinitialisés pour $nodeId');
     notifyListeners();
   }
@@ -171,6 +195,7 @@ class AutoConnectService with ChangeNotifier {
   /// Réinitialise tous les retries
   void resetAllRetries() {
     _nodeRetries.clear();
+    _connectingNodes.clear(); // ✅ AJOUT
     print('[AutoConnectService] Tous les retries réinitialisés');
     notifyListeners();
   }

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../connection_manager_fixed.dart';
+import '../connection_manager.dart';
 import 'fonctions.dart';
 
 /// 🔍 Version DIAGNOSTIQUE du NodeMetadataManager

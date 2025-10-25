@@ -1049,4 +1049,49 @@ class ObjectBox {
     // Utilise "Annonces"
     return annonces.getAll();
   }
+
+// /// Nettoyer toutes les données (ATTENTION: irréversible!)
+// void clearAll() {
+//   staffBox.removeAll();
+//   activiteBox.removeAll();
+//   branchBox.removeAll();
+//   timeOffBox.removeAll();
+//   planificationBox.removeAll();
+//   planningHebdoBox.removeAll();
+//   typeActiviteBox.removeAll();
+//   messageBox.removeAll();
+//   conversationBox.removeAll();
+//   messageReceiptBox.removeAll();
+//   conversationParticipantBox.removeAll();
+//   messageSyncQueueBox.removeAll();
+//   messageSearchIndexBox.removeAll();
+//   staffCredentialsBox.removeAll();
+//   staffSessionBox.removeAll();
+//   authAuditLogBox.removeAll();
+// }
+//
+// /// Nettoyer uniquement les données d'authentification
+// void clearAuthData() {
+//   staffCredentialsBox.removeAll();
+//   staffSessionBox.removeAll();
+//   authAuditLogBox.removeAll();
+// }
+//
+// /// Statistiques de la base de données
+// Map<String, int> getStats() {
+//   return {
+//     'staff': staffBox.count(),
+//     'activites': activiteBox.count(),
+//     'branches': branchBox.count(),
+//     'timeOffs': timeOffBox.count(),
+//     'planifications': planificationBox.count(),
+//     'planningsHebdo': planningHebdoBox.count(),
+//     'typeActivites': typeActiviteBox.count(),
+//     'messages': messageBox.count(),
+//     'conversations': conversationBox.count(),
+//     'credentials': staffCredentialsBox.count(),
+//     'sessions': staffSessionBox.count(),
+//     'authLogs': authAuditLogBox.count(),
+//   };
+// }
 }

@@ -4,7 +4,7 @@ import '../../objectbox.g.dart';
 import 'objectbox_sync_observer.dart';
 
 /// Gestionnaire ObjectBox pour P2P - Singleton
-/// ✅ CORRECTION: Utilise l'observer pour éviter les boucles
+/// ✅ CORRECTION MAJEURE: Gestion correcte des IDs dans les deltas
 class ObjectBoxP2P {
   static ObjectBoxP2P? _instance;
   late final ObjectBox _objectBox;
@@ -43,13 +43,17 @@ class ObjectBoxP2P {
         return;
       }
 
-      print('[ObjectBoxP2P] 🔥 Application delta: $operation sur $entityType');
+      print('[ObjectBoxP2P] 📥 Application delta: $operation sur $entityType');
       print('[ObjectBoxP2P] 📍 Origine: $originId');
+      print('[ObjectBoxP2P] 📊 Données reçues: $data');
 
       // ✅ CRITIQUE: Désactiver l'observer pendant l'application
       _syncObserver.setApplyingRemoteDelta(true);
 
       try {
+        // ✅ NOUVEAU : Marquer le delta AVANT l'application
+        _syncObserver.markDeltaAsApplied(entityType, data);
+
         switch (entityType) {
           case 'Staff':
             _applyStaffDelta(operation, data);
@@ -76,24 +80,31 @@ class ObjectBoxP2P {
             print('[ObjectBoxP2P] ⚠️ Type d\'entité inconnu: $entityType');
         }
       } finally {
-        // ✅ CRITIQUE: Réactiver l'observer après un délai
-        Future.delayed(Duration(seconds: 1), () {
+        // ✅ CRITIQUE: Réactiver l'observer après un délai plus long
+        Future.delayed(Duration(seconds: 3), () {
           _syncObserver.setApplyingRemoteDelta(false);
+          print('[ObjectBoxP2P] 🔓 Observer réactivé après traitement delta');
         });
       }
     } catch (e) {
       print('[ObjectBoxP2P] ❌ Erreur application delta: $e');
+      print('[ObjectBoxP2P] Stack: ${StackTrace.current}');
       _syncObserver.setApplyingRemoteDelta(false);
     }
   }
 
+  // ✅ CORRECTION MAJEURE: Accepter 'id' OU 'staffId'
   void _applyStaffDelta(String operation, Map<String, dynamic> data) {
     try {
-      final staffId = data['staffId'] as int?;
+      // ✅ CORRECTION: Chercher 'id' en priorité, puis 'staffId'
+      final staffId = (data['id'] ?? data['staffId']) as int?;
+
       if (staffId == null) {
-        print('[ObjectBoxP2P] ⚠️ staffId manquant');
+        print('[ObjectBoxP2P] ❌ ID manquant dans les données: $data');
         return;
       }
+
+      print('[ObjectBoxP2P] 🔍 Traitement Staff ID: $staffId');
 
       switch (operation) {
         case 'create':
@@ -101,7 +112,9 @@ class ObjectBoxP2P {
           final existingStaff = _objectBox.staffBox.get(staffId);
 
           if (existingStaff != null) {
-            print('[ObjectBoxP2P] 🔄 Mise à jour Staff ID: $staffId');
+            // ✅ MISE À JOUR
+            print('[ObjectBoxP2P] 🔄 Mise à jour Staff existant ID: $staffId');
+
             existingStaff.nom = data['nom'] ?? existingStaff.nom;
             existingStaff.grade = data['grade'] ?? existingStaff.grade;
             existingStaff.groupe = data['groupe'] ?? existingStaff.groupe;
@@ -109,14 +122,20 @@ class ObjectBoxP2P {
             existingStaff.obs = data['obs'];
             existingStaff.ordre = data['ordre'];
 
-            if (data['branchId'] != null) {
-              existingStaff.branch.targetId = data['branchId'] as int;
+            // ✅ Gérer la relation Branch
+            final branchId = data['branchId'];
+            if (branchId != null) {
+              _ensureBranchExists(branchId);
+              existingStaff.branch.targetId = branchId;
             }
 
             _objectBox.staffBox.put(existingStaff);
-            print('[ObjectBoxP2P] ✅ Staff mis à jour: ${existingStaff.nom}');
-          } else if (operation == 'create') {
-            print('[ObjectBoxP2P] ➕ Création Staff ID: $staffId');
+            print(
+                '[ObjectBoxP2P] ✅ Staff mis à jour: ${existingStaff.nom} (ID: $staffId)');
+          } else {
+            // ✅ CRÉATION
+            print('[ObjectBoxP2P] ➕ Création nouveau Staff ID: $staffId');
+
             final newStaff = Staff(
               id: staffId,
               nom: data['nom'] ?? '',
@@ -124,31 +143,65 @@ class ObjectBoxP2P {
               groupe: data['groupe'] ?? '',
               equipe: data['equipe'],
               obs: data['obs'],
+              ordre: data['ordre'],
             );
-            newStaff.ordre = data['ordre'];
 
-            if (data['branchId'] != null) {
-              newStaff.branch.targetId = data['branchId'] as int;
+            final branchId = data['branchId'];
+            if (branchId != null) {
+              _ensureBranchExists(branchId);
+              newStaff.branch.targetId = branchId;
             }
 
             _objectBox.staffBox.put(newStaff, mode: PutMode.insert);
-            print('[ObjectBoxP2P] ✅ Staff créé: ${newStaff.nom}');
+            print(
+                '[ObjectBoxP2P] ✅ Nouveau Staff créé: ${newStaff.nom} (ID: $staffId)');
           }
+
+          // ✅ VÉRIFICATION
+          final verification = _objectBox.staffBox.get(staffId);
+          if (verification != null) {
+            print(
+                '[ObjectBoxP2P] ✅ VÉRIFICATION: Staff $staffId existe - ${verification.nom}');
+            print(
+                '[ObjectBoxP2P] 📍 BranchId: ${verification.branch.targetId}');
+          } else {
+            print(
+                '[ObjectBoxP2P] ❌ ERREUR: Staff $staffId introuvable après insertion!');
+          }
+
+          final totalStaff = _objectBox.staffBox.count();
+          print('[ObjectBoxP2P] 📊 TOTAL Staff dans DB: $totalStaff');
           break;
 
         case 'delete':
           print('[ObjectBoxP2P] 🗑️ Suppression Staff ID: $staffId');
           _objectBox.staffBox.remove(staffId);
+          print('[ObjectBoxP2P] ✅ Staff supprimé');
           break;
       }
     } catch (e) {
-      print('[ObjectBoxP2P] ❌ Erreur delta Staff: $e');
+      print('[ObjectBoxP2P] ❌ ERREUR CRITIQUE Staff: $e');
+      print('[ObjectBoxP2P] Stack: ${StackTrace.current}');
+    }
+  }
+
+  // ✅ HELPER: S'assurer que la branche existe
+  void _ensureBranchExists(int branchId) {
+    final branch = _objectBox.branchBox.get(branchId);
+    if (branch == null) {
+      print('[ObjectBoxP2P] ⚠️ Branch $branchId n\'existe pas, création...');
+      final newBranch = Branch(
+        id: branchId,
+        branchNom: 'Branche $branchId',
+      );
+      _objectBox.branchBox.put(newBranch, mode: PutMode.insert);
+      print('[ObjectBoxP2P] ✅ Branch $branchId créée');
     }
   }
 
   void _applyActiviteJourDelta(String operation, Map<String, dynamic> data) {
     try {
-      final activiteId = data['activiteId'] as int?;
+      final activiteId = (data['id'] ?? data['activiteId']) as int?;
       if (activiteId == null) return;
 
       switch (operation) {
@@ -163,6 +216,7 @@ class ObjectBoxP2P {
               existingActivite.staff.targetId = data['staffId'] as int;
             }
             _objectBox.activiteBox.put(existingActivite);
+            print('[ObjectBoxP2P] ✅ ActiviteJour mise à jour: $activiteId');
           } else if (operation == 'create') {
             final newActivite = ActiviteJour(
               id: activiteId,
@@ -173,11 +227,13 @@ class ObjectBoxP2P {
               newActivite.staff.targetId = data['staffId'] as int;
             }
             _objectBox.activiteBox.put(newActivite, mode: PutMode.insert);
+            print('[ObjectBoxP2P] ✅ ActiviteJour créée: $activiteId');
           }
           break;
 
         case 'delete':
           _objectBox.activiteBox.remove(activiteId);
+          print('[ObjectBoxP2P] ✅ ActiviteJour supprimée: $activiteId');
           break;
       }
     } catch (e) {
@@ -187,7 +243,7 @@ class ObjectBoxP2P {
 
   void _applyBranchDelta(String operation, Map<String, dynamic> data) {
     try {
-      final branchId = data['branchId'] as int?;
+      final branchId = (data['id'] ?? data['branchId']) as int?;
       if (branchId == null) return;
 
       switch (operation) {
@@ -199,17 +255,20 @@ class ObjectBoxP2P {
             existingBranch.branchNom =
                 data['branchNom'] ?? existingBranch.branchNom;
             _objectBox.branchBox.put(existingBranch);
+            print('[ObjectBoxP2P] ✅ Branch mise à jour: $branchId');
           } else if (operation == 'create') {
             final newBranch = Branch(
               id: branchId,
               branchNom: data['branchNom'] ?? '',
             );
             _objectBox.branchBox.put(newBranch, mode: PutMode.insert);
+            print('[ObjectBoxP2P] ✅ Branch créée: $branchId');
           }
           break;
 
         case 'delete':
           _objectBox.branchBox.remove(branchId);
+          print('[ObjectBoxP2P] ✅ Branch supprimée: $branchId');
           break;
       }
     } catch (e) {
@@ -219,7 +278,7 @@ class ObjectBoxP2P {
 
   void _applyTimeOffDelta(String operation, Map<String, dynamic> data) {
     try {
-      final timeOffId = data['timeOffId'] as int?;
+      final timeOffId = (data['id'] ?? data['timeOffId']) as int?;
       if (timeOffId == null) return;
 
       switch (operation) {
@@ -239,6 +298,7 @@ class ObjectBoxP2P {
               existing.staff.targetId = data['staffId'];
             }
             _objectBox.timeOffBox.put(existing);
+            print('[ObjectBoxP2P] ✅ TimeOff mis à jour: $timeOffId');
           } else if (operation == 'create') {
             final newTimeOff = TimeOff(
               id: timeOffId,
@@ -250,10 +310,12 @@ class ObjectBoxP2P {
               newTimeOff.staff.targetId = data['staffId'];
             }
             _objectBox.timeOffBox.put(newTimeOff, mode: PutMode.insert);
+            print('[ObjectBoxP2P] ✅ TimeOff créé: $timeOffId');
           }
           break;
         case 'delete':
           _objectBox.timeOffBox.remove(timeOffId);
+          print('[ObjectBoxP2P] ✅ TimeOff supprimé: $timeOffId');
           break;
       }
     } catch (e) {
@@ -263,7 +325,7 @@ class ObjectBoxP2P {
 
   void _applyPlanificationDelta(String operation, Map<String, dynamic> data) {
     try {
-      final planifId = data['planifId'] as int?;
+      final planifId = (data['id'] ?? data['planifId']) as int?;
       if (planifId == null) return;
 
       switch (operation) {
@@ -280,6 +342,7 @@ class ObjectBoxP2P {
               existing.branch.targetId = data['branchId'];
             }
             _objectBox.planificationBox.put(existing);
+            print('[ObjectBoxP2P] ✅ Planification mise à jour: $planifId');
           } else if (operation == 'create') {
             final newPlanif = Planification(
               id: planifId,
@@ -292,10 +355,12 @@ class ObjectBoxP2P {
               newPlanif.branch.targetId = data['branchId'];
             }
             _objectBox.planificationBox.put(newPlanif, mode: PutMode.insert);
+            print('[ObjectBoxP2P] ✅ Planification créée: $planifId');
           }
           break;
         case 'delete':
           _objectBox.planificationBox.remove(planifId);
+          print('[ObjectBoxP2P] ✅ Planification supprimée: $planifId');
           break;
       }
     } catch (e) {
@@ -305,7 +370,7 @@ class ObjectBoxP2P {
 
   void _applyPlanningHebdoDelta(String operation, Map<String, dynamic> data) {
     try {
-      final planningId = data['planningId'] as int?;
+      final planningId = (data['id'] ?? data['planningId']) as int?;
       if (planningId == null) return;
 
       switch (operation) {
@@ -332,6 +397,7 @@ class ObjectBoxP2P {
               existing.staff.targetId = data['staffId'];
             }
             _objectBox.planningHebdoBox.put(existing);
+            print('[ObjectBoxP2P] ✅ PlanningHebdo mis à jour: $planningId');
           } else if (operation == 'create') {
             final newPlanning = PlanningHebdo(
               id: planningId,
@@ -353,10 +419,12 @@ class ObjectBoxP2P {
               newPlanning.staff.targetId = data['staffId'];
             }
             _objectBox.planningHebdoBox.put(newPlanning, mode: PutMode.insert);
+            print('[ObjectBoxP2P] ✅ PlanningHebdo créé: $planningId');
           }
           break;
         case 'delete':
           _objectBox.planningHebdoBox.remove(planningId);
+          print('[ObjectBoxP2P] ✅ PlanningHebdo supprimé: $planningId');
           break;
       }
     } catch (e) {
@@ -366,7 +434,7 @@ class ObjectBoxP2P {
 
   void _applyTypeActiviteDelta(String operation, Map<String, dynamic> data) {
     try {
-      final typeId = data['typeId'] as int?;
+      final typeId = (data['id'] ?? data['typeId']) as int?;
       if (typeId == null) return;
 
       switch (operation) {
@@ -379,6 +447,7 @@ class ObjectBoxP2P {
             existing.description = data['description'];
             existing.couleurHex = data['couleurHex'];
             _objectBox.typeActiviteBox.put(existing);
+            print('[ObjectBoxP2P] ✅ TypeActivite mis à jour: $typeId');
           } else if (operation == 'create') {
             final newType = TypeActivite(
               id: typeId,
@@ -388,10 +457,12 @@ class ObjectBoxP2P {
               couleurHex: data['couleurHex'],
             );
             _objectBox.typeActiviteBox.put(newType, mode: PutMode.insert);
+            print('[ObjectBoxP2P] ✅ TypeActivite créé: $typeId');
           }
           break;
         case 'delete':
           _objectBox.typeActiviteBox.remove(typeId);
+          print('[ObjectBoxP2P] ✅ TypeActivite supprimé: $typeId');
           break;
       }
     } catch (e) {

@@ -19,13 +19,11 @@ import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
 import 'license/LicenseInfoPage.dart';
-import 'p2p/connection_manager_fixed.dart';
-import 'p2p/discovery_manager_broadcast_clean.dart';
+import 'p2p/debug_p2p_data.dart';
 import 'p2p/messenger/messaging_manager.dart';
 import 'p2p/messenger/select_node.dart';
-import 'p2p/p2p_manager_fixed.dart';
+import 'p2p/objectbox_sync_observer.dart';
 import 'p2p/p2p_status_widgets.dart';
-import 'p2p/sync_manager_complete.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
 
@@ -699,8 +697,20 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (c) => SimpleP2PTest())),
+                      child: Text('Observ Sync')),
+                  const SizedBox(height: 24),
                   // ✅ Banner de statut en haut
                   P2PStatusBanner(),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                      onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (c) => SyncObserverMonitoringPage())),
+                      child: Text('Observ Sync')),
                   const SizedBox(height: 24),
                   // Dans votre HomeScreen ou page de test
                   // Column(
@@ -7581,6 +7591,73 @@ class _StatBox extends StatelessWidget {
           ),
           Text(label),
         ],
+      ),
+    );
+  }
+}
+
+class SyncObserverMonitoringPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final observer = ObjectBoxSyncObserver();
+
+    return Scaffold(
+      appBar: AppBar(title: Text('Sync Observer Monitoring')),
+      body: StreamBuilder(
+        stream: Stream.periodic(Duration(seconds: 1)),
+        builder: (context, snapshot) {
+          final stats = observer.getStats();
+
+          return ListView(
+            padding: EdgeInsets.all(16),
+            children: [
+              Card(
+                child: ListTile(
+                  title: Text('État'),
+                  trailing: Icon(
+                    stats['isRunning'] ? Icons.check_circle : Icons.cancel,
+                    color: stats['isRunning'] ? Colors.green : Colors.red,
+                  ),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text('Throttles actifs'),
+                  trailing: Text('${stats['activeThrottles']}'),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text('Modifications trackées'),
+                  trailing: Text('${stats['trackedChanges']}'),
+                ),
+              ),
+              Card(
+                child: ListTile(
+                  title: Text('Mode delta distant'),
+                  trailing: Icon(
+                    stats['isApplyingRemote']
+                        ? Icons.cloud_download
+                        : Icons.cloud_off,
+                    color:
+                        stats['isApplyingRemote'] ? Colors.blue : Colors.grey,
+                  ),
+                ),
+              ),
+              Divider(),
+              Text('Détail par entité',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              ...((stats['entities'] as Map<String, int>).entries.map((entry) {
+                return Card(
+                  child: ListTile(
+                    title: Text(entry.key),
+                    trailing: Text('${entry.value} modifications'),
+                  ),
+                );
+              }).toList()),
+            ],
+          );
+        },
       ),
     );
   }

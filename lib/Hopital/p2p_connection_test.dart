@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'p2p/connection_manager_fixed.dart';
-import 'p2p/p2p_integration_fixed.dart';
-import 'p2p/p2p_manager_fixed.dart';
+import 'p2p/connection_manager.dart';
+import 'p2p/p2p_integration.dart';
+import 'p2p/p2p_manager.dart';
 import 'p2p/udp_broadcast_discovery.dart';
 
 /// Widget de test de connexion P2P

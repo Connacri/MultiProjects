@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../objectbox.g.dart';
+import '../objectbox.g.dart'; // Généré par build_runner
 
 @Entity()
 class User {
@@ -1246,28 +1246,19 @@ class Employee {
 }
 
 ///********************* Hopital ******************************
-
 @Entity()
 class Staff {
   int id;
   String nom;
   String grade;
-  String groupe; // ex: "Garde 12H", "08H-16H", "08H-08H"
-  String? equipe; // A, B, C, D
-  String? obs; // observations particulières
-
-  // 🔹 Lien vers la branche (service)
-  int? ordre; // Pour l'ordre personnalisé
+  String groupe;
+  String? equipe;
+  String? obs;
+  int? ordre;
   final branch = ToOne<Branch>();
-
-  // 🔹 Lien vers les congés
   final timeOff = ToMany<TimeOff>();
-
-  // 🔹 Lien vers les activités quotidiennes (jours du mois)
   @Backlink('staff')
   final activites = ToMany<ActiviteJour>();
-
-  // 🆕 Lien vers planning hebdomadaire
   @Backlink('staff')
   final planningsHebdo = ToMany<PlanningHebdo>();
 
@@ -1278,15 +1269,42 @@ class Staff {
     required this.groupe,
     this.equipe,
     this.obs,
+    this.ordre,
   });
+
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nom': nom,
+      'grade': grade,
+      'groupe': groupe,
+      'equipe': equipe,
+      'obs': obs,
+      'ordre': ordre,
+      'branchId': branch.targetId, // ✅ Important: utiliser targetId
+    };
+  }
+
+  // ✅ AJOUTER fromJson() optionnel
+  factory Staff.fromJson(Map<String, dynamic> json) {
+    return Staff(
+      id: json['id'] ?? 0,
+      nom: json['nom'] ?? '',
+      grade: json['grade'] ?? '',
+      groupe: json['groupe'] ?? '',
+      equipe: json['equipe'],
+      obs: json['obs'],
+      ordre: json['ordre'],
+    );
+  }
 }
 
 @Entity()
 class ActiviteJour {
   int id;
-  int jour; // 1 à 31
-  String statut; // G, RE, C, CM, N
-
+  int jour;
+  String statut;
   final staff = ToOne<Staff>();
 
   ActiviteJour({
@@ -1295,19 +1313,35 @@ class ActiviteJour {
     required this.statut,
   });
 
-  /// Factory for creating an empty/default activity
   factory ActiviteJour.empty() {
     return ActiviteJour(jour: 0, statut: '');
+  }
+
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'jour': jour,
+      'statut': statut,
+      'staffId': staff.targetId, // ✅ Utiliser targetId
+    };
   }
 }
 
 @Entity()
 class Branch {
   int id;
-  String
-      branchNom; // ex: "Médecins", "Infirmiers", "Bureau", "Femmes de ménage"
+  String branchNom;
 
   Branch({this.id = 0, required this.branchNom});
+
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'branchNom': branchNom,
+    };
+  }
 }
 
 @Entity()
@@ -1315,8 +1349,7 @@ class TimeOff {
   int id;
   DateTime debut;
   DateTime fin;
-  String? motif; // G, RE, C, CM, N
-
+  String? motif;
   final staff = ToOne<Staff>();
 
   TimeOff({
@@ -1325,23 +1358,27 @@ class TimeOff {
     required this.fin,
     this.motif,
   });
+
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'debut': debut.millisecondsSinceEpoch,
+      'fin': fin.millisecondsSinceEpoch,
+      'motif': motif,
+      'staffId': staff.targetId, // ✅ Utiliser targetId
+    };
+  }
 }
 
 @Entity()
 class Planification {
   int id;
-
-  int mois; // ex: 9
-  int annee; // ex: 2025
-
-  String ordreEquipes; // "A,B,C,D"
-
-  // 🔹 Optionnel : lier à une branche/service
+  int mois;
+  int annee;
+  String ordreEquipes;
   final branch = ToOne<Branch>();
-
-  // 🆕 NOUVEAU : Sauvegarder les activités du mois
-  String?
-      activitesJson; // Format: "staffId:jour:statut,staffId:jour:statut,..."
+  String? activitesJson;
 
   Planification({
     this.id = 0,
@@ -1350,16 +1387,24 @@ class Planification {
     required this.ordreEquipes,
     this.activitesJson,
   });
+
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'mois': mois,
+      'annee': annee,
+      'ordreEquipes': ordreEquipes,
+      'activitesJson': activitesJson,
+      'branchId': branch.targetId, // ✅ Utiliser targetId
+    };
+  }
 }
 
 @Entity()
 class PlanningHebdo {
   int id;
-
-  // Référence au staff concerné
   final staff = ToOne<Staff>();
-
-  // Activités par jour de la semaine (0=Dimanche, 1=Lundi, ..., 6=Samedi)
   String? dimanche;
   String? lundi;
   String? mardi;
@@ -1367,8 +1412,6 @@ class PlanningHebdo {
   String? jeudi;
   String? vendredi;
   String? samedi;
-
-  // Période de validité (optionnel)
   DateTime? dateDebut;
   DateTime? dateFin;
 
@@ -1385,7 +1428,6 @@ class PlanningHebdo {
     this.dateFin,
   });
 
-  /// Obtenir l'activité d'un jour spécifique (0-6)
   String? getActiviteJour(int jourSemaine) {
     switch (jourSemaine) {
       case 0:
@@ -1407,7 +1449,6 @@ class PlanningHebdo {
     }
   }
 
-  /// Définir l'activité d'un jour spécifique
   void setActiviteJour(int jourSemaine, String? activite) {
     switch (jourSemaine) {
       case 0:
@@ -1433,15 +1474,32 @@ class PlanningHebdo {
         break;
     }
   }
+
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'staffId': staff.targetId, // ✅ Utiliser targetId
+      'dimanche': dimanche,
+      'lundi': lundi,
+      'mardi': mardi,
+      'mercredi': mercredi,
+      'jeudi': jeudi,
+      'vendredi': vendredi,
+      'samedi': samedi,
+      'dateDebut': dateDebut?.millisecondsSinceEpoch,
+      'dateFin': dateFin?.millisecondsSinceEpoch,
+    };
+  }
 }
 
 @Entity()
 class TypeActivite {
   int id;
-  String code; // DMO, VG, SERV, etc.
-  String libelle; // "Visite Générale", "Service", etc.
+  String code;
+  String libelle;
   String? description;
-  int? couleurHex; // Pour l'affichage
+  int? couleurHex;
 
   TypeActivite({
     this.id = 0,
@@ -1450,8 +1508,18 @@ class TypeActivite {
     this.description,
     this.couleurHex,
   });
-}
 
+  // ✅ AJOUTER toJson()
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'code': code,
+      'libelle': libelle,
+      'description': description,
+      'couleurHex': couleurHex,
+    };
+  }
+}
 // ============================================================================
 // ENTITIES MESSAGING P2P - À utiliser avec ObjectBox generator
 // ============================================================================

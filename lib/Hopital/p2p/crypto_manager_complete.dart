@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:cryptography/cryptography.dart';
 import 'package:cryptography/helpers.dart' as Nonce;
 
-import 'p2p_manager_fixed.dart';
+import 'p2p_manager.dart';
 
 /// Gestionnaire cryptographique - Singleton
 /// Responsabilité: Chiffrement/déchiffrement des deltas P2P
