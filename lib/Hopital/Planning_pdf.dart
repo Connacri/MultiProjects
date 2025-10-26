@@ -12,8 +12,7 @@ import 'package:provider/provider.dart';
 import 'StaffProvider.dart';
 
 /// Génère les pages 2 et 3 du planning (listes du personnel)
-Future<String?> generatePersonnelListsPDF(
-  BuildContext context, {
+Future<String?> generatePersonnelListsPDF(BuildContext context, {
   required int year,
   required int month,
 }) async {
@@ -23,7 +22,7 @@ Future<String?> generatePersonnelListsPDF(
 
   // 🆕 RÉCUPÉRER LE PROVIDER TypeActivite
   final typeActiviteProvider =
-      Provider.of<TypeActiviteProvider>(context, listen: false);
+  Provider.of<TypeActiviteProvider>(context, listen: false);
   await typeActiviteProvider.fetchTypesActivites();
 
   if (staffs.isEmpty) return null;
@@ -52,13 +51,12 @@ Future<String?> generatePersonnelListsPDF(
         grade.contains('RHUMATOLOGUE');
   }).toList();
 
-  pw.Widget _buildScheduleCell(
-    String text,
-    pw.Font oswald,
-    double fontSize, {
-    pw.Alignment alignment = pw.Alignment.center,
-    bool bold = false,
-  }) {
+  pw.Widget _buildScheduleCell(String text,
+      pw.Font oswald,
+      double fontSize, {
+        pw.Alignment alignment = pw.Alignment.center,
+        bool bold = false,
+      }) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 5),
       alignment: alignment,
@@ -202,29 +200,33 @@ Future<String?> generatePersonnelListsPDF(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-        build: (ctx) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            _buildHeader(logo, bold, baseStyle),
-            pw.SizedBox(height: 50),
-            pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-            pw.SizedBox(height: 20),
-            pw.Center(
-              child: pw.Text(
-                'Planning des Médecins « Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year »',
-                style: bold.copyWith(fontSize: 12),
-              ),
+        build: (ctx) =>
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                _buildHeader(logo, bold, baseStyle),
+                pw.SizedBox(height: 50),
+                pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+                pw.SizedBox(height: 20),
+                pw.Center(
+                  child: pw.Text(
+                    'Planning des Médecins « Mois ${prefix}${monthName
+                        .substring(0, 1).toUpperCase()}${monthName.substring(
+                        1)} $year »',
+                    style: bold.copyWith(fontSize: 12),
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Center(
+                  child: pw.Text(
+                      'DE 8H À 16H', style: bold.copyWith(fontSize: 11)),
+                ),
+                pw.Spacer(),
+                _buildWeeklyScheduleTableImproved(medecins, oswald),
+                pw.Spacer(),
+                _buildFooter(baseStyle),
+              ],
             ),
-            pw.SizedBox(height: 4),
-            pw.Center(
-              child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 11)),
-            ),
-            pw.Spacer(),
-            _buildWeeklyScheduleTableImproved(medecins, oswald),
-            pw.Spacer(),
-            _buildFooter(baseStyle),
-          ],
-        ),
       ),
     );
   }
@@ -234,31 +236,35 @@ Future<String?> generatePersonnelListsPDF(
     pw.Page(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
-          pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-          pw.SizedBox(height: 20),
+      build: (ctx) =>
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
+              pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+              pw.SizedBox(height: 20),
 
-          // SECTION 1 : Personnel Médical
-          pw.Center(
-            child: pw.Text(
-              'La liste du personnel médical du mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
-              style: bold.copyWith(fontSize: 11),
-            ),
-          ),
-          pw.SizedBox(height: 4),
-          pw.Center(
-            child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 10)),
-          ),
-          pw.Spacer(),
-          _buildMedicalStaffTable(medecins, oswald, month, year),
+              // SECTION 1 : Personnel Médical
+              pw.Center(
+                child: pw.Text(
+                  'La liste du personnel médical du mois ${prefix}${monthName
+                      .substring(0, 1).toUpperCase()}${monthName.substring(
+                      1)} $year',
+                  style: bold.copyWith(fontSize: 11),
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.Text(
+                    'DE 8H À 16H', style: bold.copyWith(fontSize: 10)),
+              ),
+              pw.Spacer(),
+              _buildMedicalStaffTable(medecins, oswald, month, year),
 
-          pw.Spacer(),
-          _buildFooter(baseStyle),
-        ],
-      ),
+              pw.Spacer(),
+              _buildFooter(baseStyle),
+            ],
+          ),
     ),
   );
 
@@ -268,26 +274,29 @@ Future<String?> generatePersonnelListsPDF(
     pw.Page(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      build: (ctx) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
-          pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-          pw.SizedBox(height: 20),
+      build: (ctx) =>
+          pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
+              pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+              pw.SizedBox(height: 20),
 
-          // SECTION 2 : Personnel Paramédical
-          pw.Center(
-              child: pw.Text(
-            'Planning du Personnel Paramédical du Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
-            style: bold.copyWith(fontSize: 11),
-          )),
-          pw.Spacer(),
-          _buildParamedicalStaffTable(staffs, oswald, month, year),
+              // SECTION 2 : Personnel Paramédical
+              pw.Center(
+                  child: pw.Text(
+                    'Planning du Personnel Paramédical du Mois ${prefix}${monthName
+                        .substring(0, 1).toUpperCase()}${monthName.substring(
+                        1)} $year',
+                    style: bold.copyWith(fontSize: 11),
+                  )),
+              pw.Spacer(),
+              _buildParamedicalStaffTable(staffs, oswald, month, year),
 
-          pw.Spacer(),
-          _buildFooter(baseStyle),
-        ],
-      ),
+              pw.Spacer(),
+              _buildFooter(baseStyle),
+            ],
+          ),
     ),
   );
 
@@ -308,8 +317,8 @@ Future<String?> generatePersonnelListsPDF(
 
 // ========== WIDGETS COMMUNS ==========
 
-pw.Widget _buildHeader(
-    pw.MemoryImage logo, pw.TextStyle bold, pw.TextStyle baseStyle) {
+pw.Widget _buildHeader(pw.MemoryImage logo, pw.TextStyle bold,
+    pw.TextStyle baseStyle) {
   return pw.Column(mainAxisAlignment: pw.MainAxisAlignment.center, children: [
     pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.center,
@@ -349,7 +358,8 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
       pw.Align(
         alignment: pw.Alignment.centerRight,
         child: pw.Text(
-          'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+          'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(
+              DateTime.now())}',
           style: baseStyle,
         ),
       ),
@@ -370,8 +380,8 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
 
 // ========== TABLEAU PERSONNEL MÉDICAL ==========
 
-pw.Widget _buildMedicalStaffTable(
-    List medecins, pw.Font oswald, int month, int year) {
+pw.Widget _buildMedicalStaffTable(List medecins, pw.Font oswald, int month,
+    int year) {
   final rows = <pw.TableRow>[];
 
   // En-tête
@@ -447,7 +457,7 @@ String _getObservationWithTimeOff(dynamic staff, int month, int year) {
         // - Il se termine dans le mois OU
         // - Il englobe complètement le mois
         final isInMonth = (debut.isBefore(endOfMonth) ||
-                debut.isAtSameMomentAs(endOfMonth)) &&
+            debut.isAtSameMomentAs(endOfMonth)) &&
             (fin.isAfter(startOfMonth) || fin.isAtSameMomentAs(startOfMonth));
 
         if (isInMonth) {
@@ -476,8 +486,8 @@ String _getObservationWithTimeOff(dynamic staff, int month, int year) {
 
 // ========== TABLEAU PERSONNEL PARAMÉDICAL ==========
 
-pw.Widget _buildParamedicalStaffTable(
-    List staffs, pw.Font oswald, int month, int year) {
+pw.Widget _buildParamedicalStaffTable(List staffs, pw.Font oswald, int month,
+    int year) {
   final paramedical = staffs.where((s) {
     final grade = (s.grade ?? '').toString().toUpperCase();
     return !(grade.contains('MÉDECIN') ||
@@ -528,7 +538,9 @@ pw.Widget _buildParamedicalStaffTable(
     if (obsText.isEmpty) return rowHeight;
 
     // Compter le nombre de lignes (nombre de \n + 1)
-    final lineCount = '\n'.allMatches(obsText).length + 1;
+    final lineCount = '\n'
+        .allMatches(obsText)
+        .length + 1;
     // Arrondir pour éviter les décalages de pixels
     return (rowHeight * lineCount.clamp(1, 4)).roundToDouble();
   }
@@ -542,8 +554,8 @@ pw.Widget _buildParamedicalStaffTable(
     return total;
   }
 
-  double getTotalHeightFor08h08h(
-      Map<String, List<dynamic>> groupes, List<String> ordreGroupes) {
+  double getTotalHeightFor08h08h(Map<String, List<dynamic>> groupes,
+      List<String> ordreGroupes) {
     double total = 0;
     for (var equipe in ordreGroupes) {
       if (groupes.containsKey(equipe)) {
@@ -570,10 +582,10 @@ pw.Widget _buildParamedicalStaffTable(
               _buildMergedCell('08h-16h', oswald, 9, 80,
                   getTotalHeightForGroup(groupe08h16h),
                   bold: true, fullBorder: true, isHoraireBoundary: true),
-              _buildMergedCell('08h-08h', oswald, 9, 80,
+              _buildMergedCell('24h', oswald, 9, 80,
                   getTotalHeightFor08h08h(groupesEquipe, ordreGroupes),
                   bold: true, fullBorder: true, isHoraireBoundary: true),
-              _buildMergedCell('08h-12h', oswald, 9, 80,
+              _buildMergedCell('12h', oswald, 9, 80,
                   getTotalHeightForGroup(groupe08h12h),
                   bold: true, fullBorder: true, isHoraireBoundary: true),
             ],
@@ -607,7 +619,10 @@ pw.Widget _buildParamedicalStaffTable(
                 ),
                 // 08h-16h
                 if (groupe08h16h.isNotEmpty) ...[
-                  ...groupe08h16h.asMap().entries.map((entry) {
+                  ...groupe08h16h
+                      .asMap()
+                      .entries
+                      .map((entry) {
                     final index = entry.key;
                     final m = entry.value;
                     final dynamicHeight = getRowHeight(m);
@@ -653,7 +668,7 @@ pw.Widget _buildParamedicalStaffTable(
                     final membres = groupesEquipe[equipe]!;
                     final isFirstGroup = equipe ==
                         ordreGroupes.firstWhere(
-                          (e) => groupesEquipe.containsKey(e),
+                              (e) => groupesEquipe.containsKey(e),
                           orElse: () => '',
                         );
 
@@ -727,7 +742,10 @@ pw.Widget _buildParamedicalStaffTable(
                 ],
                 // 08h-12h
                 if (groupe08h12h.isNotEmpty) ...[
-                  ...groupe08h12h.asMap().entries.map((entry) {
+                  ...groupe08h12h
+                      .asMap()
+                      .entries
+                      .map((entry) {
                     final index = entry.key;
                     final m = entry.value;
                     final dynamicHeight = getRowHeight(m);
@@ -775,29 +793,28 @@ pw.Widget _buildParamedicalStaffTable(
 }
 
 // Helper pour créer une cellule fusionnée
-pw.Widget _buildMergedCell(
-  String text,
-  pw.Font oswald,
-  double fontSize,
-  double? width,
-  double height, {
-  bool bold = false,
-  bool header = false,
-  bool alignLeft = false,
-  bool isGroupHeader = false,
-  bool fullBorder = false,
-  bool isHoraireBoundary = false,
-}) {
+pw.Widget _buildMergedCell(String text,
+    pw.Font oswald,
+    double fontSize,
+    double? width,
+    double height, {
+      bool bold = false,
+      bool header = false,
+      bool alignLeft = false,
+      bool isGroupHeader = false,
+      bool fullBorder = false,
+      bool isHoraireBoundary = false,
+    }) {
   final backgroundColor =
-      isGroupHeader ? PdfColors.black : (header ? PdfColors.white : null);
+  isGroupHeader ? PdfColors.black : (header ? PdfColors.white : null);
 
   final textColor = isGroupHeader ? PdfColors.white : PdfColors.black;
 
   // Trait du haut : visible pour header, fullBorder, groupHeader, et première ligne (isHoraireBoundary)
   final borderColorTop =
-      (header || fullBorder || isGroupHeader || isHoraireBoundary)
-          ? PdfColors.black
-          : PdfColors.white;
+  (header || fullBorder || isGroupHeader || isHoraireBoundary)
+      ? PdfColors.black
+      : PdfColors.white;
 
   // Trait du bas : visible uniquement pour header, fullBorder, et groupHeader
   final borderColorBottom = (header || fullBorder || isGroupHeader)
@@ -839,13 +856,12 @@ pw.Widget _buildMergedCell(
 }
 
 // Helper standard pour cellules normales
-pw.Widget _buildCell(
-  String text,
-  pw.Font oswald,
-  double fontSize, {
-  pw.Alignment alignment = pw.Alignment.center,
-  bool bold = false,
-}) {
+pw.Widget _buildCell(String text,
+    pw.Font oswald,
+    double fontSize, {
+      pw.Alignment alignment = pw.Alignment.center,
+      bool bold = false,
+    }) {
   return pw.Container(
     padding: const pw.EdgeInsets.symmetric(vertical: 5, horizontal: 4),
     alignment: alignment,
@@ -929,8 +945,8 @@ String getMonthPrefix(String monthName) {
   }
 }
 
-String _getActivityLabel(
-    String? code, TypeActiviteProvider typeActiviteProvider) {
+String _getActivityLabel(String? code,
+    TypeActiviteProvider typeActiviteProvider) {
   if (code == null || code.isEmpty) return '';
 
   // Utiliser la méthode du Provider pour trouver le type

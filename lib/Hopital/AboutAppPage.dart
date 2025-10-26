@@ -13,6 +13,7 @@ class _AboutAppPageState extends State<AboutAppPage>
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  final Uri _walletDzUri = Uri.parse('https://walletdz-d12e0.web.app/');
 
   @override
   void initState() {
@@ -124,14 +125,14 @@ class _AboutAppPageState extends State<AboutAppPage>
                             child: Column(
                               children: [
                                 _buildSectionTitle(
-                                  'Medical Staff Planning',
+                                  'Medical Staff Planning\nBlockchain-Powered\nDecentralized Storage & Messaging',
                                   Icons.app_settings_alt_rounded,
                                 ),
                                 SizedBox(height: 20),
                                 _buildInfoRow(
                                   Icons.code,
                                   'Version',
-                                  '1.0.0',
+                                  '1.0.2',
                                 ),
                                 _buildInfoRow(
                                   Icons.calendar_today,
@@ -199,7 +200,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                             child: Column(
                               children: [
                                 _buildSectionTitle(
-                                  'Project DevCode',
+                                  'Project Local @Blockchain-Powered\nDecentralized Storage Database',
                                   Icons.person_rounded,
                                 ),
                                 SizedBox(height: 20),
@@ -245,11 +246,10 @@ class _AboutAppPageState extends State<AboutAppPage>
                                 ),
                                 SizedBox(height: 8),
                                 Text(
-                                  'Full Stack Dev',
+                                  'Full-Stack DevOps',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.cyan.shade300,
-
                                   ),
                                 ),
                               ],
@@ -290,7 +290,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                                       ),
                                       SizedBox(height: 15),
                                       Text(
-                                        'Solutions logicielles innovantes pour le secteur de la santé',
+                                        'Solutions logicielles décentralisées pour une santé connectée et sécurisée',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           color: Colors.white,
@@ -333,9 +333,14 @@ class _AboutAppPageState extends State<AboutAppPage>
                                 SizedBox(height: 12),
                                 _buildContactButton(
                                   Icons.location_on,
-                                  'Bir el Djir, Oran, Algérie',
+                                  'Oran, Algérie',
                                   'https://maps.app.goo.gl/PpmeqfinpKZcErDk8',
                                   Colors.blue,
+                                ),
+                                SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: openWalletDZ,
+                                  child: const Text('Ouvrir WalletDZ'),
                                 ),
                               ],
                             ),
@@ -382,7 +387,7 @@ class _AboutAppPageState extends State<AboutAppPage>
                           ),
                           SizedBox(height: 10),
                           Text(
-                            'Fait avec ❤️ en Algérie',
+                            'Proudly crafted with in Oran 🇩🇿',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Colors.cyan.shade200,
@@ -435,25 +440,29 @@ class _AboutAppPageState extends State<AboutAppPage>
   }
 
   Widget _buildSectionTitle(String title, IconData icon) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: Colors.cyan.shade300,
-          size: 28,
-        ),
-        SizedBox(width: 12),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w500,
-            color: Colors.white,
-            letterSpacing: 1.2,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: Colors.cyan.shade300,
+            size: 28,
           ),
-        ),
-      ],
+          SizedBox(width: 12),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -533,10 +542,12 @@ class _AboutAppPageState extends State<AboutAppPage>
     );
   }
 
-  Widget _buildContactButton(IconData icon,
-      String text,
-      String url,
-      Color color,) {
+  Widget _buildContactButton(
+    IconData icon,
+    String text,
+    String url,
+    Color color,
+  ) {
     return InkWell(
       onTap: () => _launchUrl(url),
       borderRadius: BorderRadius.circular(15),
@@ -603,5 +614,25 @@ class _AboutAppPageState extends State<AboutAppPage>
         ),
       ),
     );
+  }
+
+  Future<void> openWalletDZ() async {
+    // Essaie d’ouvrir avec le comportement par défaut de la plateforme.
+    final ok = await launchUrl(
+      _walletDzUri,
+      mode: LaunchMode.platformDefault,
+      // externe sur desktop/mobile, nouvel onglet sur web
+      webOnlyWindowName: '_blank', // ouvre un nouvel onglet sur Flutter Web
+    );
+    if (!ok) {
+      // Fallback explicite : forcer l’ouverture externe (utile sur desktop)
+      final okExternal = await launchUrl(
+        _walletDzUri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!okExternal) {
+        throw 'Impossible d’ouvrir ${_walletDzUri.toString()}';
+      }
+    }
   }
 }

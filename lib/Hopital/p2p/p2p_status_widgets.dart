@@ -27,19 +27,19 @@ class P2PStatusBanner extends StatelessWidget {
         if (isConnected) {
           bannerColor = Colors.green;
           statusIcon = Icons.cloud_done;
-          statusText = 'P2P Connecté';
+          statusText = 'Blockchain Connected';
         } else if (isReady && conn.isRunning) {
-          bannerColor = Colors.amber;
+          bannerColor = Colors.blueGrey;
           statusIcon = Icons.cloud;
-          statusText = 'P2P Actif (En attente)';
+          statusText = 'Blockchain Mining (Pending)';
         } else if (isReady) {
-          bannerColor = Colors.orange;
+          bannerColor = Colors.deepOrangeAccent;
           statusIcon = Icons.cloud_queue;
-          statusText = 'P2P Initialisation';
+          statusText = 'Initializing Blockchain';
         } else {
           bannerColor = Colors.red;
           statusIcon = Icons.cloud_off;
-          statusText = 'P2P Arrêté';
+          statusText = 'Blockchain Stopped';
         }
 
         return Container(
@@ -69,7 +69,7 @@ class P2PStatusBanner extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Voisins: ${conn.neighbors.length} | Découverts: ${discovery.discoveredNodes.length}',
+                        'Node(s): ${conn.neighbors.length} | Discovered: ${discovery.discoveredNodes.length}',
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 11,

@@ -170,14 +170,14 @@ Future<String?> generateAndSaveMonthPlanningPDF(
 
       String title;
       if (isAgentsHygiene) {
-        title = "Agents d'Hygiène (08h–12h)";
+        title = "Agents d'Hygiène (12h)";
       } else if (isMedecinsGroup) {
         title = '08h–16h — (Personnel Médical)';
       } else if (groupe.toUpperCase().contains('08H') &&
           groupe.toUpperCase().contains('16H')) {
-        title = '08h–16h — (Autres personnels)';
+        title = '08h–16h';
       } else {
-        title = groupe;
+        title = '(24h)'; //groupe;
       }
 
       final prefix = getMonthPrefix(monthName);
@@ -240,7 +240,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    'G : Garde 12h       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+                    'G : Garde       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
                     style: baseStyle),
                 pw.Text(
                     'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
