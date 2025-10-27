@@ -1520,6 +1520,46 @@ class TypeActivite {
     };
   }
 }
+
+/// ✅ EXTENSION DE LA CLASSE PLANIFICATION (sans modifier l'entity)
+extension PlanificationExtension on Planification {
+  /// Sauvegarder les données complètes du mois
+  void saveMonthSnapshot({
+    required List<Staff> staffs,
+    required Map<int, List<ActiviteJour>> activitesByStaff,
+    required Map<int, String?> obsByStaff,
+  }) {
+    // Construire le JSON complet
+    final snapshot = {
+      'ordreEquipes': ordreEquipes,
+      'staffsOrdre': staffs
+          .map((s) => {
+                'id': s.id,
+                'ordre': s.ordre ?? 0,
+              })
+          .toList(),
+      'observations': obsByStaff.entries
+          .where((e) => e.value != null && e.value!.isNotEmpty)
+          .map((e) => {'staffId': e.key, 'obs': e.value})
+          .toList(),
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    };
+
+    // Stocker dans activitesJson
+    activitesJson = jsonEncode(snapshot);
+  }
+
+  /// Charger les données complètes du mois
+  Map<String, dynamic>? loadMonthSnapshot() {
+    if (activitesJson == null || activitesJson!.isEmpty) return null;
+    try {
+      return jsonDecode(activitesJson!) as Map<String, dynamic>;
+    } catch (e) {
+      print('❌ Erreur décodage snapshot: $e');
+      return null;
+    }
+  }
+}
 // ============================================================================
 // ENTITIES MESSAGING P2P - À utiliser avec ObjectBox generator
 // ============================================================================

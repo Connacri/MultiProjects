@@ -257,14 +257,125 @@ class StaffProvider with ChangeNotifier {
     }
   }
 
-  // Méthodes utilitaires...
+  /// ✅ NOUVELLE MÉTHODE : Sauvegarder le mois avec TOUTES les données
   Future<void> saveMonthActivities(int year, int month) async {
-    print('[StaffProvider] 💾 Sauvegarde mois $month/$year');
+    try {
+      print('💾 Sauvegarde complète du mois $month/$year...');
+
+      final objectBox = ObjectBox();
+
+      // 1️⃣ Récupérer la planification existante ou créer
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(month) &
+              Planification_.annee.equals(year))
+          .build();
+      Planification? planif = query.findFirst();
+      query.close();
+
+      if (planif == null) {
+        planif = Planification(
+          mois: month,
+          annee: year,
+          ordreEquipes: '', // sera rempli par extension
+        );
+      }
+
+      // 2️⃣ Collecter les données à sauvegarder
+      final activitesByStaff = <int, List<ActiviteJour>>{};
+      final obsByStaff = <int, String?>{};
+
+      for (final staff in _staffs) {
+        // Activités du mois
+        final activitesDuMois =
+            staff.activites.where((a) => a.jour >= 1 && a.jour <= 31).toList();
+        activitesByStaff[staff.id] = activitesDuMois;
+
+        // Observations
+        obsByStaff[staff.id] = staff.obs;
+      }
+
+      // 3️⃣ Sauvegarder via l'extension
+      planif.saveMonthSnapshot(
+        staffs: _staffs,
+        activitesByStaff: activitesByStaff,
+        obsByStaff: obsByStaff,
+      );
+
+      // 4️⃣ Persister en base
+      objectBox.planificationBox.put(planif);
+
+      print('✅ Mois $month/$year sauvegardé avec ${_staffs.length} staffs');
+    } catch (e) {
+      print('❌ Erreur saveMonthActivities: $e');
+    }
   }
 
+  /// ✅ NOUVELLE MÉTHODE : Charger un mois avec restauration complète
   Future<bool> loadMonthActivities(int year, int month) async {
-    print('[StaffProvider] 📂 Chargement mois $month/$year');
-    return true;
+    try {
+      print('📂 Chargement du mois $month/$year...');
+
+      final objectBox = ObjectBox();
+
+      // 1️⃣ Rechercher la planification
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(month) &
+              Planification_.annee.equals(year))
+          .build();
+      final planif = query.findFirst();
+      query.close();
+
+      if (planif == null) {
+        print('ℹ️ Aucune sauvegarde trouvée pour $month/$year');
+        return false;
+      }
+
+      // 2️⃣ Charger le snapshot
+      final snapshot = planif.loadMonthSnapshot();
+      if (snapshot == null) {
+        print('⚠️ Snapshot invalide pour $month/$year');
+        return false;
+      }
+
+      // 3️⃣ Restaurer l'ordre des staffs
+      final staffsOrdre = snapshot['staffsOrdre'] as List<dynamic>?;
+      if (staffsOrdre != null) {
+        for (var entry in staffsOrdre) {
+          final staffId = entry['id'] as int;
+          final ordre = entry['ordre'] as int;
+
+          final staff = objectBox.staffBox.get(staffId);
+          if (staff != null && staff.ordre != ordre) {
+            staff.ordre = ordre;
+            objectBox.staffBox.put(staff);
+          }
+        }
+      }
+
+      // 4️⃣ Restaurer les observations
+      final observations = snapshot['observations'] as List<dynamic>?;
+      if (observations != null) {
+        for (var entry in observations) {
+          final staffId = entry['staffId'] as int;
+          final obs = entry['obs'] as String;
+
+          final staff = objectBox.staffBox.get(staffId);
+          if (staff != null) {
+            staff.obs = obs;
+            objectBox.staffBox.put(staff);
+          }
+        }
+      }
+
+      // 5️⃣ Rafraîchir les staffs
+      await fetchStaffs();
+
+      print('✅ Mois $month/$year restauré avec succès');
+      return true;
+    } catch (e) {
+      print('❌ Erreur loadMonthActivities: $e');
+      return false;
+    }
   }
 
   Staff? getStaffById(int id) {
@@ -470,9 +581,13 @@ class ActiviteProvider with ChangeNotifier {
     }
   }
 
-  /// 🔹 Vérifie si un staff est en congé TimeOff à une date donnée
+  /// ✅ MÉTHODE : Vérifier si staff en congé à une date
   bool _isStaffOnLeaveTimeOff(Staff staff, DateTime dateJour) {
-    final timeOffs = staff.timeOff.toList();
+    final objectBox = ObjectBox();
+    final timeOffs = objectBox.timeOffBox
+        .query(TimeOff_.staff.equals(staff.id))
+        .build()
+        .find();
 
     for (var timeOff in timeOffs) {
       if (dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
@@ -497,81 +612,113 @@ class ActiviteProvider with ChangeNotifier {
         (activite.statut == 'C' || activite.statut == 'CM'));
   }
 
-  /// 🔹 VERSION CORRIGÉE : insertActivites avec gestion des congés
-  Future<void> insertActivites(List<ActivitePersonne> liste,
-      {required int year, required int month}) async {
+  /// ✅ MÉTHODE CORRIGÉE : Création d'activités avec prise en compte des congés et obs
+  Future<void> insertActivites(
+    List<ActivitePersonne> liste, {
+    required int year,
+    required int month,
+  }) async {
     try {
-      // Nettoyage complet de la base (si nécessaire)
-      _objectBox.activiteBox.removeAll();
-      _objectBox.staffBox.removeAll();
-      _objectBox.branchBox.removeAll();
-      _objectBox.timeOffBox.removeAll();
+      print('📥 Insertion des activités pour $month/$year...');
+
+      final objectBox = ObjectBox();
+
+      // ⚠️ NE PAS SUPPRIMER TOUTE LA BASE
+      // Supprimer seulement les activités du mois concerné
+      final debutMois = DateTime(year, month, 1);
+      final finMois = DateTime(year, month + 1, 0);
+      final daysInMonth = finMois.day;
 
       for (var e in liste) {
-        // 1. Créer/récupérer Branch
-        Branch branch = _objectBox.branchBox
+        // 1️⃣ Créer/récupérer Branch
+        Branch branch = objectBox.branchBox
                 .query(Branch_.branchNom.equals(e.branchNom ?? "Rhumatologie"))
                 .build()
                 .findFirst() ??
             Branch(branchNom: e.branchNom ?? "Rhumatologie");
-        _objectBox.branchBox.put(branch);
+        objectBox.branchBox.put(branch);
 
-        // 2. Créer Staff
-        final staff = Staff(
-          nom: e.nom,
-          grade: e.grade,
-          groupe: e.groupe,
-          equipe: e.equipe,
-          obs: e.obs,
-        )..branch.target = branch;
+        // 2️⃣ Créer/récupérer Staff (avec ordre préservé si existe)
+        Staff? existingStaff = objectBox.staffBox
+            .query(Staff_.nom.equals(e.nom))
+            .build()
+            .findFirst();
 
-        _objectBox.staffBox.put(staff);
+        final staff = existingStaff ??
+            Staff(
+              nom: e.nom,
+              grade: e.grade,
+              groupe: e.groupe,
+              equipe: e.equipe,
+              obs: e.obs,
+              ordre: existingStaff?.ordre, // ✅ Préserver l'ordre
+            )
+          ..branch.target = branch;
 
-        // 3. Insérer les congés TimeOff AVANT les activités
+        objectBox.staffBox.put(staff);
+
+        // 3️⃣ Insérer TimeOff (congés planifiés)
         if (e.conges != null && e.conges!.isNotEmpty) {
+          // ✅ Supprimer les anciens congés du mois
+          final oldTimeOffs = objectBox.timeOffBox
+              .query(TimeOff_.staff.equals(staff.id))
+              .build()
+              .find()
+              .where((t) =>
+                  t.debut.isBefore(finMois.add(Duration(days: 1))) &&
+                  t.fin.isAfter(debutMois.subtract(Duration(days: 1))))
+              .toList();
+
+          for (var old in oldTimeOffs) {
+            objectBox.timeOffBox.remove(old.id);
+          }
+
+          // Ajouter les nouveaux
           for (var conge in e.conges!) {
             final timeOff = TimeOff(
               debut: conge.debut,
               fin: conge.fin,
               motif: conge.motif,
             )..staff.target = staff;
-            _objectBox.timeOffBox.put(timeOff);
-            print(
-                "📅 Congé ajouté: ${staff.nom} du ${conge.debut} au ${conge.fin}");
+            objectBox.timeOffBox.put(timeOff);
           }
         }
 
-        // 4. Traiter les activités journalières avec respect des congés
-        for (int i = 0; i < e.jours.length && i < 31; i++) {
+        // 4️⃣ Supprimer les anciennes activités du mois
+        final oldActivites = objectBox.activiteBox
+            .query(ActiviteJour_.staff.equals(staff.id))
+            .build()
+            .find()
+            .where((a) => a.jour >= 1 && a.jour <= daysInMonth)
+            .toList();
+
+        for (var old in oldActivites) {
+          objectBox.activiteBox.remove(old.id);
+        }
+
+        // 5️⃣ Créer les nouvelles activités en respectant les congés
+        for (int i = 0; i < e.jours.length && i < daysInMonth; i++) {
           final jour = i + 1;
           final statutJour = e.jours[i];
           final dateJour = DateTime(year, month, jour);
 
-          // Vérifier si le staff est en congé TimeOff ce jour-là
+          // Vérifier TimeOff
           final estEnCongeTimeOff = _isStaffOnLeaveTimeOff(staff, dateJour);
 
-          String statutFinal;
-          if (estEnCongeTimeOff) {
-            // Si en congé TimeOff, forcer 'C'
-            statutFinal = 'C';
-          } else {
-            // Sinon utiliser le statut planifié
-            statutFinal = statutJour;
-          }
+          String statutFinal = estEnCongeTimeOff ? 'C' : statutJour;
 
           final activite = ActiviteJour(jour: jour, statut: statutFinal)
             ..staff.target = staff;
-          _objectBox.activiteBox.put(activite);
+          objectBox.activiteBox.put(activite);
         }
 
-        print(
-            "✅ Staff inséré: ${staff.nom} avec ${e.conges?.length ?? 0} congés");
+        print('✅ Staff inséré: ${staff.nom}');
       }
 
       await fetchStaffs();
-      print("🎉 Insertion terminée: ${liste.length} staffs traités");
+      print('🎉 Insertion terminée: ${liste.length} staffs traités');
     } catch (e) {
-      print("❌ Erreur insertActivites: $e");
+      print('❌ Erreur insertActivites: $e');
       rethrow;
     }
   }

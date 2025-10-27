@@ -433,7 +433,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   // 🆕 NOUVELLE MÉTHODE : Charger un mois
-  Future<void> _loadMonth(int year, int month) async {
+// 🆕 NOUVELLE MÉTHODE : Charger un mois
+  Future<bool> _loadMonth(int year, int month) async {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
     // Essayer de charger depuis la sauvegarde
@@ -487,6 +488,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         );
       }
     }
+
+    return loaded; // ✅ Renvoie le booléen
   }
 
   // 🆕 NOUVELLE MÉTHODE : Sauvegarder avant de changer de mois
@@ -1402,6 +1405,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ...groupedStaffs.entries.map((entry) {
                     String groupeName = entry.key;
                     List<dynamic> groupStaffs = entry.value;
+                    groupStaffs.sort((a, b) {
+                      final numeroA = a['numero'] as int;
+                      final numeroB = b['numero'] as int;
+                      return numeroA.compareTo(numeroB);
+                    });
 
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1591,6 +1599,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   final staff = staffData['staff'] as Staff;
                                   final numero = staffData['numero'] as int;
                                   final equipe = staffData['equipe'] as String;
+                                  // groupStaffs.sort((a, b) {
+                                  //   final numeroA = a['numero'] as int;
+                                  //   final numeroB = b['numero'] as int;
+                                  //   return numeroA.compareTo(numeroB);
+                                  // });
 
                                   // ⭐ CORRECTION : Charger les activités ET filtrer les TimeOff par mois
                                   final activites = staff.activites.toList();
@@ -2122,76 +2135,256 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   /// Gère le changement de mois
+  // Future<void> _onMonthChanged(int? value) async {
+  //   if (value != null && value != _selectedMonth) {
+  //     // Sauvegarder l'ancien mois
+  //     await _saveCurrentMonth();
+  //
+  //     // Changer de mois
+  //     setState(() {
+  //       _selectedMonth = value;
+  //       _editingCells.clear();
+  //       _tempValues.clear();
+  //     });
+  //
+  //     // Charger le nouveau mois
+  //     await _loadMonth(_selectedYear, value);
+  //     //////////////////////////////////////////////////////////
+  //     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+  //     final objectBox = ObjectBox();
+  //
+  //     // int activitesSupprimes = 0;
+  //     // int congesSupprimes = 0;
+  //     //
+  //     // // 1. Supprimer les activités du mois
+  //     // for (final staff in staffProvider.staffs) {
+  //     //   final activitesToDelete = staff.activites
+  //     //       .where((a) => a.jour >= 1 && a.jour <= _daysInSelectedMonth)
+  //     //       .toList();
+  //     //
+  //     //   for (var activite in activitesToDelete) {
+  //     //     objectBox.activiteBox.remove(activite.id);
+  //     //     activitesSupprimes++;
+  //     //   }
+  //     // }
+  //     //
+  //     // // 2. Supprimer les TimeOff qui chevauchent le mois
+  //     // final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
+  //     // final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
+  //     //
+  //     // final allTimeOffs = objectBox.timeOffBox.getAll();
+  //     // for (var timeOff in allTimeOffs) {
+  //     //   // Vérifier si le TimeOff chevauche le mois sélectionné
+  //     //   if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+  //     //       timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
+  //     //     objectBox.timeOffBox.remove(timeOff.id);
+  //     //     congesSupprimes++;
+  //     //   }
+  //     // }
+  //
+  //     // 3. Supprimer la planification du mois
+  //     final planifQuery = objectBox.planificationBox
+  //         .query(Planification_.mois.equals(_selectedMonth) &
+  //             Planification_.annee.equals(_selectedYear))
+  //         .build();
+  //     final existingPlanif = planifQuery.findFirst();
+  //     planifQuery.close();
+  //
+  //     if (existingPlanif != null) {
+  //       objectBox.planificationBox.remove(existingPlanif.id);
+  //     }
+  //
+  //     // // 4. Nettoyer les obs des staffs
+  //     // for (final staff in staffProvider.staffs) {
+  //     //   if (staff.obs != null && staff.obs!.isNotEmpty) {
+  //     //     staff.obs = null;
+  //     //     objectBox.staffBox.put(staff);
+  //     //   }
+  //     // }
+  //
+  //     // 5. Rafraîchir
+  //     await staffProvider.fetchStaffs();
+  //     ///////////////////////////////////////////////////
+  //   }
+  // }
+  /// ✅ MÉTHODE CORRIGÉE : Changement de mois avec sauvegarde
   Future<void> _onMonthChanged(int? value) async {
     if (value != null && value != _selectedMonth) {
-      // Sauvegarder l'ancien mois
+      // 1️⃣ Sauvegarder l'ancien mois
       await _saveCurrentMonth();
 
-      // Changer de mois
+      // 2️⃣ Changer de mois
       setState(() {
         _selectedMonth = value;
         _editingCells.clear();
         _tempValues.clear();
       });
 
-      // Charger le nouveau mois
-      await _loadMonth(_selectedYear, value);
-      //////////////////////////////////////////////////////////
+      // 3️⃣ Charger le nouveau mois
+      final loaded = await _loadMonth(_selectedYear, value);
+
+      // 4️⃣ Si pas de données, créer un mois vierge AVEC RESPECT DES CONGÉS
+      if (!loaded) {
+        await _creerMoisVierge(_selectedYear, value);
+      }
+    }
+  }
+
+  /// ✅ NOUVELLE MÉTHODE : Créer un mois vierge avec congés et obs
+  Future<void> _creerMoisVierge(int year, int month) async {
+    try {
+      print('🆕 Création du mois vierge $month/$year...');
+
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+      final objectBox = ObjectBox();
+
+      final daysInMonth = DateUtils.getDaysInMonth(year, month);
+
+      for (final staff in staffProvider.staffs) {
+        // Récupérer les congés du staff pour ce mois
+        final timeOffs = objectBox.timeOffBox
+            .query(TimeOff_.staff.equals(staff.id))
+            .build()
+            .find();
+
+        for (int day = 1; day <= daysInMonth; day++) {
+          final dateJour = DateTime(year, month, day);
+
+          // Vérifier si en congé
+          bool enConge = timeOffs.any((timeOff) =>
+              dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+              dateJour.isBefore(timeOff.fin.add(Duration(days: 1))));
+
+          String statut = enConge ? 'C' : '-';
+
+          // Créer l'activité
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            day,
+            statut,
+            year: year,
+            month: month,
+          );
+        }
+      }
+
+      await staffProvider.fetchStaffs();
+      print('✅ Mois vierge créé avec respect des congés');
+    } catch (e) {
+      print('❌ Erreur création mois vierge: $e');
+    }
+  }
+
+  /// ✅ MÉTHODE CORRIGÉE : Vider le mois avec préservation des métadonnées
+  Future<void> _clearCurrentMonthData() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.delete_sweep, color: Colors.orange),
+            SizedBox(width: 8),
+            Text("Vider ${_moisNoms[_selectedMonth - 1]} $_selectedYear"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Cette action va supprimer pour ce mois uniquement :"),
+            SizedBox(height: 8),
+            Text("• Toutes les activités (G, RE, C, CM, N)"),
+            Text("• Tous les congés (TimeOff)"),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "✅ Seront conservés :",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text("• L'ordre des staffs"),
+                  Text("• Les observations"),
+                  Text("• L'ordre des équipes"),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text("Annuler"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text("Vider et recréer"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       final objectBox = ObjectBox();
 
-      // int activitesSupprimes = 0;
-      // int congesSupprimes = 0;
-      //
-      // // 1. Supprimer les activités du mois
-      // for (final staff in staffProvider.staffs) {
-      //   final activitesToDelete = staff.activites
-      //       .where((a) => a.jour >= 1 && a.jour <= _daysInSelectedMonth)
-      //       .toList();
-      //
-      //   for (var activite in activitesToDelete) {
-      //     objectBox.activiteBox.remove(activite.id);
-      //     activitesSupprimes++;
-      //   }
-      // }
-      //
-      // // 2. Supprimer les TimeOff qui chevauchent le mois
-      // final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
-      // final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
-      //
-      // final allTimeOffs = objectBox.timeOffBox.getAll();
-      // for (var timeOff in allTimeOffs) {
-      //   // Vérifier si le TimeOff chevauche le mois sélectionné
-      //   if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
-      //       timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
-      //     objectBox.timeOffBox.remove(timeOff.id);
-      //     congesSupprimes++;
-      //   }
-      // }
+      final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
+      final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
+      final daysInMonth = finMois.day;
 
-      // 3. Supprimer la planification du mois
-      final planifQuery = objectBox.planificationBox
-          .query(Planification_.mois.equals(_selectedMonth) &
-              Planification_.annee.equals(_selectedYear))
-          .build();
-      final existingPlanif = planifQuery.findFirst();
-      planifQuery.close();
+      // 1️⃣ Supprimer activités du mois
+      for (final staff in staffProvider.staffs) {
+        final activitesToDelete = staff.activites
+            .where((a) => a.jour >= 1 && a.jour <= daysInMonth)
+            .toList();
 
-      if (existingPlanif != null) {
-        objectBox.planificationBox.remove(existingPlanif.id);
+        for (var activite in activitesToDelete) {
+          objectBox.activiteBox.remove(activite.id);
+        }
       }
 
-      // // 4. Nettoyer les obs des staffs
-      // for (final staff in staffProvider.staffs) {
-      //   if (staff.obs != null && staff.obs!.isNotEmpty) {
-      //     staff.obs = null;
-      //     objectBox.staffBox.put(staff);
-      //   }
-      // }
+      // 2️⃣ Supprimer TimeOff du mois
+      final allTimeOffs = objectBox.timeOffBox.getAll();
+      for (var timeOff in allTimeOffs) {
+        if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+            timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
+          objectBox.timeOffBox.remove(timeOff.id);
+        }
+      }
 
-      // 5. Rafraîchir
+      // 3️⃣ Recréer le mois vierge avec respect des congés restants
+      await _creerMoisVierge(_selectedYear, _selectedMonth);
+
+      // 4️⃣ Rafraîchir
       await staffProvider.fetchStaffs();
-      ///////////////////////////////////////////////////
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              "✅ Mois vidé et recréé avec respect des congés et observations"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("❌ Erreur : $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -7064,7 +7257,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     else
                       _buildTextField(newGroupeCtrl, "Nom du nouveau groupe *",
                           icon: Icons.group_add,
-                          hint: "Ex: 08H-16H, 08H-08H...",
+                          hint: "Ex: 08H-16H, 24H...",
                           suffix: IconButton(
                             icon: const Icon(Icons.cancel),
                             onPressed: () {
@@ -7242,13 +7435,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Widget _buildCategorieSelector(String? selected, Function(String?) onChange) {
     final cats = [
       {
-        'label': 'Personnel Médical',
+        'label': 'Médecins',
         'value': 'medical',
         'icon': Icons.medical_services,
         'color': Colors.blue
       },
       {
-        'label': 'Personnel Administratif',
+        'label': 'P/Administratif',
         'value': 'administratif',
         'icon': Icons.admin_panel_settings,
         'color': Colors.orange
@@ -7262,7 +7455,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 8,
+          spacing: 4,
+          runSpacing: 4,
           children: cats.map((c) {
             final isSelected = selected == c['value'];
             return FilterChip(
@@ -7314,155 +7508,155 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-  Future<void> _clearCurrentMonthData() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.delete_sweep, color: Colors.orange),
-            SizedBox(width: 8),
-            Text("Vider ${_moisNoms[_selectedMonth - 1]} $_selectedYear"),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Cette action va supprimer pour ce mois uniquement :",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text("• Toutes les activités (G, RE, C, CM, N)"),
-            Text("• Tous les congés (TimeOff)"),
-            Text("• La planification sauvegardée"),
-            SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Les staffs seront conservés",
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.blue.shade700),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text("Annuler"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text("Vider ce mois"),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm != true) return;
-
-    try {
-      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final objectBox = ObjectBox();
-
-      int activitesSupprimes = 0;
-      int congesSupprimes = 0;
-
-      // 1. Supprimer les activités du mois
-      for (final staff in staffProvider.staffs) {
-        final activitesToDelete = staff.activites
-            .where((a) => a.jour >= 1 && a.jour <= _daysInSelectedMonth)
-            .toList();
-
-        for (var activite in activitesToDelete) {
-          objectBox.activiteBox.remove(activite.id);
-          activitesSupprimes++;
-        }
-      }
-
-      // 2. Supprimer les TimeOff qui chevauchent le mois
-      final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
-      final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
-
-      final allTimeOffs = objectBox.timeOffBox.getAll();
-      for (var timeOff in allTimeOffs) {
-        // Vérifier si le TimeOff chevauche le mois sélectionné
-        if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
-            timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
-          objectBox.timeOffBox.remove(timeOff.id);
-          congesSupprimes++;
-        }
-      }
-
-      // 3. Supprimer la planification du mois
-      final planifQuery = objectBox.planificationBox
-          .query(Planification_.mois.equals(_selectedMonth) &
-              Planification_.annee.equals(_selectedYear))
-          .build();
-      final existingPlanif = planifQuery.findFirst();
-      planifQuery.close();
-
-      if (existingPlanif != null) {
-        objectBox.planificationBox.remove(existingPlanif.id);
-      }
-
-      // // 4. Nettoyer les obs des staffs
-      // for (final staff in staffProvider.staffs) {
-      //   if (staff.obs != null && staff.obs!.isNotEmpty) {
-      //     staff.obs = null;
-      //     objectBox.staffBox.put(staff);
-      //   }
-      // }
-
-      // 5. Rafraîchir
-      await staffProvider.fetchStaffs();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 5),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Données de ${_moisNoms[_selectedMonth - 1]} $_selectedYear supprimées",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 4),
-              Text("$activitesSupprimes activités supprimées"),
-              Text("$congesSupprimes congés supprimés"),
-            ],
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Erreur : $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
+  // Future<void> _clearCurrentMonthData() async {
+  //   final confirm = await showDialog<bool>(
+  //     context: context,
+  //     builder: (ctx) => AlertDialog(
+  //       title: Row(
+  //         children: [
+  //           Icon(Icons.delete_sweep, color: Colors.orange),
+  //           SizedBox(width: 8),
+  //           Text("Vider ${_moisNoms[_selectedMonth - 1]} $_selectedYear"),
+  //         ],
+  //       ),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Text(
+  //             "Cette action va supprimer pour ce mois uniquement :",
+  //             style: TextStyle(fontWeight: FontWeight.bold),
+  //           ),
+  //           SizedBox(height: 8),
+  //           Text("• Toutes les activités (G, RE, C, CM, N)"),
+  //           Text("• Tous les congés (TimeOff)"),
+  //           Text("• La planification sauvegardée"),
+  //           SizedBox(height: 12),
+  //           Container(
+  //             padding: EdgeInsets.all(8),
+  //             decoration: BoxDecoration(
+  //               color: Colors.blue.shade50,
+  //               borderRadius: BorderRadius.circular(8),
+  //             ),
+  //             child: Row(
+  //               children: [
+  //                 Icon(Icons.info_outline, size: 16, color: Colors.blue),
+  //                 SizedBox(width: 8),
+  //                 Expanded(
+  //                   child: Text(
+  //                     "Les staffs seront conservés",
+  //                     style:
+  //                         TextStyle(fontSize: 12, color: Colors.blue.shade700),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.of(ctx).pop(false),
+  //           child: Text("Annuler"),
+  //         ),
+  //         ElevatedButton(
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor: Colors.orange,
+  //             foregroundColor: Colors.white,
+  //           ),
+  //           onPressed: () => Navigator.of(ctx).pop(true),
+  //           child: Text("Vider ce mois"),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  //
+  //   if (confirm != true) return;
+  //
+  //   try {
+  //     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+  //     final objectBox = ObjectBox();
+  //
+  //     int activitesSupprimes = 0;
+  //     int congesSupprimes = 0;
+  //
+  //     // 1. Supprimer les activités du mois
+  //     for (final staff in staffProvider.staffs) {
+  //       final activitesToDelete = staff.activites
+  //           .where((a) => a.jour >= 1 && a.jour <= _daysInSelectedMonth)
+  //           .toList();
+  //
+  //       for (var activite in activitesToDelete) {
+  //         objectBox.activiteBox.remove(activite.id);
+  //         activitesSupprimes++;
+  //       }
+  //     }
+  //
+  //     // 2. Supprimer les TimeOff qui chevauchent le mois
+  //     final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
+  //     final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
+  //
+  //     final allTimeOffs = objectBox.timeOffBox.getAll();
+  //     for (var timeOff in allTimeOffs) {
+  //       // Vérifier si le TimeOff chevauche le mois sélectionné
+  //       if (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+  //           timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1)))) {
+  //         objectBox.timeOffBox.remove(timeOff.id);
+  //         congesSupprimes++;
+  //       }
+  //     }
+  //
+  //     // 3. Supprimer la planification du mois
+  //     final planifQuery = objectBox.planificationBox
+  //         .query(Planification_.mois.equals(_selectedMonth) &
+  //             Planification_.annee.equals(_selectedYear))
+  //         .build();
+  //     final existingPlanif = planifQuery.findFirst();
+  //     planifQuery.close();
+  //
+  //     if (existingPlanif != null) {
+  //       objectBox.planificationBox.remove(existingPlanif.id);
+  //     }
+  //
+  //     // // 4. Nettoyer les obs des staffs
+  //     // for (final staff in staffProvider.staffs) {
+  //     //   if (staff.obs != null && staff.obs!.isNotEmpty) {
+  //     //     staff.obs = null;
+  //     //     objectBox.staffBox.put(staff);
+  //     //   }
+  //     // }
+  //
+  //     // 5. Rafraîchir
+  //     await staffProvider.fetchStaffs();
+  //
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         backgroundColor: Colors.green,
+  //         duration: Duration(seconds: 5),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Text(
+  //               "Données de ${_moisNoms[_selectedMonth - 1]} $_selectedYear supprimées",
+  //               style: TextStyle(fontWeight: FontWeight.bold),
+  //             ),
+  //             SizedBox(height: 4),
+  //             Text("$activitesSupprimes activités supprimées"),
+  //             Text("$congesSupprimes congés supprimés"),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text("Erreur : $e"),
+  //         backgroundColor: Colors.red,
+  //       ),
+  //     );
+  //   }
+  // }
 
   /// Supprime toutes les activités avec confirmation
   Future<void> _clearAllActivitiesWithConfirmation(BuildContext context) async {
