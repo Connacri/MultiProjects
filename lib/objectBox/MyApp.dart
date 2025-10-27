@@ -107,7 +107,14 @@ class MyApp9 extends StatelessWidget {
           create: (context) => HotelProvider(objectBox),
         ),
 
-        ChangeNotifierProvider(create: (_) => StaffProvider()),
+        ChangeNotifierProvider(create: (_) => StaffProvider(objectBox)),
+        // ChangeNotifierProvider(
+        //   create: (context) {
+        //     final objectBox = Provider.of<ObjectBox>(context, listen: false);
+        //     final provider = StaffProvider(objectBox);
+        //     return provider;
+        //   },
+        // ),
         ChangeNotifierProvider(create: (_) => ActiviteProvider()),
         ChangeNotifierProvider(
             create: (_) => TimeOffProvider()..fetchTimeOffs()),

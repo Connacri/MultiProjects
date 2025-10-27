@@ -203,7 +203,7 @@ class ObjectBoxSyncObserver {
           print(
               '[SyncObserver] ⭐ Skip Staff ${staff.id} (vient d\'un delta distant)');
           // ✅ NOUVEAU : Notifier les listeners même pour les changements distants
-          _notifyStaffListeners();
+          notifyStaffListeners();
           continue;
         }
 
@@ -213,7 +213,7 @@ class ObjectBoxSyncObserver {
       }
 
       // ✅ NOUVEAU : Notifier tous les listeners
-      _notifyStaffListeners();
+      notifyStaffListeners();
     });
   }
 
@@ -229,7 +229,7 @@ class ObjectBoxSyncObserver {
         if (_recentlyAppliedDeltas.contains(changeSignature)) {
           print(
               '[SyncObserver] ⭐ Skip ActiviteJour ${activite.id} (vient d\'un delta distant)');
-          _notifyActiviteListeners();
+          notifyActiviteListeners();
           continue;
         }
 
@@ -237,7 +237,7 @@ class ObjectBoxSyncObserver {
         print('[SyncObserver] 📤 ActiviteJour synchronisée: ${activite.id}');
       }
 
-      _notifyActiviteListeners();
+      notifyActiviteListeners();
     });
   }
 
@@ -252,7 +252,7 @@ class ObjectBoxSyncObserver {
         if (_recentlyAppliedDeltas.contains(changeSignature)) {
           print(
               '[SyncObserver] ⭐ Skip Branch ${branch.id} (vient d\'un delta distant)');
-          _notifyBranchListeners();
+          notifyBranchListeners();
           continue;
         }
 
@@ -260,7 +260,7 @@ class ObjectBoxSyncObserver {
         print('[SyncObserver] 📤 Branch synchronisée: ${branch.branchNom}');
       }
 
-      _notifyBranchListeners();
+      notifyBranchListeners();
     });
   }
 
@@ -357,7 +357,7 @@ class ObjectBoxSyncObserver {
   // ✅ NOUVEAU : MÉTHODES POUR NOTIFIER LES LISTENERS
   // ========================================================================
 
-  void _notifyStaffListeners() {
+  void notifyStaffListeners() {
     print(
         '[SyncObserver] 🔔 Notification de ${_onStaffChangedCallbacks.length} listeners Staff');
     for (final callback in _onStaffChangedCallbacks) {
@@ -369,7 +369,7 @@ class ObjectBoxSyncObserver {
     }
   }
 
-  void _notifyActiviteListeners() {
+  void notifyActiviteListeners() {
     print(
         '[SyncObserver] 🔔 Notification de ${_onActiviteChangedCallbacks.length} listeners Activité');
     for (final callback in _onActiviteChangedCallbacks) {
@@ -381,7 +381,7 @@ class ObjectBoxSyncObserver {
     }
   }
 
-  void _notifyBranchListeners() {
+  void notifyBranchListeners() {
     for (final callback in _onBranchChangedCallbacks) {
       try {
         callback();

@@ -213,6 +213,8 @@ class P2PIntegration with ChangeNotifier {
         _objectBox.applyDelta(delta);
         _syncManager.queueForSync(delta);
         print('[P2PIntegration] ✅ Delta appliqué: ${delta['entity']}');
+        // ✅ AJOUT CRITIQUE : Notifier explicitement selon le type d'entité
+        _notifyProviders(delta['entity'] as String);
       } finally {
         // ✅ Réactiver après un délai
         Future.delayed(Duration(seconds: 1), () {
@@ -222,6 +224,25 @@ class P2PIntegration with ChangeNotifier {
     } catch (e) {
       print('[P2PIntegration] ❌ Erreur traitement delta: $e');
       _syncObserver.setApplyingRemoteDelta(false);
+    }
+  }
+
+// ✅ NOUVELLE MÉTHODE : Notification explicite des providers
+  void _notifyProviders(String entityType) {
+    print('[P2PIntegration] 🔔 Notification providers pour: $entityType');
+
+    // Notifier via les callbacks de l'observer
+    switch (entityType) {
+      case 'Staff':
+        _syncObserver.notifyStaffListeners();
+        break;
+      case 'ActiviteJour':
+        _syncObserver.notifyActiviteListeners();
+        break;
+      case 'Branch':
+        _syncObserver.notifyBranchListeners();
+        break;
+      // Ajouter d'autres cas si nécessaire
     }
   }
 

@@ -81,9 +81,10 @@ class ObjectBoxP2P {
         }
       } finally {
         // ✅ CRITIQUE: Réactiver l'observer après un délai plus long
-        Future.delayed(Duration(seconds: 3), () {
+
+        Future.delayed(Duration(milliseconds: 500), () {
           _syncObserver.setApplyingRemoteDelta(false);
-          print('[ObjectBoxP2P] 🔓 Observer réactivé après traitement delta');
+          print('[ObjectBoxP2P] 🔓 Observer réactivé');
         });
       }
     } catch (e) {

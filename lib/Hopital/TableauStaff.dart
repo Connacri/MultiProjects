@@ -498,7 +498,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   @override
   Widget build(BuildContext context) {
     final staffProvider = Provider.of<StaffProvider>(context, listen: true);
+
     return Scaffold(
+      key: ValueKey('staff_table_${staffProvider.lastUpdateTimestamp}'),
+      // ✅ Force rebuild
+
       appBar: AppBar(
         title: Tooltip(
             message: 'Hospital Planning (Decentralized Storage Database)',
@@ -506,6 +510,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            tooltip: 'Force Refresh (${staffProvider.remoteChangesReceived})',
+            onPressed: () async {
+              print('[UI] 🔄 Force refresh manuel...');
+              await staffProvider.forceRefresh();
+              setState(() {}); // Force rebuild local aussi
+            },
+          ),
           // IconButton(
           //   icon: Icon(Icons.message),
           //   color: Colors.white,
@@ -612,6 +625,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         ],
       ),
       body: Consumer2<StaffProvider, BranchProvider>(
+        key: ValueKey('consumer_${staffProvider.lastUpdateTimestamp}'),
+        // ✅ Force rebuild
+
         builder: (context, provider, branchProvider, child) {
           final staffs = provider.staffs;
 
@@ -711,6 +727,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 24),
+                  //  if (kDebugMode) P2PSyncDebugWidget(),
+                  // ✅ Widget de debug
+                  const SizedBox(height: 24),
                   // const SizedBox(height: 24),
                   // ElevatedButton(
                   //     onPressed: () => Navigator.of(context).push(
