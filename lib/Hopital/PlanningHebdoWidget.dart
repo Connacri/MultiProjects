@@ -244,7 +244,10 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
         builder: (context, planningProvider, staffProvider,
             typeActiviteProvider, child) {
           if (!staffProvider.isInitialized) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+                child: CircularProgressIndicator(
+              color: Colors.red,
+            ));
           }
 
           // Filtrer uniquement les médecins (avec différentes orthographes)
@@ -380,9 +383,10 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                     // SizedBox(height: 4),
                     Text(
                       'Doctors',
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: const TextStyle(
                         color: Colors.grey,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 16,
                       ),
                     ),
                   ],
@@ -391,20 +395,14 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
             ),
             ...List.generate(5, (index) {
               return DataColumn(
-                label: Container(
-                  width: 120,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        joursLong[index],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                label: Expanded(
+                  child: Text(
+                    joursLong[index],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w400,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               );
@@ -426,7 +424,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                         Text(
                           staff.nom,
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w400,
                             fontSize: 14,
                           ),
                           maxLines: 2,
@@ -436,8 +434,9 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                         Text(
                           staff.grade,
                           style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                            color: Colors.grey,
+                            fontWeight: FontWeight.w300,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -1335,6 +1334,13 @@ class RemplirPlanningAutoButton extends StatelessWidget {
       'Visite Générale', // Mardi
       'Service', // Mercredi
       'Consultation E.P.S.P Ben Smir', // Jeudi
+    ],
+    'Benrahal Yasmina': [
+      'Service', // Dimanche
+      'Service', // Lundi
+      'Service', // Mardi
+      'Service', // Mercredi
+      'Service', // Jeudi
     ],
   };
 
