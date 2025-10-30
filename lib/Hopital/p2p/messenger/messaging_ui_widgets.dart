@@ -502,38 +502,40 @@ class _ConversationDialogState extends State<ConversationDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(widget.conversation.title ?? 'Conversation'),
-                Row(
-                  children: [
-                    Icon(
-                      getPlatformIcon(platform),
-                      size: 12,
-                      color: hasMetadata ? Colors.white : Colors.white60,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      platform,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight:
-                            hasMetadata ? FontWeight.bold : FontWeight.normal,
+                FittedBox(
+                  child: Row(
+                    children: [
+                      Icon(
+                        getPlatformIcon(platform),
+                        size: 12,
                         color: hasMetadata ? Colors.white : Colors.white60,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (branch != null && branch != 'No Branch') ...[
-                      const Icon(Icons.business,
-                          size: 12, color: Colors.greenAccent),
                       const SizedBox(width: 4),
                       Text(
-                        branch,
-                        style: const TextStyle(
+                        platform,
+                        style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.greenAccent,
+                          fontWeight:
+                              hasMetadata ? FontWeight.bold : FontWeight.normal,
+                          color: hasMetadata ? Colors.white : Colors.white60,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      if (branch != null && branch != 'No Branch') ...[
+                        const Icon(Icons.business,
+                            size: 12, color: Colors.greenAccent),
+                        const SizedBox(width: 4),
+                        Text(
+                          branch,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.greenAccent,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -556,12 +558,12 @@ class _ConversationDialogState extends State<ConversationDialog> {
                 tooltip:
                     hasMetadata ? 'Métadonnées OK' : 'Rafraîchir métadonnées',
               ),
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                onPressed: () {
-                  _showConversationInfo(context, participantId);
-                },
-              ),
+              // IconButton(
+              //   icon: const Icon(Icons.info_outline),
+              //   onPressed: () {
+              //     _showConversationInfo(context, participantId);
+              //   },
+              // ),
             ],
           ),
           body: Column(

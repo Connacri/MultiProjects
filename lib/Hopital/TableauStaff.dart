@@ -181,6 +181,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   int _selectedMonthNext = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
 
+// 1. Ajoutez ces variables d'état dans _TableauStaffPageState
+  int _previousMonth = DateTime.now().month;
+  int _previousYear = DateTime.now().year;
+  bool _isNavigatingForward = false;
+
   // Variables pour gérer l'édition
   Map<String, bool> _editingCells = {}; // Clé: "staffId-jour"
   Map<String, String> _tempValues = {}; // Valeurs temporaires pendant l'édition
@@ -208,9 +213,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   void initState() {
     super.initState();
 
-    // context
-    //     .read<ActiviteProvider>()
-    //     .clearAllActivites(context); // Charger les données au démarrage
+    // Utiliser les capacités de DateTime pour calculer automatiquement
+    final now = DateTime.now();
+    final nextMonth = DateTime(now.year, now.month + 1, 1);
+
+    _selectedMonth = nextMonth.month;
+    _selectedYear = nextMonth.year;
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<StaffProvider>(context, listen: false);
       provider.fetchStaffs();
@@ -224,6 +233,535 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   // ⭐ NOUVEAU : Obtenir le nom du mois sélectionné
   String get _selectedMonthName => _moisNoms[_selectedMonth - 1];
+
+// 2. Remplacez la méthode _onMonthChanged par cette version améliorée
+  Future<void> _onMonthChanged(int? value) async {
+    if (value == null || value == _selectedMonth) return;
+
+    // Déterminer la direction de navigation
+    final isForward = _isMonthForward(value, _selectedMonth, _selectedYear);
+    _isNavigatingForward = isForward;
+
+    // Sauvegarder l'ancien mois
+    await _saveCurrentMonth();
+
+    // Mémoriser l'ancien mois
+    _previousMonth = _selectedMonth;
+    _previousYear = _selectedYear;
+
+    // Changer de mois
+    setState(() {
+      _selectedMonth = value;
+      _editingCells.clear();
+      _tempValues.clear();
+    });
+
+    // Charger le nouveau mois avec logique intelligente
+    await _loadMonthWithIntelligentLogic(
+      _selectedYear,
+      value,
+      isForward: isForward,
+    );
+  }
+
+// 3. Nouvelle méthode pour déterminer si on avance ou recule
+  bool _isMonthForward(int newMonth, int oldMonth, int year) {
+    if (newMonth > oldMonth) return true;
+    if (newMonth < oldMonth) return false;
+    return false;
+  }
+
+// 4. Méthode principale de chargement intelligent
+  Future<void> _loadMonthWithIntelligentLogic(
+    int year,
+    int month, {
+    required bool isForward,
+  }) async {
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final objectBox = ObjectBox();
+
+      // Vérifier si le mois existe déjà
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(month) &
+              Planification_.annee.equals(year))
+          .build();
+      final existingPlanif = query.findFirst();
+      query.close();
+
+      final monthExists = existingPlanif != null;
+
+      print(
+          "📅 Navigation vers $month/$year (${isForward ? 'Avance' : 'Recul'})");
+      print("   Mois existe: $monthExists");
+
+      if (!isForward) {
+        // ⬅️ RECULER : Afficher ce qui existe ou laisser vide
+        if (monthExists) {
+          await staffProvider.loadMonthActivities(year, month);
+          // ✅ FORCER le refresh de l'interface
+          await staffProvider.forceRefresh();
+
+          _showSnackbar(
+            "📂 Mois ${_moisNoms[month - 1]} $year chargé",
+            Colors.blue,
+          );
+        } else {
+          // Tableau vide
+          await _clearCurrentMonthDataSilently();
+          _showEmptyMonthDialog(month, year, isRecul: true);
+        }
+      } else {
+        // ➡️ AVANCER : Logique intelligente
+        if (monthExists) {
+          // Mois existe : afficher ce qui est enregistré
+          await staffProvider.loadMonthActivities(year, month);
+          // ✅ FORCER le refresh de l'interface
+          await staffProvider.forceRefresh();
+
+          // Vérifier si des tableaux sont vides
+          await _checkAndNotifyEmptyGroups(month, year);
+
+          _showSnackbar(
+            "📂 Mois ${_moisNoms[month - 1]} $year chargé",
+            Colors.blue,
+          );
+        } else {
+          // Nouveau mois : remplissage automatique intelligent
+          await _autoFillNewMonth(year, month);
+        }
+      }
+
+      // ✅ CRITIQUE : Forcer plusieurs refresh pour garantir la MAJ
+      await staffProvider.fetchStaffs();
+      await Future.delayed(Duration(milliseconds: 100));
+      if (mounted) {
+        setState(() {}); // Force rebuild du widget
+      }
+    } catch (e) {
+      print("❌ Erreur _loadMonthWithIntelligentLogic: $e");
+      _showSnackbar("❌ Erreur: $e", Colors.red);
+    }
+  }
+
+// 5. Remplissage automatique d'un nouveau mois
+  Future<void> _autoFillNewMonth(int year, int month) async {
+    try {
+      print("🆕 Remplissage automatique du mois $month/$year");
+
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final activiteProvider = ActiviteProvider();
+      final objectBox = ObjectBox();
+
+      final daysInMonth = DateUtils.getDaysInMonth(year, month);
+      int modifications = 0;
+
+      // 1️⃣ PERSONNEL MÉDICAL ET ADMINISTRATIF : Remplissage automatique
+      final personnelMedicalAdmin = staffProvider.staffs.where((staff) {
+        return (staff.grade.toLowerCase().contains('médecin') ||
+                staff.groupe == '08H-16H') &&
+            staff.groupe != 'Garde 12H' &&
+            staff.grade != "Agent d'hygiène";
+      }).toList();
+
+      for (final staff in personnelMedicalAdmin) {
+        final equipe = staff.equipe?.toUpperCase();
+        final isEquipeABCD =
+            equipe != null && ['A', 'B', 'C', 'D'].contains(equipe);
+
+        for (int day = 1; day <= daysInMonth; day++) {
+          final date = DateTime(year, month, day);
+
+          // Vérifier congés
+          if (_isStaffOnLeaveForDate(staff, date)) {
+            await activiteProvider.forceUpdateActiviteIgnoringLeave(
+              staff.id,
+              day,
+              'C',
+              year: year,
+              month: month,
+            );
+            continue;
+          }
+
+          // Déterminer le statut
+          String statut;
+          if (date.weekday == DateTime.friday ||
+              date.weekday == DateTime.saturday) {
+            statut = "RE";
+          } else {
+            statut = isEquipeABCD ? "-" : "N";
+          }
+
+          await activiteProvider.forceUpdateActiviteIgnoringLeave(
+            staff.id,
+            day,
+            statut,
+            year: year,
+            month: month,
+          );
+          modifications++;
+        }
+      }
+
+      print("✅ $modifications modifications pour personnel médical/admin");
+
+      // 2️⃣ PERSONNEL PARAMÉDICAL : Copier l'ordre du mois précédent
+      await _copyParamedicalRotation(
+          _previousYear, _previousMonth, year, month);
+
+      // 3️⃣ AGENTS D'HYGIÈNE : Copier l'ordre du mois précédent
+      await _copyHygieneRotation(_previousYear, _previousMonth, year, month);
+
+      // 4️⃣ Sauvegarder la planification
+      await staffProvider.saveMonthActivities(year, month);
+
+      _showSnackbar(
+        "✅ Mois ${_moisNoms[month - 1]} $year créé automatiquement",
+        Colors.green,
+        duration: 4,
+      );
+    } catch (e) {
+      print("❌ Erreur _autoFillNewMonth: $e");
+      _showSnackbar("❌ Erreur: $e", Colors.red);
+    }
+  }
+
+// 6. Copier la rotation paramédical du mois précédent
+  Future<void> _copyParamedicalRotation(
+    int fromYear,
+    int fromMonth,
+    int toYear,
+    int toMonth,
+  ) async {
+    try {
+      print(
+          "🔄 Copie rotation paramédical: $fromMonth/$fromYear → $toMonth/$toYear");
+
+      final objectBox = ObjectBox();
+      final activiteProvider = ActiviteProvider();
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+
+      // Récupérer la planification du mois précédent
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(fromMonth) &
+              Planification_.annee.equals(fromYear))
+          .build();
+      final previousPlanif = query.findFirst();
+      query.close();
+
+      if (previousPlanif == null || previousPlanif.ordreEquipes.isEmpty) {
+        print("⚠️ Pas de planification paramédical dans le mois précédent");
+        return;
+      }
+
+      // Récupérer l'ordre des équipes
+      final equipesOrdonnees =
+          previousPlanif.ordreEquipes.split(',').map((e) => e.trim()).toList();
+      print("   Ordre trouvÃ©: ${equipesOrdonnees.join(' â†')}");
+// âœ… CALCULER quelle Ã©quipe doit commencer dans le nouveau mois
+      final daysInPreviousMonth = DateUtils.getDaysInMonth(fromYear, fromMonth);
+
+      // Trouver quelle Ã©quipe Ã©tait de garde le dernier jour du mois prÃ©cÃ©dent
+      int lastDayEquipeIndex =
+          (daysInPreviousMonth - 1) % equipesOrdonnees.length;
+
+      // L'Ã©quipe suivante commence le nouveau mois
+      int startEquipeIndex = (lastDayEquipeIndex + 1) % equipesOrdonnees.length;
+
+      // RÃ©organiser l'ordre pour que cette Ã©quipe soit en premier
+      final newOrder = <String>[];
+      for (int i = 0; i < equipesOrdonnees.length; i++) {
+        int index = (startEquipeIndex + i) % equipesOrdonnees.length;
+        newOrder.add(equipesOrdonnees[index]);
+      }
+
+      print("   Nouvel ordre (continuitÃ©): ${newOrder.join(' â†')}");
+      print("   Ã‰quipe ${newOrder[0]} commence le jour 1");
+
+      // Appliquer au nouveau mois avec le nouvel ordre
+      await _executerPlanificationGardesSimple(newOrder);
+
+      print("âœ… Rotation paramÃ©dical copiÃ©e avec continuitÃ©");
+    } catch (e) {
+      print("❌ Erreur _copyParamedicalRotation: $e");
+    }
+  }
+
+// 7. Copier la rotation hygiène du mois précédent
+  Future<void> _copyHygieneRotation(
+    int fromYear,
+    int fromMonth,
+    int toYear,
+    int toMonth,
+  ) async {
+    try {
+      print(
+          "🧹 Copie rotation hygiène: $fromMonth/$fromYear → $toMonth/$toYear");
+
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final objectBox = ObjectBox();
+
+      // Identifier les agents d'hygiène
+      final agentsHygiene = staffProvider.staffs
+          .where((s) =>
+              s.grade.toLowerCase().contains('hygiène') ||
+              s.groupe == '08H-12H')
+          .toList();
+
+      if (agentsHygiene.isEmpty) {
+        print("⚠️ Aucun agent d'hygiène trouvé");
+        return;
+      }
+
+      // Récupérer l'ordre du mois précédent (premier jour ouvrable)
+      final joursOuvrablesPrecedent = <int>[];
+      final daysInPreviousMonth = DateUtils.getDaysInMonth(fromYear, fromMonth);
+
+      for (int day = 1; day <= daysInPreviousMonth; day++) {
+        final date = DateTime(fromYear, fromMonth, day);
+        if (date.weekday != DateTime.friday &&
+            date.weekday != DateTime.saturday) {
+          joursOuvrablesPrecedent.add(day);
+        }
+      }
+
+      if (joursOuvrablesPrecedent.isEmpty) return;
+
+      // Trouver l'ordre des agents dans le mois précédent
+      final ordreAgents = <Staff>[];
+      for (final jourOuvrable in joursOuvrablesPrecedent) {
+        for (final agent in agentsHygiene) {
+          final activites =
+              agent.activites.where((a) => a.jour == jourOuvrable).toList();
+          if (activites.isNotEmpty && activites.first.statut == 'N') {
+            if (!ordreAgents.contains(agent)) {
+              ordreAgents.add(agent);
+            }
+            break;
+          }
+        }
+      }
+
+      if (ordreAgents.isEmpty) {
+        print("⚠️ Impossible de déterminer l'ordre du mois précédent");
+        return;
+      }
+
+      print("   Ordre trouvé: ${ordreAgents.map((a) => a.nom).join(' → ')}");
+
+      // Calculer les jours ouvrables du nouveau mois
+      final joursOuvrables = <int>[];
+      final daysInMonth = DateUtils.getDaysInMonth(toYear, toMonth);
+
+      for (int day = 1; day <= daysInMonth; day++) {
+        final date = DateTime(toYear, toMonth, day);
+        if (date.weekday != DateTime.friday &&
+            date.weekday != DateTime.saturday) {
+          joursOuvrables.add(day);
+        }
+      }
+
+      // Analyser les congés du nouveau mois
+      final congesParAgent = await _analyserCongesAgents(agentsHygiene);
+
+      // Appliquer la rotation
+      await _executerPlanificationAgentsHygiene(
+        ordreAgents,
+        joursOuvrables,
+        congesParAgent,
+      );
+
+      print("✅ Rotation hygiène copiée");
+    } catch (e) {
+      print("❌ Erreur _copyHygieneRotation: $e");
+    }
+  }
+
+// 8. Vérifier si un staff est en congé à une date
+  bool _isStaffOnLeaveForDate(Staff staff, DateTime date) {
+    final objectBox = ObjectBox();
+
+    // TimeOff
+    final timeOffs = objectBox.timeOffBox
+        .query(TimeOff_.staff.equals(staff.id))
+        .build()
+        .find();
+
+    for (var timeOff in timeOffs) {
+      if (date.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
+          date.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+// 9. Vérifier et notifier les groupes vides
+  Future<void> _checkAndNotifyEmptyGroups(int month, int year) async {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final groupedStaffs = _groupStaffs(staffProvider.staffs);
+
+    final emptyGroups = <String>[];
+
+    for (var entry in groupedStaffs.entries) {
+      final groupeName = entry.key;
+      final groupStaffs = entry.value;
+
+      bool hasActivities = false;
+      for (var staffData in groupStaffs) {
+        final staff = staffData['staff'] as Staff;
+        if (staff.activites.isNotEmpty) {
+          hasActivities = true;
+          break;
+        }
+      }
+
+      if (!hasActivities) {
+        emptyGroups.add(groupeName);
+      }
+    }
+
+    if (emptyGroups.isNotEmpty) {
+      _showEmptyGroupsDialog(emptyGroups, month, year);
+    }
+  }
+
+// 10. Dialog pour mois vide (recul)
+  void _showEmptyMonthDialog(int month, int year, {bool isRecul = false}) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.orange),
+            SizedBox(width: 8),
+            Text("Mois vide"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.calendar_today_outlined, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              "Le mois de ${_moisNoms[month - 1]} $year est vide",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              isRecul
+                  ? "Aucune planification n'a été enregistrée pour ce mois."
+                  : "Ce mois n'a pas encore été planifié.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+// 11. Dialog pour groupes vides
+  void _showEmptyGroupsDialog(List<String> emptyGroups, int month, int year) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(child: Text("Tableaux incomplets")),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Les groupes suivants sont vides pour ${_moisNoms[month - 1]} $year :",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            ...emptyGroups.map((group) => Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, size: 16, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          group,
+                          style: TextStyle(color: Colors.orange.shade700),
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+            SizedBox(height: 16),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info, size: 16, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Planifiez ces groupes pour compléter le mois",
+                      style:
+                          TextStyle(fontSize: 12, color: Colors.blue.shade700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text("OK"),
+          ),
+        ],
+      ),
+    );
+  }
+
+// 12. Nettoyer silencieusement le mois actuel
+  Future<void> _clearCurrentMonthDataSilently() async {
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      await staffProvider.fetchStaffs();
+    } catch (e) {
+      print("❌ Erreur _clearCurrentMonthDataSilently: $e");
+    }
+  }
+
+// 13. Snackbar helper
+  void _showSnackbar(String message, Color color, {int duration = 3}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        duration: Duration(seconds: duration),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
 
 // 4. Modifier aussi la méthode _saveActiviteModification
   Future<void> _saveActiviteModification(
@@ -2208,27 +2746,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   //   }
   // }
   /// ✅ MÉTHODE CORRIGÉE : Changement de mois avec sauvegarde
-  Future<void> _onMonthChanged(int? value) async {
-    if (value != null && value != _selectedMonth) {
-      // 1️⃣ Sauvegarder l'ancien mois
-      await _saveCurrentMonth();
-
-      // 2️⃣ Changer de mois
-      setState(() {
-        _selectedMonth = value;
-        _editingCells.clear();
-        _tempValues.clear();
-      });
-
-      // 3️⃣ Charger le nouveau mois
-      final loaded = await _loadMonth(_selectedYear, value);
-
-      // 4️⃣ Si pas de données, créer un mois vierge AVEC RESPECT DES CONGÉS
-      if (!loaded) {
-        await _creerMoisVierge(_selectedYear, value);
-      }
-    }
-  }
+  // Future<void> _onMonthChanged(int? value) async {
+  //   if (value != null && value != _selectedMonth) {
+  //     // 1️⃣ Sauvegarder l'ancien mois
+  //     await _saveCurrentMonth();
+  //
+  //     // 2️⃣ Changer de mois
+  //     setState(() {
+  //       _selectedMonth = value;
+  //       _editingCells.clear();
+  //       _tempValues.clear();
+  //     });
+  //
+  //     // 3️⃣ Charger le nouveau mois
+  //     final loaded = await _loadMonth(_selectedYear, value);
+  //
+  //     // 4️⃣ Si pas de données, créer un mois vierge AVEC RESPECT DES CONGÉS
+  //     if (!loaded) {
+  //       await _creerMoisVierge(_selectedYear, value);
+  //     }
+  //   }
+  // }
 
   /// ✅ NOUVELLE MÉTHODE : Créer un mois vierge avec congés et obs
   Future<void> _creerMoisVierge(int year, int month) async {
@@ -3366,17 +3904,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           },
                         ),
                       ),
-                      SizedBox(height: 20),
-                      Divider(thickness: 2),
-                      SizedBox(height: 10),
                     ],
 
                     // SECTION 2 : Nouveau congé
-                    Text("Nouveau congé:",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Colors.green.shade700)),
+                    Center(
+                      child: Text("Nouveau congé",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                              color: Colors.green.shade700)),
+                    ),
                     SizedBox(height: 15),
 
                     // Mode de saisie
@@ -3405,120 +3942,206 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 20),
 
-                    // Date de début
-                    Row(
-                      children: [
-                        Text("Date début:",
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            icon: Icon(Icons.calendar_month),
-                            label: Text(dateDebut != null
-                                ? DateFormat('dd/MM/yyyy').format(dateDebut!)
-                                : 'Sélectionner'),
-                            onPressed: () async {
-                              final firstDate =
-                                  DateTime(_selectedYear, _selectedMonth, 1);
-                              final lastDate = DateTime(
-                                  _selectedYear, _selectedMonth + 1, 0);
-                              final now = DateTime.now();
-
-                              DateTime initialDate;
-                              if (dateDebut != null) {
-                                initialDate = dateDebut!;
-                              } else if (now.isAfter(firstDate) &&
-                                  now.isBefore(
-                                      lastDate.add(Duration(days: 1)))) {
-                                initialDate = now;
-                              } else {
-                                initialDate = firstDate;
-                              }
-
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: initialDate,
-                                firstDate: firstDate.previousMonth,
-                                lastDate: lastDate,
-                              );
-                              if (date != null) {
-                                setState(() {
-                                  dateDebut = date;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 8),
-                    // Mode dates : Date de fin OU Mode début + jours : Nombre de jours
-                    if (!useNombreJours) ...[
-                      Row(
+                    Container(
+                      width: double.infinity,
+                      height: 150,
+                      child: Row(
                         children: [
-                          Text("Date fin:",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          SizedBox(width: 10),
                           Expanded(
-                            child: OutlinedButton.icon(
-                              icon: Icon(Icons.calendar_month),
-                              label: Text(dateFin != null
-                                  ? DateFormat('dd/MM/yyyy').format(dateFin!)
-                                  : 'Sélectionner'),
-                              onPressed: dateDebut == null
-                                  ? null
-                                  : () async {
+                            child: Row(
+                              children: [
+                                Text("Date début:",
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                SizedBox(width: 10),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    icon: Icon(Icons.calendar_month),
+                                    label: Text(dateDebut != null
+                                        ? DateFormat('dd/MM/yyyy')
+                                            .format(dateDebut!)
+                                        : 'Sélectionner'),
+                                    onPressed: () async {
+                                      final firstDate = DateTime(
+                                          _selectedYear, _selectedMonth, 1);
+                                      final lastDate = DateTime(
+                                          _selectedYear, _selectedMonth + 1, 0);
+                                      final now = DateTime.now();
+
+                                      DateTime initialDate;
+                                      if (dateDebut != null) {
+                                        initialDate = dateDebut!;
+                                      } else if (now.isAfter(firstDate) &&
+                                          now.isBefore(lastDate
+                                              .add(Duration(days: 1)))) {
+                                        initialDate = now;
+                                      } else {
+                                        initialDate = firstDate;
+                                      }
+
                                       final date = await showDatePicker(
                                         context: context,
-                                        initialDate: dateFin ??
-                                            dateDebut!.add(Duration(days: 1)),
-                                        firstDate: dateDebut!,
-                                        lastDate: DateTime(2100),
-                                        // DateTime(_selectedYear,
-                                        //     _selectedMonth + 1, 0),
+                                        initialDate: initialDate,
+                                        firstDate: firstDate.previousMonth,
+                                        lastDate: lastDate,
                                       );
                                       if (date != null) {
                                         setState(() {
-                                          dateFin = date;
+                                          dateDebut = date;
                                         });
                                       }
                                     },
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                          SizedBox(width: 8),
+                          // Mode dates : Date de fin OU Mode début + jours : Nombre de jours
+                          if (!useNombreJours) ...[
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Text("Date fin:",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      icon: Icon(Icons.calendar_month),
+                                      label: Text(dateFin != null
+                                          ? DateFormat('dd/MM/yyyy')
+                                              .format(dateFin!)
+                                          : 'Sélectionner'),
+                                      onPressed: dateDebut == null
+                                          ? null
+                                          : () async {
+                                              final date = await showDatePicker(
+                                                context: context,
+                                                initialDate: dateFin ??
+                                                    dateDebut!
+                                                        .add(Duration(days: 1)),
+                                                firstDate: dateDebut!,
+                                                lastDate: DateTime(2100),
+                                                // DateTime(_selectedYear,
+                                                //     _selectedMonth + 1, 0),
+                                              );
+                                              if (date != null) {
+                                                setState(() {
+                                                  dateFin = date;
+                                                });
+                                              }
+                                            },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          if (useNombreJours) ...[
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Text("Nb jours:",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: TextFormField(
+                                      keyboardType: TextInputType.number,
+                                      decoration: InputDecoration(
+                                        hintText: "Ex: 5",
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 8),
+                                      ),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          nombreJours = int.tryParse(value);
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                    ],
+                    ),
 
-                    if (useNombreJours) ...[
-                      Row(
-                        children: [
-                          Text("Nb jours:",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: TextFormField(
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                hintText: "Ex: 5",
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 8),
+                    // Type de congé pour le nouveau congé
+                    Row(
+                      children: [
+                        Text("Type de congé:",
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        SizedBox(width: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: ['C', 'CM'].map((statut) {
+                            String label;
+                            Color color;
+                            switch (statut) {
+                              case 'C':
+                                label = 'Congé';
+                                color = Colors.orange;
+                                break;
+                              case 'CM':
+                                label = 'Congé Maladie';
+                                color = Colors.purple;
+                                break;
+
+                              default:
+                                label = statut;
+                                color = Colors.grey;
+                            }
+
+                            return ChoiceChip(
+                              label: Text(
+                                "$statut - $label",
+                                style: TextStyle(
+                                  color: selectedStatut == statut
+                                      ? Colors.white
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface, // texte selon le thème
+                                ),
                               ),
-                              onChanged: (value) {
+                              selected: selectedStatut == statut,
+
+                              // Couleur quand sélectionné (s’adapte au thème)
+                              selectedColor:
+                                  Theme.of(context).colorScheme.primary,
+
+                              // Couleur de fond quand non sélectionné
+                              backgroundColor: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.grey[800]
+                                  : Colors.grey[200],
+
+                              // Bordure douce
+                              shape: StadiumBorder(
+                                side: BorderSide(
+                                  color: selectedStatut == statut
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.grey.withOpacity(0.4),
+                                ),
+                              ),
+
+                              onSelected: (bool selected) {
                                 setState(() {
-                                  nombreJours = int.tryParse(value);
+                                  selectedStatut = selected ? statut : 'C';
                                 });
                               },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 15),
-
                     // Résumé du nouveau congé
                     if (dateDebut != null &&
                         ((dateFin != null && !useNombreJours) ||
@@ -3531,92 +4154,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           border: Border.all(color: Colors.blue.shade200),
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text("Résumé du nouveau congé:",
+                            Text("Résumé du nouveau congé $selectedStatut:",
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.blue.shade700)),
-                            Text(
-                                "Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
-                            Text(
-                                "Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
-                            Text(
-                                "Durée: ${nombreJours!} jour${nombreJours! > 1 ? 's' : ''}"),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Text(
+                                    "Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
+                                Text(
+                                    "Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
+                                Text(
+                                    "Durée: ${nombreJours!} jour${nombreJours! > 1 ? 's' : ''}"),
+                              ],
+                            ),
                           ],
                         ),
                       ),
-                      SizedBox(height: 15),
                     ],
-
-                    // Type de congé pour le nouveau congé
-                    Text("Type de congé:",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: ['C', 'CM', 'AU'].map((statut) {
-                        String label;
-                        Color color;
-                        switch (statut) {
-                          case 'C':
-                            label = 'Congé';
-                            color = Colors.orange;
-                            break;
-                          case 'CM':
-                            label = 'Congé Maladie';
-                            color = Colors.purple;
-                            break;
-                          case 'AU':
-                            label = 'Autorisé';
-                            color = Colors.green;
-                            break;
-
-                          default:
-                            label = statut;
-                            color = Colors.grey;
-                        }
-
-                        return ChoiceChip(
-                          label: Text(
-                            "$statut - $label",
-                            style: TextStyle(
-                              color: selectedStatut == statut
-                                  ? Colors.white
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .onSurface, // texte selon le thème
-                            ),
-                          ),
-                          selected: selectedStatut == statut,
-
-                          // Couleur quand sélectionné (s’adapte au thème)
-                          selectedColor: Theme.of(context).colorScheme.primary,
-
-                          // Couleur de fond quand non sélectionné
-                          backgroundColor:
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.grey[800]
-                                  : Colors.grey[200],
-
-                          // Bordure douce
-                          shape: StadiumBorder(
-                            side: BorderSide(
-                              color: selectedStatut == statut
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey.withOpacity(0.4),
-                            ),
-                          ),
-
-                          onSelected: (bool selected) {
-                            setState(() {
-                              selectedStatut = selected ? statut : 'C';
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
                   ],
                 ),
               ),

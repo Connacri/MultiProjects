@@ -1,9 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'LicenseGeneratorScreen.dart';
 
@@ -88,9 +87,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         return;
       }
 
-      final now = DateTime
-          .now()
-          .millisecondsSinceEpoch;
+      final now = DateTime.now().millisecondsSinceEpoch;
       if (now - timestamp > 3600000) {
         _showError('QR Code expiré. Veuillez en générer un nouveau.');
         setState(() => hasScanned = false);
@@ -100,12 +97,11 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
       Navigator.of(context)
           .push(
         MaterialPageRoute(
-          builder: (_) =>
-              LicenseGeneratorScreen(
-                deviceId: deviceId,
-                deviceHashShort: deviceHashShort ?? '',
-                appVersion: appVersion ?? 'Unknown',
-              ),
+          builder: (_) => LicenseGeneratorScreen(
+            deviceId: deviceId,
+            deviceHashShort: deviceHashShort ?? '',
+            appVersion: appVersion ?? 'Unknown',
+          ),
         ),
       )
           .then((_) {
@@ -147,7 +143,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
             ),
           ),
           Expanded(
-            flex: 1,
+            flex: 2,
             child: Container(
               color: Colors.deepPurple.shade50,
               child: Center(
@@ -159,12 +155,14 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'Scannez le QR Code de l\'application Windows',
+                      textAlign: TextAlign.center,
                       style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'ou appuyez sur l\'icône galerie',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.deepPurple.shade600,
