@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:kenzy/Hopital/test.dart';
+import 'package:kenzy/Hopital/CardSelectionScreen.dart';
 
 import 'admin/AdminLicenseApp.dart';
 

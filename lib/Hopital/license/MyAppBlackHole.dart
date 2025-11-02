@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
-import 'Desktop/DesktopEntryScreen.dart';
 import 'Mobile/MobileEntryScreen.dart';
 
 class MyAppBlackHole extends StatelessWidget {
@@ -13,7 +12,7 @@ class MyAppBlackHole extends StatelessWidget {
     if (isMobilePlatform) {
       return MobileEntryScreen();
     } else {
-      return DesktopEntryScreen();
+      return MobileEntryScreen(); //DesktopEntryScreen();
     }
   }
 }

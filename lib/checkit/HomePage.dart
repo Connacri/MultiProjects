@@ -900,7 +900,7 @@ class _googleBtnState extends State<googleBtn> {
     try {
       // On attend que les deux futures se terminent : la déconnexion + le délai
       await Future.wait([
-        _authService.handleSignOut2(),
+        _authService.signOut(),
         Future.delayed(const Duration(seconds: 2)), // 👈 délai imposé
       ]);
 

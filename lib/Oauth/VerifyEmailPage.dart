@@ -83,7 +83,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
               actions: [
                 IconButton(
                     onPressed: () async {
-                      await AuthService().handleSignOut2();
+                      await AuthService().signOut();
                     },
                     icon: Icon(
                       Icons.logout,

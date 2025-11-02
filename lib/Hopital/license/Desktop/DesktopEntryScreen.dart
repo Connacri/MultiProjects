@@ -42,7 +42,7 @@ class _DesktopEntryScreenState extends State<DesktopEntryScreen> {
 
       if (status.isValid) {
         // Naviguer vers MainApp
-        Future.delayed(Duration(milliseconds: 500), () {
+        Future.delayed(Duration(milliseconds: 100), () {
           if (mounted) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
@@ -177,10 +177,23 @@ class _DesktopEntryScreenState extends State<DesktopEntryScreen> {
             Icon(Icons.check_circle, size: 64, color: Colors.green),
             SizedBox(height: 16),
             Text(
-              'Licence valide',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              'Licence valide By Ramzi Guedouar',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400),
             ),
             SizedBox(height: 8),
+            // LinearProgressIndicator(),
+            SizedBox(height: 8),
+            Lottie.asset('assets/lotties/Man checking marketing strategy.json',
+                width: 250),
+            SizedBox(height: 8),
+            Text(
+              'Plateforme: ${_getPlatformName()}',
+              style: TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 14,
+                color: Colors.blueGrey,
+              ),
+            ),
             Text('Chargement de l\'application...'),
             SizedBox(height: 8),
             // Lottie.asset('assets/lotties/1 (2).json', width: 250),

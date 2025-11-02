@@ -19,6 +19,7 @@ dependencies:
   firebase_storage: ^13.0.3
   firebase_in_app_messaging: ^0.9.0+3
   firebase_analytics: any
+  #  google_sign_in: ^6.3.0
   google_sign_in: ^7.2.0
   #  firedart: ^0.9.8
   cached_network_image: ^3.4.1
@@ -130,6 +131,10 @@ dependencies:
 
   socket_io_client: ^3.1.2
   flutter_local_notifications: ^19.5.0
+
+  firebase_app_check: ^0.4.1+1
+  flutter_osm_plugin: ^1.4.3
+
 
 
 

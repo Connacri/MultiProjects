@@ -4413,7 +4413,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// Dans _deleteTimeOff - AJOUTER après objectBox.timeOffBox.remove
+// Dans _deleteTimeOff - CORRIGER la restauration
   Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
     try {
       final objectBox = ObjectBox();
@@ -4427,26 +4427,33 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       bool removed = objectBox.timeOffBox.remove(timeOff.id);
       print("🗑️ Suppression base : $removed");
 
-      // 2. ⭐ FORCER LE RECHARGEMENT DU CACHE ToMany
+      // 2. ✅ FORCER LE RECHARGEMENT DU CACHE ToMany
       await _refreshStaffTimeOffCache(staff);
       print(
           "🔄 APRÈS rechargement : staff.timeOff (cache) = ${staff.timeOff.length}");
 
-      // 3. Restaurer les jours
+      // 3. ✅ RESTAURER LES JOURS AVEC LE STATUT APPROPRIÉ
       DateTime currentDate = timeOff.debut;
       int joursRestaures = 0;
+
       while (currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
           int jour = currentDate.day;
+
+          // ✅ DÉTERMINER LE STATUT APPROPRIÉ SELON LE GROUPE
+          String statutARestaurer =
+              _determinerStatutApresSuppressionConge(staff, currentDate);
+
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
             staff.id,
             jour,
-            '-',
+            statutARestaurer,
             year: _selectedYear,
             month: _selectedMonth,
           );
           joursRestaures++;
+          print("   Jour $jour restauré : $statutARestaurer");
         }
         currentDate = currentDate.add(const Duration(days: 1));
       }
@@ -4478,6 +4485,143 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+// ✅ NOUVELLE MÉTHODE : Déterminer le statut à restaurer après suppression d'un congé
+  String _determinerStatutApresSuppressionConge(Staff staff, DateTime date) {
+    // 1. Vérifier si c'est un weekend
+    if (date.weekday == DateTime.friday || date.weekday == DateTime.saturday) {
+      return "RE"; // Récupération pour tout le monde
+    }
+
+    // 2. Vérifier si le staff a d'autres congés ce jour-là
+    final autresConges = staff.timeOff.toList().where((t) {
+      return date.isAfter(t.debut.subtract(Duration(days: 1))) &&
+          date.isBefore(t.fin.add(Duration(days: 1)));
+    }).toList();
+
+    if (autresConges.isNotEmpty) {
+      return 'C'; // Il reste un autre congé
+    }
+
+    // 3. Déterminer selon le groupe
+    final groupe = staff.groupe?.toUpperCase() ?? '';
+    final equipe = staff.equipe?.toUpperCase();
+
+    // Agents d'hygiène (08H-12H)
+    if (groupe.contains('08H-12H') ||
+        staff.grade.toLowerCase().contains('hygiène')) {
+      // Vérifier la rotation en cours
+      return _getStatutAgentHygiene(staff, date);
+    }
+
+    // Personnel médical avec équipes (08H-08H ou Garde 12H)
+    if ((groupe.contains('08H-08H') || groupe.contains('GARDE 12H')) &&
+        equipe != null &&
+        ['A', 'B', 'C', 'D'].contains(equipe)) {
+      // Vérifier la rotation en cours
+      return _getStatutEquipeMedicale(staff, date);
+    }
+
+    // Personnel administratif (08H-16H) ou autres
+    if (groupe.contains('08H-16H')) {
+      return 'N'; // Normal
+    }
+
+    // Médecins sans équipe ou autres cas
+    if (staff.grade.toLowerCase().contains('médecin')) {
+      return 'N'; // Normal
+    }
+
+    // Par défaut
+    return '-';
+  }
+
+// ✅ MÉTHODE HELPER : Obtenir le statut pour agent d'hygiène
+  String _getStatutAgentHygiene(Staff staff, DateTime date) {
+    try {
+      final objectBox = ObjectBox();
+
+      // Récupérer la planification du mois
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(date.month) &
+              Planification_.annee.equals(date.year))
+          .build();
+      final planif = query.findFirst();
+      query.close();
+
+      if (planif == null || planif.ordreEquipes.isEmpty) {
+        return 'RE'; // Pas de planification = repos
+      }
+
+      // Récupérer tous les agents d'hygiène
+      final agentsHygiene = objectBox.staffBox
+          .getAll()
+          .where((s) =>
+              s.grade.toLowerCase().contains('hygiène') ||
+              s.groupe == '08H-12H')
+          .toList();
+
+      if (agentsHygiene.isEmpty) return 'RE';
+
+      // Calculer les jours ouvrables jusqu'à cette date
+      int joursOuvrablesAvant = 0;
+      for (int d = 1; d < date.day; d++) {
+        final testDate = DateTime(date.year, date.month, d);
+        if (testDate.weekday != DateTime.friday &&
+            testDate.weekday != DateTime.saturday) {
+          joursOuvrablesAvant++;
+        }
+      }
+
+      // Déterminer quel agent travaille ce jour
+      final agentIndex = joursOuvrablesAvant % agentsHygiene.length;
+      final agentQuiTravaille = agentsHygiene[agentIndex];
+
+      return (agentQuiTravaille.id == staff.id) ? 'N' : 'RE';
+    } catch (e) {
+      print("⚠️ Erreur _getStatutAgentHygiene: $e");
+      return 'RE';
+    }
+  }
+
+// ✅ MÉTHODE HELPER : Obtenir le statut pour équipe médicale
+  String _getStatutEquipeMedicale(Staff staff, DateTime date) {
+    try {
+      final objectBox = ObjectBox();
+
+      // Récupérer la planification du mois
+      final query = objectBox.planificationBox
+          .query(Planification_.mois.equals(date.month) &
+              Planification_.annee.equals(date.year))
+          .build();
+      final planif = query.findFirst();
+      query.close();
+
+      if (planif == null || planif.ordreEquipes.isEmpty) {
+        return '-'; // Pas de planification
+      }
+
+      // Récupérer l'ordre des équipes
+      final equipesOrdonnees = planif.ordreEquipes
+          .split(',')
+          .map((e) => e.trim().toUpperCase())
+          .toList();
+
+      if (equipesOrdonnees.isEmpty) return '-';
+
+      // Calculer quelle équipe est de garde ce jour
+      final joursEcoules =
+          (date.day - 1) % DateTime(date.year, date.month + 1, 0).day;
+      final equipeIndex = joursEcoules % equipesOrdonnees.length;
+      final equipeDeGarde = equipesOrdonnees[equipeIndex];
+
+      // Comparer avec l'équipe du staff
+      return (staff.equipe?.toUpperCase() == equipeDeGarde) ? 'G' : 'RE';
+    } catch (e) {
+      print("⚠️ Erreur _getStatutEquipeMedicale: $e");
+      return '-';
     }
   }
 
