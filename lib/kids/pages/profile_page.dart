@@ -13,7 +13,7 @@ class ProfilePage extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser; //auth.user!;
     return Scaffold(
       appBar: AppBar(
-        title: Text("${AppLocalizations.of(context).translate('profile')}"),
+        title: Text("${AppLocalizations.of(context)!.translate('profile')}"),
       ),
       body: Center(
         child: Column(

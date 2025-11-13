@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../checkit/HomePage.dart';
+import '../kids/pages/MyApp.dart';
 import '../objectBox/MyApp.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectBox/pages/invoice/FacturationPageUI.dart';
@@ -44,16 +45,6 @@ class CardSelectionScreen extends StatelessWidget {
     }
     // Données pour vos 5 pages
     final List<PageCardData> cardData = [
-      PageCardData(
-        title: 'Tinder',
-        subtitle: 'Social',
-        imageUrl: 'assets/100.png',
-        gradientColors: [
-          Colors.blue.shade800.withOpacity(0.8),
-          Colors.black.withOpacity(0.5)
-        ],
-        destination: MyApp_TinderClone(),
-      ),
       PageCardData(
         title: 'Planning Staff\nRhumatologie',
         subtitle: 'Gestion du personnel',
@@ -110,6 +101,26 @@ class CardSelectionScreen extends StatelessWidget {
         ],
         destination: adaptiveHome(objectBox: objectBox),
       ),
+      PageCardData(
+        title: 'Tinder',
+        subtitle: 'Social',
+        imageUrl: 'assets/100.png',
+        gradientColors: [
+          Colors.blue.shade800.withOpacity(0.8),
+          Colors.black.withOpacity(0.5)
+        ],
+        destination: MyApp_TinderClone(),
+      ),
+      PageCardData(
+        title: 'mainKids',
+        subtitle: 'Childrens',
+        imageUrl: 'assets/photos/a (7).png',
+        gradientColors: [
+          Colors.deepOrangeAccent.withOpacity(0.8),
+          Colors.black.withOpacity(0.5)
+        ],
+        destination: AuthScreen(),
+      ),
     ];
 
     return Scaffold(
@@ -126,7 +137,7 @@ class CardSelectionScreen extends StatelessWidget {
               runSpacing: 20,
               alignment: WrapAlignment.center,
               children:
-              cardData.map((data) => _buildCard(context, data)).toList(),
+                  cardData.map((data) => _buildCard(context, data)).toList(),
             ),
           ),
         ),

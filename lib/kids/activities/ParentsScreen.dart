@@ -61,7 +61,8 @@ class _ParentHomePageState extends State<ParentHomePage> {
       print('Erreur déconnexion: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).translate('connexErreur')),
+          content:
+              Text(AppLocalizations.of(context)!.translate('connexErreur')),
         ),
       );
     } finally {

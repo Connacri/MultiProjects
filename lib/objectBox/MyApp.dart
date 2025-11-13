@@ -28,6 +28,9 @@ import '../Hopital/p2p/udp_broadcast_discovery.dart';
 import '../MyListLotties.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
+import '../kids/activities/generated/multiphoto/photo_provider.dart';
+import '../kids/activities/providers.dart';
+import '../kids/ads_provider.dart' show LocalizationModel, AdsProvider;
 import 'Entity.dart';
 import 'FuturisticConnectionUI.dart';
 import 'MyProviders.dart';
@@ -92,7 +95,36 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ClientProvider(objectBox)),
         ChangeNotifierProvider(create: (_) => AdProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        //////////////////////////////////////////////////////////////////
+        /////////////////////////////KIDS/////////////////////////////////////
+        //ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LocalizationModel()),
+        ChangeNotifierProvider(create: (_) => AdsProvider()),
+        ChangeNotifierProvider(create: (_) => ChildProvider()),
+        //ChangeNotifierProvider(create: (_) => ClubProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()),
+        ChangeNotifierProvider(create: (_) => ProfProvider()),
+        ChangeNotifierProvider<PhotoProvider>(create: (_) => PhotoProvider()),
+        ChangeNotifierProvider(create: (_) => StepProvider()),
+        ChangeNotifierProvider(create: (_) => StepProvider1()),
+        // ChangeNotifierProvider(create: (_) => AuthService()),
+        // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(
+        //   create: (ctx) => ProfileProvider(auth: ctx.read<AuthService>()),
+        //   update: (ctx, auth, previous) {
+        //     final provider = previous ?? ProfileProvider(auth: auth);
+        //     // Réinitialiser quand l'utilisateur change ou se déconnecte
+        //     if (auth.user?.uid != provider.user?.id) {
+        //       provider.updateAuth(auth); // Doit gérer la réinitialisation
+        //
+        //       // provider.clearUser();
+        //     }
+        //     return provider;
+        //   },
+        // ),
+
+        //////////////////////////////////////////////////////////////////////
+
         ChangeNotifierProvider(create: (_) => ConnectionStatusProvider()),
         ChangeNotifierProvider(create: (_) => FacturationProvider()),
         ChangeNotifierProvider(create: (_) => EditableFieldProvider()),

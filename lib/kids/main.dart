@@ -19,7 +19,7 @@ import 'pages/MyApp.dart';
 // Global navigator key for navigation operations from anywhere
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-Future<void> main() async {
+Future<void> mainKids() async {
   // Ensure Flutter bindings are initialized
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
 
@@ -58,7 +58,21 @@ Future<void> main() async {
 
   // Run the app
   runApp(
-    MultiProvider(
+    HomePageKids(),
+  );
+}
+
+class HomePageKids extends StatefulWidget {
+  const HomePageKids({super.key});
+
+  @override
+  State<HomePageKids> createState() => _HomePageKidsState();
+}
+
+class _HomePageKidsState extends State<HomePageKids> {
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
         //ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -88,8 +102,8 @@ Future<void> main() async {
         // ),
       ],
       child: MyApp1(),
-    ),
-  );
+    );
+  }
 }
 
 // Background message handler for Firebase Cloud Messaging

@@ -25,6 +25,7 @@ import 'p2p/messenger/select_node.dart';
 import 'p2p/objectbox_sync_observer.dart';
 import 'p2p/p2p_manager.dart';
 import 'p2p/p2p_status_widgets.dart';
+import 'pdf_options_dialog.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
 
@@ -1141,8 +1142,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   .push(MaterialPageRoute(builder: (_) => LicenseInfoPage()));
             },
           ),
-
           _buildSavePdfButton(context),
+          _buildSavePdfButtonWithOption(context),
           staffProvider.staffs.isEmpty
               ? SizedBox.shrink()
               : IconButton(
@@ -3040,12 +3041,243 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 // ═══════════════════════════════════════════════════════════════
 
   /// Bouton de sauvegarde PDF
+  Widget _buildSavePdfButtonWithOption(BuildContext context) {
+    return IconButton(
+      icon: const Icon(
+        Icons.save_as,
+        color: Colors.lightGreenAccent,
+      ),
+      tooltip: 'Sauvegarder un planning en PDF Spécifique',
+      onPressed: () =>
+          _showPdfOptionsAndGenerate(context), //_savePlanningToPdf2(context),
+    );
+  }
+
   Widget _buildSavePdfButton(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.save_alt),
       tooltip: 'Sauvegarder le planning en PDF',
       onPressed: () => _savePlanningToPdf2(context),
     );
+  }
+
+  Future<void> _savePlanningToPdf2(BuildContext context) async {
+    BuildContext? dialogContext;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dContext) {
+        dialogContext = dContext;
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      final filePath = await generateAndSaveMonthPlanningPDF(
+        context,
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+
+      final path = await generatePersonnelListsPDF(
+        context,
+        year: _selectedYear,
+        month: _selectedMonth,
+      );
+
+      // ✅ Fermer le bon dialogue
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!, rootNavigator: true).pop();
+      }
+
+      if (context.mounted) {
+        if (filePath != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ PDF sauvegardé avec succès !\n📁 $filePath'),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'OUVRIR',
+                onPressed: () {
+                  _openFileLocation(filePath);
+                },
+              ),
+            ),
+          );
+
+          _openFileLocation(filePath);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Erreur lors de la sauvegarde du PDF'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!, rootNavigator: true).pop();
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur : $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showPdfOptionsAndGenerate(BuildContext context) async {
+    // Liste d'images disponibles (à adapter selon votre projet)
+    final List<File> availableImages = [
+      // Exemple : File('assets/images/logo1.png'),
+      // Ajoutez vos images ici
+      File('assets/photos/hopital/pitol/stamps (1).webp'),
+      File('assets/photos/hopital/pitol/stamps (2).webp'),
+      File('assets/photos/hopital/pitol/stamps (3).webp'),
+      File('assets/photos/hopital/pitol/stamps (4).webp'),
+      File('assets/photos/hopital/pitol/stamps (5).webp'),
+      File('assets/photos/hopital/pitol/stamps (6).webp'),
+      File('assets/photos/hopital/pitol/stamps (7).webp'),
+      File('assets/photos/hopital/pitol/stamps (8).webp'),
+      File('assets/photos/hopital/pitol/stamps (9).webp'),
+      File('assets/photos/hopital/pitol/stamps (10).webp'),
+      File('assets/photos/hopital/pitol/stamps (11).webp'),
+      File('assets/photos/hopital/pitol/stamps (12).webp'),
+      File('assets/photos/hopital/pitol/stamps (13).webp'),
+      File('assets/photos/hopital/pitol/stamps (14).webp'),
+      File('assets/photos/hopital/pitol/stamps (15).webp'),
+      File('assets/photos/hopital/pitol/stamps (16).webp'),
+      File('assets/photos/hopital/pitol/stamps (17).webp'),
+      File('assets/photos/hopital/pitol/stamps (18).webp'),
+      File('assets/photos/hopital/pitol/stamps (19).webp'),
+      File('assets/photos/hopital/pitol/stamps (20).webp'),
+      File('assets/photos/hopital/pitol/stamps (21).webp'),
+      File('assets/photos/hopital/pitol/stamps (22).webp'),
+    ];
+
+    // Afficher le dialog
+    final selectedOptions = await showPdfOptionsDialog(
+      context,
+      monthName: _selectedMonthName,
+      year: _selectedYear,
+      availableImages: availableImages,
+    );
+
+    if (selectedOptions == null) return;
+
+    // Générer les PDFs selon les options sélectionnées
+    await _generatePdfWithOptions(context, selectedOptions);
+  }
+
+  Future<void> _generatePdfWithOptions(
+    BuildContext context,
+    List<PdfPageOption> options,
+  ) async {
+    BuildContext? dialogContext;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dContext) {
+        dialogContext = dContext;
+        return const Center(child: CircularProgressIndicator());
+      },
+    );
+
+    try {
+      String? filePath;
+      String? path;
+
+      // Générer le PDF principal (tableaux d'activité) avec les options
+      final hasActiviteTableau = options.any(
+        (opt) => opt.type == PdfPageType.activiteTableau,
+      );
+
+      if (hasActiviteTableau || options.isEmpty) {
+        filePath = await generateAndSaveMonthPlanningPDFWithOptions(
+          context,
+          year: _selectedYear,
+          month: _selectedMonth,
+          options: options,
+        );
+      }
+
+      // Générer les pages personnel (médecins et paramédicaux) avec les options
+      final hasPersonnelPages = options.any(
+        (opt) =>
+            opt.type == PdfPageType.medecinPlanning ||
+            opt.type == PdfPageType.medecinListe ||
+            opt.type == PdfPageType.paramedicalPlanning,
+      );
+
+      if (hasPersonnelPages || options.isEmpty) {
+        path = await generatePersonnelListsPDFWithOptions(
+          context,
+          year: _selectedYear,
+          month: _selectedMonth,
+          options: options,
+        );
+      }
+
+      // Fermer le dialog de chargement
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!, rootNavigator: true).pop();
+      }
+
+      if (context.mounted) {
+        // Déterminer quel fichier afficher
+        final mainFilePath = filePath ?? path;
+
+        if (mainFilePath != null) {
+          // Compter combien de PDFs ont été générés
+          int pdfCount = 0;
+          if (filePath != null) pdfCount++;
+          if (path != null) pdfCount++;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '✅ ${pdfCount == 1 ? "PDF sauvegardé" : "$pdfCount PDFs sauvegardés"} avec succès !\n📁 $mainFilePath',
+              ),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'OUVRIR',
+                onPressed: () {
+                  _openFileLocation(mainFilePath);
+                },
+              ),
+            ),
+          );
+          _openFileLocation(mainFilePath);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Erreur lors de la sauvegarde du PDF'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
+        Navigator.of(dialogContext!, rootNavigator: true).pop();
+      }
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur : $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   /// Bouton de suppression du mois actuel
@@ -3118,17 +3350,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
 
     try {
-      final filePath = await generateAndSaveMonthPlanningPDF(
+      // Liste d'options vide = génère tous les PDFs par défaut (sans modifications)
+      final List<PdfPageOption> defaultOptions = [];
+
+      // Générer le planning principal (tableaux d'activité) avec options
+      final filePath = await generateAndSaveMonthPlanningPDFWithOptions(
         context,
         year: _selectedYear,
         month: _selectedMonth,
+        options: defaultOptions,
       );
 
-      // Générer les pages 2 et 3
-      final path = await generatePersonnelListsPDF(
+      // Générer les pages 2 et 3 (personnel médical et paramédical) avec options
+      final path = await generatePersonnelListsPDFWithOptions(
         context,
         year: _selectedYear,
         month: _selectedMonth,
+        options: defaultOptions,
       );
 
       if (context.mounted && Navigator.canPop(context)) {
@@ -3136,22 +3374,32 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       if (context.mounted) {
-        if (filePath != null) {
+        // Déterminer quel fichier afficher
+        final mainFilePath = filePath ?? path;
+
+        if (mainFilePath != null) {
+          // Compter combien de PDFs ont été générés
+          int pdfCount = 0;
+          if (filePath != null) pdfCount++;
+          if (path != null) pdfCount++;
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('✅ PDF sauvegardé avec succès !\n📁 $filePath'),
+              content: Text(
+                '✅ ${pdfCount == 1 ? "PDF sauvegardé" : "$pdfCount PDFs sauvegardés"} avec succès !\n📁 $mainFilePath',
+              ),
               duration: const Duration(seconds: 4),
               action: SnackBarAction(
                 label: 'OUVRIR',
                 onPressed: () {
-                  _openFileLocation(filePath);
+                  _openFileLocation(mainFilePath);
                 },
               ),
             ),
           );
 
           // Ouvrir automatiquement le dossier après la sauvegarde
-          _openFileLocation(filePath);
+          _openFileLocation(mainFilePath);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -3173,77 +3421,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             content: Text('❌ Erreur : $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _savePlanningToPdf2(BuildContext context) async {
-    BuildContext? dialogContext;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext dContext) {
-        dialogContext = dContext;
-        return const Center(child: CircularProgressIndicator());
-      },
-    );
-
-    try {
-      final filePath = await generateAndSaveMonthPlanningPDF(
-        context,
-        year: _selectedYear,
-        month: _selectedMonth,
-      );
-
-      final path = await generatePersonnelListsPDF(
-        context,
-        year: _selectedYear,
-        month: _selectedMonth,
-      );
-
-      // ✅ Fermer le bon dialogue
-      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
-        Navigator.of(dialogContext!, rootNavigator: true).pop();
-      }
-
-      if (context.mounted) {
-        if (filePath != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ PDF sauvegardé avec succès !\n📁 $filePath'),
-              duration: const Duration(seconds: 4),
-              action: SnackBarAction(
-                label: 'OUVRIR',
-                onPressed: () {
-                  _openFileLocation(filePath);
-                },
-              ),
-            ),
-          );
-
-          _openFileLocation(filePath);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('❌ Erreur lors de la sauvegarde du PDF'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (dialogContext != null && Navigator.canPop(dialogContext!)) {
-        Navigator.of(dialogContext!, rootNavigator: true).pop();
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('❌ Erreur : $e'),
-            backgroundColor: Colors.red,
           ),
         );
       }

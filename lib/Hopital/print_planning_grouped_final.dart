@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import '../objectBox/Entity.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
+import 'pdf_options_dialog.dart';
 
 /// Génère et sauvegarde le planning mensuel complet en PDF
 /// Retourne le chemin du fichier sauvegardé
@@ -276,7 +277,306 @@ Future<String?> generateAndSaveMonthPlanningPDF(
   // Sauvegarde
   try {
     final pdfBytes = await pdf.save();
-    final fileName = 'Planning_${monthName}_$year.pdf';
+    final now = DateTime.now();
+    final formattedTime =
+        '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}m${now.second.toString().padLeft(2, '0')}s${now.millisecond.toString().padLeft(3, '0')}';
+
+    final fileName = 'Planning_${monthName}_${year}_$formattedTime.pdf';
+    if (Platform.isAndroid) {
+      return await _saveToAndroid(pdfBytes, fileName);
+    } else {
+      return await _saveToDesktop(pdfBytes, fileName);
+    }
+  } catch (e) {
+    print('❌ Erreur sauvegarde PDF : $e');
+    return null;
+  }
+}
+
+/// Génère et sauvegarde le planning mensuel complet en PDF avec options
+Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
+  BuildContext context, {
+  required int year,
+  required int month,
+  required List<PdfPageOption> options,
+}) async {
+  // Si l'option tableau d'activité n'est pas sélectionnée, ne rien générer
+  final hasActiviteTableau = options.any(
+    (opt) => opt.type == PdfPageType.activiteTableau,
+  );
+
+  if (!hasActiviteTableau && options.isNotEmpty) {
+    return null;
+  }
+
+  // Récupérer l'option pour le tableau d'activité
+  final activiteOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableau,
+    orElse: () => PdfPageOption(
+      type: PdfPageType.activiteTableau,
+      title: '',
+    ),
+  );
+
+  final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+  await staffProvider.fetchStaffs();
+  final staffs = staffProvider.staffs ?? [];
+
+  if (staffs.isEmpty) return null;
+
+  final daysInMonth = DateUtils.getDaysInMonth(year, month);
+  final monthName = DateFormat.MMMM('fr_FR').format(DateTime(year, month));
+  final pdf = pw.Document();
+
+  final fontData = await rootBundle.load('assets/fonts/Oswald-Regular.ttf');
+  final oswald = pw.Font.ttf(fontData);
+  final logoData = await rootBundle.load('assets/images/logo_hopital.png');
+  final logo = pw.MemoryImage(logoData.buffer.asUint8List());
+
+  final baseStyle = pw.TextStyle(font: oswald, fontSize: 10);
+  final bold = pw.TextStyle(
+    font: oswald,
+    fontSize: 13,
+    fontWeight: pw.FontWeight.bold,
+  );
+
+  // Fonction helper pour l'ordre des équipes (code existant)
+  int getEquipePriority(String? equipe) {
+    if (equipe == null) return 5;
+    switch (equipe.toUpperCase()) {
+      case 'A':
+        return 1;
+      case 'B':
+        return 2;
+      case 'C':
+        return 3;
+      case 'D':
+        return 4;
+      default:
+        return 5;
+    }
+  }
+
+  void sortStaffList(List membres) {
+    membres.sort((a, b) {
+      if (a.ordre != null && b.ordre != null) {
+        return a.ordre!.compareTo(b.ordre!);
+      }
+      if (a.ordre != null) return -1;
+      if (b.ordre != null) return 1;
+
+      int priorityA = getEquipePriority(a.equipe);
+      int priorityB = getEquipePriority(b.equipe);
+
+      if (priorityA != priorityB) {
+        return priorityA.compareTo(priorityB);
+      }
+
+      return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
+    });
+  }
+
+  // Regrouper par groupe (code existant)
+  final Map<String, List<dynamic>> grouped = {};
+  for (var s in staffs) {
+    final g = (s.groupe ?? 'Sans Groupe').toString();
+    grouped.putIfAbsent(g, () => []).add(s);
+  }
+
+  // Pour chaque groupe, créer une page
+  grouped.forEach((groupe, membres) {
+    List<List<dynamic>> subGroups = [];
+
+    if (groupe.toUpperCase().contains('08H') &&
+        groupe.toUpperCase().contains('12H') &&
+        !groupe.toUpperCase().contains('16H')) {
+      sortStaffList(membres);
+      subGroups.add(membres);
+    } else if (groupe.toUpperCase().contains('08H') &&
+        groupe.toUpperCase().contains('16H')) {
+      final medecins = membres.where((s) {
+        final grade = (s.grade ?? '').toString().toUpperCase();
+        return grade.contains('MÉDECIN') ||
+            grade.contains('MEDECIN') ||
+            grade.contains('RHUMATOLOGUE');
+      }).toList();
+
+      final autres = membres.where((s) {
+        final grade = (s.grade ?? '').toString().toUpperCase();
+        return !(grade.contains('MÉDECIN') ||
+            grade.contains('MEDECIN') ||
+            grade.contains('RHUMATOLOGUE'));
+      }).toList();
+
+      sortStaffList(medecins);
+      sortStaffList(autres);
+
+      if (medecins.isNotEmpty) subGroups.add(medecins);
+      if (autres.isNotEmpty) subGroups.add(autres);
+    } else {
+      sortStaffList(membres);
+      subGroups.add(membres);
+    }
+
+    // Génération des pages
+    for (var list in subGroups) {
+      final bool isMedecinsGroup = list.isNotEmpty &&
+          ((list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('MÉDECIN') ||
+              (list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('MEDECIN') ||
+              (list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('RHUMATOLOGUE'));
+
+      final bool isAgentsHygiene = list.isNotEmpty &&
+          ((list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('HYGIÈNE') ||
+              (list.first.grade ?? '')
+                  .toString()
+                  .toUpperCase()
+                  .contains('HYGIENE'));
+
+      String title;
+      if (isAgentsHygiene) {
+        title = "Agents d'Hygiène (12h)";
+      } else if (isMedecinsGroup) {
+        title = '08h–16h – (Personnel Médical)';
+      } else if (groupe.toUpperCase().contains('08H') &&
+          groupe.toUpperCase().contains('16H')) {
+        title = '08h–16h';
+      } else {
+        title = '(24h)';
+      }
+
+      final prefix = getMonthPrefix(monthName);
+
+      // Construire le titre principal avec les options
+      String mainTitle =
+          'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year';
+
+      if (activiteOption.includeModificatif) {
+        mainTitle += ' (Modificatif)';
+      }
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4.landscape,
+          margin: const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          header: (ctx) => pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            mainAxisAlignment: pw.MainAxisAlignment.center,
+            children: [
+              pw.Center(
+                child: pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+                  children: [
+                    pw.Text('RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE',
+                        style: bold),
+                    pw.Text(
+                        'MINISTÈRE DE LA SANTÉ, DE LA POPULATION ET DE LA RÉFORME HOSPITALIÈRE',
+                        style: baseStyle),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                        'Établissement Hospitalier d\'Aïn El Türck - Dr. Medjber Tami',
+                        style: baseStyle),
+                    pw.SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          build: (ctx) => [
+            pw.Spacer(),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.start,
+              children: [
+                pw.Text('Unité : Service de Rhumatologie',
+                    style: baseStyle.copyWith(fontSize: 12)),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+            pw.Center(
+              child: pw.Text(
+                mainTitle,
+                style: bold.copyWith(fontSize: 14),
+              ),
+            ),
+
+            // Ajouter le texte personnalisé si présent
+            if (activiteOption.customText != null) ...[
+              pw.SizedBox(height: 4),
+              pw.Center(
+                child: pw.Text(
+                  activiteOption.customText!,
+                  style: baseStyle.copyWith(
+                    fontSize: 11,
+                    color: PdfColors.blue700,
+                  ),
+                ),
+              ),
+            ],
+
+            pw.SizedBox(height: 4),
+            pw.Center(
+                child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
+            pw.SizedBox(height: 8),
+            pw.Center(
+              child: _buildGroupTable(list, daysInMonth, oswald, year, month),
+            ),
+            pw.SizedBox(height: 8),
+            pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                    'G : Garde       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+                    style: baseStyle),
+                pw.Text(
+                    'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                    style: baseStyle),
+              ],
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+                'N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction',
+                style: baseStyle),
+            pw.Spacer(),
+          ],
+          footer: (ctx) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                children: [
+                  pw.Text('Le Médecin Chef', style: baseStyle),
+                  pw.Text('Le Surveillant Médical', style: baseStyle),
+                  pw.Text('DAPM', style: baseStyle),
+                  pw.Text('Le Directeur Général', style: baseStyle),
+                ],
+              ),
+              pw.SizedBox(height: 90),
+            ],
+          ),
+        ),
+      );
+    }
+  });
+
+  // Sauvegarde
+  try {
+    final pdfBytes = await pdf.save();
+    final now = DateTime.now();
+    final formattedTime =
+        '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}m${now.second.toString().padLeft(2, '0')}s${now.millisecond.toString().padLeft(3, '0')}';
+
+    final fileName = 'Planning_${monthName}_${year}_$formattedTime.pdf';
     if (Platform.isAndroid) {
       return await _saveToAndroid(pdfBytes, fileName);
     } else {

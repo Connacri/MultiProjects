@@ -23,6 +23,7 @@ class _googleState extends State<google> {
   int currentPage = 0;
   final int pageSize = 10; // Nombre de résultats par page
   bool isSigningOut = false;
+
   // String? roleChoice;
   @override
   void initState() {
@@ -178,7 +179,8 @@ class _googleState extends State<google> {
       print('Erreur déconnexion: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).translate('connexErreur')),
+          content:
+              Text(AppLocalizations.of(context)!.translate('connexErreur')),
         ),
       );
     } finally {
@@ -218,7 +220,7 @@ class _googleState extends State<google> {
               ),
             ),
             //SizedBox(height: 20),
-            AppLocalizations.of(context).locale.languageCode != 'ar'
+            AppLocalizations.of(context)!.locale.languageCode != 'ar'
                 ? Flexible(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 0, 18, 50),
@@ -238,7 +240,7 @@ class _googleState extends State<google> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(18, 0, 18, 0),
                       child: Text(
-                        '${AppLocalizations.of(context).translate('usingGoogleToReport')}'
+                        '${AppLocalizations.of(context)!.translate('usingGoogleToReport')}'
                             .toUpperCase(),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
@@ -327,7 +329,7 @@ class _googleState extends State<google> {
                               SizedBox(height: 16),
                               Text(
                                 _user?.displayName ??
-                                    '${AppLocalizations.of(context).translate('user')}',
+                                    '${AppLocalizations.of(context)!.translate('user')}',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -361,7 +363,7 @@ class _googleState extends State<google> {
                                       Theme.of(context).colorScheme.onPrimary,
                                 ),
                                 label: Text(
-                                  '${AppLocalizations.of(context).translate('deconex')}',
+                                  '${AppLocalizations.of(context)!.translate('deconex')}',
                                 ),
                               ),
                             ],
@@ -417,11 +419,11 @@ class _googleState extends State<google> {
         content: Text(content),
         actions: [
           TextButton(
-            child: Text(AppLocalizations.of(context).translate('cancel')),
+            child: Text(AppLocalizations.of(context)!.translate('cancel')),
             onPressed: () => Navigator.of(ctx).pop(),
           ),
           TextButton(
-            child: Text(AppLocalizations.of(context).translate('confirm')),
+            child: Text(AppLocalizations.of(context)!.translate('confirm')),
             onPressed: () {
               Navigator.of(ctx).pop();
               onConfirm();
