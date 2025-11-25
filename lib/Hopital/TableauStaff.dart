@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
+import '1.dart';
 import 'AboutAppPage.dart';
 import 'ActivitePersonne.dart';
 import 'PlanningHebdoWidget.dart';
@@ -192,7 +193,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Map<String, String> _tempValues = {}; // Valeurs temporaires pendant l'édition
 
   // Liste des statuts disponibles pour le dropdown
-  final List<String> _statutsDisponibles = ['G', "Ré", 'C', 'CM', 'N', '-'];
+  final List<String> _statutsDisponibles = ['G', "RE", 'C', 'CM', 'N', '-'];
 
   // ⭐ NOUVEAU : Liste des mois en français
   final List<String> _moisNoms = [
@@ -223,7 +224,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = Provider.of<StaffProvider>(context, listen: false);
-      provider.fetchStaffs();
+      // quickGroupCorrection();
+      await provider.fetchStaffs();
       await _loadMonth(_selectedYear, _selectedMonth);
     });
   }
@@ -774,8 +776,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       await staffProvider.fetchStaffs();
-// 🆕 Sauvegarder automatiquement après modification
       await staffProvider.saveMonthActivities(_selectedYear, _selectedMonth);
+
+      // ✅ AJOUT CRITIQUE : Forcer le rebuild de tout le widget
+      if (mounted) {
+        setState(() {
+          // Vider les états d'édition APRÈS la mise à jour des données
+          _editingCells.clear();
+          _tempValues.clear();
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -882,6 +892,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   //
   //   return groupedStaffs;
   // }
+  // Quelque part dans votre code où vous avez accès au provider
+  void quickGroupCorrection() async {
+    try {
+      final provider = Provider.of<StaffProvider>(context, listen: false);
+      final results = await provider.correctStaffGroups();
+
+      print('✅ Correction rapide terminée: $results');
+
+      // Afficher un snackbar de confirmation
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              '✅ Groupes corrigés: ${results['totalModified']} modifications'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      print('❌ Erreur correction rapide: $e');
+    }
+  }
+
 // 3. Modifiez votre méthode _groupStaffs pour utiliser l'ordre sauvegardé
   Map<String, List<dynamic>> _groupStaffs(List<Staff> staffs) {
     Map<String, List<dynamic>> groupedStaffs = {};
@@ -889,8 +920,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final ordreGroupes = [
       'Personnel Médical',
       'Personnel Administratif (08h-16h)',
-      'Personnel Paramédical (08h-08h)',
-      'Agents d\'hygiène (08h-12h)',
+      'Personnel Paramédical (24h)',
+      'Agents d\'hygiène (12h)',
     ];
 
     for (String groupe in ordreGroupes) {
@@ -905,13 +936,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       if (staff.grade.toLowerCase().contains('médecin') ||
           staff.grade.toLowerCase().contains('rhumatologue')) {
         groupeAffichage = 'Personnel Médical';
-      } else if (staff.groupe == '08H-12H' ||
+      } else if (staff.groupe == '12H' ||
           staff.grade.toLowerCase().contains('hygiène')) {
-        groupeAffichage = 'Agents d\'hygiène (08h-12h)';
+        groupeAffichage = 'Agents d\'hygiène (12h)';
       } else if (staff.groupe == '08H-16H') {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
-      } else if (staff.groupe == '08H-08H' || staff.groupe == 'Garde 12H') {
-        groupeAffichage = 'Personnel Paramédical (08h-08h)';
+      } else if (staff.groupe == '24H' ||
+          staff.groupe.toLowerCase() == 'Garde 24H' ||
+          staff.groupe.toLowerCase() == 'garde 24h') {
+        groupeAffichage = 'Personnel Paramédical (24h)';
       } else {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
       }
@@ -920,7 +953,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       groupedStaffs[groupeAffichage]!.add({
         'staff': staff,
-        'numero': numeroGlobal++,
+        'numero': staff.ordre ?? numeroGlobal++,
         'equipe': equipe,
       });
     }
@@ -1061,6 +1094,51 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               setState(() {}); // Force rebuild local aussi
             },
           ),
+          IconButton(
+            icon: Icon(Icons.bug_report),
+            tooltip: 'Vérifier classification',
+            onPressed: () {
+              final staffProvider =
+                  Provider.of<StaffProvider>(context, listen: false);
+              final grouped = _groupStaffs(staffProvider.staffs);
+
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text('Classification des staffs'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: grouped.entries.map((e) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${e.key} (${e.value.length})',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            ...e.value.map((s) {
+                              final staff = s['staff'] as Staff;
+                              return Text(
+                                  '  • ${staff.id} ${staff.ordre} ${staff.nom} - ${staff.groupe}');
+                            }),
+                            Divider(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          CorrectionGroupsButton(),
           // IconButton(
           //   icon: Icon(Icons.message),
           //   color: Colors.white,
@@ -1228,15 +1306,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           final groupedStaffs = _groupStaffs(staffs);
           Map<String, String> groupNameToImage = {
             "Personnel Médical": "assets/photos/hopital/d (1).jpg",
-            "Personnel Paramédical (08h-08h)":
-                "assets/photos/hopital/d (8).jpg",
+            "Personnel Paramédical (24h)": "assets/photos/hopital/d (8).jpg",
             "Agents d'hygiène (08h-12h)": "assets/photos/hopital/q (1).jpg",
             "Personnel Administratif (08h-16h)":
                 "assets/photos/hopital/s2 (10).jpg",
           };
           Map<String, List<Color>> groupNameToGradient = {
             "Personnel Médical": [Color(0x6636E3FF), Color(0x6613D6B4)],
-            "Personnel Paramédical (08h-08h)": [
+            "Personnel Paramédical (24h)": [
               Color(0x66FF9A9E),
               Color(0x66FAD0C4)
             ],
@@ -1253,7 +1330,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             "Personnel Médical": () async {
               await runPlanificationAutomatique(context);
             },
-            "Personnel Paramédical (08h-08h)": () =>
+            "Personnel Paramédical (24h)": () =>
                 _showSimplePlanificationDialog(),
             "Agents d'hygiène (08h-12h)": () async {
               await _showPlanificationAgentsHygieneDialog();
@@ -2028,329 +2105,329 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
+                        _buildGroupTable(groupeName, groupStaffs),
                         // Tableau pour ce groupe
-                        Center(
-                          child: DragScrollWrapper(
-                            scrollDirection: Axis.horizontal,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: DataTable(
-                                columnSpacing: 5,
-                                headingRowHeight: 40,
-                                dataRowHeight: 40,
-                                headingRowColor: WidgetStateProperty.all(
-                                    Colors.grey.shade300),
-                                border: TableBorder.all(
-                                    color: Colors.grey.shade300, width: 0.5),
-                                columns: [
-                                  const DataColumn(
-                                    label: Center(
-                                      child: Text('N°',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14)),
-                                    ),
-                                  ),
-                                  const DataColumn(
-                                    label: Text('Nom et Prénom',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14)),
-                                  ),
-                                  const DataColumn(
-                                    label: Text('Grade/Fonction',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14)),
-                                  ),
-                                  const DataColumn(
-                                    label: Text('Équipe',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14)),
-                                  ),
-                                  const DataColumn(
-                                    label: Text('OBS',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14)),
-                                  ),
-                                  // NOUVELLE COLONNE : Congés
-                                  const DataColumn(
-                                    label: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.event_busy,
-                                            size: 14, color: Colors.orange),
-                                        SizedBox(width: 4),
-                                        Text('Congés',
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14)),
-                                      ],
-                                    ),
-                                  ),
-                                  // ⭐ MISE À JOUR : Générer les colonnes selon le mois sélectionné
-                                  ...List.generate(
-                                    _daysInSelectedMonth,
-                                    (i) {
-                                      final jour = i + 1;
-                                      final date = DateTime(
-                                          _selectedYear, _selectedMonth, jour);
-
-                                      Color? bgColor;
-                                      if (date.weekday == DateTime.friday) {
-                                        bgColor = Colors.blueAccent.shade100;
-                                      } else if (date.weekday ==
-                                          DateTime.saturday) {
-                                        bgColor = Colors.blue.shade100;
-                                      }
-                                      String nomDuJour =
-                                          DateFormat('EEE', 'fr_FR')
-                                              .format(date);
-                                      return DataColumn(
-                                        label: Container(
-                                          width: 28,
-                                          decoration: BoxDecoration(
-                                            color: bgColor,
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                          ),
-                                          child: Text(
-                                            '$jour\n${nomDuJour}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w500,
-                                              fontSize: 14,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                                // Dans la méthode build() qui génère les DataRow
-                                rows: groupStaffs.map<DataRow>((staffData) {
-                                  final staff = staffData['staff'] as Staff;
-                                  final numero = staffData['numero'] as int;
-                                  final equipe = staffData['equipe'] as String;
-                                  // groupStaffs.sort((a, b) {
-                                  //   final numeroA = a['numero'] as int;
-                                  //   final numeroB = b['numero'] as int;
-                                  //   return numeroA.compareTo(numeroB);
-                                  // });
-
-                                  // ⭐ CORRECTION : Charger les activités ET filtrer les TimeOff par mois
-                                  final activites = staff.activites.toList();
-                                  List<String> jours =
-                                      List.filled(_daysInSelectedMonth, '-');
-
-                                  // Remplir avec les activités existantes
-                                  for (var activite in activites) {
-                                    if (activite.jour >= 1 &&
-                                        activite.jour <= _daysInSelectedMonth) {
-                                      jours[activite.jour - 1] =
-                                          activite.statut;
-                                    }
-                                  }
-
-                                  // ⭐ CORRECTION CRITIQUE : Filtrer les congés par le mois sélectionné
-                                  final timeOffs = staff.timeOff.toList();
-
-                                  return DataRow(
-                                    color:
-                                        WidgetStateProperty.resolveWith<Color?>(
-                                      (states) =>
-                                          states.contains(WidgetState.hovered)
-                                              ? Colors.blue.shade50
-                                              : null,
-                                    ),
-                                    cells: [
-                                      DataCell(Text('$numero',
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.blue,
-                                              fontSize: 14))),
-                                      DataCell(InkWell(
-                                        onDoubleTap: () async =>
-                                            await _showCrudDialog(
-                                                context, staff),
-                                        onLongPress: () async {
-                                          final confirm =
-                                              await showDialog<bool>(
-                                            context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              title: Text(
-                                                  "Confirmer la suppression"),
-                                              content: Text(
-                                                  "Voulez-vous vraiment supprimer ${staff.nom} ?"),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(false),
-                                                  child: Text("Annuler"),
-                                                ),
-                                                ElevatedButton(
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                          backgroundColor:
-                                                              Colors.red,
-                                                          foregroundColor:
-                                                              Colors.white),
-                                                  onPressed: () =>
-                                                      Navigator.of(ctx)
-                                                          .pop(true),
-                                                  child: Text("Supprimer"),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-
-                                          if (confirm == true) {
-                                            final staffProvider =
-                                                Provider.of<StaffProvider>(
-                                                    context,
-                                                    listen: false);
-                                            await staffProvider
-                                                .deleteStaff(staff);
-                                            //  Navigator.pop(context);
-                                          }
-                                        },
-                                        child: Text(
-                                          staff.nom,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.black87,
-                                            fontSize: 15,
-                                          ),
-                                        ),
-                                      )),
-                                      DataCell(Text(staff.grade,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                          ))),
-                                      DataCell(Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: _getEquipeColor(equipe),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Text(equipe,
-                                            style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14)),
-                                      )),
-                                      DataCell(
-                                        GestureDetector(
-                                          onTap: () async {
-                                            await _showObservationDialog(
-                                                context, staff);
-                                          },
-                                          child: Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 6, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: (staff.obs?.isNotEmpty ??
-                                                      false)
-                                                  ? Colors.blue.shade50
-                                                  : Colors.grey.shade50,
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                              border: Border.all(
-                                                color: (staff.obs?.isNotEmpty ??
-                                                        false)
-                                                    ? Colors.blue.shade200
-                                                    : Colors.grey.shade300,
-                                              ),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(
-                                                  Icons.note,
-                                                  size: 12,
-                                                  color: (staff.obs
-                                                              ?.isNotEmpty ??
-                                                          false)
-                                                      ? Colors.blue.shade600
-                                                      : Colors.grey.shade400,
-                                                ),
-                                                SizedBox(width: 4),
-                                                Text(
-                                                  (staff.obs?.isNotEmpty ??
-                                                          false)
-                                                      ? "OBS"
-                                                      : "-",
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: (staff.obs
-                                                                ?.isNotEmpty ??
-                                                            false)
-                                                        ? Colors.blue.shade600
-                                                        : Colors.grey.shade400,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        GestureDetector(
-                                          onTap: () async {
-                                            await _showCongesManagementDialog(
-                                                context, staff,
-                                                parentContext: context);
-                                          },
-                                          child: _buildCongesIndicator(staff),
-                                        ),
-                                      ),
-
-                                      // ⭐ CORRECTION : Générer les cellules avec vérification du mois
-                                      ...List.generate(jours.length, (index) {
-                                        final jourIndex = index + 1;
-                                        final statutJour = jours[index];
-
-                                        // ⭐ VÉRIFICATION CORRECTE : Ne vérifier que les congés du mois actuel
-                                        final dateJour = DateTime(_selectedYear,
-                                            _selectedMonth, jourIndex);
-
-                                        // Filtrer les TimeOff qui chevauchent ce jour précis
-                                        final estEnConge =
-                                            timeOffs.any((timeOff) {
-                                          // Vérifier si dateJour est entre debut et fin
-                                          return dateJour.isAfter(timeOff.debut
-                                                  .subtract(
-                                                      Duration(days: 1))) &&
-                                              dateJour.isBefore(timeOff.fin
-                                                  .add(Duration(days: 1)));
-                                        });
-
-                                        return DataCell(
-                                          Container(
-                                            color: Colors.transparent,
-                                            child: _buildEditableCell(
-                                                staff, jourIndex, statutJour),
-                                          ),
-                                        );
-                                      }),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
-                        ),
+                        // Center(
+                        //   child: DragScrollWrapper(
+                        //     scrollDirection: Axis.horizontal,
+                        //     child: Container(
+                        //       decoration: BoxDecoration(
+                        //         border: Border.all(color: Colors.grey.shade300),
+                        //         borderRadius: BorderRadius.circular(8),
+                        //       ),
+                        //       child: DataTable(
+                        //         columnSpacing: 5,
+                        //         headingRowHeight: 40,
+                        //         dataRowHeight: 40,
+                        //         headingRowColor: WidgetStateProperty.all(
+                        //             Colors.grey.shade300),
+                        //         border: TableBorder.all(
+                        //             color: Colors.grey.shade300, width: 0.5),
+                        //         columns: [
+                        //           const DataColumn(
+                        //             label: Center(
+                        //               child: Text('N°',
+                        //                   style: TextStyle(
+                        //                       fontWeight: FontWeight.bold,
+                        //                       fontSize: 14)),
+                        //             ),
+                        //           ),
+                        //           const DataColumn(
+                        //             label: Text('Nom et Prénom',
+                        //                 style: TextStyle(
+                        //                     fontWeight: FontWeight.bold,
+                        //                     fontSize: 14)),
+                        //           ),
+                        //           const DataColumn(
+                        //             label: Text('Grade/Fonction',
+                        //                 style: TextStyle(
+                        //                     fontWeight: FontWeight.bold,
+                        //                     fontSize: 14)),
+                        //           ),
+                        //           const DataColumn(
+                        //             label: Text('Équipe',
+                        //                 style: TextStyle(
+                        //                     fontWeight: FontWeight.bold,
+                        //                     fontSize: 14)),
+                        //           ),
+                        //           const DataColumn(
+                        //             label: Text('OBS',
+                        //                 style: TextStyle(
+                        //                     fontWeight: FontWeight.bold,
+                        //                     fontSize: 14)),
+                        //           ),
+                        //           // NOUVELLE COLONNE : Congés
+                        //           const DataColumn(
+                        //             label: Row(
+                        //               mainAxisSize: MainAxisSize.min,
+                        //               children: [
+                        //                 Icon(Icons.event_busy,
+                        //                     size: 14, color: Colors.orange),
+                        //                 SizedBox(width: 4),
+                        //                 Text('Congés',
+                        //                     style: TextStyle(
+                        //                         fontWeight: FontWeight.bold,
+                        //                         fontSize: 14)),
+                        //               ],
+                        //             ),
+                        //           ),
+                        //           // ⭐ MISE À JOUR : Générer les colonnes selon le mois sélectionné
+                        //           ...List.generate(
+                        //             _daysInSelectedMonth,
+                        //             (i) {
+                        //               final jour = i + 1;
+                        //               final date = DateTime(
+                        //                   _selectedYear, _selectedMonth, jour);
+                        //
+                        //               Color? bgColor;
+                        //               if (date.weekday == DateTime.friday) {
+                        //                 bgColor = Colors.blueAccent.shade100;
+                        //               } else if (date.weekday ==
+                        //                   DateTime.saturday) {
+                        //                 bgColor = Colors.blue.shade100;
+                        //               }
+                        //               String nomDuJour =
+                        //                   DateFormat('EEE', 'fr_FR')
+                        //                       .format(date);
+                        //               return DataColumn(
+                        //                 label: Container(
+                        //                   width: 28,
+                        //                   decoration: BoxDecoration(
+                        //                     color: bgColor,
+                        //                     borderRadius:
+                        //                         BorderRadius.circular(4),
+                        //                   ),
+                        //                   child: Text(
+                        //                     '$jour\n${nomDuJour}',
+                        //                     style: const TextStyle(
+                        //                       fontWeight: FontWeight.w500,
+                        //                       fontSize: 14,
+                        //                     ),
+                        //                     textAlign: TextAlign.center,
+                        //                   ),
+                        //                 ),
+                        //               );
+                        //             },
+                        //           ),
+                        //         ],
+                        //         // Dans la méthode build() qui génère les DataRow
+                        //         rows: groupStaffs.map<DataRow>((staffData) {
+                        //           final staff = staffData['staff'] as Staff;
+                        //           final numero = staffData['numero'] as int;
+                        //           final equipe = staffData['equipe'] as String;
+                        //           // groupStaffs.sort((a, b) {
+                        //           //   final numeroA = a['numero'] as int;
+                        //           //   final numeroB = b['numero'] as int;
+                        //           //   return numeroA.compareTo(numeroB);
+                        //           // });
+                        //
+                        //           // ⭐ CORRECTION : Charger les activités ET filtrer les TimeOff par mois
+                        //           final activites = staff.activites.toList();
+                        //           List<String> jours =
+                        //               List.filled(_daysInSelectedMonth, '-');
+                        //
+                        //           // Remplir avec les activités existantes
+                        //           for (var activite in activites) {
+                        //             if (activite.jour >= 1 &&
+                        //                 activite.jour <= _daysInSelectedMonth) {
+                        //               jours[activite.jour - 1] =
+                        //                   activite.statut;
+                        //             }
+                        //           }
+                        //
+                        //           // ⭐ CORRECTION CRITIQUE : Filtrer les congés par le mois sélectionné
+                        //           final timeOffs = staff.timeOff.toList();
+                        //
+                        //           return DataRow(
+                        //             color:
+                        //                 WidgetStateProperty.resolveWith<Color?>(
+                        //               (states) =>
+                        //                   states.contains(WidgetState.hovered)
+                        //                       ? Colors.blue.shade50
+                        //                       : null,
+                        //             ),
+                        //             cells: [
+                        //               DataCell(Text('$numero',
+                        //                   style: const TextStyle(
+                        //                       fontWeight: FontWeight.bold,
+                        //                       color: Colors.blue,
+                        //                       fontSize: 14))),
+                        //               DataCell(InkWell(
+                        //                 onDoubleTap: () async =>
+                        //                     await _showCrudDialog(
+                        //                         context, staff),
+                        //                 onLongPress: () async {
+                        //                   final confirm =
+                        //                       await showDialog<bool>(
+                        //                     context: context,
+                        //                     builder: (ctx) => AlertDialog(
+                        //                       title: Text(
+                        //                           "Confirmer la suppression"),
+                        //                       content: Text(
+                        //                           "Voulez-vous vraiment supprimer ${staff.nom} ?"),
+                        //                       actions: [
+                        //                         TextButton(
+                        //                           onPressed: () =>
+                        //                               Navigator.of(ctx)
+                        //                                   .pop(false),
+                        //                           child: Text("Annuler"),
+                        //                         ),
+                        //                         ElevatedButton(
+                        //                           style:
+                        //                               ElevatedButton.styleFrom(
+                        //                                   backgroundColor:
+                        //                                       Colors.red,
+                        //                                   foregroundColor:
+                        //                                       Colors.white),
+                        //                           onPressed: () =>
+                        //                               Navigator.of(ctx)
+                        //                                   .pop(true),
+                        //                           child: Text("Supprimer"),
+                        //                         ),
+                        //                       ],
+                        //                     ),
+                        //                   );
+                        //
+                        //                   if (confirm == true) {
+                        //                     final staffProvider =
+                        //                         Provider.of<StaffProvider>(
+                        //                             context,
+                        //                             listen: false);
+                        //                     await staffProvider
+                        //                         .deleteStaff(staff);
+                        //                     //  Navigator.pop(context);
+                        //                   }
+                        //                 },
+                        //                 child: Text(
+                        //                   staff.nom,
+                        //                   style: const TextStyle(
+                        //                     fontWeight: FontWeight.w400,
+                        //                     color: Colors.black87,
+                        //                     fontSize: 15,
+                        //                   ),
+                        //                 ),
+                        //               )),
+                        //               DataCell(Text(staff.grade,
+                        //                   style: const TextStyle(
+                        //                     fontSize: 14,
+                        //                     fontWeight: FontWeight.w500,
+                        //                   ))),
+                        //               DataCell(Container(
+                        //                 padding: const EdgeInsets.symmetric(
+                        //                     horizontal: 8, vertical: 4),
+                        //                 decoration: BoxDecoration(
+                        //                   color: _getEquipeColor(equipe),
+                        //                   borderRadius:
+                        //                       BorderRadius.circular(12),
+                        //                 ),
+                        //                 child: Text(equipe,
+                        //                     style: const TextStyle(
+                        //                         color: Colors.white,
+                        //                         fontWeight: FontWeight.bold,
+                        //                         fontSize: 14)),
+                        //               )),
+                        //               DataCell(
+                        //                 GestureDetector(
+                        //                   onTap: () async {
+                        //                     await _showObservationDialog(
+                        //                         context, staff);
+                        //                   },
+                        //                   child: Container(
+                        //                     padding: EdgeInsets.symmetric(
+                        //                         horizontal: 6, vertical: 4),
+                        //                     decoration: BoxDecoration(
+                        //                       color: (staff.obs?.isNotEmpty ??
+                        //                               false)
+                        //                           ? Colors.blue.shade50
+                        //                           : Colors.grey.shade50,
+                        //                       borderRadius:
+                        //                           BorderRadius.circular(4),
+                        //                       border: Border.all(
+                        //                         color: (staff.obs?.isNotEmpty ??
+                        //                                 false)
+                        //                             ? Colors.blue.shade200
+                        //                             : Colors.grey.shade300,
+                        //                       ),
+                        //                     ),
+                        //                     child: Row(
+                        //                       mainAxisSize: MainAxisSize.min,
+                        //                       children: [
+                        //                         Icon(
+                        //                           Icons.note,
+                        //                           size: 12,
+                        //                           color: (staff.obs
+                        //                                       ?.isNotEmpty ??
+                        //                                   false)
+                        //                               ? Colors.blue.shade600
+                        //                               : Colors.grey.shade400,
+                        //                         ),
+                        //                         SizedBox(width: 4),
+                        //                         Text(
+                        //                           (staff.obs?.isNotEmpty ??
+                        //                                   false)
+                        //                               ? "OBS"
+                        //                               : "-",
+                        //                           style: TextStyle(
+                        //                             fontSize: 12,
+                        //                             fontWeight: FontWeight.w500,
+                        //                             color: (staff.obs
+                        //                                         ?.isNotEmpty ??
+                        //                                     false)
+                        //                                 ? Colors.blue.shade600
+                        //                                 : Colors.grey.shade400,
+                        //                           ),
+                        //                         ),
+                        //                       ],
+                        //                     ),
+                        //                   ),
+                        //                 ),
+                        //               ),
+                        //               DataCell(
+                        //                 GestureDetector(
+                        //                   onTap: () async {
+                        //                     await _showCongesManagementDialog(
+                        //                         context, staff,
+                        //                         parentContext: context);
+                        //                   },
+                        //                   child: _buildCongesIndicator(staff),
+                        //                 ),
+                        //               ),
+                        //
+                        //               // ⭐ CORRECTION : Générer les cellules avec vérification du mois
+                        //               ...List.generate(jours.length, (index) {
+                        //                 final jourIndex = index + 1;
+                        //                 final statutJour = jours[index];
+                        //
+                        //                 // ⭐ VÉRIFICATION CORRECTE : Ne vérifier que les congés du mois actuel
+                        //                 final dateJour = DateTime(_selectedYear,
+                        //                     _selectedMonth, jourIndex);
+                        //
+                        //                 // Filtrer les TimeOff qui chevauchent ce jour précis
+                        //                 final estEnConge =
+                        //                     timeOffs.any((timeOff) {
+                        //                   // Vérifier si dateJour est entre debut et fin
+                        //                   return dateJour.isAfter(timeOff.debut
+                        //                           .subtract(
+                        //                               Duration(days: 1))) &&
+                        //                       dateJour.isBefore(timeOff.fin
+                        //                           .add(Duration(days: 1)));
+                        //                 });
+                        //
+                        //                 return DataCell(
+                        //                   Container(
+                        //                     color: Colors.transparent,
+                        //                     child: _buildEditableCell(
+                        //                         staff, jourIndex, statutJour),
+                        //                   ),
+                        //                 );
+                        //               }),
+                        //             ],
+                        //           );
+                        //         }).toList(),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
 
                         const SizedBox(height: 32),
                       ],
@@ -2361,6 +2438,255 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildGroupTable(String groupeName, List<dynamic> groupStaffs) {
+    // ✅ Calculer dynamiquement le nombre de jours
+    final int daysInMonth =
+        DateUtils.getDaysInMonth(_selectedYear, _selectedMonth);
+
+    return Center(
+      child: DragScrollWrapper(
+        scrollDirection: Axis.horizontal,
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: DataTable(
+            columnSpacing: 5,
+            headingRowHeight: 40,
+            dataRowHeight: 40,
+            headingRowColor: WidgetStateProperty.all(Colors.grey.shade300),
+            border: TableBorder.all(color: Colors.grey.shade300, width: 0.5),
+            columns: [
+              const DataColumn(
+                label: Center(
+                  child: Text('N°',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                ),
+              ),
+              const DataColumn(
+                label: Text('Nom et Prénom',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
+              const DataColumn(
+                label: Text('Grade/Fonction',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
+              const DataColumn(
+                label: Text('Équipe',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
+              const DataColumn(
+                label: Text('OBS',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ),
+              const DataColumn(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.event_busy, size: 14, color: Colors.orange),
+                    SizedBox(width: 4),
+                    Text('Congés',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14)),
+                  ],
+                ),
+              ),
+              // ✅ CORRECTION : Générer les colonnes selon le mois sélectionné
+              ...List.generate(daysInMonth, (i) {
+                final jour = i + 1;
+                final date = DateTime(_selectedYear, _selectedMonth, jour);
+
+                Color? bgColor;
+                if (date.weekday == DateTime.friday) {
+                  bgColor = Colors.blueAccent.shade100;
+                } else if (date.weekday == DateTime.saturday) {
+                  bgColor = Colors.blue.shade100;
+                }
+
+                String nomDuJour = DateFormat('EEE', 'fr_FR').format(date);
+
+                return DataColumn(
+                  label: Container(
+                    width: 28,
+                    decoration: BoxDecoration(
+                      color: bgColor,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$jour\n$nomDuJour',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w500, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                );
+              }),
+            ],
+            rows: groupStaffs.map<DataRow>((staffData) {
+              final staff = staffData['staff'] as Staff;
+              final numero = staffData['numero'] as int;
+              final equipe = staffData['equipe'] as String;
+
+              // ✅ Charger les activités avec la bonne longueur
+              final activites = staff.activites.toList();
+              List<String> jours = List.filled(daysInMonth, '-');
+
+              for (var activite in activites) {
+                if (activite.jour >= 1 && activite.jour <= daysInMonth) {
+                  jours[activite.jour - 1] = activite.statut;
+                }
+              }
+
+              final timeOffs = staff.timeOff.toList();
+
+              return DataRow(
+                color: WidgetStateProperty.resolveWith<Color?>(
+                  (states) => states.contains(WidgetState.hovered)
+                      ? Colors.blue.shade50
+                      : null,
+                ),
+                cells: [
+                  DataCell(Text('$numero',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                          fontSize: 14))),
+                  DataCell(InkWell(
+                    onDoubleTap: () async =>
+                        await _showCrudDialog(context, staff),
+                    onLongPress: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: Text("Confirmer la suppression"),
+                          content: Text(
+                              "Voulez-vous vraiment supprimer ${staff.nom} ?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: Text("Annuler"),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white),
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: Text("Supprimer"),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        final staffProvider =
+                            Provider.of<StaffProvider>(context, listen: false);
+                        await staffProvider.deleteStaff(staff);
+                      }
+                    },
+                    child: Text(
+                      staff.nom,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400,
+                          color: Colors.black87,
+                          fontSize: 15),
+                    ),
+                  )),
+                  DataCell(Text(staff.grade,
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w500))),
+                  DataCell(Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getEquipeColor(equipe),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(equipe,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14)),
+                  )),
+                  DataCell(GestureDetector(
+                    onTap: () async =>
+                        await _showObservationDialog(context, staff),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (staff.obs?.isNotEmpty ?? false)
+                            ? Colors.blue.shade50
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: (staff.obs?.isNotEmpty ?? false)
+                              ? Colors.blue.shade200
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.note,
+                              size: 12,
+                              color: (staff.obs?.isNotEmpty ?? false)
+                                  ? Colors.blue.shade600
+                                  : Colors.grey.shade400),
+                          SizedBox(width: 4),
+                          Text(
+                            (staff.obs?.isNotEmpty ?? false) ? "OBS" : "-",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: (staff.obs?.isNotEmpty ?? false)
+                                  ? Colors.blue.shade600
+                                  : Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+                  DataCell(GestureDetector(
+                    onTap: () async => await _showCongesManagementDialog(
+                        context, staff,
+                        parentContext: context),
+                    child: _buildCongesIndicator(staff),
+                  )),
+                  // ✅ Générer les cellules selon le mois
+                  ...List.generate(jours.length, (index) {
+                    final jourIndex = index + 1;
+                    final statutJour = jours[index];
+                    final dateJour =
+                        DateTime(_selectedYear, _selectedMonth, jourIndex);
+
+                    final estEnConge = timeOffs.any((timeOff) {
+                      return dateJour.isAfter(
+                              timeOff.debut.subtract(Duration(days: 1))) &&
+                          dateJour.isBefore(timeOff.fin.add(Duration(days: 1)));
+                    });
+
+                    return DataCell(
+                      Container(
+                        color: Colors.transparent,
+                        child: _buildEditableCell(staff, jourIndex, statutJour),
+                      ),
+                    );
+                  }),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -3196,7 +3522,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // Générer le PDF principal (tableaux d'activité) avec les options
       final hasActiviteTableau = options.any(
-        (opt) => opt.type == PdfPageType.activiteTableau,
+        (opt) =>
+            opt.type == PdfPageType.activiteTableauMedical ||
+            opt.type == PdfPageType.activiteTableauAdministratif ||
+            opt.type == PdfPageType.activiteTableauParamedical ||
+            opt.type == PdfPageType.activiteTableauHygiene,
       );
 
       if (hasActiviteTableau || options.isEmpty) {
@@ -3452,8 +3782,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final cellKey = "${staff.id}-$jour";
     final isEditing = _editingCells[cellKey] ?? false;
 
+    // ✅ AJOUT : Clé unique basée sur le timestamp
+    final uniqueKey =
+        ValueKey('cell_${cellKey}_${DateTime.now().millisecondsSinceEpoch}');
+
     if (isEditing) {
       return Container(
+        key: uniqueKey,
+        // ✅ Force le rebuild
         width: 28,
         height: 32,
         decoration: BoxDecoration(
@@ -3505,11 +3841,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               // ✅ Sauvegarder immédiatement
               await _saveActiviteModification(staff, jour, newValue);
 
-              // ✅ Nettoyer les états d'édition
-              setState(() {
-                _editingCells.remove(cellKey);
-                _tempValues.remove(cellKey);
-              });
+              // // ✅ Nettoyer les états d'édition
+              // setState(() {
+              //   _editingCells.remove(cellKey);
+              //   _tempValues.remove(cellKey);
+              // });
             }
           },
           icon: Container(),
@@ -3520,6 +3856,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       );
     } else {
       return MouseRegion(
+        key: uniqueKey, // ✅ Force le rebuild
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           onTap: () {
@@ -4683,7 +5020,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
 
     // 3. Déterminer selon le groupe
-    final groupe = staff.groupe?.toUpperCase() ?? '';
+    final groupe = staff.groupe.toUpperCase() ?? '';
     final equipe = staff.equipe?.toUpperCase();
 
     // Agents d'hygiène (08H-12H)
@@ -7882,8 +8219,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // PHASE 1: ATTRIBUTION AUTOMATIQUE
       for (final staff in staffProvider.staffs) {
-        if (staff.groupe == "Garde 12H") {
-          print("⏩ ${staff.nom} ignoré car groupe = Garde 12H");
+        if (staff.groupe == "Garde 24") {
+          print("⏩ ${staff.nom} ignoré car groupe = Garde 24H");
           continue;
         }
         if (staff.grade == "Agent d'hygiène") {

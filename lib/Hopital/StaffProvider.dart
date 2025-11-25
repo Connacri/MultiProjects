@@ -825,6 +825,118 @@ class StaffProvider with ChangeNotifier {
     }
   }
 
+  // Ajoutez ces méthodes dans votre classe StaffProvider
+
+// ✅ MÉTHODE : Correction des groupes paramédicaux et agents d'hygiène
+// ✅ MÉTHODE UNIQUE : Correction des groupes paramédicaux et agents d'hygiène
+  Future<Map<String, int>> correctStaffGroups() async {
+    try {
+      print('[StaffProvider] 🔧 Début correction groupes...');
+
+      final allStaff = _objectBox.staffBox.getAll();
+      int paramedicalCount = 0;
+      int hygieneCount = 0;
+      int totalModified = 0;
+
+      for (final staff in allStaff) {
+        final originalGroupe = staff.groupe;
+
+        // ✅ CORRECTION UNIQUE : Vérifie les deux conditions en une seule passe
+        if (_isParamedical(staff.groupe) && staff.groupe == 'Garde 12H') {
+          staff.groupe = 'Garde 24H';
+          paramedicalCount++;
+          totalModified++;
+          print(
+              '[StaffProvider] 🔄 Paramédical: ${staff.nom} - Garde 12H → Garde 24H');
+        }
+        // ✅ CORRECTION UNIQUE : Vérifie les deux conditions en une seule passe
+        else if (_isAgentHygiene(staff.groupe) && staff.groupe == '08h-12h') {
+          staff.groupe = '12h';
+          hygieneCount++;
+          totalModified++;
+          print('[StaffProvider] 🔄 Hygiène: ${staff.nom} - 08h-12h → 12h');
+        }
+
+        // ✅ SAUVEGARDE UNIQUE : Seulement si modification
+        if (staff.groupe != originalGroupe) {
+          _objectBox.staffBox.put(staff);
+        }
+      }
+
+      // ✅ RECHARGEMENT UNIQUE des données
+      if (totalModified > 0) {
+        await fetchStaffs();
+      }
+
+      final results = {
+        'totalModified': totalModified,
+        'paramedicalModified': paramedicalCount,
+        'hygieneModified': hygieneCount,
+      };
+
+      print('[StaffProvider] ✅ Correction terminée: $results');
+      return results;
+    } catch (e) {
+      print('[StaffProvider] ❌ Erreur correction groupes: $e');
+      rethrow;
+    }
+  }
+
+// ✅ MÉTHODE : Détection personnel paramédical
+  bool _isParamedical(String groupe) {
+    final paramedicalGrades = ["Garde 12H"];
+
+    final lowerGrade = groupe.toLowerCase();
+    return paramedicalGrades
+        .any((pattern) => lowerGrade.contains(pattern.toLowerCase()));
+  }
+
+// ✅ MÉTHODE : Détection agents d'hygiène
+  bool _isAgentHygiene(String groupe) {
+    final hygieneGrades = ["08h-12h"];
+
+    final lowerGrade = groupe.toLowerCase();
+    return hygieneGrades
+        .any((pattern) => lowerGrade.contains(pattern.toLowerCase()));
+  }
+
+// ✅ MÉTHODE : Statistiques avant correction
+  Map<String, dynamic> getGroupCorrectionStats() {
+    final allStaff = _staffs;
+    int paramedical12H = 0;
+    int hygiene8H12H = 0;
+    int totalParamadical = 0;
+    int totalHygiene = 0;
+
+    for (final staff in allStaff) {
+      if (_isParamedical(staff.groupe)) {
+        print(
+            "Groupes avant correction : ${_staffs.map((s) => s.groupe).toList()}");
+        totalParamadical++;
+        if (staff.groupe == 'Garde 12H') {
+          staff.groupe = 'Garde 24H'; // ✅ Modification correcte
+          paramedical12H++;
+        }
+      } else if (_isAgentHygiene(staff.groupe)) {
+        print(
+            "Groupes avant correction : ${_staffs.map((s) => s.groupe).toList()}");
+        totalHygiene++;
+        if (staff.groupe == '08h-12h') {
+          staff.groupe = '12H'; // ✅ Modification corrigée
+          hygiene8H12H++;
+        }
+      }
+    }
+
+    return {
+      'totalStaff': allStaff.length,
+      'totalParamadical': totalParamadical,
+      'paramedical12H': paramedical12H,
+      'totalHygiene': totalHygiene,
+      'hygiene8H12H': hygiene8H12H,
+    };
+  }
+
   @override
   void dispose() {
     print('[StaffProvider] 🧹 Nettoyage du provider');

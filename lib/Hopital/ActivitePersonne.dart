@@ -187,7 +187,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "A",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -196,7 +196,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "A",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -205,7 +205,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "A",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
 
@@ -216,7 +216,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "B",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -225,7 +225,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "B",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -234,7 +234,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "B",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -243,7 +243,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "B",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
 
@@ -254,7 +254,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "C",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -263,7 +263,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "C",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -272,7 +272,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "C",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
 
@@ -283,7 +283,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "D",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -292,7 +292,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "D",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
   ActivitePersonne(
@@ -301,7 +301,7 @@ final List<ActivitePersonne> activites = [
     groupe: "Garde 12H",
     equipe: "D",
     mois: "Septembre 2025",
-    horaire: "08h-08h",
+    horaire: "24h",
     jours: [],
   ),
 //Hygiéne
@@ -310,7 +310,7 @@ final List<ActivitePersonne> activites = [
     grade: "Agent d'hygiène",
     groupe: "08h-12h",
     mois: "Octobre 2025",
-    horaire: "08h-12h",
+    horaire: "12h",
     jours: [],
   ),
   ActivitePersonne(
@@ -318,7 +318,7 @@ final List<ActivitePersonne> activites = [
     grade: "Agent d'hygiène",
     groupe: "08h-12h",
     mois: "Octobre 2025",
-    horaire: "08h-12h",
+    horaire: "12h",
     jours: [],
   ),
 ];

@@ -3,7 +3,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 enum PdfPageType {
-  activiteTableau,
+  // ✅ 4 types distincts
+  activiteTableauMedical,
+  activiteTableauAdministratif,
+  activiteTableauParamedical,
+  activiteTableauHygiene,
+  // Pages de personnel
   medecinPlanning,
   medecinListe,
   paramedicalPlanning,
@@ -52,10 +57,24 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
   }
 
   void _initializeOptions() {
-    _options[PdfPageType.activiteTableau] = PdfPageOption(
-      type: PdfPageType.activiteTableau,
-      title:
-          "TABLEAU D'ACTIVITÉ DU MOIS ${widget.monthName.toUpperCase()} ${widget.year}",
+    _options[PdfPageType.activiteTableauMedical] = PdfPageOption(
+      type: PdfPageType.activiteTableauMedical,
+      title: "TABLEAU D'ACTIVITÉ - Personnel Médical",
+    );
+
+    _options[PdfPageType.activiteTableauAdministratif] = PdfPageOption(
+      type: PdfPageType.activiteTableauAdministratif,
+      title: "TABLEAU D'ACTIVITÉ - Personnel Administratif",
+    );
+
+    _options[PdfPageType.activiteTableauParamedical] = PdfPageOption(
+      type: PdfPageType.activiteTableauParamedical,
+      title: "TABLEAU D'ACTIVITÉ - Personnel Paramédical",
+    );
+
+    _options[PdfPageType.activiteTableauHygiene] = PdfPageOption(
+      type: PdfPageType.activiteTableauHygiene,
+      title: "TABLEAU D'ACTIVITÉ - Agents d'Hygiène",
     );
 
     _options[PdfPageType.medecinPlanning] = PdfPageOption(
@@ -331,8 +350,14 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
 
   String _getShortTitle(PdfPageType type) {
     switch (type) {
-      case PdfPageType.activiteTableau:
-        return "Tableau d'activité";
+      case PdfPageType.activiteTableauMedical:
+        return "Tableau d'activité Médical";
+      case PdfPageType.activiteTableauAdministratif:
+        return "Tableau d'activité Administratif";
+      case PdfPageType.activiteTableauParamedical:
+        return "Tableau d'activité Paramedical";
+      case PdfPageType.activiteTableauHygiene:
+        return "Tableau d'activité Hygiene";
       case PdfPageType.medecinPlanning:
         return "Planning médecins";
       case PdfPageType.medecinListe:

@@ -294,28 +294,47 @@ Future<String?> generateAndSaveMonthPlanningPDF(
 }
 
 /// Génère et sauvegarde le planning mensuel complet en PDF avec options
+/// ✅ VERSION CORRIGÉE - Génère le planning avec 4 types d'activité distincts
 Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
   BuildContext context, {
   required int year,
   required int month,
   required List<PdfPageOption> options,
 }) async {
-  // Si l'option tableau d'activité n'est pas sélectionnée, ne rien générer
-  final hasActiviteTableau = options.any(
-    (opt) => opt.type == PdfPageType.activiteTableau,
-  );
+  // ✅ Vérifier si au moins un type d'activité est sélectionné
+  final hasAnyActivite = options.any((opt) =>
+      opt.type == PdfPageType.activiteTableauMedical ||
+      opt.type == PdfPageType.activiteTableauAdministratif ||
+      opt.type == PdfPageType.activiteTableauParamedical ||
+      opt.type == PdfPageType.activiteTableauHygiene);
 
-  if (!hasActiviteTableau && options.isNotEmpty) {
+  if (!hasAnyActivite && options.isNotEmpty) {
     return null;
   }
 
-  // Récupérer l'option pour le tableau d'activité
-  final activiteOption = options.firstWhere(
-    (opt) => opt.type == PdfPageType.activiteTableau,
+  // ✅ Récupérer les 4 options distinctes
+  final medicalOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauMedical,
+    orElse: () =>
+        PdfPageOption(type: PdfPageType.activiteTableauMedical, title: ''),
+  );
+
+  final administratifOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauAdministratif,
     orElse: () => PdfPageOption(
-      type: PdfPageType.activiteTableau,
-      title: '',
-    ),
+        type: PdfPageType.activiteTableauAdministratif, title: ''),
+  );
+
+  final paramedicalOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauParamedical,
+    orElse: () =>
+        PdfPageOption(type: PdfPageType.activiteTableauParamedical, title: ''),
+  );
+
+  final hygieneOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauHygiene,
+    orElse: () =>
+        PdfPageOption(type: PdfPageType.activiteTableauHygiene, title: ''),
   );
 
   final staffProvider = Provider.of<StaffProvider>(context, listen: false);
@@ -340,7 +359,7 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
     fontWeight: pw.FontWeight.bold,
   );
 
-  // Fonction helper pour l'ordre des équipes (code existant)
+  // ✅ Fonction de tri (identique à TableauStaffPage)
   int getEquipePriority(String? equipe) {
     if (equipe == null) return 5;
     switch (equipe.toUpperCase()) {
@@ -367,33 +386,39 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
 
       int priorityA = getEquipePriority(a.equipe);
       int priorityB = getEquipePriority(b.equipe);
-
       if (priorityA != priorityB) {
         return priorityA.compareTo(priorityB);
       }
-
       return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
     });
   }
 
-  // Regrouper par groupe (code existant)
+  // Regrouper par groupe
   final Map<String, List<dynamic>> grouped = {};
   for (var s in staffs) {
     final g = (s.groupe ?? 'Sans Groupe').toString();
     grouped.putIfAbsent(g, () => []).add(s);
   }
 
-  // Pour chaque groupe, créer une page
+  final prefix = getMonthPrefix(monthName);
+
+  // ✅ GÉNÉRATION DES PAGES SELON LES OPTIONS
   grouped.forEach((groupe, membres) {
     List<List<dynamic>> subGroups = [];
+    PdfPageOption? currentOption;
+    String pageTitle = '';
 
-    if (groupe.toUpperCase().contains('08H') &&
-        groupe.toUpperCase().contains('12H') &&
-        !groupe.toUpperCase().contains('16H')) {
+    // ✅ Déterminer le type et l'option correspondante
+    if (groupe.toUpperCase().contains('08H-12H')) {
+      // Agents d'hygiène
+      if (!options.any((o) => o.type == PdfPageType.activiteTableauHygiene))
+        return;
+      currentOption = hygieneOption;
       sortStaffList(membres);
       subGroups.add(membres);
-    } else if (groupe.toUpperCase().contains('08H') &&
-        groupe.toUpperCase().contains('16H')) {
+      pageTitle = "Agents d'Hygiène (12h)";
+    } else if (groupe.toUpperCase().contains('08H-16H')) {
+      // 08H-16H : séparer médecins / administratifs
       final medecins = membres.where((s) {
         final grade = (s.grade ?? '').toString().toUpperCase();
         return grade.contains('MÉDECIN') ||
@@ -411,161 +436,40 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
       sortStaffList(medecins);
       sortStaffList(autres);
 
-      if (medecins.isNotEmpty) subGroups.add(medecins);
-      if (autres.isNotEmpty) subGroups.add(autres);
+      // Médecins
+      if (medecins.isNotEmpty &&
+          options.any((o) => o.type == PdfPageType.activiteTableauMedical)) {
+        subGroups.add(medecins);
+        currentOption = medicalOption;
+        pageTitle = '08h–16h – (Personnel Médical)';
+        _addActivityPage(pdf, medecins, daysInMonth, oswald, year, month,
+            pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
+      }
+
+      // Administratifs
+      if (autres.isNotEmpty &&
+          options
+              .any((o) => o.type == PdfPageType.activiteTableauAdministratif)) {
+        currentOption = administratifOption;
+        pageTitle = '08h–16h';
+        _addActivityPage(pdf, autres, daysInMonth, oswald, year, month,
+            pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
+      }
+      return;
     } else {
+      // Personnel paramédical (08H-08H)
+      if (!options.any((o) => o.type == PdfPageType.activiteTableauParamedical))
+        return;
+      currentOption = paramedicalOption;
       sortStaffList(membres);
       subGroups.add(membres);
+      pageTitle = '(24h)';
     }
 
-    // Génération des pages
+    // Générer les pages pour les groupes simples
     for (var list in subGroups) {
-      final bool isMedecinsGroup = list.isNotEmpty &&
-          ((list.first.grade ?? '')
-                  .toString()
-                  .toUpperCase()
-                  .contains('MÉDECIN') ||
-              (list.first.grade ?? '')
-                  .toString()
-                  .toUpperCase()
-                  .contains('MEDECIN') ||
-              (list.first.grade ?? '')
-                  .toString()
-                  .toUpperCase()
-                  .contains('RHUMATOLOGUE'));
-
-      final bool isAgentsHygiene = list.isNotEmpty &&
-          ((list.first.grade ?? '')
-                  .toString()
-                  .toUpperCase()
-                  .contains('HYGIÈNE') ||
-              (list.first.grade ?? '')
-                  .toString()
-                  .toUpperCase()
-                  .contains('HYGIENE'));
-
-      String title;
-      if (isAgentsHygiene) {
-        title = "Agents d'Hygiène (12h)";
-      } else if (isMedecinsGroup) {
-        title = '08h–16h – (Personnel Médical)';
-      } else if (groupe.toUpperCase().contains('08H') &&
-          groupe.toUpperCase().contains('16H')) {
-        title = '08h–16h';
-      } else {
-        title = '(24h)';
-      }
-
-      final prefix = getMonthPrefix(monthName);
-
-      // Construire le titre principal avec les options
-      String mainTitle =
-          'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year';
-
-      if (activiteOption.includeModificatif) {
-        mainTitle += ' (Modificatif)';
-      }
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4.landscape,
-          margin: const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          header: (ctx) => pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            mainAxisAlignment: pw.MainAxisAlignment.center,
-            children: [
-              pw.Center(
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.center,
-                  children: [
-                    pw.Text('RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE',
-                        style: bold),
-                    pw.Text(
-                        'MINISTÈRE DE LA SANTÉ, DE LA POPULATION ET DE LA RÉFORME HOSPITALIÈRE',
-                        style: baseStyle),
-                    pw.SizedBox(height: 4),
-                    pw.Text(
-                        'Établissement Hospitalier d\'Aïn El Türck - Dr. Medjber Tami',
-                        style: baseStyle),
-                    pw.SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          build: (ctx) => [
-            pw.Spacer(),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.start,
-              children: [
-                pw.Text('Unité : Service de Rhumatologie',
-                    style: baseStyle.copyWith(fontSize: 12)),
-              ],
-            ),
-            pw.SizedBox(height: 6),
-            pw.Center(
-              child: pw.Text(
-                mainTitle,
-                style: bold.copyWith(fontSize: 14),
-              ),
-            ),
-
-            // Ajouter le texte personnalisé si présent
-            if (activiteOption.customText != null) ...[
-              pw.SizedBox(height: 4),
-              pw.Center(
-                child: pw.Text(
-                  activiteOption.customText!,
-                  style: baseStyle.copyWith(
-                    fontSize: 11,
-                    color: PdfColors.blue700,
-                  ),
-                ),
-              ),
-            ],
-
-            pw.SizedBox(height: 4),
-            pw.Center(
-                child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
-            pw.SizedBox(height: 8),
-            pw.Center(
-              child: _buildGroupTable(list, daysInMonth, oswald, year, month),
-            ),
-            pw.SizedBox(height: 8),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              children: [
-                pw.Text(
-                    'G : Garde       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
-                    style: baseStyle),
-                pw.Text(
-                    'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-                    style: baseStyle),
-              ],
-            ),
-            pw.SizedBox(height: 6),
-            pw.Text(
-                'N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction',
-                style: baseStyle),
-            pw.Spacer(),
-          ],
-          footer: (ctx) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-                children: [
-                  pw.Text('Le Médecin Chef', style: baseStyle),
-                  pw.Text('Le Surveillant Médical', style: baseStyle),
-                  pw.Text('DAPM', style: baseStyle),
-                  pw.Text('Le Directeur Général', style: baseStyle),
-                ],
-              ),
-              pw.SizedBox(height: 90),
-            ],
-          ),
-        ),
-      );
+      _addActivityPage(pdf, list, daysInMonth, oswald, year, month, pageTitle,
+          currentOption, logo, bold, baseStyle, prefix, monthName);
     }
   });
 
@@ -573,19 +477,159 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
   try {
     final pdfBytes = await pdf.save();
     final now = DateTime.now();
-    final formattedTime =
-        '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}m${now.second.toString().padLeft(2, '0')}s${now.millisecond.toString().padLeft(3, '0')}';
+    final formattedTime = '${now.hour.toString().padLeft(2, '0')}h'
+        '${now.minute.toString().padLeft(2, '0')}m'
+        '${now.second.toString().padLeft(2, '0')}s'
+        '${now.millisecond.toString().padLeft(3, '0')}';
 
     final fileName = 'Planning_${monthName}_${year}_$formattedTime.pdf';
+
     if (Platform.isAndroid) {
       return await _saveToAndroid(pdfBytes, fileName);
     } else {
       return await _saveToDesktop(pdfBytes, fileName);
     }
   } catch (e) {
-    print('❌ Erreur sauvegarde PDF : $e');
+    print('✖ Erreur sauvegarde PDF : $e');
     return null;
   }
+}
+
+/// ✅ Fonction helper pour ajouter une page d'activité
+void _addActivityPage(
+  pw.Document pdf,
+  List<dynamic> staffList,
+  int daysInMonth,
+  pw.Font oswald,
+  int year,
+  int month,
+  String subtitle,
+  PdfPageOption? option,
+  pw.MemoryImage logo,
+  pw.TextStyle bold,
+  pw.TextStyle baseStyle,
+  String prefix,
+  String monthName,
+) {
+  // Construction du titre avec Modificatif
+  String mainTitle =
+      'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year';
+  if (option?.includeModificatif ?? false) {
+    mainTitle += ' (Modificatif)';
+  }
+
+  pdf.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4.landscape,
+      margin: const pw.EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      header: (ctx) => _buildPageHeader(logo, bold, baseStyle),
+      build: (ctx) => [
+        pw.Spacer(),
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.start,
+          children: [
+            pw.Text('Unité : Service de Rhumatologie',
+                style: baseStyle.copyWith(fontSize: 12)),
+          ],
+        ),
+        pw.SizedBox(height: 6),
+
+        // ✅ Titre avec texte personnalisé sur la même ligne
+        pw.Center(
+          child: pw.Column(
+            children: [
+              pw.Text(mainTitle,
+                  style: bold.copyWith(fontSize: 14),
+                  textAlign: pw.TextAlign.center),
+              if (option?.customText != null) ...[
+                pw.SizedBox(height: 2),
+                pw.Text(
+                  option!.customText!,
+                  style: baseStyle.copyWith(
+                    fontSize: 10,
+                    color: PdfColors.blue700,
+                    fontStyle: pw.FontStyle.italic,
+                  ),
+                  textAlign: pw.TextAlign.center,
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        pw.SizedBox(height: 4),
+        pw.Center(child: pw.Text(subtitle, style: bold.copyWith(fontSize: 12))),
+        pw.SizedBox(height: 8),
+        pw.Center(
+            child:
+                _buildGroupTable(staffList, daysInMonth, oswald, year, month)),
+        pw.SizedBox(height: 8),
+        _buildPageFooterContent(baseStyle),
+        pw.Spacer(),
+      ],
+      footer: (ctx) => _buildPageFooter(baseStyle),
+    ),
+  );
+}
+
+/// Helpers pour header/footer (à créer si pas déjà présents)
+pw.Widget _buildPageHeader(
+    pw.MemoryImage logo, pw.TextStyle bold, pw.TextStyle baseStyle) {
+  return pw.Row(
+    crossAxisAlignment: pw.CrossAxisAlignment.center,
+    mainAxisAlignment: pw.MainAxisAlignment.center,
+    children: [
+      pw.Center(
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.Text('RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE',
+                style: bold),
+            pw.Text(
+                'MINISTÈRE DE LA SANTÉ, DE LA POPULATION ET DE LA RÉFORME HOSPITALIÈRE',
+                style: baseStyle),
+            pw.SizedBox(height: 4),
+            pw.Text(
+                'Établissement Hospitalier d\'Aïn El Türck - Dr. Medjber Tami',
+                style: baseStyle),
+            pw.SizedBox(height: 24),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+pw.Widget _buildPageFooterContent(pw.TextStyle baseStyle) {
+  return pw.Row(
+    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+    children: [
+      pw.Text(
+          'G : Garde       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+          style: baseStyle),
+      pw.Text(
+          'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+          style: baseStyle),
+    ],
+  );
+}
+
+pw.Widget _buildPageFooter(pw.TextStyle baseStyle) {
+  return pw.Column(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+        children: [
+          pw.Text('Le Médecin Chef', style: baseStyle),
+          pw.Text('Le Surveillant Médical', style: baseStyle),
+          pw.Text('DAPM', style: baseStyle),
+          pw.Text('Le Directeur Général', style: baseStyle),
+        ],
+      ),
+      pw.SizedBox(height: 90),
+    ],
+  );
 }
 
 Future<String?> _saveToAndroid(List<int> pdfBytes, String fileName) async {
@@ -658,12 +702,62 @@ pw.Widget _buildGroupTable(
       s.equipe != null &&
       ['A', 'B', 'C', 'D'].contains(s.equipe.toString().toUpperCase()));
 
-  // Headers avec ou sans colonne Équipe
+// // ✅ Headers avec nombre de jours dynamique
+//   final headers = hasEquipes
+//       ? <String>['N°', 'Nom et Prénom', 'Grade', 'Équipe'] +
+//           List.generate(
+//             daysInMonth,
+//             (i) {
+//               final jour = i + 1;
+//               final date = DateTime(year, month, jour);
+//               final nomJour = DateFormat('EEE', 'fr_FR')
+//                   .format(date)
+//                   .substring(0, 3)
+//                   .toUpperCase();
+//               return '$jour\n$nomJour';
+//             },
+//           )
+//       : <String>['N°', 'Nom et Prénom', 'Grade'] +
+//           List.generate(daysInMonth, (i) {
+//             final jour = i + 1;
+//             final date = DateTime(year, month, jour);
+//             final nomJour = DateFormat('EEE', 'fr_FR')
+//                 .format(date)
+//                 .substring(0, 3)
+//                 .toUpperCase();
+//             return '$jour\n$nomJour';
+//           });
+// ✅ Headers avec nombre de jours dynamique (retourne Map)
   final headers = hasEquipes
-      ? <String>['N°', 'Nom et Prénom', 'Grade', 'Équipe'] +
-          List.generate(daysInMonth, (i) => '${i + 1}')
-      : <String>['N°', 'Nom et Prénom', 'Grade'] +
-          List.generate(daysInMonth, (i) => '${i + 1}');
+      ? <Map<String, dynamic>>[
+          {'jour': 'N°', 'nomJour': ''},
+          {'jour': 'Nom et Prénom', 'nomJour': ''},
+          {'jour': 'Grade', 'nomJour': ''},
+          {'jour': 'Équipe', 'nomJour': ''},
+          ...List.generate(daysInMonth, (i) {
+            final jour = i + 1;
+            final date = DateTime(year, month, jour);
+            final nomJour = DateFormat('EEE', 'fr_FR')
+                .format(date)
+                .substring(0, 3)
+                .toUpperCase();
+            return {'jour': '$jour', 'nomJour': nomJour};
+          }),
+        ]
+      : <Map<String, dynamic>>[
+          {'jour': 'N°', 'nomJour': ''},
+          {'jour': 'Nom et Prénom', 'nomJour': ''},
+          {'jour': 'Grade', 'nomJour': ''},
+          ...List.generate(daysInMonth, (i) {
+            final jour = i + 1;
+            final date = DateTime(year, month, jour);
+            final nomJour = DateFormat('EEE', 'fr_FR')
+                .format(date)
+                .substring(0, 3)
+                .toUpperCase();
+            return {'jour': '$jour', 'nomJour': nomJour};
+          }),
+        ];
 
   final data = <List<String>>[];
   int index = 1;
@@ -748,13 +842,33 @@ pw.Widget _buildGroupTable(
         padding: const pw.EdgeInsets.symmetric(vertical: 4, horizontal: 2),
         decoration: pw.BoxDecoration(color: bg),
         alignment: pw.Alignment.center,
-        child: pw.Text(
-          headers[ci],
-          style: pw.TextStyle(
-              font: oswald,
-              fontSize: 8.5,
-              fontWeight: pw.FontWeight.bold,
-              color: txtColor),
+        child: pw.Column(
+          mainAxisAlignment: pw.MainAxisAlignment.center,
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.Center(
+              child: pw.Text(
+                headers[ci]['jour'].toString(),
+                style: pw.TextStyle(
+                  font: oswald,
+                  fontSize: 9,
+                  fontWeight: pw.FontWeight.bold,
+                  color: txtColor,
+                ),
+              ),
+            ),
+            if ((headers[ci]['nomJour'] ?? '').isNotEmpty)
+              pw.Center(
+                child: pw.Text(
+                  headers[ci]['nomJour'].toString(),
+                  style: pw.TextStyle(
+                    font: oswald,
+                    fontSize: 8,
+                    color: txtColor,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
