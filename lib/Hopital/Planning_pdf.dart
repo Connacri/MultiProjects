@@ -53,16 +53,29 @@ Future<String?> generatePersonnelListsPDF(
         grade.contains('RHUMATOLOGUE');
   }).toList();
 
-  pw.Widget _buildScheduleCell(
-    String text,
-    pw.Font oswald,
-    double fontSize, {
-    pw.Alignment alignment = pw.Alignment.center,
-    bool bold = false,
-  }) {
+  if (medecins.isNotEmpty &&
+      (options.isEmpty ||
+          options.any((opt) => opt.type == PdfPageType.medecinPlanning))) {
+    // Construire le titre avec les options
+    String mainTitle =
+        'Planning des Médecins « Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year »';
+
+    if (medecinPlanningOption.includeModificatif) {
+      mainTitle += ' (Modificatif)';
+    }
+
+  // ⭐ CRÉER LE FOOTER EN AVANCE
+  final footer = await _buildFooterWithStamp(
+    baseStyle,
+    medecinPlanningOption.selectedImagePath,
+    oswald,
+  );
+
+  pw.Widget _buildScheduleCell(String text, pw.Font oswald, double fontSize,
+      {pw.Alignment alignment = pw.Alignment.center, bool bold = false}) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-      alignment: alignment,
+      alignment: pw.Alignment.center, // ⭐ TOUJOURS CENTRÉ
       constraints: const pw.BoxConstraints(minHeight: 35),
       child: pw.Text(
         text,
@@ -71,9 +84,7 @@ Future<String?> generatePersonnelListsPDF(
           fontSize: fontSize,
           fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
         ),
-        textAlign: alignment == pw.Alignment.centerLeft
-            ? pw.TextAlign.left
-            : pw.TextAlign.center,
+        textAlign: pw.TextAlign.center, // ⭐ TOUJOURS CENTRÉ
         maxLines: 3,
         overflow: pw.TextOverflow.clip,
       ),
@@ -107,7 +118,7 @@ Future<String?> generatePersonnelListsPDF(
               h,
               style: pw.TextStyle(
                 font: oswald,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: pw.FontWeight.bold,
                 color: PdfColors.white,
               ),
@@ -166,16 +177,17 @@ Future<String?> generatePersonnelListsPDF(
             _buildScheduleCell(
               nom,
               oswald,
-              9.5,
-              alignment: pw.Alignment.centerLeft,
+              12,
+              alignment: pw.Alignment.center,
               bold: true,
             ),
+
             // ⭐ MAINTENANT ON AFFICHE LES LIBELLÉS
-            _buildScheduleCell(dimanche, oswald, 8.5),
-            _buildScheduleCell(lundi, oswald, 8.5),
-            _buildScheduleCell(mardi, oswald, 8.5),
-            _buildScheduleCell(mercredi, oswald, 8.5),
-            _buildScheduleCell(jeudi, oswald, 8.5),
+            _buildScheduleCell(dimanche, oswald, 10),
+            _buildScheduleCell(lundi, oswald, 10),
+            _buildScheduleCell(mardi, oswald, 10),
+            _buildScheduleCell(mercredi, oswald, 10),
+            _buildScheduleCell(jeudi, oswald, 10),
           ],
         ),
       );
@@ -224,6 +236,17 @@ Future<String?> generatePersonnelListsPDF(
             _buildWeeklyScheduleTableImproved(medecins, oswald),
             pw.Spacer(),
             _buildFooter(baseStyle),
+            pw.Spacer(),
+            _buildWeeklyScheduleTableImproved(medecins, oswald),
+            _buildNotesSection(
+                medecinPlanningOption.customNotes, oswald, baseStyle),
+            // ⭐ AJOUT
+            pw.Spacer(),
+            await _buildFooterWithStamp(
+              baseStyle,
+              medecinPlanningOption.selectedImagePath, // ⭐ CHANGÉ
+              oswald,
+            ),
           ],
         ),
       ),
@@ -371,7 +394,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
       {pw.Alignment alignment = pw.Alignment.center, bool bold = false}) {
     return pw.Container(
       padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-      alignment: alignment,
+      alignment: pw.Alignment.center, // ⭐ TOUJOURS CENTRÉ
       constraints: const pw.BoxConstraints(minHeight: 35),
       child: pw.Text(
         text,
@@ -380,9 +403,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
           fontSize: fontSize,
           fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
         ),
-        textAlign: alignment == pw.Alignment.centerLeft
-            ? pw.TextAlign.left
-            : pw.TextAlign.center,
+        textAlign: pw.TextAlign.center, // ⭐ TOUJOURS CENTRÉ
         maxLines: 3,
         overflow: pw.TextOverflow.clip,
       ),
@@ -501,7 +522,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
               nom,
               oswald,
               9.5,
-              alignment: pw.Alignment.centerLeft,
+              alignment: pw.Alignment.center,
               bold: true,
             ),
             // ⭐ MAINTENANT ON AFFICHE LES LIBELLÉS
@@ -774,6 +795,119 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
   );
 }
 
+pw.Widget _buildNotesSection(
+    String? notes, pw.Font oswald, pw.TextStyle baseStyle) {
+  if (notes == null || notes.isEmpty) {
+    return pw.SizedBox.shrink();
+  }
+
+  return pw.Container(
+    margin: const pw.EdgeInsets.only(top: 15, bottom: 10),
+    padding: const pw.EdgeInsets.all(8),
+    decoration: pw.BoxDecoration(
+      border: pw.Border.all(color: PdfColors.grey600, width: 0.8),
+      color: PdfColors.grey50,
+      borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
+    ),
+    child: pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        pw.Text(
+          'NB : ',
+          style: pw.TextStyle(
+            font: oswald,
+            fontSize: 9,
+            fontWeight: pw.FontWeight.bold,
+            color: PdfColors.red700,
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(
+            notes,
+            style: baseStyle.copyWith(
+              fontSize: 8.5,
+              color: PdfColors.grey900,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<pw.Widget?> _buildStampImage(String? imagePath, double maxWidth) async {
+  if (imagePath == null || imagePath.isEmpty) {
+    return null;
+  }
+
+  try {
+    // Charger l'image depuis les assets
+    final imageData = await rootBundle.load(imagePath);
+    final imageBytes = imageData.buffer.asUint8List();
+
+    // Créer l'image pour le PDF
+    final image = pw.MemoryImage(imageBytes);
+
+    return pw.Container(
+      constraints: pw.BoxConstraints(
+        maxWidth: maxWidth,
+        maxHeight: 80,
+      ),
+      child: pw.Image(
+        image,
+        fit: pw.BoxFit.contain,
+      ),
+    );
+  } catch (e) {
+    print('❌ Erreur chargement image $imagePath: $e');
+    return null;
+  }
+}
+
+Future<pw.Widget> _buildFooterWithStamp(
+  pw.TextStyle baseStyle,
+  String? stampImagePath,
+  pw.Font oswald,
+) async {
+  pw.Widget? stampWidget;
+  if (stampImagePath != null && stampImagePath.isNotEmpty) {
+    stampWidget = await _buildStampImage(stampImagePath, 100);
+  }
+
+  return pw.Column(
+    mainAxisAlignment: pw.MainAxisAlignment.end,
+    children: [
+      pw.Align(
+        alignment: pw.Alignment.centerRight,
+        child: pw.Text(
+          'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+          style: baseStyle,
+        ),
+      ),
+      pw.SizedBox(height: 15),
+      pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Column(
+            children: [
+              pw.Text('Le Médecin chef', style: baseStyle),
+              if (stampWidget != null) ...[
+                pw.SizedBox(height: 5),
+                stampWidget,
+              ],
+            ],
+          ),
+          pw.Text('Le Surveillant Médical', style: baseStyle),
+          pw.Text('DAPM', style: baseStyle),
+          pw.Text('Le Directeur Général', style: baseStyle),
+        ],
+      ),
+      pw.SizedBox(height: 20),
+    ],
+  );
+}
+
 // ========== TABLEAU PERSONNEL MÉDICAL ==========
 
 pw.Widget _buildMedicalStaffTable(
@@ -785,9 +919,9 @@ pw.Widget _buildMedicalStaffTable(
     pw.TableRow(
       decoration: const pw.BoxDecoration(color: PdfColors.grey300),
       children: [
-        _buildCell('Nom et Prénom', oswald, 9, bold: true),
-        _buildCell('Fonction', oswald, 9, bold: true),
-        _buildCell('O.B.S', oswald, 9, bold: true),
+        _buildCell('Nom et Prénom', oswald, 10, bold: true),
+        _buildCell('Fonction', oswald, 10, bold: true),
+        _buildCell('O.B.S', oswald, 10, bold: true),
       ],
     ),
   );
@@ -797,16 +931,16 @@ pw.Widget _buildMedicalStaffTable(
     rows.add(
       pw.TableRow(
         children: [
-          _buildCell((medecin.nom ?? '').toString(), oswald, 9,
-              alignment: pw.Alignment.centerLeft),
-          _buildCell((medecin.grade ?? '').toString(), oswald, 8.5,
-              alignment: pw.Alignment.centerLeft),
+          _buildCell((medecin.nom ?? '').toString(), oswald, 10,
+              alignment: pw.Alignment.center, bold: true),
+          _buildCell((medecin.grade ?? '').toString(), oswald, 10,
+              alignment: pw.Alignment.center),
           _buildCell(
             _getObservationWithTimeOff(medecin, month, year).length == 0
                 ? '08h-16h'
                 : _getObservationWithTimeOff(medecin, month, year),
             oswald,
-            9,
+            10,
           )
         ],
       ),
@@ -817,8 +951,8 @@ pw.Widget _buildMedicalStaffTable(
     border: pw.TableBorder.all(width: 0.5, color: PdfColors.grey800),
     columnWidths: const {
       0: pw.FlexColumnWidth(3),
-      1: pw.FlexColumnWidth(4.5),
-      2: pw.FlexColumnWidth(2),
+      1: pw.FlexColumnWidth(3),
+      2: pw.FlexColumnWidth(6),
     },
     children: rows,
   );
@@ -877,7 +1011,7 @@ String _getObservationWithTimeOff(dynamic staff, int month, int year) {
   }
 
   // Joindre avec un saut de ligne pour afficher chaque congé sur une ligne séparée
-  return observations.join('\n');
+  return observations.join('  |  ');
 }
 
 // ========== TABLEAU PERSONNEL PARAMÉDICAL ==========
@@ -899,14 +1033,12 @@ pw.Widget _buildParamedicalStaffTable(
 
   final groupe08h08h = paramedical.where((s) {
     final groupe = (s.groupe ?? '').toString().toUpperCase();
-    return groupe.contains('GARDE') && groupe.contains('12H');
+    return groupe.contains('GARDE') && groupe.contains('24H');
   }).toList();
 
   final groupe08h12h = paramedical.where((s) {
     final groupe = (s.groupe ?? '').toString().toUpperCase();
-    return groupe.contains('08H') &&
-        groupe.contains('12H') &&
-        !groupe.contains('16H');
+    return groupe.contains('12H');
   }).toList();
 
   // Regrouper 08h-08h par équipe
@@ -933,10 +1065,10 @@ pw.Widget _buildParamedicalStaffTable(
     final obsText = _getObservationWithTimeOff(staff, month, year);
     if (obsText.isEmpty) return rowHeight;
 
-    // Compter le nombre de lignes (nombre de \n + 1)
-    final lineCount = '\n'.allMatches(obsText).length + 1;
-    // Arrondir pour éviter les décalages de pixels
-    return (rowHeight * lineCount.clamp(1, 4)).roundToDouble();
+    // Calcul basé sur la longueur du texte pour une ligne unique
+    final textLength = obsText.length;
+    if (textLength > 80) return (rowHeight * 2).roundToDouble();
+    return rowHeight;
   }
 
   // Calculer la hauteur totale de chaque section d'horaire
@@ -969,23 +1101,27 @@ pw.Widget _buildParamedicalStaffTable(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           // Colonne Horaire
-          pw.Column(
-            children: [
-              _buildMergedCell('Horaire', oswald, 9, 80, headerHeight,
-                  bold: true, header: true, fullBorder: true),
-              _buildMergedCell('08h-16h', oswald, 9, 80,
-                  getTotalHeightForGroup(groupe08h16h),
-                  bold: true, fullBorder: true, isHoraireBoundary: true),
-              _buildMergedCell('24h', oswald, 9, 80,
-                  getTotalHeightFor08h08h(groupesEquipe, ordreGroupes),
-                  bold: true, fullBorder: true, isHoraireBoundary: true),
-              _buildMergedCell(
-                  '12h', oswald, 9, 80, getTotalHeightForGroup(groupe08h12h),
-                  bold: true, fullBorder: true, isHoraireBoundary: true),
-            ],
+          pw.Expanded(
+            flex: 1,
+            child: pw.Column(
+              children: [
+                _buildMergedCell('Horaire', oswald, 10, 80, headerHeight,
+                    bold: true, header: true, fullBorder: true),
+                _buildMergedCell('08h-16h', oswald, 10, 80,
+                    getTotalHeightForGroup(groupe08h16h),
+                    bold: true, fullBorder: true, isHoraireBoundary: true),
+                _buildMergedCell('24h', oswald, 10, 80,
+                    getTotalHeightFor08h08h(groupesEquipe, ordreGroupes),
+                    bold: true, fullBorder: true, isHoraireBoundary: true),
+                _buildMergedCell(
+                    '12h', oswald, 10, 80, getTotalHeightForGroup(groupe08h12h),
+                    bold: true, fullBorder: true, isHoraireBoundary: true),
+              ],
+            ),
           ),
           // Colonnes Nom, Fonction et OBS
           pw.Expanded(
+            flex: 8,
             child: pw.Column(
               children: [
                 // En-tête
@@ -994,19 +1130,19 @@ pw.Widget _buildParamedicalStaffTable(
                     pw.Expanded(
                       flex: 3,
                       child: _buildMergedCell(
-                          'Nom et Prénom', oswald, 9, null, headerHeight,
+                          'Nom et Prénom', oswald, 10, null, headerHeight,
                           bold: true, header: true, fullBorder: true),
                     ),
                     pw.Expanded(
                       flex: 3,
                       child: _buildMergedCell(
-                          'Fonction', oswald, 9, null, headerHeight,
+                          'Fonction', oswald, 10, null, headerHeight,
                           bold: true, header: true, fullBorder: true),
                     ),
                     pw.Expanded(
-                      flex: 2,
+                      flex: 6,
                       child: _buildMergedCell(
-                          'OBS', oswald, 9, null, headerHeight,
+                          'OBS', oswald, 10, null, headerHeight,
                           bold: true, header: true, fullBorder: true),
                     ),
                   ],
@@ -1022,21 +1158,21 @@ pw.Widget _buildParamedicalStaffTable(
                         pw.Expanded(
                           flex: 3,
                           child: _buildMergedCell((m.nom ?? '').toString(),
-                              oswald, 8, null, dynamicHeight,
+                              oswald, 10, null, dynamicHeight,
                               alignLeft: true, isHoraireBoundary: index == 0),
                         ),
                         pw.Expanded(
                           flex: 3,
                           child: _buildMergedCell((m.grade ?? '').toString(),
-                              oswald, 7.5, null, dynamicHeight,
+                              oswald, 10, null, dynamicHeight,
                               alignLeft: true, isHoraireBoundary: index == 0),
                         ),
                         pw.Expanded(
-                          flex: 2,
+                          flex: 6,
                           child: _buildMergedCell(
                               _getObservationWithTimeOff(m, month, year),
                               oswald,
-                              7,
+                              10,
                               null,
                               dynamicHeight,
                               isHoraireBoundary: index == 0),
@@ -1070,7 +1206,7 @@ pw.Widget _buildParamedicalStaffTable(
                           pw.Expanded(
                             flex: 3,
                             child: _buildMergedCell(
-                                'Groupe $equipe', oswald, 8.5, null, rowHeight,
+                                'Groupe $equipe', oswald, 10, null, rowHeight,
                                 bold: true,
                                 isGroupHeader: true,
                                 isHoraireBoundary: isFirstGroup),
@@ -1078,13 +1214,13 @@ pw.Widget _buildParamedicalStaffTable(
                           pw.Expanded(
                             flex: 3,
                             child: _buildMergedCell(
-                                '', oswald, 8, null, rowHeight,
+                                '', oswald, 10, null, rowHeight,
                                 isHoraireBoundary: isFirstGroup),
                           ),
                           pw.Expanded(
-                            flex: 2,
+                            flex: 6,
                             child: _buildMergedCell(
-                                '', oswald, 7.5, null, rowHeight,
+                                '', oswald, 10, null, rowHeight,
                                 isHoraireBoundary: isFirstGroup),
                           ),
                         ],
@@ -1097,7 +1233,7 @@ pw.Widget _buildParamedicalStaffTable(
                             pw.Expanded(
                               flex: 3,
                               child: _buildMergedCell((m.nom ?? '').toString(),
-                                  oswald, 8, null, dynamicHeight,
+                                  oswald, 10, null, dynamicHeight,
                                   alignLeft: true),
                             ),
                             pw.Expanded(
@@ -1105,17 +1241,17 @@ pw.Widget _buildParamedicalStaffTable(
                               child: _buildMergedCell(
                                   (m.grade ?? '').toString(),
                                   oswald,
-                                  7.5,
+                                  10,
                                   null,
                                   dynamicHeight,
                                   alignLeft: true),
                             ),
                             pw.Expanded(
-                              flex: 2,
+                              flex: 6,
                               child: _buildMergedCell(
                                   _getObservationWithTimeOff(m, month, year),
                                   oswald,
-                                  7,
+                                  10,
                                   null,
                                   dynamicHeight),
                             ),
@@ -1142,21 +1278,21 @@ pw.Widget _buildParamedicalStaffTable(
                         pw.Expanded(
                           flex: 3,
                           child: _buildMergedCell((m.nom ?? '').toString(),
-                              oswald, 8, null, dynamicHeight,
+                              oswald, 10, null, dynamicHeight,
                               alignLeft: true, isHoraireBoundary: index == 0),
                         ),
                         pw.Expanded(
                           flex: 3,
                           child: _buildMergedCell((m.grade ?? '').toString(),
-                              oswald, 7.5, null, dynamicHeight,
+                              oswald, 10, null, dynamicHeight,
                               alignLeft: true, isHoraireBoundary: index == 0),
                         ),
                         pw.Expanded(
-                          flex: 2,
+                          flex: 6,
                           child: _buildMergedCell(
                               _getObservationWithTimeOff(m, month, year),
                               oswald,
-                              7,
+                              10,
                               null,
                               dynamicHeight,
                               isHoraireBoundary: index == 0),

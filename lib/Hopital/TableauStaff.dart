@@ -3459,40 +3459,38 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   Future<void> _showPdfOptionsAndGenerate(BuildContext context) async {
-    // Liste d'images disponibles (à adapter selon votre projet)
-    final List<File> availableImages = [
-      // Exemple : File('assets/images/logo1.png'),
-      // Ajoutez vos images ici
-      File('assets/photos/hopital/pitol/stamps (1).webp'),
-      File('assets/photos/hopital/pitol/stamps (2).webp'),
-      File('assets/photos/hopital/pitol/stamps (3).webp'),
-      File('assets/photos/hopital/pitol/stamps (4).webp'),
-      File('assets/photos/hopital/pitol/stamps (5).webp'),
-      File('assets/photos/hopital/pitol/stamps (6).webp'),
-      File('assets/photos/hopital/pitol/stamps (7).webp'),
-      File('assets/photos/hopital/pitol/stamps (8).webp'),
-      File('assets/photos/hopital/pitol/stamps (9).webp'),
-      File('assets/photos/hopital/pitol/stamps (10).webp'),
-      File('assets/photos/hopital/pitol/stamps (11).webp'),
-      File('assets/photos/hopital/pitol/stamps (12).webp'),
-      File('assets/photos/hopital/pitol/stamps (13).webp'),
-      File('assets/photos/hopital/pitol/stamps (14).webp'),
-      File('assets/photos/hopital/pitol/stamps (15).webp'),
-      File('assets/photos/hopital/pitol/stamps (16).webp'),
-      File('assets/photos/hopital/pitol/stamps (17).webp'),
-      File('assets/photos/hopital/pitol/stamps (18).webp'),
-      File('assets/photos/hopital/pitol/stamps (19).webp'),
-      File('assets/photos/hopital/pitol/stamps (20).webp'),
-      File('assets/photos/hopital/pitol/stamps (21).webp'),
-      File('assets/photos/hopital/pitol/stamps (22).webp'),
+    // ⭐ CORRECTION : Liste de chemins d'assets (String) au lieu de File
+    final List<String> availableImagePaths = [
+      'assets/photos/hopital/pitol/stamps (1).webp',
+      'assets/photos/hopital/pitol/stamps (2).webp',
+      'assets/photos/hopital/pitol/stamps (3).webp',
+      'assets/photos/hopital/pitol/stamps (4).webp',
+      'assets/photos/hopital/pitol/stamps (5).webp',
+      'assets/photos/hopital/pitol/stamps (6).webp',
+      'assets/photos/hopital/pitol/stamps (7).webp',
+      'assets/photos/hopital/pitol/stamps (8).webp',
+      'assets/photos/hopital/pitol/stamps (9).webp',
+      'assets/photos/hopital/pitol/stamps (10).webp',
+      'assets/photos/hopital/pitol/stamps (11).webp',
+      'assets/photos/hopital/pitol/stamps (12).webp',
+      'assets/photos/hopital/pitol/stamps (13).webp',
+      'assets/photos/hopital/pitol/stamps (14).webp',
+      'assets/photos/hopital/pitol/stamps (15).webp',
+      'assets/photos/hopital/pitol/stamps (16).webp',
+      'assets/photos/hopital/pitol/stamps (17).webp',
+      'assets/photos/hopital/pitol/stamps (18).webp',
+      'assets/photos/hopital/pitol/stamps (19).webp',
+      'assets/photos/hopital/pitol/stamps (20).webp',
+      'assets/photos/hopital/pitol/stamps (21).webp',
+      'assets/photos/hopital/pitol/stamps (22).webp',
     ];
 
-    // Afficher le dialog
+    // Afficher le dialog avec les chemins d'assets
     final selectedOptions = await showPdfOptionsDialog(
       context,
       monthName: _selectedMonthName,
       year: _selectedYear,
-      availableImages: availableImages,
+      availableImagePaths: availableImagePaths, // ⭐ CORRIGÉ
     );
 
     if (selectedOptions == null) return;
