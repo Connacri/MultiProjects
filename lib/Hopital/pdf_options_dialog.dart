@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
 enum PdfPageType {
-  // ✅ 4 types distincts
   activiteTableauMedical,
   activiteTableauAdministratif,
   activiteTableauParamedical,
   activiteTableauHygiene,
-  // Pages de personnel
   medecinPlanning,
   medecinListe,
   paramedicalPlanning,
@@ -15,32 +13,31 @@ enum PdfPageType {
 class PdfPageOption {
   final PdfPageType type;
   final String title;
-  bool includeModificatif; // ⭐ Changé en non-final pour pouvoir modifier
-  String? customText; // ⭐ Changé en non-final
-  String? selectedImagePath; // ⭐ CHANGÉ de File à String
-  String? customNotes; // ⭐ AJOUT
+  bool includeModificatif;
+  String? customText;
+  String? selectedImagePath;
+  String? customNotes;
 
   PdfPageOption({
     required this.type,
     required this.title,
     this.includeModificatif = false,
     this.customText,
-    this.selectedImagePath, // ⭐ CHANGÉ
-    this.customNotes, // ⭐ AJOUT
+    this.selectedImagePath,
+    this.customNotes,
   });
 }
 
 class PdfOptionsDialog extends StatefulWidget {
   final String monthName;
   final int year;
-  final List<String>?
-      availableImagePaths; // ⭐ CHANGÉ de List<File> à List<String>
+  final List<String>? availableImagePaths;
 
   const PdfOptionsDialog({
     Key? key,
     required this.monthName,
     required this.year,
-    this.availableImagePaths, // ⭐ CHANGÉ
+    this.availableImagePaths,
   }) : super(key: key);
 
   @override
@@ -102,6 +99,7 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
     return vowels.contains(firstLetter) ? "d'" : "de ";
   }
 
+// ✅ CORRECTION du bouton "Générer PDF"
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -122,10 +120,7 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
             children: [
               Text(
                 "Sélectionnez les tableaux à inclure :",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               SizedBox(height: 16),
               ..._options.entries.map((entry) => _buildPageOption(entry.value)),
@@ -146,15 +141,16 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
             foregroundColor: Colors.white,
           ),
           onPressed: () {
+            // ✅ CORRECTION : Inclure TOUTES les options avec au moins une modification
             final selectedOptions = _options.values
                 .where((opt) =>
                     opt.includeModificatif ||
                     opt.customText != null ||
-                    opt.selectedImagePath != null || // ⭐ CHANGÉ de customImage
-                    opt.customNotes != null) // ⭐ AJOUTÉ
+                    opt.selectedImagePath != null ||
+                    opt.customNotes != null)
                 .toList();
 
-            // Si aucune option n'est sélectionnée, retourner toutes les pages par défaut
+            // ✅ Si aucune option modifiée, retourner toutes les options par défaut
             if (selectedOptions.isEmpty) {
               Navigator.of(context).pop(_options.values.toList());
             } else {
@@ -234,7 +230,7 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
                   },
                 ),
 
-                // ⭐ AJOUT : Champ de notes NB
+                // Champ de notes NB
                 SizedBox(height: 12),
                 Divider(),
                 Text(
@@ -270,7 +266,7 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
                   },
                 ),
 
-                // ⭐ MODIFIÉ : Sélection d'image avec chemins d'assets
+                // Sélection d'image
                 if (widget.availableImagePaths != null &&
                     widget.availableImagePaths!.isNotEmpty) ...[
                   SizedBox(height: 12),
@@ -290,13 +286,15 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
     );
   }
 
-  // ⭐ MODIFIÉ : Sélecteur d'images avec chemins d'assets
+  // âœ… CORRECTION : Sélecteur d'images avec gestion d'erreur améliorée
+// ✅ CORRECTION COMPLÈTE du sélecteur d'images
+
   Widget _buildImageSelector(PdfPageOption option) {
     return Container(
       height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: widget.availableImagePaths!.length + 1,
+        itemCount: (widget.availableImagePaths?.length ?? 0) + 1,
         itemBuilder: (context, index) {
           if (index == 0) {
             // Option "Aucune image"
@@ -351,6 +349,7 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
           final isSelected = option.selectedImagePath == imagePath;
 
           return GestureDetector(
+            // ✅ CORRECTION : Ne plus fermer le dialog ici
             onTap: () {
               setState(() {
                 option.selectedImagePath = imagePath;
@@ -369,9 +368,12 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: Image.asset(
-                  imagePath, // ⭐ CHANGÉ : Image.asset au lieu de Image.file
+                  imagePath,
                   fit: BoxFit.contain,
+                  cacheWidth: 200,
+                  cacheHeight: 200,
                   errorBuilder: (context, error, stackTrace) {
+                    debugPrint('Erreur chargement image $imagePath: $error');
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -383,8 +385,27 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
                             'Erreur',
                             style: TextStyle(fontSize: 10, color: Colors.red),
                           ),
+                          Text(
+                            'Image introuvable',
+                            style: TextStyle(fontSize: 8, color: Colors.grey),
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
+                    );
+                  },
+                  frameBuilder:
+                      (context, child, frame, wasSynchronouslyLoaded) {
+                    if (wasSynchronouslyLoaded) return child;
+                    return AnimatedOpacity(
+                      opacity: frame == null ? 0 : 1,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                      child: frame == null
+                          ? Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : child,
                     );
                   },
                 ),
@@ -416,19 +437,19 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
   }
 }
 
-// ⭐ MODIFIÉ : Fonction helper avec chemins d'assets
+// Fonction helper
 Future<List<PdfPageOption>?> showPdfOptionsDialog(
   BuildContext context, {
   required String monthName,
   required int year,
-  List<String>? availableImagePaths, // ⭐ CHANGÉ
+  List<String>? availableImagePaths,
 }) async {
   return await showDialog<List<PdfPageOption>>(
     context: context,
     builder: (context) => PdfOptionsDialog(
       monthName: monthName,
       year: year,
-      availableImagePaths: availableImagePaths, // ⭐ CHANGÉ
+      availableImagePaths: availableImagePaths,
     ),
   );
 }

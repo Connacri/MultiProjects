@@ -3518,6 +3518,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       String? filePath;
       String? path;
 
+      // ✅ EXTRACTION du stamp AVANT de générer les PDFs
+      String? stampImagePath;
+      for (var option in options) {
+        if (option.selectedImagePath != null &&
+            option.selectedImagePath!.isNotEmpty) {
+          stampImagePath = option.selectedImagePath;
+          print("🖼️ Stamp sélectionné : $stampImagePath");
+          break;
+        }
+      }
+
       // Générer le PDF principal (tableaux d'activité) avec les options
       final hasActiviteTableau = options.any(
         (opt) =>

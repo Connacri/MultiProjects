@@ -53,24 +53,6 @@ Future<String?> generatePersonnelListsPDF(
         grade.contains('RHUMATOLOGUE');
   }).toList();
 
-  if (medecins.isNotEmpty &&
-      (options.isEmpty ||
-          options.any((opt) => opt.type == PdfPageType.medecinPlanning))) {
-    // Construire le titre avec les options
-    String mainTitle =
-        'Planning des Médecins « Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year »';
-
-    if (medecinPlanningOption.includeModificatif) {
-      mainTitle += ' (Modificatif)';
-    }
-
-  // ⭐ CRÉER LE FOOTER EN AVANCE
-  final footer = await _buildFooterWithStamp(
-    baseStyle,
-    medecinPlanningOption.selectedImagePath,
-    oswald,
-  );
-
   pw.Widget _buildScheduleCell(String text, pw.Font oswald, double fontSize,
       {pw.Alignment alignment = pw.Alignment.center, bool bold = false}) {
     return pw.Container(
@@ -236,17 +218,6 @@ Future<String?> generatePersonnelListsPDF(
             _buildWeeklyScheduleTableImproved(medecins, oswald),
             pw.Spacer(),
             _buildFooter(baseStyle),
-            pw.Spacer(),
-            _buildWeeklyScheduleTableImproved(medecins, oswald),
-            _buildNotesSection(
-                medecinPlanningOption.customNotes, oswald, baseStyle),
-            // ⭐ AJOUT
-            pw.Spacer(),
-            await _buildFooterWithStamp(
-              baseStyle,
-              medecinPlanningOption.selectedImagePath, // ⭐ CHANGÉ
-              oswald,
-            ),
           ],
         ),
       ),
@@ -341,6 +312,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
   required int year,
   required int month,
   required List<PdfPageOption> options,
+  String? stampImagePath,
 }) async {
   // Si aucune option de personnel n'est sélectionnée, ne rien générer
   final hasPersonnelPages = options.any(
@@ -410,6 +382,21 @@ Future<String?> generatePersonnelListsPDFWithOptions(
     );
   }
 
+  // ✅ CORRECTION : Extraire le stampImagePath depuis les options
+  String? finalStampPath;
+
+  for (var option in options) {
+    if (option.selectedImagePath != null &&
+        option.selectedImagePath!.isNotEmpty) {
+      finalStampPath = option.selectedImagePath;
+      print("✅ Stamp extrait : $finalStampPath");
+      break;
+    }
+  }
+
+  print(
+      "🖼️ Stamp à utiliser pour TOUTES les pages : ${finalStampPath ?? 'aucun'}");
+
   // Récupérer les options pour chaque type de page
   final medecinPlanningOption = options.firstWhere(
     (opt) => opt.type == PdfPageType.medecinPlanning,
@@ -433,6 +420,30 @@ Future<String?> generatePersonnelListsPDFWithOptions(
       type: PdfPageType.paramedicalPlanning,
       title: '',
     ),
+  );
+  // ✅ RÉCUPÉRER LES NOTES POUR CHAQUE TYPE DE TABLEAU
+  final medicalOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauMedical,
+    orElse: () =>
+        PdfPageOption(type: PdfPageType.activiteTableauMedical, title: ''),
+  );
+
+  final adminOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauAdministratif,
+    orElse: () => PdfPageOption(
+        type: PdfPageType.activiteTableauAdministratif, title: ''),
+  );
+
+  final paramedicalNoteOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauParamedical,
+    orElse: () =>
+        PdfPageOption(type: PdfPageType.activiteTableauParamedical, title: ''),
+  );
+
+  final hygieneOption = options.firstWhere(
+    (opt) => opt.type == PdfPageType.activiteTableauHygiene,
+    orElse: () =>
+        PdfPageOption(type: PdfPageType.activiteTableauHygiene, title: ''),
   );
 // ========== TABLEAU HEBDOMADAIRE DES MÉDECINS - VERSION AMÉLIORÉE ==========
 
@@ -564,7 +575,11 @@ Future<String?> generatePersonnelListsPDFWithOptions(
     if (medecinPlanningOption.includeModificatif) {
       mainTitle += ' (Modificatif)';
     }
+    // ✅ Construire le footer avec tampon de manière asynchrone
+    // ✅ CORRECTION 1 : Utiliser finalStampPath
+    final footer = await _buildStamp(baseStyle, finalStampPath, oswald);
 
+    // ✅ CORRECTION : Remplacer activiteTableauMedical par medecinPlanning
     pdf.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -573,9 +588,16 @@ Future<String?> generatePersonnelListsPDFWithOptions(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildHeader(logo, bold, baseStyle),
-            pw.SizedBox(height: 50),
-            pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-            pw.SizedBox(height: 20),
+            pw.Stack(children: [
+              pw.Column(children: [
+                pw.SizedBox(height: 50),
+                pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+                pw.SizedBox(height: 20),
+              ]),
+              pw.Expanded(
+                  child: pw.Align(
+                      alignment: pw.Alignment.bottomRight, child: footer)),
+            ]),
             pw.Center(
               child: pw.Text(
                 mainTitle,
@@ -603,6 +625,11 @@ Future<String?> generatePersonnelListsPDFWithOptions(
             ),
             pw.Spacer(),
             _buildWeeklyScheduleTableImproved(medecins, oswald),
+
+            // ✅ Utiliser les notes de medecinPlanningOption au lieu de medicalOption
+            _buildNotesSection(
+                medecinPlanningOption.customNotes, oswald, baseStyle),
+
             pw.Spacer(),
             _buildFooter(baseStyle),
           ],
@@ -620,6 +647,8 @@ Future<String?> generatePersonnelListsPDFWithOptions(
     if (medecinListeOption.includeModificatif) {
       mainTitle += ' (Modificatif)';
     }
+    // ✅ Construire le footer avec tampon de manière asynchrone
+    final footer = await _buildStamp(baseStyle, finalStampPath, oswald);
 
     pdf.addPage(
       pw.Page(
@@ -629,9 +658,16 @@ Future<String?> generatePersonnelListsPDFWithOptions(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildHeader(logo, bold, baseStyle),
-            pw.SizedBox(height: 50),
-            pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-            pw.SizedBox(height: 20),
+            pw.Stack(children: [
+              pw.Column(children: [
+                pw.SizedBox(height: 50),
+                pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+                pw.SizedBox(height: 20),
+              ]),
+              pw.Expanded(
+                  child: pw.Align(
+                      alignment: pw.Alignment.bottomRight, child: footer)),
+            ]),
             pw.Center(
               child: pw.Text(
                 mainTitle,
@@ -656,6 +692,8 @@ Future<String?> generatePersonnelListsPDFWithOptions(
             ),
             pw.Spacer(),
             _buildMedicalStaffTable(medecins, oswald, month, year),
+            _buildNotesSection(
+                medecinListeOption.customNotes, oswald, baseStyle),
             pw.Spacer(),
             _buildFooter(baseStyle),
           ],
@@ -673,6 +711,8 @@ Future<String?> generatePersonnelListsPDFWithOptions(
     if (paramedicalOption.includeModificatif) {
       mainTitle += ' (Modificatif)';
     }
+    // ✅ Construire le footer avec tampon de manière asynchrone
+    final footer = await _buildStamp(baseStyle, finalStampPath, oswald);
 
     pdf.addPage(
       pw.Page(
@@ -682,9 +722,16 @@ Future<String?> generatePersonnelListsPDFWithOptions(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
             _buildHeader(logo, bold, baseStyle),
-            pw.SizedBox(height: 50),
-            pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-            pw.SizedBox(height: 20),
+            pw.Stack(children: [
+              pw.Column(children: [
+                pw.SizedBox(height: 50),
+                pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
+                pw.SizedBox(height: 20),
+              ]),
+              pw.Expanded(
+                  child: pw.Align(
+                      alignment: pw.Alignment.bottomRight, child: footer)),
+            ]),
             pw.Center(
               child: pw.Text(
                 mainTitle,
@@ -705,6 +752,8 @@ Future<String?> generatePersonnelListsPDFWithOptions(
             ],
             pw.Spacer(),
             _buildParamedicalStaffTable(staffs, oswald, month, year),
+            _buildNotesSection(
+                paramedicalOption.customNotes, oswald, baseStyle),
             pw.Spacer(),
             _buildFooter(baseStyle),
           ],
@@ -798,7 +847,7 @@ pw.Widget _buildFooter(pw.TextStyle baseStyle) {
 pw.Widget _buildNotesSection(
     String? notes, pw.Font oswald, pw.TextStyle baseStyle) {
   if (notes == null || notes.isEmpty) {
-    return pw.SizedBox.shrink();
+    return pw.SizedBox.shrink(); // ✅ Ne rien afficher si vide
   }
 
   return pw.Container(
@@ -816,16 +865,16 @@ pw.Widget _buildNotesSection(
           'NB : ',
           style: pw.TextStyle(
             font: oswald,
-            fontSize: 9,
+            fontSize: 10,
             fontWeight: pw.FontWeight.bold,
-            color: PdfColors.red700,
+            color: PdfColors.black,
           ),
         ),
         pw.Expanded(
           child: pw.Text(
             notes,
             style: baseStyle.copyWith(
-              fontSize: 8.5,
+              fontSize: 10,
               color: PdfColors.grey900,
             ),
           ),
@@ -864,48 +913,40 @@ Future<pw.Widget?> _buildStampImage(String? imagePath, double maxWidth) async {
   }
 }
 
-Future<pw.Widget> _buildFooterWithStamp(
+// ✅ CORRECTION COMPLÈTE de _buildFooterWithStamp
+
+Future<pw.Widget> _buildStamp(
   pw.TextStyle baseStyle,
   String? stampImagePath,
   pw.Font oswald,
 ) async {
-  pw.Widget? stampWidget;
-  if (stampImagePath != null && stampImagePath.isNotEmpty) {
-    stampWidget = await _buildStampImage(stampImagePath, 100);
-  }
+  pw.MemoryImage? stampImage;
 
-  return pw.Column(
-    mainAxisAlignment: pw.MainAxisAlignment.end,
-    children: [
-      pw.Align(
-        alignment: pw.Alignment.centerRight,
-        child: pw.Text(
-          'fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-          style: baseStyle,
-        ),
+  // ✅ Charger l'image si un chemin est fourni
+  if (stampImagePath != null && stampImagePath.isNotEmpty) {
+    try {
+      print("🖼️ Chargement du stamp depuis : $stampImagePath");
+      final imageData = await rootBundle.load(stampImagePath);
+      final imageBytes = imageData.buffer.asUint8List();
+      stampImage = pw.MemoryImage(imageBytes);
+      print("✅ Stamp chargé avec succès !");
+    } catch (e) {
+      print("❌ Erreur chargement stamp $stampImagePath: $e");
+      stampImage = null;
+    }
+  } else {
+    print("ℹ️ Aucun stamp fourni");
+  }
+  if (stampImage == null) {
+    return pw.SizedBox.shrink();
+  }
+  // ✅ Construire le footer COMPLET avec ou sans stamp
+  return pw.Container(
+      constraints: const pw.BoxConstraints(
+        maxWidth: 100,
+        maxHeight: 100,
       ),
-      pw.SizedBox(height: 15),
-      pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Column(
-            children: [
-              pw.Text('Le Médecin chef', style: baseStyle),
-              if (stampWidget != null) ...[
-                pw.SizedBox(height: 5),
-                stampWidget,
-              ],
-            ],
-          ),
-          pw.Text('Le Surveillant Médical', style: baseStyle),
-          pw.Text('DAPM', style: baseStyle),
-          pw.Text('Le Directeur Général', style: baseStyle),
-        ],
-      ),
-      pw.SizedBox(height: 20),
-    ],
-  );
+      child: pw.Image(stampImage, fit: pw.BoxFit.contain));
 }
 
 // ========== TABLEAU PERSONNEL MÉDICAL ==========
