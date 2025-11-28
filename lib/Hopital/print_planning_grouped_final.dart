@@ -541,6 +541,9 @@ void _addActivityPage(
               pw.Text(mainTitle,
                   style: bold.copyWith(fontSize: 14),
                   textAlign: pw.TextAlign.center),
+              pw.SizedBox(height: 4),
+              pw.Center(
+                  child: pw.Text(subtitle, style: bold.copyWith(fontSize: 12))),
               if (option?.customText != null) ...[
                 pw.SizedBox(height: 2),
                 pw.Text(
@@ -557,8 +560,6 @@ void _addActivityPage(
           ),
         ),
 
-        pw.SizedBox(height: 4),
-        pw.Center(child: pw.Text(subtitle, style: bold.copyWith(fontSize: 12))),
         pw.SizedBox(height: 8),
         pw.Center(
             child:

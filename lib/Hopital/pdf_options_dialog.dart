@@ -197,71 +197,48 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
 
                 Divider(),
 
-                // Texte personnalisé
+                // Texte personnalisé avec compteur
                 Text(
                   "Texte personnalisé :",
                   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                 ),
                 SizedBox(height: 8),
-                TextField(
+                _buildLimitedTextField(
                   controller: TextEditingController(text: option.customText),
-                  decoration: InputDecoration(
-                    hintText: "Ex: Version révisée, Mise à jour...",
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    suffixIcon: option.customText != null
-                        ? IconButton(
-                            icon: Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              setState(() {
-                                option.customText = null;
-                              });
-                            },
-                          )
-                        : null,
-                  ),
-                  maxLines: 2,
+                  hintText: "Ex: Version révisée, Mise à jour...",
+                  currentText: option.customText,
+                  maxLength: 160,
                   onChanged: (value) {
-                    setState(() {
-                      option.customText =
-                          value.trim().isEmpty ? null : value.trim();
-                    });
+                    option.customNotes =
+                        value.trim().isEmpty ? null : value.trim();
+                  },
+                  onClear: () {
+                    option.customText = null;
                   },
                 ),
 
-                // Champ de notes NB
+                // Champ de notes NB avec compteur
                 SizedBox(height: 12),
                 Divider(),
                 Text(
                   "Note NB (affichée en bas du tableau) :",
                   style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                 ),
+
                 SizedBox(height: 8),
-                TextField(
+                _buildLimitedTextField(
                   controller: TextEditingController(text: option.customNotes),
-                  decoration: InputDecoration(
-                    hintText: "Ex: NB : Planning modifié le 15/01/2025",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.note_add, size: 20),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    suffixIcon: option.customNotes != null
-                        ? IconButton(
-                            icon: Icon(Icons.clear, size: 18),
-                            onPressed: () {
-                              setState(() {
-                                option.customNotes = null;
-                              });
-                            },
-                          )
-                        : null,
-                  ),
-                  maxLines: 3,
+                  hintText: "Ex: NB : Planning modifié le 15/01/2025",
+                  currentText: option.customNotes,
+                  maxLength: 160,
+                  prefixIcon: Icon(Icons.note_add, size: 20),
                   onChanged: (value) {
+                    option.customNotes =
+                        value.trim().isEmpty ? null : value.trim();
+                  },
+                  onClear: () {
                     setState(() {
-                      option.customNotes =
-                          value.trim().isEmpty ? null : value.trim();
+                      option.customNotes = null;
                     });
                   },
                 ),
@@ -272,7 +249,7 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
                   SizedBox(height: 12),
                   Divider(),
                   Text(
-                    "Image personnalisée (tampon/signature) :",
+                    "Image personnalisée (tampon) :",
                     style: TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
                   ),
                   SizedBox(height: 8),
@@ -283,6 +260,71 @@ class _PdfOptionsDialogState extends State<PdfOptionsDialog> {
           ),
         ],
       ),
+    );
+  }
+
+// Widget réutilisable pour les champs de texte limités
+  Widget _buildLimitedTextField({
+    required TextEditingController controller,
+    required String hintText,
+    required String? currentText,
+    required int maxLength,
+    required Function(String) onChanged,
+    required Function() onClear,
+    Icon? prefixIcon,
+  }) {
+    // ValueNotifier pour suivre la longueur du texte
+    final ValueNotifier<int> textLengthNotifier =
+        ValueNotifier<int>(currentText?.length ?? 0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller..text = currentText ?? '',
+          decoration: InputDecoration(
+            hintText: hintText,
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            prefixIcon: prefixIcon,
+            suffixIcon: currentText != null && currentText!.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.clear, size: 18),
+                    onPressed: onClear,
+                  )
+                : null,
+            counterText: "",
+          ),
+          maxLines: 2,
+          maxLength: maxLength,
+          onChanged: (value) {
+            // Mettre à jour la longueur instantanément
+            textLengthNotifier.value = value.length;
+
+            // Appeler le callback sans setState
+            onChanged(value);
+          },
+        ),
+        SizedBox(height: 4),
+        // ValueListenableBuilder pour mettre à jour seulement le compteur
+        ValueListenableBuilder<int>(
+          valueListenable: textLengthNotifier,
+          builder: (context, currentLength, child) {
+            final remainingChars = maxLength - currentLength;
+            return Text(
+              "$remainingChars caractères restants",
+              style: TextStyle(
+                fontSize: 12,
+                color: remainingChars < 0
+                    ? Colors.red
+                    : remainingChars < 20
+                        ? Colors.orange
+                        : Colors.grey[600],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 

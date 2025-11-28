@@ -203,18 +203,18 @@ Future<String?> generatePersonnelListsPDF(
             _buildHeader(logo, bold, baseStyle),
             pw.SizedBox(height: 50),
             pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-            pw.SizedBox(height: 20),
+            pw.Spacer(),
             pw.Center(
               child: pw.Text(
                 'Planning des Médecins « Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year »',
                 style: bold.copyWith(fontSize: 12),
               ),
             ),
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: 8),
             pw.Center(
               child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 11)),
             ),
-            pw.Spacer(),
+            pw.SizedBox(height: 8),
             _buildWeeklyScheduleTableImproved(medecins, oswald),
             pw.Spacer(),
             _buildFooter(baseStyle),
@@ -234,8 +234,8 @@ Future<String?> generatePersonnelListsPDF(
         children: [
           _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
           pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-          pw.SizedBox(height: 20),
 
+          pw.Spacer(),
           // SECTION 1 : Personnel Médical
           pw.Center(
             child: pw.Text(
@@ -243,11 +243,11 @@ Future<String?> generatePersonnelListsPDF(
               style: bold.copyWith(fontSize: 11),
             ),
           ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 8),
           pw.Center(
             child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 10)),
           ),
-          pw.Spacer(),
+          pw.SizedBox(height: 8),
           _buildMedicalStaffTable(medecins, oswald, month, year),
 
           pw.Spacer(),
@@ -268,7 +268,7 @@ Future<String?> generatePersonnelListsPDF(
         children: [
           _buildHeader(logo, bold, baseStyle), pw.SizedBox(height: 50),
           pw.Text('Unité : Service de Rhumatologie', style: baseStyle),
-          pw.SizedBox(height: 20),
+          pw.Spacer(),
 
           // SECTION 2 : Personnel Paramédical
           pw.Center(
@@ -276,7 +276,7 @@ Future<String?> generatePersonnelListsPDF(
             'Planning du Personnel Paramédical du Mois ${prefix}${monthName.substring(0, 1).toUpperCase()}${monthName.substring(1)} $year',
             style: bold.copyWith(fontSize: 11),
           )),
-          pw.Spacer(),
+          pw.SizedBox(height: 8),
           _buildParamedicalStaffTable(staffs, oswald, month, year),
 
           pw.Spacer(),
@@ -598,6 +598,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
                   child: pw.Align(
                       alignment: pw.Alignment.bottomRight, child: footer)),
             ]),
+            pw.Spacer(),
             pw.Center(
               child: pw.Text(
                 mainTitle,
@@ -607,7 +608,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
 
             // Ajouter le texte personnalisé si présent
             if (medecinPlanningOption.customText != null) ...[
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 8),
               pw.Center(
                 child: pw.Text(
                   medecinPlanningOption.customText!,
@@ -619,11 +620,11 @@ Future<String?> generatePersonnelListsPDFWithOptions(
               ),
             ],
 
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: 8),
             pw.Center(
               child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 11)),
             ),
-            pw.Spacer(),
+            pw.SizedBox(height: 8),
             _buildWeeklyScheduleTableImproved(medecins, oswald),
 
             // ✅ Utiliser les notes de medecinPlanningOption au lieu de medicalOption
@@ -668,6 +669,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
                   child: pw.Align(
                       alignment: pw.Alignment.bottomRight, child: footer)),
             ]),
+            pw.Spacer(),
             pw.Center(
               child: pw.Text(
                 mainTitle,
@@ -675,7 +677,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
               ),
             ),
             if (medecinListeOption.customText != null) ...[
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 8),
               pw.Center(
                 child: pw.Text(
                   medecinListeOption.customText!,
@@ -686,11 +688,11 @@ Future<String?> generatePersonnelListsPDFWithOptions(
                 ),
               ),
             ],
-            pw.SizedBox(height: 4),
+            pw.SizedBox(height: 8),
             pw.Center(
               child: pw.Text('DE 8H À 16H', style: bold.copyWith(fontSize: 10)),
             ),
-            pw.Spacer(),
+            pw.SizedBox(height: 8),
             _buildMedicalStaffTable(medecins, oswald, month, year),
             _buildNotesSection(
                 medecinListeOption.customNotes, oswald, baseStyle),
@@ -732,6 +734,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
                   child: pw.Align(
                       alignment: pw.Alignment.bottomRight, child: footer)),
             ]),
+            pw.Spacer(),
             pw.Center(
               child: pw.Text(
                 mainTitle,
@@ -739,7 +742,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
               ),
             ),
             if (paramedicalOption.customText != null) ...[
-              pw.SizedBox(height: 4),
+              pw.SizedBox(height: 8),
               pw.Center(
                 child: pw.Text(
                   paramedicalOption.customText!,
@@ -750,7 +753,7 @@ Future<String?> generatePersonnelListsPDFWithOptions(
                 ),
               ),
             ],
-            pw.Spacer(),
+            pw.SizedBox(height: 8),
             _buildParamedicalStaffTable(staffs, oswald, month, year),
             _buildNotesSection(
                 paramedicalOption.customNotes, oswald, baseStyle),
