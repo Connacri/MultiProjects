@@ -25,12 +25,12 @@ import '../Hopital/p2p/p2p_integration.dart';
 import '../Hopital/p2p/p2p_manager.dart';
 import '../Hopital/p2p/sync_manager.dart';
 import '../Hopital/p2p/udp_broadcast_discovery.dart';
+import '../Kids/providers/auth_provider_dart.dart';
+import '../Kids/providers/course_provider_complete.dart';
+import '../Kids/providers/locale_provider.dart';
 import '../MyListLotties.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
-import '../kids/activities/generated/multiphoto/photo_provider.dart';
-import '../kids/activities/providers.dart';
-import '../kids/ads_provider.dart' show LocalizationModel, AdsProvider;
 import 'Entity.dart';
 import 'FuturisticConnectionUI.dart';
 import 'MyProviders.dart';
@@ -96,18 +96,11 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AdProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         /////////////////////////////KIDS/////////////////////////////////////
-        //ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => LocalizationModel()),
-        ChangeNotifierProvider(create: (_) => AdsProvider()),
-        ChangeNotifierProvider(create: (_) => ChildProvider()),
-        //ChangeNotifierProvider(create: (_) => ClubProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => CourseProvider()),
-        ChangeNotifierProvider(create: (_) => ProfProvider()),
-        ChangeNotifierProvider<PhotoProvider>(create: (_) => PhotoProvider()),
-        ChangeNotifierProvider(create: (_) => StepProvider()),
-        ChangeNotifierProvider(create: (_) => StepProvider1()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()..initialize()),
+        /////////////////////////////FIN-KIDS/////////////////////////////////////
+
         // ChangeNotifierProvider(create: (_) => AuthService()),
         // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(
         //   create: (ctx) => ProfileProvider(auth: ctx.read<AuthService>()),

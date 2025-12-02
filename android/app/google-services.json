@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "536701149573",
+    "firebase_url": "https://hotel-f84db-default-rtdb.firebaseio.com",
     "project_id": "hotel-f84db",
     "storage_bucket": "hotel-f84db.firebasestorage.app"
   },
@@ -12,7 +13,20 @@
           "package_name": "com.hotel.dz"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "536701149573-3is44e87e972ha3je4pejv10ga5f1gf6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hotel.dz",
+            "certificate_hash": "503bca0e7d9cf11193b8a34339154f33bc34aace"
+          }
+        },
+        {
+          "client_id": "536701149573-ts9lcsf8ltefuruvsvgsf2sakatmcit5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBygH4-4mmUJe-6UL7iExAPxNwiVv3WIlA"
@@ -20,7 +34,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "536701149573-ts9lcsf8ltefuruvsvgsf2sakatmcit5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "536701149573-qmhir7962lmnj4va4leq5vt0i7qitfrg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.hotel.dz"
+              }
+            }
+          ]
         }
       }
     }

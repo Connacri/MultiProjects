@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../Kids/main.dart';
 import '../checkit/HomePage.dart';
-import '../kids/pages/MyApp.dart';
 import '../objectBox/MyApp.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectBox/pages/invoice/FacturationPageUI.dart';
@@ -119,7 +119,7 @@ class CardSelectionScreen extends StatelessWidget {
           Colors.deepOrangeAccent.withOpacity(0.8),
           Colors.black.withOpacity(0.5)
         ],
-        destination: AuthScreen(),
+        destination: EduPlatformApp(),
       ),
     ];
 

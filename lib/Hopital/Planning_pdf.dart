@@ -277,6 +277,7 @@ Future<String?> generatePersonnelListsPDF(
             style: bold.copyWith(fontSize: 11),
           )),
           pw.SizedBox(height: 8),
+
           _buildParamedicalStaffTable(staffs, oswald, month, year),
 
           pw.Spacer(),
