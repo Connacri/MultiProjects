@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../objectbox.g.dart'; // Généré par build_runner
 
 @Entity()
-class User {
+class UserEntity {
   @Id()
   int id;
   String? photo;
@@ -20,7 +20,7 @@ class User {
 
   final crud = ToOne<Crud>();
 
-  User({
+  UserEntity({
     this.id = 0,
     this.photo,
     required this.username,
@@ -33,8 +33,8 @@ class User {
     DateTime? syncedAt,
   }) : syncedAt = syncedAt ?? DateTime.now();
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
+  factory UserEntity.fromJson(Map<String, dynamic> json) {
+    return UserEntity(
       id: json['id'] ?? 0,
       photo: json['photo'],
       username: json['username'] ?? '',

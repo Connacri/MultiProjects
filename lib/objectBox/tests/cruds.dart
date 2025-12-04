@@ -71,7 +71,7 @@ class _UserListScreenState extends State<UserListScreen> {
 
   void checkCrudsWithInvalidUserIds(objectBox) {
     // Étape 1 : Récupérer tous les IDs des utilisateurs existants
-    final userBox = objectBox.store.box<User>();
+    final userBox = objectBox.store.box<UserEntity>();
     final crudBox = objectBox.store.box<Crud>();
 
     final existingUserIds = userBox.getAll().map((user) => user.id).toList();
@@ -278,7 +278,7 @@ class _UserListScreenState extends State<UserListScreen> {
   }
 
   Future<void> updateCrudsWithValidUserIdsAsync(objectBox) async {
-    final userBox = objectBox.store.box<User>();
+    final userBox = objectBox.store.box<UserEntity>();
     final crudBox = objectBox.store.box<Crud>();
 
     // Récupérer les utilisateurs dans le thread principal
@@ -331,7 +331,7 @@ class _UserListScreenState extends State<UserListScreen> {
   }
 
   Future<void> updateCrudsWithValidUserIdsAsync2(ObjectBox objectBox) async {
-    final userBox = objectBox.store.box<User>();
+    final userBox = objectBox.store.box<UserEntity>();
     final crudBox = objectBox.store.box<Crud>();
 
     print("Début de la récupération des utilisateurs...");

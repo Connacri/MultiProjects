@@ -3174,12 +3174,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectToFB: (Fournisseur object, fb.Builder fbb) {
         final qrOffset = object.qr == null ? null : fbb.writeString(object.qr!);
         final nomOffset = fbb.writeString(object.nom);
-        final phoneOffset = object.phone == null
-            ? null
-            : fbb.writeString(object.phone!);
-        final adresseOffset = object.adresse == null
-            ? null
-            : fbb.writeString(object.adresse!);
+        final phoneOffset =
+            object.phone == null ? null : fbb.writeString(object.phone!);
+        final adresseOffset =
+            object.adresse == null ? null : fbb.writeString(object.adresse!);
         fbb.startTable(16);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, qrOffset);
@@ -3271,9 +3269,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (Produit object, fb.Builder fbb) {
         final qrOffset = object.qr == null ? null : fbb.writeString(object.qr!);
-        final imageOffset = object.image == null
-            ? null
-            : fbb.writeString(object.image!);
+        final imageOffset =
+            object.image == null ? null : fbb.writeString(object.image!);
         final nomOffset = fbb.writeString(object.nom);
         final descriptionOffset = object.description == null
             ? null
@@ -3338,8 +3335,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           rootOffset,
           52,
         );
-        final pricePartielVenteParam = const fb.Float64Reader()
-            .vTableGetNullable(buffer, rootOffset, 54);
+        final pricePartielVenteParam =
+            const fb.Float64Reader().vTableGetNullable(buffer, rootOffset, 54);
         final minimStockParam = const fb.Float64Reader().vTableGetNullable(
           buffer,
           rootOffset,
@@ -3362,27 +3359,25 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final syncedAtParam = DateTime.fromMillisecondsSinceEpoch(
           const fb.Int64Reader().vTableGet(buffer, rootOffset, 58, 0),
         );
-        final object =
-            Produit(
-                id: idParam,
-                qr: qrParam,
-                image: imageParam,
-                nom: nomParam,
-                description: descriptionParam,
-                prixVente: prixVenteParam,
-                tax: taxParam,
-                qtyPartiel: qtyPartielParam,
-                pricePartielVente: pricePartielVenteParam,
-                minimStock: minimStockParam,
-                alertPeremption: alertPeremptionParam,
-                derniereModification: derniereModificationParam,
-                isSynced: isSyncedParam,
-                syncedAt: syncedAtParam,
-              )
-              ..qrCodeList = const fb.ListReader<String>(
-                fb.StringReader(asciiOptimization: true),
-                lazy: false,
-              ).vTableGet(buffer, rootOffset, 50, []);
+        final object = Produit(
+          id: idParam,
+          qr: qrParam,
+          image: imageParam,
+          nom: nomParam,
+          description: descriptionParam,
+          prixVente: prixVenteParam,
+          tax: taxParam,
+          qtyPartiel: qtyPartielParam,
+          pricePartielVente: pricePartielVenteParam,
+          minimStock: minimStockParam,
+          alertPeremption: alertPeremptionParam,
+          derniereModification: derniereModificationParam,
+          isSynced: isSyncedParam,
+          syncedAt: syncedAtParam,
+        )..qrCodeList = const fb.ListReader<String>(
+            fb.StringReader(asciiOptimization: true),
+            lazy: false,
+          ).vTableGet(buffer, rootOffset, 50, []);
         object.crud.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -3588,24 +3583,22 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
-    User: obx_int.EntityDefinition<User>(
+    UserEntity: obx_int.EntityDefinition<UserEntity>(
       model: _entities[4],
-      toOneRelations: (User object) => [object.crud],
-      toManyRelations: (User object) => {},
-      getId: (User object) => object.id,
-      setId: (User object, int id) {
+      toOneRelations: (UserEntity object) => [object.crud],
+      toManyRelations: (UserEntity object) => {},
+      getId: (UserEntity object) => object.id,
+      setId: (UserEntity object, int id) {
         object.id = id;
       },
-      objectToFB: (User object, fb.Builder fbb) {
-        final photoOffset = object.photo == null
-            ? null
-            : fbb.writeString(object.photo!);
+      objectToFB: (UserEntity object, fb.Builder fbb) {
+        final photoOffset =
+            object.photo == null ? null : fbb.writeString(object.photo!);
         final usernameOffset = fbb.writeString(object.username);
         final passwordOffset = fbb.writeString(object.password);
         final emailOffset = fbb.writeString(object.email);
-        final phoneOffset = object.phone == null
-            ? null
-            : fbb.writeString(object.phone!);
+        final phoneOffset =
+            object.phone == null ? null : fbb.writeString(object.phone!);
         final roleOffset = fbb.writeString(object.role);
         fbb.startTable(16);
         fbb.addInt64(0, object.id);
@@ -3661,7 +3654,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final syncedAtParam = DateTime.fromMillisecondsSinceEpoch(
           const fb.Int64Reader().vTableGet(buffer, rootOffset, 32, 0),
         );
-        final object = User(
+        final object = UserEntity(
           id: idParam,
           photo: photoParam,
           username: usernameParam,
@@ -3718,8 +3711,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           rootOffset,
           10,
         );
-        final derniereModificationValue = const fb.Int64Reader()
-            .vTableGetNullable(buffer, rootOffset, 22);
+        final derniereModificationValue =
+            const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 22);
         final idParam = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -4217,10 +4210,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final selectedDiscountItemsParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 78);
-        final cachedBoardBasisPriceParam = const fb.Float64Reader()
-            .vTableGetNullable(buffer, rootOffset, 64);
-        final cachedExtrasTotalParam = const fb.Float64Reader()
-            .vTableGetNullable(buffer, rootOffset, 66);
+        final cachedBoardBasisPriceParam =
+            const fb.Float64Reader().vTableGetNullable(buffer, rootOffset, 64);
+        final cachedExtrasTotalParam =
+            const fb.Float64Reader().vTableGetNullable(buffer, rootOffset, 66);
         final seasonalMultiplierParam = const fb.Float64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -4373,9 +4366,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (Employee object, fb.Builder fbb) {
         final phoneNumberOffset = fbb.writeString(object.phoneNumber);
-        final emailOffset = object.email == null
-            ? null
-            : fbb.writeString(object.email!);
+        final emailOffset =
+            object.email == null ? null : fbb.writeString(object.email!);
         final fullNameOffset = fbb.writeString(object.fullName);
         final photosJsonOffset = fbb.writeString(object.photosJson);
         fbb.startTable(14);
@@ -4433,9 +4425,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (Guest object, fb.Builder fbb) {
         final phoneNumberOffset = fbb.writeString(object.phoneNumber);
-        final emailOffset = object.email == null
-            ? null
-            : fbb.writeString(object.email!);
+        final emailOffset =
+            object.email == null ? null : fbb.writeString(object.email!);
         final idCardNumberOffset = fbb.writeString(object.idCardNumber);
         final nationalityOffset = object.nationality == null
             ? null
@@ -4550,8 +4541,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           avoidedNumbers: avoidedNumbersParam,
           photosJson: photosJsonParam,
         )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
-        object.selectedSeasonalPricing.targetId = const fb.Int64Reader()
-            .vTableGet(buffer, rootOffset, 14, 0);
+        object.selectedSeasonalPricing.targetId =
+            const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0);
         object.selectedSeasonalPricing.attach(store);
         obx_int.InternalToManyAccess.setRelInfo<Hotel>(
           object.rooms,
@@ -4577,9 +4568,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final nameOffset = fbb.writeString(object.name);
         final codeOffset = fbb.writeString(object.code);
         final descriptionOffset = fbb.writeString(object.description);
-        final notesOffset = object.notes == null
-            ? null
-            : fbb.writeString(object.notes!);
+        final notesOffset =
+            object.notes == null ? null : fbb.writeString(object.notes!);
         final photosJsonOffset = fbb.writeString(object.photosJson);
         fbb.startTable(28);
         fbb.addInt64(0, object.id);
@@ -4730,9 +4720,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final pricingUnitOffset = fbb.writeString(object.pricingUnit);
         final codeOffset = fbb.writeString(object.code);
         final categoryOffset = fbb.writeString(object.category);
-        final notesOffset = object.notes == null
-            ? null
-            : fbb.writeString(object.notes!);
+        final notesOffset =
+            object.notes == null ? null : fbb.writeString(object.notes!);
         final packageIncludesOffset = object.packageIncludes == null
             ? null
             : fbb.writeString(object.packageIncludes!);
@@ -4867,9 +4856,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         object.id = id;
       },
       objectToFB: (ReservationExtra object, fb.Builder fbb) {
-        final notesOffset = object.notes == null
-            ? null
-            : fbb.writeString(object.notes!);
+        final notesOffset =
+            object.notes == null ? null : fbb.writeString(object.notes!);
         final statusOffset = fbb.writeString(object.status);
         fbb.startTable(14);
         fbb.addInt64(0, object.id);
@@ -4964,9 +4952,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final descriptionOffset = fbb.writeString(object.description);
         final bedTypeOffset = fbb.writeString(object.bedType);
         final standingOffset = fbb.writeString(object.standing);
-        final viewTypeOffset = object.viewType == null
-            ? null
-            : fbb.writeString(object.viewType!);
+        final viewTypeOffset =
+            object.viewType == null ? null : fbb.writeString(object.viewType!);
         final amenitiesOffset = fbb.writeString(object.amenities);
         fbb.startTable(21);
         fbb.addInt64(0, object.id);
@@ -5202,12 +5189,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final gradeOffset = fbb.writeString(object.grade);
         final nomOffset = fbb.writeString(object.nom);
         final groupeOffset = fbb.writeString(object.groupe);
-        final equipeOffset = object.equipe == null
-            ? null
-            : fbb.writeString(object.equipe!);
-        final obsOffset = object.obs == null
-            ? null
-            : fbb.writeString(object.obs!);
+        final equipeOffset =
+            object.equipe == null ? null : fbb.writeString(object.equipe!);
+        final obsOffset =
+            object.obs == null ? null : fbb.writeString(object.obs!);
         fbb.startTable(42);
         fbb.addInt64(0, object.id);
         fbb.addOffset(5, gradeOffset);
@@ -5244,20 +5229,18 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final obsParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 78);
-        final object =
-            Staff(
-                id: idParam,
-                nom: nomParam,
-                grade: gradeParam,
-                groupe: groupeParam,
-                equipe: equipeParam,
-                obs: obsParam,
-              )
-              ..ordre = const fb.Int64Reader().vTableGetNullable(
-                buffer,
-                rootOffset,
-                84,
-              );
+        final object = Staff(
+          id: idParam,
+          nom: nomParam,
+          grade: gradeParam,
+          groupe: groupeParam,
+          equipe: equipeParam,
+          obs: obsParam,
+        )..ordre = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            84,
+          );
         object.branch.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -5384,9 +5367,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         object.id = id;
       },
       objectToFB: (TimeOff object, fb.Builder fbb) {
-        final motifOffset = object.motif == null
-            ? null
-            : fbb.writeString(object.motif!);
+        final motifOffset =
+            object.motif == null ? null : fbb.writeString(object.motif!);
         fbb.startTable(8);
         fbb.addInt64(0, object.id);
         fbb.addOffset(3, motifOffset);
@@ -5506,27 +5488,20 @@ obx_int.ModelDefinition getObjectBoxModel() {
         object.id = id;
       },
       objectToFB: (PlanningHebdo object, fb.Builder fbb) {
-        final dimancheOffset = object.dimanche == null
-            ? null
-            : fbb.writeString(object.dimanche!);
-        final lundiOffset = object.lundi == null
-            ? null
-            : fbb.writeString(object.lundi!);
-        final mardiOffset = object.mardi == null
-            ? null
-            : fbb.writeString(object.mardi!);
-        final mercrediOffset = object.mercredi == null
-            ? null
-            : fbb.writeString(object.mercredi!);
-        final jeudiOffset = object.jeudi == null
-            ? null
-            : fbb.writeString(object.jeudi!);
-        final vendrediOffset = object.vendredi == null
-            ? null
-            : fbb.writeString(object.vendredi!);
-        final samediOffset = object.samedi == null
-            ? null
-            : fbb.writeString(object.samedi!);
+        final dimancheOffset =
+            object.dimanche == null ? null : fbb.writeString(object.dimanche!);
+        final lundiOffset =
+            object.lundi == null ? null : fbb.writeString(object.lundi!);
+        final mardiOffset =
+            object.mardi == null ? null : fbb.writeString(object.mardi!);
+        final mercrediOffset =
+            object.mercredi == null ? null : fbb.writeString(object.mercredi!);
+        final jeudiOffset =
+            object.jeudi == null ? null : fbb.writeString(object.jeudi!);
+        final vendrediOffset =
+            object.vendredi == null ? null : fbb.writeString(object.vendredi!);
+        final samediOffset =
+            object.samedi == null ? null : fbb.writeString(object.samedi!);
         fbb.startTable(12);
         fbb.addInt64(0, object.id);
         fbb.addInt64(1, object.staff.targetId);
@@ -5677,9 +5652,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (Conversation object, fb.Builder fbb) {
         final conversationIdOffset = fbb.writeString(object.conversationId);
-        final titleOffset = object.title == null
-            ? null
-            : fbb.writeString(object.title!);
+        final titleOffset =
+            object.title == null ? null : fbb.writeString(object.title!);
         final descriptionOffset = object.description == null
             ? null
             : fbb.writeString(object.description!);
@@ -5696,9 +5670,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final lastMessagePreviewOffset = object.lastMessagePreview == null
             ? null
             : fbb.writeString(object.lastMessagePreview!);
-        final metadataOffset = object.metadata == null
-            ? null
-            : fbb.writeString(object.metadata!);
+        final metadataOffset =
+            object.metadata == null ? null : fbb.writeString(object.metadata!);
         fbb.startTable(21);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, conversationIdOffset);
@@ -5905,8 +5878,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final lastReadMessageIdParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 20);
-        final lastAccessTimestampParam = const fb.Int64Reader()
-            .vTableGetNullable(buffer, rootOffset, 22);
+        final lastAccessTimestampParam =
+            const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 22);
         final object = ConversationParticipant(
           conversationId: conversationIdParam,
           nodeId: nodeIdParam,
@@ -5934,9 +5907,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final messageIdOffset = fbb.writeString(object.messageId);
         final conversationIdOffset = fbb.writeString(object.conversationId);
         final fromNodeIdOffset = fbb.writeString(object.fromNodeId);
-        final toNodeIdOffset = object.toNodeId == null
-            ? null
-            : fbb.writeString(object.toNodeId!);
+        final toNodeIdOffset =
+            object.toNodeId == null ? null : fbb.writeString(object.toNodeId!);
         final contentOffset = fbb.writeString(object.content);
         final mediaPathOffset = object.mediaPath == null
             ? null
@@ -6287,8 +6259,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           12,
           0,
         );
-        final nextRetryTimestampParam = const fb.Int64Reader()
-            .vTableGetNullable(buffer, rootOffset, 16);
+        final nextRetryTimestampParam =
+            const fb.Int64Reader().vTableGetNullable(buffer, rootOffset, 16);
         final statusParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 18, '');
@@ -6371,8 +6343,8 @@ class Fournisseur_ {
   /// see [Fournisseur.approvisionnements]
   static final approvisionnements =
       obx.QueryBacklinkToMany<Approvisionnement, Fournisseur>(
-        Approvisionnement_.fournisseur,
-      );
+    Approvisionnement_.fournisseur,
+  );
 }
 
 /// [Produit] entity fields to define ObjectBox queries.
@@ -6460,8 +6432,8 @@ class Produit_ {
   /// see [Produit.approvisionnements]
   static final approvisionnements =
       obx.QueryBacklinkToMany<Approvisionnement, Produit>(
-        Approvisionnement_.produit,
-      );
+    Approvisionnement_.produit,
+  );
 }
 
 /// [Client] entity fields to define ObjectBox queries.
@@ -6573,56 +6545,58 @@ class DeletedProduct_ {
   );
 }
 
-/// [User] entity fields to define ObjectBox queries.
+/// [UserEntity] entity fields to define ObjectBox queries.
 class User_ {
-  /// See [User.id].
-  static final id = obx.QueryIntegerProperty<User>(_entities[4].properties[0]);
+  /// See [UserEntity.id].
+  static final id =
+      obx.QueryIntegerProperty<UserEntity>(_entities[4].properties[0]);
 
-  /// See [User.photo].
-  static final photo = obx.QueryStringProperty<User>(
+  /// See [UserEntity.photo].
+  static final photo = obx.QueryStringProperty<UserEntity>(
     _entities[4].properties[1],
   );
 
-  /// See [User.username].
-  static final username = obx.QueryStringProperty<User>(
+  /// See [UserEntity.username].
+  static final username = obx.QueryStringProperty<UserEntity>(
     _entities[4].properties[2],
   );
 
-  /// See [User.password].
-  static final password = obx.QueryStringProperty<User>(
+  /// See [UserEntity.password].
+  static final password = obx.QueryStringProperty<UserEntity>(
     _entities[4].properties[3],
   );
 
-  /// See [User.email].
-  static final email = obx.QueryStringProperty<User>(
+  /// See [UserEntity.email].
+  static final email = obx.QueryStringProperty<UserEntity>(
     _entities[4].properties[4],
   );
 
-  /// See [User.phone].
-  static final phone = obx.QueryStringProperty<User>(
+  /// See [UserEntity.phone].
+  static final phone = obx.QueryStringProperty<UserEntity>(
     _entities[4].properties[5],
   );
 
-  /// See [User.role].
-  static final role = obx.QueryStringProperty<User>(_entities[4].properties[6]);
+  /// See [UserEntity.role].
+  static final role =
+      obx.QueryStringProperty<UserEntity>(_entities[4].properties[6]);
 
-  /// See [User.crud].
-  static final crud = obx.QueryRelationToOne<User, Crud>(
+  /// See [UserEntity.crud].
+  static final crud = obx.QueryRelationToOne<UserEntity, Crud>(
     _entities[4].properties[7],
   );
 
-  /// See [User.derniereModification].
-  static final derniereModification = obx.QueryDateProperty<User>(
+  /// See [UserEntity.derniereModification].
+  static final derniereModification = obx.QueryDateProperty<UserEntity>(
     _entities[4].properties[8],
   );
 
-  /// See [User.isSynced].
-  static final isSynced = obx.QueryBooleanProperty<User>(
+  /// See [UserEntity.isSynced].
+  static final isSynced = obx.QueryBooleanProperty<UserEntity>(
     _entities[4].properties[9],
   );
 
-  /// See [User.syncedAt].
-  static final syncedAt = obx.QueryDateProperty<User>(
+  /// See [UserEntity.syncedAt].
+  static final syncedAt = obx.QueryDateProperty<UserEntity>(
     _entities[4].properties[10],
   );
 }
@@ -6652,8 +6626,8 @@ class Approvisionnement_ {
   /// See [Approvisionnement.fournisseur].
   static final fournisseur =
       obx.QueryRelationToOne<Approvisionnement, Fournisseur>(
-        _entities[5].properties[4],
-      );
+    _entities[5].properties[4],
+  );
 
   /// See [Approvisionnement.prixAchat].
   static final prixAchat = obx.QueryDoubleProperty<Approvisionnement>(
@@ -6930,8 +6904,8 @@ class Reservation_ {
   /// See [Reservation.seasonalPricing].
   static final seasonalPricing =
       obx.QueryRelationToOne<Reservation, SeasonalPricing>(
-        _entities[10].properties[12],
-      );
+    _entities[10].properties[12],
+  );
 
   /// See [Reservation.seasonalMultiplier].
   static final seasonalMultiplier = obx.QueryDoubleProperty<Reservation>(
@@ -7101,8 +7075,8 @@ class Hotel_ {
   /// See [Hotel.selectedSeasonalPricing].
   static final selectedSeasonalPricing =
       obx.QueryRelationToOne<Hotel, SeasonalPricing>(
-        _entities[14].properties[5],
-      );
+    _entities[14].properties[5],
+  );
 
   /// See [Hotel.photosJson].
   static final photosJson = obx.QueryStringProperty<Hotel>(
@@ -7304,14 +7278,14 @@ class ReservationExtra_ {
   /// See [ReservationExtra.reservation].
   static final reservation =
       obx.QueryRelationToOne<ReservationExtra, Reservation>(
-        _entities[17].properties[1],
-      );
+    _entities[17].properties[1],
+  );
 
   /// See [ReservationExtra.extraService].
   static final extraService =
       obx.QueryRelationToOne<ReservationExtra, ExtraService>(
-        _entities[17].properties[2],
-      );
+    _entities[17].properties[2],
+  );
 
   /// See [ReservationExtra.quantity].
   static final quantity = obx.QueryIntegerProperty<ReservationExtra>(
@@ -7844,8 +7818,8 @@ class ConversationParticipant_ {
   /// See [ConversationParticipant.conversationId].
   static final conversationId =
       obx.QueryStringProperty<ConversationParticipant>(
-        _entities[28].properties[1],
-      );
+    _entities[28].properties[1],
+  );
 
   /// See [ConversationParticipant.nodeId].
   static final nodeId = obx.QueryStringProperty<ConversationParticipant>(
@@ -7865,32 +7839,32 @@ class ConversationParticipant_ {
   /// See [ConversationParticipant.joinedTimestamp].
   static final joinedTimestamp =
       obx.QueryIntegerProperty<ConversationParticipant>(
-        _entities[28].properties[5],
-      );
+    _entities[28].properties[5],
+  );
 
   /// See [ConversationParticipant.leftTimestamp].
   static final leftTimestamp =
       obx.QueryIntegerProperty<ConversationParticipant>(
-        _entities[28].properties[6],
-      );
+    _entities[28].properties[6],
+  );
 
   /// See [ConversationParticipant.notificationsEnabled].
   static final notificationsEnabled =
       obx.QueryBooleanProperty<ConversationParticipant>(
-        _entities[28].properties[7],
-      );
+    _entities[28].properties[7],
+  );
 
   /// See [ConversationParticipant.lastReadMessageId].
   static final lastReadMessageId =
       obx.QueryStringProperty<ConversationParticipant>(
-        _entities[28].properties[8],
-      );
+    _entities[28].properties[8],
+  );
 
   /// See [ConversationParticipant.lastAccessTimestamp].
   static final lastAccessTimestamp =
       obx.QueryIntegerProperty<ConversationParticipant>(
-        _entities[28].properties[9],
-      );
+    _entities[28].properties[9],
+  );
 }
 
 /// [Message] entity fields to define ObjectBox queries.

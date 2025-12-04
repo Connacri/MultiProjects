@@ -1,18 +1,22 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as su;
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:timeago/timeago.dart' as timeago;
 
 import 'Hopital/p2p/connection_manager.dart';
@@ -23,48 +27,7 @@ import 'Hopital/p2p/messenger/messaging_manager.dart';
 import 'Hopital/p2p/p2p_integration.dart';
 import 'Hopital/p2p/p2p_manager.dart';
 import 'firebase_options.dart';
-import 'objectBox/MyApp.dart';
 import 'objectBox/classeObjectBox.dart';
-
-// ============================================================================
-// LOGGING HELPER
-// ============================================================================
-void logDebug(String message) {
-  final timestamp = DateTime.now().toString().substring(11, 19);
-  print('[$timestamp] 🔍 DEBUG: $message');
-}
-
-void logInfo(String message) {
-  final timestamp = DateTime.now().toString().substring(11, 19);
-  print('[$timestamp] ℹ️  INFO: $message');
-}
-
-void logSuccess(String message) {
-  final timestamp = DateTime.now().toString().substring(11, 19);
-  print('[$timestamp] ✅ SUCCESS: $message');
-}
-
-void logWarning(String message) {
-  final timestamp = DateTime.now().toString().substring(11, 19);
-  print('[$timestamp] ⚠️  WARNING: $message');
-}
-
-void logError(String message, [Object? error, StackTrace? stackTrace]) {
-  final timestamp = DateTime.now().toString().substring(11, 19);
-  print('[$timestamp] ❌ ERROR: $message');
-  if (error != null) {
-    print('[$timestamp]    └─ Error: $error');
-  }
-  if (stackTrace != null) {
-    print('[$timestamp]    └─ StackTrace:\n$stackTrace');
-  }
-}
-
-void logStep(String step) {
-  print('\n════════════════════════════════════════════════════════════════');
-  print('   $step');
-  print('════════════════════════════════════════════════════════════════\n');
-}
 
 // ============================================================================
 // GLOBAL VARIABLES
@@ -102,435 +65,639 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
-Future<void> main() async {
-  logStep('🚀 DÉMARRAGE DE L\'APPLICATION');
+final navigatorKey = GlobalKey<NavigatorState>();
 
+void main() async {
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
+  MobileAds.instance.initialize();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Initialisation Firebase
+  logStep('🔹 Initialisation Firebase');
   try {
-    // ============================================================================
-    // ÉTAPE 1: INITIALISATION DE BASE
-    // ============================================================================
-    logStep('ÉTAPE 1: Initialisation Flutter Bindings');
-    logDebug('Appel WidgetsFlutterBinding.ensureInitialized()');
-    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-    logSuccess('Flutter Bindings initialisé');
-
-    // ============================================================================
-    // ÉTAPE 2: DÉTECTION DE LA PLATEFORME
-    // ============================================================================
-    logStep('ÉTAPE 2: Détection de la plateforme');
-    if (kIsWeb) {
-      logInfo('Plateforme détectée: WEB');
-    } else {
-      logInfo('Plateforme détectée: ${Platform.operatingSystem}');
-      logInfo('Version: ${Platform.operatingSystemVersion}');
-    }
-
-    // ============================================================================
-    // ÉTAPE 3: INITIALISATION FIREBASE
-    // ============================================================================
-    logStep('ÉTAPE 3: Initialisation Firebase');
-    await _initializeFirebaseConditionally();
-
-    // ============================================================================
-    // ÉTAPE 4: INITIALISATION SUPABASE
-    // ============================================================================
-    logStep('ÉTAPE 4: Initialisation Supabase');
-    await initializeSupabase();
-
-    // ============================================================================
-    // ÉTAPE 5: INITIALISATION MOBILE ADS
-    // ============================================================================
-    logStep('ÉTAPE 5: Initialisation Mobile Ads');
-    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      try {
-        logDebug('Tentative d\'initialisation Mobile Ads');
-        await MobileAds.instance.initialize();
-        logSuccess('Mobile Ads initialisé');
-      } catch (e, stackTrace) {
-        logError('Erreur Mobile Ads', e, stackTrace);
-      }
-    } else {
-      logWarning('Mobile Ads non supporté sur cette plateforme');
-    }
-
-    // ============================================================================
-    // ÉTAPE 6: INITIALISATION DATE/TIME
-    // ============================================================================
-    logStep('ÉTAPE 6: Initialisation Date/Time');
-    try {
-      logDebug('Initialisation des formats de date français');
-      await initializeDateFormatting('fr_FR', null);
-      timeago.setLocaleMessages('fr', timeago.FrMessages());
-      timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
-      logSuccess('Date/Time configuré');
-    } catch (e, stackTrace) {
-      logError('Erreur Date/Time', e, stackTrace);
-    }
-
-    // ============================================================================
-    // ÉTAPE 7: INITIALISATION OBJECTBOX
-    // ============================================================================
-    logStep('ÉTAPE 7: Initialisation ObjectBox');
-    try {
-      logDebug('Création de l\'instance ObjectBox');
-      objectBox = ObjectBox();
-      logDebug('Appel objectBox.init()');
-      await objectBox.init();
-      logSuccess('ObjectBox initialisé');
-    } catch (e, stackTrace) {
-      logError('ERREUR CRITIQUE: ObjectBox', e, stackTrace);
-      rethrow;
-    }
-
-    // ============================================================================
-    // ÉTAPE 8: INITIALISATION P2P
-    // ============================================================================
-    logStep('ÉTAPE 8: Initialisation P2P');
-    await _initializeP2P();
-
-    // ============================================================================
-    // ÉTAPE 9: PERMISSIONS RÉSEAU
-    // ============================================================================
-    logStep('ÉTAPE 9: Configuration des permissions réseau');
-    await _setupNetworkPermissions();
-
-    // ============================================================================
-    // ÉTAPE 10: INITIALISATION MESSAGING P2P
-    // ============================================================================
-    logStep('ÉTAPE 10: Initialisation Messaging P2P');
-    await _initializeMessaging();
-
-    // ============================================================================
-    // ÉTAPE 11: LANCEMENT DE L'APPLICATION
-    // ============================================================================
-    logStep('ÉTAPE 11: Lancement de l\'interface utilisateur');
-    logDebug('Appel runApp()');
-    runApp(MyApp());
-    logSuccess('Application lancée avec succès');
-  } catch (e, stackTrace) {
-    logError('ERREUR FATALE DANS MAIN()', e, stackTrace);
-
-    // Afficher une UI d'erreur
-    runApp(MaterialApp(
-      home: Scaffold(
-        backgroundColor: Colors.red.shade900,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 80, color: Colors.white),
-                const SizedBox(height: 24),
-                const Text(
-                  'Erreur Critique',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'L\'application n\'a pas pu démarrer:\n$e',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () {
-                    print('════════════════════════════════════════');
-                    print('LOGS COMPLETS:');
-                    print('════════════════════════════════════════');
-                    print('Erreur: $e');
-                    print('StackTrace: $stackTrace');
-                  },
-                  child: const Text('Afficher les détails'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ));
-  }
-}
-
-/// Initialise Firebase uniquement sur les plateformes supportées
-Future<void> _initializeFirebaseConditionally() async {
-  try {
-    logDebug('Début de l\'initialisation Firebase');
-
-    // Vérifier la plateforme
-    logDebug('Vérification du support Firebase pour cette plateforme');
-    if (kIsWeb) {
-      logInfo('Plateforme: Web - Firebase supporté');
-      isFirebaseSupported = true;
-    } else if (Platform.isAndroid) {
-      logInfo('Plateforme: Android - Firebase supporté');
-      isFirebaseSupported = true;
-    } else if (Platform.isIOS) {
-      logInfo('Plateforme: iOS - Firebase supporté');
-      isFirebaseSupported = true;
-    } else if (Platform.isMacOS) {
-      logInfo('Plateforme: macOS - Firebase supporté');
-      isFirebaseSupported = true;
-    } else if (Platform.isWindows) {
-      logWarning('Plateforme: Windows - Firebase partiellement supporté');
-      logWarning('Tentative d\'initialisation avec gestion d\'erreur');
-      isFirebaseSupported = true;
-    } else if (Platform.isLinux) {
-      logWarning('Plateforme: Linux - Firebase NON supporté');
-      isFirebaseSupported = false;
-      logInfo('Mode sans Firebase activé');
-      return;
-    } else {
-      logWarning('Plateforme inconnue - Firebase NON supporté');
-      isFirebaseSupported = false;
-      return;
-    }
-
-    if (!isFirebaseSupported) {
-      logInfo('Firebase désactivé pour cette plateforme');
-      return;
-    }
-
-    // Tentative d'initialisation Firebase
-    logDebug('Appel Firebase.initializeApp()');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    logStep('✅ Firebase initialisé');
+  } catch (e, st) {
+    logError('Erreur initialisation Firebase', e, st);
+  }
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+  );
 
-    isFirebaseInitialized = true;
-    logSuccess('Firebase initialisé avec succès');
+  initializeDateFormatting(
+      'fr_FR', null); // Initialisez la localisation française
+  if (Platform.isAndroid || Platform.isIOS) {
+    MobileAds.instance.initialize();
+  } else {
+    print("Google Mobile Ads n'est pas supporté sur cette plateforme");
+  }
 
-    // Configuration Firestore
-    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS || Platform.isMacOS)) {
-      try {
-        logDebug('Configuration de la persistence Firestore');
-        FirebaseFirestore.instance.settings = const Settings(
-          persistenceEnabled: true,
-        );
-        logSuccess('Firestore persistence activée');
-      } catch (e, stackTrace) {
-        logError('Erreur configuration Firestore', e, stackTrace);
-      }
-    }
+  // SplashMaster.initialize();
+  // Future.delayed(const Duration(seconds: 2)).then(
+  //   (value) {
+  //     SplashMaster.resume();
+  //   },
+  // );
+  timeago.setLocaleMessages('fr', timeago.FrMessages());
+  timeago.setLocaleMessages('fr_short', timeago.FrShortMessages());
 
-    // Configuration Firebase Messaging
-    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      try {
-        logDebug('Configuration Firebase Messaging');
-        FirebaseMessaging.onBackgroundMessage(
-            _firebaseMessagingBackgroundHandler);
-        logSuccess('Firebase Messaging configuré');
-      } catch (e, stackTrace) {
-        logError('Erreur Firebase Messaging', e, stackTrace);
-      }
-    }
-  } catch (e, stackTrace) {
-    isFirebaseInitialized = false;
-    logError('ERREUR lors de l\'initialisation Firebase', e, stackTrace);
+  // ========================================================================
+  // 1️⃣ INITIALISER OBJECTBOX EN PREMIER - C'EST CRITIQUE
+  // ========================================================================
+  print('[Main] 1️⃣ Initialisation ObjectBox...');
+  objectBox = ObjectBox();
+  await objectBox.init(); // ⚠️ ATTENDRE LA FINALISATION
+  print('[Main] ✅ ObjectBox initialisé');
+  // 2️⃣ Initialiser P2P
+  await _initializeP2P();
+  //////////////////////////////////////////////////////////////////////////////
+  // 1. Vérifier les permissions réseau
+  await _setupNetworkPermissions();
 
-    if (!kIsWeb && Platform.isWindows) {
-      logWarning('Windows détecté - L\'application continuera sans Firebase');
-      logInfo('Supabase sera utilisé comme backend principal');
-    } else {
-      logWarning('L\'application continuera sans Firebase');
+  // ========================================================================
+  // INITIALISATION MESSAGING P2P
+  // ========================================================================
+  print('[Main] =========== Initialisation Messaging ===========');
+
+  try {
+    // 1. Initialiser MessagingManager avec objectBox initialisé
+    messagingManager = MessagingManager();
+    await messagingManager.initialize(objectBox, p2pManager.nodeId);
+    print('✅ MessagingManager initialisé');
+    // ✅ AJOUTER CES LIGNES
+    // 2. Initialiser NodesManager avec les vrais nœuds
+    // Initialiser NodesManager
+    final nodesManager = NodesManager();
+    await nodesManager.initialize(p2pManager, connectionManager);
+
+    print('✅ NodesManager initialisé');
+    // 2. Initialiser MessagingP2PIntegration
+    messagingP2P = MessagingP2PIntegration();
+    await messagingP2P.initialize(
+        messagingManager, p2pIntegration, connectionManager, objectBox);
+    messagingP2P.start();
+    print('✅ MessagingP2PIntegration initialisé et démarré');
+
+    // 3. Initialiser sync observer pour messaging
+    final messagingSyncObserver = MessagingSyncObserver();
+    await messagingSyncObserver.initialize(objectBox, messagingP2P);
+    messagingSyncObserver.start();
+    print('✅ MessagingSyncObserver démarré');
+  } catch (e) {
+    print('[Main] ❌ Erreur initialisation Messaging: $e');
+  }
+
+  print('[Main] ======================================');
+  //////////////////////////////////////////////////////////////////////////////
+
+  await messagingP2P.initialize(
+    messagingManager,
+    p2pIntegration,
+    connectionManager,
+    objectBox,
+  );
+  messagingP2P.start(); // Lance la synchronisation
+
+// Initialisation Supabase (IMPORTANT pour la persistance)
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    logStep('🔹 Initialisation Supabase pour Desktop');
+
+    // ========================================================================
+    // Nettoyage DÉSACTIVÉ - Sessions persistées correctement
+    // ========================================================================
+    // IMPORTANT: Ce bloc ne doit être activé QUE si tu rencontres des erreurs
+    // de corruption. En temps normal, il doit rester commenté pour que les
+    // sessions persistent entre les redémarrages.
+
+    // try {
+    //   logStep('🧹 Nettoyage RADICAL des données Supabase...');
+    //   final sp = await SharedPreferences.getInstance();
+    //
+    //   // ✅ CORRECTION : Le préfixe réel est "flutter.supabase_auth_"
+    //   final supabaseKeys = sp
+    //       .getKeys()
+    //       .where((k) => k.startsWith('supabase_auth_session'))
+    //       .toList();
+    //
+    //   if (supabaseKeys.isNotEmpty) {
+    //     logWarning(
+    //         '⚠️ ${supabaseKeys.length} clé(s) Supabase détectée(s) - SUPPRESSION TOTALE');
+    //
+    //     for (var key in supabaseKeys) {
+    //       try {
+    //         await sp.remove(key);
+    //         logStep('  🗑️ Supprimé: $key');
+    //       } catch (e) {
+    //         logError('  ❌ Échec suppression: $key', e);
+    //       }
+    //     }
+    //
+    //     logSuccess(
+    //         '✅ Nettoyage radical terminé - ${supabaseKeys.length} clé(s) supprimée(s)');
+    //     logWarning('⚠️ Vous devrez vous reconnecter');
+    //   } else {
+    //     logStep('✅ Aucune donnée Supabase existante');
+    //   }
+    // } catch (e, st) {
+    //   logError('Erreur lors du nettoyage radical', e, st);
+    // }
+
+    // ========================================================================
+    // Initialisation Supabase
+    // ========================================================================
+    try {
+      await Supabase.initialize(
+        url: 'https://ftaqbokfeahvfndorzuf.supabase.co',
+        anonKey:
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXFib2tmZWFodmZuZG9yenVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NDE5MDEsImV4cCI6MjA4MDMxNzkwMX0.I_pvSiN5S8Y31XS3NV2Gw5dVrCDNjXqmUUSloycXhcw',
+        authOptions: FlutterAuthClientOptions(
+          authFlowType: AuthFlowType.pkce,
+          autoRefreshToken: true,
+          // localStorage: SharedPrefsStorage(),
+        ),
+        debug: true,
+      );
+      logSuccess('✅ Supabase initialisé avec persistance');
+    } catch (e, st) {
+      logError('Erreur initialisation Supabase', e, st);
     }
   }
+
+  // Run App avec Provider
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        //
+        // ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
+        // ChangeNotifierProvider(create: (_) => CommerceProvider(objectBox)),
+        // ChangeNotifierProvider(create: (_) => CartProvider(objectBox)),
+        // ChangeNotifierProvider(create: (_) => ClientProvider(objectBox)),
+        // ChangeNotifierProvider(create: (_) => AdProvider()),
+        // ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        // /////////////////////////////KIDS/////////////////////////////////////
+        // ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        // ChangeNotifierProvider(create: (_) => AuthProvider()),
+        // ChangeNotifierProvider(create: (_) => CourseProvider()..initialize()),
+        //
+        // ChangeNotifierProvider(create: (_) => ConnectionStatusProvider()),
+        // ChangeNotifierProvider(create: (_) => FacturationProvider()),
+        // ChangeNotifierProvider(create: (_) => EditableFieldProvider()),
+        // ChangeNotifierProvider(
+        //   create: (_) => SignalementProvider(),
+        // ),
+        // ChangeNotifierProvider(
+        //   create: (_) => SignalementProviderSupabase(),
+        // ),
+        //
+        // ChangeNotifierProvider(
+        //   create: (context) => HotelProvider(objectBox),
+        // ),
+        //
+        // ChangeNotifierProvider(create: (_) => StaffProvider(objectBox)),
+        //
+        // ChangeNotifierProvider(create: (_) => ActiviteProvider()),
+        // ChangeNotifierProvider(
+        //     create: (_) => TimeOffProvider()..fetchTimeOffs()),
+        // ChangeNotifierProvider(create: (_) => BranchProvider()),
+        //
+        // // ⚠️ IMPORTANT: TypeActiviteProvider DOIT être déclaré AVANT PlanningHebdoProvider
+        // // car PlanningHebdoProvider en dépend
+        // ChangeNotifierProvider(
+        //     create: (context) => TypeActiviteProvider(objectBox)),
+        //
+        // ChangeNotifierProvider(create: (_) => PlanningHebdoProvider(objectBox)),
+        // ///////////////////////////////////////////////////////
+        // ChangeNotifierProvider<P2PManager>(
+        //   create: (_) => P2PManager(),
+        // ),
+        // ChangeNotifierProvider<ConnectionManager>(
+        //   create: (_) => ConnectionManager(),
+        // ),
+        // ChangeNotifierProvider<SyncManager>(
+        //   create: (_) => SyncManager(),
+        // ),
+        // ChangeNotifierProvider<P2PIntegration>(
+        //   create: (_) => P2PIntegration(),
+        // ),
+        // ChangeNotifierProvider<DiscoveryManagerBroadcast>(
+        //   // ✅ AJOUTE CETTE LIGNE
+        //   create: (_) => DiscoveryManagerBroadcast(),
+        // ),
+        // // ✅ MESSAGING PROVIDER - À AJOUTER
+        // ChangeNotifierProvider<MessagingManager>(
+        //   create: (_) => MessagingManager(),
+        // ),
+        // ChangeNotifierProvider<AutoConnectService>(
+        //   create: (_) => AutoConnectService(),
+        // ),
+        // ChangeNotifierProvider<DeltaGenerator>(
+        //   create: (_) => DeltaGenerator(),
+        // ),
+        // ChangeNotifierProvider<DiscoveryManager>(
+        //   create: (_) => DiscoveryManager(),
+        // ),
+        // ChangeNotifierProvider<MessagingP2PIntegration>(
+        //   create: (_) => MessagingP2PIntegration(),
+        // ),
+        // ChangeNotifierProvider<MessagingProvider>(
+        //   create: (_) => MessagingProvider(),
+        // ),
+      ],
+      child: MyApp(),
+    ),
+  );
 }
 
 /// Configure les permissions réseau nécessaires
 Future<void> _setupNetworkPermissions() async {
-  if (kIsWeb) {
-    logInfo('Web - Pas de permissions réseau nécessaires');
-    return;
-  }
-
   try {
-    logDebug('Début de la configuration des permissions réseau');
+    print('[Main] Vérification des permissions réseau...');
 
     if (Platform.isAndroid) {
-      logDebug(
-          'Android - Demande des permissions location et nearbyWifiDevices');
+      // Android: demander les permissions à l'exécution
       final statuses = await [
-        Permission.location,
+        Permission.location, // Remplace accessNetworkState
         Permission.nearbyWifiDevices,
       ].request();
 
       bool allGranted = statuses.values.every((status) => status.isGranted);
 
       if (!allGranted) {
-        logWarning('Certaines permissions Android ont été refusées');
-        statuses.forEach((permission, status) {
-          logDebug('  $permission: $status');
-        });
+        print('[Main] ⚠️ Certaines permissions refusées sur Android');
       } else {
-        logSuccess('Toutes les permissions Android accordées');
+        print('[Main] ✅ Permissions Android accordées');
       }
     } else if (Platform.isIOS) {
-      logDebug('iOS - Demande de la permission nearbyWifiDevices');
+      // iOS: demander l'accès réseau local
       final status = await Permission.nearbyWifiDevices.request();
 
       if (status.isDenied) {
-        logWarning('Permission réseau local refusée sur iOS');
+        print('[Main] ⚠️ Permission réseau local refusée sur iOS');
       } else if (status.isPermanentlyDenied) {
-        logWarning('Permission réseau définitivement refusée');
-        logInfo('Suggestion: Ouvrir les paramètres de l\'app');
+        print('[Main] ⚠️ Permission réseau local définitivement refusée');
+        await openAppSettings();
       } else {
-        logSuccess('Permission iOS accordée');
+        print('[Main] ✅ Permissions iOS accordées');
       }
-    } else {
-      logInfo('${Platform.operatingSystem} - Pas de permissions spécifiques');
     }
 
     // Vérifier la connectivité
-    logDebug('Vérification de la connectivité réseau');
     final connectivity = await Connectivity().checkConnectivity();
     if (connectivity == ConnectivityResult.none) {
-      logWarning('Aucune connexion réseau disponible');
+      print('[Main] ⚠️ Aucune connexion réseau disponible');
     } else {
-      logSuccess('Connectivité réseau OK: $connectivity');
+      print('[Main] ✅ Connectivité réseau OK: $connectivity');
     }
-  } catch (e, stackTrace) {
-    logError('Erreur configuration permissions réseau', e, stackTrace);
+  } catch (e) {
+    print('[Main] ❌ Erreur configuration permissions: $e');
   }
 }
 
 /// Initialise le système P2P complet
 Future<void> _initializeP2P() async {
   try {
-    logDebug('Création de l\'instance P2PIntegration');
+    print('[Main] =========== Initialisation P2P ===========');
     p2pIntegration = P2PIntegration();
 
-    logDebug('Appel initializeP2PSystem()');
     await p2pIntegration.initializeP2PSystem();
 
-    logDebug('Configuration du callback de broadcast');
+    // ✅ CRITIQUE : Configurer le callback APRÈS l'initialisation
+    print('[Main] 🔧 Configuration du callback de broadcast...');
     final deltaGenerator = DeltaGenerator();
     deltaGenerator
         .setBroadcastCallback((delta) => p2pIntegration.broadcastDelta(delta));
+    print('[Main] ✅ Callback configuré');
 
-    logDebug('Initialisation P2PManager et ConnectionManager');
     p2pManager = P2PManager();
     connectionManager = p2pIntegration.connectionManager;
 
-    logSuccess('P2P System initialisé');
-  } catch (e, stackTrace) {
-    logError('ERREUR lors de l\'initialisation P2P', e, stackTrace);
-    rethrow;
+    print('[Main] ✅ P2P System initialisé');
+  } catch (e) {
+    print('[Main] ❌ Erreur initialisation P2P: $e');
   }
 }
 
-/// Initialise le système de messagerie P2P
-Future<void> _initializeMessaging() async {
-  try {
-    logDebug('Création de MessagingManager');
-    messagingManager = MessagingManager();
+// ============================================================================
+// LOGGING UTILS (à conserver dans ton main.dart)
+// ============================================================================
+void logStep(String message) {
+  final timestamp = DateTime.now().toString().substring(11, 19);
+  print('[$timestamp] 🔹 STEP: $message');
+}
 
-    logDebug('Initialisation MessagingManager avec ObjectBox et nodeId');
-    await messagingManager.initialize(objectBox, p2pManager.nodeId);
-    logSuccess('MessagingManager initialisé');
+void logError(String message, [Object? e, StackTrace? st]) {
+  final timestamp = DateTime.now().toString().substring(11, 19);
+  print('[$timestamp] ❌ ERROR: $message');
+  if (e != null) print('[$timestamp]     └─ $e');
+  if (st != null) print('[$timestamp]     └─ StackTrace:\n$st');
+}
 
-    logDebug('Création et initialisation NodesManager');
-    final nodesManager = NodesManager();
-    await nodesManager.initialize(p2pManager, connectionManager);
-    logSuccess('NodesManager initialisé');
+void logWarning(String message) {
+  final timestamp = DateTime.now().toString().substring(11, 19);
+  print('[$timestamp] ⚠️ WARNING: $message');
+}
 
-    logDebug('Création de MessagingP2PIntegration');
-    messagingP2P = MessagingP2PIntegration();
+void logSuccess(String message) {
+  final timestamp = DateTime.now().toString().substring(11, 19);
+  print('[$timestamp] ✅ SUCCESS: $message');
+}
 
-    logDebug('Initialisation MessagingP2PIntegration');
-    await messagingP2P.initialize(
-        messagingManager, p2pIntegration, connectionManager, objectBox);
+// ===========================================
+// AuthProvider
+// ===========================================
 
-    logDebug('Démarrage de MessagingP2PIntegration');
-    messagingP2P.start();
-    logSuccess('MessagingP2PIntegration démarré');
+class MemoryStorage implements GotrueAsyncStorage {
+  final Map<String, String> _data = {};
 
-    logDebug('Création et initialisation MessagingSyncObserver');
-    final messagingSyncObserver = MessagingSyncObserver();
-    await messagingSyncObserver.initialize(objectBox, messagingP2P);
-    messagingSyncObserver.start();
-    logSuccess('MessagingSyncObserver démarré');
+  @override
+  Future<void> clear() async => _data.clear();
 
-    logSuccess('Système de messagerie P2P complètement initialisé');
-  } catch (e, stackTrace) {
-    logError('ERREUR lors de l\'initialisation Messaging', e, stackTrace);
-    rethrow;
+  @override
+  Future<String?> getItem({required String key}) async => _data[key];
+
+  @override
+  Future<void> removeItem({required String key}) async => _data.remove(key);
+
+  @override
+  Future<void> setItem({required String key, required String value}) async {
+    _data[key] = value;
   }
 }
 
-Future<void> initializeSupabase() async {
-  try {
-    logDebug('=== DIAGNOSTIC SUPABASE ===');
+class AuthProvider extends ChangeNotifier {
+  bool loading = true;
+  bool isSupabase = false;
+  User? firebaseUser;
+  Session? supabaseSession;
 
-    const supabaseUrl = 'https://zjbnzghyhdhlivpokstz.supabase.co';
-    const supabaseKey =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqYm56Z2h5aGRobGl2cG9rc3R6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg2ODA1MjcsImV4cCI6MjA1NDI1NjUyN30.99PBeSXyoFJQMFopizHfLDlqLrMunSBLlBfTGcLIpv8';
+  StreamSubscription<AuthState>? _supabaseAuthSubscription;
 
-    // Diagnostic 1: Vérifier les caractères
-    logDebug('URL length: ${supabaseUrl.length}');
-    logDebug('Key length: ${supabaseKey.length}');
-    logDebug('URL bytes: ${supabaseUrl.codeUnits.take(10).toList()}');
-    logDebug('Key bytes: ${supabaseKey.codeUnits.take(10).toList()}');
+  // Flag pour éviter les double-initialisations lors du hot reload
+  bool _isInitialized = false;
 
-    // Diagnostic 2: Vérifier le format de la clé JWT
-    final keyParts = supabaseKey.split('.');
-    logDebug('JWT parts: ${keyParts.length} (devrait être 3)');
+  AuthProvider() {
+    _init();
+  }
 
-    if (keyParts.length != 3) {
-      logError(
-          'Clé JWT invalide - devrait avoir 3 parties séparées par des points');
+  Future<void> _init() async {
+    // Protection contre double initialisation (hot reload)
+    if (_isInitialized) {
+      logWarning('⚠️ AuthProvider déjà initialisé, récupération session...');
+      await _recoverSession();
       return;
     }
 
-    // Diagnostic 3: Vérifier l'URL
+    if (kIsWeb || (!kIsWeb && (Platform.isAndroid || Platform.isIOS))) {
+      // ============ PATH FIREBASE ============
+      isSupabase = false;
+      FirebaseAuth.instance.authStateChanges().listen((u) {
+        firebaseUser = u;
+        loading = false;
+        notifyListeners();
+      });
+      _isInitialized = true;
+    } else {
+      // ============ PATH SUPABASE (DESKTOP) ============
+      isSupabase = true;
+
+      try {
+        logStep('🔐 Vérification session Supabase...');
+
+        // Petit délai pour laisser Supabase s'initialiser proprement
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        // Récupération de la session actuelle
+        final sess = Supabase.instance.client.auth.currentSession;
+
+        if (sess != null) {
+          logSuccess('✅ Session trouvée: ${sess.user.email}');
+          supabaseSession = sess;
+        } else {
+          logStep('❌ Aucune session trouvée');
+        }
+      } catch (e, stackTrace) {
+        logError('❌ Erreur init Supabase', e, stackTrace);
+
+        // Gestion spécifique FormatException (session corrompue)
+        if (e is FormatException) {
+          logWarning('🔧 FormatException détectée - Nettoyage complet...');
+          await _handleCorruptedSession();
+        }
+      } finally {
+        loading = false;
+        _isInitialized = true;
+        notifyListeners();
+      }
+
+      // Écoute des changements d'authentification
+      _supabaseAuthSubscription?.cancel(); // Cancel previous if any
+      _supabaseAuthSubscription =
+          Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        logStep('🔔 Auth Event: ${data.event}');
+
+        // Ne pas écraser une session valide avec null lors du hot reload
+        if (data.session != null || data.event == AuthChangeEvent.signedOut) {
+          supabaseSession = data.session;
+          notifyListeners();
+        }
+      });
+    }
+  }
+
+  /// Récupération de session lors du hot reload
+  Future<void> _recoverSession() async {
+    if (!isSupabase) return;
+
     try {
-      final uri = Uri.parse(supabaseUrl);
-      logDebug('URL scheme: ${uri.scheme}');
-      logDebug('URL host: ${uri.host}');
-    } catch (e) {
-      logError('URL invalide', e, null);
-      return;
+      loading = true;
+      notifyListeners();
+
+      logStep('🔄 Récupération session après hot reload...');
+
+      await Future.delayed(const Duration(milliseconds: 200));
+
+      final sess = Supabase.instance.client.auth.currentSession;
+
+      if (sess != null) {
+        logSuccess('✅ Session récupérée: ${sess.user.email}');
+        supabaseSession = sess;
+      } else {
+        logWarning('⚠️ Aucune session à récupérer');
+      }
+    } catch (e, st) {
+      logError('Erreur récupération session', e, st);
+    } finally {
+      loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Gestion session corrompue
+  Future<void> _handleCorruptedSession() async {
+    try {
+      // Nettoyage complet du storage
+      final storage = SharedPrefsStorage();
+      await storage.removePersistedSession();
+      logSuccess('✅ Storage nettoyé après corruption');
+
+      // Réinitialisation état
+      supabaseSession = null;
+    } catch (cleanupError, st) {
+      logError('Erreur lors du nettoyage post-corruption', cleanupError, st);
+    }
+  }
+
+  bool get isLoggedIn {
+    if (!isSupabase) {
+      return firebaseUser != null;
+    } else {
+      return supabaseSession != null;
+    }
+  }
+
+  String? get userEmail {
+    if (!isSupabase) {
+      return firebaseUser?.email;
+    } else {
+      return supabaseSession?.user.email;
+    }
+  }
+
+  Future<String?> login(String email, String password) async {
+    loading = true;
+    notifyListeners();
+    logStep('🔐 Tentative de connexion: $email');
+
+    if (!isSupabase) {
+      // ============ FIREBASE LOGIN ============
+      try {
+        await FirebaseAuth.instance
+            .signInWithEmailAndPassword(email: email, password: password);
+        logSuccess('✅ Connexion Firebase réussie');
+        return null;
+      } on FirebaseAuthException catch (e) {
+        logError('FirebaseAuthException', e);
+        return e.message;
+      } catch (e) {
+        logError('Erreur Firebase', e);
+        return "Erreur inconnue";
+      } finally {
+        loading = false;
+        notifyListeners();
+      }
+    } else {
+      // ============ SUPABASE LOGIN ============
+      try {
+        final res = await Supabase.instance.client.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+
+        if (res.session == null) {
+          loading = false;
+          notifyListeners();
+          return 'Email ou mot de passe invalide';
+        }
+
+        supabaseSession = res.session;
+        logSuccess('✅ Connexion Supabase réussie: ${res.session!.user.email}');
+
+        loading = false;
+        notifyListeners();
+        return null;
+      } catch (e, st) {
+        logError('Erreur Supabase login', e, st);
+        loading = false;
+        notifyListeners();
+        return "Erreur: $e";
+      }
+    }
+  }
+
+  Future<String?> signup(String email, String password) async {
+    loading = true;
+    notifyListeners();
+
+    if (!isSupabase) {
+      // ============ FIREBASE SIGNUP ============
+      try {
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        return null;
+      } on FirebaseAuthException catch (e) {
+        return e.message;
+      } catch (e) {
+        return "Erreur inconnue";
+      } finally {
+        loading = false;
+        notifyListeners();
+      }
+    } else {
+      // ============ SUPABASE SIGNUP ============
+      try {
+        final res = await Supabase.instance.client.auth
+            .signUp(email: email, password: password);
+
+        if (res.session == null && res.user == null) {
+          loading = false;
+          notifyListeners();
+          return 'Erreur lors de l\'inscription';
+        }
+
+        supabaseSession = res.session;
+        loading = false;
+        notifyListeners();
+        return null;
+      } catch (e, st) {
+        logError('Erreur signup', e, st);
+        loading = false;
+        notifyListeners();
+        return "Erreur: $e";
+      }
+    }
+  }
+
+  Future<void> logout() async {
+    loading = true;
+    notifyListeners();
+
+    if (!isSupabase) {
+      await FirebaseAuth.instance.signOut();
+      firebaseUser = null;
+    } else {
+      await Supabase.instance.client.auth.signOut();
+      supabaseSession = null;
     }
 
-    // Tentative d'initialisation
-    logDebug('Tentative d\'initialisation...');
+    loading = false;
+    notifyListeners();
+  }
 
-    await su.Supabase.initialize(
-      url: supabaseUrl.trim(),
-      anonKey: supabaseKey.trim(),
-      authOptions: const su.FlutterAuthClientOptions(
-        authFlowType: su.AuthFlowType.pkce,
-      ),
-      realtimeClientOptions: const su.RealtimeClientOptions(
-        logLevel: su.RealtimeLogLevel.info,
-      ),
-      storageOptions: const su.StorageClientOptions(
-        retryAttempts: 10,
-      ),
-      debug: true,
-    );
-
-    logSuccess('✅ Supabase initialisé avec succès');
-  } catch (e, stackTrace) {
-    logError('❌ ERREUR Supabase', e, stackTrace);
-
-    if (e is FormatException) {
-      logError('Format Exception Message', e.message, null);
-      logError('Format Exception Source', e.source, null);
-      logError('Format Exception Offset', e.offset, null);
-    }
+  @override
+  void dispose() {
+    _supabaseAuthSubscription?.cancel();
+    super.dispose();
   }
 }
 
-final navigatorKey = GlobalKey<NavigatorState>();
-final globalScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
+// ===========================================
+// MyApp
+// ===========================================
 class MyApp extends StatefulWidget {
-  MyApp({super.key});
+  MyApp({
+    super.key,
+    /*required this.objectBox*/
+  });
+
+//  final ObjectBox objectBox;
+//   static FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+//   static FirebaseInAppMessaging fiam = FirebaseInAppMessaging.instance;
 
   static const String _title = 'DZ Wallet';
 
@@ -538,85 +705,1125 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
+final globalScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
 class _MyAppState extends State<MyApp> {
   bool _isLicenseValidated = false;
   bool _isLicenseDemoValidated = false;
 
+  //final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
-    logDebug('MyApp.initState() appelé');
+    // initializeDefault();
+
     _checkLicenseStatus();
   }
 
   Future<void> _checkLicenseStatus() async {
-    try {
-      logDebug('Vérification du statut de licence');
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
 
-      bool? isLicenseValidated = prefs.getBool('isLicenseValidated');
-      bool? isLicenseDemoValidated = prefs.getBool('isLicenseDemoValidated');
+    // Vérifier les deux états dans SharedPreferences
+    bool? isLicenseValidated = prefs.getBool('isLicenseValidated');
+    bool? isLicenseDemoValidated = prefs.getBool('isLicenseDemoValidated');
 
-      logDebug('isLicenseValidated: $isLicenseValidated');
-      logDebug('isLicenseDemoValidated: $isLicenseDemoValidated');
-
-      if (isLicenseValidated != null && isLicenseValidated) {
-        setState(() {
-          _isLicenseValidated = true;
-        });
-        logInfo('Licence validée');
-      } else if (isLicenseDemoValidated != null && isLicenseDemoValidated) {
-        setState(() {
-          _isLicenseDemoValidated = true;
-        });
-        logInfo('Licence démo validée');
-      } else {
-        logInfo('Aucune licence trouvée');
-      }
-    } catch (e, stackTrace) {
-      logError('Erreur lors de la vérification de licence', e, stackTrace);
+    // Mettre à jour l'état en fonction des valeurs récupérées
+    if (isLicenseValidated != null && isLicenseValidated) {
+      setState(() {
+        _isLicenseValidated = true;
+      });
+    } else if (isLicenseDemoValidated != null && isLicenseDemoValidated) {
+      setState(() {
+        _isLicenseDemoValidated = true;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    logDebug('MyApp.build() appelé');
-
     return MaterialApp(
       scaffoldMessengerKey: globalScaffoldMessengerKey,
+
       scrollBehavior: CustomScrollBehavior(),
+      // Applique le nouveau ScrollBehavior
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
         fontFamily: 'OSWALD',
-        textTheme: const TextTheme(
+        textTheme: TextTheme(
           bodyLarge: TextStyle(color: Colors.black87),
         ),
-        chipTheme: const ChipThemeData(
-          backgroundColor: Colors.black87,
-          labelStyle: TextStyle(color: Colors.white),
-          shape: StadiumBorder(),
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.black87, // fond foncé
+          labelStyle: const TextStyle(color: Colors.white), // texte clair
+          shape: StadiumBorder(), // arrondi moderne
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         ),
       ),
       locale: const Locale('fr', 'CA'),
+
+      //scaffoldMessengerKey: Utils.messengerKey,
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Ramzi',
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: Colors.blueGrey,
-        textTheme: const TextTheme(
+        textTheme: TextTheme(
           bodyLarge: TextStyle(color: Colors.white),
         ),
-        chipTheme: const ChipThemeData(
-          backgroundColor: Colors.white,
-          labelStyle: TextStyle(color: Colors.black87),
+        chipTheme: ChipThemeData(
+          backgroundColor: Colors.white, // fond clair
+          labelStyle: const TextStyle(color: Colors.black87), // texte foncé
           shape: StadiumBorder(),
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         ),
       ),
-      home: MyMain(),
+      home: //LicenseCheckScreen(),
+          // Platform.isAndroid || Platform.isIOS
+          //     ?.
+          SplashScreen(),
+      //     SplashMaster.lottie(
+      //   source: AssetSource('assets/lotties/1 (104).json'),
+      //   lottieConfig: LottieConfig(
+      //     fit: BoxFit.contain,
+      //     // conserve le ratio original
+      //     overrideBoxFit: false,
+      //     // empêche SplashMaster de forcer le BoxFit
+      //     alignment: Alignment.center,
+      //     //centre l’animation
+      //     repeat: true,
+      //     // si tu veux que ça boucle
+      //     animate: true,
+      //     // démarre automatiquement
+      //     filterQuality: FilterQuality.high,
+      //     // meilleure qualité d’affichage
+      //     visibilityEnum: VisibilityEnum.none,
+      //   ),
+      //   nextScreen: MyMain(),
+      // ),
+
+      //     : _isLicenseValidated || _isLicenseDemoValidated
+      //         ? MyMain()
+      //         : hashPage()
     );
   }
+}
+
+// ===========================================
+// SplashScreen
+// ===========================================
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+
+    // Attendre que loading soit terminé
+    int attempts = 0;
+    while (auth.loading && attempts < 50) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      attempts++;
+    }
+
+    if (!mounted) return;
+
+    logStep('🔍 État final:');
+    logStep('   - isSupabase: ${auth.isSupabase}');
+    logStep('   - isLoggedIn: ${auth.isLoggedIn}');
+    logStep('   - email: ${auth.userEmail}');
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    if (!mounted) return;
+
+    if (auth.isLoggedIn) {
+      logStep('✅ → HomeScreen');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    } else {
+      logStep('❌ → LoginScreen');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Chargement...'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================
+// LoginScreen
+// ===========================================
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
+    return Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: "Email"),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: "Mot de passe"),
+              ),
+              const SizedBox(height: 24),
+              if (auth.loading)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  onPressed: () async {
+                    final result = await auth.login(
+                      emailCtrl.text.trim(),
+                      passCtrl.text.trim(),
+                    );
+                    if (result != null) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result)),
+                        );
+                      }
+                    } else {
+                      if (context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text("Connexion"),
+                ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SignupScreen()),
+                  );
+                },
+                child: const Text("Créer un compte"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================
+// SignupScreen
+// ===========================================
+class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
+  @override
+  State<SignupScreen> createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  final confirmPassCtrl = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Inscription")),
+      body: Center(
+        child: SizedBox(
+          width: 350,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: "Email"),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: "Mot de passe"),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: confirmPassCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(
+                    labelText: "Confirmer le mot de passe"),
+              ),
+              const SizedBox(height: 24),
+              if (auth.loading)
+                const CircularProgressIndicator()
+              else
+                ElevatedButton(
+                  onPressed: () async {
+                    if (passCtrl.text != confirmPassCtrl.text) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content:
+                                Text("Les mots de passe ne correspondent pas"),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    final result = await auth.signup(
+                      emailCtrl.text.trim(),
+                      passCtrl.text.trim(),
+                    );
+
+                    if (result != null) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(result)),
+                        );
+                      }
+                    } else {
+                      if (context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        );
+                      }
+                    }
+                  },
+                  child: const Text("S'inscrire"),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================
+// HomeScreen
+// ===========================================
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    const Color(0xFF1a1a2e),
+                    const Color(0xFF16213e),
+                    const Color(0xFF0f3460),
+                  ]
+                : [
+                    const Color(0xFF667eea),
+                    const Color(0xFF764ba2),
+                    const Color(0xFFf093fb),
+                  ],
+          ),
+        ),
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              children: [
+                // Header moderne
+                _buildHeader(context, auth, isDark),
+
+                // Contenu principal
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildWelcomeCard(auth, isDark),
+                        const SizedBox(height: 24),
+                        _buildStatsGrid(isDark),
+                        const SizedBox(height: 24),
+                        _buildQuickActions(context, isDark),
+                        const SizedBox(height: 24),
+                        _buildRecentActivity(isDark),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, AuthProvider auth, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Dashboard',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white.withOpacity(0.95),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _getGreeting(),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              _buildIconButton(
+                Icons.notifications_outlined,
+                () {},
+                isDark,
+              ),
+              const SizedBox(width: 12),
+              _buildIconButton(
+                Icons.logout,
+                () async {
+                  await auth.logout();
+                  if (context.mounted) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  }
+                },
+                isDark,
+                isDestructive: true,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, VoidCallback onTap, bool isDark,
+      {bool isDestructive = false}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDestructive
+              ? Colors.red.withOpacity(0.2)
+              : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDestructive
+                ? Colors.red.withOpacity(0.3)
+                : Colors.white.withOpacity(0.2),
+          ),
+        ),
+        child: Icon(
+          icon,
+          color: isDestructive ? Colors.red[300] : Colors.white,
+          size: 22,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeCard(AuthProvider auth, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person,
+              size: 32,
+              color: Colors.white.withOpacity(0.9),
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bienvenue,',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  auth.userEmail ?? 'Invité',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsGrid(bool isDark) {
+    final stats = [
+      {
+        'icon': Icons.task_alt,
+        'label': 'Tâches',
+        'value': '24',
+        'color': Colors.blue
+      },
+      {
+        'icon': Icons.notifications_active,
+        'label': 'Notifications',
+        'value': '8',
+        'color': Colors.orange
+      },
+      {
+        'icon': Icons.trending_up,
+        'label': 'Progression',
+        'value': '76%',
+        'color': Colors.green
+      },
+      {
+        'icon': Icons.star,
+        'label': 'Points',
+        'value': '1.2K',
+        'color': Colors.purple
+      },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.5,
+      ),
+      itemCount: stats.length,
+      itemBuilder: (context, index) {
+        final stat = stats[index];
+        return _buildStatCard(
+          icon: stat['icon'] as IconData,
+          label: stat['label'] as String,
+          value: stat['value'] as String,
+          color: stat['color'] as Color,
+          isDark: isDark,
+        );
+      },
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required bool isDark,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context, bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Actions Rapides',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white.withOpacity(0.9),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _buildActionChip(
+                Icons.add_circle_outline, 'Nouveau', Colors.blue, isDark),
+            _buildActionChip(Icons.search, 'Rechercher', Colors.purple, isDark),
+            _buildActionChip(
+                Icons.filter_list, 'Filtrer', Colors.orange, isDark),
+            _buildActionChip(Icons.settings, 'Paramètres', Colors.teal, isDark),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionChip(
+      IconData icon, String label, Color color, bool isDark) {
+    return InkWell(
+      onTap: () {},
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity(bool isDark) {
+    final activities = [
+      {
+        'title': 'Tâche complétée',
+        'subtitle': 'Il y a 2 heures',
+        'icon': Icons.check_circle
+      },
+      {
+        'title': 'Nouveau message',
+        'subtitle': 'Il y a 5 heures',
+        'icon': Icons.message
+      },
+      {
+        'title': 'Mise à jour système',
+        'subtitle': 'Hier',
+        'icon': Icons.system_update
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Activité Récente',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white.withOpacity(0.9),
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...activities.map((activity) => _buildActivityItem(
+              title: activity['title'] as String,
+              subtitle: activity['subtitle'] as String,
+              icon: activity['icon'] as IconData,
+              isDark: isDark,
+            )),
+      ],
+    );
+  }
+
+  Widget _buildActivityItem({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isDark,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: Colors.white70, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            Icons.chevron_right,
+            color: Colors.white.withOpacity(0.3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Bon matin';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  }
+}
+
+class SharedPrefsStorage implements LocalStorage {
+  final String prefix;
+  static const String _sessionKey = 'session';
+  static const String _accessTokenKey = 'access-token';
+
+  // Cache pour éviter les lectures répétées
+  SharedPreferences? _prefs;
+
+  SharedPrefsStorage(
+      {this.prefix = "supabase_auth_session"}); // ✅ SANS flutter.
+
+  Future<SharedPreferences> get _sharedPrefs async {
+    _prefs ??= await SharedPreferences.getInstance();
+    return _prefs!;
+  }
+
+  @override
+  Future<void> initialize() async {
+    logStep('📦 SharedPrefs: INITIALIZE appelé');
+
+    try {
+      final sp = await _sharedPrefs;
+
+      // Lister UNIQUEMENT les clés (pas de lecture)
+      final allKeys = sp.getKeys().where((k) => k.startsWith(prefix)).toList();
+
+      if (allKeys.isEmpty) {
+        logStep('📦 SharedPrefs: Aucune donnée Supabase stockée');
+        return;
+      }
+
+      logStep('📦 SharedPrefs: ${allKeys.length} clé(s) trouvée(s)');
+
+      // Tentative de validation PROTÉGÉE
+      try {
+        final sessionString = sp.getString("$prefix$_sessionKey");
+
+        if (sessionString != null && sessionString.isNotEmpty) {
+          try {
+            final decoded = json.decode(sessionString);
+
+            if (decoded is Map<String, dynamic> &&
+                decoded.containsKey('access_token') &&
+                decoded.containsKey('user')) {
+              logSuccess('📦 ✅ Session existante VALIDE');
+              return;
+            } else {
+              logWarning('📦 Structure de session invalide');
+              await _cleanupCorruptedSession(sp);
+            }
+          } on FormatException catch (e) {
+            logWarning('📦 Session corrompue (FormatException)');
+            logStep('  └─ ${e.message}');
+            await _cleanupCorruptedSession(sp);
+          }
+        }
+      } catch (e) {
+        // Si lecture échoue, supprimer TOUTES les clés
+        logWarning('📦 ❌ Impossible de lire la session - Nettoyage complet');
+        logStep('  └─ $e');
+        await _cleanupCorruptedSession(sp);
+      }
+    } catch (e, st) {
+      logError('Erreur critique initialize()', e, st);
+      // En cas d'erreur critique, forcer nettoyage complet
+      try {
+        final sp = await _sharedPrefs;
+        await _cleanupCorruptedSession(sp);
+      } catch (_) {
+        logError('Impossible de nettoyer après erreur critique');
+      }
+    }
+  }
+
+  /// Nettoyage sécurisé des données corrompues
+  Future<void> _cleanupCorruptedSession(SharedPreferences sp) async {
+    try {
+      logStep('🧹 Nettoyage session corrompue...');
+
+      final keysToRemove =
+          sp.getKeys().where((k) => k.startsWith(prefix)).toList();
+
+      for (var key in keysToRemove) {
+        await sp.remove(key);
+        logStep('🧹 Clé supprimée: $key');
+      }
+
+      logSuccess('✅ Nettoyage terminé');
+    } catch (e, st) {
+      logError('Erreur lors du nettoyage', e, st);
+    }
+  }
+
+  @override
+  Future<String?> accessToken() async {
+    try {
+      final sp = await _sharedPrefs;
+
+      // IMPORTANT: On récupère depuis la session complète, pas depuis access-token
+      // Car Supabase s'attend à parser du JSON, pas un JWT brut
+      final sessionString = sp.getString("$prefix$_sessionKey");
+
+      if (sessionString != null && sessionString.isNotEmpty) {
+        try {
+          final session = json.decode(sessionString);
+          if (session is Map<String, dynamic> &&
+              session.containsKey('access_token')) {
+            final token = session['access_token'];
+            logStep(
+                '📦 GET accessToken = ${token != null ? "TROUVÉ (depuis session)" : "NULL"}');
+            return token;
+          }
+        } catch (e) {
+          logWarning('📦 Erreur parsing session pour accessToken');
+          return null;
+        }
+      }
+
+      logStep('📦 GET accessToken = NULL');
+      return null;
+    } catch (e, st) {
+      logError('Erreur accessToken()', e, st);
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> hasAccessToken() async {
+    final token = await accessToken();
+    final hasToken = token != null && token.isNotEmpty;
+    logStep('📦 hasAccessToken = $hasToken');
+    return hasToken;
+  }
+
+  @override
+  Future<void> persistSession(String sessionString) async {
+    try {
+      logStep(
+          '📦 SharedPrefs: PERSIST SESSION (${sessionString.length} chars)');
+
+      // 1. Validation JSON AVANT toute écriture
+      final Map<String, dynamic> sessionData;
+      try {
+        final decoded = json.decode(sessionString);
+        if (decoded is! Map<String, dynamic>) {
+          logError('Session data n\'est pas un Map valide');
+          return;
+        }
+        sessionData = decoded;
+      } catch (e, st) {
+        logError('JSON invalide lors de persistSession', e, st);
+        return;
+      }
+
+      // 2. Validation structure minimale
+      if (!sessionData.containsKey('access_token')) {
+        logError('Session manque access_token');
+        return;
+      }
+
+      // 3. Écriture UNIQUEMENT de la session complète
+      final sp = await _sharedPrefs;
+
+      // Sauvegarder UNIQUEMENT la session complète
+      // Supabase lira le JSON complet, pas juste l'access_token
+      final saveResult =
+          await sp.setString("$prefix$_sessionKey", sessionString);
+      if (!saveResult) {
+        logError('Échec sauvegarde session dans SharedPreferences');
+        return;
+      }
+
+      logSuccess('📦 ✅ Session persistée avec succès');
+    } catch (e, st) {
+      logError('Erreur critique persistSession()', e, st);
+      // En cas d'erreur, nettoyer pour éviter état corrompu
+      await removePersistedSession();
+    }
+  }
+
+  @override
+  Future<void> removePersistedSession() async {
+    try {
+      logStep('📦 SharedPrefs: REMOVE PERSISTED SESSION');
+      final sp = await _sharedPrefs;
+
+      // Suppression des clés principales
+      await sp.remove("$prefix$_sessionKey");
+      await sp.remove("$prefix$_accessTokenKey");
+
+      // Suppression de toutes les clés avec notre prefix
+      final allKeys = sp.getKeys().where((k) => k.startsWith(prefix)).toList();
+      for (var key in allKeys) {
+        await sp.remove(key);
+        logStep('📦 Clé supprimée: $key');
+      }
+
+      logSuccess('📦 ✅ Session supprimée complètement');
+    } catch (e, st) {
+      logError('Erreur removePersistedSession()', e, st);
+    }
+  }
+
+  @override
+  Future<void> removeItem(String key) async {
+    try {
+      logStep('📦 SharedPrefs: REMOVE "$prefix$key"');
+      final sp = await _sharedPrefs;
+      await sp.remove("$prefix$key");
+    } catch (e, st) {
+      logError('Erreur removeItem($key)', e, st);
+    }
+  }
+
+  @override
+  Future<String?> getItem(String key) async {
+    try {
+      final sp = await _sharedPrefs;
+      final value = sp.getString("$prefix$key");
+
+      // Validation spéciale pour la clé session
+      if (key == _sessionKey && value != null && value.isNotEmpty) {
+        try {
+          final decoded = json.decode(value);
+          if (decoded is! Map<String, dynamic>) {
+            logWarning('📦 Session invalide pour "$key", retour null');
+            await sp.remove("$prefix$key");
+            return null;
+          }
+        } catch (e) {
+          logWarning('📦 Session corrompue pour "$key", retour null');
+          await sp.remove("$prefix$key");
+          return null;
+        }
+      }
+
+      logStep('📦 GET "$prefix$key" = ${value != null ? "TROUVÉ" : "NULL"}');
+      return value;
+    } catch (e, st) {
+      logError('Erreur getItem($key)', e, st);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> setItem(String key, String value) async {
+    try {
+      logStep('📦 SharedPrefs: SET "$prefix$key"');
+      final sp = await _sharedPrefs;
+      await sp.setString("$prefix$key", value);
+    } catch (e, st) {
+      logError('Erreur setItem($key)', e, st);
+    }
+  }
+}
+
+void logInfo(String message) {
+  final timestamp = DateTime.now().toString().substring(11, 19);
+  print('[$timestamp] ℹ️ INFO: $message');
+}
+
+void logDebug(String message) {
+  final timestamp = DateTime.now().toString().substring(11, 19);
+  print('[$timestamp] 🔍 DEBUG: $message');
 }

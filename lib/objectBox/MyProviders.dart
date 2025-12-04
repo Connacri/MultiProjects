@@ -29,7 +29,7 @@ class CommerceProvider extends ChangeNotifier {
 
   List<Produit> _produits = [];
   List<Fournisseur> _fournisseurs = [];
-  List<User> _users = [];
+  List<UserEntity> _users = [];
   List<Approvisionnement> _approvisionnements = [];
   List<Approvisionnement> _approvisionnementTemporaire = [];
   List<Client> _clients = [];
@@ -52,7 +52,7 @@ class CommerceProvider extends ChangeNotifier {
 
   List<Fournisseur> get fournisseurs => _fournisseurs;
 
-  List<User> get users => _users;
+  List<UserEntity> get users => _users;
 
   bool get isLoading => _isLoading;
 

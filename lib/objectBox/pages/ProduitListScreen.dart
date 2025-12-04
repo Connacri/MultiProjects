@@ -1,35 +1,25 @@
+import 'dart:io' show File;
 import 'dart:isolate';
-import 'package:flutter/services.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:syncfusion_flutter_barcodes/barcodes.dart';
-import 'package:timeago/timeago.dart' as timeago;
+
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dart_date/dart_date.dart';
 import 'package:faker/faker.dart' as fak;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/intl.dart';
-import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:provider/provider.dart';
 import 'package:string_extensions/string_extensions.dart';
+import 'package:syncfusion_flutter_barcodes/barcodes.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
-import '../../objectbox.g.dart';
 import '../Entity.dart';
 import '../MyProviders.dart';
 import '../Utils/country_flags.dart';
-import '../Utils/winMobile.dart';
 import '../classeObjectBox.dart';
-import '../tests/doublons.dart';
 import 'FournisseurListScreen.dart';
-import 'dart:io' show File, Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:percent_indicator/percent_indicator.dart';
 import 'addProduct.dart';
-
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-
 import 'editProduct.dart';
 
 class ProduitListScreen extends StatefulWidget {
@@ -114,9 +104,9 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
         'Début de la création des utilisateurs et de la mise à jour des relations...');
 
     // Création des utilisateurs
-    List<User> newUsers = [];
+    List<UserEntity> newUsers = [];
     for (int i = 0; i < 5; i++) {
-      User newUser = User(
+      UserEntity newUser = UserEntity(
         id: 0,
         username: faker.person.firstName() +
             faker.randomGenerator.numberOfLength(3).toString(),
@@ -148,11 +138,11 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
           '\nTraitement du produit : ID=${produit.id}, Nom=${produit.nom}');
 
       // Choisir aléatoirement un utilisateur pour chaque rôle dans Crud
-      User createdByUser =
+      UserEntity createdByUser =
           newUsers[faker.randomGenerator.integer(newUsers.length)];
-      User updatedByUser =
+      UserEntity updatedByUser =
           newUsers[faker.randomGenerator.integer(newUsers.length)];
-      User? deletedByUser = faker.randomGenerator.boolean()
+      UserEntity? deletedByUser = faker.randomGenerator.boolean()
           ? newUsers[faker.randomGenerator.integer(newUsers.length)]
           : null;
 

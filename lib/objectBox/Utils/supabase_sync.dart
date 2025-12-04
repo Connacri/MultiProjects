@@ -1,26 +1,17 @@
-import 'dart:io';
-import 'dart:isolate';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:path/path.dart' as path;
-import 'package:supabase_flutter/supabase_flutter.dart' as Supa;
-import 'package:objectbox/objectbox.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import '../../objectbox.g.dart';
-import '../Entity.dart';
-import '../classeObjectBox.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:timeago/timeago.dart' as timeago;
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:path/path.dart' as path;
+import 'package:supabase_flutter/supabase_flutter.dart' as Supa;
+
+import '../../objectbox.g.dart';
+import '../Entity.dart';
 import '../pages/ProduitListScreen.dart';
-import 'package:supabase/supabase.dart' as Supa;
-import 'package:objectbox/objectbox.dart';
-import 'dart:developer' as developer;
 
 class SyncException implements Exception {
   final String message;
@@ -955,7 +946,7 @@ class SupabaseSync {
   }
 
   Future<void> _syncModifiedUsers(DateTime lastSync) async {
-    final userBox = objectboxStore.box<User>();
+    final userBox = objectboxStore.box<UserEntity>();
     final modifiedUsers = userBox
         .query(User_.derniereModification
             .greaterThan(lastSync.millisecondsSinceEpoch))
@@ -1018,7 +1009,7 @@ class SupabaseSync {
     }
   }
 
-  Map<String, dynamic> _prepareUserData(User user) {
+  Map<String, dynamic> _prepareUserData(UserEntity user) {
     return {
       'id': user.id,
       'username': user.username,
@@ -1247,13 +1238,14 @@ class _ProduitListPageState extends State<ProduitListPage>
     }
   }
 
-  Future<List<User>> fetchUsersFromSupabase() async {
+  Future<List<UserEntity>> fetchUsersFromSupabase() async {
     final supabase = Supa.Supabase.instance.client;
     try {
       final List<Map<String, dynamic>> data =
           await supabase.from('User').select().order('id', ascending: true);
 
-      List<User> users = data.map((item) => User.fromJson(item)).toList();
+      List<UserEntity> users =
+          data.map((item) => UserEntity.fromJson(item)).toList();
       return users;
     } catch (e) {
       print('Erreur lors de la récupération des Users: $e');
