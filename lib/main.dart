@@ -11,14 +11,20 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
+import 'package:kenzy/Kids/claude/auth_provider_v2.dart' show AuthProviderV2;
+import 'package:kenzy/Kids/claude/auth_wrapper_refactored.dart'
+    show AuthWrapperRefactored;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:timeago/timeago.dart' as timeago;
 
+import '../Kids/providers/course_provider_complete.dart';
+import '../Kids/providers/locale_provider.dart';
 import 'Hopital/p2p/connection_manager.dart';
 import 'Hopital/p2p/delta_generator_real.dart';
 import 'Hopital/p2p/messenger/NodesManager.dart';
@@ -26,6 +32,11 @@ import 'Hopital/p2p/messenger/messaging_integration.dart';
 import 'Hopital/p2p/messenger/messaging_manager.dart';
 import 'Hopital/p2p/p2p_integration.dart';
 import 'Hopital/p2p/p2p_manager.dart';
+import 'Kids/models/user_model.dart';
+import 'Kids/providers/child_enrollment_provider.dart';
+import 'Kids/screens/coach_dashboard_screen.dart';
+import 'Kids/screens/parent_dashboard_screen.dart';
+import 'Kids/screens/school_dashboard_screen.dart';
 import 'firebase_options.dart';
 import 'objectBox/classeObjectBox.dart';
 
@@ -231,7 +242,14 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        //
+        ChangeNotifierProvider(create: (_) => ChildEnrollmentProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => AuthProviderV2()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()),
+
+        // ✅ NOUVEAU
+
         // ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
         // ChangeNotifierProvider(create: (_) => CommerceProvider(objectBox)),
         // ChangeNotifierProvider(create: (_) => CartProvider(objectBox)),
@@ -307,7 +325,7 @@ void main() async {
         //   create: (_) => MessagingProvider(),
         // ),
       ],
-      child: MyApp(),
+      child: KidsAcademyApp(), //MyApp(),
     ),
   );
 }
@@ -853,7 +871,7 @@ class _SplashScreenState extends State<SplashScreen> {
       logStep('✅ → HomeScreen');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        MaterialPageRoute(builder: (_) => AuthWrapper()), //const HomeScreen()),
       );
     } else {
       logStep('❌ → LoginScreen');
@@ -1826,4 +1844,484 @@ void logInfo(String message) {
 void logDebug(String message) {
   final timestamp = DateTime.now().toString().substring(11, 19);
   print('[$timestamp] 🔍 DEBUG: $message');
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        // Afficher le loader pendant le chargement
+        if (authProvider.loading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        // Vérifier si l'utilisateur est connecté
+        if (!authProvider.isLoggedIn) {
+          return const LoginScreen();
+        }
+
+        // TODO: Récupérer les données utilisateur depuis Firestore/Supabase
+        // Pour l'instant, afficher un dashboard par défaut
+        // Tu devras implémenter la logique de récupération du UserModel
+        return FutureBuilder<UserModel?>(
+          future: _fetchUserData(authProvider),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (!snapshot.hasData || snapshot.data == null) {
+              // Si pas de données utilisateur, déconnecter
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                authProvider.logout();
+              });
+              return const Scaffold(
+                body: Center(
+                  child: Text('Erreur de chargement du profil'),
+                ),
+              );
+            }
+
+            final user = snapshot.data!;
+
+            // Vérifier si le compte est actif
+            if (!user.isActive) {
+              return DeactivatedAccountScreen(
+                onReactivate: () async {
+                  // TODO: Implémenter la réactivation
+                  // await authProvider.reactivateAccount();
+                },
+                onLogout: () async {
+                  await authProvider.logout();
+                },
+              );
+            }
+
+            // Router vers le dashboard approprié selon le rôle
+            switch (user.role) {
+              case UserRole.parent:
+                return const ParentDashboard();
+              case UserRole.school:
+                return const SchoolDashboard();
+              case UserRole.coach:
+                return const CoachDashboard();
+            }
+          },
+        );
+      },
+    );
+  }
+
+  /// Récupère les données utilisateur depuis Firestore/Supabase
+  Future<UserModel?> _fetchUserData(AuthProvider authProvider) async {
+    try {
+      final email = authProvider.userEmail;
+      if (email == null) return null;
+
+      // TODO: Implémenter la récupération depuis Firestore/Supabase
+      // Exemple pour Supabase:
+      if (authProvider.isSupabase) {
+        final response = await Supabase.instance.client
+            .from('users')
+            .select()
+            .eq('email', email)
+            .single();
+        return UserModel.fromSupabase(response);
+      }
+
+      // Exemple pour Firebase:
+      // else {
+      //   final doc = await FirebaseFirestore.instance
+      //       .collection('users')
+      //       .doc(authProvider.firebaseUser!.uid)
+      //       .get();
+      //   return UserModel.fromJson(doc.data()!);
+      // }
+
+      // Pour l'instant, retourner null pour forcer l'implémentation
+      return null;
+    } catch (e) {
+      logError('Erreur récupération user data', e);
+      return null;
+    }
+  }
+}
+
+class DeactivatedAccountScreen extends StatelessWidget {
+  final VoidCallback onReactivate;
+  final VoidCallback onLogout;
+
+  const DeactivatedAccountScreen({
+    super.key,
+    required this.onReactivate,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Compte Désactivé'),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 80,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Compte Désactivé',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Votre compte a été temporairement désactivé. Vous pouvez le réactiver dans les 60 jours suivant la désactivation.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: onReactivate,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Réactiver mon compte'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: onLogout,
+                child: const Text('Se déconnecter'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// APPLICATION PRINCIPALE
+// ============================================================================
+
+class KidsAcademyApp extends StatelessWidget {
+  const KidsAcademyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<LocaleProvider>(
+      builder: (context, localeProvider, _) {
+        return MaterialApp(
+          // ============================================================
+          // CONFIGURATION DE BASE
+          // ============================================================
+          title: 'Kids Sports Academy',
+          //debugShowCheckedModeBanner: false,
+          // ============================================================
+          // LOCALISATION - ✅ FIX: Add localizationsDelegates
+          // ============================================================
+
+          supportedLocales: const [
+            Locale('fr', 'FR'),
+            Locale('en', 'US'),
+            Locale('ar', 'DZ'),
+          ],
+          // ✅ ADD THIS - Critical for Material widgets localization
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          // ============================================================
+          // LOCALISATION
+          // ============================================================
+          locale: localeProvider.locale,
+
+          // ============================================================
+          // THEME - Material Design 3
+          // ============================================================
+          theme: _buildLightTheme(),
+          darkTheme: _buildDarkTheme(),
+          themeMode: ThemeMode.system,
+
+          // ============================================================
+          // NAVIGATION
+          // ============================================================
+          navigatorKey: GlobalKey<NavigatorState>(),
+
+          // ============================================================
+          // ÉCRAN PRINCIPAL
+          // ============================================================
+          home: const AuthWrapperRefactored(),
+
+          // ============================================================
+          // GESTION DES ROUTES
+          // ============================================================
+          onGenerateRoute: _generateRoute,
+
+          // ============================================================
+          // CONFIGURATION SCROLL
+          // ============================================================
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            scrollbars: false,
+          ),
+        );
+      },
+    );
+  }
+
+  /// Génère les routes de l'application
+  Route<dynamic>? _generateRoute(RouteSettings settings) {
+    // TODO: Implémenter le routing nommé
+    return null;
+  }
+
+  /// Thème clair Material Design 3
+  ThemeData _buildLightTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+
+      // Palette de couleurs
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF6750A4), // Violet moderne
+        brightness: Brightness.light,
+      ),
+
+      // Typographie
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontSize: 57,
+          fontWeight: FontWeight.w400,
+          letterSpacing: -0.25,
+        ),
+        displayMedium: TextStyle(
+          fontSize: 45,
+          fontWeight: FontWeight.w400,
+        ),
+        displaySmall: TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.w400,
+        ),
+        headlineLarge: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w400,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.w400,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: 24,
+          fontWeight: FontWeight.w400,
+        ),
+        titleLarge: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w500,
+        ),
+        titleMedium: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.15,
+        ),
+        titleSmall: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.5,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.25,
+        ),
+        bodySmall: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.4,
+        ),
+        labelLarge: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        labelMedium: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
+        labelSmall: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.5,
+        ),
+      ),
+
+      // Composants
+      appBarTheme: const AppBarTheme(
+        centerTitle: false,
+        elevation: 0,
+      ),
+
+      cardTheme: CardThemeData(
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 1,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Thème sombre Material Design 3
+  ThemeData _buildDarkTheme() {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF6750A4),
+        brightness: Brightness.dark,
+      ),
+
+      // Reprendre la configuration du thème clair
+      textTheme: _buildLightTheme().textTheme,
+      appBarTheme: _buildLightTheme().appBarTheme,
+      cardTheme: _buildLightTheme().cardTheme,
+      chipTheme: _buildLightTheme().chipTheme,
+      inputDecorationTheme: _buildLightTheme().inputDecorationTheme,
+      elevatedButtonTheme: _buildLightTheme().elevatedButtonTheme,
+      filledButtonTheme: _buildLightTheme().filledButtonTheme,
+    );
+  }
+}
+
+// ============================================================================
+// ÉCRAN D'ERREUR D'INITIALISATION
+// ============================================================================
+
+class ErrorApp extends StatelessWidget {
+  final String error;
+
+  const ErrorApp({
+    super.key,
+    required this.error,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: Colors.red[50],
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error_outline,
+                  size: 80,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Erreur d\'initialisation',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  error,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // Redémarrer l'application
+                    // ignore: invalid_use_of_protected_member
+                    WidgetsBinding.instance.reassembleApplication();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Réessayer'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

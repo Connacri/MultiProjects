@@ -302,7 +302,6 @@ class EduPlatformApp extends StatelessWidget {
               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
           ),
-
           themeMode: ThemeMode.system,
           home: const AuthWrapper(),
         );

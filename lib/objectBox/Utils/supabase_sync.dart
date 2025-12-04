@@ -15,7 +15,9 @@ import '../pages/ProduitListScreen.dart';
 
 class SyncException implements Exception {
   final String message;
+
   SyncException(this.message);
+
   @override
   String toString() => 'SyncException: $message';
 }
@@ -946,9 +948,9 @@ class SupabaseSync {
   }
 
   Future<void> _syncModifiedUsers(DateTime lastSync) async {
-    final userBox = objectboxStore.box<UserEntity>();
+    final userBox = objectboxStore.box<Usero>();
     final modifiedUsers = userBox
-        .query(User_.derniereModification
+        .query(Usero_.derniereModification
             .greaterThan(lastSync.millisecondsSinceEpoch))
         .build()
         .find();
@@ -1009,7 +1011,7 @@ class SupabaseSync {
     }
   }
 
-  Map<String, dynamic> _prepareUserData(UserEntity user) {
+  Map<String, dynamic> _prepareUserData(Usero user) {
     return {
       'id': user.id,
       'username': user.username,
@@ -1238,14 +1240,13 @@ class _ProduitListPageState extends State<ProduitListPage>
     }
   }
 
-  Future<List<UserEntity>> fetchUsersFromSupabase() async {
+  Future<List<Usero>> fetchUsersFromSupabase() async {
     final supabase = Supa.Supabase.instance.client;
     try {
       final List<Map<String, dynamic>> data =
           await supabase.from('User').select().order('id', ascending: true);
 
-      List<UserEntity> users =
-          data.map((item) => UserEntity.fromJson(item)).toList();
+      List<Usero> users = data.map((item) => Usero.fromJson(item)).toList();
       return users;
     } catch (e) {
       print('Erreur lors de la récupération des Users: $e');

@@ -13,7 +13,7 @@ import 'Entity.dart';
 
 class ObjectBox {
   late final Store store;
-  late final Box<UserEntity> userBox;
+  late final Box<Usero> userBox;
   late final Box<Crud> crudBox;
   late final Box<Produit> produitBox;
   late final Box<Approvisionnement> approvisionnementBox;
@@ -69,7 +69,7 @@ class ObjectBox {
     // ✅ CORRECTION 1: Vérifiez si le store est déjà ouvert
     if (!Store.isOpen(dbPath)) {
       store = await openStore(directory: dbPath);
-      userBox = Box<UserEntity>(store);
+      userBox = Box<Usero>(store);
       crudBox = Box<Crud>(store);
       produitBox = Box<Produit>(store);
       approvisionnementBox = Box<Approvisionnement>(store);
@@ -219,9 +219,9 @@ class ObjectBox {
     ];
 
     // Créer des utilisateurs
-    List<UserEntity> users = List.generate(userCount, (index) {
+    List<Usero> users = List.generate(userCount, (index) {
       roles.shuffle(random); // Mélanger les rôles
-      return UserEntity(
+      return Usero(
         phone: faker.phoneNumber.de(),
         username: faker.person.name(),
         password: faker.internet.password(),

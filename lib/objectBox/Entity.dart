@@ -1,40 +1,48 @@
 import 'dart:convert';
 
+import 'package:objectbox/objectbox.dart';
+
 import '../objectbox.g.dart'; // Généré par build_runner
 
 @Entity()
-class UserEntity {
+class Usero {
   @Id()
   int id;
+
   String? photo;
+
   @Index()
   String username;
+
   String password;
   String email;
+
   @Index()
   String? phone;
+
   String role;
   DateTime derniereModification;
+
   bool isSynced;
   DateTime syncedAt;
 
   final crud = ToOne<Crud>();
 
-  UserEntity({
+  Usero({
     this.id = 0,
     this.photo,
     required this.username,
     required this.password,
-    this.phone,
     required this.email,
+    this.phone,
     required this.role,
     required this.derniereModification,
     this.isSynced = false,
     DateTime? syncedAt,
   }) : syncedAt = syncedAt ?? DateTime.now();
 
-  factory UserEntity.fromJson(Map<String, dynamic> json) {
-    return UserEntity(
+  factory Usero.fromJson(Map<String, dynamic> json) {
+    return Usero(
       id: json['id'] ?? 0,
       photo: json['photo'],
       username: json['username'] ?? '',
@@ -43,7 +51,7 @@ class UserEntity {
       phone: json['phone'],
       role: json['role'] ?? '',
       derniereModification: json['derniereModification'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['derniereModification'])
+          ? DateTime.parse(json['derniereModification'].toString())
           : DateTime.now(),
     );
   }

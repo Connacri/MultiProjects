@@ -104,9 +104,9 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
         'Début de la création des utilisateurs et de la mise à jour des relations...');
 
     // Création des utilisateurs
-    List<UserEntity> newUsers = [];
+    List<Usero> newUsers = [];
     for (int i = 0; i < 5; i++) {
-      UserEntity newUser = UserEntity(
+      Usero newUser = Usero(
         id: 0,
         username: faker.person.firstName() +
             faker.randomGenerator.numberOfLength(3).toString(),
@@ -138,11 +138,11 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
           '\nTraitement du produit : ID=${produit.id}, Nom=${produit.nom}');
 
       // Choisir aléatoirement un utilisateur pour chaque rôle dans Crud
-      UserEntity createdByUser =
+      Usero createdByUser =
           newUsers[faker.randomGenerator.integer(newUsers.length)];
-      UserEntity updatedByUser =
+      Usero updatedByUser =
           newUsers[faker.randomGenerator.integer(newUsers.length)];
-      UserEntity? deletedByUser = faker.randomGenerator.boolean()
+      Usero? deletedByUser = faker.randomGenerator.boolean()
           ? newUsers[faker.randomGenerator.integer(newUsers.length)]
           : null;
 
