@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_service.dart';
 
-/// 🎯 Provider d'authentification avec gestion confirmation email
+/// 🎯 Provider d'authentification avec gestion cas edge
 class AuthProviderV2 extends ChangeNotifier {
   final AuthService _authService = AuthService();
 
@@ -87,6 +87,24 @@ class AuthProviderV2 extends ChangeNotifier {
 
       case AuthChangeEvent.userUpdated:
         _currentUser = authState.session?.user;
+
+        // ✅ FIX: Détecter si l'email vient d'être confirmé
+        if (_currentUser != null && _needsEmailConfirmation) {
+          final isNowConfirmed = _currentUser!.emailConfirmedAt != null;
+          if (isNowConfirmed) {
+            print(
+                '[AuthProviderV2] 🎉 Email confirmé détecté via userUpdated!');
+            _needsEmailConfirmation = false;
+          }
+        }
+
+        await _checkUserStatus();
+        break;
+
+      case AuthChangeEvent.tokenRefreshed:
+      // ✅ NOUVEAU: Écouter aussi le refresh de token
+        print('[AuthProviderV2] 🔄 Token rafraîchi, vérification statut...');
+        _currentUser = authState.session?.user;
         await _checkUserStatus();
         break;
 
@@ -95,7 +113,7 @@ class AuthProviderV2 extends ChangeNotifier {
     }
   }
 
-  /// Vérifie le statut de l'utilisateur (email confirmé, profil complété)
+  /// ✨ FIX: Vérifie le statut avec gestion du cas "email confirmé mais pas de profil"
   Future<void> _checkUserStatus() async {
     if (_currentUser == null) return;
 
@@ -111,17 +129,32 @@ class AuthProviderV2 extends ChangeNotifier {
         return;
       }
 
-      // 2. Vérifier si profil existe et est complété
+      // 2. Vérifier si profil existe dans public.users
       _userData = await _authService.getUserData(_currentUser!.id);
 
+      // ⚠️ CAS EDGE: Email confirmé mais pas d'entrée dans users
       if (_userData == null) {
-        // Profil pas encore créé
-        _needsEmailConfirmation = false;
-        _needsProfileCompletion = true;
-        _setState(AppAuthState.needsProfileCompletion);
-        return;
+        print(
+            '[AuthProviderV2] ⚠️ Email confirmé mais profil manquant → Création auto');
+
+        // 🔧 OPTION A: Créer une entrée minimale automatiquement
+        await _createMinimalProfile();
+
+        // Réessayer de récupérer les données
+        _userData = await _authService.getUserData(_currentUser!.id);
+
+        // Si toujours null, forcer la complétion
+        if (_userData == null) {
+          print(
+              '[AuthProviderV2] ❌ Échec création auto → Forcer ProfileCompletion');
+          _needsEmailConfirmation = false;
+          _needsProfileCompletion = true;
+          _setState(AppAuthState.needsProfileCompletion);
+          return;
+        }
       }
 
+      // 3. Vérifier si profil est complété
       final profileCompleted = _userData!['profile_completed'] ?? false;
 
       if (!profileCompleted) {
@@ -137,6 +170,34 @@ class AuthProviderV2 extends ChangeNotifier {
       print('[AuthProviderV2] Erreur _checkUserStatus: $e');
       _setState(AppAuthState.error);
       _errorMessage = 'Erreur de vérification du statut';
+    }
+  }
+
+  /// 🔧 Crée une entrée minimale dans users (cas de récupération)
+  Future<void> _createMinimalProfile() async {
+    if (_currentUser == null) return;
+
+    try {
+      final role = _authService.getUserRole() ?? 'parent';
+
+      // ✅ FIX: Ajouter tous les champs NOT NULL obligatoires
+      final minimalData = {
+        'id': _currentUser!.id,
+        'email': _currentUser!.email!,
+        'role': role,
+        'name': 'À compléter', // ← Valeur temporaire pour NOT NULL constraint
+        'is_active': true,
+        'profile_completed': false, // ← Force ProfileCompletion
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      await Supabase.instance.client.from('users').insert(minimalData);
+
+      print('[AuthProviderV2] ✅ Profil minimal créé pour ${_currentUser!.id}');
+    } catch (e) {
+      print('[AuthProviderV2] ❌ Erreur _createMinimalProfile: $e');
+      // Ne pas bloquer, on laisse le flow continuer vers ProfileCompletion
     }
   }
 
@@ -245,7 +306,6 @@ class AuthProviderV2 extends ChangeNotifier {
     _setState(AppAuthState.loading);
     _errorMessage = null;
 
-    // Récupérer le rôle depuis metadata
     final role = _authService.getUserRole() ?? 'parent';
 
     final result = await _authService.createUserProfile(
@@ -267,10 +327,49 @@ class AuthProviderV2 extends ChangeNotifier {
     return result;
   }
 
+  /// Met à jour le profil utilisateur après création
+  Future<AuthResult> updateUserProfile(Map<String, dynamic> profileData) async {
+    if (_currentUser == null) {
+      return AuthResult.error('Utilisateur non connecté');
+    }
+
+    _setState(AppAuthState.loading);
+    _errorMessage = null;
+
+    try {
+      await Supabase.instance.client.from('users').update({
+        ...profileData,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', _currentUser!.id);
+
+      // Mettre à jour le cache local
+      _userData = {
+        ...(_userData ?? {}),
+        ...profileData,
+      };
+
+      _needsProfileCompletion = false;
+
+      // Rafraîchir l'état global
+      await _checkUserStatus();
+
+      return AuthResult.success(
+        message: 'Profil mis à jour',
+        user: _currentUser,
+        needsProfileCompletion: false,
+      );
+    } catch (e) {
+      final msg = e.toString();
+      print('[AuthProviderV2] updateUserProfile ERROR: $msg');
+      _errorMessage = msg;
+      _setState(AppAuthState.error);
+      return AuthResult.error(msg);
+    }
+  }
+
   /// Vérifier si un email existe déjà
   Future<bool> checkEmailExists(String email) async {
     try {
-      // Utiliser une requête à la table users pour vérifier l'existence
       final response = await Supabase.instance.client
           .from('users')
           .select('id')
@@ -316,6 +415,46 @@ class AuthProviderV2 extends ChangeNotifier {
 
     _setState(AppAuthState.unauthenticated);
     notifyListeners();
+  }
+
+  // ============================================================================
+  // VÉRIFICATION MANUELLE DE LA CONFIRMATION EMAIL
+  // ============================================================================
+
+  /// ✅ Vérifie manuellement si l'email a été confirmé (appel depuis UI)
+  Future<bool> checkEmailConfirmationStatus() async {
+    try {
+      print('[AuthProviderV2] 🔄 Vérification manuelle confirmation email...');
+
+      // 1. Rafraîchir la session pour obtenir les dernières infos
+      final refreshResponse =
+      await Supabase.instance.client.auth.refreshSession();
+
+      if (refreshResponse.session == null) {
+        print('[AuthProviderV2] ❌ Pas de session après refresh');
+        return false;
+      }
+
+      // 2. Mettre à jour l'utilisateur local
+      _currentUser = refreshResponse.session!.user;
+
+      // 3. Vérifier la confirmation
+      final isConfirmed = _currentUser!.emailConfirmedAt != null;
+      print('[AuthProviderV2] Email confirmé: $isConfirmed');
+
+      if (isConfirmed) {
+        // 4. Email confirmé → Vérifier le statut complet
+        _needsEmailConfirmation = false;
+        await _checkUserStatus();
+        return true;
+      }
+
+      return false;
+    } catch (e, stackTrace) {
+      print('[AuthProviderV2] ❌ Erreur checkEmailConfirmationStatus: $e');
+      print(stackTrace);
+      return false;
+    }
   }
 
   // ============================================================================

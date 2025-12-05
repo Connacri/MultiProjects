@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'auth_provider_v2.dart';
 
 /// 📧 Écran de confirmation email - Design moderne
@@ -7,7 +8,8 @@ class EmailConfirmationScreen extends StatefulWidget {
   const EmailConfirmationScreen({super.key});
 
   @override
-  State<EmailConfirmationScreen> createState() => _EmailConfirmationScreenState();
+  State<EmailConfirmationScreen> createState() =>
+      _EmailConfirmationScreenState();
 }
 
 class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
@@ -44,7 +46,8 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
     );
   }
 
-  Widget _buildContent(BuildContext context, ColorScheme colorScheme, String email) {
+  Widget _buildContent(
+      BuildContext context, ColorScheme colorScheme, String email) {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 500),
       child: Card(
@@ -107,7 +110,7 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
           },
         ),
         const SizedBox(height: 24),
-        
+
         // Titre
         Text(
           'Confirmez votre email',
@@ -117,7 +120,7 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        
+
         // Sous-titre
         Text(
           'Nous avons envoyé un lien de confirmation',
@@ -207,7 +210,7 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
           Icons.person_outline,
         ),
         const SizedBox(height: 16),
-        
+
         // Note spam
         Container(
           padding: const EdgeInsets.all(12),
@@ -322,7 +325,8 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
           )
         else
           OutlinedButton.icon(
-            onPressed: _isResending ? null : () => _handleResendEmail(context, email),
+            onPressed:
+                _isResending ? null : () => _handleResendEmail(context, email),
             icon: _isResending
                 ? const SizedBox(
                     width: 16,
@@ -338,9 +342,9 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
               ),
             ),
           ),
-        
+
         const SizedBox(height: 12),
-        
+
         // Bouton Se déconnecter
         TextButton.icon(
           onPressed: () => _handleLogout(context),
@@ -350,9 +354,9 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
             minimumSize: const Size(double.infinity, 48),
           ),
         ),
-        
+
         const SizedBox(height: 8),
-        
+
         // Bouton Supprimer le compte
         TextButton.icon(
           onPressed: () => _showDeleteAccountDialog(context),
@@ -399,7 +403,7 @@ class _EmailConfirmationScreenState extends State<EmailConfirmationScreen> {
 
     if (result.success) {
       setState(() => _emailResent = true);
-      
+
       // Réinitialiser après 5 secondes
       Future.delayed(const Duration(seconds: 5), () {
         if (mounted) {

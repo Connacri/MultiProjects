@@ -472,55 +472,87 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   }
 
   void _handleNext() {
-    if (_currentStep < _totalSteps - 1) {
-      // Valider l'étape actuelle avant de passer à la suivante
-      if (_currentStep == 0 && !_formKey.currentState!.validate()) {
-        return;
-      }
+    bool isValid = true;
 
+    if (_currentStep == 0) {
+      isValid = _formKey.currentState!.validate();
+    }
+
+    if (_currentStep == 1) {
+      isValid = _addressController.text.isNotEmpty &&
+          _cityController.text.isNotEmpty &&
+          _postalCodeController.text.isNotEmpty;
+    }
+
+    // Pour coach / school
+    if (_currentStep == 2) {
+      final role =
+          context.read<AuthProviderV2>().currentUser?.userMetadata?['role'];
+
+      if (role == 'coach' || role == 'school') {
+        if (_organizationNameController.text.isEmpty) {
+          _showSnackBar("Veuillez remplir le champ organisation",
+              isError: true);
+          return;
+        }
+      }
+    }
+
+    if (!isValid) return;
+
+    if (_currentStep < _totalSteps - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      // Dernière étape : sauvegarder le profil
       _handleSaveProfile();
     }
   }
 
   Future<void> _handleSaveProfile() async {
     final authProvider = context.read<AuthProviderV2>();
+    final user = authProvider.currentUser;
 
-    // ✅ Récupérer le rôle depuis metadata (car pas encore de userData)
-    final role =
-        authProvider.currentUser?.userMetadata?['role'] as String? ?? 'parent';
+    if (user == null) {
+      _showSnackBar("Utilisateur non authentifié", isError: true);
+      return;
+    }
+
+    final role = user.userMetadata?['role'] as String? ?? 'parent';
+
+    // ✅ FIX: Construire le nom complet pour la colonne "name"
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final fullName = '$firstName $lastName'.trim();
 
     final profileData = {
-      'first_name': _firstNameController.text.trim(),
-      'last_name': _lastNameController.text.trim(),
-      'phone': _phoneController.text.trim(),
+      'name': fullName, // ← CRITIQUE : Remplit la contrainte NOT NULL
+      'first_name': firstName,
+      'last_name': lastName,
+      'phone_number': _phoneController.text.trim(),
       'address': _addressController.text.trim(),
       'city': _cityController.text.trim(),
       'postal_code': _postalCodeController.text.trim(),
+      'profile_completed': true,
+      'updated_at': DateTime.now().toIso8601String(),
     };
 
-    // Ajouter les champs spécifiques au rôle
     if (role == 'coach' || role == 'school') {
       profileData['organization_name'] =
           _organizationNameController.text.trim();
     }
+
     if (role == 'coach') {
       profileData['license_number'] = _licenseNumberController.text.trim();
     }
 
-    // ✅ Utiliser createUserProfile
-    final result = await authProvider.createUserProfile(profileData);
+    final result = await authProvider.updateUserProfile(profileData);
 
     if (!mounted) return;
 
     if (result.success) {
-      _showSnackBar('Profil créé avec succès !', isError: false);
-      // Navigation gérée par AuthWrapper
+      _showSnackBar('Profil mis à jour avec succès', isError: false);
     } else {
       _showSnackBar(result.message!, isError: true);
     }

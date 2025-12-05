@@ -144,60 +144,55 @@ class AuthService {
     required Map<String, dynamic> profileData,
   }) async {
     try {
-      print('[AuthService] 🔄 Création profil user: $userId');
+      print('[AuthService] 🔄 createUserProfile → $userId');
 
-      // Vérifier si email est confirmé
       if (!isEmailConfirmed()) {
         return AuthResult.error(
-          'Veuillez d\'abord confirmer votre email',
+          'Veuillez confirmer votre email avant de continuer.',
           code: 'email_not_confirmed',
         );
       }
 
-      // Vérifier si le profil existe déjà
+      // Vérifier si l'utilisateur existe déjà
       final existing = await _supabase
           .from('users')
           .select('id')
           .eq('id', userId)
           .maybeSingle();
 
-      if (existing != null) {
-        print('[AuthService] ⚠️ Profil existe déjà, mise à jour...');
-
-        // Mettre à jour le profil existant
-        await _supabase.from('users').update({
-          ...profileData,
-          'profile_completed': true,
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', userId);
-
-        print('[AuthService] ✅ Profil mis à jour');
-
-        return AuthResult.success(
-          message: 'Profil mis à jour avec succès',
-        );
-      }
-
-      // Créer le profil
-      await _supabase.from('users').insert({
+      final payload = {
         'id': userId,
         'email': email,
         'role': role,
         ...profileData,
         'is_active': true,
         'profile_completed': true,
-        'created_at': DateTime.now().toIso8601String(),
-      });
+        'updated_at': DateTime.now().toIso8601String(),
+      };
 
-      print('[AuthService] ✅ Profil créé');
+      if (existing == null) {
+        payload['created_at'] = DateTime.now().toIso8601String();
+        print('[AuthService] 🟢 Création nouveau profil');
+      } else {
+        print('[AuthService] 🛠️ Mise à jour profil existant');
+      }
+
+      // Supabase v2 retour implicitement un List<dynamic>
+      final data = await _supabase.from('users').upsert(payload).select();
+
+      print('[AuthService] ✅ Profil sauvegardé → $data');
 
       return AuthResult.success(
-        message: 'Profil créé avec succès',
+        message: existing == null
+            ? 'Profil créé avec succès'
+            : 'Profil mis à jour avec succès',
       );
     } catch (e, stackTrace) {
       print('[AuthService] ❌ Erreur createUserProfile: $e');
-      print('[AuthService] Stack: $stackTrace');
-      return AuthResult.error('Erreur lors de la création du profil: $e');
+      print(stackTrace);
+      return AuthResult.error(
+        'Erreur lors de la sauvegarde du profil: $e',
+      );
     }
   }
 
