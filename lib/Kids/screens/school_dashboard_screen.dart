@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../claude/auth_provider_v2.dart';
 import '../models/course_model_complete.dart';
-import '../providers/auth_provider_dart.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
@@ -24,11 +24,11 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
   }
 
   Future<void> _loadUserCourses() async {
-    final authProvider = context.read<AuthProvider>();
+    final authProvider = context.read<AuthProviderV2>();
     final courseProvider = context.read<CourseProvider>();
 
-    if (authProvider.user != null) {
-      await courseProvider.loadUserCourses(authProvider.user!.uid);
+    if (authProvider.currentUser != null) {
+      await courseProvider.loadUserCourses(authProvider.currentUser!.id);
     }
   }
 
@@ -146,7 +146,7 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
   }
 
   Widget _buildDashboardOverview() {
-    return Consumer2<CourseProvider, AuthProvider>(
+    return Consumer2<CourseProvider, AuthProviderV2>(
       builder: (context, courseProvider, authProvider, _) {
         final userCourses = courseProvider.userCourses;
         final totalStudents = userCourses.fold<int>(
@@ -159,7 +159,7 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
           padding: ResponsiveLayout.getResponsivePadding(context),
           children: [
             Text(
-              'Bienvenue, ${authProvider.user?.name ?? "École"}',
+              'Bienvenue, ${authProvider.currentUser!.role ?? "École"}',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -477,7 +477,7 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
                 leading: const Icon(Icons.logout),
                 title: const Text('Déconnexion'),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                onTap: () => _handleSignOut(),
+                onTap: () => _handleSignOut(context),
               ),
             ],
           ),
@@ -564,8 +564,64 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
     );
   }
 
-  Future<void> _handleSignOut() async {
-    final authProvider = context.read<AuthProvider>();
-    await authProvider.signOut();
+  Future<void> _handleSignOut(BuildContext context) async {
+    final authProvider = context.read<AuthProviderV2>();
+    Object? error;
+
+    // Variable pour stocker le BuildContext du dialogue
+    BuildContext? dialogContext;
+
+    // Affiche le loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext innerContext) {
+        // <-- On capture le BuildContext du dialogue ici
+        dialogContext = innerContext;
+        return const Center(
+            child: CircularProgressIndicator(
+          color: Colors.white70,
+        ));
+      },
+    );
+
+    try {
+      // Attendre 3 secondes avant de lancer la déconnexion
+      await Future.delayed(const Duration(seconds: 3));
+      await authProvider.logout();
+    } catch (e) {
+      error = e;
+    } finally {
+      // GUARANTIE : Ferme le loader dans TOUS les cas (succès ou erreur)
+
+      // On utilise le BuildContext interne du dialogue si disponible,
+      // sinon on revient au contexte de base.
+      final contextToPop = dialogContext ?? context;
+
+      // Vérification de sécurité
+      if (contextToPop.mounted) {
+        // On vérifie qu'il y a quelque chose à retirer de la pile
+        // L'utilisation de rootNavigator: true reste la plus sûre
+        if (Navigator.of(contextToPop, rootNavigator: true).canPop()) {
+          Navigator.of(contextToPop, rootNavigator: true).pop();
+        }
+      }
+    }
+
+    // Gérer le résultat APRÈS la fermeture du loader
+    if (!context.mounted) return;
+
+    if (error == null) {
+      // Redirection après succès
+      // Navigator.pushReplacementNamed(context, '/login');
+    } else {
+      // Affiche une snackbar avec l'erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la déconnexion: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

@@ -232,9 +232,9 @@ class _AuthScreenState extends State<AuthScreen>
           _buildEmailField(),
           const SizedBox(height: 8),
           _buildPasswordField(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 2),
           _buildRoleSelector(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           _buildSignupButton(),
         ],
       ),
@@ -377,18 +377,19 @@ class _AuthScreenState extends State<AuthScreen>
       {'value': 'parent', 'label': 'Parent', 'icon': Icons.family_restroom},
       {'value': 'coach', 'label': 'Coach', 'icon': Icons.sports},
       {'value': 'school', 'label': 'Club', 'icon': Icons.school},
+      {'value': 'autres', 'label': 'Autres', 'icon': Icons.account_box},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Je suis un(e)',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: 12),
+        // Text(
+        //   'Je suis un(e)',
+        //   style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        //         fontWeight: FontWeight.w600,
+        //       ),
+        // ),
+        const SizedBox(height: 8),
         Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -396,12 +397,12 @@ class _AuthScreenState extends State<AuthScreen>
             final isSelected = _selectedRole == role['value'];
 
             return ChoiceChip(
-              label: Row(
+              label: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     role['icon'] as IconData,
-                    size: 20,
+                    size: 40,
                     color: isSelected ? Colors.white : null,
                   ),
                   const SizedBox(width: 8),

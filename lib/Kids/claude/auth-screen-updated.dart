@@ -378,17 +378,18 @@ class _AuthScreenState extends State<AuthScreen>
       {'value': 'parent', 'label': 'Parent', 'icon': Icons.family_restroom},
       {'value': 'coach', 'label': 'Coach', 'icon': Icons.sports},
       {'value': 'school', 'label': 'Club', 'icon': Icons.school},
+      {'value': 'autres', 'label': 'Autres', 'icon': Icons.account_box},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Je suis un(e)',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
+        // Text(
+        //   'Je suis un(e)',
+        //   style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        //         fontWeight: FontWeight.w600,
+        //       ),
+        // ),
         const SizedBox(height: 12),
         Wrap(
           spacing: 12,

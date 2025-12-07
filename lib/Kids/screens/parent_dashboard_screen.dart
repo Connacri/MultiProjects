@@ -1,52 +1,148 @@
+/// 🏠 Parent Dashboard - Version corrigée pour production
+/// Fix des crashs au démarrage + gestion robuste des états
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../claude/auth_provider_v2.dart';
 import '../models/child_model_complete.dart';
 import '../models/course_model_complete.dart';
 import '../models/enrollment_model_complete.dart';
 import '../models/session_schedule_model.dart';
-import '../providers/auth_provider_dart.dart';
 import '../providers/child_enrollment_provider.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
 import '../widgets/weekly_timeline_widget.dart';
 
-class ParentDashboard extends StatefulWidget {
-  const ParentDashboard({super.key});
+class ParentDashboard_screen extends StatefulWidget {
+  const ParentDashboard_screen({super.key});
 
   @override
-  State<ParentDashboard> createState() => _ParentDashboardState();
+  State<ParentDashboard_screen> createState() => _ParentDashboard_screenState();
 }
 
-class _ParentDashboardState extends State<ParentDashboard> {
+class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
   int _selectedIndex = 0;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // ✅ FIX : Charger les données avec gestion d'erreurs
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _safeLoadData();
+    });
   }
 
-  Future<void> _loadData() async {
-    final authProvider = context.read<AuthProvider>();
-    final courseProvider = context.read<CourseProvider>();
-    final childProvider = context.read<ChildEnrollmentProvider>();
+  /// ✅ Chargement sécurisé avec timeout et error handling
+  Future<void> _safeLoadData() async {
+    if (!mounted) return;
 
-    if (authProvider.user != null) {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final auth = context.read<AuthProviderV2>();
+
+      // ✅ Vérification que l'utilisateur est connecté
+      if (auth.currentUser == null) {
+        throw Exception('Utilisateur non connecté');
+      }
+
+      final courseProvider = context.read<CourseProvider>();
+      final childProvider = context.read<ChildEnrollmentProvider>();
+
+      // ✅ Chargement avec timeout pour éviter freeze
       await Future.wait([
         courseProvider.loadCourses(refresh: true),
-        childProvider.loadChildren(authProvider.user!.uid),
-        childProvider.loadEnrollments(authProvider.user!.uid),
-      ]);
+        childProvider.loadChildren(auth.currentUser!.id),
+        childProvider.loadEnrollments(auth.currentUser!.id),
+      ]).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException('Délai de chargement dépassé');
+        },
+      );
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [ParentDashboard] Erreur chargement: $e');
+      debugPrint('StackTrace: $stackTrace');
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = _getErrorMessage(e);
+        });
+      }
     }
+  }
+
+  /// Conversion des erreurs en messages utilisateur
+  String _getErrorMessage(Object error) {
+    if (error is TimeoutException) {
+      return 'Le chargement prend trop de temps. Vérifiez votre connexion.';
+    }
+    return 'Erreur de chargement des données';
   }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Afficher écran d'erreur si problème critique
+    if (_errorMessage != null) {
+      return _buildErrorScreen();
+    }
+
     return AdaptiveLayout(
       mobile: _buildMobileLayout(),
       desktop: _buildDesktopLayout(),
+    );
+  }
+
+  /// ✅ Écran d'erreur avec retry
+  Widget _buildErrorScreen() {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Dashboard Parent')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 80,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Erreur de chargement',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage ?? 'Une erreur est survenue',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 32),
+              FilledButton.icon(
+                onPressed: _safeLoadData,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Réessayer'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -167,6 +263,20 @@ class _ParentDashboardState extends State<ParentDashboard> {
   }
 
   Widget _getSelectedPage() {
+    // ✅ Afficher loader pendant chargement initial
+    if (_isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Chargement des données...'),
+          ],
+        ),
+      );
+    }
+
     switch (_selectedIndex) {
       case 0:
         return _buildHomePage();
@@ -182,8 +292,20 @@ class _ParentDashboardState extends State<ParentDashboard> {
   }
 
   Widget _buildHomePage() {
-    return Consumer3<AuthProvider, ChildEnrollmentProvider, CourseProvider>(
+    return Consumer3<AuthProviderV2, ChildEnrollmentProvider, CourseProvider>(
       builder: (context, authProvider, childProvider, courseProvider, _) {
+        // ✅ Protection contre états invalides
+        if (authProvider.currentUser == null) {
+          return const Center(
+            child: Text('Session expirée. Veuillez vous reconnecter.'),
+          );
+        }
+
+        // ✅ FIX : Récupérer le nom depuis userData, pas currentUser.role
+        final userName = authProvider.userData?['name'] ??
+            authProvider.currentUser!.email?.split('@').first ??
+            'Parent';
+
         final children = childProvider.children;
         final enrollments = childProvider.enrollments;
         final approvedEnrollments = enrollments
@@ -193,6 +315,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
         return ListView(
           padding: ResponsiveLayout.getResponsivePadding(context),
           children: [
+            // ✅ Header utilisateur corrigé
             Row(
               children: [
                 CircleAvatar(
@@ -211,7 +334,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Bonjour, ${authProvider.user?.name ?? "Parent"}',
+                        'Bonjour, $userName',
+                        // ✅ FIX : Utilise userData['name']
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
@@ -229,6 +353,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
               ],
             ),
             const SizedBox(height: 32),
+
+            // Stats cards
             ResponsiveBuilder(
               builder: (context, deviceType) {
                 return Wrap(
@@ -267,6 +393,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
               },
             ),
             const SizedBox(height: 32),
+
+            // Section enfants
             if (children.isNotEmpty) ...[
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -298,6 +426,8 @@ class _ParentDashboardState extends State<ParentDashboard> {
               ),
               const SizedBox(height: 32),
             ],
+
+            // Section cours recommandés
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -315,13 +445,23 @@ class _ParentDashboardState extends State<ParentDashboard> {
               ],
             ),
             const SizedBox(height: 16),
-            ...courseProvider.courses.take(3).map((course) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: CourseCard(
-                    course: course,
-                    onTap: () => _showCourseDetails(course),
-                  ),
-                )),
+
+            // ✅ Protection si pas de cours
+            if (courseProvider.courses.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text('Aucun cours disponible pour le moment'),
+                ),
+              )
+            else
+              ...courseProvider.courses.take(3).map((course) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: CourseCard(
+                      course: course,
+                      onTap: () => _showCourseDetails(course),
+                    ),
+                  )),
           ],
         );
       },
@@ -477,7 +617,7 @@ class _ParentDashboardState extends State<ParentDashboard> {
                 hintText: 'Rechercher un cours...',
                 leading: const Icon(Icons.search),
                 onChanged: (value) {
-                  // Implémenter la recherche
+                  // TODO: Implémenter la recherche
                 },
               ),
             ),
@@ -512,6 +652,10 @@ class _ParentDashboardState extends State<ParentDashboard> {
       },
     );
   }
+
+  // ============================================================================
+  // WIDGETS UTILITAIRES
+  // ============================================================================
 
   Widget _buildStatCard(
     BuildContext context, {
@@ -648,23 +792,30 @@ class _ParentDashboardState extends State<ParentDashboard> {
     );
   }
 
+  // ============================================================================
+  // ACTIONS
+  // ============================================================================
+
   void _showAddChildDialog() {
-    // Navigation vers écran d'ajout d'enfant
+    // TODO: Navigation vers écran d'ajout d'enfant
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Fonctionnalité en développement')),
+    );
   }
 
   void _showEditChildDialog(ChildModel child) {
-    // Navigation vers écran d'édition d'enfant
+    // TODO: Navigation vers écran d'édition d'enfant
   }
 
   Future<void> _confirmDeleteChild(ChildModel child) async {
-    // Dialogue de confirmation de suppression
+    // TODO: Dialogue de confirmation de suppression
   }
 
   void _showCourseDetails(CourseModel course) {
-    // Navigation vers détails du cours
+    // TODO: Navigation vers détails du cours
   }
 
   void _showSessionDetails(SessionSchedule session) {
-    // Navigation vers détails de la session
+    // TODO: Navigation vers détails de la session
   }
 }

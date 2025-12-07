@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kenzy/Kids/claude/auth_provider_v2.dart';
 import 'package:provider/provider.dart';
 
 import '../models/course_model_complete.dart';
-import '../providers/auth_provider_dart.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
@@ -24,11 +24,11 @@ class _CoachDashboardState extends State<CoachDashboard> {
   }
 
   Future<void> _loadData() async {
-    final authProvider = context.read<AuthProvider>();
+    final authProvider = context.read<AuthProviderV2>();
     final courseProvider = context.read<CourseProvider>();
 
-    if (authProvider.user != null) {
-      await courseProvider.loadUserCourses(authProvider.user!.uid);
+    if (authProvider.currentUser != null) {
+      await courseProvider.loadUserCourses(authProvider.currentUser!.id);
     }
   }
 
@@ -50,6 +50,10 @@ class _CoachDashboardState extends State<CoachDashboard> {
               icon: const Icon(Icons.add),
               onPressed: () => _navigateToCreateCourse(),
             ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => _handleSignOut(context),
+          ),
         ],
       ),
       body: _getSelectedPage(),
@@ -147,7 +151,7 @@ class _CoachDashboardState extends State<CoachDashboard> {
   }
 
   Widget _buildOverviewPage() {
-    return Consumer2<CourseProvider, AuthProvider>(
+    return Consumer2<CourseProvider, AuthProviderV2>(
       builder: (context, courseProvider, authProvider, _) {
         final sessions = courseProvider.userCourses;
         final activeSessions = sessions.where((s) => s.isActive).length;
@@ -177,7 +181,7 @@ class _CoachDashboardState extends State<CoachDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Bonjour, ${authProvider.user?.name ?? "Coach"}',
+                        'Bonjour, ${authProvider.currentUser!.email ?? "Coach"}',
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
@@ -191,6 +195,10 @@ class _CoachDashboardState extends State<CoachDashboard> {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () => _handleSignOut(context),
                 ),
               ],
             ),
@@ -583,6 +591,67 @@ class _CoachDashboardState extends State<CoachDashboard> {
           const SnackBar(content: Text('Session supprimée avec succès')),
         );
       }
+    }
+  }
+
+  Future<void> _handleSignOut(BuildContext context) async {
+    final authProvider = context.read<AuthProviderV2>();
+    Object? error;
+
+    // Variable pour stocker le BuildContext du dialogue
+    BuildContext? dialogContext;
+
+    // Affiche le loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext innerContext) {
+        // <-- On capture le BuildContext du dialogue ici
+        dialogContext = innerContext;
+        return const Center(
+            child: CircularProgressIndicator(
+          color: Colors.white70,
+        ));
+      },
+    );
+
+    try {
+      // Attendre 3 secondes avant de lancer la déconnexion
+      await Future.delayed(const Duration(seconds: 3));
+      await authProvider.logout();
+    } catch (e) {
+      error = e;
+    } finally {
+      // GUARANTIE : Ferme le loader dans TOUS les cas (succès ou erreur)
+
+      // On utilise le BuildContext interne du dialogue si disponible,
+      // sinon on revient au contexte de base.
+      final contextToPop = dialogContext ?? context;
+
+      // Vérification de sécurité
+      if (contextToPop.mounted) {
+        // On vérifie qu'il y a quelque chose à retirer de la pile
+        // L'utilisation de rootNavigator: true reste la plus sûre
+        if (Navigator.of(contextToPop, rootNavigator: true).canPop()) {
+          Navigator.of(contextToPop, rootNavigator: true).pop();
+        }
+      }
+    }
+
+    // Gérer le résultat APRÈS la fermeture du loader
+    if (!context.mounted) return;
+
+    if (error == null) {
+      // Redirection après succès
+      // Navigator.pushReplacementNamed(context, '/login');
+    } else {
+      // Affiche une snackbar avec l'erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la déconnexion: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

@@ -102,7 +102,7 @@ class AuthProviderV2 extends ChangeNotifier {
         break;
 
       case AuthChangeEvent.tokenRefreshed:
-      // ✅ NOUVEAU: Écouter aussi le refresh de token
+        // ✅ NOUVEAU: Écouter aussi le refresh de token
         print('[AuthProviderV2] 🔄 Token rafraîchi, vérification statut...');
         _currentUser = authState.session?.user;
         await _checkUserStatus();
@@ -327,6 +327,45 @@ class AuthProviderV2 extends ChangeNotifier {
     return result;
   }
 
+  // Dans auth_provider_v2.dart
+
+  /// Met à jour le profil SANS déclencher _checkUserStatus
+  Future<AuthResult> updateUserProfileSilent(
+      Map<String, dynamic> profileData) async {
+    if (_currentUser == null) {
+      return AuthResult.error('Utilisateur non connecté');
+    }
+
+    // ❌ NE PAS mettre _setState(AppAuthState.loading) pour éviter rebuild global
+    _errorMessage = null;
+
+    try {
+      await Supabase.instance.client.from('users').update({
+        ...profileData,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', _currentUser!.id);
+
+      // ✅ Mettre à jour UNIQUEMENT le cache local
+      _userData = {
+        ...(_userData ?? {}),
+        ...profileData,
+      };
+
+      // ❌ NE PAS appeler _checkUserStatus() ni notifyListeners()
+
+      return AuthResult.success(
+        message: 'Profil mis à jour',
+        user: _currentUser,
+        needsProfileCompletion: false,
+      );
+    } catch (e) {
+      final msg = e.toString();
+      print('[AuthProviderV2] updateUserProfileSilent ERROR: $msg');
+      _errorMessage = msg;
+      return AuthResult.error(msg);
+    }
+  }
+
   /// Met à jour le profil utilisateur après création
   Future<AuthResult> updateUserProfile(Map<String, dynamic> profileData) async {
     if (_currentUser == null) {
@@ -428,7 +467,7 @@ class AuthProviderV2 extends ChangeNotifier {
 
       // 1. Rafraîchir la session pour obtenir les dernières infos
       final refreshResponse =
-      await Supabase.instance.client.auth.refreshSession();
+          await Supabase.instance.client.auth.refreshSession();
 
       if (refreshResponse.session == null) {
         print('[AuthProviderV2] ❌ Pas de session après refresh');

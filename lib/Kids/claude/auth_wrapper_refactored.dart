@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/autresDashboard.dart';
+import '../screens/coach_dashboard_screen.dart';
+import '../screens/parent_dashboard_screen.dart';
+import '../screens/school_dashboard_screen.dart';
 import 'auth_provider_v2.dart';
 import 'auth_screen_unified.dart';
 import 'email_confirmation_screen.dart';
@@ -61,11 +65,14 @@ class AuthWrapperRefactored extends StatelessWidget {
           final role = userData['role'] as String?;
           switch (role) {
             case 'parent':
-              return const ParentDashboard();
+              return const ParentDashboard_screen(); //ParentDashboard();
             case 'coach':
               return const CoachDashboard();
             case 'school':
               return const SchoolDashboard();
+
+            case 'autres':
+              return const AutreDashboard();
             default:
               return _ErrorScreen(
                 message: 'Rôle utilisateur invalide',
@@ -310,82 +317,6 @@ class DeactivatedAccountScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// DASHBOARDS PLACEHOLDERS
-// =============================================================================
-
-class ParentDashboard extends StatelessWidget {
-  const ParentDashboard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Parent'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProviderV2>().logout();
-            },
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Text('Dashboard Parent - À implémenter'),
-      ),
-    );
-  }
-}
-
-class CoachDashboard extends StatelessWidget {
-  const CoachDashboard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Coach'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProviderV2>().logout();
-            },
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Text('Dashboard Coach - À implémenter'),
-      ),
-    );
-  }
-}
-
-class SchoolDashboard extends StatelessWidget {
-  const SchoolDashboard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Club'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthProviderV2>().logout();
-            },
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Text('Dashboard Club - À implémenter'),
       ),
     );
   }

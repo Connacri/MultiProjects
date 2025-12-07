@@ -17,6 +17,7 @@ import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
 import 'package:kenzy/Kids/claude/auth_provider_v2.dart' show AuthProviderV2;
 import 'package:kenzy/Kids/claude/auth_wrapper_refactored.dart'
     show AuthWrapperRefactored;
+import 'package:kenzy/Kids/screens/autresDashboard.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1911,11 +1912,13 @@ class AuthWrapper extends StatelessWidget {
             // Router vers le dashboard approprié selon le rôle
             switch (user.role) {
               case UserRole.parent:
-                return const ParentDashboard();
+                return const ParentDashboard_screen();
               case UserRole.school:
                 return const SchoolDashboard();
               case UserRole.coach:
                 return const CoachDashboard();
+              case UserRole.autres:
+                return const AutreDashboard();
             }
           },
         );

@@ -58,7 +58,8 @@ class AppLocation {
 enum UserRole {
   parent,
   school,
-  coach;
+  coach,
+  autres;
 
   String toJson() => name;
 
@@ -74,9 +75,11 @@ enum UserRole {
       case UserRole.parent:
         return 'Parent';
       case UserRole.school:
-        return 'École';
+        return 'School';
       case UserRole.coach:
         return 'Coach';
+      case UserRole.autres:
+        return 'Autres';
     }
   }
 }
@@ -122,6 +125,7 @@ class UserProfileImages {
   }
 
   String? get profileImage => profileImageFirebase ?? profileImageSupabase;
+
   String? get coverImage => coverImageFirebase ?? coverImageSupabase;
 
   UserProfileImages copyWith({

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kenzy/Kids/screens/autresDashboard.dart';
 import 'package:provider/provider.dart';
 
 import '../../../main.dart';
@@ -72,11 +73,13 @@ class AuthWrapper extends StatelessWidget {
             // Router vers le dashboard approprié selon le rôle
             switch (user.role) {
               case UserRole.parent:
-                return const ParentDashboard();
+                return const ParentDashboard_screen();
               case UserRole.school:
                 return const SchoolDashboard();
               case UserRole.coach:
                 return const CoachDashboard();
+              case UserRole.autres:
+                return const AutreDashboard();
             }
           },
         );

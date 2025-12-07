@@ -621,6 +621,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return Icons.school;
       case UserRole.coach:
         return Icons.sports;
+      case UserRole.autres:
+        return Icons.account_box_rounded;
     }
   }
 }
