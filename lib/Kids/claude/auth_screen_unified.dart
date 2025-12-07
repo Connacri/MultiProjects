@@ -75,6 +75,79 @@ class _AuthScreenState extends State<AuthScreen>
     }
   }
 
+  // ============================================================================
+  // ✅ NOUVELLE LOGIQUE DE LOGIN AVEC DÉTECTION
+  // ============================================================================
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final authProvider = context.read<AuthProviderV2>();
+
+    // Sauvegarder l'email pour le pré-remplissage
+    final email = _emailController.text.trim();
+
+    final result = await authProvider.login(
+      email: email,
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    if (result.success) {
+      _showSnackBar('Connexion réussie !', isError: false);
+      // Navigation gérée par AuthWrapper
+    } else {
+      // ✅ NOUVEAU : Détecter si email n'existe pas
+      if (result.errorCode == 'email_not_found') {
+        _showSnackBar(
+          'Cet email n\'est pas enregistré',
+          isError: false,
+          action: SnackBarAction(
+            label: 'Créer un compte',
+            textColor: Colors.white,
+            onPressed: () {
+              // ✅ Basculer sur l'onglet Signup
+              _switchToSignupWithEmail(email);
+            },
+          ),
+        );
+
+        // ✅ OU basculer automatiquement après 2 secondes
+        Future.delayed(const Duration(seconds: 2), () {
+          if (mounted) {
+            _switchToSignupWithEmail(email);
+          }
+        });
+      } else {
+        _showSnackBar(result.message ?? 'Erreur de connexion', isError: true);
+      }
+    }
+  }
+
+  // ============================================================================
+  // ✅ NOUVELLE MÉTHODE : Basculer vers Signup avec email pré-rempli
+  // ============================================================================
+
+  void _switchToSignupWithEmail(String email) {
+    // Basculer sur l'onglet Signup
+    _tabController.animateTo(1);
+
+    // Garder l'email pré-rempli (déjà dans _emailController)
+    // Optionnel : vider le mot de passe pour plus de sécurité
+    _passwordController.clear();
+
+    // Message informatif
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _showSnackBar(
+          'Créez votre compte avec $email',
+          isError: false,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -507,25 +580,25 @@ class _AuthScreenState extends State<AuthScreen>
   // ACTIONS
   // ==========================================================================
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final authProvider = context.read<AuthProviderV2>();
-    final result = await authProvider.login(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
-
-    if (!mounted) return;
-
-    if (result.success) {
-      _showSnackBar('Connexion réussie !', isError: false);
-
-      // Navigation gérée par AuthWrapper
-    } else {
-      _showSnackBar(result.message ?? 'Erreur de connexion', isError: true);
-    }
-  }
+  // Future<void> _handleLogin() async {
+  //   if (!_formKey.currentState!.validate()) return;
+  //
+  //   final authProvider = context.read<AuthProviderV2>();
+  //   final result = await authProvider.login(
+  //     email: _emailController.text.trim(),
+  //     password: _passwordController.text,
+  //   );
+  //
+  //   if (!mounted) return;
+  //
+  //   if (result.success) {
+  //     _showSnackBar('Connexion réussie !', isError: false);
+  //
+  //     // Navigation gérée par AuthWrapper
+  //   } else {
+  //     _showSnackBar(result.message ?? 'Erreur de connexion', isError: true);
+  //   }
+  // }
 
   Future<void> _handleSignup() async {
     if (_selectedRole == null) {

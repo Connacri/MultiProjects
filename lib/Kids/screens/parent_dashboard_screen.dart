@@ -11,6 +11,7 @@ import '../models/child_model_complete.dart';
 import '../models/course_model_complete.dart';
 import '../models/enrollment_model_complete.dart';
 import '../models/session_schedule_model.dart';
+import '../models/user_model.dart';
 import '../providers/child_enrollment_provider.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
@@ -29,61 +30,69 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  UserModel? _user;
+  String? _error;
+
+  // Controllers pour édition inline
+  final Map<String, TextEditingController> _controllers = {};
+
   @override
   void initState() {
     super.initState();
     // ✅ FIX : Charger les données avec gestion d'erreurs
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _safeLoadData();
+      _loadData();
     });
   }
 
   /// ✅ Chargement sécurisé avec timeout et error handling
-  Future<void> _safeLoadData() async {
-    if (!mounted) return;
-
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _error = null;
     });
 
     try {
-      final auth = context.read<AuthProviderV2>();
+      final authProvider = context.read<AuthProviderV2>();
+      final userData = authProvider.userData;
 
-      // ✅ Vérification que l'utilisateur est connecté
-      if (auth.currentUser == null) {
-        throw Exception('Utilisateur non connecté');
-      }
-
-      final courseProvider = context.read<CourseProvider>();
-      final childProvider = context.read<ChildEnrollmentProvider>();
-
-      // ✅ Chargement avec timeout pour éviter freeze
-      await Future.wait([
-        courseProvider.loadCourses(refresh: true),
-        childProvider.loadChildren(auth.currentUser!.id),
-        childProvider.loadEnrollments(auth.currentUser!.id),
-      ]).timeout(
-        const Duration(seconds: 10),
-        onTimeout: () {
-          throw TimeoutException('Délai de chargement dépassé');
-        },
-      );
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    } catch (e, stackTrace) {
-      debugPrint('❌ [ParentDashboard] Erreur chargement: $e');
-      debugPrint('StackTrace: $stackTrace');
-
-      if (mounted) {
+      if (userData == null) {
         setState(() {
+          _error = 'Aucune donnée utilisateur disponible';
           _isLoading = false;
-          _errorMessage = _getErrorMessage(e);
         });
+        return;
       }
+
+      // Construire le UserModel depuis les données brutes
+      _user = UserModel.fromSupabase(userData);
+
+      // Initialiser les controllers
+      _initializeControllers();
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() {
+        _error = 'Erreur lors du chargement: $e';
+        _isLoading = false;
+      });
     }
+  }
+
+  void _initializeControllers() {
+    if (_user == null) return;
+
+    _controllers['name'] = TextEditingController(text: _user!.name);
+    _controllers['email'] = TextEditingController(text: _user!.email);
+    _controllers['bio'] = TextEditingController(text: _user!.bio ?? '');
+    _controllers['phoneNumber'] =
+        TextEditingController(text: _user!.phoneNumber ?? '');
+    _controllers['address'] =
+        TextEditingController(text: _user!.location?.address ?? '');
+    _controllers['city'] =
+        TextEditingController(text: _user!.location?.city ?? '');
+    _controllers['country'] =
+        TextEditingController(text: _user!.location?.country ?? '');
   }
 
   /// Conversion des erreurs en messages utilisateur
@@ -135,7 +144,7 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
               ),
               const SizedBox(height: 32),
               FilledButton.icon(
-                onPressed: _safeLoadData,
+                onPressed: _loadData,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Réessayer'),
               ),

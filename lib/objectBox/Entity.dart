@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-import 'package:objectbox/objectbox.dart';
-
 import '../objectbox.g.dart'; // Généré par build_runner
 
 @Entity()

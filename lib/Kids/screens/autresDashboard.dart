@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -221,8 +222,6 @@ class _AutreDashboardState extends State<AutreDashboard> {
                       _buildQuickInfo(),
                       const SizedBox(height: 16),
                       _buildPersonalInfoSection(),
-                      const SizedBox(height: 16),
-                      _buildLocationSection(),
                     ],
                   ),
                 ),
@@ -232,6 +231,8 @@ class _AutreDashboardState extends State<AutreDashboard> {
                   flex: 1,
                   child: Column(
                     children: [
+                      _buildLocationSection(),
+                      const SizedBox(height: 16),
                       _buildImagesSection(),
                       const SizedBox(height: 16),
                       _buildMetadataSection(),
@@ -264,21 +265,23 @@ class _AutreDashboardState extends State<AutreDashboard> {
           height: 200,
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: coverUrl == null
-                ? LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primaryContainer,
-                      Theme.of(context).colorScheme.secondaryContainer,
-                    ],
-                  )
-                : null,
-            image: coverUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(coverUrl),
-                    fit: BoxFit.cover,
-                  )
-                : null,
-          ),
+              gradient: coverUrl == null
+                  ? LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primaryContainer,
+                        Theme.of(context).colorScheme.secondaryContainer,
+                      ],
+                    )
+                  : null,
+              image: coverUrl != null
+                  ? DecorationImage(
+                      image: CachedNetworkImageProvider(coverUrl),
+                      fit: BoxFit.scaleDown,
+                    )
+                  : DecorationImage(
+                      image: AssetImage('assets/photos/a (5).png'),
+                      fit: BoxFit.cover,
+                    )),
           child: coverUrl == null
               ? Center(
                   child: Icon(

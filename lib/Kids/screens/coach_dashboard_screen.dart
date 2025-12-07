@@ -3,6 +3,7 @@ import 'package:kenzy/Kids/claude/auth_provider_v2.dart';
 import 'package:provider/provider.dart';
 
 import '../models/course_model_complete.dart';
+import '../models/user_model.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
@@ -16,20 +17,69 @@ class CoachDashboard extends StatefulWidget {
 
 class _CoachDashboardState extends State<CoachDashboard> {
   int _selectedIndex = 0;
+  bool _isLoading = true;
+  UserModel? _user;
+  String? _error;
+
+  // Controllers pour édition inline
+  final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // ✅ Attendre la fin du build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
   Future<void> _loadData() async {
-    final authProvider = context.read<AuthProviderV2>();
-    final courseProvider = context.read<CourseProvider>();
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
 
-    if (authProvider.currentUser != null) {
-      await courseProvider.loadUserCourses(authProvider.currentUser!.id);
+    try {
+      final authProvider = context.read<AuthProviderV2>();
+      final userData = authProvider.userData;
+
+      if (userData == null) {
+        setState(() {
+          _error = 'Aucune donnée utilisateur disponible';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Construire le UserModel depuis les données brutes
+      _user = UserModel.fromSupabase(userData);
+
+      // Initialiser les controllers
+      _initializeControllers();
+
+      setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() {
+        _error = 'Erreur lors du chargement: $e';
+        _isLoading = false;
+      });
     }
+  }
+
+  void _initializeControllers() {
+    if (_user == null) return;
+
+    _controllers['name'] = TextEditingController(text: _user!.name);
+    _controllers['email'] = TextEditingController(text: _user!.email);
+    _controllers['bio'] = TextEditingController(text: _user!.bio ?? '');
+    _controllers['phoneNumber'] =
+        TextEditingController(text: _user!.phoneNumber ?? '');
+    _controllers['address'] =
+        TextEditingController(text: _user!.location?.address ?? '');
+    _controllers['city'] =
+        TextEditingController(text: _user!.location?.city ?? '');
+    _controllers['country'] =
+        TextEditingController(text: _user!.location?.country ?? '');
   }
 
   @override

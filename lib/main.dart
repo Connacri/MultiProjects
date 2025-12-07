@@ -174,69 +174,69 @@ void main() async {
   messagingP2P.start(); // Lance la synchronisation
 
 // Initialisation Supabase (IMPORTANT pour la persistance)
-  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
-    logStep('🔹 Initialisation Supabase pour Desktop');
+  // if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+  logStep('🔹 Initialisation Supabase pour Desktop');
 
-    // ========================================================================
-    // Nettoyage DÉSACTIVÉ - Sessions persistées correctement
-    // ========================================================================
-    // IMPORTANT: Ce bloc ne doit être activé QUE si tu rencontres des erreurs
-    // de corruption. En temps normal, il doit rester commenté pour que les
-    // sessions persistent entre les redémarrages.
+  // ========================================================================
+  // Nettoyage DÉSACTIVÉ - Sessions persistées correctement
+  // ========================================================================
+  // IMPORTANT: Ce bloc ne doit être activé QUE si tu rencontres des erreurs
+  // de corruption. En temps normal, il doit rester commenté pour que les
+  // sessions persistent entre les redémarrages.
 
-    // try {
-    //   logStep('🧹 Nettoyage RADICAL des données Supabase...');
-    //   final sp = await SharedPreferences.getInstance();
-    //
-    //   // ✅ CORRECTION : Le préfixe réel est "flutter.supabase_auth_"
-    //   final supabaseKeys = sp
-    //       .getKeys()
-    //       .where((k) => k.startsWith('supabase_auth_session'))
-    //       .toList();
-    //
-    //   if (supabaseKeys.isNotEmpty) {
-    //     logWarning(
-    //         '⚠️ ${supabaseKeys.length} clé(s) Supabase détectée(s) - SUPPRESSION TOTALE');
-    //
-    //     for (var key in supabaseKeys) {
-    //       try {
-    //         await sp.remove(key);
-    //         logStep('  🗑️ Supprimé: $key');
-    //       } catch (e) {
-    //         logError('  ❌ Échec suppression: $key', e);
-    //       }
-    //     }
-    //
-    //     logSuccess(
-    //         '✅ Nettoyage radical terminé - ${supabaseKeys.length} clé(s) supprimée(s)');
-    //     logWarning('⚠️ Vous devrez vous reconnecter');
-    //   } else {
-    //     logStep('✅ Aucune donnée Supabase existante');
-    //   }
-    // } catch (e, st) {
-    //   logError('Erreur lors du nettoyage radical', e, st);
-    // }
+  // try {
+  //   logStep('🧹 Nettoyage RADICAL des données Supabase...');
+  //   final sp = await SharedPreferences.getInstance();
+  //
+  //   // ✅ CORRECTION : Le préfixe réel est "flutter.supabase_auth_"
+  //   final supabaseKeys = sp
+  //       .getKeys()
+  //       .where((k) => k.startsWith('supabase_auth_session'))
+  //       .toList();
+  //
+  //   if (supabaseKeys.isNotEmpty) {
+  //     logWarning(
+  //         '⚠️ ${supabaseKeys.length} clé(s) Supabase détectée(s) - SUPPRESSION TOTALE');
+  //
+  //     for (var key in supabaseKeys) {
+  //       try {
+  //         await sp.remove(key);
+  //         logStep('  🗑️ Supprimé: $key');
+  //       } catch (e) {
+  //         logError('  ❌ Échec suppression: $key', e);
+  //       }
+  //     }
+  //
+  //     logSuccess(
+  //         '✅ Nettoyage radical terminé - ${supabaseKeys.length} clé(s) supprimée(s)');
+  //     logWarning('⚠️ Vous devrez vous reconnecter');
+  //   } else {
+  //     logStep('✅ Aucune donnée Supabase existante');
+  //   }
+  // } catch (e, st) {
+  //   logError('Erreur lors du nettoyage radical', e, st);
+  // }
 
-    // ========================================================================
-    // Initialisation Supabase
-    // ========================================================================
-    try {
-      await Supabase.initialize(
-        url: 'https://ftaqbokfeahvfndorzuf.supabase.co',
-        anonKey:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXFib2tmZWFodmZuZG9yenVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NDE5MDEsImV4cCI6MjA4MDMxNzkwMX0.I_pvSiN5S8Y31XS3NV2Gw5dVrCDNjXqmUUSloycXhcw',
-        authOptions: FlutterAuthClientOptions(
-          authFlowType: AuthFlowType.pkce,
-          autoRefreshToken: true,
-          // localStorage: SharedPrefsStorage(),
-        ),
-        debug: true,
-      );
-      logSuccess('✅ Supabase initialisé avec persistance');
-    } catch (e, st) {
-      logError('Erreur initialisation Supabase', e, st);
-    }
+  // ========================================================================
+  // Initialisation Supabase
+  // ========================================================================
+  try {
+    await Supabase.initialize(
+      url: 'https://ftaqbokfeahvfndorzuf.supabase.co',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXFib2tmZWFodmZuZG9yenVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NDE5MDEsImV4cCI6MjA4MDMxNzkwMX0.I_pvSiN5S8Y31XS3NV2Gw5dVrCDNjXqmUUSloycXhcw',
+      authOptions: FlutterAuthClientOptions(
+        authFlowType: AuthFlowType.pkce,
+        autoRefreshToken: true,
+        // localStorage: SharedPrefsStorage(),
+      ),
+      debug: true,
+    );
+    logSuccess('✅ Supabase initialisé avec persistance');
+  } catch (e, st) {
+    logError('Erreur initialisation Supabase', e, st);
   }
+  // }
 
   // Run App avec Provider
   runApp(
@@ -591,49 +591,74 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     logStep('🔐 Tentative de connexion: $email');
 
-    if (!isSupabase) {
-      // ============ FIREBASE LOGIN ============
-      try {
-        await FirebaseAuth.instance
-            .signInWithEmailAndPassword(email: email, password: password);
-        logSuccess('✅ Connexion Firebase réussie');
-        return null;
-      } on FirebaseAuthException catch (e) {
-        logError('FirebaseAuthException', e);
-        return e.message;
-      } catch (e) {
-        logError('Erreur Firebase', e);
-        return "Erreur inconnue";
-      } finally {
+    // if (!isSupabase) {
+    //   // ============ FIREBASE LOGIN ============
+    //   try {
+    //     await FirebaseAuth.instance
+    //         .signInWithEmailAndPassword(email: email, password: password);
+    //     logSuccess('✅ Connexion Firebase réussie');
+    //     return null;
+    //   } on FirebaseAuthException catch (e) {
+    //     logError('FirebaseAuthException', e);
+    //     return e.message;
+    //   } catch (e) {
+    //     logError('Erreur Firebase', e);
+    //     return "Erreur inconnue";
+    //   } finally {
+    //     loading = false;
+    //     notifyListeners();
+    //   }
+    // } else {
+    //   // ============ SUPABASE LOGIN ============
+    //   try {
+    //     final res = await Supabase.instance.client.auth.signInWithPassword(
+    //       email: email,
+    //       password: password,
+    //     );
+    //
+    //     if (res.session == null) {
+    //       loading = false;
+    //       notifyListeners();
+    //       return 'Email ou mot de passe invalide';
+    //     }
+    //
+    //     supabaseSession = res.session;
+    //     logSuccess('✅ Connexion Supabase réussie: ${res.session!.user.email}');
+    //
+    //     loading = false;
+    //     notifyListeners();
+    //     return null;
+    //   } catch (e, st) {
+    //     logError('Erreur Supabase login', e, st);
+    //     loading = false;
+    //     notifyListeners();
+    //     return "Erreur: $e";
+    //   }
+    // }
+    // ============ SUPABASE LOGIN ============
+    try {
+      final res = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (res.session == null) {
         loading = false;
         notifyListeners();
+        return 'Email ou mot de passe invalide';
       }
-    } else {
-      // ============ SUPABASE LOGIN ============
-      try {
-        final res = await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: password,
-        );
 
-        if (res.session == null) {
-          loading = false;
-          notifyListeners();
-          return 'Email ou mot de passe invalide';
-        }
+      supabaseSession = res.session;
+      logSuccess('✅ Connexion Supabase réussie: ${res.session!.user.email}');
 
-        supabaseSession = res.session;
-        logSuccess('✅ Connexion Supabase réussie: ${res.session!.user.email}');
-
-        loading = false;
-        notifyListeners();
-        return null;
-      } catch (e, st) {
-        logError('Erreur Supabase login', e, st);
-        loading = false;
-        notifyListeners();
-        return "Erreur: $e";
-      }
+      loading = false;
+      notifyListeners();
+      return null;
+    } catch (e, st) {
+      logError('Erreur Supabase login', e, st);
+      loading = false;
+      notifyListeners();
+      return "Erreur: $e";
     }
   }
 

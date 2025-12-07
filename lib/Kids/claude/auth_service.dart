@@ -255,6 +255,15 @@ class AuthService {
       );
     } on AuthException catch (e) {
       print('[AuthService] ❌ Login AuthException: ${e.message}');
+      // ✅ NOUVEAU : Détecter si l'email n'existe pas
+      if (e.message.contains('Invalid login credentials') ||
+          e.message.contains('Email not found') ||
+          e.statusCode == '400') {
+        return AuthResult.error(
+          'Cet email n\'est pas enregistré',
+          code: 'email_not_found', // ✅ Code spécifique
+        );
+      }
       return AuthResult.error(_parseAuthException(e));
     } catch (e, stackTrace) {
       print('[AuthService] ❌ Erreur login: $e');
