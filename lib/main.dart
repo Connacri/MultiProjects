@@ -39,6 +39,7 @@ import 'Kids/screens/coach_dashboard_screen.dart';
 import 'Kids/screens/parent_dashboard_screen.dart';
 import 'Kids/screens/school_dashboard_screen.dart';
 import 'firebase_options.dart';
+import 'objectBox/MyProviders.dart';
 import 'objectBox/classeObjectBox.dart';
 
 // ============================================================================
@@ -248,83 +249,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CourseProvider()..initialize()),
         ChangeNotifierProvider(create: (_) => AuthProviderV2()),
         ChangeNotifierProvider(create: (_) => CourseProvider()),
-
-        // ✅ NOUVEAU
-
-        // ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
-        // ChangeNotifierProvider(create: (_) => CommerceProvider(objectBox)),
-        // ChangeNotifierProvider(create: (_) => CartProvider(objectBox)),
-        // ChangeNotifierProvider(create: (_) => ClientProvider(objectBox)),
-        // ChangeNotifierProvider(create: (_) => AdProvider()),
-        // ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        // /////////////////////////////KIDS/////////////////////////////////////
-        // ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        // ChangeNotifierProvider(create: (_) => AuthProvider()),
-        // ChangeNotifierProvider(create: (_) => CourseProvider()..initialize()),
-        //
-        // ChangeNotifierProvider(create: (_) => ConnectionStatusProvider()),
-        // ChangeNotifierProvider(create: (_) => FacturationProvider()),
-        // ChangeNotifierProvider(create: (_) => EditableFieldProvider()),
-        // ChangeNotifierProvider(
-        //   create: (_) => SignalementProvider(),
-        // ),
-        // ChangeNotifierProvider(
-        //   create: (_) => SignalementProviderSupabase(),
-        // ),
-        //
-        // ChangeNotifierProvider(
-        //   create: (context) => HotelProvider(objectBox),
-        // ),
-        //
-        // ChangeNotifierProvider(create: (_) => StaffProvider(objectBox)),
-        //
-        // ChangeNotifierProvider(create: (_) => ActiviteProvider()),
-        // ChangeNotifierProvider(
-        //     create: (_) => TimeOffProvider()..fetchTimeOffs()),
-        // ChangeNotifierProvider(create: (_) => BranchProvider()),
-        //
-        // // ⚠️ IMPORTANT: TypeActiviteProvider DOIT être déclaré AVANT PlanningHebdoProvider
-        // // car PlanningHebdoProvider en dépend
-        // ChangeNotifierProvider(
-        //     create: (context) => TypeActiviteProvider(objectBox)),
-        //
-        // ChangeNotifierProvider(create: (_) => PlanningHebdoProvider(objectBox)),
-        // ///////////////////////////////////////////////////////
-        // ChangeNotifierProvider<P2PManager>(
-        //   create: (_) => P2PManager(),
-        // ),
-        // ChangeNotifierProvider<ConnectionManager>(
-        //   create: (_) => ConnectionManager(),
-        // ),
-        // ChangeNotifierProvider<SyncManager>(
-        //   create: (_) => SyncManager(),
-        // ),
-        // ChangeNotifierProvider<P2PIntegration>(
-        //   create: (_) => P2PIntegration(),
-        // ),
-        // ChangeNotifierProvider<DiscoveryManagerBroadcast>(
-        //   // ✅ AJOUTE CETTE LIGNE
-        //   create: (_) => DiscoveryManagerBroadcast(),
-        // ),
-        // // ✅ MESSAGING PROVIDER - À AJOUTER
-        // ChangeNotifierProvider<MessagingManager>(
-        //   create: (_) => MessagingManager(),
-        // ),
-        // ChangeNotifierProvider<AutoConnectService>(
-        //   create: (_) => AutoConnectService(),
-        // ),
-        // ChangeNotifierProvider<DeltaGenerator>(
-        //   create: (_) => DeltaGenerator(),
-        // ),
-        // ChangeNotifierProvider<DiscoveryManager>(
-        //   create: (_) => DiscoveryManager(),
-        // ),
-        // ChangeNotifierProvider<MessagingP2PIntegration>(
-        //   create: (_) => MessagingP2PIntegration(),
-        // ),
-        // ChangeNotifierProvider<MessagingProvider>(
-        //   create: (_) => MessagingProvider(),
-        // ),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: KidsAcademyApp(), //MyApp(),
     ),
@@ -2127,6 +2052,7 @@ class KidsAcademyApp extends StatelessWidget {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: 'oswald',
 
       // Palette de couleurs
       colorScheme: ColorScheme.fromSeed(
@@ -2265,7 +2191,7 @@ class KidsAcademyApp extends StatelessWidget {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-
+      fontFamily: 'oswald',
       colorScheme: ColorScheme.fromSeed(
         seedColor: const Color(0xFF6750A4),
         brightness: Brightness.dark,

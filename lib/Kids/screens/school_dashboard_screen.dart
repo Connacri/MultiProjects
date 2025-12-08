@@ -9,6 +9,7 @@ import '../models/user_model.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
+import 'create_course_screen.dart';
 
 class SchoolDashboard extends StatefulWidget {
   const SchoolDashboard({super.key});
@@ -510,9 +511,11 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
   }
 
   void _navigateToCreateCourse() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Création de cours à implémenter')),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(content: Text('Création de cours à implémenter')),
+    // );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (ctx) => CreateCourseScreen()));
   }
 
   void _navigateToEditCourse(CourseModel course) {}

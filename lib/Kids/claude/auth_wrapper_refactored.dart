@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/ParentDashboard.dart';
 import '../screens/autresDashboard.dart';
 import '../screens/coach_dashboard_screen.dart';
-import '../screens/parent_dashboard_screen.dart';
 import '../screens/school_dashboard_screen.dart';
 import 'auth_provider_v2.dart';
 import 'auth_screen_unified.dart';
@@ -65,7 +65,7 @@ class AuthWrapperRefactored extends StatelessWidget {
           final role = userData['role'] as String?;
           switch (role) {
             case 'parent':
-              return const ParentDashboard_screen(); //ParentDashboard();
+              return const ParentDashboard(); //ParentDashboard();
             case 'coach':
               return const CoachDashboard();
             case 'school':

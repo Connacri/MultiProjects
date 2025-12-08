@@ -53,18 +53,20 @@ class GhibliTheme {
 // WIDGETS RÉUTILISABLES STYLE GHIBLI
 // =============================================================================
 
-/// Nuage animé flottant
 /// Nuage animé flottant - VERSION CORRIGÉE
+/// Gère lui-même sa position verticale et horizontale
 class FloatingCloud extends StatefulWidget {
   final double size;
   final Duration duration;
   final double delay;
+  final double topPosition; // ✅ Position verticale passée en paramètre
 
   const FloatingCloud({
     super.key,
     this.size = 80,
     this.duration = const Duration(seconds: 8),
     this.delay = 0,
+    required this.topPosition, // ✅ Obligatoire maintenant
   });
 
   @override
@@ -90,7 +92,6 @@ class _FloatingCloudState extends State<FloatingCloud>
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // ✅ Initialiser l'animation ici, pas dans initState()
     if (!_isInitialized) {
       _animation = Tween<double>(
         begin: -widget.size,
@@ -100,7 +101,6 @@ class _FloatingCloudState extends State<FloatingCloud>
         curve: Curves.linear,
       ));
 
-      // Démarrer l'animation après le délai
       Future.delayed(Duration(milliseconds: (widget.delay * 1000).toInt()), () {
         if (mounted) {
           _controller.repeat();
@@ -119,16 +119,17 @@ class _FloatingCloudState extends State<FloatingCloud>
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Vérifier que l'animation est initialisée
     if (_animation == null) {
       return const SizedBox.shrink();
     }
 
+    // ✅ UN SEUL Positioned avec top ET left
     return AnimatedBuilder(
       animation: _animation!,
       builder: (context, child) {
         return Positioned(
-          left: _animation!.value,
+          top: widget.topPosition, // ✅ Position verticale
+          left: _animation!.value, // ✅ Position horizontale animée
           child: Opacity(
             opacity: 0.6,
             child: CustomPaint(
@@ -464,26 +465,23 @@ class _ParentHomeScreenState extends State<ParentHomeScreen>
             ),
           ),
 
-          // Nuages animés
-          Positioned(
-            top: 60,
-            child: FloatingCloud(size: 100, delay: 0),
+          // ✅ Nuages animés - plus de Positioned externe !
+          FloatingCloud(
+            size: 100,
+            delay: 0,
+            topPosition: 60, // ✅ Position verticale en paramètre
           ),
-          Positioned(
-            top: 120,
-            child: FloatingCloud(
-              size: 80,
-              delay: 2,
-              duration: const Duration(seconds: 12),
-            ),
+          FloatingCloud(
+            size: 80,
+            delay: 2,
+            duration: const Duration(seconds: 12),
+            topPosition: 120, // ✅
           ),
-          Positioned(
-            top: 200,
-            child: FloatingCloud(
-              size: 120,
-              delay: 4,
-              duration: const Duration(seconds: 15),
-            ),
+          FloatingCloud(
+            size: 120,
+            delay: 4,
+            duration: const Duration(seconds: 15),
+            topPosition: 200, // ✅
           ),
 
           // Contenu
@@ -987,40 +985,37 @@ class _AnimatedStatCardState extends State<_AnimatedStatCard>
         child: GhibliCard(
           color: Colors.white.withOpacity(0.95),
           child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: widget.color.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(widget.icon, color: widget.color, size: 28),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: widget.color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    widget.value,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+                  child: Icon(widget.icon, color: widget.color, size: 28),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  widget.value,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
-                  Text(
-                    widget.label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
+                ),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
