@@ -91,9 +91,9 @@ class CourseLocation {
   }
 }
 
+/// Modèle d'image de cours adapté pour Supabase
 class CourseImage {
   final String id;
-  final String firebaseUrl;
   final String? supabaseUrl;
   final String localPath;
   final bool isSynced;
@@ -101,40 +101,41 @@ class CourseImage {
 
   CourseImage({
     required this.id,
-    required this.firebaseUrl,
     this.supabaseUrl,
     required this.localPath,
     required this.isSynced,
     required this.uploadedAt,
   });
 
+  /// Désérialisation depuis Supabase (JSONB)
   factory CourseImage.fromMap(Map<String, dynamic> map) {
     return CourseImage(
       id: map['id'] ?? '',
-      firebaseUrl: map['firebaseUrl'] ?? '',
-      supabaseUrl: map['supabaseUrl'],
-      localPath: map['localPath'] ?? '',
-      isSynced: map['isSynced'] ?? false,
-      uploadedAt: map['uploadedAt'] is Timestamp
-          ? (map['uploadedAt'] as Timestamp).toDate()
-          : DateTime.parse(map['uploadedAt']),
+      supabaseUrl: map['supabaseUrl'] ?? map['supabase_url'],
+      localPath: map['localPath'] ?? map['local_path'] ?? '',
+      isSynced: map['isSynced'] ?? map['is_synced'] ?? false,
+      uploadedAt: map['uploadedAt'] != null
+          ? DateTime.parse(map['uploadedAt'].toString())
+          : (map['uploaded_at'] != null
+              ? DateTime.parse(map['uploaded_at'].toString())
+              : DateTime.now()),
     );
   }
 
+  /// Sérialisation pour Supabase (JSONB)
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'firebaseUrl': firebaseUrl,
-      'supabaseUrl': supabaseUrl,
-      'localPath': localPath,
-      'isSynced': isSynced,
-      'uploadedAt': Timestamp.fromDate(uploadedAt),
+      'supabase_url': supabaseUrl,
+      'local_path': localPath,
+      'is_synced': isSynced,
+      'uploaded_at': uploadedAt.toIso8601String(),
     };
   }
 
+  /// CopyWith pour créer une copie modifiée
   CourseImage copyWith({
     String? id,
-    String? firebaseUrl,
     String? supabaseUrl,
     String? localPath,
     bool? isSynced,
@@ -142,13 +143,27 @@ class CourseImage {
   }) {
     return CourseImage(
       id: id ?? this.id,
-      firebaseUrl: firebaseUrl ?? this.firebaseUrl,
       supabaseUrl: supabaseUrl ?? this.supabaseUrl,
       localPath: localPath ?? this.localPath,
       isSynced: isSynced ?? this.isSynced,
       uploadedAt: uploadedAt ?? this.uploadedAt,
     );
   }
+
+  @override
+  String toString() {
+    return 'CourseImage(id: $id, supabaseUrl: $supabaseUrl, isSynced: $isSynced)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is CourseImage && other.id == id;
+  }
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class CourseModel {
@@ -164,7 +179,7 @@ class CourseModel {
   final CourseLocation location;
   final List<CourseImage> images;
   final String createdBy;
-  final String createdByRole;
+
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
@@ -186,7 +201,6 @@ class CourseModel {
     required this.location,
     required this.images,
     required this.createdBy,
-    required this.createdByRole,
     required this.createdAt,
     required this.updatedAt,
     this.isActive = true,
@@ -220,7 +234,6 @@ class CourseModel {
               .toList() ??
           [],
       createdBy: data['createdBy'] ?? '',
-      createdByRole: data['createdByRole'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: (data['updatedAt'] as Timestamp).toDate(),
       isActive: data['isActive'] ?? true,
@@ -244,7 +257,6 @@ class CourseModel {
       'location': location.toMap(),
       'images': images.map((img) => img.toMap()).toList(),
       'createdBy': createdBy,
-      'createdByRole': createdByRole,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'isActive': isActive,
@@ -278,7 +290,6 @@ class CourseModel {
               .toList() ??
           [],
       createdBy: data['created_by'] ?? '',
-      createdByRole: data['created_by_role'] ?? '',
       createdAt: DateTime.parse(data['created_at']),
       updatedAt: DateTime.parse(data['updated_at']),
       isActive: data['is_active'] ?? true,
@@ -302,7 +313,6 @@ class CourseModel {
       'location': location.toMap(),
       'images': images.map((img) => img.toMap()).toList(),
       'created_by': createdBy,
-      'created_by_role': createdByRole,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'is_active': isActive,
@@ -362,7 +372,6 @@ class CourseModel {
       location: location ?? this.location,
       images: images ?? this.images,
       createdBy: createdBy ?? this.createdBy,
-      createdByRole: createdByRole ?? this.createdByRole,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isActive: isActive ?? this.isActive,

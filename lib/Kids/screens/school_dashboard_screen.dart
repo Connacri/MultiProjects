@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../claude/auth_provider_v2.dart';
 import '../models/course_model_complete.dart';
@@ -9,6 +10,8 @@ import '../models/user_model.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
+import 'ParentDashboard.dart';
+import 'course_details_screen.dart';
 import 'create_course_screen.dart';
 
 class SchoolDashboard extends StatefulWidget {
@@ -48,9 +51,12 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
 
     try {
       final authProvider = context.read<AuthProviderV2>();
-      final userData = authProvider.userData;
+      final courseProvider = context.read<CourseProvider>();
 
-      if (userData == null) {
+      final userData = authProvider.userData;
+      final currentUser = authProvider.currentUser;
+
+      if (userData == null || currentUser == null) {
         setState(() {
           _error = 'Aucune donnée utilisateur disponible';
           _isLoading = false;
@@ -61,11 +67,15 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
       // Construire le UserModel depuis les données brutes
       _user = UserModel.fromSupabase(userData);
 
+      // ✅ FIX CRITIQUE : Charger les cours de l'utilisateur
+      await courseProvider.loadUserCourses(currentUser.id);
+
       // Initialiser les controllers
       _initializeControllers();
 
       setState(() => _isLoading = false);
     } catch (e) {
+      print('❌ [SchoolDashboard] Erreur _loadData: $e');
       setState(() {
         _error = 'Erreur lors du chargement: $e';
         _isLoading = false;
@@ -149,6 +159,7 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
   }
 
   Widget _buildMobileLayout() {
+    final authProvider = context.watch<AuthProviderV2>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestion des Cours'),
@@ -158,6 +169,11 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
               icon: const Icon(Icons.add),
               onPressed: () => _navigateToCreateCourse(),
             ),
+          _buildIconButton(
+            Icons.logout,
+            () => authProvider.logout(),
+            GhibliTheme.sunsetOrange,
+          ),
         ],
       ),
       body: _getSelectedPage(),
@@ -193,7 +209,17 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
   }
 
   Widget _buildDesktopLayout() {
+    final authProvider = context.watch<AuthProviderV2>();
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          _buildIconButton(
+            Icons.logout,
+            () => authProvider.logout(),
+            GhibliTheme.sunsetOrange,
+          ),
+        ],
+      ),
       body: Row(
         children: [
           NavigationRail(
@@ -285,7 +311,7 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
         );
         final activeCourses = userCourses.where((c) => c.isActive).length;
 
-        // ✅ FIX : Récupérer le nom depuis userData
+        // ✅ Récupérer le nom depuis userData
         final userName = authProvider.userData?['name'] ??
             authProvider.currentUser!.email?.split('@').first ??
             'École';
@@ -293,6 +319,7 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
         return ListView(
           padding: ResponsiveLayout.getResponsivePadding(context),
           children: [
+            // Header
             Text(
               'Bienvenue, $userName',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -300,6 +327,8 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
                   ),
             ),
             const SizedBox(height: 24),
+
+            // Stats Cards
             ResponsiveBuilder(
               builder: (context, deviceType) {
                 final isDesktop = deviceType == DeviceType.desktop;
@@ -342,6 +371,8 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
               },
             ),
             const SizedBox(height: 32),
+
+            // Section Title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -359,25 +390,57 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
             ),
             const SizedBox(height: 16),
 
-            // ✅ Protection si pas de cours
+            // ✅ FIX CRITIQUE : Gérer proprement les cours
             if (userCourses.isEmpty)
-              const Center(
+              Center(
                 child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Text('Aucun cours créé pour le moment'),
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.school_outlined,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aucun cours créé pour le moment',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: _navigateToCreateCourse,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Créer un cours'),
+                      ),
+                    ],
+                  ),
                 ),
               )
             else
-              ...userCourses.take(3).map((course) => Padding(
+              // ✅ Utiliser Column au lieu du spread operator
+              Column(
+                children: userCourses.take(3).map((course) {
+                  // ✅ Vérification de sécurité
+                  if (course.id.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
                     child: CourseCard(
+                      key: ValueKey(course.id),
+                      // ✅ Clé unique
                       course: course,
                       showActions: true,
                       onTap: () => _navigateToCourseDetails(course),
                       onEdit: () => _navigateToEditCourse(course),
                       onDelete: () => _confirmDeleteCourse(course),
+                      onShare: () => _shareCourse(course),
                     ),
-                  )),
+                  );
+                }).toList(),
+              ),
           ],
         );
       },
@@ -518,9 +581,49 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
         .push(MaterialPageRoute(builder: (ctx) => CreateCourseScreen()));
   }
 
-  void _navigateToEditCourse(CourseModel course) {}
+  /// ✅ Navigation vers l'édition d'un cours
+  void _navigateToEditCourse(CourseModel course) {
+    if (!mounted) return;
 
-  void _navigateToCourseDetails(CourseModel course) {}
+    print('🔵 [SchoolDashboard] Navigation vers édition: ${course.id}');
+
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute(
+        builder: (context) => CreateCourseScreen(courseToEdit: course),
+      ),
+    )
+        .then((result) {
+      print('🔵 [SchoolDashboard] Retour de l\'édition: $result');
+
+      // ✅ Recharger les données après édition
+      if (mounted) {
+        _loadData();
+      }
+    });
+  }
+
+  /// ✅ Navigation vers les détails d'un cours
+  void _navigateToCourseDetails(CourseModel course) {
+    if (!mounted) return;
+
+    print('🔵 [SchoolDashboard] Navigation vers détails: ${course.id}');
+
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute(
+        builder: (context) => CourseDetailsScreen(course: course),
+      ),
+    )
+        .then((_) {
+      print('🔵 [SchoolDashboard] Retour des détails');
+
+      // ✅ Recharger les données au retour
+      if (mounted) {
+        _loadData();
+      }
+    });
+  }
 
   Future<void> _confirmDeleteCourse(CourseModel course) async {
     final confirmed = await showDialog<bool>(
@@ -552,5 +655,33 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
         );
       }
     }
+  }
+
+  void _shareCourse(CourseModel course) {
+    Share.share(
+      'Découvrez ce cours: ${course.title}\n${course.description}',
+      subject: course.title,
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, VoidCallback onTap, Color color) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.9),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: color, size: 24),
+      ),
+    );
   }
 }

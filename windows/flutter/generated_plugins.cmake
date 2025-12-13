@@ -12,10 +12,12 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_storage
   flutter_avif_windows
   flutter_inappwebview_windows
+  geolocator_windows
   objectbox_flutter_libs
   permission_handler_windows
   printing
   screen_retriever_windows
+  share_plus
   url_launcher_windows
   window_manager
 )

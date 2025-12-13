@@ -67,7 +67,7 @@ class ChildEnrollmentProvider extends ChangeNotifier {
 
       String? photoUrl;
       if (photo != null) {
-        photoUrl = await _imageService.uploadProfileImage(
+        photoUrl = await _imageService.uploadUserProfileImage(
           imageFile: photo,
           userId: '$parentId-${DateTime.now().millisecondsSinceEpoch}',
           isProfileImage: true,
@@ -123,7 +123,7 @@ class ChildEnrollmentProvider extends ChangeNotifier {
 
       String? photoUrl = _children[index].photoUrl;
       if (newPhoto != null) {
-        photoUrl = await _imageService.uploadProfileImage(
+        photoUrl = await _imageService.uploadUserProfileImage(
           imageFile: newPhoto,
           userId: childId,
           isProfileImage: true,

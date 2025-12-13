@@ -1,6 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,224 +9,287 @@ import 'package:uuid/uuid.dart';
 
 import '../models/course_model_complete.dart';
 
+/// Service de gestion des images via Supabase Storage
+/// ✅ COMPATIBLE WINDOWS : Compression désactivée sur Desktop
 class ImageStorageService {
-  final FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
   final SupabaseClient _supabase = Supabase.instance.client;
   final Uuid _uuid = const Uuid();
 
-  static const int maxImageSizeKB = 500; // Limite de taille après compression
-  static const int imageQuality = 85; // Qualité de compression
+  // Bucket Supabase pour les images de cours
+  static const String _coursesBucket = 'courses';
+  static const String _usersBucket = 'user-images';
 
+  static const int maxImageSizeKB = 500;
+  static const int imageQuality = 85;
+
+  /// 🖥️ Détecte si on est sur Windows Desktop
+  bool get _isWindowsDesktop => !kIsWeb && Platform.isWindows;
+
+  /// Compresse une image pour optimiser le stockage
+  /// ✅ SKIP sur Windows car non supporté
   Future<File> _compressImage(File file) async {
-    final tempDir = await getTemporaryDirectory();
-    final targetPath = '${tempDir.path}/${_uuid.v4()}.jpg';
-
-    final result = await FlutterImageCompress.compressAndGetFile(
-      file.absolute.path,
-      targetPath,
-      quality: imageQuality,
-      minWidth: 1920,
-      minHeight: 1080,
-    );
-
-    if (result == null) {
-      throw Exception('Erreur lors de la compression de l\'image');
+    // 🖥️ Sur Windows : Pas de compression, retour direct
+    if (_isWindowsDesktop) {
+      print('🖥️ [ImageStorage] Windows détecté : Compression SKIP');
+      return file;
     }
 
-    final compressedFile = File(result.path);
-    final fileSizeKB = await compressedFile.length() / 1024;
+    print('📦 [ImageStorage] Compression image: ${file.path}');
 
-    if (fileSizeKB > maxImageSizeKB) {
-      final adjustedQuality =
-          (imageQuality * (maxImageSizeKB / fileSizeKB)).round();
-      final finalResult = await FlutterImageCompress.compressAndGetFile(
-        file.absolute.path,
-        targetPath,
-        quality: adjustedQuality,
-        minWidth: 1920,
-        minHeight: 1080,
+    final tempDir = await getTemporaryDirectory();
+    final output = '${tempDir.path}/${_uuid.v4()}.jpg';
+
+    try {
+      // Première passe de compression
+      final compressed = await FlutterImageCompress.compressAndGetFile(
+        file.path,
+        output,
+        quality: imageQuality,
+        minWidth: 1280,
+        minHeight: 720,
       );
 
-      if (finalResult == null) {
-        throw Exception('Erreur lors de la recompression de l\'image');
+      if (compressed == null) {
+        print(
+            '⚠️ [ImageStorage] Compression échouée, utilisation fichier original');
+        return file;
       }
-      return File(finalResult.path);
-    }
 
-    return compressedFile;
+      final compressedFile = File(compressed.path);
+      final sizeKB = (await compressedFile.length()) / 1024;
+
+      print(
+          '📦 [ImageStorage] Taille après compression: ${sizeKB.toStringAsFixed(2)} KB');
+
+      // Recompression si le fichier est trop lourd
+      if (sizeKB > maxImageSizeKB) {
+        print('📦 [ImageStorage] Recompression nécessaire...');
+        final adjustedQuality =
+            (imageQuality * (maxImageSizeKB / sizeKB)).round();
+
+        final finalCompressed = await FlutterImageCompress.compressAndGetFile(
+          file.path,
+          output,
+          quality: adjustedQuality,
+          minWidth: 1280,
+          minHeight: 720,
+        );
+
+        if (finalCompressed == null) {
+          print(
+              '⚠️ [ImageStorage] Recompression échouée, utilisation version 1ère compression');
+          return compressedFile;
+        }
+
+        return File(finalCompressed.path);
+      }
+
+      return compressedFile;
+    } catch (e) {
+      print('⚠️ [ImageStorage] Erreur compression: $e');
+      print('⚠️ [ImageStorage] Utilisation fichier original sans compression');
+      return file;
+    }
   }
 
+  /// 🔧 Upload une image de cours dans Supabase Storage (bucket: courses)
+  /// ✅ Compatible Windows Desktop (sans compression)
   Future<CourseImage> uploadCourseImage({
     required File imageFile,
     required String courseId,
-    bool syncBothClouds = true,
   }) async {
     try {
-      final compressedImage = await _compressImage(imageFile);
-      final imageId = _uuid.v4();
-      final fileName = '$courseId/$imageId.jpg';
+      print('📤 [ImageStorage] Début upload image pour course: $courseId');
 
-      String? firebaseUrl;
-      String? supabaseUrl;
+      // 1️⃣ Compression (skip sur Windows)
+      final fileToUpload = await _compressImage(imageFile);
+      final imgId = _uuid.v4();
 
-      try {
-        final firebaseRef = _firebaseStorage.ref().child('courses/$fileName');
-        final uploadTask = await firebaseRef.putFile(compressedImage);
-        firebaseUrl = await uploadTask.ref.getDownloadURL();
-      } catch (e) {
-        print('Erreur upload Firebase: $e');
+      // 2️⃣ Structure : courses/{courseId}/{imageId}.jpg
+      final filePath = '$courseId/$imgId.jpg';
+      print('📤 [ImageStorage] Chemin: $filePath');
+
+      // 3️⃣ Lecture bytes
+      final Uint8List imageBytes = await fileToUpload.readAsBytes();
+      final sizeKB = imageBytes.length / 1024;
+      print(
+          '📤 [ImageStorage] Taille: ${sizeKB.toStringAsFixed(2)} KB (${imageBytes.length} bytes)');
+
+      // ⚠️ Avertissement si image trop lourde
+      if (sizeKB > 2000) {
+        print(
+            '⚠️ [ImageStorage] ATTENTION: Image très lourde (${sizeKB.toStringAsFixed(0)} KB)');
+        print(
+            '⚠️ [ImageStorage] Recommandé: < 1 MB pour de meilleures performances');
       }
 
-      if (syncBothClouds || firebaseUrl == null) {
+      // 4️⃣ Upload avec Uint8List
+      await _supabase.storage.from(_coursesBucket).uploadBinary(
+            filePath,
+            imageBytes,
+            fileOptions: const FileOptions(
+              contentType: 'image/jpeg',
+              upsert: true,
+            ),
+          );
+
+      print('✅ [ImageStorage] Upload réussi');
+
+      // 5️⃣ Récupération de l'URL publique
+      final publicUrl =
+          _supabase.storage.from(_coursesBucket).getPublicUrl(filePath);
+
+      print('✅ [ImageStorage] URL publique: $publicUrl');
+
+      // 6️⃣ Nettoyage du fichier temporaire (si compression a eu lieu)
+      if (fileToUpload.path != imageFile.path) {
         try {
-          final bytes = await compressedImage.readAsBytes();
-          final supabasePath = 'courses/$fileName';
-
-          await _supabase.storage.from('course-images').uploadBinary(
-                supabasePath,
-                bytes,
-                fileOptions: const FileOptions(
-                  contentType: 'image/jpeg',
-                  upsert: true,
-                ),
-              );
-
-          supabaseUrl = _supabase.storage
-              .from('course-images')
-              .getPublicUrl(supabasePath);
+          await fileToUpload.delete();
+          print('🧹 [ImageStorage] Fichier temporaire supprimé');
         } catch (e) {
-          print('Erreur upload Supabase: $e');
-          if (firebaseUrl == null) {
-            rethrow;
-          }
+          print(
+              '⚠️ [ImageStorage] Impossible de supprimer le fichier temp: $e');
         }
       }
 
-      await compressedImage.delete();
-
-      if (firebaseUrl == null && supabaseUrl == null) {
-        throw Exception('Échec de l\'upload sur les deux plateformes');
-      }
-
       return CourseImage(
-        id: imageId,
-        firebaseUrl: firebaseUrl ?? '',
-        supabaseUrl: supabaseUrl,
+        id: imgId,
+        supabaseUrl: publicUrl,
         localPath: imageFile.path,
-        isSynced: firebaseUrl != null && supabaseUrl != null,
+        isSynced: true,
         uploadedAt: DateTime.now(),
       );
-    } catch (e) {
-      throw Exception('Erreur lors de l\'upload de l\'image: $e');
+    } on StorageException catch (e) {
+      print('❌ [ImageStorage] StorageException: ${e.message}');
+      print('❌ [ImageStorage] StatusCode: ${e.statusCode}');
+      throw Exception("Erreur upload Supabase Storage: ${e.message}");
+    } catch (e, stackTrace) {
+      print('❌ [ImageStorage] Erreur upload: $e');
+      print('❌ [ImageStorage] StackTrace: $stackTrace');
+      throw Exception("Erreur upload: $e");
     }
   }
 
+  /// Upload multiple d'images de cours avec callback de progression
   Future<List<CourseImage>> uploadMultipleCourseImages({
     required List<File> imageFiles,
     required String courseId,
-    bool syncBothClouds = true,
     Function(int current, int total)? onProgress,
   }) async {
-    final List<CourseImage> uploadedImages = [];
+    print('📤 [ImageStorage] Upload multiple: ${imageFiles.length} images');
+    final results = <CourseImage>[];
 
     for (int i = 0; i < imageFiles.length; i++) {
       try {
-        final courseImage = await uploadCourseImage(
+        print('📤 [ImageStorage] Upload image ${i + 1}/${imageFiles.length}');
+        final img = await uploadCourseImage(
           imageFile: imageFiles[i],
           courseId: courseId,
-          syncBothClouds: syncBothClouds,
         );
-        uploadedImages.add(courseImage);
+        results.add(img);
         onProgress?.call(i + 1, imageFiles.length);
+        print('✅ [ImageStorage] Image ${i + 1}/${imageFiles.length} uploadée');
       } catch (e) {
-        print('Erreur upload image ${i + 1}: $e');
+        print("❌ [ImageStorage] Erreur upload image ${i + 1}: $e");
+        // Continue même si une image échoue
       }
     }
 
-    return uploadedImages;
+    print(
+        '✅ [ImageStorage] Upload multiple terminé: ${results.length}/${imageFiles.length} réussis');
+    return results;
   }
 
-  Future<void> deleteImageFromBothClouds(CourseImage image) async {
-    final List<Future> deleteTasks = [];
-
-    if (image.firebaseUrl.isNotEmpty) {
-      try {
-        final ref = _firebaseStorage.refFromURL(image.firebaseUrl);
-        deleteTasks.add(ref.delete());
-      } catch (e) {
-        print('Erreur suppression Firebase: $e');
-      }
+  /// Supprime une image de cours du bucket Supabase
+  Future<void> deleteCourseImage(CourseImage img, String courseId) async {
+    if (img.supabaseUrl == null || img.supabaseUrl!.isEmpty) {
+      return;
     }
 
-    if (image.supabaseUrl != null && image.supabaseUrl!.isNotEmpty) {
-      try {
-        final fileName = image.supabaseUrl!.split('/').last;
-        deleteTasks.add(
-          _supabase.storage.from('course-images').remove(['courses/$fileName']),
-        );
-      } catch (e) {
-        print('Erreur suppression Supabase: $e');
-      }
+    // Structure du path : {courseId}/{imageId}.jpg
+    final path = '$courseId/${img.id}.jpg';
+
+    try {
+      print('🗑️ [ImageStorage] Suppression: $path');
+      await _supabase.storage.from(_coursesBucket).remove([path]);
+      print('✅ [ImageStorage] Image supprimée');
+    } on StorageException catch (e) {
+      print("❌ [ImageStorage] Erreur suppression Supabase: ${e.message}");
+    } catch (e) {
+      print("❌ [ImageStorage] Erreur suppression: $e");
     }
-
-    await Future.wait(deleteTasks);
   }
 
-  Future<void> deleteCourseImages(List<CourseImage> images) async {
-    final deleteTasks = images.map((image) => deleteImageFromBothClouds(image));
-    await Future.wait(deleteTasks);
+  /// Supprime plusieurs images d'un cours
+  Future<void> deleteMultipleImages(
+    List<CourseImage> images,
+    String courseId,
+  ) async {
+    final paths = images
+        .where((img) => img.supabaseUrl != null && img.supabaseUrl!.isNotEmpty)
+        .map((img) => '$courseId/${img.id}.jpg')
+        .toList();
+
+    if (paths.isEmpty) return;
+
+    try {
+      print('🗑️ [ImageStorage] Suppression multiple: ${paths.length} images');
+      await _supabase.storage.from(_coursesBucket).remove(paths);
+      print('✅ [ImageStorage] Images supprimées');
+    } on StorageException catch (e) {
+      print("❌ [ImageStorage] Erreur suppression multiple: ${e.message}");
+    } catch (e) {
+      print("❌ [ImageStorage] Erreur suppression: $e");
+    }
   }
 
-  Future<String?> uploadProfileImage({
+  /// Upload d'une image de profil utilisateur
+  Future<String?> uploadUserProfileImage({
     required File imageFile,
     required String userId,
-    bool isProfileImage = true,
+    required bool isProfileImage,
   }) async {
     try {
-      final compressedImage = await _compressImage(imageFile);
-      final imageType = isProfileImage ? 'profile' : 'cover';
-      final fileName = '$userId/$imageType.jpg';
+      final fileToUpload = await _compressImage(imageFile);
+      final type = isProfileImage ? 'profile' : 'cover';
 
-      String? url;
+      // Structure : {userId}/{type}.jpg
+      final path = '$userId/$type.jpg';
 
-      try {
-        final firebaseRef = _firebaseStorage.ref().child('users/$fileName');
-        final uploadTask = await firebaseRef.putFile(compressedImage);
-        url = await uploadTask.ref.getDownloadURL();
-      } catch (e) {
-        print('Erreur upload profil Firebase: $e');
+      final bytes = await fileToUpload.readAsBytes();
 
-        final bytes = await compressedImage.readAsBytes();
-        final supabasePath = 'users/$fileName';
+      await _supabase.storage.from(_usersBucket).uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
+          );
 
-        await _supabase.storage.from('user-images').uploadBinary(
-              supabasePath,
-              bytes,
-              fileOptions: const FileOptions(
-                contentType: 'image/jpeg',
-                upsert: true,
-              ),
-            );
-
-        url = _supabase.storage.from('user-images').getPublicUrl(supabasePath);
+      // Nettoyage si compression
+      if (fileToUpload.path != imageFile.path) {
+        await fileToUpload.delete();
       }
 
-      await compressedImage.delete();
-      return url;
+      return _supabase.storage.from(_usersBucket).getPublicUrl(path);
+    } on StorageException catch (e) {
+      throw Exception("Erreur upload profil: ${e.message}");
     } catch (e) {
-      throw Exception('Erreur lors de l\'upload de l\'image de profil: $e');
+      throw Exception("Erreur upload: $e");
     }
   }
 
+  /// Upload des images de profil et de couverture d'un utilisateur
   Future<Map<String, String?>> uploadUserProfileImages({
     File? profileImage,
     File? coverImage,
     required String userId,
   }) async {
-    final Map<String, String?> urls = {};
+    final urls = <String, String?>{};
 
     if (profileImage != null) {
-      urls['profile'] = await uploadProfileImage(
+      urls['profile'] = await uploadUserProfileImage(
         imageFile: profileImage,
         userId: userId,
         isProfileImage: true,
@@ -233,7 +297,7 @@ class ImageStorageService {
     }
 
     if (coverImage != null) {
-      urls['cover'] = await uploadProfileImage(
+      urls['cover'] = await uploadUserProfileImage(
         imageFile: coverImage,
         userId: userId,
         isProfileImage: false,
@@ -243,58 +307,26 @@ class ImageStorageService {
     return urls;
   }
 
-  Future<void> syncImageToSupabase(CourseImage image, String courseId) async {
-    if (image.supabaseUrl != null && image.supabaseUrl!.isNotEmpty) {
-      return;
-    }
-
+  /// Supprime toutes les images d'un cours (utile lors de la suppression complète)
+  Future<void> deleteAllCourseImages(String courseId) async {
     try {
-      if (image.firebaseUrl.isEmpty) {
-        throw Exception('URL Firebase manquante pour la synchronisation');
+      print('🗑️ [ImageStorage] Suppression dossier: $courseId');
+      final response =
+          await _supabase.storage.from(_coursesBucket).list(path: courseId);
+
+      if (response.isEmpty) {
+        print('⚠️ [ImageStorage] Aucune image à supprimer');
+        return;
       }
 
-      final response = await _supabase.storage
-          .from('course-images')
-          .createSignedUrl('courses/$courseId/${image.id}.jpg', 3600);
+      final paths = response.map((file) => '$courseId/${file.name}').toList();
 
-      if (response.isNotEmpty) {
-        print('Image synchronisée vers Supabase: ${image.id}');
-      }
+      await _supabase.storage.from(_coursesBucket).remove(paths);
+      print('✅ [ImageStorage] Dossier supprimé: ${paths.length} fichiers');
+    } on StorageException catch (e) {
+      print("❌ [ImageStorage] Erreur suppression dossier: ${e.message}");
     } catch (e) {
-      print('Erreur synchronisation image vers Supabase: $e');
+      print("❌ [ImageStorage] Erreur: $e");
     }
-  }
-
-  Future<void> syncAllImagesToSupabase(
-      List<CourseImage> images, String courseId) async {
-    final syncTasks = images
-        .where((img) => img.supabaseUrl == null || img.supabaseUrl!.isEmpty)
-        .map((img) => syncImageToSupabase(img, courseId));
-
-    await Future.wait(syncTasks);
-  }
-
-  Future<int> calculateStorageUsage(String userId) async {
-    int totalSize = 0;
-
-    try {
-      final firebaseRef = _firebaseStorage.ref().child('users/$userId');
-      final listResult = await firebaseRef.listAll();
-
-      for (var item in listResult.items) {
-        final metadata = await item.getMetadata();
-        totalSize += metadata.size ?? 0;
-      }
-    } catch (e) {
-      print('Erreur calcul usage stockage: $e');
-    }
-
-    return totalSize;
-  }
-
-  String formatStorageSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
   }
 }

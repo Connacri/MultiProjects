@@ -98,7 +98,7 @@ class MyApp9 extends StatelessWidget {
         /////////////////////////////KIDS/////////////////////////////////////
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => CourseProvider()..initialize()),
+        ChangeNotifierProvider(create: (_) => CourseProvider()),
         /////////////////////////////FIN-KIDS/////////////////////////////////////
 
         // ChangeNotifierProvider(create: (_) => AuthService()),

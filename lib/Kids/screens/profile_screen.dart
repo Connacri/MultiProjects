@@ -90,7 +90,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final authProvider = context.read<AuthProvider>();
       if (authProvider.user == null) return;
 
-      final imageUrl = await _imageService.uploadProfileImage(
+      final imageUrl = await _imageService.uploadUserProfileImage(
         imageFile: image,
         userId: authProvider.user!.uid,
         isProfileImage: isProfile,

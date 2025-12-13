@@ -1,76 +1,93 @@
 // ============================================================================
-// FICHIER: location_picker_dialog_widget.dart (VERSION CORRIGÉE)
-// Utilise flutter_osm_plugin: ^1.4.3
+// FICHIER: location_picker_dialog_windows.dart (VERSION CORRIGÉE)
+// Version Windows Desktop compatible avec flutter_map
 // Initialise automatiquement la carte sur la position actuelle
+// Compatible avec flutter_map: ^4.0.0 à ^6.x (API stable)
 // ============================================================================
 
 import 'package:flutter/material.dart';
-import 'package:flutter_osm_plugin/flutter_osm_plugin.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
-import '../models/user_model.dart';
+import '../models/course_model_complete.dart';
 import '../services/location_service_osm.dart';
 
-class LocationPickerDialog extends StatefulWidget {
-  final AppLocation? initialLocation;
+/// Dialog de sélection de localisation compatible Windows Desktop
+class LocationPickerDialogWindows extends StatefulWidget {
+  final dynamic initialLocation; // Accepte AppLocation ou CourseLocation
 
-  const LocationPickerDialog({super.key, this.initialLocation});
+  const LocationPickerDialogWindows({super.key, this.initialLocation});
 
   @override
-  State<LocationPickerDialog> createState() => _LocationPickerDialogState();
+  State<LocationPickerDialogWindows> createState() =>
+      _LocationPickerDialogWindowsState();
 }
 
-class _LocationPickerDialogState extends State<LocationPickerDialog> {
+class _LocationPickerDialogWindowsState
+    extends State<LocationPickerDialogWindows> {
   late MapController _mapController;
   final TextEditingController _searchController = TextEditingController();
   late LocationService _locationService;
 
-  GeoPoint? _selectedPosition;
+  LatLng? _selectedPosition;
   String? _selectedAddress;
   List<LocationSearchResult> _searchResults = [];
   bool _isSearching = false;
   bool _isLoadingCurrentLocation = false;
-  bool _mapReady = false;
   bool _initialLocationSet = false;
+
+  // Marqueur de sélection
+  final List<Marker> _markers = [];
 
   @override
   void initState() {
     super.initState();
 
-    GeoPoint initialPosition;
+    _mapController = MapController();
+    _locationService = LocationService();
 
-    // Déterminer la position initiale
+    // Déterminer et configurer la position initiale
     if (widget.initialLocation != null) {
-      // Utiliser la location fournie
-      initialPosition = GeoPoint(
-        latitude: widget.initialLocation!.latitude,
-        longitude: widget.initialLocation!.longitude,
-      );
-      _selectedPosition = initialPosition;
-      _selectedAddress = widget.initialLocation!.address;
-      _initialLocationSet = true;
-
-      print('🔵 [LocationPicker] Position initiale fournie: ${initialPosition
-          .latitude}, ${initialPosition.longitude}');
+      _setupInitialLocation();
     } else {
-      // Position par défaut (Mascara, Algérie) - sera remplacée par la position actuelle
-      initialPosition = GeoPoint(latitude: 35.3967, longitude: 0.1403);
-      print('🔵 [LocationPicker] Position par défaut temporaire');
-    }
-
-    // Initialiser le contrôleur de carte
-    _mapController = MapController(
-      initPosition: initialPosition,
-    );
-
-    // Initialiser le service de localisation avec le controller
-    _locationService = LocationService(mapController: _mapController);
-
-    // Charger la position actuelle si pas de position initiale fournie
-    if (widget.initialLocation == null) {
+      // Charger la position actuelle en mode création
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _loadCurrentLocation();
       });
     }
+  }
+
+  void _setupInitialLocation() {
+    double lat, lon;
+    String addr;
+
+    // Support pour AppLocation et CourseLocation
+    if (widget.initialLocation is CourseLocation) {
+      final loc = widget.initialLocation as CourseLocation;
+      lat = loc.latitude;
+      lon = loc.longitude;
+      addr = loc.address;
+    } else {
+      // Position par défaut si type inconnu
+      lat = 35.3967;
+      lon = 0.1403;
+      addr = 'Position par défaut';
+    }
+
+    _selectedPosition = LatLng(lat, lon);
+    _selectedAddress = addr;
+    _initialLocationSet = true;
+    _addMarkerAtPosition(_selectedPosition!);
+
+    print('🔵 [LocationPickerWindows] Position initiale: $lat, $lon');
+
+    // Centrer la carte après le build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _mapController.move(_selectedPosition!, 13.0);
+        print('✅ [LocationPickerWindows] Carte centrée sur position initiale');
+      }
+    });
   }
 
   @override
@@ -83,24 +100,25 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
   Future<void> _loadCurrentLocation() async {
     if (!mounted) return;
 
-    print('🔵 [LocationPicker] _loadCurrentLocation - DÉBUT');
+    print('🔵 [LocationPickerWindows] _loadCurrentLocation - DÉBUT');
     setState(() => _isLoadingCurrentLocation = true);
 
     try {
       final position = await _locationService.getCurrentPosition();
 
       if (position != null && mounted) {
-        print('✅ [LocationPicker] Position obtenue: ${position
+        print('✅ [LocationPickerWindows] Position: ${position
             .latitude}, ${position.longitude}');
 
+        final latLng = LatLng(position.latitude, position.longitude);
+
         setState(() {
-          _selectedPosition = position;
+          _selectedPosition = latLng;
         });
 
-        // Centrer la carte et ajouter le marqueur SEULEMENT si la carte est prête
-        if (_mapReady) {
-          await _centerMapAndAddMarker(position);
-        }
+        // Centrer la carte et ajouter le marqueur
+        _mapController.move(latLng, 15.0);
+        _addMarkerAtPosition(latLng);
 
         // Récupérer l'adresse
         final address = await _locationService.getAddressFromCoordinates(
@@ -110,39 +128,45 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
 
         if (mounted) {
           setState(() => _selectedAddress = address);
-          print('✅ [LocationPicker] Adresse: $address');
+          print('✅ [LocationPickerWindows] Adresse: $address');
         }
       } else {
-        print(
-            '⚠️ [LocationPicker] Position NULL, utilisation position par défaut');
+        print('⚠️ [LocationPickerWindows] Position NULL');
+
+        // Position par défaut (Mascara, Algérie) si la géolocalisation échoue
+        if (mounted) {
+          final defaultPos = LatLng(35.3967, 0.1403);
+          setState(() {
+            _selectedPosition = defaultPos;
+            _selectedAddress = 'Mascara, Algérie';
+          });
+          _mapController.move(defaultPos, 13.0);
+          _addMarkerAtPosition(defaultPos);
+
+          print('⚠️ [LocationPickerWindows] Utilisation position par défaut');
+        }
       }
     } catch (e, stackTrace) {
-      print('❌ [LocationPicker] Erreur chargement position: $e');
-      print('❌ [LocationPicker] StackTrace: $stackTrace');
+      print('❌ [LocationPickerWindows] Erreur: $e');
+      print('❌ [LocationPickerWindows] StackTrace: $stackTrace');
+
+      // Position par défaut en cas d'erreur
+      if (mounted) {
+        final defaultPos = LatLng(35.3967, 0.1403);
+        setState(() {
+          _selectedPosition = defaultPos;
+          _selectedAddress = 'Mascara, Algérie';
+        });
+        _mapController.move(defaultPos, 13.0);
+        _addMarkerAtPosition(defaultPos);
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoadingCurrentLocation = false);
       }
     }
 
-    print('🔵 [LocationPicker] _loadCurrentLocation - FIN');
-  }
-
-  Future<void> _centerMapAndAddMarker(GeoPoint position) async {
-    if (!_mapReady) return;
-
-    try {
-      print('🔵 [LocationPicker] Centrage carte sur: ${position
-          .latitude}, ${position.longitude}');
-
-      await _mapController.changeLocation(position);
-      await _mapController.setZoom(zoomLevel: 15);
-      await _addMarkerAtPosition(position);
-
-      print('✅ [LocationPicker] Carte centrée et marqueur ajouté');
-    } catch (e) {
-      print('❌ [LocationPicker] Erreur centrage carte: $e');
-    }
+    print('🔵 [LocationPickerWindows] _loadCurrentLocation - FIN');
   }
 
   Future<void> _searchLocation(String query) async {
@@ -168,7 +192,7 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
         });
       }
     } catch (e) {
-      print('❌ [LocationPicker] Erreur recherche: $e');
+      print('❌ [LocationPickerWindows] Erreur recherche: $e');
       if (mounted) {
         setState(() {
           _searchResults = [];
@@ -178,31 +202,30 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
     }
   }
 
-  Future<void> _selectSearchResult(LocationSearchResult result) async {
-    final geoPoint = GeoPoint(
-      latitude: result.latitude,
-      longitude: result.longitude,
-    );
+  void _selectSearchResult(LocationSearchResult result) {
+    final latLng = LatLng(result.latitude, result.longitude);
 
     setState(() {
-      _selectedPosition = geoPoint;
+      _selectedPosition = latLng;
       _selectedAddress = result.displayName;
       _searchResults = [];
       _searchController.clear();
     });
 
-    if (_mapReady) {
-      await _centerMapAndAddMarker(geoPoint);
-    }
+    _mapController.move(latLng, 15.0);
+    _addMarkerAtPosition(latLng);
+
+    print('✅ [LocationPickerWindows] Résultat recherche sélectionné: ${result
+        .displayName}');
   }
 
-  Future<void> _onMapTap(GeoPoint position) async {
+  Future<void> _onMapTap(TapPosition tapPosition, LatLng position) async {
     setState(() {
       _selectedPosition = position;
       _selectedAddress = null;
     });
 
-    await _addMarkerAtPosition(position);
+    _addMarkerAtPosition(position);
 
     final address = await _locationService.getAddressFromCoordinates(
       position.latitude,
@@ -214,44 +237,40 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
     }
   }
 
-  Future<void> _addMarkerAtPosition(GeoPoint position) async {
-    if (!_mapReady) return;
-
-    try {
-      // Supprimer tous les marqueurs existants
-      try {
-        await _mapController.removeMarker(position);
-      } catch (e) {
-        // Ignorer l'erreur si le marqueur n'existe pas
-      }
-
-      // Ajouter le nouveau marqueur
-      await _mapController.addMarker(
-        position,
-        markerIcon: const MarkerIcon(
-          icon: Icon(
+  void _addMarkerAtPosition(LatLng position) {
+    setState(() {
+      _markers.clear();
+      _markers.add(
+        Marker(
+          point: position,
+          width: 50,
+          height: 50,
+          builder: (context) =>
+          const Icon(
             Icons.location_on,
             color: Colors.red,
-            size: 56,
+            size: 50,
           ),
         ),
       );
+    });
 
-      print('✅ [LocationPicker] Marqueur ajouté à: ${position
-          .latitude}, ${position.longitude}');
-    } catch (e) {
-      print('❌ [LocationPicker] Erreur ajout marqueur: $e');
-    }
+    print('✅ [LocationPickerWindows] Marqueur ajouté: ${position
+        .latitude}, ${position.longitude}');
   }
 
   void _confirmSelection() {
     if (_selectedPosition != null && _selectedAddress != null) {
-      final location = AppLocation(
+      // Retourner CourseLocation pour compatibilité avec create_course_screen
+      final location = CourseLocation(
         latitude: _selectedPosition!.latitude,
         longitude: _selectedPosition!.longitude,
         address: _selectedAddress!,
       );
       Navigator.pop(context, location);
+
+      print(
+          '✅ [LocationPickerWindows] Location confirmée: ${location.address}');
     }
   }
 
@@ -459,55 +478,26 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
   }
 
   Widget _buildMap() {
-    return OSMFlutter(
-      controller: _mapController,
-      osmOption: OSMOption(
-        zoomOption: const ZoomOption(
-          initZoom: 13,
-          minZoomLevel: 3,
-          maxZoomLevel: 19,
-          stepZoom: 1.0,
-        ),
-        userLocationMarker: UserLocationMaker(
-          personMarker: const MarkerIcon(
-            icon: Icon(
-              Icons.location_history_rounded,
-              color: Colors.blue,
-              size: 48,
-            ),
-          ),
-          directionArrowMarker: const MarkerIcon(
-            icon: Icon(
-              Icons.double_arrow,
-              color: Colors.blue,
-              size: 48,
-            ),
-          ),
-        ),
-        roadConfiguration: const RoadOption(
-          roadColor: Colors.blue,
-        ),
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        // API flutter_map version stable
+        center: _selectedPosition ?? LatLng(35.3967, 0.1403),
+        zoom: 13.0,
+        minZoom: 3.0,
+        maxZoom: 19.0,
+        onTap: _onMapTap,
       ),
-      onMapIsReady: (isReady) async {
-        if (isReady && mounted) {
-          print('✅ [LocationPicker] Carte prête');
-          setState(() => _mapReady = true);
-
-          // Si on a une position initiale fournie, ajouter le marqueur
-          if (_initialLocationSet && _selectedPosition != null) {
-            await _addMarkerAtPosition(_selectedPosition!);
-            print('✅ [LocationPicker] Marqueur initial ajouté');
-          }
-          // Sinon, si on a déjà récupéré la position actuelle, centrer dessus
-          else if (_selectedPosition != null && !_isLoadingCurrentLocation) {
-            await _centerMapAndAddMarker(_selectedPosition!);
-            print('✅ [LocationPicker] Carte centrée sur position actuelle');
-          }
-        }
-      },
-      onGeoPointClicked: (geoPoint) async {
-        await _onMapTap(geoPoint);
-      },
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.hospitaldz.app',
+          maxZoom: 19,
+        ),
+        MarkerLayer(
+          markers: _markers,
+        ),
+      ],
     );
   }
 

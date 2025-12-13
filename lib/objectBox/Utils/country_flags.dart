@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
+
 import 'package:country_flags/country_flags.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class FlagDetector extends StatefulWidget {
@@ -136,9 +137,9 @@ class CountryDisplay extends StatelessWidget {
             ? FittedBox(
                 child: CountryFlag.fromCountryCode(
                   isoCode,
-                  height: height,
-                  width: width,
-                  shape: const RoundedRectangle(6),
+                  // height: height,
+                  // width: width,
+                  // shape: const RoundedRectangle(6),
                 ),
               )
             : FittedBox(
@@ -299,8 +300,8 @@ class CountryDisplayOnlyFlag extends StatelessWidget {
           ? FittedBox(
               child: CountryFlag.fromCountryCode(
                 isoCode,
-                height: height,
-                width: width,
+                // height: height,
+                // width: width,
               ),
             )
           : FittedBox(

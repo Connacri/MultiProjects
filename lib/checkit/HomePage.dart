@@ -13,7 +13,6 @@ import 'package:kenzy/checkit/admobHelper.dart';
 import 'package:kenzy/checkit/providerF.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as su;
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -1659,19 +1658,21 @@ class MyShimmerCircleAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
-        child: Shimmer.fromColors(
-      baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-      highlightColor: Theme.of(context).colorScheme.primary,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          shape: BoxShape.circle,
-        ),
-      ),
-    ));
+    return CircleAvatar(child: CircularProgressIndicator()
+
+        //     Shimmer.fromColors(
+        //   baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        //   highlightColor: Theme.of(context).colorScheme.primary,
+        //   child: Container(
+        //     width: 40,
+        //     height: 40,
+        //     decoration: BoxDecoration(
+        //       color: Colors.white,
+        //       shape: BoxShape.circle,
+        //     ),
+        //   ),
+        // ),
+        );
   }
 }
 
