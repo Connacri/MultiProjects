@@ -2,7 +2,11 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:map_launcher/map_launcher.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/course_model_complete.dart';
 import '../providers/course_provider_complete.dart';
@@ -320,6 +324,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
           const SizedBox(height: 24),
           _buildDescription(),
           const SizedBox(height: 24),
+          _buildLocationSection1(),
+          const SizedBox(height: 24),
           _buildLocationSection(),
           const SizedBox(height: 24),
           _buildStatsSection(),
@@ -402,12 +408,11 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
             if (_course.price != null)
               Chip(
                 avatar: Icon(
-                  Icons.euro,
+                  Icons.monetization_on_rounded,
                   size: 16,
                   color: Colors.green,
                 ),
-                label: Text(
-                    '${_course.price!.toStringAsFixed(2)} ${_course.currency}'),
+                label: Text('${_course.price!.toStringAsFixed(2)} DZD'),
                 backgroundColor: Colors.green.withOpacity(0.1),
               ),
             Chip(
@@ -581,7 +586,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   Row(
                     children: [
                       Icon(
-                        Icons.euro,
+                        Icons.attach_money,
                         size: 20,
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -595,7 +600,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _course.price != null
-                        ? '${_course.price!.toStringAsFixed(2)} ${_course.currency}'
+                        ? '${_course.price!.toStringAsFixed(2)} DZD'
                         : 'Gratuit',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
@@ -729,8 +734,317 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
     );
   }
 
-  /// Section localisation
+// 2️⃣ REMPLACER LA MÉTHODE _buildLocationSection() PAR CELLE-CI :
+
+  /// Section localisation avec carte interactive
   Widget _buildLocationSection() {
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.location_on,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Localisation',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ),
+
+          // ✅ CARTE INTERACTIVE (Cliquable)
+          _buildInteractiveMap(),
+
+          // Adresse et boutons
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _course.location.address,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                if (_course.location.city != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_course.location.city}${_course.location.country != null ? ', ${_course.location.country}' : ''}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+                const SizedBox(height: 16),
+
+                // Coordonnées
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.gps_fixed,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${_course.location.latitude.toStringAsFixed(4)}, ${_course.location.longitude.toStringAsFixed(4)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontFamily: 'monospace',
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Boutons d'action
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _openInMaps,
+                        icon: const Icon(Icons.map),
+                        label: const Text('Ouvrir dans Maps'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _shareLocation,
+                        icon: const Icon(Icons.share_location),
+                        label: const Text('Partager'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+// 3️⃣ AJOUTER CES NOUVELLES MÉTHODES DANS LA CLASSE
+
+  /// ✅ Carte interactive avec OpenStreetMap
+  Widget _buildInteractiveMap() {
+    final location = LatLng(
+      _course.location.latitude,
+      _course.location.longitude,
+    );
+
+    return GestureDetector(
+      onTap: _openInMaps, // ✅ Cliquer sur la carte → ouvre Maps
+      child: SizedBox(
+        height: 200,
+        child: Stack(
+          children: [
+            // Carte OpenStreetMap
+            FlutterMap(
+              options: MapOptions(
+                center: location,
+                zoom: 15.0,
+                interactiveFlags: InteractiveFlag.none,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.wallet.dz',
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: location,
+                      width: 60,
+                      height: 60,
+                      builder: (context) => const Icon(
+                        Icons.location_on,
+                        color: Colors.red,
+                        size: 50,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            // Overlay semi-transparent avec icône (pour indiquer que c'est cliquable)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.0),
+                      Colors.black.withOpacity(0.3),
+                    ],
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.touch_app, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Cliquez pour ouvrir',
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ✅ Ouvre la position dans l'app Maps (Google Maps, Apple Maps, etc.)
+  Future<void> _openInMaps1() async {
+    try {
+      final availableMaps = await MapLauncher.installedMaps;
+      print('🗺️ [Maps] Applications disponibles: ${availableMaps.length}');
+
+      if (availableMaps.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Aucune application de carte installée'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+
+      final coords = Coords(
+        _course.location.latitude,
+        _course.location.longitude,
+      );
+
+      final title = _course.title;
+      final description = _course.location.address;
+
+      // Si une seule app → ouvrir directement
+      if (availableMaps.length == 1) {
+        await availableMaps.first.showMarker(
+          coords: coords,
+          title: title,
+          description: description,
+        );
+        return;
+      }
+
+      // Si plusieurs apps → afficher choix
+      if (mounted) {
+        await showModalBottomSheet(
+          context: context,
+          builder: (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Ouvrir avec',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                const Divider(height: 1),
+                ...availableMaps.map((map) {
+                  return ListTile(
+                    leading: Image.asset(
+                      map.icon,
+                      width: 32,
+                      height: 32,
+                    ),
+                    title: Text(map.mapName),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await map.showMarker(
+                        coords: coords,
+                        title: title,
+                        description: description,
+                      );
+                    },
+                  );
+                }),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ [Maps] Erreur: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'ouverture: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// ✅ Partage la localisation
+  void _shareLocation() {
+    final lat = _course.location.latitude;
+    final lng = _course.location.longitude;
+    final url = 'https://www.google.com/maps?q=$lat,$lng';
+
+    // Utiliser share_plus (déjà dans vos dépendances)
+    Share.share(
+      '📍 Localisation de "${_course.title}"\n'
+      '${_course.location.address}\n\n'
+      '$url',
+      subject: 'Localisation - ${_course.title}',
+    );
+  }
+
+  /// Section localisation
+  Widget _buildLocationSection1() {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -764,7 +1078,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
             ],
             const SizedBox(height: 12),
             FilledButton.tonalIcon(
-              onPressed: _openInMaps,
+              onPressed: _openInMaps1,
               icon: const Icon(Icons.map),
               label: const Text('Voir sur la carte'),
             ),

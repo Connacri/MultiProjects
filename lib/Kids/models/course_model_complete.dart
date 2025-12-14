@@ -172,14 +172,14 @@ class CourseModel {
   final String description;
   final CourseCategory category;
   final double? price;
-  final String currency;
+
+  // ✅ REMOVED: Currency n'existe plus
   final CourseSeason season;
   final DateTime seasonStartDate;
   final DateTime seasonEndDate;
   final CourseLocation location;
   final List<CourseImage> images;
   final String createdBy;
-
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
@@ -194,7 +194,7 @@ class CourseModel {
     required this.description,
     required this.category,
     this.price,
-    this.currency = 'EUR',
+    // ✅ REMOVED: Pas de currency
     required this.season,
     required this.seasonStartDate,
     required this.seasonEndDate,
@@ -221,7 +221,7 @@ class CourseModel {
         orElse: () => CourseCategory.other,
       ),
       price: data['price']?.toDouble(),
-      currency: data['currency'] ?? 'EUR',
+      // ✅ REMOVED: Pas de currency
       season: CourseSeason.values.firstWhere(
         (e) => e.name == data['season'],
         orElse: () => CourseSeason.yearRound,
@@ -250,7 +250,7 @@ class CourseModel {
       'description': description,
       'category': category.name,
       'price': price,
-      'currency': currency,
+      // ✅ REMOVED: Pas de currency
       'season': season.name,
       'seasonStartDate': Timestamp.fromDate(seasonStartDate),
       'seasonEndDate': Timestamp.fromDate(seasonEndDate),
@@ -277,7 +277,7 @@ class CourseModel {
         orElse: () => CourseCategory.other,
       ),
       price: data['price']?.toDouble(),
-      currency: data['currency'] ?? 'EUR',
+      // ✅ REMOVED: Pas de currency
       season: CourseSeason.values.firstWhere(
         (e) => e.name == data['season'],
         orElse: () => CourseSeason.yearRound,
@@ -306,7 +306,7 @@ class CourseModel {
       'description': description,
       'category': category.name,
       'price': price,
-      'currency': currency,
+      // ✅ REMOVED: Pas de currency
       'season': season.name,
       'season_start_date': seasonStartDate.toIso8601String(),
       'season_end_date': seasonEndDate.toIso8601String(),
@@ -343,7 +343,7 @@ class CourseModel {
     String? description,
     CourseCategory? category,
     double? price,
-    String? currency,
+    // ✅ REMOVED: Pas de currency
     CourseSeason? season,
     DateTime? seasonStartDate,
     DateTime? seasonEndDate,
@@ -365,7 +365,7 @@ class CourseModel {
       description: description ?? this.description,
       category: category ?? this.category,
       price: price ?? this.price,
-      currency: currency ?? this.currency,
+      // ✅ REMOVED: Pas de currency
       season: season ?? this.season,
       seasonStartDate: seasonStartDate ?? this.seasonStartDate,
       seasonEndDate: seasonEndDate ?? this.seasonEndDate,

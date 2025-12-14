@@ -94,7 +94,7 @@ class CourseProvider extends ChangeNotifier {
     required String description,
     required CourseCategory category,
     double? price,
-    String currency = 'EUR',
+    String currency = '',
     required CourseSeason season,
     required DateTime seasonStartDate,
     required DateTime seasonEndDate,
@@ -128,7 +128,7 @@ class CourseProvider extends ChangeNotifier {
         description: description,
         category: category,
         price: price,
-        currency: currency,
+
         season: season,
         seasonStartDate: seasonStartDate,
         seasonEndDate: seasonEndDate,

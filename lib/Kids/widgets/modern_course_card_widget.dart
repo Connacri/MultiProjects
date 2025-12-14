@@ -262,7 +262,7 @@ class CourseCard extends StatelessWidget {
               // Prix
               if (course.price != null && course.price! > 0)
                 Text(
-                  '${course.price!.toStringAsFixed(2)} ${course.currency}',
+                  '${course.price!.toStringAsFixed(2)} DZD',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.bold,

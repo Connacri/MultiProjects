@@ -613,8 +613,8 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
                 controller: _priceController,
                 decoration: const InputDecoration(
                   labelText: 'Prix (optionnel)',
-                  prefixIcon: Icon(Icons.euro),
-                  suffixText: 'EUR',
+                  prefixIcon: Icon(Icons.attach_money),
+                  suffixText: 'DZD',
                 ),
                 keyboardType: TextInputType.number,
               ),
