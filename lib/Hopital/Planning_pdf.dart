@@ -9,6 +9,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../objectBox/classeObjectBox.dart';
+import '../objectbox.g.dart';
 import 'StaffProvider.dart';
 import 'pdf_options_dialog.dart';
 
@@ -1003,9 +1005,10 @@ pw.Widget _buildMedicalStaffTable(
   );
 }
 
-// Fonction pour récupérer les observations d'un staff avec OBS et TimeOff filtrés par mois/année
 String _getObservationWithTimeOff(dynamic staff, int month, int year) {
   final List<String> observations = [];
+
+  final objectBox = ObjectBox();
 
   // Récupérer OBS si existe
   final obs = staff.obs ?? '';
@@ -1013,38 +1016,26 @@ String _getObservationWithTimeOff(dynamic staff, int month, int year) {
     observations.add(obs);
   }
 
-  // Récupérer TimeOff si existe et filtrer par mois/année
+  // Récupérer TimeOff depuis ObjectBox (comme dans _buildCongesListView)
   try {
-    final timeOffList = staff.timeOff;
+    final freshTimeOffs = objectBox.timeOffBox
+        .query(TimeOff_.staff.equals(staff.id))
+        .build()
+        .find()
+        .where((timeOff) {
+      // Vérifier si le congé chevauche le mois sélectionné
+      final debutMois = DateTime(year, month, 1);
+      final finMois = DateTime(year, month + 1, 0);
 
-    if (timeOffList != null && timeOffList.isNotEmpty) {
-      // Créer les dates de début et fin du mois sélectionné
-      final startOfMonth = DateTime(year, month, 1);
-      final endOfMonth = DateTime(year, month + 1, 0, 23, 59, 59);
+      return (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
+          timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1))));
+    }).toList();
 
-      for (var timeOff in timeOffList) {
-        final debut = timeOff.debut;
-        final fin = timeOff.fin;
-
-        // Vérifier si le congé chevauche le mois sélectionné
-        // Un congé est inclus si:
-        // - Il commence dans le mois OU
-        // - Il se termine dans le mois OU
-        // - Il englobe complètement le mois
-        final isInMonth = (debut.isBefore(endOfMonth) ||
-                debut.isAtSameMomentAs(endOfMonth)) &&
-            (fin.isAfter(startOfMonth) || fin.isAtSameMomentAs(startOfMonth));
-
-        if (isInMonth) {
-          final motif = timeOff.motif ?? '';
-          if (motif.isNotEmpty) {
-            // Formater : Motif (date début - date fin)
-            final debutStr = DateFormat('dd/MM').format(debut);
-            final finStr = DateFormat('dd/MM').format(fin);
-            observations.add('$motif ($debutStr-$finStr)');
-          }
-        }
-      }
+    for (var timeOff in freshTimeOffs) {
+      final motif = timeOff.motif ?? 'Congé';
+      final debutStr = DateFormat('dd/MM').format(timeOff.debut);
+      final finStr = DateFormat('dd/MM').format(timeOff.fin);
+      observations.add('($debutStr -> $finStr)');
     }
   } catch (e) {
     print('⚠️ Erreur lecture TimeOff: $e');
@@ -1055,8 +1046,8 @@ String _getObservationWithTimeOff(dynamic staff, int month, int year) {
     return '';
   }
 
-  // Joindre avec un saut de ligne pour afficher chaque congé sur une ligne séparée
-  return observations.join('  |  ');
+  // Ajouter le préfixe "congés : " uniquement s'il y a des congés
+  return 'Congés : ${observations.join(' : ')}';
 }
 
 // ========== TABLEAU PERSONNEL PARAMÉDICAL ==========

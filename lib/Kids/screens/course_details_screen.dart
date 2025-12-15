@@ -378,8 +378,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         // Titre
         Text(
           _course.title,
-          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w400,
               ),
         ),
         const SizedBox(height: 12),

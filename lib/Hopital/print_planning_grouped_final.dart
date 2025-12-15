@@ -171,14 +171,14 @@ Future<String?> generateAndSaveMonthPlanningPDF(
 
       String title;
       if (isAgentsHygiene) {
-        title = "Agents d'Hygiène (12h)";
+        title = "Agents d'Hygiène — 12h";
       } else if (isMedecinsGroup) {
-        title = '08h–16h — (Personnel Médical)';
+        title = '08h–16h — Personnel Médical';
       } else if (groupe.toUpperCase().contains('08H') &&
           groupe.toUpperCase().contains('16H')) {
         title = '08h–16h';
       } else {
-        title = '(24h)'; //groupe;
+        title = '24h'; //groupe;
       }
 
       final prefix = getMonthPrefix(monthName);
@@ -225,13 +225,13 @@ Future<String?> generateAndSaveMonthPlanningPDF(
             pw.SizedBox(height: 6),
             pw.Center(
               child: pw.Text(
-                'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year',
+                'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year | $title',
                 style: bold.copyWith(fontSize: 14),
               ),
             ),
-            pw.SizedBox(height: 4),
-            pw.Center(
-                child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
+            // pw.SizedBox(height: 4),
+            // pw.Center(
+            //     child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
             pw.SizedBox(height: 8),
             pw.Center(
               child: _buildGroupTable(list, daysInMonth, oswald, year, month),
@@ -416,7 +416,7 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
       currentOption = hygieneOption;
       sortStaffList(membres);
       subGroups.add(membres);
-      pageTitle = "Agents d'Hygiène (12h)";
+      pageTitle = "Agents d'Hygiène - 12h";
     } else if (groupe.toUpperCase().contains('08H-16H')) {
       // 08H-16H : séparer médecins / administratifs
       final medecins = membres.where((s) {
@@ -441,7 +441,7 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
           options.any((o) => o.type == PdfPageType.activiteTableauMedical)) {
         subGroups.add(medecins);
         currentOption = medicalOption;
-        pageTitle = '08h–16h – (Personnel Médical)';
+        pageTitle = '08h–16h – Personnel Médical';
         _addActivityPage(pdf, medecins, daysInMonth, oswald, year, month,
             pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
       }
@@ -463,7 +463,7 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
       currentOption = paramedicalOption;
       sortStaffList(membres);
       subGroups.add(membres);
-      pageTitle = '(24h)';
+      pageTitle = '24h';
     }
 
     // Générer les pages pour les groupes simples
@@ -515,7 +515,7 @@ void _addActivityPage(
   String mainTitle =
       'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year';
   if (option?.includeModificatif ?? false) {
-    mainTitle += ' (Modificatif)';
+    mainTitle += ' (Modificatif) ';
   }
 
   pdf.addPage(
@@ -538,12 +538,12 @@ void _addActivityPage(
         pw.Center(
           child: pw.Column(
             children: [
-              pw.Text(mainTitle,
+              pw.Text(mainTitle + ' ' + subtitle,
                   style: bold.copyWith(fontSize: 14),
                   textAlign: pw.TextAlign.center),
-              pw.SizedBox(height: 4),
-              pw.Center(
-                  child: pw.Text(subtitle, style: bold.copyWith(fontSize: 12))),
+              // pw.SizedBox(height: 4),
+              // pw.Center(
+              //     child: pw.Text(subtitle, style: bold.copyWith(fontSize: 12))),
               if (option?.customText != null) ...[
                 pw.SizedBox(height: 2),
                 pw.Text(

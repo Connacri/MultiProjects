@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Importez cette ligne
-import 'package:kenzy/Kids/claude/auth_provider_v2.dart' show AuthProviderV2;
 import 'package:kenzy/Kids/claude/auth_wrapper_refactored.dart'
     show AuthWrapperRefactored;
 import 'package:kenzy/Kids/screens/autresDashboard.dart';
@@ -24,7 +23,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:timeago/timeago.dart' as timeago;
 
-import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
 import 'Hopital/p2p/connection_manager.dart';
 import 'Hopital/p2p/delta_generator_real.dart';
@@ -34,12 +32,11 @@ import 'Hopital/p2p/messenger/messaging_manager.dart';
 import 'Hopital/p2p/p2p_integration.dart';
 import 'Hopital/p2p/p2p_manager.dart';
 import 'Kids/models/user_model.dart';
-import 'Kids/providers/child_enrollment_provider.dart';
 import 'Kids/screens/coach_dashboard_screen.dart';
 import 'Kids/screens/parent_dashboard_screen.dart';
 import 'Kids/screens/school_dashboard_screen.dart';
 import 'firebase_options.dart';
-import 'objectBox/MyProviders.dart';
+import 'objectBox/MyApp.dart';
 import 'objectBox/classeObjectBox.dart';
 
 // ============================================================================
@@ -241,17 +238,18 @@ void main() async {
 
   // Run App avec Provider
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ChildEnrollmentProvider()),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => CourseProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProviderV2()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: KidsAcademyApp(), //MyApp(),
-    ),
+    // MultiProvider(
+    //   providers: [
+    //     ChangeNotifierProvider(create: (_) => AuthProvider()),
+    //     ChangeNotifierProvider(create: (_) => ChildEnrollmentProvider()),
+    //     ChangeNotifierProvider(create: (_) => LocaleProvider()),
+    //     ChangeNotifierProvider(create: (_) => CourseProvider()),
+    //     ChangeNotifierProvider(create: (_) => AuthProviderV2()),
+    //     ChangeNotifierProvider(create: (_) => ThemeProvider()),
+    //   ],
+    //   child: KidsAcademyApp(), //MyApp(),
+    // ),
+    MyMain(),
   );
 }
 
