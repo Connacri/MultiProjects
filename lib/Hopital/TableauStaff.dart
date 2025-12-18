@@ -17,7 +17,6 @@ import 'AboutAppPage.dart';
 import 'ActivitePersonne.dart';
 import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
-import 'StaffLeaveList.dart';
 import 'StaffProvider.dart';
 import 'license/LicenseInfoPage.dart';
 import 'p2p/connection_manager.dart';
@@ -1075,9 +1074,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final staffProvider = Provider.of<StaffProvider>(context, listen: true);
 
     return Scaffold(
-      key: ValueKey('staff_table_${staffProvider.lastUpdateTimestamp}'),
-      // ✅ Force rebuild
-
+      key: ValueKey(
+          'staff_table_${staffProvider.lastUpdateTimestamp}_${staffProvider.staffs.length}'),
       appBar: AppBar(
         title: Tooltip(
             message: 'Hospital Planning (Decentralized Storage Database)',
@@ -1085,21 +1083,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: Icon(Icons.account_balance),
-            color: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => StaffLeaveList(
-                          staffs: staffProvider.staffs,
-                          selectedMonth: 12,
-                          selectedYear: 2025,
-                        )),
-              );
-            },
-          ),
           IconButton(
             icon: Icon(Icons.refresh),
             tooltip: 'Force Refresh (${staffProvider.remoteChangesReceived})',
@@ -2632,45 +2615,49 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             fontWeight: FontWeight.bold,
                             fontSize: 14)),
                   )),
-                  DataCell(GestureDetector(
-                    onTap: () async =>
-                        await _showObservationDialog(context, staff),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (staff.obs?.isNotEmpty ?? false)
-                            ? Colors.blue.shade50
-                            : Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: (staff.obs?.isNotEmpty ?? false)
-                              ? Colors.blue.shade200
-                              : Colors.grey.shade300,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.note,
-                              size: 12,
-                              color: (staff.obs?.isNotEmpty ?? false)
-                                  ? Colors.blue.shade600
-                                  : Colors.grey.shade400),
-                          SizedBox(width: 4),
-                          Text(
-                            (staff.obs?.isNotEmpty ?? false) ? "OBS" : "-",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: (staff.obs?.isNotEmpty ?? false)
-                                  ? Colors.blue.shade600
-                                  : Colors.grey.shade400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )),
+                  // 3️⃣ DANS LA DATATABLE : Remplacez la cellule OBS par :
+                  DataCell(
+                    _buildObservationCell(staff),
+                  ),
+                  // DataCell(GestureDetector(
+                  //   onTap: () async =>
+                  //       await _showObservationDialog(context, staff),
+                  //   child: Container(
+                  //     padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  //     decoration: BoxDecoration(
+                  //       color: (staff.obs?.isNotEmpty ?? false)
+                  //           ? Colors.blue.shade50
+                  //           : Colors.grey.shade50,
+                  //       borderRadius: BorderRadius.circular(4),
+                  //       border: Border.all(
+                  //         color: (staff.obs?.isNotEmpty ?? false)
+                  //             ? Colors.blue.shade200
+                  //             : Colors.grey.shade300,
+                  //       ),
+                  //     ),
+                  //     child: Row(
+                  //       mainAxisSize: MainAxisSize.min,
+                  //       children: [
+                  //         Icon(Icons.note,
+                  //             size: 12,
+                  //             color: (staff.obs?.isNotEmpty ?? false)
+                  //                 ? Colors.blue.shade600
+                  //                 : Colors.grey.shade400),
+                  //         SizedBox(width: 4),
+                  //         Text(
+                  //           (staff.obs?.isNotEmpty ?? false) ? "OBS" : "-",
+                  //           style: TextStyle(
+                  //             fontSize: 12,
+                  //             fontWeight: FontWeight.w500,
+                  //             color: (staff.obs?.isNotEmpty ?? false)
+                  //                 ? Colors.blue.shade600
+                  //                 : Colors.grey.shade400,
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // )),
                   DataCell(GestureDetector(
                     onTap: () async => await _showCongesManagementDialog(
                         context, staff,
@@ -3250,7 +3237,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // 4️⃣ Rafraîchir
       await staffProvider.fetchStaffs();
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -4074,9 +4060,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }) async {
     final nomCtrl = TextEditingController(text: staff.nom);
     final gradeCtrl = TextEditingController(text: staff.grade);
-    final obsCtrl = TextEditingController(text: staff.obs ?? "");
 
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+
+    // Récupérer l'observation actuelle du mois chargé
+    final currentObs = staffProvider.getObservationForStaff(staff.id) ?? "";
+    final obsCtrl = TextEditingController(text: currentObs);
 
     // ⭐ Récupérer les groupes existants
     final Set<String> groupesExistants = staffProvider.staffs
@@ -4096,7 +4085,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       context: context,
       builder: (ctx) {
         return StatefulBuilder(
-          builder: (ctx, setState) {
+          builder: (ctx, setStateDialog) {
             // Déterminer si on affiche l'équipe
             bool showEquipe = false;
             if (!isCreatingNewGroupe && selectedGroupe != null) {
@@ -4109,7 +4098,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             }
 
             return AlertDialog(
-              title: Text("Modifier / Supprimer ${staff.nom}"),
+              title: Text("Modifier ${staff.nom}"),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -4118,28 +4107,28 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     // Nom
                     TextField(
                       controller: nomCtrl,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: "Nom",
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
                     // Grade
                     TextField(
                       controller: gradeCtrl,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: "Grade",
                         border: OutlineInputBorder(),
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                    // ⭐ DROPDOWN GROUPE
-                    if (!isCreatingNewGroupe) ...[
+                    // ⭐ GROUPE
+                    if (!isCreatingNewGroupe)
                       DropdownButtonFormField<String>(
                         value: selectedGroupe,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: "Groupe",
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.group),
@@ -4150,7 +4139,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             child: Text(
                               groupe,
                               style: groupe.startsWith("➕")
-                                  ? TextStyle(
+                                  ? const TextStyle(
                                       color: Colors.green,
                                       fontWeight: FontWeight.bold)
                                   : null,
@@ -4158,13 +4147,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           );
                         }).toList(),
                         onChanged: (value) {
-                          setState(() {
+                          setStateDialog(() {
                             if (value == "➕ Nouveau groupe...") {
                               isCreatingNewGroupe = true;
                               selectedGroupe = null;
                             } else {
                               selectedGroupe = value;
-                              // Reset équipe si on change de groupe
                               if (!value!.toUpperCase().contains('08H-08H') &&
                                   !value.toUpperCase().contains('GARDE 24H')) {
                                 selectedEquipe = null;
@@ -4173,21 +4161,19 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           });
                         },
                       ),
-                    ],
 
-                    // ⭐ Champ pour créer un nouveau groupe
-                    if (isCreatingNewGroupe) ...[
+                    if (isCreatingNewGroupe)
                       TextField(
                         controller: newGroupeCtrl,
                         decoration: InputDecoration(
                           labelText: "Nom du nouveau groupe",
                           hintText: "Ex: 08H-16H, 08H-08H...",
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.group_add),
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.group_add),
                           suffixIcon: IconButton(
-                            icon: Icon(Icons.cancel),
+                            icon: const Icon(Icons.cancel),
                             onPressed: () {
-                              setState(() {
+                              setStateDialog(() {
                                 isCreatingNewGroupe = false;
                                 newGroupeCtrl.clear();
                                 selectedGroupe = staff.groupe;
@@ -4195,46 +4181,52 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             },
                           ),
                         ),
-                        onChanged: (value) {
-                          setState(() {});
-                        },
+                        onChanged: (_) => setStateDialog(() {}),
                       ),
-                    ],
 
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                    // Afficher Équipe si nécessaire
-                    if (showEquipe && equipesActives) ...[
-                      Text(
-                        "Équipe :",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                    // Équipe
+                    if (showEquipe && equipesActives)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("Équipe :",
+                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: ["A", "B", "C", "D"].map((equipe) {
+                              return ChoiceChip(
+                                label: Text(equipe),
+                                selected: selectedEquipe == equipe,
+                                selectedColor: _getEquipeColor(equipe),
+                                onSelected: (selected) {
+                                  setStateDialog(() {
+                                    selectedEquipe = selected ? equipe : null;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ),
-                      SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: ["A", "B", "C", "D"].map((equipe) {
-                          return ChoiceChip(
-                            label: Text(equipe),
-                            selected: selectedEquipe == equipe,
-                            selectedColor: _getEquipeColor(equipe),
-                            onSelected: (bool selected) {
-                              setState(() {
-                                selectedEquipe = selected ? equipe : null;
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 12),
-                    ],
 
                     // Observations
                     TextField(
                       controller: obsCtrl,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         labelText: "Observation",
                         border: OutlineInputBorder(),
                       ),
+                      onChanged: (value) {
+                        // Mise à jour temporaire en mémoire
+                        staffProvider.setTemporaryObservation(
+                          staff.id,
+                          value.trim().isEmpty ? null : value.trim(),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -4242,19 +4234,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: Text("Annuler"),
+                  child: const Text("Annuler"),
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    // Déterminer le groupe final
+                    // Groupe final
                     String? finalGroupe;
                     if (isCreatingNewGroupe) {
                       if (newGroupeCtrl.text.trim().isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Le nom du groupe est obligatoire"),
-                            backgroundColor: Colors.red,
-                          ),
+                          const SnackBar(
+                              content: Text("Le nom du groupe est obligatoire"),
+                              backgroundColor: Colors.red),
                         );
                         return;
                       }
@@ -4263,30 +4254,39 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       finalGroupe = selectedGroupe;
                     }
 
-                    staff.nom = nomCtrl.text;
-                    staff.grade = gradeCtrl.text;
+                    // Mise à jour du staff
+                    staff.nom = nomCtrl.text.trim();
+                    staff.grade = gradeCtrl.text.trim();
                     staff.groupe = finalGroupe!;
+                    staff.equipe =
+                        showEquipe && equipesActives ? selectedEquipe : null;
 
-                    // Gérer l'équipe
-                    if (showEquipe && equipesActives) {
-                      staff.equipe = selectedEquipe;
-                    } else {
-                      staff.equipe = null;
+                    try {
+                      await staffProvider.updateStaff(
+                          staff); // Met à jour les champs permanents
+                      await staffProvider.saveMonthActivities(_selectedYear,
+                          _selectedMonth); // Sauvegarde obs + activités
+
+                      if (context.mounted) {
+                        Navigator.pop(ctx);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text("✅ ${staff.nom} modifié avec succès"),
+                              backgroundColor: Colors.green),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text("❌ Erreur: $e"),
+                              backgroundColor: Colors.red),
+                        );
+                      }
                     }
-
-                    staff.obs = obsCtrl.text;
-
-                    await staffProvider.updateStaff(staff);
-                    Navigator.pop(ctx);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("✅ ${staff.nom} modifié avec succès"),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
                   },
-                  child: Text("Enregistrer"),
+                  child: const Text("Enregistrer"),
                 ),
               ],
             );
@@ -4511,7 +4511,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // 4. Rafraîchir les données
       await staffProvider.fetchStaffs();
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("✅ ${_getStatutName(statut)} ajouté pour ${staff.nom}\n"
@@ -4532,7 +4531,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// Dans _deleteTimeOff - CORRIGER la restauration
   Future<void> _deleteTimeOff(Staff staff, TimeOff timeOff) async {
     try {
       final objectBox = ObjectBox();
@@ -4542,26 +4540,24 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       print(
           "🗑️ AVANT suppression : staff.timeOff (cache) = ${staff.timeOff.length}");
 
-      // 1. Supprimer de la base
-      bool removed = objectBox.timeOffBox.remove(timeOff.id);
-      print("🗑️ Suppression base : $removed");
+      // 1. Supprimer le TimeOff de la base
+      objectBox.timeOffBox.remove(timeOff.id);
+      print("🗑️ TimeOff supprimé de la base");
 
-      // 2. ✅ FORCER LE RECHARGEMENT DU CACHE ToMany
+      // 2. Forcer le rechargement du cache ToMany
       await _refreshStaffTimeOffCache(staff);
       print(
           "🔄 APRÈS rechargement : staff.timeOff (cache) = ${staff.timeOff.length}");
 
-      // 3. ✅ RESTAURER LES JOURS AVEC LE STATUT APPROPRIÉ
+      // 3. Restaurer les jours impactés avec le statut approprié
       DateTime currentDate = timeOff.debut;
       int joursRestaures = 0;
 
       while (currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
-          int jour = currentDate.day;
-
-          // ✅ DÉTERMINER LE STATUT APPROPRIÉ SELON LE GROUPE
-          String statutARestaurer =
+          final jour = currentDate.day;
+          final statutARestaurer =
               _determinerStatutApresSuppressionConge(staff, currentDate);
 
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
@@ -4572,38 +4568,48 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             month: _selectedMonth,
           );
           joursRestaures++;
-          print("   Jour $jour restauré : $statutARestaurer");
+          print("   Jour $jour restauré → $statutARestaurer");
         }
         currentDate = currentDate.add(const Duration(days: 1));
       }
 
-      // 4. Nettoyer les obs
-      if (staff.obs != null &&
-          staff.obs!.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut))) {
-        staff.obs = null;
-        await staffProvider.updateStaff(staff);
+      // 4. Nettoyer l'observation du mois si elle contenait ce congé
+      final currentObs = staffProvider.getObservationForStaff(staff.id) ?? '';
+      if (currentObs.contains(DateFormat('dd/MM/yyyy').format(timeOff.debut)) ||
+          currentObs.contains(timeOff.motif ?? '')) {
+        staffProvider.setTemporaryObservation(
+            staff.id, null); // Efface l'obs du mois
       }
 
-      // 5. Rafraîchir
+      // 5. Sauvegarder le snapshot (pour persister la suppression d'obs)
+      await staffProvider.saveMonthActivities(_selectedYear, _selectedMonth);
+
+      // 6. Rafraîchir les données
       await staffProvider.fetchStaffs();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("✅ Congé supprimé pour ${staff.nom}\n"
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "✅ Congé supprimé pour ${staff.nom}\n"
               "Cache actualisé : ${staff.timeOff.length} congé(s) restant(s)\n"
-              "$joursRestaures jours restaurés"),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 4),
-        ),
-      );
+              "$joursRestaures jours restaurés",
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     } catch (e) {
       print("❌ Erreur _deleteTimeOff: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Erreur lors de la suppression: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("❌ Erreur lors de la suppression: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -4849,7 +4855,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       await staffProvider.fetchStaffs(); // Rafraîchir d'abord
-
       final objectBox = ObjectBox();
       final staffs = objectBox.staffBox.getAll();
       final allTimeOffs = objectBox.timeOffBox.getAll();
@@ -4969,9 +4974,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// CORRIGER _updateTimeOff aussi
-  Future<void> _updateTimeOff(Staff staff, TimeOff timeOff,
-      DateTime nouveauDebut, DateTime nouvelleFin, String nouveauMotif) async {
+  Future<void> _updateTimeOff(
+    Staff staff,
+    TimeOff timeOff,
+    DateTime nouveauDebut,
+    DateTime nouvelleFin,
+    String nouveauMotif,
+  ) async {
     try {
       final objectBox = ObjectBox();
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
@@ -4979,7 +4988,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // 1. Remettre à '-' les anciens jours
       DateTime currentDate = timeOff.debut;
-      while (currentDate.isBefore(timeOff.fin.add(Duration(days: 1)))) {
+      while (currentDate.isBefore(timeOff.fin.add(const Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
@@ -4990,23 +4999,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             month: _selectedMonth,
           );
         }
-        currentDate = currentDate.add(Duration(days: 1));
+        currentDate = currentDate.add(const Duration(days: 1));
       }
 
       // 2. Mettre à jour l'entité TimeOff
       timeOff.debut = nouveauDebut;
       timeOff.fin = nouvelleFin;
       timeOff.motif = nouveauMotif;
-      objectBox.timeOffBox.put(timeOff); // Sauvegarder les changements
+      objectBox.timeOffBox.put(timeOff);
 
-      // 3. ⭐ SYNCHRONISER - pas besoin de re-add car l'objet existe déjà dans la relation
-      // Juste sauvegarder les changements de relations si nécessaire
+      // 3. Synchroniser la relation (au cas où)
       objectBox.staffBox.put(staff);
 
-      // 4. Appliquer les nouveaux jours
+      // 4. Appliquer les nouveaux jours avec 'C'
       currentDate = nouveauDebut;
       int joursModifies = 0;
-      while (currentDate.isBefore(nouvelleFin.add(Duration(days: 1)))) {
+      while (currentDate.isBefore(nouvelleFin.add(const Duration(days: 1)))) {
         if (currentDate.year == _selectedYear &&
             currentDate.month == _selectedMonth) {
           await activiteProvider.forceUpdateActiviteIgnoringLeave(
@@ -5018,33 +5026,44 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           );
           joursModifies++;
         }
-        currentDate = currentDate.add(Duration(days: 1));
+        currentDate = currentDate.add(const Duration(days: 1));
       }
 
-      // 5. Mettre à jour l'observation
-      staff.obs =
-          "$nouveauMotif du ${DateFormat('dd/MM/yyyy').format(nouveauDebut)} au ${DateFormat('dd/MM/yyyy').format(nouvelleFin)}";
-      await staffProvider.updateStaff(staff);
+      // 5. Mettre à jour l'observation du mois courant
+      final nouvelleObs =
+          "$nouveauMotif du ${DateFormat('dd/MM/yyyy').format(nouveauDebut)} "
+          "au ${DateFormat('dd/MM/yyyy').format(nouvelleFin)}";
+      staffProvider.setTemporaryObservation(staff.id, nouvelleObs);
 
-      // 6. Rafraîchir
+      // 6. Sauvegarder le snapshot du mois (obs + activités)
+      await staffProvider.saveMonthActivities(_selectedYear, _selectedMonth);
+
+      // 7. Rafraîchir
       await staffProvider.fetchStaffs();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              "✅ Congé modifié pour ${staff.nom}\n$joursModifies jours mis à jour\nRelations OK : ${staff.timeOff.length} congé(s)"),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "✅ Congé modifié pour ${staff.nom}\n"
+              "$joursModifies jours mis à jour\n"
+              "Relations OK : ${staff.timeOff.length} congé(s)",
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } catch (e) {
-      print("❌ Erreur lors de la modification: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Erreur lors de la modification: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print("❌ Erreur _updateTimeOff: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("❌ Erreur lors de la modification: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -5680,7 +5699,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // Rafraîchir les données
       await staffProvider.fetchStaffs();
-
       // Préparer le résumé
       String resumeGardes = gardesParEquipe.entries
           .map((e) => "${e.key}: ${e.value}G")
@@ -6444,7 +6462,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // ✅ 6. Rafraîchir les données
       await staffProvider.fetchStaffs();
-
       // ✅ 7. Résumés
       String resumeGardes = gardesParEquipe.entries
           .where((e) => e.value > 0)
@@ -7099,7 +7116,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // Rafraîchir les données
       await staffProvider.fetchStaffs();
-
       // Afficher le résultat
       final repartitionDetails = assignationParAgent.entries
           .map((e) => "${e.key.nom}: ${e.value}j")
@@ -7230,73 +7246,204 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-  Future<void> _showObservationDialog(BuildContext context, Staff staff) async {
-    final obsController = TextEditingController(text: staff.obs ?? '');
+  // Future<void> _showObservationDialog(BuildContext context, Staff staff) async {
+  //   final obsController = TextEditingController(text: staff.obs ?? '');
+  //
+  //   // ✅ Capturer le provider avant d’ouvrir le dialog
+  //   final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+  //
+  //   await showDialog(
+  //     context: context,
+  //     builder: (BuildContext dialogContext) {
+  //       return AlertDialog(
+  //         title: Row(
+  //           children: [
+  //             Icon(Icons.note, color: Colors.blue),
+  //             SizedBox(width: 8),
+  //             Text("Observations - ${staff.nom}"),
+  //           ],
+  //         ),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(
+  //               controller: obsController,
+  //               maxLines: 3,
+  //               decoration: InputDecoration(
+  //                 labelText: "Observations",
+  //                 hintText: "Saisir les observations pour ce staff...",
+  //                 border: OutlineInputBorder(),
+  //                 prefixIcon: Icon(Icons.edit_note),
+  //                 // ✅ Icône pour vider le champ
+  //                 suffixIcon: obsController.text.isNotEmpty
+  //                     ? IconButton(
+  //                         icon: Icon(Icons.clear),
+  //                         tooltip: "Effacer le texte",
+  //                         onPressed: () {
+  //                           obsController.clear();
+  //                         },
+  //                       )
+  //                     : null,
+  //               ),
+  //               onChanged: (_) {
+  //                 // ✅ Redessine le widget pour faire apparaître/disparaître l’icône
+  //                 (dialogContext as Element).markNeedsBuild();
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () => Navigator.of(dialogContext).pop(),
+  //             child: Text("Annuler"),
+  //           ),
+  //           ElevatedButton.icon(
+  //             icon: Icon(Icons.save, size: 16),
+  //             label: Text("Sauvegarder"),
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: Colors.blue,
+  //               foregroundColor: Colors.white,
+  //             ),
+  //             onPressed: () async {
+  //               staff.obs = obsController.text.trim().isEmpty
+  //                   ? null
+  //                   : obsController.text.trim();
+  //               await staffProvider.updateStaff(staff);
+  //               Navigator.of(dialogContext).pop();
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
+// ============================================================================
+// CORRECTIF CRUD OBSERVATIONS - TableauStaff.dart
+// ============================================================================
 
-    // ✅ Capturer le provider avant d’ouvrir le dialog
+// ============================================================================
+// CORRECTION COMPLÈTE - _showObservationDialog
+// Remplacez votre méthode existante par celle-ci
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// _showObservationDialog - Corrigé
+// ---------------------------------------------------------------------------
+  Future<void> _showObservationDialog(BuildContext context, Staff staff) async {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final currentObs = staffProvider.getObservationForStaff(staff.id) ?? '';
+    final obsController = TextEditingController(text: currentObs);
 
     await showDialog(
       context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.note, color: Colors.blue),
-              SizedBox(width: 8),
-              Text("Observations - ${staff.nom}"),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: obsController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: "Observations",
-                  hintText: "Saisir les observations pour ce staff...",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.edit_note),
-                  // ✅ Icône pour vider le champ
-                  suffixIcon: obsController.text.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(Icons.clear),
-                          tooltip: "Effacer le texte",
-                          onPressed: () {
-                            obsController.clear();
-                          },
-                        )
-                      : null,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.note, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Expanded(
+                      child: Text("Observations - ${staff.nom}",
+                          style: const TextStyle(fontSize: 16))),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(6)),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 14, color: Colors.blue),
+                        SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            "Les observations seront sauvegardées automatiquement",
+                            style: TextStyle(fontSize: 11, color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: obsController,
+                    maxLines: 5,
+                    maxLength: 500,
+                    decoration: InputDecoration(
+                      labelText: "Observations",
+                      hintText: "Saisir les observations pour ce staff...",
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.edit_note),
+                      suffixIcon: obsController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              tooltip: "Effacer",
+                              onPressed: () {
+                                setState(() {
+                                  obsController.clear();
+                                  staffProvider.setTemporaryObservation(
+                                      staff.id, null);
+                                });
+                              },
+                            )
+                          : null,
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                      staffProvider.setTemporaryObservation(
+                          staff.id, value.trim().isEmpty ? null : value.trim());
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${obsController.text.length}/500 caractères',
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text("Fermer")),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.save, size: 16),
+                  label: const Text("Sauvegarder"),
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white),
+                  onPressed: () async {
+                    try {
+                      await staffProvider.saveMonthActivities(
+                          _selectedYear, _selectedMonth);
+                      Navigator.pop(ctx);
+                      if (context.mounted) {
+                        setState(() {}); // Rebuild tableau
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text("✅ Observations sauvegardées"),
+                              backgroundColor: Colors.green),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text("❌ Erreur: $e"),
+                              backgroundColor: Colors.red),
+                        );
+                      }
+                    }
+                  },
                 ),
-                onChanged: (_) {
-                  // ✅ Redessine le widget pour faire apparaître/disparaître l’icône
-                  (dialogContext as Element).markNeedsBuild();
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text("Annuler"),
-            ),
-            ElevatedButton.icon(
-              icon: Icon(Icons.save, size: 16),
-              label: Text("Sauvegarder"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () async {
-                staff.obs = obsController.text.trim().isEmpty
-                    ? null
-                    : obsController.text.trim();
-                await staffProvider.updateStaff(staff);
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-          ],
+              ],
+            );
+          },
         );
       },
     );
@@ -7936,7 +8083,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       await staffProvider.fetchStaffs();
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
@@ -8214,9 +8360,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       grade: finalGrade,
                       groupe: groupeFinal,
                       equipe: selectedEquipe,
-                      obs: obsCtrl.text.trim().isEmpty
-                          ? null
-                          : obsCtrl.text.trim(),
                     )..branch.target = branchToAssign;
 
                     await staffProvider.addStaff(newStaff, []);
@@ -8588,7 +8731,6 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         final staffProvider =
             Provider.of<StaffProvider>(context, listen: false);
         await staffProvider.fetchStaffs();
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
@@ -8617,6 +8759,57 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     } else {
       return "de ";
     }
+  }
+
+// 2️⃣ CORRECTION : Widget d'affichage des observations dans le tableau
+// ============================================================================
+// CORRECTION - _buildObservationCell
+// Remplacez votre méthode dans TableauStaff.dart (vers ligne 3850)
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// _buildObservationCell - Corrigé
+// ---------------------------------------------------------------------------
+  Widget _buildObservationCell(Staff staff) {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final obs = staffProvider.getObservationForStaff(staff.id) ?? '';
+    final hasObs = obs.isNotEmpty;
+
+    return GestureDetector(
+      onTap: () async {
+        await _showObservationDialog(context, staff);
+        if (mounted) setState(() {});
+      },
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          key: ValueKey('obs_${staff.id}_$obs'), // Force rebuild si obs change
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          decoration: BoxDecoration(
+            color: hasObs ? Colors.blue.shade50 : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+                color: hasObs ? Colors.blue.shade200 : Colors.grey.shade300),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(hasObs ? Icons.note : Icons.note_add,
+                  size: 12,
+                  color: hasObs ? Colors.blue.shade600 : Colors.grey.shade400),
+              const SizedBox(width: 4),
+              Text(hasObs ? "OBS" : "-",
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: hasObs
+                          ? Colors.blue.shade600
+                          : Colors.grey.shade400)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -9208,10 +9401,10 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
         }
         currentDate = currentDate.add(Duration(days: 1));
       }
-
+      final _selectedMonth = widget.selectedMonth;
+      final _selectedYear = widget.selectedYear;
       // 4. Rafraîchir
       await staffProvider.fetchStaffs();
-
       // 5. ✅ Rafraîchir le state du dialog
       setState(() {
         dateDebut = null;
@@ -9304,10 +9497,10 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
 
         // Supprimer de la DB
         objectBox.timeOffBox.remove(timeOff.id);
-
+        final _selectedYear = widget.selectedYear;
+        final _selectedMonth = widget.selectedMonth;
         // Recharger
         await staffProvider.fetchStaffs();
-
         // ✅ Rafraîchir le state
         setState(() {
           _listRebuildKey++;
@@ -9499,10 +9692,10 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
               widget.timeOff.debut = dateDebut;
               widget.timeOff.fin = dateFin;
               widget.timeOff.motif = motif;
-
+              final _selectedYear = widget.selectedYear;
+              final _selectedMonth = widget.selectedMonth;
               objectBox.timeOffBox.put(widget.timeOff);
               await staffProvider.fetchStaffs();
-
               // ✅ Fermer APRÈS l'update
               if (context.mounted) {
                 Navigator.of(context).pop();

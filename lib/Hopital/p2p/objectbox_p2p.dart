@@ -120,7 +120,7 @@ class ObjectBoxP2P {
             existingStaff.grade = data['grade'] ?? existingStaff.grade;
             existingStaff.groupe = data['groupe'] ?? existingStaff.groupe;
             existingStaff.equipe = data['equipe'];
-            existingStaff.obs = data['obs'];
+            // existingStaff.obs = data['obs'];
             existingStaff.ordre = data['ordre'];
 
             // ✅ Gérer la relation Branch
@@ -143,7 +143,7 @@ class ObjectBoxP2P {
               grade: data['grade'] ?? '',
               groupe: data['groupe'] ?? '',
               equipe: data['equipe'],
-              obs: data['obs'],
+              // obs: data['obs'],
               ordre: data['ordre'],
             );
 

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:objectbox/objectbox.dart';
+
 import '../objectbox.g.dart'; // Généré par build_runner
 
 @Entity()
@@ -1259,7 +1261,8 @@ class Staff {
   String grade;
   String groupe;
   String? equipe;
-  String? obs;
+
+  // String? obs;
   int? ordre;
   final branch = ToOne<Branch>();
   final timeOff = ToMany<TimeOff>();
@@ -1274,7 +1277,7 @@ class Staff {
     required this.grade,
     required this.groupe,
     this.equipe,
-    this.obs,
+    // this.obs,
     this.ordre,
   });
 
@@ -1286,7 +1289,7 @@ class Staff {
       'grade': grade,
       'groupe': groupe,
       'equipe': equipe,
-      'obs': obs,
+      // 'obs': obs,
       'ordre': ordre,
       'branchId': branch.targetId, // ✅ Important: utiliser targetId
     };
@@ -1300,7 +1303,7 @@ class Staff {
       grade: json['grade'] ?? '',
       groupe: json['groupe'] ?? '',
       equipe: json['equipe'],
-      obs: json['obs'],
+      // obs: json['obs'],
       ordre: json['ordre'],
     );
   }
@@ -1528,16 +1531,53 @@ class TypeActivite {
 }
 
 /// ✅ EXTENSION DE LA CLASSE PLANIFICATION (sans modifier l'entity)
+// extension PlanificationExtension on Planification {
+//   /// Sauvegarder les données complètes du mois
+//   void saveMonthSnapshot({
+//     required List<Staff> staffs,
+//     required Map<int, List<ActiviteJour>> activitesByStaff,
+//     required Map<int, String?> obsByStaff,
+//   }) {
+//     // Construire le JSON complet
+//     final snapshot = {
+//       'ordreEquipes': ordreEquipes,
+//       'staffsOrdre': staffs
+//           .map((s) => {
+//                 'id': s.id,
+//                 'ordre': s.ordre ?? 0,
+//               })
+//           .toList(),
+//       'observations': obsByStaff.entries
+//           .where((e) => e.value != null && e.value!.isNotEmpty)
+//           .map((e) => {'staffId': e.key, 'obs': e.value})
+//           .toList(),
+//       'timestamp': DateTime.now().millisecondsSinceEpoch,
+//     };
+//
+//     // Stocker dans activitesJson
+//     activitesJson = jsonEncode(snapshot);
+//   }
+//
+//   /// Charger les données complètes du mois
+//   Map<String, dynamic>? loadMonthSnapshot() {
+//     if (activitesJson == null || activitesJson!.isEmpty) return null;
+//     try {
+//       return jsonDecode(activitesJson!) as Map<String, dynamic>;
+//     } catch (e) {
+//       print('❌ Erreur décodage snapshot: $e');
+//       return null;
+//     }
+//   }
+// }
 extension PlanificationExtension on Planification {
-  /// Sauvegarder les données complètes du mois
   void saveMonthSnapshot({
     required List<Staff> staffs,
     required Map<int, List<ActiviteJour>> activitesByStaff,
-    required Map<int, String?> obsByStaff,
+    required Map<int, String?> obsByStaff, // ✅ CRITIQUE
   }) {
-    // Construire le JSON complet
     final snapshot = {
-      'ordreEquipes': ordreEquipes,
+      'version': '1.0',
+      'timestamp': DateTime.now().toIso8601String(),
       'staffsOrdre': staffs
           .map((s) => {
                 'id': s.id,
@@ -1546,12 +1586,24 @@ extension PlanificationExtension on Planification {
           .toList(),
       'observations': obsByStaff.entries
           .where((e) => e.value != null && e.value!.isNotEmpty)
-          .map((e) => {'staffId': e.key, 'obs': e.value})
+          .map((e) => {
+                'staffId': e.key,
+                'obs': e.value,
+              })
           .toList(),
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'activites': activitesByStaff.entries
+          .map((e) => {
+                'staffId': e.key,
+                'jours': e.value
+                    .map((a) => {
+                          'jour': a.jour,
+                          'statut': a.statut,
+                        })
+                    .toList(),
+              })
+          .toList(),
     };
 
-    // Stocker dans activitesJson
     activitesJson = jsonEncode(snapshot);
   }
 

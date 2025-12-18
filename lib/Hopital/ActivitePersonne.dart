@@ -353,7 +353,7 @@ void insertActivites(List<ActivitePersonne> liste) {
       grade: e.grade,
       groupe: e.groupe,
       equipe: e.equipe,
-      obs: e.obs,
+      // obs: e.obs,
     );
 
     staff.branch.target = branch; // liaison OneToOne

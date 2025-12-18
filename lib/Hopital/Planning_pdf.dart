@@ -9,6 +9,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectbox.g.dart';
 import 'StaffProvider.dart';
@@ -868,7 +869,7 @@ pw.Widget _buildNotesSection(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'NB : ',
+          '',
           style: pw.TextStyle(
             font: oswald,
             fontSize: 10,
@@ -1006,48 +1007,84 @@ pw.Widget _buildMedicalStaffTable(
 }
 
 String _getObservationWithTimeOff(dynamic staff, int month, int year) {
-  final List<String> observations = [];
+  final List<String> parts = [];
 
   final objectBox = ObjectBox();
 
-  // Récupérer OBS si existe
-  final obs = staff.obs ?? '';
-  if (obs.isNotEmpty) {
-    observations.add(obs);
+  // ===================================================================
+  // 1. Récupérer l'observation mensuelle depuis le snapshot Planification
+  // ===================================================================
+  try {
+    final query = objectBox.planificationBox
+        .query(Planification_.mois.equals(month) &
+            Planification_.annee.equals(year))
+        .build();
+    final planif = query.findFirst();
+    query.close();
+
+    if (planif != null) {
+      final snapshot = planif.loadMonthSnapshot();
+      if (snapshot != null) {
+        final observationsList = snapshot['observations'] as List<dynamic>?;
+        if (observationsList != null) {
+          for (var entry in observationsList) {
+            if (entry is Map && entry['staffId'] == staff.id) {
+              final obs = (entry['obs'] as String?)?.trim();
+              if (obs != null && obs.isNotEmpty) {
+                parts.add(obs);
+              }
+              break; // Un seul par staff
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    print(
+        '⚠️ Erreur lors du chargement de l\'observation mensuelle pour staff ${staff.id}: $e');
   }
 
-  // Récupérer TimeOff depuis ObjectBox (comme dans _buildCongesListView)
+  // ===================================================================
+  // 2. Récupérer les congés (TimeOff) qui chevauchent le mois
+  // ===================================================================
   try {
-    final freshTimeOffs = objectBox.timeOffBox
+    final debutMois = DateTime(year, month, 1);
+    final finMois = DateTime(year, month + 1, 0, 23, 59, 59); // Fin du mois
+
+    final timeOffs = objectBox.timeOffBox
         .query(TimeOff_.staff.equals(staff.id))
         .build()
         .find()
-        .where((timeOff) {
-      // Vérifier si le congé chevauche le mois sélectionné
-      final debutMois = DateTime(year, month, 1);
-      final finMois = DateTime(year, month + 1, 0);
+        .where((t) =>
+            t.debut.isBefore(finMois.add(const Duration(days: 1))) &&
+            t.fin.isAfter(debutMois.subtract(const Duration(days: 1))))
+        .toList();
 
-      return (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
-          timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1))));
-    }).toList();
+    if (timeOffs.isNotEmpty) {
+      final congesStr = timeOffs.map((t) {
+        final motif =
+            t.motif?.trim().isNotEmpty == true ? t.motif!.trim() : 'Congé';
+        final debut = DateFormat('dd/MM').format(t.debut);
+        final fin = DateFormat('dd/MM').format(t.fin);
+        return '$motif ($debut → $fin)';
+      }).join(' • ');
 
-    for (var timeOff in freshTimeOffs) {
-      final motif = timeOff.motif ?? 'Congé';
-      final debutStr = DateFormat('dd/MM').format(timeOff.debut);
-      final finStr = DateFormat('dd/MM').format(timeOff.fin);
-      observations.add('($debutStr -> $finStr)');
+      parts.add(congesStr);
     }
   } catch (e) {
-    print('⚠️ Erreur lecture TimeOff: $e');
+    print(
+        '⚠️ Erreur lors de la lecture des TimeOff pour staff ${staff.id}: $e');
   }
 
-  // Si pas de données, retourner vide
-  if (observations.isEmpty) {
+  // ===================================================================
+  // 3. Retour final
+  // ===================================================================
+  if (parts.isEmpty) {
     return '';
   }
 
-  // Ajouter le préfixe "congés : " uniquement s'il y a des congés
-  return 'Congés : ${observations.join(' : ')}';
+  // Sépare observation et congés si les deux existent
+  return parts.join('\n');
 }
 
 // ========== TABLEAU PERSONNEL PARAMÉDICAL ==========
