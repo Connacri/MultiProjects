@@ -216,7 +216,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     // Utiliser les capacités de DateTime pour calculer automatiquement
     final now = DateTime.now();
-    final nextMonth = DateTime(now.year, now.month + 1, 1);
+    final nextMonth = DateTime(now.year, now.month, 1);
 
     _selectedMonth = nextMonth.month;
     _selectedYear = nextMonth.year;
@@ -1305,7 +1305,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           Map<String, String> groupNameToImage = {
             "Personnel Médical": "assets/photos/hopital/d (1).jpg",
             "Personnel Paramédical (24h)": "assets/photos/hopital/d (8).jpg",
-            "Agents d'hygiène (08h-12h)": "assets/photos/hopital/q (1).jpg",
+            "Agents d'hygiène (12h)": "assets/photos/hopital/q (1).jpg",
             "Personnel Administratif (08h-16h)":
                 "assets/photos/hopital/s2 (10).jpg",
           };
@@ -1315,10 +1315,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               Color(0x66FF9A9E),
               Color(0x66FAD0C4)
             ],
-            "Agents d'hygiène (08h-12h)": [
-              Color(0x66A8E6CF),
-              Color(0x66FFD3A5)
-            ],
+            "Agents d'hygiène (12h)": [Color(0x66A8E6CF), Color(0x66FFD3A5)],
             "Personnel Administratif (08h-16h)": [
               Color(0x66FFB75E),
               Color(0x66ED8F03)
@@ -1330,7 +1327,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             },
             "Personnel Paramédical (24h)": () =>
                 _showSimplePlanificationDialog(),
-            "Agents d'hygiène (08h-12h)": () async {
+            "Agents d'hygiène (12h)": () async {
               await _showPlanificationAgentsHygieneDialog();
             },
             "Personnel Administratif (08h-16h)": () async {
@@ -2860,9 +2857,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
+                  // onPressed: () async {
+                  //   // Sauvegarder l'ordre dans la base de données
+                  //   await _saveStaffOrder(groupeName, reorderedStaffs);
+                  //   Navigator.of(context).pop();
+                  //
+                  //   // Rafraîchir l'affichage
+                  //   setState(() {});
+                  // },
                   onPressed: () async {
                     // Sauvegarder l'ordre dans la base de données
                     await _saveStaffOrder(groupeName, reorderedStaffs);
+
+                    // ✅ CRITIQUE : Forcer le rechargement depuis ObjectBox
+                    final staffProvider =
+                        Provider.of<StaffProvider>(context, listen: false);
+                    await staffProvider.fetchStaffs();
+
                     Navigator.of(context).pop();
 
                     // Rafraîchir l'affichage
@@ -4634,7 +4645,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final groupe = staff.groupe.toUpperCase() ?? '';
     final equipe = staff.equipe?.toUpperCase();
 
-    // Agents d'hygiène (08H-12H)
+    // Agents d'hygiène (12H)
     if (groupe.contains('08H-12H') ||
         staff.grade.toLowerCase().contains('hygiène')) {
       // Vérifier la rotation en cours
@@ -7386,20 +7397,20 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               icon: const Icon(Icons.clear),
                               tooltip: "Effacer",
                               onPressed: () {
-                                setState(() {
-                                  obsController.clear();
-                                  staffProvider.setTemporaryObservation(
-                                      staff.id, null);
-                                });
+                                // setState(() {
+                                obsController.clear();
+                                //   staffProvider.setTemporaryObservation(
+                                //       staff.id, null);
+                                // });
                               },
                             )
                           : null,
                     ),
-                    onChanged: (value) {
-                      setState(() {});
-                      staffProvider.setTemporaryObservation(
-                          staff.id, value.trim().isEmpty ? null : value.trim());
-                    },
+                    // onChanged: (value) {
+                    //   setState(() {});
+                    //   staffProvider.setTemporaryObservation(
+                    //       staff.id, value.trim().isEmpty ? null : value.trim());
+                    // },
                   ),
                   const SizedBox(height: 8),
                   Text('${obsController.text.length}/500 caractères',
@@ -7419,6 +7430,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       foregroundColor: Colors.white),
                   onPressed: () async {
                     try {
+                      staffProvider.setTemporaryObservation(
+                          staff.id,
+                          obsController.text.trim().isEmpty
+                              ? null
+                              : obsController.text.trim());
                       await staffProvider.saveMonthActivities(
                           _selectedYear, _selectedMonth);
                       Navigator.pop(ctx);
@@ -8999,7 +9015,7 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
     return AlertDialog(
       title: Text("Gestion des congés - ${widget.staff.nom}"),
       content: SizedBox(
-        width: double.maxFinite, // ✅ Contrainte explicite
+        width: double.minPositive, // ✅ Contrainte explicite
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
