@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -208,9 +209,13 @@ class StaffProvider with ChangeNotifier {
       notifyListeners();
 
       final oldCount = _staffs.length;
-      _staffs = _objectBox.staffBox.getAll();
+      _staffs = await Isolate.run(() {
+        // Ici, fais tes calculs de tris ou de filtrages complexes
+        // Attention: On ne peut pas manipuler des objets complexes de DB directement
+        // s'ils ne sont pas thread-safe, mais on peut traiter des listes.
+        return _objectBox.staffBox.getAll();
+      });
       final newCount = _staffs.length;
-
       print('[StaffProvider] 📊 fetchStaffs: $oldCount → $newCount staffs');
 
       _isLoading = false;
@@ -219,8 +224,26 @@ class StaffProvider with ChangeNotifier {
     } catch (e) {
       print('[StaffProvider] ❌ Erreur chargement: $e');
       _isLoading = false;
-      notifyListeners();
+      // notifyListeners();
     }
+  }
+
+// Dans StaffProvider.dart
+  Future<void> fetchStaffsBackground() async {
+    _isLoading = true;
+    notifyListeners();
+
+    // On lance le calcul sur un thread séparé pour ne pas bloquer l'UI
+    // Note: Assure-toi que _objectBox est accessible ou passe les données nécessaires
+    _staffs = await Isolate.run(() {
+      // Ici, fais tes calculs de tris ou de filtrages complexes
+      // Attention: On ne peut pas manipuler des objets complexes de DB directement
+      // s'ils ne sont pas thread-safe, mais on peut traiter des listes.
+      return _objectBox.staffBox.getAll();
+    });
+
+    _isLoading = false;
+    notifyListeners();
   }
 
 // ✅ AMÉLIORATION : Méthode pour forcer la relecture depuis ObjectBox
@@ -383,20 +406,20 @@ class StaffProvider with ChangeNotifier {
         return false;
       }
 
-      // ✅ 1. Restaurer l'ordre des staffs (inchangé)
-      final staffsOrdre = snapshot['staffsOrdre'] as List<dynamic>?;
-      if (staffsOrdre != null) {
-        for (var entry in staffsOrdre) {
-          final staffId = entry['id'] as int;
-          final ordre = entry['ordre'] as int;
-
-          final staff = _objectBox.staffBox.get(staffId);
-          if (staff != null && staff.ordre != ordre) {
-            staff.ordre = ordre;
-            _objectBox.staffBox.put(staff);
-          }
-        }
-      }
+      // // ✅ 1. Restaurer l'ordre des staffs (inchangé)
+      // final staffsOrdre = snapshot['staffsOrdre'] as List<dynamic>?;
+      // if (staffsOrdre != null) {
+      //   for (var entry in staffsOrdre) {
+      //     final staffId = entry['id'] as int;
+      //     final ordre = entry['ordre'] as int;
+      //
+      //     final staff = _objectBox.staffBox.get(staffId);
+      //     if (staff != null && staff.ordre != ordre) {
+      //       staff.ordre = ordre;
+      //       _objectBox.staffBox.put(staff);
+      //     }
+      //   }
+      // }
 
       // ✅ 2. Restaurer les observations dans le map (toujours, même vides)
       final observations = snapshot['observations'] as List<dynamic>?;

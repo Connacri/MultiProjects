@@ -181,6 +181,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   int _selectedMonth = DateTime.now().month;
   int _selectedMonthNext = DateTime.now().month;
   int _selectedYear = DateTime.now().year;
+  bool _isInitialLoading = true;
 
 // 1. Ajoutez ces variables d'état dans _TableauStaffPageState
   int _previousMonth = DateTime.now().month;
@@ -221,12 +222,29 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     _selectedMonth = nextMonth.month;
     _selectedYear = nextMonth.year;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final provider = Provider.of<StaffProvider>(context, listen: false);
-      // quickGroupCorrection();
-      await provider.fetchStaffs();
-      await _loadMonth(_selectedYear, _selectedMonth);
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) async {
+    //   final provider = Provider.of<StaffProvider>(context, listen: false);
+    //   // quickGroupCorrection();
+    //   await provider.fetchStaffs();
+    //   await _loadMonth(_selectedYear, _selectedMonth);
+    // });
+    _initData();
+  }
+
+  Future<void> _initData() async {
+    final provider = Provider.of<StaffProvider>(context, listen: false);
+
+    // On attend un tout petit peu pour laisser l'animation de transition finir
+    await Future.delayed(const Duration(milliseconds: 300));
+
+    await provider.fetchStaffs();
+    await _loadMonth(_selectedYear, _selectedMonth);
+
+    if (mounted) {
+      setState(() {
+        _isInitialLoading = false; // On arrête le loader
+      });
+    }
   }
 
   // ⭐ NOUVEAU : Obtenir le nombre de jours dans le mois sélectionné
@@ -912,7 +930,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// 3. Modifiez votre méthode _groupStaffs pour utiliser l'ordre sauvegardé
+  /// ✅ MÉTHODE CORRIGÉE : Groupement avec ordre global unique
   Map<String, List<dynamic>> _groupStaffs(List<Staff> staffs) {
     Map<String, List<dynamic>> groupedStaffs = {};
 
@@ -923,15 +941,33 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       'Agents d\'hygiène (12h)',
     ];
 
+    // Initialiser les groupes
     for (String groupe in ordreGroupes) {
       groupedStaffs[groupe] = [];
     }
 
+    // ✅ CORRECTION 1 : Trier TOUS les staffs par ordre global AVANT le groupement
+    final staffsOrdonnes = List<Staff>.from(staffs);
+    staffsOrdonnes.sort((a, b) {
+      // Si les deux ont un ordre défini
+      if (a.ordre != null && b.ordre != null) {
+        return a.ordre!.compareTo(b.ordre!);
+      }
+      // Si seulement a a un ordre
+      if (a.ordre != null) return -1;
+      // Si seulement b a un ordre
+      if (b.ordre != null) return 1;
+      // Sinon, trier par nom
+      return a.nom.compareTo(b.nom);
+    });
+
+    // ✅ CORRECTION 2 : numeroGlobal suit l'ordre réel des staffs
     int numeroGlobal = 1;
 
-    for (var staff in staffs) {
+    for (var staff in staffsOrdonnes) {
       String groupeAffichage;
 
+      // Classification des groupes (inchangé)
       if (staff.grade.toLowerCase().contains('médecin') ||
           staff.grade.toLowerCase().contains('rhumatologue')) {
         groupeAffichage = 'Personnel Médical';
@@ -950,54 +986,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       String equipe = staff.equipe ?? '-';
 
+      // ✅ CORRECTION 3 : Utiliser numeroGlobal comme numéro d'affichage
       groupedStaffs[groupeAffichage]!.add({
         'staff': staff,
-        'numero': staff.ordre ?? numeroGlobal++,
+        'numero': numeroGlobal, // ← Toujours cohérent avec l'ordre
         'equipe': equipe,
+        'ordreGlobal': staff.ordre ?? 9999, // Pour debug
       });
+
+      numeroGlobal++;
     }
 
-    // ✅ NOUVEAU : Trier par ordre sauvegardé OU par équipe/nom
-    for (var groupe in groupedStaffs.keys) {
-      groupedStaffs[groupe]!.sort((a, b) {
-        Staff staffA = a['staff'] as Staff;
-        Staff staffB = b['staff'] as Staff;
-
-        // Si les deux ont un ordre défini, utiliser cet ordre
-        if (staffA.ordre != null && staffB.ordre != null) {
-          return staffA.ordre!.compareTo(staffB.ordre!);
-        }
-
-        // Sinon, trier par équipe puis par nom (comportement par défaut)
-        String equipeA = a['equipe'] as String;
-        String equipeB = b['equipe'] as String;
-
-        int getPriority(String equipe) {
-          switch (equipe.toUpperCase()) {
-            case 'A':
-              return 1;
-            case 'B':
-              return 2;
-            case 'C':
-              return 3;
-            case 'D':
-              return 4;
-            default:
-              return 5;
-          }
-        }
-
-        int priorityA = getPriority(equipeA);
-        int priorityB = getPriority(equipeB);
-
-        if (priorityA == priorityB) {
-          return staffA.nom.compareTo(staffB.nom);
-        }
-
-        return priorityA.compareTo(priorityB);
-      });
-    }
-
+    // ✅ Plus besoin de tri local - déjà trié globalement
     groupedStaffs.removeWhere((key, value) => value.isEmpty);
 
     return groupedStaffs;
@@ -1072,7 +1072,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   @override
   Widget build(BuildContext context) {
     final staffProvider = Provider.of<StaffProvider>(context, listen: true);
-
+// Si c'est le premier chargement, on affiche un loader propre
+    if (_isInitialLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       key: ValueKey(
           'staff_table_${staffProvider.lastUpdateTimestamp}_${staffProvider.staffs.length}'),
@@ -1083,6 +1088,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
+          _buildDiagnosticButton(context), // ← NOUVEAU
           IconButton(
             icon: Icon(Icons.refresh),
             tooltip: 'Force Refresh (${staffProvider.remoteChangesReceived})',
@@ -1960,7 +1966,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       ),
                     ],
                   ),
-
+                  OrdreMonitorWidget(),
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final bool isMobile = constraints.maxWidth < 600;
@@ -2690,7 +2696,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-  /// Affiche un dialog pour réorganiser manuellement l'ordre des staffs d'un groupe
+  /// ✅ DIALOG CORRIGÉ : Réorganisation avec numéros globaux
   Future<void> _showReorderStaffDialog(
     BuildContext context,
     String groupeName,
@@ -2737,7 +2743,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              "Glissez pour réorganiser l'ordre d'affichage",
+                              "Glissez pour réorganiser l'ordre d'affichage global",
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.blue.shade700,
@@ -2759,16 +2765,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             final item = reorderedStaffs.removeAt(oldIndex);
                             reorderedStaffs.insert(newIndex, item);
 
-                            // Mettre à jour les numéros
-                            for (int i = 0; i < reorderedStaffs.length; i++) {
-                              reorderedStaffs[i]['numero'] = i + 1;
-                            }
+                            // ✅ CORRECTION : Pas de mise à jour des numéros ici
+                            // Les numéros globaux seront recalculés lors de la sauvegarde
                           });
                         },
                         itemBuilder: (context, index) {
                           final staffData = reorderedStaffs[index];
                           final staff = staffData['staff'] as Staff;
-                          final numero = staffData['numero'] as int;
+                          final numeroGlobal = staffData['numero'] as int;
                           final equipe = staffData['equipe'] as String;
 
                           return Container(
@@ -2780,7 +2784,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             child: Card(
                               elevation: 1,
                               child: ListTile(
-                                // Numéro
+                                // ✅ Afficher le numéro GLOBAL actuel
                                 leading: Container(
                                   width: 40,
                                   height: 40,
@@ -2794,7 +2798,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      '$numero',
+                                      '$numeroGlobal',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.blue.shade700,
@@ -2828,14 +2832,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
+                                    // ✅ NOUVEAU : Afficher l'ordre global stocké
+                                    Text(
+                                      'Ordre global stocké: ${staff.ordre ?? "non défini"}',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        color: Colors.grey,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
                                   ],
                                 ),
-
-                                // Icône de drag
-                                // trailing: Icon(
-                                //   Icons.drag_handle,
-                                //   color: Colors.grey.shade400,
-                                // ),
                               ),
                             ),
                           );
@@ -2857,19 +2864,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
-                  // onPressed: () async {
-                  //   // Sauvegarder l'ordre dans la base de données
-                  //   await _saveStaffOrder(groupeName, reorderedStaffs);
-                  //   Navigator.of(context).pop();
-                  //
-                  //   // Rafraîchir l'affichage
-                  //   setState(() {});
-                  // },
                   onPressed: () async {
-                    // Sauvegarder l'ordre dans la base de données
+                    // Sauvegarder l'ordre (recalcule les ordres globaux)
                     await _saveStaffOrder(groupeName, reorderedStaffs);
 
-                    // ✅ CRITIQUE : Forcer le rechargement depuis ObjectBox
+                    // Forcer le rechargement depuis ObjectBox
                     final staffProvider =
                         Provider.of<StaffProvider>(context, listen: false);
                     await staffProvider.fetchStaffs();
@@ -2888,42 +2887,810 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-// 2. Ajoutez cette méthode pour sauvegarder l'ordre
+  /// ✅ VERSION CORRIGÉE - _diagnosticAndFixOrdres avec gestion context safe
+  Future<void> _diagnosticAndFixOrdres(BuildContext context) async {
+    // ✅ CRITIQUE : Capturer le ScaffoldMessenger AVANT les opérations async
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final objectBox = ObjectBox();
+
+      print('🔍 === DIAGNOSTIC DES ORDRES ===');
+
+      // 1️⃣ Récupérer tous les staffs
+      final allStaffs = objectBox.staffBox.getAll();
+
+      // 2️⃣ Analyser les ordres
+      final ordresUtilises = <int, List<Staff>>{};
+      final staffsSansOrdre = <Staff>[];
+
+      for (var staff in allStaffs) {
+        if (staff.ordre == null) {
+          staffsSansOrdre.add(staff);
+        } else {
+          ordresUtilises.putIfAbsent(staff.ordre!, () => []).add(staff);
+        }
+      }
+
+      // 3️⃣ Identifier les doublons
+      final doublons = ordresUtilises.entries
+          .where((entry) => entry.value.length > 1)
+          .toList();
+
+      print('📊 Statistiques:');
+      print('   - Total staffs: ${allStaffs.length}');
+      print('   - Staffs sans ordre: ${staffsSansOrdre.length}');
+      print('   - Ordres dupliqués: ${doublons.length}');
+
+      if (doublons.isNotEmpty) {
+        print('⚠️  DOUBLONS DÉTECTÉS:');
+        for (var entry in doublons) {
+          print(
+              '   Ordre ${entry.key}: ${entry.value.map((s) => s.nom).join(", ")}');
+        }
+      }
+
+      // ✅ Vérifier si le widget est toujours monté avant d'afficher le dialog
+      if (!mounted) {
+        print('⚠️  Widget démonté, arrêt du diagnostic');
+        return;
+      }
+
+      // 4️⃣ Proposer la correction
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.orange),
+              SizedBox(width: 8),
+              Expanded(child: Text('Diagnostic des Ordres')),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Résultats de l\'analyse:',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                SizedBox(height: 12),
+
+                // Statistiques
+                _buildStatRow(
+                    'Total staffs', '${allStaffs.length}', Colors.blue),
+                _buildStatRow('Staffs sans ordre', '${staffsSansOrdre.length}',
+                    staffsSansOrdre.isEmpty ? Colors.green : Colors.orange),
+                _buildStatRow('Ordres dupliqués', '${doublons.length}',
+                    doublons.isEmpty ? Colors.green : Colors.red),
+
+                if (doublons.isNotEmpty) ...[
+                  SizedBox(height: 16),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '❌ Doublons détectés:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.red.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ...doublons.map((entry) => Padding(
+                              padding: EdgeInsets.only(left: 8, top: 4),
+                              child: Text(
+                                '• Ordre ${entry.key}: ${entry.value.map((s) => s.nom).join(", ")}',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            )),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (staffsSansOrdre.isNotEmpty) ...[
+                  SizedBox(height: 12),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '⚠️  Staffs sans ordre:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange.shade700,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        ...staffsSansOrdre.take(5).map((staff) => Padding(
+                              padding: EdgeInsets.only(left: 8, top: 4),
+                              child: Text('• ${staff.nom}',
+                                  style: TextStyle(fontSize: 12)),
+                            )),
+                        if (staffsSansOrdre.length > 5)
+                          Padding(
+                            padding: EdgeInsets.only(left: 8, top: 4),
+                            child: Text(
+                              '... et ${staffsSansOrdre.length - 5} autre(s)',
+                              style: TextStyle(
+                                  fontSize: 12, fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                SizedBox(height: 16),
+                Container(
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              size: 16, color: Colors.blue.shade700),
+                          SizedBox(width: 8),
+                          Text(
+                            'Action de correction:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        '1. Réassignation des ordres globaux uniques (1 à ${allStaffs.length})',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      Text(
+                        '2. Respect de l\'ordre des groupes',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      Text(
+                        '3. Tri par nom dans chaque groupe',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text('Annuler'),
+            ),
+            ElevatedButton.icon(
+              icon: Icon(Icons.build_circle, size: 16),
+              label: Text('Corriger automatiquement'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true) return;
+
+      // 5️⃣ CORRECTION AUTOMATIQUE
+      print('🔧 === CORRECTION AUTOMATIQUE ===');
+
+      final ordreGroupes = [
+        'Personnel Médical',
+        'Personnel Administratif (08h-16h)',
+        'Personnel Paramédical (24h)',
+        'Agents d\'hygiène (12h)',
+      ];
+
+      final staffsParGroupe = <String, List<Staff>>{};
+
+      for (final staff in allStaffs) {
+        final groupe = _getGroupeAffichage(staff);
+        staffsParGroupe.putIfAbsent(groupe, () => []).add(staff);
+      }
+
+      int ordreGlobal = 1;
+      int totalCorriges = 0;
+      Map<String, List<String>> corrections = {};
+
+      for (final groupeName in ordreGroupes) {
+        final staffsGroupe = staffsParGroupe[groupeName] ?? [];
+
+        if (staffsGroupe.isEmpty) continue;
+
+        // Trier par ordre actuel (si existe) puis par nom
+        staffsGroupe.sort((a, b) {
+          if (a.ordre != null && b.ordre != null) {
+            final comp = a.ordre!.compareTo(b.ordre!);
+            if (comp != 0) return comp;
+          }
+          return a.nom.compareTo(b.nom);
+        });
+
+        print('📁 Groupe: $groupeName (${staffsGroupe.length} staffs)');
+        corrections[groupeName] = [];
+
+        for (var staff in staffsGroupe) {
+          final ancienOrdre = staff.ordre;
+          staff.ordre = ordreGlobal;
+          objectBox.staffBox.put(staff);
+
+          final message =
+              '${staff.nom}: ${ancienOrdre ?? "null"} → $ordreGlobal';
+          print('   $message');
+          corrections[groupeName]!.add(message);
+
+          ordreGlobal++;
+          totalCorriges++;
+        }
+      }
+
+      // 6️⃣ Rafraîchir
+      await staffProvider.fetchStaffs();
+
+      print('✅ === CORRECTION TERMINÉE ===');
+      print('   Total corrigés: $totalCorriges staffs');
+
+      // ✅ Vérifier à nouveau si monté avant d'afficher le résumé
+      if (!mounted) {
+        print('⚠️  Widget démonté, skip affichage résumé');
+        return;
+      }
+
+      // 7️⃣ Afficher le résumé - UTILISER scaffoldMessenger au lieu de context
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green),
+              SizedBox(width: 8),
+              Text('Correction Réussie'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '✅ $totalCorriges ordres corrigés',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Détails par groupe:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                ...corrections.entries.map((entry) {
+                  return ExpansionTile(
+                    title: Text(
+                      '${entry.key} (${entry.value.length} staffs)',
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    children: entry.value.map((msg) {
+                      return Padding(
+                        padding: EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            msg,
+                            style: TextStyle(
+                                fontSize: 12, fontFamily: 'monospace'),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                }),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('Fermer'),
+            ),
+          ],
+        ),
+      );
+
+      // ✅ Utiliser scaffoldMessenger au lieu de context
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('✅ $totalCorriges ordres corrigés avec succès'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } catch (e, stack) {
+      print('❌ Erreur diagnostic: $e');
+      print('Stack: $stack');
+
+      // ✅ Utiliser scaffoldMessenger ici aussi
+      if (mounted) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Helper pour afficher une ligne de statistique
+  Widget _buildStatRow(String label, String value, Color color) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ✅ BOUTON DANS L'APPBAR : Ajouter dans les actions
+  Widget _buildDiagnosticButton(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.medical_information),
+      tooltip: 'Diagnostic des ordres',
+      onPressed: () => _diagnosticAndFixOrdres(context),
+    );
+  }
+
+  /// ✅ CORRECTION RAPIDE : Sans diagnostic préalable
+  Future<void> _quickFixOrdres(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.flash_on, color: Colors.blue),
+            SizedBox(width: 8),
+            Text('Correction Rapide'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Cette action va :',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('✅ Réassigner tous les ordres (1 à N)'),
+            Text('✅ Éliminer tous les doublons'),
+            Text('✅ Respecter l\'ordre des groupes'),
+            Text('✅ Trier par nom dans chaque groupe'),
+            SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.warning, size: 16, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'L\'ordre personnalisé sera perdu',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('Annuler'),
+          ),
+          ElevatedButton.icon(
+            icon: Icon(Icons.flash_on, size: 16),
+            label: Text('Corriger maintenant'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+      final objectBox = ObjectBox();
+
+      final allStaffs = objectBox.staffBox.getAll();
+
+      // Grouper par type
+      final ordreGroupes = [
+        'Personnel Médical',
+        'Personnel Administratif (08h-16h)',
+        'Personnel Paramédical (24h)',
+        'Agents d\'hygiène (12h)',
+      ];
+
+      final staffsParGroupe = <String, List<Staff>>{};
+
+      for (final staff in allStaffs) {
+        final groupe = _getGroupeAffichage(staff);
+        staffsParGroupe.putIfAbsent(groupe, () => []).add(staff);
+      }
+
+      int ordreGlobal = 1;
+      int totalCorriges = 0;
+
+      for (final groupeName in ordreGroupes) {
+        final staffsGroupe = staffsParGroupe[groupeName] ?? [];
+        if (staffsGroupe.isEmpty) continue;
+
+        // Trier par nom
+        staffsGroupe.sort((a, b) => a.nom.compareTo(b.nom));
+
+        for (var staff in staffsGroupe) {
+          staff.ordre = ordreGlobal;
+          objectBox.staffBox.put(staff);
+          ordreGlobal++;
+          totalCorriges++;
+        }
+      }
+
+      await staffProvider.fetchStaffs();
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                '✅ $totalCorriges ordres corrigés en ${allStaffs.length} staffs'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Bouton dans l'AppBar
+  Widget _buildQuickFixButton(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.flash_on),
+      tooltip: 'Correction rapide des ordres',
+      color: Colors.yellow,
+      onPressed: () => _quickFixOrdres(context),
+    );
+  }
+
+  /// ✅ VERSION CORRIGÉE - _saveStaffOrder avec détection et correction automatique des doublons
   Future<void> _saveStaffOrder(
     String groupeName,
     List<dynamic> orderedStaffs,
   ) async {
     try {
       final objectBox = ObjectBox();
+      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
-      // Mettre à jour l'ordre de tri pour chaque staff
+      print('💾 === SAUVEGARDE ORDRE - $groupeName ===');
+
+      // ✅ ÉTAPE 0 : Détecter et corriger les doublons AVANT la sauvegarde
+      await _detectAndFixDuplicatesBeforeSave(objectBox, staffProvider);
+
+      // 1️⃣ Récupérer tous les staffs
+      final allStaffs = staffProvider.staffs;
+
+      // 2️⃣ Identifier les staffs des AUTRES groupes avec leur ordre actuel
+      final autresStaffs = allStaffs.where((s) {
+        final groupe = _getGroupeAffichage(s);
+        return groupe != groupeName && s.ordre != null;
+      }).toList();
+
+      // 3️⃣ Trier les autres staffs par ordre
+      autresStaffs.sort((a, b) => a.ordre!.compareTo(b.ordre!));
+
+      // 4️⃣ Identifier la position d'insertion de ce groupe
+      int ordreDepart = 0;
+
+      // Trouver le dernier ordre du groupe précédent
+      final ordreGroupes = [
+        'Personnel Médical',
+        'Personnel Administratif (08h-16h)',
+        'Personnel Paramédical (24h)',
+        'Agents d\'hygiène (12h)',
+      ];
+
+      final indexGroupeCourant = ordreGroupes.indexOf(groupeName);
+
+      if (indexGroupeCourant > 0) {
+        // Trouver le dernier staff du groupe précédent
+        for (int i = indexGroupeCourant - 1; i >= 0; i--) {
+          final groupePrecedent = ordreGroupes[i];
+          final staffsGroupePrecedent = allStaffs
+              .where((s) => _getGroupeAffichage(s) == groupePrecedent)
+              .toList();
+
+          if (staffsGroupePrecedent.isNotEmpty) {
+            // Trouver l'ordre max dans ce groupe
+            final ordresMax = staffsGroupePrecedent
+                .where((s) => s.ordre != null)
+                .map((s) => s.ordre!)
+                .toList();
+
+            if (ordresMax.isNotEmpty) {
+              ordreDepart = ordresMax.reduce((a, b) => a > b ? a : b) + 1;
+              break;
+            }
+          }
+        }
+      }
+
+      print('📍 Ordre de départ pour $groupeName: $ordreDepart');
+
+      // ✅ ÉTAPE CRITIQUE : Vérifier l'unicité des ordres à assigner
+      final ordresAAssigner = <int>{};
+      int ordreActuel = ordreDepart;
+
+      // 5️⃣ Assigner les nouveaux ordres à partir de ordreDepart
       for (int i = 0; i < orderedStaffs.length; i++) {
         final staffData = orderedStaffs[i];
         final staff = staffData['staff'] as Staff;
 
-        // Ajouter/mettre à jour un champ 'ordre' dans votre entité Staff
-        staff.ordre = i; // ⚠️ Vous devrez ajouter ce champ à votre entité
+        // ✅ S'assurer que l'ordre n'est pas déjà utilisé
+        while (ordresAAssigner.contains(ordreActuel) ||
+            _isOrdreUsedByOtherStaff(objectBox, ordreActuel, staff.id)) {
+          ordreActuel++;
+          print('⚠️  Ordre $ordreActuel déjà utilisé, passage au suivant');
+        }
+
+        staff.ordre = ordreActuel;
+        ordresAAssigner.add(ordreActuel);
         objectBox.staffBox.put(staff);
+
+        print('✅ ${staff.nom} → ordre global ${staff.ordre}');
+        ordreActuel++;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      // 6️⃣ Réajuster les ordres des groupes suivants
+      for (int i = indexGroupeCourant + 1; i < ordreGroupes.length; i++) {
+        final groupeSuivant = ordreGroupes[i];
+        final staffsGroupeSuivant = allStaffs
+            .where((s) => _getGroupeAffichage(s) == groupeSuivant)
+            .toList();
+
+        // Trier par ordre actuel
+        staffsGroupeSuivant.sort((a, b) {
+          if (a.ordre != null && b.ordre != null) {
+            return a.ordre!.compareTo(b.ordre!);
+          }
+          return a.nom.compareTo(b.nom);
+        });
+
+        // Réassigner à partir du nouvel offset
+        ordreActuel = ordreDepart + orderedStaffs.length;
+
+        for (int j = 0; j < staffsGroupeSuivant.length; j++) {
+          final staff = staffsGroupeSuivant[j];
+
+          // ✅ S'assurer que l'ordre n'est pas déjà utilisé
+          while (ordresAAssigner.contains(ordreActuel) ||
+              _isOrdreUsedByOtherStaff(objectBox, ordreActuel, staff.id)) {
+            ordreActuel++;
+          }
+
+          staff.ordre = ordreActuel;
+          ordresAAssigner.add(ordreActuel);
+          objectBox.staffBox.put(staff);
+          ordreActuel++;
+        }
+      }
+
+      // ✅ ÉTAPE FINALE : Vérifier qu'il n'y a plus de doublons
+      await _verifyNoMoreDuplicates(objectBox);
+
+      // ✅ Capturer le ScaffoldMessenger AVANT await
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+      // Rafraîchir les données
+      await staffProvider.fetchStaffs();
+
+      // ✅ Force rebuild avec setState
+      if (mounted) {
+        setState(() {});
+      }
+
+      scaffoldMessenger.showSnackBar(
         SnackBar(
-          content: Text("✅ Ordre sauvegardé pour $groupeName"),
+          content: Text("✅ Ordre sauvegardé pour $groupeName (sans doublons)"),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
 
-      // Rafraîchir les données
-      final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      await staffProvider.fetchStaffs();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("❌ Erreur lors de la sauvegarde: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('✅ === SAUVEGARDE TERMINÉE ===');
+    } catch (e, stack) {
+      print('❌ Erreur _saveStaffOrder: $e');
+      print('Stack: $stack');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("❌ Erreur lors de la sauvegarde: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// ✅ NOUVELLE MÉTHODE : Détecter et corriger les doublons avant sauvegarde
+  Future<void> _detectAndFixDuplicatesBeforeSave(
+      ObjectBox objectBox, StaffProvider staffProvider) async {
+    final allStaffs = objectBox.staffBox.getAll();
+    final ordresUtilises = <int, List<Staff>>{};
+
+    // Analyser les ordres actuels
+    for (var staff in allStaffs) {
+      if (staff.ordre != null) {
+        ordresUtilises.putIfAbsent(staff.ordre!, () => []).add(staff);
+      }
+    }
+
+    // Identifier les doublons
+    final doublons = ordresUtilises.entries
+        .where((entry) => entry.value.length > 1)
+        .toList();
+
+    if (doublons.isEmpty) {
+      print('✅ Aucun doublon détecté avant sauvegarde');
+      return;
+    }
+
+    print('⚠️  ${doublons.length} doublons détectés, correction en cours...');
+
+    // Corriger les doublons
+    int maxOrdre = allStaffs
+        .where((s) => s.ordre != null)
+        .map((s) => s.ordre!)
+        .fold(0, (max, ordre) => ordre > max ? ordre : max);
+
+    int nextOrdre = maxOrdre + 1;
+
+    for (var entry in doublons) {
+      final staffsWithSameOrdre = entry.value;
+      // Garder le premier, réassigner les autres
+      for (int i = 1; i < staffsWithSameOrdre.length; i++) {
+        staffsWithSameOrdre[i].ordre = nextOrdre;
+        objectBox.staffBox.put(staffsWithSameOrdre[i]);
+        print('  🔧 ${staffsWithSameOrdre[i].nom}: ${entry.key} → $nextOrdre');
+        nextOrdre++;
+      }
+    }
+
+    print('✅ Doublons corrigés automatiquement');
+  }
+
+  /// ✅ NOUVELLE MÉTHODE : Vérifier si un ordre est déjà utilisé par un autre staff
+  bool _isOrdreUsedByOtherStaff(
+      ObjectBox objectBox, int ordre, int excludeStaffId) {
+    final staffs = objectBox.staffBox.getAll();
+    return staffs.any((s) => s.id != excludeStaffId && s.ordre == ordre);
+  }
+
+  /// ✅ NOUVELLE MÉTHODE : Vérifier qu'il n'y a plus de doublons
+  Future<void> _verifyNoMoreDuplicates(ObjectBox objectBox) async {
+    final allStaffs = objectBox.staffBox.getAll();
+    final ordresUtilises = <int, int>{};
+
+    for (var staff in allStaffs) {
+      if (staff.ordre != null) {
+        ordresUtilises[staff.ordre!] = (ordresUtilises[staff.ordre!] ?? 0) + 1;
+      }
+    }
+
+    final doublons = ordresUtilises.entries.where((e) => e.value > 1).toList();
+
+    if (doublons.isNotEmpty) {
+      print('❌ ERREUR : Doublons encore présents après sauvegarde !');
+      for (var entry in doublons) {
+        print('  Ordre ${entry.key}: ${entry.value} staffs');
+      }
+    } else {
+      print('✅ Vérification : Aucun doublon détecté');
+    }
+  }
+
+  /// ✅ HELPER : Déterminer le groupe d'affichage d'un staff
+  String _getGroupeAffichage(Staff staff) {
+    if (staff.grade.toLowerCase().contains('médecin') ||
+        staff.grade.toLowerCase().contains('rhumatologue')) {
+      return 'Personnel Médical';
+    } else if (staff.groupe == '12H' ||
+        staff.grade.toLowerCase().contains('hygiène')) {
+      return 'Agents d\'hygiène (12h)';
+    } else if (staff.groupe == '08H-16H') {
+      return 'Personnel Administratif (08h-16h)';
+    } else if (staff.groupe == '24H' ||
+        staff.groupe.toLowerCase() == 'Garde 24H' ||
+        staff.groupe.toLowerCase() == 'garde 24h') {
+      return 'Personnel Paramédical (24h)';
+    } else {
+      return 'Personnel Administratif (08h-16h)';
     }
   }
 
@@ -4320,7 +5087,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           selectedMonth: _selectedMonth,
           onUpdate: () {
             // ✅ Rafraîchir le state parent après chaque opération
-            if (mounted) setState(() {});
+            //  if (mounted) setState(() {});
           },
         );
       },
@@ -4330,7 +5097,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     if (mounted) {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       await staffProvider.fetchStaffs();
-      setState(() {});
+      // setState(() {});
     }
   }
 
@@ -7479,7 +8246,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   Icon(Icons.event_busy, color: Colors.orange),
                   SizedBox(width: 8),
                   Expanded(
-                    child: Text("Gestion des congés - ${staff.nom}"),
+                    child: Text("Gestion des congés de ${staff.nom}"),
                   ),
                 ],
               ),
@@ -7514,9 +8281,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             await _showTimeOffDialog(context, staff);
 
                             // ✅ Après la fermeture du dialog de création, rafraîchir la liste
-                            setState(() {
-                              // Ceci va rebuild le _buildCongesListView avec les nouvelles données
-                            });
+                            // setState(() {
+                            //   // Ceci va rebuild le _buildCongesListView avec les nouvelles données
+                            // });
 
                             // Rafraîchir le provider
                             final staffProvider = Provider.of<StaffProvider>(
@@ -9303,10 +10070,10 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
   }
 
   Widget _buildTypeSelector() {
-    return Row(
+    return Column(
       children: [
         Text("Type de congé:", style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(width: 8),
+        SizedBox(height: 8),
         Wrap(
           spacing: 6,
           runSpacing: 6,
@@ -9750,3 +10517,144 @@ extension DateTimeExtension on DateTime {
     return DateTime(year, month - 1, 1);
   }
 }
+
+/// ✅ WIDGET DE MONITORING : Visualisation en temps réel des ordres
+class OrdreMonitorWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<StaffProvider>(
+      builder: (context, provider, _) {
+        final staffs = provider.staffs;
+
+        // Analyser les ordres
+        final ordresUtilises = <int, int>{};
+        final staffsSansOrdre = <Staff>[];
+
+        for (var staff in staffs) {
+          if (staff.ordre == null) {
+            staffsSansOrdre.add(staff);
+          } else {
+            ordresUtilises[staff.ordre!] =
+                (ordresUtilises[staff.ordre!] ?? 0) + 1;
+          }
+        }
+
+        final doublons =
+            ordresUtilises.entries.where((e) => e.value > 1).length;
+
+        final hasProblems = doublons > 0 || staffsSansOrdre.isNotEmpty;
+
+        return Container(
+          margin: EdgeInsets.all(8),
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: hasProblems ? Colors.orange.shade50 : Colors.green.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: hasProblems ? Colors.orange : Colors.green,
+              width: 2,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                hasProblems ? Icons.warning : Icons.check_circle,
+                color: hasProblems ? Colors.orange : Colors.green,
+                size: 20,
+              ),
+              SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'État des ordres',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _buildStat('Total', '${staffs.length}', Colors.blue),
+                      SizedBox(width: 12),
+                      _buildStat('Doublons', '$doublons',
+                          doublons > 0 ? Colors.red : Colors.green),
+                      SizedBox(width: 12),
+                      _buildStat(
+                          'Sans ordre',
+                          '${staffsSansOrdre.length}',
+                          staffsSansOrdre.isEmpty
+                              ? Colors.green
+                              : Colors.orange),
+                    ],
+                  ),
+                ],
+              ),
+              if (hasProblems) ...[
+                SizedBox(width: 16),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.build, size: 14),
+                  label: Text('Corriger', style: TextStyle(fontSize: 12)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onPressed: () {
+                    // Utiliser la méthode de diagnostic ou correction rapide
+                    _TableauStaffPageState? state = context
+                        .findAncestorStateOfType<_TableauStaffPageState>();
+                    if (state != null) {
+                      state._diagnosticAndFixOrdres(context);
+                    }
+                  },
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStat(String label, String value, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        SizedBox(width: 4),
+        Text(
+          '$label: ',
+          style: TextStyle(fontSize: 11),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// UTILISATION : Ajoutez ce widget dans votre Column principale
+/// Exemple :
+/// Column(
+///   children: [
+///     OrdreMonitorWidget(), // ← ICI
+///     // ... reste du contenu
+///   ],
+/// )

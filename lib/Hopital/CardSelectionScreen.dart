@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../Kids/main.dart';
 import '../checkit/HomePage.dart';
+import '../dependences/calendar_timeline/home.dart';
 import '../objectBox/MyApp.dart';
 import '../objectBox/classeObjectBox.dart';
 import '../objectBox/pages/invoice/FacturationPageUI.dart';
@@ -53,7 +54,7 @@ class CardSelectionScreen extends StatelessWidget {
           Colors.blue.shade800.withOpacity(0.8),
           Colors.black.withOpacity(0.5)
         ],
-        destination: TableauStaffPage(),
+        destination: const LoadingScreen(destination: 'staff'),
       ),
       PageCardData(
         title: 'POS',
@@ -120,6 +121,16 @@ class CardSelectionScreen extends StatelessWidget {
           Colors.black.withOpacity(0.5)
         ],
         destination: EduPlatformApp(),
+      ),
+      PageCardData(
+        title: 'Calendar Timeline',
+        subtitle: 'Calendar',
+        imageUrl: 'assets/photos/a (1).png',
+        gradientColors: [
+          Colors.lightGreenAccent.withOpacity(0.8),
+          Colors.black.withOpacity(0.5)
+        ],
+        destination: HomePageCalendar(),
       ),
     ];
 
@@ -309,6 +320,50 @@ class CardSelectionScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class LoadingScreen extends StatefulWidget {
+  final String destination;
+
+  const LoadingScreen({super.key, required this.destination});
+
+  @override
+  State<LoadingScreen> createState() => _LoadingScreenState();
+}
+
+class _LoadingScreenState extends State<LoadingScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // On attend la fin du premier frame pour naviguer vers la page lourde
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => TableauStaffPage()),
+          );
+        }
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text("Chargement du planning...",
+                style: TextStyle(color: Colors.blue)),
+          ],
         ),
       ),
     );
