@@ -28,12 +28,12 @@ class AuthService {
   }
 
   final FirebaseAuth? _auth =
-  isFirebaseAvailable ? FirebaseAuth.instance : null;
+      isFirebaseAvailable ? FirebaseAuth.instance : null;
   final FirebaseFirestore? _firestore =
-  isFirebaseAvailable ? FirebaseFirestore.instance : null;
+      isFirebaseAvailable ? FirebaseFirestore.instance : null;
   final supabase.SupabaseClient _supabase = supabase.Supabase.instance.client;
   final GoogleSignIn? _googleSignIn =
-  isGoogleSignInAvailable ? GoogleSignIn.instance : null;
+      isGoogleSignInAvailable ? GoogleSignIn.instance : null;
 
   bool _isInitialized = false;
 
@@ -57,15 +57,14 @@ class AuthService {
       _isInitialized = true;
 
       _googleSignIn!.authenticationEvents.listen(
-            (GoogleSignInAuthenticationEvent event) {
+        (GoogleSignInAuthenticationEvent event) {
           final GoogleSignInAccount? account = switch (event) {
             GoogleSignInAuthenticationEventSignIn() => event.user,
             GoogleSignInAuthenticationEventSignOut() => null,
           };
 
           print(
-              'Google Sign-In state changed: ${account?.email ??
-                  'signed out'}');
+              'Google Sign-In state changed: ${account?.email ?? 'signed out'}');
         },
         onError: (error) {
           print('Google Sign-In authentication error: $error');
@@ -152,7 +151,7 @@ class AuthService {
 
     try {
       final UserCredential userCredential =
-      await _auth!.createUserWithEmailAndPassword(
+          await _auth!.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -244,7 +243,7 @@ class AuthService {
 
     try {
       final UserCredential userCredential =
-      await _auth!.signInWithEmailAndPassword(
+          await _auth!.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -288,7 +287,7 @@ class AuthService {
     if (useSupabase) {
       try {
         final userData =
-        await _supabase.from('users').select().eq('id', uid).single();
+            await _supabase.from('users').select().eq('id', uid).single();
         return UserModel.fromSupabase(userData);
       } catch (e) {
         throw Exception('fetch_user_error');
@@ -322,9 +321,9 @@ class AuthService {
           .stream(primaryKey: ['id'])
           .eq('id', uid)
           .map((data) {
-        if (data.isEmpty) return null;
-        return UserModel.fromSupabase(data.first);
-      });
+            if (data.isEmpty) return null;
+            return UserModel.fromSupabase(data.first);
+          });
     }
 
     // AUTRES PLATEFORMES: Utiliser Firebase
@@ -499,6 +498,9 @@ class AuthService {
   // ============================================================================
   // UPDATE USER PROFILE
   // ============================================================================
+  // ============================================================================
+// UPDATE USER PROFILE - VERSION CORRIGÉE AVEC MEILLEUR LOGGING
+// ============================================================================
   Future<void> updateUserProfile({
     required String uid,
     String? name,
@@ -510,24 +512,56 @@ class AuthService {
     Map<String, dynamic>? metadata,
   }) async {
     try {
+      print('📝 [AuthService] Début updateUserProfile pour uid: $uid');
+
       final updates = <String, dynamic>{
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      if (name != null) updates['name'] = name;
-      if (bio != null) updates['bio'] = bio;
-      if (phoneNumber != null) updates['phone_number'] = phoneNumber;
-      if (role != null) updates['role'] = role.toJson();
-      if (location != null) updates['location'] = location.toMap();
-      if (profileImages != null)
-        updates['profile_images'] = profileImages.toMap();
-      if (metadata != null) updates['metadata'] = metadata;
+      if (name != null) {
+        updates['name'] = name;
+        print('📝 [AuthService] Update name: $name');
+      }
+      if (bio != null) {
+        updates['bio'] = bio;
+        print('📝 [AuthService] Update bio');
+      }
+      if (phoneNumber != null) {
+        updates['phone_number'] = phoneNumber;
+        print('📝 [AuthService] Update phone: $phoneNumber');
+      }
+      if (role != null) {
+        updates['role'] = role.toJson();
+        print('📝 [AuthService] Update role: ${role.toJson()}');
+      }
+      if (location != null) {
+        updates['location'] = location.toMap();
+        print('📝 [AuthService] Update location: ${location.address}');
+      }
+      if (profileImages != null) {
+        final imagesMap = profileImages.toMap();
+        updates['profile_images'] = imagesMap;
+        print('📝 [AuthService] Update profile_images:');
+        print('   - profile: ${imagesMap['profile_image_supabase']}');
+        print('   - cover: ${imagesMap['cover_image_supabase']}');
+      }
+      if (metadata != null) {
+        updates['metadata'] = metadata;
+        print('📝 [AuthService] Update metadata');
+      }
+
+      print(
+          '📝 [AuthService] Nombre de champs à mettre à jour: ${updates.length}');
 
       // Mise à jour Supabase (toujours)
+      print('📝 [AuthService] Mise à jour Supabase...');
       await _supabase.from('users').update(updates).eq('id', uid);
+      print('✅ [AuthService] Supabase mis à jour');
 
       // Mise à jour Firebase (si disponible)
       if (!useSupabase && _firestore != null) {
+        print('📝 [AuthService] Mise à jour Firebase...');
+
         final firebaseUpdates = <String, dynamic>{
           'updatedAt': Timestamp.now(),
         };
@@ -537,14 +571,32 @@ class AuthService {
         if (phoneNumber != null) firebaseUpdates['phoneNumber'] = phoneNumber;
         if (role != null) firebaseUpdates['role'] = role.toJson();
         if (location != null) firebaseUpdates['location'] = location.toMap();
-        if (profileImages != null)
+        if (profileImages != null) {
           firebaseUpdates['profileImages'] = profileImages.toMap();
+        }
         if (metadata != null) firebaseUpdates['metadata'] = metadata;
 
         await _firestore!.collection('users').doc(uid).update(firebaseUpdates);
+        print('✅ [AuthService] Firebase mis à jour');
       }
-    } catch (e) {
-      throw Exception('update_profile_error');
+
+      print('✅ [AuthService] updateUserProfile terminé avec succès');
+    } on supabase.PostgrestException catch (e) {
+      // Erreur spécifique Supabase (tables, colonnes, etc.)
+      print('❌ [AuthService] PostgrestException: ${e.message}');
+      print('❌ [AuthService] Code: ${e.code}');
+      print('❌ [AuthService] Details: ${e.details}');
+      throw Exception('Erreur base de données: ${e.message}');
+    } on supabase.StorageException catch (e) {
+      // Erreur storage (normalement ne devrait pas arriver ici)
+      print('❌ [AuthService] StorageException: ${e.message}');
+      throw Exception('Erreur storage: ${e.message}');
+    } catch (e, stackTrace) {
+      // Erreur générique - LOGGER L'ERREUR RÉELLE
+      print('❌ [AuthService] Erreur updateUserProfile: $e');
+      print('❌ [AuthService] Type: ${e.runtimeType}');
+      print('❌ [AuthService] StackTrace: $stackTrace');
+      throw Exception('Erreur mise à jour profil: $e');
     }
   }
 

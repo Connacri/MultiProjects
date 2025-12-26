@@ -16,8 +16,11 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
 
   UserModel? get user => _user;
+
   bool get isLoading => _isLoading;
+
   String? get error => _error;
+
   bool get isAuthenticated => _user != null && _user!.isActive;
 
   AuthProvider() {
@@ -79,6 +82,23 @@ class AuthProvider extends ChangeNotifier {
       return _authService.streamUserData(currentUser.uid);
     }
     return Stream.value(null);
+  }
+
+// AJOUT : Méthode pour forcer le rafraîchissement des données utilisateur
+  Future<void> refreshUser() async {
+    if (_user == null) return;
+    try {
+      _setLoading(true);
+      final refreshedUser = await _authService.getUserData(_user!.uid);
+      if (refreshedUser != null) {
+        _user = refreshedUser;
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Erreur lors du rafraîchissement utilisateur: $e");
+    } finally {
+      _setLoading(false);
+    }
   }
 
   // Le reste du code reste identique...

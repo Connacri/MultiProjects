@@ -2,11 +2,10 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../models/user_model.dart'; // ← AJOUT IMPORTANT
+import '../models/user_model.dart';
 import '../providers/auth_provider_dart.dart';
 import '../providers/locale_provider.dart';
 import '../services/auth_service.dart';
@@ -27,7 +26,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
   final ImageStorageService _imageService = ImageStorageService();
-  final LocationService _locationService = LocationService();
   final ImagePicker _imagePicker = ImagePicker();
 
   bool _isLoading = false;
@@ -38,8 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late TextEditingController _phoneController;
 
   UserRole? _selectedRole;
-  AppLocation?
-      _selectedLocation; // ← UserLocation n'existe pas, utiliser AppLocation
+  AppLocation? _selectedLocation;
 
   @override
   void initState() {
@@ -60,77 +57,133 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  // --- GESTION DES IMAGES ---
+
+// --- GESTION DES IMAGES (VERSION CORRIGÉE) ---
+
   Future<void> _pickProfileImage() async {
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1024,
-      maxHeight: 1024,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 85,
     );
 
     if (image != null && mounted) {
-      await _uploadProfileImage(File(image.path), isProfile: true);
+      await _uploadImage(File(image.path), isProfile: true);
     }
   }
 
   Future<void> _pickCoverImage() async {
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
-      maxWidth: 1920,
-      maxHeight: 1080,
+      maxWidth: 1200,
+      maxHeight: 600,
+      imageQuality: 85,
     );
 
     if (image != null && mounted) {
-      await _uploadProfileImage(File(image.path), isProfile: false);
+      await _uploadImage(File(image.path), isProfile: false);
     }
   }
 
-  Future<void> _uploadProfileImage(File image,
-      {required bool isProfile}) async {
+  Future<void> _uploadImage(File image, {required bool isProfile}) async {
     setState(() => _isLoading = true);
 
     try {
       final authProvider = context.read<AuthProvider>();
-      if (authProvider.user == null) return;
+      if (authProvider.user == null) {
+        throw Exception('Utilisateur non connecté');
+      }
 
+      final user = authProvider.user!;
+
+      print(
+          '📤 [ProfileScreen] Début upload ${isProfile ? "profile" : "cover"}');
+      print('📤 [ProfileScreen] User UID: ${user.uid}');
+
+      // 1. Upload vers Supabase Storage
       final imageUrl = await _imageService.uploadUserProfileImage(
         imageFile: image,
-        userId: authProvider.user!.uid,
+        userId: user.uid,
         isProfileImage: isProfile,
       );
 
-      if (imageUrl != null) {
-        final currentImages = authProvider.user!.profileImages;
-        final updatedImages = isProfile
-            ? currentImages.copyWith(
-                profileImageFirebase: imageUrl,
-                lastUpdated: DateTime.now(),
-              )
-            : currentImages.copyWith(
-                coverImageFirebase: imageUrl,
-                lastUpdated: DateTime.now(),
-              );
-
-        await _authService.updateUserProfile(
-          uid: authProvider.user!.uid,
-          profileImages: updatedImages,
-        );
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isProfile
-                    ? 'Photo de profil mise à jour'
-                    : 'Image de couverture mise à jour',
-              ),
-            ),
-          );
-        }
+      if (imageUrl == null) {
+        throw Exception('Upload a échoué: URL null retournée');
       }
-    } catch (e) {
+
+      print('✅ [ProfileScreen] Upload réussi: $imageUrl');
+
+      // 2. Mise à jour de l'objet UserProfileImages
+      final currentImages = user.profileImages;
+
+      final updatedImages = isProfile
+          ? currentImages.copyWith(
+              profileImageSupabase: imageUrl,
+              profileImageFirebase: imageUrl, // Synchro
+              lastUpdated: DateTime.now(),
+            )
+          : currentImages.copyWith(
+              coverImageSupabase: imageUrl,
+              coverImageFirebase: imageUrl, // Synchro
+              lastUpdated: DateTime.now(),
+            );
+
+      print('📝 [ProfileScreen] Images mises à jour:');
+      print('   - Profile Supabase: ${updatedImages.profileImageSupabase}');
+      print('   - Cover Supabase: ${updatedImages.coverImageSupabase}');
+
+      // 3. Sauvegarde en base de données
+      print('📝 [ProfileScreen] Appel updateUserProfile...');
+      await _authService.updateUserProfile(
+        uid: user.uid,
+        profileImages: updatedImages,
+      );
+      print('✅ [ProfileScreen] updateUserProfile réussi');
+
+      // 4. Rafraîchir le provider pour voir l'image immédiatement
+      print('🔄 [ProfileScreen] Rafraîchissement du provider...');
+      await authProvider.refreshUser();
+      print('✅ [ProfileScreen] Provider rafraîchi');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(
+            content: Text(
+              isProfile
+                  ? 'Photo de profil mise à jour avec succès'
+                  : 'Image de couverture mise à jour avec succès',
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } on Exception catch (e) {
+      print('❌ [ProfileScreen] Exception: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Erreur: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      print('❌ [ProfileScreen] Erreur inattendue: $e');
+      print('❌ [ProfileScreen] Type: ${e.runtimeType}');
+      print('❌ [ProfileScreen] StackTrace: $stackTrace');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur inattendue: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
         );
       }
     } finally {
@@ -140,11 +193,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // --- GESTION DU PROFIL ---
+
   Future<void> _selectLocation() async {
     final result = await showDialog<AppLocation>(
-      // ← Changé de UserLocation à AppLocation
       context: context,
-      builder: (context) => const LocationPickerDialog(),
+      builder: (context) => Platform.isWindows
+          ? const LocationPickerDialogWindows()
+          : const LocationPickerDialog(),
     );
 
     if (result != null) {
@@ -168,16 +224,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
         location: _selectedLocation,
       );
 
+      // Rafraichir les données locales
+      await authProvider.refreshUser();
+
       if (mounted) {
         setState(() => _isEditMode = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profil mis à jour avec succès')),
+          const SnackBar(
+              content: Text('Profil mis à jour avec succès'),
+              backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: $e')),
+          SnackBar(
+              content: Text('Erreur sauvegarde: $e'),
+              backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -188,6 +251,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleSignOut() async {
+    // ... code existant inchangé ...
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -212,6 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleDeactivateAccount() async {
+    // ... code existant inchangé ...
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -238,6 +303,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // --- UI CONSTRUCTION ---
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -249,8 +316,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
+        // Si le provider charge (ex: refreshUser), on montre le loading
+        final isGlobalLoading = _isLoading || authProvider.isLoading;
+
         return LoadingOverlay(
-          isLoading: _isLoading,
+          isLoading: isGlobalLoading,
           child: Scaffold(
             body: ResponsiveBuilder(
               builder: (context, deviceType) {
@@ -270,8 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               .withOpacity(0.3),
                           border: Border(
                             left: BorderSide(
-                              color: Theme.of(context).dividerColor,
-                            ),
+                                color: Theme.of(context).dividerColor),
                           ),
                         ),
                         child: _buildSettingsPanel(),
@@ -311,11 +380,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: _buildSettingsPanel(),
             ),
           ),
+        const SliverToBoxAdapter(child: SizedBox(height: 50)),
       ],
     );
   }
 
   Widget _buildAppBar(UserModel user) {
+    final coverImage = user.profileImages.coverImage;
+
     return SliverAppBar(
       expandedHeight: 250,
       pinned: true,
@@ -323,20 +395,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (!_isEditMode)
           IconButton(
             icon: const Icon(Icons.edit),
+            tooltip: 'Modifier le profil',
             onPressed: () => setState(() => _isEditMode = true),
           )
         else ...[
           IconButton(
             icon: const Icon(Icons.close),
-            onPressed: () => setState(() => _isEditMode = false),
+            tooltip: 'Annuler',
+            onPressed: () {
+              // Reset controllers to original values
+              setState(() {
+                _isEditMode = false;
+                _nameController.text = user.name;
+                _bioController.text = user.bio ?? '';
+                _phoneController.text = user.phoneNumber ?? '';
+              });
+            },
           ),
           IconButton(
             icon: const Icon(Icons.check),
+            tooltip: 'Enregistrer',
             onPressed: _saveProfile,
           ),
         ],
         PopupMenuButton<Locale>(
           icon: const Icon(Icons.language),
+          tooltip: 'Changer de langue',
           onSelected: (locale) =>
               context.read<LocaleProvider>().setLocale(locale),
           itemBuilder: (context) => const [
@@ -350,14 +434,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            if (user.profileImages.coverImage != null)
+            // Image de couverture
+            if (coverImage != null && coverImage.isNotEmpty)
               CachedNetworkImage(
-                imageUrl: user.profileImages.coverImage!,
+                imageUrl: coverImage,
                 fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                    Container(color: Colors.grey.shade300),
-                errorWidget: (context, url, error) =>
-                    Container(color: Colors.grey.shade300),
+                placeholder: (context, url) => Container(
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.broken_image,
+                      size: 50, color: Colors.grey),
+                ),
               )
             else
               Container(
@@ -371,15 +461,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
+                child: const Center(
+                  child: Icon(Icons.image, size: 64, color: Colors.white24),
+                ),
               ),
+
+            // Overlay sombre pour lisibilité icône
+            if (_isEditMode) Container(color: Colors.black26),
+
+            // Bouton modification couverture
             if (_isEditMode)
               Positioned(
                 bottom: 16,
                 right: 16,
-                child: FloatingActionButton.small(
-                  heroTag: 'cover',
+                child: FloatingActionButton.extended(
+                  heroTag: 'edit_cover_btn',
                   onPressed: _pickCoverImage,
-                  child: const Icon(Icons.camera_alt),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Changer couverture'),
                 ),
               ),
           ],
@@ -389,6 +488,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildProfileInfo(UserModel user) {
+    final profileImage = user.profileImages.profileImage;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -403,31 +504,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Theme.of(context).scaffoldBackgroundColor,
                     width: 4,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
                 child: CircleAvatar(
                   radius: 60,
-                  backgroundImage: user.profileImages.profileImage != null
-                      ? CachedNetworkImageProvider(
-                          user.profileImages.profileImage!,
-                        )
-                      : null,
-                  child: user.profileImages.profileImage == null
-                      ? Icon(
-                          _getRoleIcon(user.role),
+                  backgroundColor: Theme.of(context).colorScheme.surfaceVariant,
+                  backgroundImage:
+                      (profileImage != null && profileImage.isNotEmpty)
+                          ? CachedNetworkImageProvider(profileImage)
+                          : null,
+                  child: (profileImage == null || profileImage.isEmpty)
+                      ? Icon(_getRoleIcon(user.role),
                           size: 50,
-                        )
+                          color: Theme.of(context).colorScheme.primary)
                       : null,
                 ),
               ),
               if (_isEditMode)
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
                   child: IconButton(
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.camera_alt, size: 18),
+                    icon: const Icon(Icons.camera_alt, size: 20),
                     color: Colors.white,
                     onPressed: _pickProfileImage,
+                    tooltip: 'Changer photo de profil',
                   ),
                 ),
             ],
@@ -436,7 +546,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (_isEditMode)
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Nom'),
+              decoration: const InputDecoration(
+                labelText: 'Nom complet',
+                border: OutlineInputBorder(),
+              ),
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
@@ -459,26 +572,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 12),
           if (_isEditMode)
-            DropdownButtonFormField<UserRole>(
-              value: _selectedRole,
-              decoration: const InputDecoration(labelText: 'Rôle'),
-              items: UserRole.values
-                  .map((role) => DropdownMenuItem(
-                        value: role,
-                        child: Row(
-                          children: [
-                            Icon(_getRoleIcon(role)),
-                            const SizedBox(width: 8),
-                            Text(role.displayName),
-                          ],
-                        ),
-                      ))
-                  .toList(),
-              onChanged: (value) => setState(() => _selectedRole = value),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: DropdownButtonFormField<UserRole>(
+                value: _selectedRole,
+                decoration: const InputDecoration(
+                  labelText: 'Rôle',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                items: UserRole.values
+                    .map((role) => DropdownMenuItem(
+                          value: role,
+                          child: Row(
+                            children: [
+                              Icon(_getRoleIcon(role), size: 20),
+                              const SizedBox(width: 8),
+                              Text(role.displayName),
+                            ],
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (value) => setState(() => _selectedRole = value),
+              ),
             )
           else
             Chip(
-              avatar: Icon(_getRoleIcon(user.role)),
+              avatar: Icon(_getRoleIcon(user.role), size: 18),
               label: Text(user.role.displayName),
               backgroundColor: Theme.of(context).colorScheme.primaryContainer,
             ),
@@ -491,17 +612,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Section Bio
         if (_isEditMode)
           TextField(
             controller: _bioController,
             decoration: const InputDecoration(
               labelText: 'Biographie',
               alignLabelWithHint: true,
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.info_outline),
             ),
-            maxLines: 3,
+            maxLines: 4,
           )
         else if (user.bio != null && user.bio!.isNotEmpty)
           Card(
+            elevation: 0,
+            color:
+                Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -509,68 +636,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 20,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                      Icon(Icons.info_outline,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary),
                       const SizedBox(width: 8),
                       Text(
                         'À propos',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Text(user.bio!),
                 ],
               ),
             ),
           ),
+
         const SizedBox(height: 16),
+
+        // Section Téléphone
         if (_isEditMode)
           TextField(
             controller: _phoneController,
             decoration: const InputDecoration(
               labelText: 'Téléphone',
               prefixIcon: Icon(Icons.phone),
+              border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.phone,
           )
         else if (user.phoneNumber != null && user.phoneNumber!.isNotEmpty)
           Card(
             child: ListTile(
-              leading: Icon(
-                Icons.phone,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              leading: Icon(Icons.phone,
+                  color: Theme.of(context).colorScheme.primary),
               title: const Text('Téléphone'),
               subtitle: Text(user.phoneNumber!),
             ),
           ),
+
         const SizedBox(height: 16),
+
+        // Section Localisation
         if (_isEditMode)
           Card(
+            clipBehavior: Clip.antiAlias,
             child: ListTile(
+              tileColor: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withOpacity(0.2),
               leading: const Icon(Icons.location_on),
               title: const Text('Localisation'),
               subtitle: _selectedLocation != null
                   ? Text(_selectedLocation!.address)
-                  : const Text('Non définie'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  : const Text('Aucune localisation définie',
+                      style: TextStyle(fontStyle: FontStyle.italic)),
+              trailing: const Icon(Icons.edit_location_alt),
               onTap: _selectLocation,
             ),
           )
         else if (user.location != null && user.location!.hasLocation)
           Card(
             child: ListTile(
-              leading: Icon(
-                Icons.location_on,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              leading: Icon(Icons.location_on,
+                  color: Theme.of(context).colorScheme.primary),
               title: const Text('Localisation'),
               subtitle: Text(user.location!.address),
             ),
@@ -581,16 +715,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSettingsPanel() {
     return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
       children: [
         Text(
-          'Paramètres',
+          'Paramètres du compte',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
         ),
         const SizedBox(height: 24),
         Card(
+          elevation: 2,
           child: Column(
             children: [
               ListTile(
@@ -602,9 +739,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
                 title: const Text('Désactiver le compte'),
+                subtitle: const Text('Suspension temporaire (60 jours)'),
                 titleTextStyle: TextStyle(
                   color: Colors.red,
                   fontSize: Theme.of(context).textTheme.bodyLarge?.fontSize,
+                  fontWeight: FontWeight.w500,
                 ),
                 onTap: _handleDeactivateAccount,
               ),
@@ -618,17 +757,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   IconData _getRoleIcon(UserRole role) {
     switch (role) {
       case UserRole.parent:
-        return Icons.person;
+        return Icons.family_restroom;
       case UserRole.school:
         return Icons.school;
       case UserRole.coach:
-        return Icons.sports;
+        return Icons.sports_soccer;
       case UserRole.autres:
-        return Icons.account_box_rounded;
+        return Icons.person;
     }
   }
 }
 
+// ----------------------------------------------------------------------------
+// DIALOG D'EDITION (OPTIONNEL SI TU UTILISES LE MODE EDIT IN-PLACE)
+// ----------------------------------------------------------------------------
 class UserProfileEditDialog extends StatefulWidget {
   final UserModel user;
 
@@ -640,22 +782,25 @@ class UserProfileEditDialog extends StatefulWidget {
 
 class _UserProfileEditDialogState extends State<UserProfileEditDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
-  final _bioCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
+  late TextEditingController _nameCtrl;
+  late TextEditingController _bioCtrl;
+  late TextEditingController _phoneCtrl;
+
   File? _profileImage;
   File? _coverImage;
   AppLocation? _location;
+
   final LocationService _locationService = LocationService();
   final ImageStorageService _imageService = ImageStorageService();
   final AuthService _authService = AuthService();
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl.text = widget.user.name;
-    _bioCtrl.text = widget.user.bio ?? '';
-    _phoneCtrl.text = widget.user.phoneNumber ?? '';
+    _nameCtrl = TextEditingController(text: widget.user.name);
+    _bioCtrl = TextEditingController(text: widget.user.bio ?? '');
+    _phoneCtrl = TextEditingController(text: widget.user.phoneNumber ?? '');
     _location = widget.user.location;
   }
 
@@ -668,208 +813,219 @@ class _UserProfileEditDialogState extends State<UserProfileEditDialog> {
   }
 
   Future<void> _pickImage(bool isProfile) async {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('Appareil photo'),
-              onTap: () async {
-                Navigator.pop(context);
-                await _selectImage(ImageSource.camera, isProfile: isProfile);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Galerie'),
-              onTap: () async {
-                Navigator.pop(context);
-                await _selectImage(ImageSource.gallery, isProfile: isProfile);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _selectImage(ImageSource source,
-      {required bool isProfile}) async {
     final picker = ImagePicker();
-    final image = await picker.pickImage(source: source);
+    final image = await picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       setState(() {
-        if (isProfile)
+        if (isProfile) {
           _profileImage = File(image.path);
-        else
+        } else {
           _coverImage = File(image.path);
+        }
       });
     }
   }
 
   Future<void> _updateLocation() async {
-    final position = await _locationService.getCurrentPosition();
-    if (position == null) return;
+    // Utiliser le widget de sélection approprié
+    final result = await showDialog<AppLocation>(
+      context: context,
+      builder: (context) => Platform.isWindows
+          ? LocationPickerDialogWindows(initialLocation: _location)
+          : LocationPickerDialog(initialLocation: _location),
+    );
+
+    if (result != null) {
+      setState(() => _location = result);
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
 
     try {
-      final placemarks =
-          await placemarkFromCoordinates(position.latitude, position.longitude);
-      final placemark = placemarks.first;
-      final newLocation = AppLocation(
-        latitude: position.latitude,
-        longitude: position.longitude,
-        address:
-            '${placemark.street ?? ''}, ${placemark.locality ?? ''}, ${placemark.country ?? ''}',
-        city: placemark.locality,
-        country: placemark.country,
+      // 1. Upload des images si changées
+      final urls = await _imageService.uploadUserProfileImages(
+        profileImage: _profileImage,
+        coverImage: _coverImage,
+        userId: widget.user.uid,
       );
 
-      // Picker pour confirmation (selon plateforme)
-      final confirmedLocation = await showDialog<AppLocation>(
-        context: context,
-        builder: (context) => Platform.isWindows
-            ? LocationPickerDialogWindows(initialLocation: newLocation)
-            : LocationPickerDialog(initialLocation: newLocation),
+      // 2. Construction des nouvelles données images
+      UserProfileImages newImages = widget.user.profileImages;
+
+      // Si une nouvelle photo de profil est uploadée
+      if (urls['profile'] != null) {
+        newImages = newImages.copyWith(
+          profileImageFirebase: urls['profile'],
+          profileImageSupabase: urls['profile'], // Synchro
+          lastUpdated: DateTime.now(),
+        );
+      }
+
+      // Si une nouvelle cover est uploadée
+      if (urls['cover'] != null) {
+        newImages = newImages.copyWith(
+          coverImageFirebase: urls['cover'],
+          coverImageSupabase: urls['cover'], // Synchro
+          lastUpdated: DateTime.now(),
+        );
+      }
+
+      // 3. Update User
+      await _authService.updateUserProfile(
+        uid: widget.user.uid,
+        name: _nameCtrl.text.trim(),
+        bio: _bioCtrl.text.trim(),
+        phoneNumber: _phoneCtrl.text.trim(),
+        location: _location,
+        profileImages: newImages,
       );
 
-      if (confirmedLocation != null) {
-        setState(() => _location = confirmedLocation);
+      // 4. Rafraîchir Provider
+      if (mounted) {
+        await context.read<AuthProvider>().refreshUser();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('Profil mis à jour'),
+              backgroundColor: Colors.green),
+        );
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Erreur localisation: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Éditer Profile'),
+      title: const Text('Éditer le profil'),
+      scrollable: true,
       content: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Photo profile
-              GestureDetector(
-                onTap: () => _pickImage(true),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: _profileImage != null
-                      ? FileImage(_profileImage!)
-                      : (widget.user.profileImages.profileImage != null
-                          ? NetworkImage(
-                              widget.user.profileImages.profileImage!)
-                          : null),
-                  child: _profileImage == null &&
-                          widget.user.profileImages.profileImage == null
-                      ? const Icon(Icons.add_a_photo)
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Photo couverture
-              GestureDetector(
-                onTap: () => _pickImage(false),
-                child: Container(
-                  height: 100,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    image: _coverImage != null
-                        ? DecorationImage(
-                            image: FileImage(_coverImage!), fit: BoxFit.cover)
-                        : (widget.user.profileImages.coverImage != null
-                            ? DecorationImage(
-                                image: NetworkImage(
-                                    widget.user.profileImages.coverImage!),
-                                fit: BoxFit.cover)
-                            : null),
-                    color: Colors.grey[300],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Avatar Edit
+                GestureDetector(
+                  onTap: () => _pickImage(true),
+                  child: Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 40,
+                        backgroundImage: _profileImage != null
+                            ? FileImage(_profileImage!)
+                            : (widget.user.profileImages.profileImage != null
+                                ? NetworkImage(
+                                        widget.user.profileImages.profileImage!)
+                                    as ImageProvider
+                                : null),
+                        child: (_profileImage == null &&
+                                widget.user.profileImages.profileImage == null)
+                            ? const Icon(Icons.person)
+                            : null,
+                      ),
+                      const Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: Colors.blue,
+                          child:
+                              Icon(Icons.edit, size: 12, color: Colors.white),
+                        ),
+                      )
+                    ],
                   ),
-                  child: _coverImage == null &&
-                          widget.user.profileImages.coverImage == null
-                      ? const Icon(Icons.add_photo_alternate)
-                      : null,
                 ),
+                const SizedBox(width: 20),
+                // Cover Edit
+                GestureDetector(
+                  onTap: () => _pickImage(false),
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                      image: _coverImage != null
+                          ? DecorationImage(
+                              image: FileImage(_coverImage!), fit: BoxFit.cover)
+                          : (widget.user.profileImages.coverImage != null
+                              ? DecorationImage(
+                                  image: NetworkImage(
+                                      widget.user.profileImages.coverImage!),
+                                  fit: BoxFit.cover)
+                              : null),
+                    ),
+                    child: const Center(child: Icon(Icons.panorama)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _nameCtrl,
+              decoration: const InputDecoration(
+                  labelText: 'Nom', border: OutlineInputBorder()),
+              validator: (v) => v?.trim().isEmpty ?? true ? 'Requis' : null,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _bioCtrl,
+              decoration: const InputDecoration(
+                  labelText: 'Bio', border: OutlineInputBorder()),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              controller: _phoneCtrl,
+              decoration: const InputDecoration(
+                  labelText: 'Téléphone', border: OutlineInputBorder()),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _updateLocation,
+              icon: const Icon(Icons.location_on),
+              label: Text(_location != null
+                  ? 'Modifier localisation'
+                  : 'Ajouter localisation'),
+            ),
+            if (_location != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 5),
+                child: Text(_location!.address,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom'),
-                validator: (v) => v?.trim().isEmpty ?? true ? 'Requis' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _bioCtrl,
-                decoration: const InputDecoration(labelText: 'Bio'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phoneCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone'),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _updateLocation,
-                child: const Text('Mettre à jour localisation'),
-              ),
-              if (_location != null)
-                Text('Localisation: ${_location!.address}'),
-            ],
-          ),
+          ],
         ),
       ),
       actions: [
         TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Annuler')),
-        ElevatedButton(
-          onPressed: () async {
-            if (_formKey.currentState!.validate()) {
-              try {
-                final urls = await _imageService.uploadUserProfileImages(
-                  profileImage: _profileImage,
-                  coverImage: _coverImage,
-                  userId: widget.user.uid,
-                );
-
-                await _authService.updateUserProfile(
-                  uid: widget.user.uid,
-                  name: _nameCtrl.text.trim(),
-                  bio: _bioCtrl.text.trim(),
-                  phoneNumber: _phoneCtrl.text.trim(),
-                  location: _location,
-                  profileImages: widget.user.profileImages.copyWith(
-                    profileImage: urls['profile'],
-                    coverImage: urls['cover'],
-                    lastUpdated: DateTime.now(),
-                  ),
-                );
-
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Profile mis à jour avec succès')),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Erreur: $e'),
-                        backgroundColor: Colors.red),
-                  );
-                }
-              }
-            }
-          },
-          child: const Text('Enregistrer'),
+        FilledButton(
+          onPressed: _isSaving ? null : _saveChanges,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2))
+              : const Text('Enregistrer'),
         ),
       ],
     );

@@ -17,6 +17,7 @@ import '../services/image_storage_service.dart';
 import '../services/location_service_osm.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/weekly_timeline_widget.dart';
+import 'profile_screen.dart';
 
 // =============================================================================
 // CONFIGURATION STYLE GHIBLI
@@ -827,7 +828,12 @@ class _ParentDashboardState extends State<ParentDashboard>
                       onSelected: (value) {
                         switch (value) {
                           case 'profile':
-                            // Naviguer vers profil
+                            // CORRECTION : Navigation vers le profil
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const ProfileScreen(),
+                              ),
+                            );
                             break;
                           case 'settings':
                             // Naviguer vers paramètres

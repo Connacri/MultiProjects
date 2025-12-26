@@ -15,9 +15,11 @@ class ImageStorageService {
   final SupabaseClient _supabase = Supabase.instance.client;
   final Uuid _uuid = const Uuid();
 
-  // Bucket Supabase pour les images de cours
+  // Buckets Supabase
   static const String _coursesBucket = 'courses';
   static const String _usersBucket = 'user-images';
+  static const String _profileBucket = 'profiles';
+  static const String _coverBucket = 'covers';
 
   static const int maxImageSizeKB = 500;
   static const int imageQuality = 85;
@@ -28,7 +30,6 @@ class ImageStorageService {
   /// Compresse une image pour optimiser le stockage
   /// ✅ SKIP sur Windows car non supporté
   Future<File> _compressImage(File file) async {
-    // 🖥️ Sur Windows : Pas de compression, retour direct
     if (_isWindowsDesktop) {
       print('🖥️ [ImageStorage] Windows détecté : Compression SKIP');
       return file;
@@ -40,7 +41,6 @@ class ImageStorageService {
     final output = '${tempDir.path}/${_uuid.v4()}.jpg';
 
     try {
-      // Première passe de compression
       final compressed = await FlutterImageCompress.compressAndGetFile(
         file.path,
         output,
@@ -61,7 +61,6 @@ class ImageStorageService {
       print(
           '📦 [ImageStorage] Taille après compression: ${sizeKB.toStringAsFixed(2)} KB');
 
-      // Recompression si le fichier est trop lourd
       if (sizeKB > maxImageSizeKB) {
         print('📦 [ImageStorage] Recompression nécessaire...');
         final adjustedQuality =
@@ -92,7 +91,7 @@ class ImageStorageService {
     }
   }
 
-  /// 🔧 Upload une image de cours dans Supabase Storage (bucket: courses)
+  /// 📤 Upload une image de cours dans Supabase Storage (bucket: courses)
   /// ✅ Compatible Windows Desktop (sans compression)
   Future<CourseImage> uploadCourseImage({
     required File imageFile,
@@ -101,21 +100,17 @@ class ImageStorageService {
     try {
       print('📤 [ImageStorage] Début upload image pour course: $courseId');
 
-      // 1️⃣ Compression (skip sur Windows)
       final fileToUpload = await _compressImage(imageFile);
       final imgId = _uuid.v4();
-
-      // 2️⃣ Structure : courses/{courseId}/{imageId}.jpg
       final filePath = '$courseId/$imgId.jpg';
+
       print('📤 [ImageStorage] Chemin: $filePath');
 
-      // 3️⃣ Lecture bytes
       final Uint8List imageBytes = await fileToUpload.readAsBytes();
       final sizeKB = imageBytes.length / 1024;
       print(
           '📤 [ImageStorage] Taille: ${sizeKB.toStringAsFixed(2)} KB (${imageBytes.length} bytes)');
 
-      // ⚠️ Avertissement si image trop lourde
       if (sizeKB > 2000) {
         print(
             '⚠️ [ImageStorage] ATTENTION: Image très lourde (${sizeKB.toStringAsFixed(0)} KB)');
@@ -123,7 +118,6 @@ class ImageStorageService {
             '⚠️ [ImageStorage] Recommandé: < 1 MB pour de meilleures performances');
       }
 
-      // 4️⃣ Upload avec Uint8List
       await _supabase.storage.from(_coursesBucket).uploadBinary(
             filePath,
             imageBytes,
@@ -135,13 +129,10 @@ class ImageStorageService {
 
       print('✅ [ImageStorage] Upload réussi');
 
-      // 5️⃣ Récupération de l'URL publique
       final publicUrl =
           _supabase.storage.from(_coursesBucket).getPublicUrl(filePath);
-
       print('✅ [ImageStorage] URL publique: $publicUrl');
 
-      // 6️⃣ Nettoyage du fichier temporaire (si compression a eu lieu)
       if (fileToUpload.path != imageFile.path) {
         try {
           await fileToUpload.delete();
@@ -191,7 +182,6 @@ class ImageStorageService {
         print('✅ [ImageStorage] Image ${i + 1}/${imageFiles.length} uploadée');
       } catch (e) {
         print("❌ [ImageStorage] Erreur upload image ${i + 1}: $e");
-        // Continue même si une image échoue
       }
     }
 
@@ -206,7 +196,6 @@ class ImageStorageService {
       return;
     }
 
-    // Structure du path : {courseId}/{imageId}.jpg
     final path = '$courseId/${img.id}.jpg';
 
     try {
@@ -243,23 +232,38 @@ class ImageStorageService {
     }
   }
 
-  /// Upload d'une image de profil utilisateur
+  /// 🔧 Upload d'une image de profil utilisateur (CORRIGÉ)
+  /// Structure unifiée: {userId}/avatar.jpg pour profile, {userId}/cover.jpg pour cover
   Future<String?> uploadUserProfileImage({
     required File imageFile,
     required String userId,
     required bool isProfileImage,
   }) async {
     try {
-      final fileToUpload = await _compressImage(imageFile);
-      final type = isProfileImage ? 'profile' : 'cover';
+      print(
+          '📤 [ImageStorage] Upload ${isProfileImage ? "profile" : "cover"} pour user: $userId');
 
-      // Structure : {userId}/{type}.jpg
-      final path = '$userId/$type.jpg';
+      // Sélection du bucket approprié
+      final String bucketName = isProfileImage ? _profileBucket : _coverBucket;
+
+      // Compression (si pas sur Windows)
+      final fileToUpload = await _compressImage(imageFile);
+
+      // ✅ CORRECTION: Structure cohérente pour profile ET cover
+      final String filePath = isProfileImage
+          ? '$userId/avatar.jpg' // Profile: userId/avatar.jpg
+          : '$userId/cover.jpg'; // Cover: userId/cover.jpg
+
+      print('📤 [ImageStorage] Bucket: $bucketName');
+      print('📤 [ImageStorage] Path: $filePath');
 
       final bytes = await fileToUpload.readAsBytes();
+      final sizeKB = bytes.length / 1024;
+      print('📤 [ImageStorage] Taille: ${sizeKB.toStringAsFixed(2)} KB');
 
-      await _supabase.storage.from(_usersBucket).uploadBinary(
-            path,
+      // Upload avec le chemin correct
+      await _supabase.storage.from(bucketName).uploadBinary(
+            filePath,
             bytes,
             fileOptions: const FileOptions(
               upsert: true,
@@ -267,16 +271,33 @@ class ImageStorageService {
             ),
           );
 
-      // Nettoyage si compression
+      print('✅ [ImageStorage] Upload Supabase réussi');
+
+      // Nettoyage du fichier temporaire si compressé
       if (fileToUpload.path != imageFile.path) {
-        await fileToUpload.delete();
+        try {
+          await fileToUpload.delete();
+          print('🧹 [ImageStorage] Fichier temporaire supprimé');
+        } catch (e) {
+          print(
+              '⚠️ [ImageStorage] Impossible de supprimer le fichier temp: $e');
+        }
       }
 
-      return _supabase.storage.from(_usersBucket).getPublicUrl(path);
+      // ✅ CORRECTION: Récupérer l'URL avec le MÊME path que l'upload
+      final publicUrl =
+          _supabase.storage.from(bucketName).getPublicUrl(filePath);
+      print('✅ [ImageStorage] URL publique: $publicUrl');
+
+      return publicUrl;
     } on StorageException catch (e) {
-      throw Exception("Erreur upload profil: ${e.message}");
-    } catch (e) {
-      throw Exception("Erreur upload: $e");
+      print("❌ [ImageStorage] StorageException: ${e.message}");
+      print("❌ [ImageStorage] StatusCode: ${e.statusCode}");
+      throw Exception("Erreur upload Supabase: ${e.message}");
+    } catch (e, stackTrace) {
+      print("❌ [ImageStorage] Erreur upload: $e");
+      print("❌ [ImageStorage] StackTrace: $stackTrace");
+      throw Exception("Erreur upload image: $e");
     }
   }
 
@@ -289,19 +310,29 @@ class ImageStorageService {
     final urls = <String, String?>{};
 
     if (profileImage != null) {
-      urls['profile'] = await uploadUserProfileImage(
-        imageFile: profileImage,
-        userId: userId,
-        isProfileImage: true,
-      );
+      try {
+        urls['profile'] = await uploadUserProfileImage(
+          imageFile: profileImage,
+          userId: userId,
+          isProfileImage: true,
+        );
+      } catch (e) {
+        print('❌ [ImageStorage] Erreur upload profile: $e');
+        rethrow; // Important de rethrow pour que l'erreur remonte
+      }
     }
 
     if (coverImage != null) {
-      urls['cover'] = await uploadUserProfileImage(
-        imageFile: coverImage,
-        userId: userId,
-        isProfileImage: false,
-      );
+      try {
+        urls['cover'] = await uploadUserProfileImage(
+          imageFile: coverImage,
+          userId: userId,
+          isProfileImage: false,
+        );
+      } catch (e) {
+        print('❌ [ImageStorage] Erreur upload cover: $e');
+        rethrow;
+      }
     }
 
     return urls;
@@ -337,12 +368,11 @@ class ImageStorageService {
   }) async {
     try {
       final fileToUpload = await _compressImage(imageFile);
-      final path = '$childId/profile.jpg'; // Structure : {childId}/profile.jpg
+      final path = '$childId/profile.jpg';
 
       final bytes = await fileToUpload.readAsBytes();
 
       await _supabase.storage.from(_usersBucket).uploadBinary(
-            // Réutilise user-images ou crée 'child-images' si besoin
             path,
             bytes,
             fileOptions: const FileOptions(
@@ -351,7 +381,6 @@ class ImageStorageService {
             ),
           );
 
-      // Nettoyage temp
       if (fileToUpload.path != imageFile.path) {
         await fileToUpload.delete();
       }
