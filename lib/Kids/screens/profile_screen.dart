@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -14,6 +15,7 @@ import '../services/location_service_osm.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/loading_overlay_widget.dart';
 import '../widgets/location_picker_dialog_widget.dart';
+import '../widgets/location_picker_windows.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -624,5 +626,252 @@ class _ProfileScreenState extends State<ProfileScreen> {
       case UserRole.autres:
         return Icons.account_box_rounded;
     }
+  }
+}
+
+class UserProfileEditDialog extends StatefulWidget {
+  final UserModel user;
+
+  const UserProfileEditDialog({super.key, required this.user});
+
+  @override
+  State<UserProfileEditDialog> createState() => _UserProfileEditDialogState();
+}
+
+class _UserProfileEditDialogState extends State<UserProfileEditDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _bioCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  File? _profileImage;
+  File? _coverImage;
+  AppLocation? _location;
+  final LocationService _locationService = LocationService();
+  final ImageStorageService _imageService = ImageStorageService();
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl.text = widget.user.name;
+    _bioCtrl.text = widget.user.bio ?? '';
+    _phoneCtrl.text = widget.user.phoneNumber ?? '';
+    _location = widget.user.location;
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _bioCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(bool isProfile) async {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Appareil photo'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _selectImage(ImageSource.camera, isProfile: isProfile);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galerie'),
+              onTap: () async {
+                Navigator.pop(context);
+                await _selectImage(ImageSource.gallery, isProfile: isProfile);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectImage(ImageSource source,
+      {required bool isProfile}) async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: source);
+    if (image != null) {
+      setState(() {
+        if (isProfile)
+          _profileImage = File(image.path);
+        else
+          _coverImage = File(image.path);
+      });
+    }
+  }
+
+  Future<void> _updateLocation() async {
+    final position = await _locationService.getCurrentPosition();
+    if (position == null) return;
+
+    try {
+      final placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+      final placemark = placemarks.first;
+      final newLocation = AppLocation(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        address:
+            '${placemark.street ?? ''}, ${placemark.locality ?? ''}, ${placemark.country ?? ''}',
+        city: placemark.locality,
+        country: placemark.country,
+      );
+
+      // Picker pour confirmation (selon plateforme)
+      final confirmedLocation = await showDialog<AppLocation>(
+        context: context,
+        builder: (context) => Platform.isWindows
+            ? LocationPickerDialogWindows(initialLocation: newLocation)
+            : LocationPickerDialog(initialLocation: newLocation),
+      );
+
+      if (confirmedLocation != null) {
+        setState(() => _location = confirmedLocation);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur localisation: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Éditer Profile'),
+      content: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Photo profile
+              GestureDetector(
+                onTap: () => _pickImage(true),
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: _profileImage != null
+                      ? FileImage(_profileImage!)
+                      : (widget.user.profileImages.profileImage != null
+                          ? NetworkImage(
+                              widget.user.profileImages.profileImage!)
+                          : null),
+                  child: _profileImage == null &&
+                          widget.user.profileImages.profileImage == null
+                      ? const Icon(Icons.add_a_photo)
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Photo couverture
+              GestureDetector(
+                onTap: () => _pickImage(false),
+                child: Container(
+                  height: 100,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    image: _coverImage != null
+                        ? DecorationImage(
+                            image: FileImage(_coverImage!), fit: BoxFit.cover)
+                        : (widget.user.profileImages.coverImage != null
+                            ? DecorationImage(
+                                image: NetworkImage(
+                                    widget.user.profileImages.coverImage!),
+                                fit: BoxFit.cover)
+                            : null),
+                    color: Colors.grey[300],
+                  ),
+                  child: _coverImage == null &&
+                          widget.user.profileImages.coverImage == null
+                      ? const Icon(Icons.add_photo_alternate)
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _nameCtrl,
+                decoration: const InputDecoration(labelText: 'Nom'),
+                validator: (v) => v?.trim().isEmpty ?? true ? 'Requis' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _bioCtrl,
+                decoration: const InputDecoration(labelText: 'Bio'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _phoneCtrl,
+                decoration: const InputDecoration(labelText: 'Téléphone'),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: _updateLocation,
+                child: const Text('Mettre à jour localisation'),
+              ),
+              if (_location != null)
+                Text('Localisation: ${_location!.address}'),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler')),
+        ElevatedButton(
+          onPressed: () async {
+            if (_formKey.currentState!.validate()) {
+              try {
+                final urls = await _imageService.uploadUserProfileImages(
+                  profileImage: _profileImage,
+                  coverImage: _coverImage,
+                  userId: widget.user.uid,
+                );
+
+                await _authService.updateUserProfile(
+                  uid: widget.user.uid,
+                  name: _nameCtrl.text.trim(),
+                  bio: _bioCtrl.text.trim(),
+                  phoneNumber: _phoneCtrl.text.trim(),
+                  location: _location,
+                  profileImages: widget.user.profileImages.copyWith(
+                    profileImage: urls['profile'],
+                    coverImage: urls['cover'],
+                    lastUpdated: DateTime.now(),
+                  ),
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Profile mis à jour avec succès')),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Erreur: $e'),
+                        backgroundColor: Colors.red),
+                  );
+                }
+              }
+            }
+          },
+          child: const Text('Enregistrer'),
+        ),
+      ],
+    );
   }
 }

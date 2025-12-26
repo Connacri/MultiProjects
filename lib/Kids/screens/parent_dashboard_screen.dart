@@ -1,11 +1,12 @@
-/// 🏠 Parent Dashboard - Version corrigée pour production
-/// Fix des crashs au démarrage + gestion robuste des états
+/// 🏠 Parent Dashboard - Version avec Calendar Timeline intégré
+/// Affiche un calendrier horizontal pour sélectionner une date et voir les cours du jour
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../dependences/calendar_timeline/calendar_timeline.dart';
 import '../claude/auth_provider_v2.dart';
 import '../models/child_model_complete.dart';
 import '../models/course_model_complete.dart';
@@ -33,19 +34,22 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
   UserModel? _user;
   String? _error;
 
+  // ✅ NOUVEAU : Date sélectionnée pour le calendrier
+  DateTime _selectedDate = DateTime.now();
+  List<DateTime> _eventDates = [];
+
   // Controllers pour édition inline
   final Map<String, TextEditingController> _controllers = {};
 
   @override
   void initState() {
     super.initState();
-    // ✅ FIX : Charger les données avec gestion d'erreurs
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
+      _loadEventDates();
     });
   }
 
-  /// ✅ Chargement sécurisé avec timeout et error handling
   Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
@@ -64,10 +68,7 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
         return;
       }
 
-      // Construire le UserModel depuis les données brutes
       _user = UserModel.fromSupabase(userData);
-
-      // Initialiser les controllers
       _initializeControllers();
 
       setState(() => _isLoading = false);
@@ -81,21 +82,49 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
 
   void _initializeControllers() {
     if (_user == null) return;
-
     _controllers['name'] = TextEditingController(text: _user!.name);
     _controllers['email'] = TextEditingController(text: _user!.email);
-    _controllers['bio'] = TextEditingController(text: _user!.bio ?? '');
-    _controllers['phoneNumber'] =
-        TextEditingController(text: _user!.phoneNumber ?? '');
-    _controllers['address'] =
-        TextEditingController(text: _user!.location?.address ?? '');
-    _controllers['city'] =
-        TextEditingController(text: _user!.location?.city ?? '');
-    _controllers['country'] =
-        TextEditingController(text: _user!.location?.country ?? '');
   }
 
-  /// Conversion des erreurs en messages utilisateur
+  /// ✅ NOUVEAU : Charge les dates avec événements (cours)
+  Future<void> _loadEventDates() async {
+    try {
+      final childProvider = context.read<ChildEnrollmentProvider>();
+
+      // Dates avec des sessions programmées
+      final dates = <DateTime>{};
+
+      for (var schedule in childProvider.schedules) {
+        if (!schedule.isCancelled) {
+          // Ajouter les occurrences sur les 30 prochains jours
+          final now = DateTime.now();
+          for (var i = 0; i < 30; i++) {
+            final date = now.add(Duration(days: i));
+            if (schedule.isScheduledFor(date)) {
+              dates.add(DateTime(date.year, date.month, date.day));
+            }
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _eventDates = dates.toList()..sort();
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur chargement dates événements: $e');
+    }
+  }
+
+  /// ✅ NOUVEAU : Appelé quand l'utilisateur sélectionne une date
+  void _onDateSelected(DateTime date) {
+    setState(() {
+      _selectedDate = date;
+    });
+    print('📅 Date sélectionnée: ${date.day}/${date.month}/${date.year}');
+  }
+
   String _getErrorMessage(Object error) {
     if (error is TimeoutException) {
       return 'Le chargement prend trop de temps. Vérifiez votre connexion.';
@@ -105,7 +134,6 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Afficher écran d'erreur si problème critique
     if (_errorMessage != null) {
       return _buildErrorScreen();
     }
@@ -116,7 +144,6 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
     );
   }
 
-  /// ✅ Écran d'erreur avec retry
   Widget _buildErrorScreen() {
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard Parent')),
@@ -272,7 +299,6 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
   }
 
   Widget _getSelectedPage() {
-    // ✅ Afficher loader pendant chargement initial
     if (_isLoading) {
       return const Center(
         child: Column(
@@ -303,14 +329,12 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
   Widget _buildHomePage() {
     return Consumer3<AuthProviderV2, ChildEnrollmentProvider, CourseProvider>(
       builder: (context, authProvider, childProvider, courseProvider, _) {
-        // ✅ Protection contre états invalides
         if (authProvider.currentUser == null) {
           return const Center(
             child: Text('Session expirée. Veuillez vous reconnecter.'),
           );
         }
 
-        // ✅ FIX : Récupérer le nom depuis userData, pas currentUser.role
         final userName = authProvider.userData?['name'] ??
             authProvider.currentUser!.email?.split('@').first ??
             'Parent';
@@ -324,7 +348,7 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
         return ListView(
           padding: ResponsiveLayout.getResponsivePadding(context),
           children: [
-            // ✅ Header utilisateur corrigé
+            // Header utilisateur
             Row(
               children: [
                 CircleAvatar(
@@ -344,7 +368,6 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
                     children: [
                       Text(
                         'Bonjour, $userName',
-                        // ✅ FIX : Utilise userData['name']
                         style:
                             Theme.of(context).textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
@@ -361,6 +384,10 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
                 ),
               ],
             ),
+            const SizedBox(height: 32),
+
+            // ✅ NOUVEAU : Calendar Timeline
+            _buildCalendarSection(childProvider),
             const SizedBox(height: 32),
 
             // Stats cards
@@ -455,7 +482,6 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
             ),
             const SizedBox(height: 16),
 
-            // ✅ Protection si pas de cours
             if (courseProvider.courses.isEmpty)
               const Center(
                 child: Padding(
@@ -474,6 +500,133 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
           ],
         );
       },
+    );
+  }
+
+  /// ✅ NOUVEAU : Section Calendar Timeline
+  Widget _buildCalendarSection(ChildEnrollmentProvider childProvider) {
+    return Card(
+      elevation: 2,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Planning de la semaine',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Calendar Timeline
+          CalendarTimeline(
+            initialDate: _selectedDate,
+            firstDate: DateTime.now().subtract(const Duration(days: 30)),
+            lastDate: DateTime.now().add(const Duration(days: 365)),
+            onDateSelected: _onDateSelected,
+            eventDates: _eventDates,
+            leftMargin: 20,
+            monthColor: Theme.of(context).colorScheme.onSurface,
+            dayColor: Theme.of(context).colorScheme.onSurface,
+            dayNameColor: Theme.of(context).colorScheme.onPrimaryContainer,
+            activeDayColor: Theme.of(context).colorScheme.onPrimary,
+            activeBackgroundDayColor: Theme.of(context).colorScheme.primary,
+            dotColor: Theme.of(context).colorScheme.secondary,
+            locale: 'fr',
+          ),
+          const SizedBox(height: 12),
+
+          // Cours du jour sélectionné
+          _buildDaySchedules(childProvider),
+        ],
+      ),
+    );
+  }
+
+  /// ✅ NOUVEAU : Affiche les cours du jour sélectionné
+  Widget _buildDaySchedules(ChildEnrollmentProvider childProvider) {
+    final daySchedules = childProvider.getSchedulesForDate(_selectedDate);
+
+    if (daySchedules.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(
+                Icons.event_busy,
+                size: 48,
+                color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Aucun cours prévu ce jour',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'Cours du ${_selectedDate.day}/${_selectedDate.month}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...daySchedules.map((schedule) => _buildScheduleTile(schedule)),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildScheduleTile(SessionSchedule schedule) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(
+          Icons.schedule,
+          color: Theme.of(context).colorScheme.onPrimaryContainer,
+        ),
+      ),
+      title: Text(
+        schedule.timeSlot.displayTime,
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      subtitle:
+          Text('${schedule.currentEnrollment}/${schedule.maxCapacity} places'),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      onTap: () => _showSessionDetails(schedule),
     );
   }
 
@@ -806,7 +959,6 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
   // ============================================================================
 
   void _showAddChildDialog() {
-    // TODO: Navigation vers écran d'ajout d'enfant
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Fonctionnalité en développement')),
     );

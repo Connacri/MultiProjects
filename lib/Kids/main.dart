@@ -3,8 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import 'claude/auth_wrapper_refactored.dart';
 import 'providers/locale_provider.dart';
-import 'screens/auth/auth_wrapper_complete.dart';
 
 class EduPlatformApp extends StatelessWidget {
   const EduPlatformApp({super.key});
@@ -303,7 +303,7 @@ class EduPlatformApp extends StatelessWidget {
             ),
           ),
           themeMode: ThemeMode.system,
-          home: const AuthWrapper(),
+          home: const AuthWrapperRefactored(),
         );
       },
     );

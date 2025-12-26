@@ -13,13 +13,13 @@ import '../objectBox/tests/timelines/Tinder-clone-main/Tinder-clone-main/lib/mai
 import '../objectBox/tests/timelines/mistral/claude.dart';
 import 'TableauStaff.dart';
 
-// 1. Définir le modèle de données pour vos cartes
+// 1. Modèle de données pour les cartes
 class PageCardData {
   final String title;
   final String subtitle;
   final String imageUrl;
   final List<Color> gradientColors;
-  final Widget destination; // La page de destination
+  final Widget destination;
 
   PageCardData({
     required this.title,
@@ -30,21 +30,40 @@ class PageCardData {
   });
 }
 
-// Le widget de l'interface de sélection
-class CardSelectionScreen extends StatelessWidget {
-  // Passez votre objectBox si nécessaire
+// Écran principal avec parallax corrigé
+class CardSelectionScreen extends StatefulWidget {
+  const CardSelectionScreen({super.key});
 
-  const CardSelectionScreen({
-    super.key,
-  });
+  @override
+  State<CardSelectionScreen> createState() => _CardSelectionScreenState();
+}
+
+class _CardSelectionScreenState extends State<CardSelectionScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final ValueNotifier<double> _scrollOffset = ValueNotifier<double>(0.0);
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      _scrollOffset.value = _scrollController.offset;
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _scrollOffset.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final objectBox = Provider.of<ObjectBox?>(context);
     if (objectBox == null) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
-    // Données pour vos 5 pages
+
     final List<PageCardData> cardData = [
       PageCardData(
         title: 'Planning Staff\nRhumatologie',
@@ -83,7 +102,7 @@ class CardSelectionScreen extends StatelessWidget {
             : Hotel_Management(),
       ),
       PageCardData(
-        title: ' Hotel Management',
+        title: 'Hotel Management',
         subtitle: 'Interface adaptative',
         imageUrl: 'assets/photos/nav (4).jpg',
         gradientColors: [
@@ -113,9 +132,9 @@ class CardSelectionScreen extends StatelessWidget {
         destination: MyApp_TinderClone(),
       ),
       PageCardData(
-        title: 'mainKids',
+        title: 'Kids',
         subtitle: 'Childrens',
-        imageUrl: 'assets/photos/a (7).png',
+        imageUrl: 'assets/photos/a (1).png',
         gradientColors: [
           Colors.deepOrangeAccent.withOpacity(0.8),
           Colors.black.withOpacity(0.5)
@@ -125,9 +144,9 @@ class CardSelectionScreen extends StatelessWidget {
       PageCardData(
         title: 'Calendar Timeline',
         subtitle: 'Calendar',
-        imageUrl: 'assets/photos/a (1).png',
+        imageUrl: 'assets/photos/a (7).png',
         gradientColors: [
-          Colors.lightGreenAccent.withOpacity(0.8),
+          Colors.indigo.withOpacity(0.8),
           Colors.black.withOpacity(0.5)
         ],
         destination: HomePageCalendar(),
@@ -141,14 +160,16 @@ class CardSelectionScreen extends StatelessWidget {
       ),
       body: Center(
         child: SingleChildScrollView(
+          controller: _scrollController, // ← Important !
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Wrap(
               spacing: 20,
               runSpacing: 20,
               alignment: WrapAlignment.center,
-              children:
-                  cardData.map((data) => _buildCard(context, data)).toList(),
+              children: cardData
+                  .map((data) => _buildCard(context, data, _scrollOffset))
+                  .toList(),
             ),
           ),
         ),
@@ -156,60 +177,65 @@ class CardSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(BuildContext context, PageCardData data) {
+  Widget _buildCard(BuildContext context, PageCardData data,
+      ValueNotifier<double> scrollOffset) {
+    final bool isMobile = MediaQuery.of(context).size.width < 800;
+    final double cardHeight = isMobile ? 200 : 400;
+    final double sensitivity =
+        isMobile ? 3.5 : 5.0; // Ajuste l'intensité du parallax
+
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => data.destination,
-          ),
+          MaterialPageRoute(builder: (context) => data.destination),
         );
       },
       borderRadius: BorderRadius.circular(30),
       child: Card(
         elevation: 10,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         clipBehavior: Clip.antiAlias,
-        child: Container(
+        child: SizedBox(
           width: 300,
-          height: 400,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                data.gradientColors[0].withOpacity(0.9),
-                data.gradientColors[1].withOpacity(0.0),
-              ],
-              stops: const [0.0, 0.5],
-            ),
-            borderRadius: BorderRadius.circular(30),
-          ),
+          height: cardHeight,
           child: Stack(
             fit: StackFit.expand,
-            children: <Widget>[
-              // Image de fond
-              Positioned.fill(
-                child: Image.asset(
-                  data.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: data.gradientColors[0].withOpacity(0.3),
-                      child: const Icon(
-                        Icons.image,
-                        size: 100,
-                        color: Colors.white30,
-                      ),
-                    );
-                  },
+            children: [
+              // Parallax avec AnimatedBuilder (très performant)
+              AnimatedBuilder(
+                animation: scrollOffset,
+                builder: (context, child) {
+                  final double parallax = scrollOffset.value / sensitivity;
+                  return Transform.translate(
+                    offset: Offset(0, -parallax),
+                    // Négatif pour un effet "derrière"
+                    child: child,
+                  );
+                },
+                child: OverflowBox(
+                  maxHeight: cardHeight + 300,
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    height: cardHeight + 300,
+                    width: double.infinity,
+                    child: Image.asset(
+                      data.imageUrl,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: data.gradientColors[0].withOpacity(0.3),
+                          child: const Icon(Icons.image,
+                              size: 100, color: Colors.white30),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
 
-              // Overlay gradient pour améliorer la lisibilité
+              // Overlay gradient
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -225,44 +251,39 @@ class CardSelectionScreen extends StatelessWidget {
                 ),
               ),
 
-              // Contenu texte
+              // Texte et bouton
               Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
+                  children: [
                     Text(
                       data.title,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        shadows: [
-                          Shadow(
-                            color: Colors.black54,
-                            offset: Offset(2, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                                color: Colors.black54,
+                                offset: Offset(2, 2),
+                                blurRadius: 4),
+                          ]),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       data.subtitle,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.95),
-                        fontSize: 16,
-                        shadows: const [
-                          Shadow(
-                            color: Colors.black45,
-                            offset: Offset(1, 1),
-                            blurRadius: 3,
-                          ),
-                        ],
-                      ),
+                          color: Colors.white.withOpacity(0.95),
+                          fontSize: 16,
+                          shadows: const [
+                            Shadow(
+                                color: Colors.black45,
+                                offset: Offset(1, 1),
+                                blurRadius: 3),
+                          ]),
                     ),
                     const Spacer(),
-                    // Bouton d'accès
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 20, vertical: 10),
@@ -271,29 +292,22 @@ class CardSelectionScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4))
                         ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Accéder',
-                            style: TextStyle(
-                              color: data.gradientColors[0],
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                          Text('Accéder',
+                              style: TextStyle(
+                                  color: data.gradientColors[0],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16)),
                           const SizedBox(width: 8),
-                          Icon(
-                            Icons.arrow_forward,
-                            color: data.gradientColors[0],
-                            size: 20,
-                          ),
+                          Icon(Icons.arrow_forward,
+                              color: data.gradientColors[0], size: 20),
                         ],
                       ),
                     ),
@@ -301,21 +315,17 @@ class CardSelectionScreen extends StatelessWidget {
                 ),
               ),
 
-              // Icône en haut à droite
+              // Icône dashboard
               Positioned(
                 top: 20,
                 right: 20,
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.dashboard,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle),
+                  child: const Icon(Icons.dashboard,
+                      color: Colors.white, size: 28),
                 ),
               ),
             ],
@@ -339,14 +349,11 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
-    // On attend la fin du premier frame pour naviguer vers la page lourde
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 100), () {
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => TableauStaffPage()),
-          );
+          Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => TableauStaffPage()));
         }
       });
     });

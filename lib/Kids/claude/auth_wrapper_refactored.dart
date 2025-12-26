@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../screens/ParentDashboard.dart';
 import '../screens/autresDashboard.dart';
 import '../screens/coach_dashboard_screen.dart';
+import '../screens/parent_dashboard_screen.dart';
 import '../screens/school_dashboard_screen.dart';
 import 'auth_provider_v2.dart';
 import 'auth_screen_unified.dart';
@@ -65,7 +66,8 @@ class AuthWrapperRefactored extends StatelessWidget {
           final role = userData['role'] as String?;
           switch (role) {
             case 'parent':
-              return const ParentDashboard(); //ParentDashboard();
+              return const ParentChoice();
+              ParentDashboard_screen(); //ParentDashboard();
             case 'coach':
               return const CoachDashboard();
             case 'school':
@@ -87,6 +89,36 @@ class AuthWrapperRefactored extends StatelessWidget {
           onRetry: () => authProvider.logout(),
         );
       },
+    );
+  }
+}
+
+class ParentChoice extends StatelessWidget {
+  const ParentChoice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(),
+      body: Center(
+        child: Column(
+          children: [
+            ElevatedButton.icon(
+                icon: Icon(Icons.safety_check_rounded),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (ctx) => ParentDashboard_screen())),
+                label: Text('ParentDashboard_screen')),
+            SizedBox(
+              height: 30,
+            ),
+            ElevatedButton.icon(
+                icon: Icon(Icons.face),
+                onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => ParentDashboard())),
+                label: Text('ParentDashboard'))
+          ],
+        ),
+      ),
     );
   }
 }

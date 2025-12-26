@@ -2,7 +2,9 @@ import 'dart:math' show sqrt, asin, pi;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/child_model_complete.dart';
 import '../models/course_model_complete.dart';
+import '../models/enrollment_model_complete.dart';
 
 /// Service dédié pour les opérations CRUD des cours dans Supabase
 class SupabaseCourseService {
@@ -363,5 +365,66 @@ class SupabaseCourseService {
     } catch (e) {
       throw Exception('Erreur decrementStudentCount: $e');
     }
+  }
+}
+
+class SupabaseChildService {
+  final _supabase = Supabase.instance.client;
+
+  // === GESTION DES ENFANTS ===
+
+  Future<List<ChildModel>> getChildren(String parentId) async {
+    final response = await _supabase
+        .from('children')
+        .select()
+        .eq('parent_id', parentId)
+        .eq('is_active', true);
+
+    return response.map((data) => ChildModel.fromSupabase(data)).toList();
+  }
+
+  Future<String> createChild(ChildModel child) async {
+    final response = await _supabase
+        .from('children')
+        .insert(child.toSupabase())
+        .select()
+        .single();
+
+    return response['id'] as String;
+  }
+
+  Future<void> updateChild(String childId, Map<String, dynamic> updates) async {
+    await _supabase.from('children').update(updates).eq('id', childId);
+  }
+
+  Future<void> softDeleteChild(String childId) async {
+    await _supabase.from('children').update({
+      'is_active': false,
+      'updated_at': DateTime.now().toIso8601String()
+    }).eq('id', childId);
+  }
+
+  // === GESTION DES INSCRIPTIONS (ENROLLMENTS) ===
+
+  Future<List<EnrollmentModel>> getEnrollments(String parentId) async {
+    final response =
+        await _supabase.from('enrollments').select().eq('parent_id', parentId);
+
+    return response.map((data) => EnrollmentModel.fromSupabase(data)).toList();
+  }
+
+  Future<String> createEnrollment(EnrollmentModel enrollment) async {
+    final response = await _supabase
+        .from('enrollments')
+        .insert(enrollment.toSupabase())
+        .select()
+        .single();
+
+    return response['id'] as String;
+  }
+
+  Future<void> updateEnrollment(
+      String enrollmentId, Map<String, dynamic> updates) async {
+    await _supabase.from('enrollments').update(updates).eq('id', enrollmentId);
   }
 }

@@ -329,4 +329,38 @@ class ImageStorageService {
       print("❌ [ImageStorage] Erreur: $e");
     }
   }
+
+  /// Upload d'une photo d'enfant
+  Future<String?> uploadChildPhoto({
+    required File imageFile,
+    required String childId,
+  }) async {
+    try {
+      final fileToUpload = await _compressImage(imageFile);
+      final path = '$childId/profile.jpg'; // Structure : {childId}/profile.jpg
+
+      final bytes = await fileToUpload.readAsBytes();
+
+      await _supabase.storage.from(_usersBucket).uploadBinary(
+            // Réutilise user-images ou crée 'child-images' si besoin
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
+          );
+
+      // Nettoyage temp
+      if (fileToUpload.path != imageFile.path) {
+        await fileToUpload.delete();
+      }
+
+      return _supabase.storage.from(_usersBucket).getPublicUrl(path);
+    } on StorageException catch (e) {
+      throw Exception("Erreur upload photo enfant: ${e.message}");
+    } catch (e) {
+      throw Exception("Erreur upload: $e");
+    }
+  }
 }

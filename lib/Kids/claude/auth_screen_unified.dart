@@ -192,9 +192,9 @@ class _AuthScreenState extends State<AuthScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildHeader(colorScheme),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
               _buildTabBar(colorScheme),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               _buildTabBarView(),
               const SizedBox(height: 16),
               _buildForgotPasswordButton(),
@@ -300,16 +300,18 @@ class _AuthScreenState extends State<AuthScreen>
   /// Formulaire d'inscription
   Widget _buildSignupForm() {
     return Form(
-      child: Column(
-        children: [
-          _buildEmailField(),
-          const SizedBox(height: 8),
-          _buildPasswordField(),
-          const SizedBox(height: 2),
-          _buildRoleSelector(),
-          const SizedBox(height: 12),
-          _buildSignupButton(),
-        ],
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildEmailField(),
+            const SizedBox(height: 8),
+            _buildPasswordField(),
+            const SizedBox(height: 2),
+            _buildRoleSelector(),
+            const SizedBox(height: 8),
+            _buildSignupButton(),
+          ],
+        ),
       ),
     );
   }
@@ -464,8 +466,8 @@ class _AuthScreenState extends State<AuthScreen>
         // ),
         const SizedBox(height: 8),
         Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 8,
+          runSpacing: 8,
           children: roles.map((role) {
             final isSelected = _selectedRole == role['value'];
 
