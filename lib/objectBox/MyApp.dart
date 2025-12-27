@@ -26,7 +26,6 @@ import '../Hopital/p2p/p2p_manager.dart';
 import '../Hopital/p2p/sync_manager.dart';
 import '../Hopital/p2p/udp_broadcast_discovery.dart';
 import '../Kids/claude/auth_provider_v2.dart';
-import '../Kids/providers/auth_provider_dart.dart';
 import '../Kids/providers/child_enrollment_provider.dart';
 import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
@@ -99,7 +98,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         /////////////////////////////KIDS/////////////////////////////////////
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        //ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CourseProvider()),
         /////////////////////////////FIN-KIDS/////////////////////////////////////
         ChangeNotifierProvider(create: (_) => AuthProviderV2()),

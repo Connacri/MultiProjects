@@ -108,12 +108,15 @@ class UserProfileImages {
       lastUpdated: map['lastUpdated'] != null
           ? (map['lastUpdated'] is Timestamp
               ? (map['lastUpdated'] as Timestamp).toDate()
-              : DateTime.parse(map['lastUpdated']))
+              : map['lastUpdated'] is String
+                  ? DateTime.parse(map['lastUpdated'])
+                  : DateTime.parse(map['lastUpdated'].toString()))
           : null,
     );
   }
 
-  Map<String, dynamic> toMap() {
+  /// ✅ FIX: Méthode pour Firestore (avec Timestamp)
+  Map<String, dynamic> toMapFirestore() {
     return {
       'profileImageFirebase': profileImageFirebase,
       'profileImageSupabase': profileImageSupabase,
@@ -124,9 +127,25 @@ class UserProfileImages {
     };
   }
 
-  String? get profileImage => profileImageFirebase ?? profileImageSupabase;
+  /// ✅ FIX: Méthode pour Supabase (avec String ISO 8601)
+  Map<String, dynamic> toMapSupabase() {
+    return {
+      'profileImageFirebase': profileImageFirebase,
+      'profileImageSupabase': profileImageSupabase,
+      'coverImageFirebase': coverImageFirebase,
+      'coverImageSupabase': coverImageSupabase,
+      'lastUpdated': lastUpdated?.toIso8601String(),
+    };
+  }
 
-  String? get coverImage => coverImageFirebase ?? coverImageSupabase;
+  /// ⚠️ DEPRECATED: Utiliser toMapFirestore() ou toMapSupabase()
+  @Deprecated(
+      'Utilisez toMapFirestore() ou toMapSupabase() selon votre backend')
+  Map<String, dynamic> toMap() => toMapSupabase();
+
+  String? get profileImage => profileImageSupabase ?? profileImageFirebase;
+
+  String? get coverImage => coverImageSupabase ?? coverImageFirebase;
 
   UserProfileImages copyWith({
     String? profileImageFirebase,
