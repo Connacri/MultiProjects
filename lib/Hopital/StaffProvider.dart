@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -209,14 +208,11 @@ class StaffProvider with ChangeNotifier {
       notifyListeners();
 
       final oldCount = _staffs.length;
-      _staffs = await Isolate.run(() {
-        // Ici, fais tes calculs de tris ou de filtrages complexes
-        // Attention: On ne peut pas manipuler des objets complexes de DB directement
-        // s'ils ne sont pas thread-safe, mais on peut traiter des listes.
-        return _objectBox.staffBox.getAll();
-      });
+      // ✅ FIX: Remove Isolate.run - load directly in main isolate (ObjectBox not shareable across isolates)
+      _staffs = _objectBox.staffBox.getAll();
       final newCount = _staffs.length;
-      print('[StaffProvider] 📊 fetchStaffs: $oldCount → $newCount staffs');
+      print(
+          '[StaffProvider] 📊 fetchStaffs: $oldCount → $newCount staffs (direct load)');
 
       _isLoading = false;
       _lastUpdateTimestamp = DateTime.now().millisecondsSinceEpoch;
@@ -233,14 +229,8 @@ class StaffProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // On lance le calcul sur un thread séparé pour ne pas bloquer l'UI
-    // Note: Assure-toi que _objectBox est accessible ou passe les données nécessaires
-    _staffs = await Isolate.run(() {
-      // Ici, fais tes calculs de tris ou de filtrages complexes
-      // Attention: On ne peut pas manipuler des objets complexes de DB directement
-      // s'ils ne sont pas thread-safe, mais on peut traiter des listes.
-      return _objectBox.staffBox.getAll();
-    });
+    // ✅ FIX: Remove Isolate.run - load directly in main isolate
+    _staffs = _objectBox.staffBox.getAll();
 
     _isLoading = false;
     notifyListeners();
@@ -961,7 +951,7 @@ class ActiviteProvider with ChangeNotifier {
           // Vérifier TimeOff
           final estEnCongeTimeOff = _isStaffOnLeaveTimeOff(staff, dateJour);
 
-          String statutFinal = estEnCongeTimeOff ? 'C' : statutJour;
+          String statutFinal = estEnCongeTimeOff ? 're' : statutJour;
 
           final activite = ActiviteJour(jour: jour, statut: statutFinal)
             ..staff.target = staff;

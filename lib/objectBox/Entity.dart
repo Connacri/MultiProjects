@@ -1,8 +1,9 @@
 import 'dart:convert';
 
 import 'package:objectbox/objectbox.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../objectbox.g.dart'; // Généré par build_runner
+import '../objectbox.g.dart';
 
 @Entity()
 class Usero {
@@ -2136,5 +2137,79 @@ extension ConversationQueries on Box<Conversation> {
     final result = query.findFirst();
     query.close();
     return result;
+  }
+}
+
+//////////////////////TINDER///////////////////////////
+
+@Entity()
+class SwipeQueue {
+  @Id()
+  int id = 0;
+
+  /// Supabase user id swipé
+  @Index()
+  final String swipedId;
+
+  /// 0 = pass, 1 = like, 2 = superlike
+  final int action;
+
+  /// 0 = pending, 1 = synced, 2 = failed
+  int status;
+
+  /// nombre de tentatives réseau
+  int attemptCount;
+
+  /// horodatage réel
+  @Property(type: PropertyType.date)
+  final DateTime createdAt;
+
+  SwipeQueue({
+    required this.swipedId,
+    required this.action,
+    DateTime? createdAt,
+    this.attemptCount = 0,
+    this.status = 0,
+  }) : createdAt = createdAt ?? DateTime.now();
+}
+
+// features/matches/domain/entities/match.dart
+
+class Match {
+  final String id;
+  final String otherUserId;
+  final String otherUserName;
+  final String? otherUserPhoto;
+  final DateTime matchedAt;
+  final DateTime? lastMessageAt;
+  final String? lastMessagePreview;
+
+  Match({
+    required this.id,
+    required this.otherUserId,
+    required this.otherUserName,
+    this.otherUserPhoto,
+    required this.matchedAt,
+    this.lastMessageAt,
+    this.lastMessagePreview,
+  });
+
+  factory Match.fromMap(Map<String, dynamic> map) {
+    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
+    final otherId =
+        map['user1_id'] == currentUserId ? map['user2_id'] : map['user1_id'];
+    final otherProfile = map['other_profile'] as Map<String, dynamic>?;
+
+    return Match(
+      id: map['id'],
+      otherUserId: otherId,
+      otherUserName: otherProfile?['full_name'] ?? 'Inconnu',
+      otherUserPhoto: (otherProfile?['photos'] as List?)?.firstOrNull,
+      matchedAt: DateTime.parse(map['matched_at']),
+      lastMessageAt: map['last_message_at'] != null
+          ? DateTime.parse(map['last_message_at'])
+          : null,
+      lastMessagePreview: map['last_message_preview'],
+    );
   }
 }

@@ -1066,7 +1066,7 @@ String _getObservationWithTimeOff(dynamic staff, int month, int year) {
             t.motif?.trim().isNotEmpty == true ? t.motif!.trim() : 'Congé';
         final debut = DateFormat('dd/MM').format(t.debut);
         final fin = DateFormat('dd/MM').format(t.fin);
-        return '$motif ($debut → $fin)';
+        return '$motif ($debut - $fin)';
       }).join(' • ');
 
       parts.add(congesStr);

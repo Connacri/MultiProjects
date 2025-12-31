@@ -2477,6 +2477,53 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(86, 7142830071251728522),
+    name: 'SwipeQueue',
+    lastPropertyId: const obx_int.IdUid(7, 3243909471887999732),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 8976692773219225816),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 4774728254492443856),
+        name: 'action',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 8994184676599511222),
+        name: 'createdAt',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 371944036295111510),
+        name: 'attemptCount',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 8447726733389834319),
+        name: 'status',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 3243909471887999732),
+        name: 'swipedId',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(163, 723282311552426138),
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -2517,8 +2564,8 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(85, 7206661662610396735),
-    lastIndexId: const obx_int.IdUid(161, 7467537001383645146),
+    lastEntityId: const obx_int.IdUid(86, 7142830071251728522),
+    lastIndexId: const obx_int.IdUid(163, 723282311552426138),
     lastRelationId: const obx_int.IdUid(11, 6355601734277678121),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -2611,6 +2658,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       8664461267398711495,
       780187164246969954,
       7626901822469274824,
+      5863762058204360024,
     ],
     retiredPropertyUids: const [
       8976483595831028651,
@@ -3151,6 +3199,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
       8328591940079026757,
       5573874058535276651,
       1780196528697690791,
+      5698251347293826812,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -6315,6 +6364,64 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
+    SwipeQueue: obx_int.EntityDefinition<SwipeQueue>(
+      model: _entities[33],
+      toOneRelations: (SwipeQueue object) => [],
+      toManyRelations: (SwipeQueue object) => {},
+      getId: (SwipeQueue object) => object.id,
+      setId: (SwipeQueue object, int id) {
+        object.id = id;
+      },
+      objectToFB: (SwipeQueue object, fb.Builder fbb) {
+        final swipedIdOffset = fbb.writeString(object.swipedId);
+        fbb.startTable(8);
+        fbb.addInt64(0, object.id);
+        fbb.addInt64(2, object.action);
+        fbb.addInt64(3, object.createdAt.millisecondsSinceEpoch);
+        fbb.addInt64(4, object.attemptCount);
+        fbb.addInt64(5, object.status);
+        fbb.addOffset(6, swipedIdOffset);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final swipedIdParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 16, '');
+        final actionParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          8,
+          0,
+        );
+        final createdAtParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 10, 0),
+        );
+        final attemptCountParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          12,
+          0,
+        );
+        final statusParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          14,
+          0,
+        );
+        final object = SwipeQueue(
+          swipedId: swipedIdParam,
+          action: actionParam,
+          createdAt: createdAtParam,
+          attemptCount: attemptCountParam,
+          status: statusParam,
+        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+
+        return object;
+      },
+    ),
   };
 
   return obx_int.ModelDefinition(model, bindings);
@@ -8130,5 +8237,38 @@ class Usero_ {
   /// See [Usero.crud].
   static final crud = obx.QueryRelationToOne<Usero, Crud>(
     _entities[32].properties[10],
+  );
+}
+
+/// [SwipeQueue] entity fields to define ObjectBox queries.
+class SwipeQueue_ {
+  /// See [SwipeQueue.id].
+  static final id = obx.QueryIntegerProperty<SwipeQueue>(
+    _entities[33].properties[0],
+  );
+
+  /// See [SwipeQueue.action].
+  static final action = obx.QueryIntegerProperty<SwipeQueue>(
+    _entities[33].properties[1],
+  );
+
+  /// See [SwipeQueue.createdAt].
+  static final createdAt = obx.QueryDateProperty<SwipeQueue>(
+    _entities[33].properties[2],
+  );
+
+  /// See [SwipeQueue.attemptCount].
+  static final attemptCount = obx.QueryIntegerProperty<SwipeQueue>(
+    _entities[33].properties[3],
+  );
+
+  /// See [SwipeQueue.status].
+  static final status = obx.QueryIntegerProperty<SwipeQueue>(
+    _entities[33].properties[4],
+  );
+
+  /// See [SwipeQueue.swipedId].
+  static final swipedId = obx.QueryStringProperty<SwipeQueue>(
+    _entities[33].properties[5],
   );
 }

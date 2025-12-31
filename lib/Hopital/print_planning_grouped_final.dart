@@ -241,7 +241,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    'G : Garde       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+                    'G : Garde       RE : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
                     style: baseStyle),
                 pw.Text(
                     'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
@@ -606,7 +606,7 @@ pw.Widget _buildPageFooterContent(pw.TextStyle baseStyle) {
     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
     children: [
       pw.Text(
-          'G : Garde       Ré : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+          'G : Garde       RE : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
           style: baseStyle),
       pw.Text(
           'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',

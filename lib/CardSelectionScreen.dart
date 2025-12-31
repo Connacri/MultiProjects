@@ -3,15 +3,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../Kids/main.dart';
-import '../checkit/HomePage.dart';
-import '../dependences/calendar_timeline/home.dart';
-import '../objectBox/MyApp.dart';
-import '../objectBox/classeObjectBox.dart';
-import '../objectBox/pages/invoice/FacturationPageUI.dart';
-import '../objectBox/tests/timelines/Tinder-clone-main/Tinder-clone-main/lib/main.dart';
-import '../objectBox/tests/timelines/mistral/claude.dart';
-import 'TableauStaff.dart';
+import 'Hopital/TableauStaff.dart';
+import 'Kids/main.dart';
+import 'checkit/HomePage.dart';
+import 'dependences/calendar_timeline/home.dart';
+import 'objectBox/MyApp.dart';
+import 'objectBox/classeObjectBox.dart';
+import 'objectBox/pages/invoice/FacturationPageUI.dart';
+import 'objectBox/tests/timelines/Tinder-clone-main/Tinder-clone-main/lib/main.dart';
+import 'objectBox/tests/timelines/mistral/claude.dart';
 
 // 1. Modèle de données pour les cartes
 class PageCardData {
