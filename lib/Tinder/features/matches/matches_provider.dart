@@ -1,179 +1,149 @@
-// lib/Tinder/features/discovery/discovery_provider.dart
+// lib/Tinder/features/matches/matches_provider.dart
 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/data/repositories/discovery_repository_impl.dart';
+import '../../../../../objectBox/Entity.dart';
 import '../../core/data/repositories/matches_repository_impl.dart';
-import '../../core/swipe_action_enum.dart';
-import '../profile/profile.dart';
 
-class DiscoveryProvider extends ChangeNotifier {
-  final DiscoveryRepositoryImpl repo = DiscoveryRepositoryImpl();
+class MatchesProvider extends ChangeNotifier {
+  final MatchesRepositoryImpl repo = MatchesRepositoryImpl();
 
   // ✅ État privé
-  List<Profile> _profiles = [];
+  List<Match> _matches = [];
   bool _loading = true;
   String? _error;
-  StreamSubscription? _sub;
+  int _unreadCount = 0;
+  StreamSubscription? _subscription;
 
   // ✅ Getters publics
-  List<Profile> get profiles => List.unmodifiable(_profiles);
+  List<Match> get matches => List.unmodifiable(_matches);
+
   bool get loading => _loading;
+
   String? get error => _error;
-  bool get hasProfiles => _profiles.isNotEmpty;
 
-  /// ✅ AMÉLIORATION: Initialisation avec gestion d'erreur
-  Future<void> init() async {
+  int get unreadCount => _unreadCount;
+
+  bool get hasMatches => _matches.isNotEmpty;
+
+  MatchesProvider() {
+    _loadMatches();
+    _loadUnreadCount();
+  }
+
+  /// ✅ AMÉLIORATION: Chargement avec gestion d'erreur
+  void _loadMatches() {
+    _subscription?.cancel();
+
+    _subscription = repo.getMatchesStream().listen(
+      (newMatches) {
+        _matches = newMatches;
+        _loading = false;
+        _error = null;
+        print('✅ [MatchesProvider] ${newMatches.length} matches reçus');
+        notifyListeners();
+      },
+      onError: (e) {
+        _error = _getErrorMessage(e);
+        _loading = false;
+        print('❌ [MatchesProvider] Erreur stream: $e');
+        notifyListeners();
+      },
+    );
+  }
+
+  /// ✅ NOUVEAU: Charger le nombre de matches non lus
+  Future<void> _loadUnreadCount() async {
     try {
-      _loading = true;
-      _error = null;
+      _unreadCount = await repo.getUnreadCount();
       notifyListeners();
-
-      final userId = Supabase.instance.client.auth.currentUser?.id;
-
-      if (userId == null) {
-        throw Exception('Utilisateur non authentifié');
-      }
-
-      // Récupération des coordonnées utilisateur
-      final profile = await Supabase.instance.client
-          .from('profiles')
-          .select('latitude, longitude')
-          .eq('id', userId)
-          .single()
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () => throw TimeoutException('Timeout coordonnées'),
-          );
-
-      final lat = (profile['latitude'] as num?)?.toDouble() ?? 48.8566;
-      final lon = (profile['longitude'] as num?)?.toDouble() ?? 2.3522;
-
-      print('📍 [DiscoveryProvider] Position: ($lat, $lon)');
-
-      // Annuler l'ancien stream
-      await _sub?.cancel();
-
-      // ✅ Écoute du stream de recommandations
-      _sub = repo
-          .getRecommendations(
-        userId: userId,
-        userLat: lat,
-        userLon: lon,
-      )
-          .listen(
-        (data) {
-          _profiles = data;
-          _loading = false;
-          _error = null;
-          print('✅ [DiscoveryProvider] ${data.length} profils reçus');
-          notifyListeners();
-        },
-        onError: (e) {
-          _error = _getErrorMessage(e);
-          _loading = false;
-          print('❌ [DiscoveryProvider] Erreur stream: $e');
-          notifyListeners();
-        },
-      );
-
-      // ✅ Synchroniser les swipes en attente
-      await repo.syncSwipes();
-    } catch (e, stackTrace) {
-      _error = _getErrorMessage(e);
-      _loading = false;
-      print('❌ [DiscoveryProvider] Erreur init: $e');
-      print(stackTrace);
-      notifyListeners();
+    } catch (e) {
+      print('❌ [MatchesProvider] Erreur count unread: $e');
     }
   }
 
-  /// ✅ AMÉLIORATION: Swipe avec animation optimiste + rollback
-  Future<void> onSwipe(Profile profile, SwipeAction action) async {
-    // ✅ Optimistic update: retirer le profil immédiatement
-    final index = _profiles.indexWhere((p) => p.id == profile.id);
-
-    if (index == -1) {
-      print('⚠️ [DiscoveryProvider] Profil déjà retiré');
-      return;
+  /// ✅ NOUVEAU: Marquer un match comme lu
+  Future<void> markAsRead(String matchId) async {
+    try {
+      await repo.markMatchAsRead(matchId);
+      await _loadUnreadCount(); // Rafraîchir le compteur
+    } catch (e) {
+      print('❌ [MatchesProvider] Erreur mark as read: $e');
     }
+  }
 
-    final removedProfile = _profiles[index];
-    _profiles = List.from(_profiles)..removeAt(index);
+  /// ✅ NOUVEAU: Supprimer un match
+  Future<bool> deleteMatch(String matchId) async {
+    try {
+      // ✅ Optimistic update
+      final index = _matches.indexWhere((m) => m.id == matchId);
+      if (index == -1) return false;
+
+      final removedMatch = _matches[index];
+      _matches = List.from(_matches)..removeAt(index);
+      notifyListeners();
+
+      // ✅ Suppression API
+      await repo.deleteMatch(matchId);
+      print('✅ [MatchesProvider] Match supprimé');
+      return true;
+    } catch (e) {
+      print('❌ [MatchesProvider] Erreur suppression: $e');
+
+      // ✅ Rollback si échec
+      _loading = true;
+      notifyListeners();
+      _loadMatches();
+
+      return false;
+    }
+  }
+
+  /// ✅ NOUVEAU: Rafraîchir manuellement
+  Future<void> refresh() async {
+    _loading = true;
+    _error = null;
     notifyListeners();
 
-    try {
-      // ✅ Envoi du swipe
-      await repo.swipe(
-        swipedId: profile.id,
-        action: action,
-      );
-
-      print(
-          '✅ [DiscoveryProvider] Swipe ${action.name} sur ${profile.fullName}');
-
-      // ✅ Vérifier si c'est un match (si like ou superlike)
-      if (action == SwipeAction.like || action == SwipeAction.superlike) {
-        await _checkForMatch(profile.id);
-      }
-    } catch (e) {
-      // ✅ Rollback: remettre le profil en cas d'erreur critique
-      print('❌ [DiscoveryProvider] Erreur swipe, rollback: $e');
-
-      _profiles = List.from(_profiles)..insert(index, removedProfile);
-      _error = _getErrorMessage(e);
-      notifyListeners();
-    }
+    _loadMatches();
+    await _loadUnreadCount();
   }
 
-  /// ✅ NOUVEAU: Vérifier si un match s'est créé
-  Future<void> _checkForMatch(String swipedId) async {
-    try {
-      // ✅ Utiliser le repository pour la logique de match
-      final matchesRepo = MatchesRepositoryImpl();
-      final matchId = await matchesRepo.checkForMatch(swipedId);
+  /// ✅ NOUVEAU: Filtrer les matches par recherche
+  List<Match> searchMatches(String query) {
+    if (query.isEmpty) return _matches;
 
-      if (matchId != null) {
-        print('🎉 [DiscoveryProvider] MATCH créé ! ID: $matchId');
-        // TODO: Déclencher animation match + notification
-        // TODO: Navigator vers MatchScreen avec animation
-      }
-    } catch (e) {
-      print('⚠️ [DiscoveryProvider] Erreur check match: $e');
-    }
+    final lowerQuery = query.toLowerCase();
+
+    return _matches.where((match) {
+      return match.otherUserName.toLowerCase().contains(lowerQuery) ||
+          (match.lastMessagePreview?.toLowerCase().contains(lowerQuery) ??
+              false);
+    }).toList();
   }
 
-  /// ✅ NOUVEAU: Recharger les profils
-  Future<void> refresh() async {
-    await init();
-  }
-
-  /// ✅ AMÉLIORATION: Messages d'erreur utilisateur-friendly
+  /// ✅ Messages d'erreur utilisateur-friendly
   String _getErrorMessage(dynamic error) {
     final errorStr = error.toString().toLowerCase();
 
     if (errorStr.contains('timeout')) {
-      return 'La connexion est trop lente. Vérifiez votre réseau.';
+      return 'La connexion est trop lente';
     }
-    if (errorStr.contains('network') || errorStr.contains('socket')) {
-      return 'Pas de connexion Internet. Vérifiez votre Wi-Fi ou vos données mobiles.';
+    if (errorStr.contains('network')) {
+      return 'Pas de connexion Internet';
     }
     if (errorStr.contains('auth')) {
-      return 'Session expirée. Veuillez vous reconnecter.';
-    }
-    if (errorStr.contains('permission')) {
-      return 'Permissions insuffisantes. Contactez le support.';
+      return 'Session expirée';
     }
 
-    return 'Une erreur est survenue. Réessayez plus tard.';
+    return 'Une erreur est survenue';
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _subscription?.cancel();
     super.dispose();
   }
 }
