@@ -1,15 +1,22 @@
-// features/discovery/domain/repositories/discovery_repository.dart
+// lib/Tinder/core/data/repositories/discovery_repository.dart
 
 import '../../../features/profile/profile.dart';
+import '../../swipe_action_enum.dart';
 
 abstract class DiscoveryRepository {
+  /// Enregistre une action de swipe
+  ///
+  /// - Si online: envoi direct à Supabase
+  /// - Si offline: mise en queue ObjectBox
   Future<void> swipe({
     required String swipedId,
-    required int action, // 0=pass, 1=like, 2=superlike
+    required SwipeAction action,
   });
 
+  /// Synchronise les swipes en attente avec Supabase
   Future<void> syncSwipes();
 
+  /// Stream des profils recommandés basé sur la géolocalisation
   Stream<List<Profile>> getRecommendations({
     required String userId,
     required double userLat,

@@ -1,10 +1,10 @@
+// lib/Tinder/bottom_nav.dart
+
 import 'package:flutter/material.dart';
 
-import 'chat.dart';
-import 'features/profile/profile.dart';
 import 'features/discovery/discovery_screen.dart';
 import 'features/matches/matches_screen.dart';
-import 'home.dart';
+import 'features/profile/profile.dart';
 import 'location.dart';
 import 'star.dart';
 
@@ -16,42 +16,58 @@ class BottomNav extends StatefulWidget {
 }
 
 class _BottomNavState extends State<BottomNav> {
-  _screens = [
-  const DiscoveryScreen(),
-  const LocationScreen(),
-  const Placeholder(), // Star
-  const MatchesScreen(),   // ← remplace Chat par Matches realtime
-  const ProfileScreen(),
-  ];
   int _currentIndex = 0;
+
+  // ✅ CORRECTION: Déclaration correcte de la liste d'écrans
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ✅ Initialisation dans initState
+    _screens = [
+      const DiscoveryScreen(),
+      const Location(),
+      const Star(), // Placeholder pour Star
+      const MatchesScreen(),
+      Profile(
+          id: '',
+          fullName: '',
+          age: null,
+          photos: [],
+          city: '',
+          distanceKm: null),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _appBar(),
+      appBar: _buildAppBar(),
       bottomNavigationBar: NavigationBar(
         destinations: [
-          navDest(
+          _buildNavDestination(
             icon: Icons.home_outlined,
             selectedIcon: Icons.home,
             label: 'Home',
           ),
-          navDest(
+          _buildNavDestination(
             icon: Icons.location_on_outlined,
             selectedIcon: Icons.location_on_sharp,
             label: 'Location',
           ),
-          navDest(
-            icon: Icons.star_rounded,
-            selectedIcon: Icons.star_rounded,
+          // ✅ AMÉLIORATION: Custom widget pour l'icône centrale
+          const NavigationDestination(
+            icon: _StarIcon(),
             label: '',
           ),
-          navDest(
+          _buildNavDestination(
             icon: Icons.chat_outlined,
             selectedIcon: Icons.chat_rounded,
             label: 'Chat',
           ),
-          navDest(
+          _buildNavDestination(
             icon: Icons.person_outline,
             selectedIcon: Icons.person,
             label: 'Profil',
@@ -64,62 +80,97 @@ class _BottomNavState extends State<BottomNav> {
           });
         },
       ),
-      body: _screens[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
     );
   }
 
-  navDest(
-      {required IconData selectedIcon,
-      required IconData icon,
-      required String label}) {
-    return label == ''
-        ? Image.asset('assets/star.png')
-        : NavigationDestination(
-            icon: Icon(
-              icon,
-              color: Colors.grey.shade800,
-            ),
-            label: label,
-            selectedIcon: Icon(
-              selectedIcon,
-              color: Colors.white,
-            ),
-          );
+  /// ✅ AMÉLIORATION: Builder pour les destinations
+  NavigationDestination _buildNavDestination({
+    required IconData icon,
+    required IconData selectedIcon,
+    required String label,
+  }) {
+    return NavigationDestination(
+      icon: Icon(
+        icon,
+        color: Colors.grey.shade800,
+      ),
+      label: label,
+      selectedIcon: Icon(
+        selectedIcon,
+        color: Colors.white,
+      ),
+    );
   }
 
-  AppBar _appBar() {
+  /// ✅ AMÉLIORATION: AppBar configurée
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: const Text('목이길어슬픈기린님의 새로운 스팟'),
-      leading: Image.asset('assets/location.png'),
+      leading: Image.asset(
+        'assets/location.png',
+        errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.location_on),
+      ),
       actions: [
+        // ✅ Badge étoiles
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(1000.0),
             color: Colors.black,
           ),
-          child: const Padding(
-            padding: EdgeInsets.all(5.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.star_rate_rounded,
-                  color: Color(0xffff2782),
-                ),
-                Text('323,233'),
-              ],
-            ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 6,
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.star_rate_rounded,
+                color: Color(0xffff2782),
+                size: 20,
+              ),
+              SizedBox(width: 4),
+              Text(
+                '323,233',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
           ),
         ),
+
+        // ✅ Badge notifications
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 5.0),
+          margin: const EdgeInsets.symmetric(horizontal: 8),
           child: const Badge(
-            child: Icon(
-              Icons.notifications_outlined,
-            ),
+            child: Icon(Icons.notifications_outlined),
           ),
-        )
+        ),
       ],
+    );
+  }
+}
+
+/// ✅ Widget personnalisé pour l'icône Star
+class _StarIcon extends StatelessWidget {
+  const _StarIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/star.png',
+      width: 24,
+      height: 24,
+      errorBuilder: (context, error, stackTrace) {
+        return const Icon(
+          Icons.star_rounded,
+          color: Colors.amber,
+        );
+      },
     );
   }
 }
