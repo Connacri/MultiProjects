@@ -3,7 +3,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/profile.dart';
+import 'profile.dart';
 
 class ProfileCard extends StatelessWidget {
   final Profile profile;

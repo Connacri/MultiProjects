@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'chat.dart';
-import 'features/discovery/domain/entities/profile.dart';
-import 'features/discovery/presentation/discovery_screen.dart';
+import 'features/profile/profile.dart';
+import 'features/discovery/discovery_screen.dart';
 import 'features/matches/matches_screen.dart';
 import 'home.dart';
 import 'location.dart';

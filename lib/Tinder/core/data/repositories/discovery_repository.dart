@@ -1,6 +1,6 @@
 // features/discovery/domain/repositories/discovery_repository.dart
 
-import '../../domain/entities/profile.dart';
+import '../../../features/profile/profile.dart';
 
 abstract class DiscoveryRepository {
   Future<void> swipe({

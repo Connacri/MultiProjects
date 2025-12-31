@@ -3,8 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectbox.g.dart';
-import '../../../../core/objectbox.dart';
-import '../../domain/entities/profile.dart';
+import '../../../features/profile/profile.dart';
+import '../../objectbox.dart';
 import 'discovery_repository.dart';
 
 class DiscoveryRepositoryImpl implements DiscoveryRepository {

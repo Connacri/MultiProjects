@@ -2,8 +2,6 @@
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../domain/entities/match.dart';
-
 class MatchesRepositoryImpl {
   final _supabase = Supabase.instance.client;
 

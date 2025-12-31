@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../data/repositories/discovery_repository_impl.dart';
-import '../../domain/entities/profile.dart';
+import '../../core/data/repositories/discovery_repository_impl.dart';
+import '../profile/profile.dart';
 
 class DiscoveryProvider extends ChangeNotifier {
   final DiscoveryRepositoryImpl repo = DiscoveryRepositoryImpl();

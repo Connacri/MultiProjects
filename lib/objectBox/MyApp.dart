@@ -31,7 +31,7 @@ import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
 import '../MyListLotties.dart';
 import '../Tinder/features/auth/auth_provider.dart';
-import '../Tinder/features/discovery/presentation/provider/discovery_provider.dart';
+import '../Tinder/features/discovery/discovery_provider.dart';
 import '../Tinder/features/matches/matches_provider.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';

@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../discovery/data/repositories/matches_repository_impl.dart';
+import '../../core/data/repositories/matches_repository_impl.dart';
 
 class MatchesProvider extends ChangeNotifier {
   final MatchesRepositoryImpl repo = MatchesRepositoryImpl();
