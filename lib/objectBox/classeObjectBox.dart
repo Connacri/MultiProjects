@@ -52,6 +52,11 @@ class ObjectBox {
   late final Box<MessageSyncQueue> messageSyncQueueBox;
   late final Box<MessageSearchIndex> messageSearchIndexBox;
 
+  // ✅ TINDER
+  late final Box<SwipeQueue> swipeQueue;
+  late final Box<Match> match;
+  late final Box<Profile> profile;
+
   Admin? admin; // Admin optionnel
 
   static final ObjectBox _singleton = ObjectBox._internal();
@@ -106,6 +111,11 @@ class ObjectBox {
       conversationParticipantBox = Box<ConversationParticipant>(store);
       messageSyncQueueBox = Box<MessageSyncQueue>(store);
       messageSearchIndexBox = Box<MessageSearchIndex>(store);
+
+      // ✅ TINDER
+      swipeQueue = Box<SwipeQueue>(store);
+      match = Box<Match>(store);
+      profile = Box<Profile>(store);
 
       // ✅ CORRECTION 2: Initialisez Admin correctement
       await _initializeAdmin();

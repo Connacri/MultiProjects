@@ -9,16 +9,15 @@ import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../Tinder/main.dart';
 import '../../checkit/HomePage.dart';
 import '../../checkit/home.dart';
 import '../../checkit/providerF.dart';
 import '../tests/HomeScreenv3.dart';
 import '../tests/hotelScreen.dart';
 import '../tests/timelines/HotelRoomTimelineScreen.dart' as t;
-import '../tests/timelines/Tinder-clone-main/Tinder-clone-main/lib/main.dart';
 import '../tests/timelines/mistral/claude.dart';
 import '../tests/timelines/mistral/mistralAncien.dart';
-
 
 class MyApp_image_picker extends StatelessWidget {
   const MyApp_image_picker({super.key});
@@ -85,7 +84,8 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _onImageButtonPressed(ImageSource source, {
+  Future<void> _onImageButtonPressed(
+    ImageSource source, {
     required BuildContext context,
     bool isMultiImage = false,
     bool isMedia = false,
@@ -104,17 +104,17 @@ class _MyHomePageState extends State<MyHomePage> {
           try {
             final List<XFile> pickedFileList = isMedia
                 ? await _picker.pickMultipleMedia(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-              imageQuality: quality,
-              limit: limit,
-            )
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    imageQuality: quality,
+                    limit: limit,
+                  )
                 : await _picker.pickMultiImage(
-              maxWidth: maxWidth,
-              maxHeight: maxHeight,
-              imageQuality: quality,
-              limit: limit,
-            );
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    imageQuality: quality,
+                    limit: limit,
+                  );
             setState(() {
               _mediaFileList = pickedFileList;
             });
@@ -232,16 +232,16 @@ class _MyHomePageState extends State<MyHomePage> {
               child: kIsWeb
                   ? Image.network(_mediaFileList![index].path)
                   : (mime == null || mime.startsWith('image/')
-                  ? Image.file(
-                File(_mediaFileList![index].path),
-                errorBuilder: (BuildContext context, Object error,
-                    StackTrace? stackTrace) {
-                  return const Center(
-                      child:
-                      Text('This image type is not supported'));
-                },
-              )
-                  : _buildInlineVideoPlayer(index)),
+                      ? Image.file(
+                          File(_mediaFileList![index].path),
+                          errorBuilder: (BuildContext context, Object error,
+                              StackTrace? stackTrace) {
+                            return const Center(
+                                child:
+                                    Text('This image type is not supported'));
+                          },
+                        )
+                      : _buildInlineVideoPlayer(index)),
             );
           },
           itemCount: _mediaFileList!.length,
@@ -262,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildInlineVideoPlayer(int index) {
     final VideoPlayerController controller =
-    VideoPlayerController.file(File(_mediaFileList![index].path));
+        VideoPlayerController.file(File(_mediaFileList![index].path));
     const double volume = kIsWeb ? 0.0 : 1.0;
     controller.setVolume(volume);
     controller.initialize();
@@ -312,32 +312,32 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: !kIsWeb && defaultTargetPlatform == TargetPlatform.android
             ? FutureBuilder<void>(
-          future: retrieveLostData(),
-          builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.none:
-              case ConnectionState.waiting:
-                return const Text(
-                  'You have not yet picked an image.',
-                  textAlign: TextAlign.center,
-                );
-              case ConnectionState.done:
-                return _handlePreview();
-              case ConnectionState.active:
-                if (snapshot.hasError) {
-                  return Text(
-                    'Pick image/video error: ${snapshot.error}}',
-                    textAlign: TextAlign.center,
-                  );
-                } else {
-                  return const Text(
-                    'You have not yet picked an image.',
-                    textAlign: TextAlign.center,
-                  );
-                }
-            }
-          },
-        )
+                future: retrieveLostData(),
+                builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+                  switch (snapshot.connectionState) {
+                    case ConnectionState.none:
+                    case ConnectionState.waiting:
+                      return const Text(
+                        'You have not yet picked an image.',
+                        textAlign: TextAlign.center,
+                      );
+                    case ConnectionState.done:
+                      return _handlePreview();
+                    case ConnectionState.active:
+                      if (snapshot.hasError) {
+                        return Text(
+                          'Pick image/video error: ${snapshot.error}}',
+                          textAlign: TextAlign.center,
+                        );
+                      } else {
+                        return const Text(
+                          'You have not yet picked an image.',
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                  }
+                },
+              )
             : _handlePreview(),
       ),
       floatingActionButton: Column(
@@ -458,8 +458,8 @@ class _MyHomePageState extends State<MyHomePage> {
     return null;
   }
 
-  Future<void> _displayPickImageDialog(BuildContext context, bool isMulti,
-      OnPickImageCallback onPick) async {
+  Future<void> _displayPickImageDialog(
+      BuildContext context, bool isMulti, OnPickImageCallback onPick) async {
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -471,14 +471,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 TextField(
                   controller: maxWidthController,
                   keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       hintText: 'Enter maxWidth if desired'),
                 ),
                 TextField(
                   controller: maxHeightController,
                   keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                      const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
                       hintText: 'Enter maxHeight if desired'),
                 ),
@@ -587,8 +587,7 @@ class ReservationNavigationButtons extends StatelessWidget {
   const ReservationNavigationButtons({Key? key, required this.roomNumbers})
       : super(key: key);
 
-  List<Reservation> get sampleReservations =>
-      [
+  List<Reservation> get sampleReservations => [
         Reservation(
           clientName: "John Doe",
           roomName: "101",
@@ -846,13 +845,12 @@ class ReservationNavigationButtons extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) =>
-                          HotelReservationChart(
-                            fromDate: DateTime(2025, 1, 1),
-                            toDate: DateTime(2025, 12, 31),
-                            roomNames: roomNumbers,
-                            reservations: sampleReservations,
-                          ),
+                      builder: (ctx) => HotelReservationChart(
+                        fromDate: DateTime(2025, 1, 1),
+                        toDate: DateTime(2025, 12, 31),
+                        roomNames: roomNumbers,
+                        reservations: sampleReservations,
+                      ),
                     ));
                   },
                   child: Text('Hotel'),
@@ -889,7 +887,7 @@ class ReservationNavigationButtons extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12)),
                     ),
                     mouseCursor:
-                    WidgetStateProperty.all(SystemMouseCursors.click),
+                        WidgetStateProperty.all(SystemMouseCursors.click),
                     visualDensity: VisualDensity.adaptivePlatformDensity,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     animationDuration: Duration(milliseconds: 300),
@@ -919,9 +917,9 @@ class ReservationNavigationButtons extends StatelessWidget {
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
-                    WidgetStateProperty.all<Color>(Colors.blue),
+                        WidgetStateProperty.all<Color>(Colors.blue),
                     foregroundColor:
-                    WidgetStateProperty.all<Color>(Colors.white),
+                        WidgetStateProperty.all<Color>(Colors.white),
                   ),
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
@@ -933,15 +931,14 @@ class ReservationNavigationButtons extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) =>
-                          CalendarTableWithDragging(
-                            fromDate: DateTime.now(),
-                            toDate: DateTime.now().add(Duration(days: 30)),
-                            // roomNames: roomNumbers,
-                            roomNames:
+                      builder: (ctx) => CalendarTableWithDragging(
+                        fromDate: DateTime.now(),
+                        toDate: DateTime.now().add(Duration(days: 30)),
+                        // roomNames: roomNumbers,
+                        roomNames:
                             List.generate(30, (index) => 'Room ${index + 1}'),
-                            reservations: sampleReservations,
-                          ),
+                        reservations: sampleReservations,
+                      ),
                     ));
                   },
                   child: Text('Hotel Fiable'),
@@ -952,13 +949,12 @@ class ReservationNavigationButtons extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
-                    WidgetStateProperty.all<Color>(Colors.blue),
+                        WidgetStateProperty.all<Color>(Colors.blue),
                     foregroundColor:
-                    WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
                   ),
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
@@ -969,9 +965,9 @@ class ReservationNavigationButtons extends StatelessWidget {
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
-                    WidgetStateProperty.all<Color>(Colors.blue),
+                        WidgetStateProperty.all<Color>(Colors.blue),
                     foregroundColor:
-                    WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
                   ),
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
@@ -982,9 +978,9 @@ class ReservationNavigationButtons extends StatelessWidget {
                 ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
-                    WidgetStateProperty.all<Color>(Colors.blue),
+                        WidgetStateProperty.all<Color>(Colors.blue),
                     foregroundColor:
-                    WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
                   ),
                   onPressed: () {
                     Navigator.of(context).push(MaterialPageRoute(
@@ -997,9 +993,9 @@ class ReservationNavigationButtons extends StatelessWidget {
                     ElevatedButton(
                       style: ButtonStyle(
                         backgroundColor:
-                        WidgetStateProperty.all<Color>(Colors.blue),
+                            WidgetStateProperty.all<Color>(Colors.blue),
                         foregroundColor:
-                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                            WidgetStateProperty.all<Color>(Colors.yellowAccent),
                       ),
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(
@@ -1010,9 +1006,9 @@ class ReservationNavigationButtons extends StatelessWidget {
                     ElevatedButton(
                       style: ButtonStyle(
                         backgroundColor:
-                        WidgetStateProperty.all<Color>(Colors.blue),
+                            WidgetStateProperty.all<Color>(Colors.blue),
                         foregroundColor:
-                        WidgetStateProperty.all<Color>(Colors.yellowAccent),
+                            WidgetStateProperty.all<Color>(Colors.yellowAccent),
                       ),
                       onPressed: () {
                         Navigator.of(context).push(MaterialPageRoute(
@@ -1129,7 +1125,7 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
 
   void _validatePhoneNumber(String value) {
     final provider =
-    Provider.of<SignalementProviderSupabase>(context, listen: false);
+        Provider.of<SignalementProviderSupabase>(context, listen: false);
     setState(() {
       if (value.isEmpty) {
         _isValid = false;
@@ -1158,47 +1154,47 @@ class _AnimatedTextFieldState extends State<AnimatedTextField>
             controller: widget.controller,
             decoration: widget.isNumberPhone
                 ? InputDecoration(
-              labelText: widget.labelText,
-              prefixIcon: widget.controller.text.isNotEmpty
-                  ? _isValid
-                  ? Icon(Icons.check_circle, color: Colors.green)
-                  : Icon(Icons.error, color: Colors.red)
-                  : null,
-              suffixIcon: widget.controller.text.isNotEmpty
-                  ? Transform.scale(
-                scale: 0.7,
-                child: IconButton(
-                  icon: Icon(Icons.close),
-                  color: Colors.red,
-                  onPressed: () {
-                    FocusScope.of(context)
-                        .unfocus(); // Enlève le fo
-                    setState(() {
-                      widget.controller.clear();
-                    });
-                    if (widget.onTextCleared != null) {
-                      widget.onTextCleared!();
-                    }
-                  },
-                ),
-              )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              contentPadding: EdgeInsets.all(8),
-            )
+                    labelText: widget.labelText,
+                    prefixIcon: widget.controller.text.isNotEmpty
+                        ? _isValid
+                            ? Icon(Icons.check_circle, color: Colors.green)
+                            : Icon(Icons.error, color: Colors.red)
+                        : null,
+                    suffixIcon: widget.controller.text.isNotEmpty
+                        ? Transform.scale(
+                            scale: 0.7,
+                            child: IconButton(
+                              icon: Icon(Icons.close),
+                              color: Colors.red,
+                              onPressed: () {
+                                FocusScope.of(context)
+                                    .unfocus(); // Enlève le fo
+                                setState(() {
+                                  widget.controller.clear();
+                                });
+                                if (widget.onTextCleared != null) {
+                                  widget.onTextCleared!();
+                                }
+                              },
+                            ),
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    contentPadding: EdgeInsets.all(8),
+                  )
                 : InputDecoration(
-              labelText: widget.labelText,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              contentPadding: EdgeInsets.all(8),
-            ),
+                    labelText: widget.labelText,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    contentPadding: EdgeInsets.all(8),
+                  ),
             style: TextStyle(
               fontSize: 25, // Agrandir le texte ici
             ),
@@ -1281,7 +1277,7 @@ class _AnimatedLongTextFieldState extends State<AnimatedLongTextField>
 
   void _validatePhoneNumber(String value) {
     final provider =
-    Provider.of<SignalementProviderSupabase>(context, listen: false);
+        Provider.of<SignalementProviderSupabase>(context, listen: false);
     setState(() {
       if (value.isEmpty) {
         _isValid = false;
@@ -1328,7 +1324,7 @@ class _AnimatedLongTextFieldState extends State<AnimatedLongTextField>
         minLines: 5,
         // pour afficher directement plusieurs lignes
         expands:
-        false, // false pour ne pas forcer à remplir tout l'espace parent
+            false, // false pour ne pas forcer à remplir tout l'espace parent
       ),
     );
   }
