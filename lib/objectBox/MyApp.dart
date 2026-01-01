@@ -111,12 +111,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TinderAuthProvider()),
         ChangeNotifierProvider(create: (_) => DiscoveryProvider()),
         ChangeNotifierProvider(create: (_) => MatchesProvider()),
-        ChangeNotifierProvider.value(
-          value: DiscoveryProvider(),
-        ),
-        ChangeNotifierProvider.value(
-          value: ProfileProvider(),
-        ),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
         // ChangeNotifierProvider(create: (_) => AuthService()),
         // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(
         //   create: (ctx) => ProfileProvider(auth: ctx.read<AuthService>()),
