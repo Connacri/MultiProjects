@@ -53,9 +53,9 @@ class ObjectBox {
   late final Box<MessageSearchIndex> messageSearchIndexBox;
 
   // ✅ TINDER
-  late final Box<SwipeQueue> swipeQueue;
-  late final Box<Match> match;
-  late final Box<Profile> profile;
+  late final Box<SwipeQueue> swipeQueueBox;
+  late final Box<Match> matchBox;
+  late final Box<Profile> profileBox;
 
   Admin? admin; // Admin optionnel
 
@@ -113,9 +113,9 @@ class ObjectBox {
       messageSearchIndexBox = Box<MessageSearchIndex>(store);
 
       // ✅ TINDER
-      swipeQueue = Box<SwipeQueue>(store);
-      match = Box<Match>(store);
-      profile = Box<Profile>(store);
+      swipeQueueBox = Box<SwipeQueue>(store);
+      matchBox = Box<Match>(store);
+      profileBox = Box<Profile>(store);
 
       // ✅ CORRECTION 2: Initialisez Admin correctement
       await _initializeAdmin();

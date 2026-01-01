@@ -5,13 +5,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectbox.g.dart';
-import '../../core/objectbox.dart';
+import '../../../objectBox/classeObjectBox.dart';
 import '../../core/swipe_action_enum.dart';
 import 'discovery_repository.dart';
 
 class DiscoveryRepositoryImpl implements DiscoveryRepository {
   final _supabase = Supabase.instance.client;
-  final _swipeBox = ObjectBox.store.box<SwipeQueue>();
+  final _swipeBox = ObjectBox().swipeQueueBox;
 
   /// ✅ CORRECTION: Utiliser SwipeAction au lieu de int
   @override

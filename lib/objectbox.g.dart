@@ -2480,15 +2480,9 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(86, 7142830071251728522),
     name: 'SwipeQueue',
-    lastPropertyId: const obx_int.IdUid(7, 3243909471887999732),
+    lastPropertyId: const obx_int.IdUid(9, 8737131139823455485),
     flags: 0,
     properties: <obx_int.ModelProperty>[
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(1, 8976692773219225816),
-        name: 'id',
-        type: 6,
-        flags: 1,
-      ),
       obx_int.ModelProperty(
         id: const obx_int.IdUid(3, 4774728254492443856),
         name: 'action',
@@ -2519,6 +2513,124 @@ final _entities = <obx_int.ModelEntity>[
         type: 9,
         flags: 2048,
         indexId: const obx_int.IdUid(163, 723282311552426138),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 8737131139823455485),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(87, 4508439693088705582),
+    name: 'Match',
+    lastPropertyId: const obx_int.IdUid(7, 4406800237696192086),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 4240052135893762881),
+        name: 'localId',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 1784493915828393145),
+        name: 'id',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(164, 4171470931828648801),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 5326742955753564583),
+        name: 'otherUserName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 3007605894174255943),
+        name: 'otherUserPhoto',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 4719544902241924290),
+        name: 'lastMessagePreview',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 3610688696722281751),
+        name: 'lastMessageAt',
+        type: 10,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 4406800237696192086),
+        name: 'matchedAt',
+        type: 10,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(88, 8967072802053838872),
+    name: 'Profile',
+    lastPropertyId: const obx_int.IdUid(8, 3300156872213894396),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 1687972677604562047),
+        name: 'localId',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 3780202613825790115),
+        name: 'id',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(165, 5741744361424423530),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 2544068240272643657),
+        name: 'fullName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 2093605709578919325),
+        name: 'age',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 8644494285661854017),
+        name: 'bio',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 4939497280957203649),
+        name: 'photos',
+        type: 30,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 3992495913841600458),
+        name: 'city',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(8, 3300156872213894396),
+        name: 'distanceKm',
+        type: 8,
+        flags: 0,
       ),
     ],
     relations: <obx_int.ModelRelation>[],
@@ -2564,8 +2676,8 @@ Future<obx.Store> openStore({
 obx_int.ModelDefinition getObjectBoxModel() {
   final model = obx_int.ModelInfo(
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(86, 7142830071251728522),
-    lastIndexId: const obx_int.IdUid(163, 723282311552426138),
+    lastEntityId: const obx_int.IdUid(88, 8967072802053838872),
+    lastIndexId: const obx_int.IdUid(165, 5741744361424423530),
     lastRelationId: const obx_int.IdUid(11, 6355601734277678121),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [
@@ -3200,6 +3312,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
       5573874058535276651,
       1780196528697690791,
       5698251347293826812,
+      8976692773219225816,
+      3108386940871026491,
     ],
     retiredRelationUids: const [
       2832941486252609678,
@@ -6374,13 +6488,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
       },
       objectToFB: (SwipeQueue object, fb.Builder fbb) {
         final swipedIdOffset = fbb.writeString(object.swipedId);
-        fbb.startTable(8);
-        fbb.addInt64(0, object.id);
+        fbb.startTable(10);
         fbb.addInt64(2, object.action);
         fbb.addInt64(3, object.createdAt.millisecondsSinceEpoch);
         fbb.addInt64(4, object.attemptCount);
         fbb.addInt64(5, object.status);
         fbb.addOffset(6, swipedIdOffset);
+        fbb.addInt64(8, object.id);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -6417,7 +6531,161 @@ obx_int.ModelDefinition getObjectBoxModel() {
           createdAt: createdAtParam,
           attemptCount: attemptCountParam,
           status: statusParam,
-        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
+        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 20, 0);
+
+        return object;
+      },
+    ),
+    Match: obx_int.EntityDefinition<Match>(
+      model: _entities[34],
+      toOneRelations: (Match object) => [],
+      toManyRelations: (Match object) => {},
+      getId: (Match object) => object.localId,
+      setId: (Match object, int id) {
+        object.localId = id;
+      },
+      objectToFB: (Match object, fb.Builder fbb) {
+        final idOffset = fbb.writeString(object.id);
+        final otherUserNameOffset = fbb.writeString(object.otherUserName);
+        final otherUserPhotoOffset = object.otherUserPhoto == null
+            ? null
+            : fbb.writeString(object.otherUserPhoto!);
+        final lastMessagePreviewOffset = object.lastMessagePreview == null
+            ? null
+            : fbb.writeString(object.lastMessagePreview!);
+        fbb.startTable(8);
+        fbb.addInt64(0, object.localId);
+        fbb.addOffset(1, idOffset);
+        fbb.addOffset(2, otherUserNameOffset);
+        fbb.addOffset(3, otherUserPhotoOffset);
+        fbb.addOffset(4, lastMessagePreviewOffset);
+        fbb.addInt64(5, object.lastMessageAt?.millisecondsSinceEpoch);
+        fbb.addInt64(6, object.matchedAt.millisecondsSinceEpoch);
+        fbb.finish(fbb.endTable());
+        return object.localId;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final lastMessageAtValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          14,
+        );
+        final localIdParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final idParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 6, '');
+        final otherUserNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final otherUserPhotoParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 10);
+        final lastMessagePreviewParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 12);
+        final lastMessageAtParam = lastMessageAtValue == null
+            ? null
+            : DateTime.fromMillisecondsSinceEpoch(lastMessageAtValue);
+        final matchedAtParam = DateTime.fromMillisecondsSinceEpoch(
+          const fb.Int64Reader().vTableGet(buffer, rootOffset, 16, 0),
+        );
+        final object = Match(
+          localId: localIdParam,
+          id: idParam,
+          otherUserName: otherUserNameParam,
+          otherUserPhoto: otherUserPhotoParam,
+          lastMessagePreview: lastMessagePreviewParam,
+          lastMessageAt: lastMessageAtParam,
+          matchedAt: matchedAtParam,
+        );
+
+        return object;
+      },
+    ),
+    Profile: obx_int.EntityDefinition<Profile>(
+      model: _entities[35],
+      toOneRelations: (Profile object) => [],
+      toManyRelations: (Profile object) => {},
+      getId: (Profile object) => object.localId,
+      setId: (Profile object, int id) {
+        object.localId = id;
+      },
+      objectToFB: (Profile object, fb.Builder fbb) {
+        final idOffset = fbb.writeString(object.id);
+        final fullNameOffset = fbb.writeString(object.fullName);
+        final bioOffset = object.bio == null
+            ? null
+            : fbb.writeString(object.bio!);
+        final photosOffset = fbb.writeList(
+          object.photos.map(fbb.writeString).toList(growable: false),
+        );
+        final cityOffset = fbb.writeString(object.city);
+        fbb.startTable(9);
+        fbb.addInt64(0, object.localId);
+        fbb.addOffset(1, idOffset);
+        fbb.addOffset(2, fullNameOffset);
+        fbb.addInt64(3, object.age);
+        fbb.addOffset(4, bioOffset);
+        fbb.addOffset(5, photosOffset);
+        fbb.addOffset(6, cityOffset);
+        fbb.addFloat64(7, object.distanceKm);
+        fbb.finish(fbb.endTable());
+        return object.localId;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final localIdParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final idParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 6, '');
+        final fullNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final ageParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          10,
+          0,
+        );
+        final bioParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 12);
+        final photosParam = const fb.ListReader<String>(
+          fb.StringReader(asciiOptimization: true),
+          lazy: false,
+        ).vTableGet(buffer, rootOffset, 14, []);
+        final cityParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 16, '');
+        final distanceKmParam = const fb.Float64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          18,
+          0,
+        );
+        final object = Profile(
+          localId: localIdParam,
+          id: idParam,
+          fullName: fullNameParam,
+          age: ageParam,
+          bio: bioParam,
+          photos: photosParam,
+          city: cityParam,
+          distanceKm: distanceKmParam,
+        );
 
         return object;
       },
@@ -8242,33 +8510,112 @@ class Usero_ {
 
 /// [SwipeQueue] entity fields to define ObjectBox queries.
 class SwipeQueue_ {
-  /// See [SwipeQueue.id].
-  static final id = obx.QueryIntegerProperty<SwipeQueue>(
-    _entities[33].properties[0],
-  );
-
   /// See [SwipeQueue.action].
   static final action = obx.QueryIntegerProperty<SwipeQueue>(
-    _entities[33].properties[1],
+    _entities[33].properties[0],
   );
 
   /// See [SwipeQueue.createdAt].
   static final createdAt = obx.QueryDateProperty<SwipeQueue>(
-    _entities[33].properties[2],
+    _entities[33].properties[1],
   );
 
   /// See [SwipeQueue.attemptCount].
   static final attemptCount = obx.QueryIntegerProperty<SwipeQueue>(
-    _entities[33].properties[3],
+    _entities[33].properties[2],
   );
 
   /// See [SwipeQueue.status].
   static final status = obx.QueryIntegerProperty<SwipeQueue>(
-    _entities[33].properties[4],
+    _entities[33].properties[3],
   );
 
   /// See [SwipeQueue.swipedId].
   static final swipedId = obx.QueryStringProperty<SwipeQueue>(
+    _entities[33].properties[4],
+  );
+
+  /// See [SwipeQueue.id].
+  static final id = obx.QueryIntegerProperty<SwipeQueue>(
     _entities[33].properties[5],
+  );
+}
+
+/// [Match] entity fields to define ObjectBox queries.
+class Match_ {
+  /// See [Match.localId].
+  static final localId = obx.QueryIntegerProperty<Match>(
+    _entities[34].properties[0],
+  );
+
+  /// See [Match.id].
+  static final id = obx.QueryStringProperty<Match>(_entities[34].properties[1]);
+
+  /// See [Match.otherUserName].
+  static final otherUserName = obx.QueryStringProperty<Match>(
+    _entities[34].properties[2],
+  );
+
+  /// See [Match.otherUserPhoto].
+  static final otherUserPhoto = obx.QueryStringProperty<Match>(
+    _entities[34].properties[3],
+  );
+
+  /// See [Match.lastMessagePreview].
+  static final lastMessagePreview = obx.QueryStringProperty<Match>(
+    _entities[34].properties[4],
+  );
+
+  /// See [Match.lastMessageAt].
+  static final lastMessageAt = obx.QueryDateProperty<Match>(
+    _entities[34].properties[5],
+  );
+
+  /// See [Match.matchedAt].
+  static final matchedAt = obx.QueryDateProperty<Match>(
+    _entities[34].properties[6],
+  );
+}
+
+/// [Profile] entity fields to define ObjectBox queries.
+class Profile_ {
+  /// See [Profile.localId].
+  static final localId = obx.QueryIntegerProperty<Profile>(
+    _entities[35].properties[0],
+  );
+
+  /// See [Profile.id].
+  static final id = obx.QueryStringProperty<Profile>(
+    _entities[35].properties[1],
+  );
+
+  /// See [Profile.fullName].
+  static final fullName = obx.QueryStringProperty<Profile>(
+    _entities[35].properties[2],
+  );
+
+  /// See [Profile.age].
+  static final age = obx.QueryIntegerProperty<Profile>(
+    _entities[35].properties[3],
+  );
+
+  /// See [Profile.bio].
+  static final bio = obx.QueryStringProperty<Profile>(
+    _entities[35].properties[4],
+  );
+
+  /// See [Profile.photos].
+  static final photos = obx.QueryStringVectorProperty<Profile>(
+    _entities[35].properties[5],
+  );
+
+  /// See [Profile.city].
+  static final city = obx.QueryStringProperty<Profile>(
+    _entities[35].properties[6],
+  );
+
+  /// See [Profile.distanceKm].
+  static final distanceKm = obx.QueryDoubleProperty<Profile>(
+    _entities[35].properties[7],
   );
 }

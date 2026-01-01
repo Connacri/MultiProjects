@@ -108,10 +108,20 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProviderV2()),
         ChangeNotifierProvider(create: (_) => ChildEnrollmentProvider()),
         /////////////////////////////tinder/////////////////////////////////////
+        // 🎯 Fournir ObjectBox comme Provider value
+        Provider<ObjectBox>.value(value: objectBox),
         ChangeNotifierProvider(create: (_) => TinderAuthProvider()),
-        ChangeNotifierProvider(create: (_) => DiscoveryProvider()),
+        // ChangeNotifierProvider(create: (_) => DiscoveryProvider()),
+        ChangeNotifierProxyProvider<ObjectBox, DiscoveryProvider>(
+          create: (_) => DiscoveryProvider(), // Création initiale
+          update: (context, objectBox, previous) {
+            // ✅ Garantit que ObjectBox est prêt avant création
+            return previous ?? DiscoveryProvider();
+          },
+        ),
         ChangeNotifierProvider(create: (_) => MatchesProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
+
         // ChangeNotifierProvider(create: (_) => AuthService()),
         // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(
         //   create: (ctx) => ProfileProvider(auth: ctx.read<AuthService>()),

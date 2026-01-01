@@ -2168,20 +2168,39 @@ class SwipeQueue {
     this.attemptCount = 0,
     this.status = 0,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  Map<String, dynamic> toMap() {
+    return {
+      // On n'envoie pas l'ID local (int), Supabase gérera son propre ID ou utilisera swipedId
+      'swiped_id': swipedId,
+      'action': action,
+      'status': status,
+      'attempt_count': attemptCount,
+      'created_at': createdAt.toIso8601String(),
+    };
+  }
 }
 
-// features/matches/domain/entities/match.dart
-
-// lib/Tinder/core/domain/entities/match.dart
+@Entity()
 class Match {
-  final String id;
+  @Id()
+  int localId = 0; // ID auto-incrémenté pour ObjectBox
+
+  @Index()
+  final String id; // Ton ID Supabase (String)
+
   final String otherUserName;
   final String? otherUserPhoto;
   final String? lastMessagePreview;
+
+  @Property(type: PropertyType.date)
   final DateTime? lastMessageAt;
+
+  @Property(type: PropertyType.date)
   final DateTime matchedAt;
 
   Match({
+    this.localId = 0,
     required this.id,
     required this.otherUserName,
     this.otherUserPhoto,
@@ -2192,6 +2211,7 @@ class Match {
 
   factory Match.fromMap(Map<String, dynamic> map) {
     return Match(
+      // localId reste à 0 pour qu'ObjectBox l'auto-incrémente à l'insertion
       id: map['id'] as String,
       otherUserName: map['other_user_name'] as String? ?? 'Inconnu',
       otherUserPhoto: map['other_user_photo'] as String?,
@@ -2199,14 +2219,32 @@ class Match {
       lastMessageAt: map['last_message_at'] != null
           ? DateTime.parse(map['last_message_at'] as String)
           : null,
-      matchedAt: DateTime.parse(map['matched_at'] as String),
+      matchedAt: map['matched_at'] != null
+          ? DateTime.parse(map['matched_at'] as String)
+          : DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id, // ID Supabase (String)
+      'other_user_name': otherUserName,
+      'other_user_photo': otherUserPhoto,
+      'last_message_preview': lastMessagePreview,
+      'last_message_at': lastMessageAt?.toIso8601String(),
+      'matched_at': matchedAt.toIso8601String(),
+    };
   }
 }
 
-// features/discovery/domain/entities/profile.dart
+@Entity()
 class Profile {
-  final String id;
+  @Id()
+  int localId = 0;
+
+  @Index()
+  final String id; // ID Supabase
+
   final String fullName;
   final int age;
   final String? bio;
@@ -2215,6 +2253,7 @@ class Profile {
   final double distanceKm;
 
   Profile({
+    this.localId = 0,
     required this.id,
     required this.fullName,
     required this.age,
@@ -2225,15 +2264,48 @@ class Profile {
   });
 
   factory Profile.fromMap(Map<String, dynamic> map) {
-    final photos = List<String>.from(map['photos'] ?? []);
+    // Gestion sécurisée de la liste de photos
+    final photosRaw = map['photos'];
+    final List<String> photosList =
+        photosRaw is List ? List<String>.from(photosRaw) : [];
+
+    // Calcul de l'âge sécurisé
+    int calculatedAge = 0;
+    if (map['date_of_birth'] != null) {
+      try {
+        final dob = DateTime.parse(map['date_of_birth'] as String);
+        calculatedAge = DateTime.now().year - dob.year;
+        // Ajustement si l'anniversaire n'est pas encore passé cette année
+        if (DateTime.now().month < dob.month ||
+            (DateTime.now().month == dob.month &&
+                DateTime.now().day < dob.day)) {
+          calculatedAge--;
+        }
+      } catch (e) {
+        calculatedAge = 0;
+      }
+    }
+
     return Profile(
-      id: map['id'],
-      fullName: map['full_name'] ?? '',
-      age: DateTime.now().year - DateTime.parse(map['date_of_birth']).year,
-      bio: map['bio'],
-      photos: photos,
-      city: map['city'] ?? '',
-      distanceKm: (map['distance_km'] as num?)?.toDouble() ?? 0,
+      id: map['id'] as String,
+      fullName: map['full_name'] as String? ?? 'Utilisateur',
+      age: calculatedAge,
+      bio: map['bio'] as String?,
+      photos: photosList,
+      city: map['city'] as String? ?? 'Non précisé',
+      distanceKm: (map['distance_km'] as num?)?.toDouble() ?? 0.0,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'full_name': fullName,
+      // Note: On stocke souvent date_of_birth plutôt que l'âge calculé en DB
+      'bio': bio,
+      'photos': photos,
+      'city': city,
+      'distance_km': distanceKm,
+    };
   }
 }
