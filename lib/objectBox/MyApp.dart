@@ -120,7 +120,14 @@ class MyApp9 extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (_) => MatchesProvider()),
-        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        // Dans lib/objectBox/MyApp.dart (ou là où se trouve MyApp9)
+
+        ChangeNotifierProvider(
+          create: (_) => ProfileProvider()
+            ..init(), // 👈 Ajoute "..init()" pour lancer le chargement
+          lazy:
+              false, // 👈 Ajoute "lazy: false" pour forcer la création au boot
+        ),
 
         // ChangeNotifierProvider(create: (_) => AuthService()),
         // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(

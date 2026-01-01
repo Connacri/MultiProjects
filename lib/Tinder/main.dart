@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'bottom_nav.dart';
+import 'features/auth/auth_wrapper_tinder.dart';
 
 class MyApp_TinderClone extends StatelessWidget {
   const MyApp_TinderClone({super.key});
@@ -10,7 +10,7 @@ class MyApp_TinderClone extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: const BottomNav(),
+      home: const AuthWrapperTinder(),
     );
   }
 }
