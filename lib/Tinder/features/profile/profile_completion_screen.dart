@@ -1,7 +1,8 @@
-// lib/Tinder/features/profile/profile_completion_screen.dart
-
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -9,17 +10,16 @@ import 'package:provider/provider.dart';
 import '../discovery/discovery_screen.dart';
 import 'profile_provider.dart';
 
-/// ✅ Écran de complétion de profil avec progress bar
-class ProfileCompletionScreenTinder extends StatefulWidget {
-  const ProfileCompletionScreenTinder({super.key});
+/// 🎨 Écran de complétion de profil - Design moderne Material 3
+class ProfileCompletionScreen extends StatefulWidget {
+  const ProfileCompletionScreen({super.key});
 
   @override
-  State<ProfileCompletionScreenTinder> createState() =>
-      _ProfileCompletionScreenTinderState();
+  State<ProfileCompletionScreen> createState() =>
+      _ProfileCompletionScreenState();
 }
 
-class _ProfileCompletionScreenTinderState
-    extends State<ProfileCompletionScreenTinder> {
+class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _picker = ImagePicker();
 
@@ -28,50 +28,15 @@ class _ProfileCompletionScreenTinderState
   final _bioController = TextEditingController();
   final _occupationController = TextEditingController();
   final _cityController = TextEditingController();
+  DateTime? _dateOfBirth;
+  String? _gender;
+  String? _lookingFor;
+  List<String> _interests = [];
 
-  // State
-  DateTime? _selectedDate;
-  String? _selectedGender;
-  String? _selectedLookingFor;
   File? _avatarFile;
-  File? _coverFile;
-  List<File> _galleryFiles = [];
-  List<String> _selectedInterests = [];
-
-  final List<String> _availableInterests = [
-    '🎬 Cinéma',
-    '🎵 Musique',
-    '⚽ Sport',
-    '📚 Lecture',
-    '✈️ Voyages',
-    '🍳 Cuisine',
-    '🎨 Art',
-    '🎮 Gaming',
-    '🏃 Fitness',
-    '🎭 Théâtre',
-    '📷 Photo',
-    '🌿 Nature',
-    '🍷 Gastronomie',
-    '🎪 Festivals',
-    '🧘 Yoga',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadExistingData();
-  }
-
-  void _loadExistingData() {
-    final provider = Provider.of<ProfileProvider>(context, listen: false);
-    _fullNameController.text = provider.fullName;
-    _bioController.text = provider.bio;
-    _occupationController.text = provider.occupation ?? '';
-    _cityController.text = provider.city ?? '';
-    _selectedGender = provider.gender;
-    _selectedLookingFor = provider.lookingFor;
-    _selectedInterests = provider.interests;
-  }
+  bool _isUploading = false;
+  String? _uploadedAvatarUrl;
+  double _uploadProgress = 0.0;
 
   @override
   void dispose() {
@@ -84,85 +49,374 @@ class _ProfileCompletionScreenTinderState
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProfileProvider>(
-      builder: (context, provider, _) {
-        final completion = provider.completionPercentage;
-        final missingFields = provider.getMissingFields();
+    final colorScheme = Theme.of(context).colorScheme;
+    final provider = Provider.of<ProfileProvider>(context);
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Complétez votre profil'),
-            centerTitle: true,
-            actions: [
-              if (completion >= 80)
-                TextButton(
-                  onPressed: () => _finishSetup(context, provider),
-                  child: const Text(
-                    'Terminer',
-                    style: TextStyle(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.primaryContainer.withOpacity(0.3),
+              colorScheme.surface,
             ],
           ),
-          body: Column(
+        ),
+        child: SafeArea(
+          child: Column(
             children: [
-              // ✅ Progress Bar
-              _buildProgressHeader(completion, missingFields.length),
-
-              // ✅ Form scrollable
+              _buildHeader(context, provider),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildSectionTitle('Photos', '30%'),
-                        _buildPhotoSection(provider),
-                        const SizedBox(height: 24),
-
-                        _buildSectionTitle('Informations de base', '40%'),
-                        _buildBasicInfoSection(),
-                        const SizedBox(height: 24),
-
-                        _buildSectionTitle('À propos de vous', '20%'),
-                        _buildBioSection(),
-                        const SizedBox(height: 24),
-
-                        _buildSectionTitle('Centres d\'intérêt', '10%'),
-                        _buildInterestsSection(),
-                        const SizedBox(height: 32),
-
-                        // ✅ Bouton de sauvegarde
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: provider.loading
-                                ? null
-                                : () => _saveProfile(provider),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              backgroundColor: Colors.pink,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: provider.loading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white)
-                                : const Text(
-                                    'Sauvegarder',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                child: _buildForm(context, provider),
               ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showGalleryBottomSheet(provider),
+        child: const Icon(Icons.photo_library_outlined),
+      ),
+    );
+  }
+
+  /// Header avec progression dynamique
+  Widget _buildHeader(BuildContext context, ProfileProvider provider) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text(
+            'Complétez votre profil',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Quelques informations pour commencer',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            value: provider.completionPercentage / 100,
+            backgroundColor: Colors.grey[300],
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Formulaire principal
+  Widget _buildForm(BuildContext context, ProfileProvider provider) {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          // Avatar
+          _buildAvatarSection(context),
+          const SizedBox(height: 32),
+
+          // Nom complet
+          TextFormField(
+            controller: _fullNameController,
+            decoration: InputDecoration(
+              labelText: 'Nom complet *',
+              prefixIcon: const Icon(Icons.person_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+          ),
+          const SizedBox(height: 16),
+
+          // Date de naissance
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: Text(
+              _dateOfBirth == null
+                  ? 'Date de naissance *'
+                  : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
+            ),
+            trailing: const Icon(Icons.calendar_today),
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate:
+                    DateTime.now().subtract(const Duration(days: 365 * 18)),
+                firstDate: DateTime(1900),
+                lastDate: DateTime.now(),
+              );
+              if (picked != null) setState(() => _dateOfBirth = picked);
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Genre
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              labelText: 'Genre *',
+              prefixIcon: const Icon(Icons.person),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'male', child: Text('Homme')),
+              DropdownMenuItem(value: 'female', child: Text('Femme')),
+              DropdownMenuItem(value: 'other', child: Text('Autre')),
+            ],
+            onChanged: (v) => _gender = v,
+            validator: (v) => v == null ? 'Requis' : null,
+          ),
+          const SizedBox(height: 16),
+
+          // Recherche
+          DropdownButtonFormField<String>(
+            decoration: InputDecoration(
+              labelText: 'Recherche *',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'male', child: Text('Hommes')),
+              DropdownMenuItem(value: 'female', child: Text('Femmes')),
+              DropdownMenuItem(value: 'both', child: Text('Les deux')),
+            ],
+            onChanged: (v) => _lookingFor = v,
+            validator: (v) => v == null ? 'Requis' : null,
+          ),
+          const SizedBox(height: 16),
+
+          // Bio
+          TextFormField(
+            controller: _bioController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: 'Bio *',
+              prefixIcon: const Icon(Icons.edit_note),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            validator: (v) =>
+                v == null || v.length < 20 ? 'Minimum 20 caractères' : null,
+          ),
+          const SizedBox(height: 16),
+
+          // Profession
+          TextFormField(
+            controller: _occupationController,
+            decoration: InputDecoration(
+              labelText: 'Profession',
+              prefixIcon: const Icon(Icons.work_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Ville
+          TextFormField(
+            controller: _cityController,
+            decoration: InputDecoration(
+              labelText: 'Ville *',
+              prefixIcon: const Icon(Icons.location_city_outlined),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+          ),
+          const SizedBox(height: 32),
+
+          // Centres d'intérêt (Chip input simple)
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _interests
+                .map((interest) => Chip(
+                      label: Text(interest),
+                      onDeleted: () =>
+                          setState(() => _interests.remove(interest)),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: () async {
+              final interest = await showDialog<String>(
+                context: context,
+                builder: (context) {
+                  final ctrl = TextEditingController();
+                  return AlertDialog(
+                    title: const Text('Ajouter un intérêt'),
+                    content: TextField(controller: ctrl),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Annuler')),
+                      TextButton(
+                        onPressed: () =>
+                            Navigator.pop(context, ctrl.text.trim()),
+                        child: const Text('Ajouter'),
+                      ),
+                    ],
+                  );
+                },
+              );
+              if (interest != null &&
+                  interest.isNotEmpty &&
+                  !_interests.contains(interest)) {
+                setState(() => _interests.add(interest));
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Ajouter un intérêt'),
+          ),
+          const SizedBox(height: 32),
+
+          // Bouton sauvegarde
+          if (_isUploading) LinearProgressIndicator(value: _uploadProgress),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            onPressed: _isUploading ? null : () => _handleSave(provider),
+            icon: const Icon(Icons.save),
+            label: const Text('Sauvegarder et continuer'),
+            style: ElevatedButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Section avatar
+  Widget _buildAvatarSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isMobile = !kIsWeb;
+
+    return Center(
+      child: GestureDetector(
+        onTap: () => _showImagePickerOptions(context, isMobile),
+        child: Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: colorScheme.surfaceVariant,
+              backgroundImage:
+                  _avatarFile != null ? FileImage(_avatarFile!) : null,
+              child: _avatarFile == null
+                  ? Icon(Icons.person,
+                      size: 60, color: colorScheme.onSurfaceVariant)
+                  : null,
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child:
+                  const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Options picker image
+  void _showImagePickerOptions(BuildContext context, bool isMobile) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.photo_library, color: colorScheme.primary),
+                ),
+                title: const Text('Galerie'),
+                subtitle: const Text('Choisir une photo existante'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              if (isMobile) ...[
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(Icons.camera_alt, color: colorScheme.secondary),
+                  ),
+                  title: const Text('Appareil photo'),
+                  subtitle: const Text('Prendre une nouvelle photo'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+              ],
+              if (_avatarFile != null) ...[
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.delete_outline, color: Colors.red),
+                  ),
+                  title: const Text('Supprimer',
+                      style: TextStyle(color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _avatarFile = null;
+                      _uploadedAvatarUrl = null;
+                    });
+                  },
+                ),
+              ],
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -170,467 +424,378 @@ class _ProfileCompletionScreenTinderState
     );
   }
 
-  /// ✅ Progress Header
-  Widget _buildProgressHeader(int completion, int missingCount) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.pink.shade50,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey.shade300),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Complétion: $completion%',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: completion >= 80 ? Colors.green : Colors.orange,
-                ),
-              ),
-              Text(
-                missingCount > 0
-                    ? '$missingCount champs restants'
-                    : '✅ Complet',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: completion / 100,
-            backgroundColor: Colors.grey.shade300,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              completion >= 80 ? Colors.green : Colors.pink,
-            ),
-            minHeight: 8,
-          ),
-        ],
-      ),
-    );
+  /// Sélectionner une image
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() {
+        _avatarFile = File(pickedFile.path);
+      });
+
+      _showSnackBar('Photo sélectionnée', isError: false);
+    } catch (e) {
+      print('Erreur pick image: $e');
+      _showSnackBar('Erreur lors de la sélection', isError: true);
+    }
   }
 
-  Widget _buildSectionTitle(String title, String weight) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            weight,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// ✅ Photo Section
-  Widget _buildPhotoSection(ProfileProvider provider) {
-    return Column(
-      children: [
-        // Avatar + Cover
-        Row(
-          children: [
-            Expanded(
-              child: _buildPhotoCard(
-                label: 'Photo de profil',
-                file: _avatarFile,
-                existingUrl: provider.photoUrl,
-                onTap: () => _pickImage(isAvatar: true),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildPhotoCard(
-                label: 'Photo de couverture',
-                file: _coverFile,
-                existingUrl: provider.coverUrl,
-                onTap: () => _pickImage(isCover: true),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Galerie (2-6 photos)
-        Text(
-          'Photos supplémentaires (${provider.photos.length + _galleryFiles.length}/6)',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade700,
-          ),
-        ),
-        const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemCount: provider.photos.length + _galleryFiles.length + 1,
-          itemBuilder: (context, index) {
-            // Bouton d'ajout
-            if (index == provider.photos.length + _galleryFiles.length) {
-              return _buildAddPhotoButton();
-            }
-
-            // Photo existante
-            if (index < provider.photos.length) {
-              return _buildGalleryPhoto(
-                url: provider.photos[index],
-                onRemove: () =>
-                    provider.removePhotoFromGallery(provider.photos[index]),
-              );
-            }
-
-            // Photo nouvellement ajoutée
-            final fileIndex = index - provider.photos.length;
-            return _buildGalleryPhoto(
-              file: _galleryFiles[fileIndex],
-              onRemove: () {
-                setState(() {
-                  _galleryFiles.removeAt(fileIndex);
-                });
-              },
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhotoCard({
-    required String label,
-    File? file,
-    String? existingUrl,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 120,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(12),
-          image: file != null
-              ? DecorationImage(
-                  image: FileImage(file),
-                  fit: BoxFit.cover,
-                )
-              : existingUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(existingUrl),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-        ),
-        child: file == null && existingUrl == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.add_a_photo, size: 32, color: Colors.grey),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              )
-            : null,
-      ),
-    );
-  }
-
-  Widget _buildAddPhotoButton() {
-    return GestureDetector(
-      onTap: () => _pickImage(isGallery: true),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade400, width: 2),
-        ),
-        child: const Center(
-          child: Icon(Icons.add, size: 32, color: Colors.grey),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGalleryPhoto(
-      {File? file, String? url, required VoidCallback onRemove}) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            image: DecorationImage(
-              image: file != null
-                  ? FileImage(file)
-                  : NetworkImage(url!) as ImageProvider,
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        Positioned(
-          top: 4,
-          right: 4,
-          child: GestureDetector(
-            onTap: onRemove,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.close, size: 16, color: Colors.white),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// ✅ Basic Info Section
-  Widget _buildBasicInfoSection() {
-    return Column(
-      children: [
-        TextFormField(
-          controller: _fullNameController,
-          decoration: const InputDecoration(
-            labelText: 'Nom complet *',
-            border: OutlineInputBorder(),
-          ),
-          validator: (value) =>
-              value == null || value.isEmpty ? 'Champ obligatoire' : null,
-        ),
-        const SizedBox(height: 16),
-        InkWell(
-          onTap: () => _selectDate(context),
-          child: InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'Date de naissance *',
-              border: OutlineInputBorder(),
-            ),
-            child: Text(
-              _selectedDate != null
-                  ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                  : 'Sélectionner',
-              style: TextStyle(
-                color: _selectedDate != null ? Colors.black : Colors.grey,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: _selectedGender,
-          decoration: const InputDecoration(
-            labelText: 'Genre *',
-            border: OutlineInputBorder(),
-          ),
-          items: ['male', 'female', 'other']
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(e == 'male'
-                        ? 'Homme'
-                        : e == 'female'
-                            ? 'Femme'
-                            : 'Autre'),
-                  ))
-              .toList(),
-          onChanged: (value) => setState(() => _selectedGender = value),
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: _selectedLookingFor,
-          decoration: const InputDecoration(
-            labelText: 'Je recherche *',
-            border: OutlineInputBorder(),
-          ),
-          items: ['male', 'female', 'both']
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(e == 'male'
-                        ? 'Hommes'
-                        : e == 'female'
-                            ? 'Femmes'
-                            : 'Tous'),
-                  ))
-              .toList(),
-          onChanged: (value) => setState(() => _selectedLookingFor = value),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _cityController,
-          decoration: const InputDecoration(
-            labelText: 'Ville',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _occupationController,
-          decoration: const InputDecoration(
-            labelText: 'Profession',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// ✅ Bio Section
-  Widget _buildBioSection() {
-    return TextFormField(
-      controller: _bioController,
-      maxLines: 5,
-      maxLength: 500,
-      decoration: const InputDecoration(
-        labelText: 'Bio (min 20 caractères) *',
-        border: OutlineInputBorder(),
-        hintText: 'Parlez de vous...',
-      ),
-      validator: (value) =>
-          value == null || value.length < 20 ? 'Minimum 20 caractères' : null,
-    );
-  }
-
-  /// ✅ Interests Section
-  Widget _buildInterestsSection() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _availableInterests.map((interest) {
-        final isSelected = _selectedInterests.contains(interest);
-        return FilterChip(
-          label: Text(interest),
-          selected: isSelected,
-          onSelected: (selected) {
-            setState(() {
-              if (selected) {
-                _selectedInterests.add(interest);
-              } else {
-                _selectedInterests.remove(interest);
-              }
-            });
-          },
-          selectedColor: Colors.pink,
-          labelStyle: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  /// ✅ Actions
-  Future<void> _pickImage({
-    bool isAvatar = false,
-    bool isCover = false,
-    bool isGallery = false,
-  }) async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile == null) return;
+  /// Uploader l'avatar vers Supabase Storage
+  Future<String?> _uploadAvatar(ProfileProvider provider) async {
+    if (_avatarFile == null) return null;
 
     setState(() {
-      if (isAvatar) {
-        _avatarFile = File(pickedFile.path);
-      } else if (isCover) {
-        _coverFile = File(pickedFile.path);
-      } else if (isGallery && _galleryFiles.length < 6) {
-        _galleryFiles.add(File(pickedFile.path));
-      }
+      _isUploading = true;
+      _uploadProgress = 0.0;
     });
-  }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() => _selectedDate = picked);
+    try {
+      final url = await provider.uploadPhoto(_avatarFile!);
+      setState(() {
+        _uploadProgress = 1.0;
+        _uploadedAvatarUrl = url;
+      });
+      return url;
+    } catch (e) {
+      print('❌ Erreur upload avatar: $e');
+      _showSnackBar('Erreur lors de l\'upload', isError: true);
+      return null;
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
 
-  Future<void> _saveProfile(ProfileProvider provider) async {
-    if (!_formKey.currentState!.validate()) return;
+  /// Sauvegarde
+// Dans ProfileCompletionScreen._handleSave() → version corrigée et robuste
 
-    // Upload photos
-    String? avatarUrl;
-    String? coverUrl;
-
-    if (_avatarFile != null) {
-      avatarUrl = await provider.uploadPhoto(_avatarFile!);
-    }
-
-    if (_coverFile != null) {
-      coverUrl = await provider.uploadPhoto(_coverFile!, isCover: true);
-    }
-
-    // Upload gallery
-    for (final file in _galleryFiles) {
-      await provider.addPhotoToGallery(file);
-    }
-
-    // Update profile
-    await provider.updateProfile(
-      fullName: _fullNameController.text.trim(),
-      bio: _bioController.text.trim(),
-      occupation: _occupationController.text.trim(),
-      city: _cityController.text.trim(),
-      dateOfBirth: _selectedDate,
-      gender: _selectedGender,
-      lookingFor: _selectedLookingFor,
-      interests: _selectedInterests,
-    );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil sauvegardé !')),
-      );
-    }
-  }
-
-  void _finishSetup(BuildContext context, ProfileProvider provider) {
-    if (provider.completionPercentage < 80) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Complétez au moins 80% de votre profil'),
-        ),
-      );
+  Future<void> _handleSave(ProfileProvider provider) async {
+    // 1. Validation formulaire
+    if (!_formKey.currentState!.validate()) {
+      _showSnackBar('Veuillez corriger les erreurs', isError: true);
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const DiscoveryScreen()),
+    // 2. Validation champs obligatoires
+    if (_dateOfBirth == null) {
+      _showSnackBar('Date de naissance requise', isError: true);
+      return;
+    }
+    if (_gender == null) {
+      _showSnackBar('Genre requis', isError: true);
+      return;
+    }
+    if (_lookingFor == null) {
+      _showSnackBar('Recherche requise', isError: true);
+      return;
+    }
+    if (_interests.length < 3) {
+      _showSnackBar('Au moins 3 centres d\'intérêt', isError: true);
+      return;
+    }
+    if (provider.photos.length < 2) {
+      _showSnackBar('Ajoutez au moins 2 photos dans la galerie', isError: true);
+      return;
+    }
+
+    setState(() => _isUploading = true);
+
+    try {
+      // 3. Upload avatar principal si modifié
+      String? finalPhotoUrl = provider.photoUrl;
+      if (_avatarFile != null) {
+        finalPhotoUrl = await provider
+            .uploadPhoto(_avatarFile!); // méthode existante pour avatar
+        if (finalPhotoUrl == null) throw Exception('Upload avatar échoué');
+      }
+
+      // 4. Mise à jour profil avec tous les champs
+      await provider.updateProfile(
+        fullName: _fullNameController.text.trim(),
+        bio: _bioController.text.trim(),
+        occupation: _occupationController.text.trim().isNotEmpty
+            ? _occupationController.text.trim()
+            : null,
+        city: _cityController.text.trim(),
+        photoUrl: finalPhotoUrl,
+        dateOfBirth: _dateOfBirth,
+        gender: _gender,
+        lookingFor: _lookingFor,
+        interests: _interests,
+      );
+
+      // 5. Vérification finale du statut complété
+      // Le provider a déjà recalculé completion_percentage + profile_completed
+      if (provider.profileCompleted && provider.completionPercentage >= 90) {
+        _showSnackBar('Profil complété avec succès ! 🎉', isError: false);
+
+        // Navigation forcée + nettoyage stack
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const DiscoveryScreen()),
+            (route) => false, // supprime tout le stack précédent
+          );
+        }
+      } else {
+        // Cas improbable (bug calcul) → force refresh + message
+        await provider.refresh();
+        _showSnackBar(
+          'Profil mis à jour mais pas encore complet (${provider.completionPercentage}%)',
+          isError: false,
+        );
+      }
+    } catch (e) {
+      print('❌ Erreur sauvegarde complète: $e');
+      _showSnackBar('Erreur lors de la sauvegarde : $e', isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: Text(message)),
+          ],
+        ),
+        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
     );
+  }
+
+// Dans ProfileCompletionScreen ou ProfileEditScreen
+// Ajoute cette méthode privée
+
+  void _showGalleryBottomSheet(ProfileProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Poignée
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Text(
+                  'Ajouter des photos',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Jusqu\'à 6 photos pour montrer qui vous êtes',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+
+                // Grille actuelle des photos
+                Consumer<ProfileProvider>(
+                  builder: (context, prov, _) {
+                    final currentPhotos = prov.photos;
+                    final remainingSlots = 6 - currentPhotos.length;
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1,
+                      ),
+                      itemCount:
+                          currentPhotos.length + (remainingSlots > 0 ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index < currentPhotos.length) {
+                          final url = currentPhotos[index];
+                          return Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: CachedNetworkImage(
+                                  imageUrl: url,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, __) =>
+                                      Container(color: Colors.black12),
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: const Text(
+                                            'Supprimer cette photo ?'),
+                                        actions: [
+                                          TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context, false),
+                                              child: const Text('Annuler')),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            style: TextButton.styleFrom(
+                                                foregroundColor: Colors.red),
+                                            child: const Text('Supprimer'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await prov.removePhotoFromGallery(url);
+                                      if (mounted)
+                                        Navigator.pop(
+                                            context); // referme le sheet pour refresh
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close,
+                                        color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        // Bouton d'ajout
+                        return DottedBorder(
+                          borderType: BorderType.RRect,
+                          radius: const Radius.circular(12),
+                          color: Theme.of(context).colorScheme.primary,
+                          strokeWidth: 2,
+                          dashPattern: const [6, 4],
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Material(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primaryContainer
+                                  .withOpacity(0.3),
+                              child: InkWell(
+                                onTap: remainingSlots > 0
+                                    ? () => _pickAndAddGalleryPhoto(provider)
+                                    : null,
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_a_photo_outlined,
+                                      size: 32,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Ajouter',
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (remainingSlots > 1)
+                                      Text(
+                                        '$remainingSlots places',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _pickAndAddGalleryPhoto(ProfileProvider provider) async {
+    Navigator.pop(context); // ferme le sheet avant picker
+
+    final picked = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      imageQuality: 85,
+    );
+
+    if (picked == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      await provider.addPhotoToGallery(File(picked.path));
+      _showSnackBar('Photo ajoutée à votre galerie', isError: false);
+    } catch (e) {
+      _showSnackBar('Erreur lors de l\'ajout', isError: true);
+    } finally {
+      setState(() => _isUploading = false);
+    }
   }
 }

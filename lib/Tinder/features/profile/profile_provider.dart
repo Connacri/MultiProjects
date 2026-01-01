@@ -1,4 +1,4 @@
-// lib/Tinder/features/profile/profile_provider.dart
+// features/profile/presentation/providers/profile_provider.dart
 
 import 'dart:io';
 
@@ -11,12 +11,17 @@ class ProfileProvider extends ChangeNotifier {
   Map<String, dynamic>? _profileData;
   bool _loading = true;
   String? _error;
+  bool _hasInitialized = false;
 
   Map<String, dynamic>? get profileData => _profileData;
 
   bool get loading => _loading;
 
   String? get error => _error;
+
+  bool get profileCompleted => _profileData?['profile_completed'] ?? false;
+
+  int get completionPercentage => _profileData?['completion_percentage'] ?? 0;
 
   // ✅ Getters sécurisés
   String get fullName => _profileData?['full_name'] as String? ?? '';
@@ -54,103 +59,92 @@ class ProfileProvider extends ChangeNotifier {
 
   String? get lookingFor => _profileData?['looking_for'] as String?;
 
-  bool get profileCompleted =>
-      _profileData?['profile_completed'] as bool? ?? false;
+  List<String> get interests =>
+      List<String>.from(_profileData?['interests'] ?? []);
 
-  int get completionPercentage =>
-      _profileData?['completion_percentage'] as int? ?? 0;
-
-  List<String> get photos {
-    final photosJson = _profileData?['photos'];
-    if (photosJson is List) {
-      return photosJson.map((e) => e.toString()).toList();
-    }
-    return [];
-  }
-
-  List<String> get interests {
-    final interestsData = _profileData?['interests'];
-    if (interestsData is List) {
-      return List<String>.from(interestsData);
-    }
-    return [];
-  }
-
-  /// ✅ CORRECTION : Gestion du cas "profile inexistant"
-// lib/Tinder/features/profile/profile_provider.dart
-
-// lib/Tinder/features/profile/profile_provider.dart
+  List<String> get photos => List<String>.from(_profileData?['photos'] ?? []);
 
   Future<void> init() async {
-    print('🚀 [ProfileProvider] DÉBUT INIT');
-    try {
-      _loading = true;
-      _error = null;
-      notifyListeners();
+    if (_hasInitialized) return;
 
+    _hasInitialized = true;
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
       final user = _supabase.auth.currentUser;
       if (user == null) {
-        print('ℹ️ [ProfileProvider] Aucun utilisateur connecté');
+        _error = 'Session expirée';
         _loading = false;
-        _error = "Utilisateur non authentifié";
         notifyListeners();
         return;
       }
 
-      print('👤 [ProfileProvider] User ID: ${user.id}');
-      print('📧 [ProfileProvider] Email: ${user.email}');
-
-      // Tentative de lecture
-      final data = await _supabase
+      final response = await _supabase
           .from('profiles')
           .select()
           .eq('id', user.id)
           .maybeSingle();
 
-      if (data == null) {
-        print('⚠️ [ProfileProvider] Profil inexistant en base, création...');
+      if (response == null) {
         await _createProfile(user.id);
-        // Récupération après création
-        _profileData = await _supabase
-            .from('profiles')
-            .select()
-            .eq('id', user.id)
-            .single();
-        print('✅ [ProfileProvider] Profil créé et récupéré');
-      } else {
-        _profileData = data;
-        print('✅ [ProfileProvider] Profil chargé avec succès');
-        print('📊 [ProfileProvider] Complétion: ${completionPercentage}%');
+        await init(); // Recharge après création
+        return;
       }
-    } catch (e, stacktrace) {
-      print('❌ [ProfileProvider] ERREUR CRITIQUE: $e');
-      print('📜 [ProfileProvider] STACKTRACE: $stacktrace');
-      _error = e.toString();
-    } finally {
+
+      _profileData = response;
       _loading = false;
-      print(
-          '🏁 [ProfileProvider] FIN INIT - Loading: $_loading, Error: $_error');
+      notifyListeners();
+    } catch (e) {
+      _error = _getErrorMessage(e);
+      _loading = false;
       notifyListeners();
     }
   }
 
-  /// ✅ Créer un profile vide si inexistant
   Future<void> _createProfile(String userId) async {
     try {
+      final now = DateTime.now().toIso8601String();
       await _supabase.from('profiles').insert({
         'id': userId,
         'email': _supabase.auth.currentUser?.email,
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
+        'created_at': now,
+        'updated_at': now,
+        'profile_completed': false,
+        'completion_percentage': 0,
       });
-      print('✅ [ProfileProvider] Profile créé');
     } catch (e) {
-      print('❌ [ProfileProvider] Erreur création profile: $e');
       rethrow;
     }
   }
 
-  /// ✅ Mise à jour du profil
+  Future<String?> uploadPhoto(File file, {bool isCover = false}) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Non authentifié');
+
+      final extension = file.path.split('.').last;
+      final path = '$userId/${isCover ? 'cover' : 'avatar'}.$extension';
+
+      await _supabase.storage.from('profiles').upload(
+            path,
+            file,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      final url = _supabase.storage.from('profiles').getPublicUrl(path);
+
+      await updateProfile(
+          photoUrl: isCover ? null : url, coverUrl: isCover ? url : null);
+
+      return url;
+    } catch (e) {
+      print('❌ [ProfileProvider] Erreur upload: $e');
+      rethrow;
+    }
+  }
+
   Future<void> updateProfile({
     String? fullName,
     String? bio,
@@ -162,150 +156,148 @@ class ProfileProvider extends ChangeNotifier {
     String? gender,
     String? lookingFor,
     List<String>? interests,
-    double? latitude,
-    double? longitude,
-    String? education,
-    int? heightCm,
   }) async {
     try {
       _loading = true;
-      _error = null;
       notifyListeners();
 
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('Utilisateur non authentifié');
+      if (userId == null) throw Exception('Non authentifié');
 
-      final updates = <String, dynamic>{};
-      if (fullName != null) updates['full_name'] = fullName;
-      if (bio != null) updates['bio'] = bio;
-      if (occupation != null) updates['occupation'] = occupation;
-      if (city != null) updates['city'] = city;
-      if (photoUrl != null) updates['photo_url'] = photoUrl;
-      if (coverUrl != null) updates['cover_url'] = coverUrl;
-      if (dateOfBirth != null) {
-        updates['date_of_birth'] = dateOfBirth.toIso8601String().split('T')[0];
-      }
-      if (gender != null) updates['gender'] = gender;
-      if (lookingFor != null) updates['looking_for'] = lookingFor;
-      if (interests != null) updates['interests'] = interests;
-      if (latitude != null) updates['latitude'] = latitude;
-      if (longitude != null) updates['longitude'] = longitude;
-      if (education != null) updates['education'] = education;
-      if (heightCm != null) updates['height_cm'] = heightCm;
+      final updates = <String, dynamic>{
+        'updated_at': DateTime.now().toIso8601String(),
+        if (fullName != null && fullName.isNotEmpty) 'full_name': fullName,
+        if (bio != null) 'bio': bio,
+        if (occupation != null && occupation.isNotEmpty)
+          'occupation': occupation,
+        if (city != null && city.isNotEmpty) 'city': city,
+        if (photoUrl != null) 'photo_url': photoUrl,
+        if (coverUrl != null) 'cover_url': coverUrl,
+        if (dateOfBirth != null)
+          'date_of_birth': dateOfBirth.toIso8601String().split('T')[0],
+        if (gender != null && gender.isNotEmpty) 'gender': gender,
+        if (lookingFor != null && lookingFor.isNotEmpty)
+          'looking_for': lookingFor,
+        if (interests != null && interests.isNotEmpty) 'interests': interests,
+      };
 
       await _supabase.from('profiles').update(updates).eq('id', userId);
 
-      // Recharger le profil
+      // Recharger les données
       await init();
 
-      print('✅ [ProfileProvider] Profil mis à jour');
+      // Calculer et mettre à jour la complétion
+      final percentage = _calculateCompletionPercentage();
+      final completed = percentage >= 90;
+
+      await _supabase.from('profiles').update({
+        'completion_percentage': percentage,
+        'profile_completed': completed,
+      }).eq('id', userId);
+
+      // Recharger une dernière fois
+      await init();
+
+      _error = null;
     } catch (e) {
       _error = _getErrorMessage(e);
+    } finally {
       _loading = false;
-      print('❌ [ProfileProvider] Erreur update: $e');
       notifyListeners();
     }
   }
 
-  /// ✅ Upload photo de profil ou cover
-  Future<String?> uploadPhoto(File file, {bool isCover = false}) async {
+  // ✅ Ajouter une photo à la galerie
+  Future<String?> addPhotoToGallery(File file) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return null;
+      if (userId == null) throw Exception('Non authentifié');
 
-      final fileName =
-          '${userId}/${isCover ? 'cover' : 'avatar'}_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final bucket = isCover ? 'covers' : 'avatars';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final extension = file.path.split('.').last;
+      final path = '$userId/gallery/$timestamp.$extension';
 
-      await _supabase.storage.from(bucket).upload(fileName, file);
+      await _supabase.storage.from('profiles').upload(
+            path,
+            file,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
-      final publicUrl = _supabase.storage.from(bucket).getPublicUrl(fileName);
+      final url = _supabase.storage.from('profiles').getPublicUrl(path);
 
-      // Mettre à jour le profil
-      await updateProfile(
-        photoUrl: isCover ? null : publicUrl,
-        coverUrl: isCover ? publicUrl : null,
+      // Récupérer la liste actuelle
+      final currentPhotos = photos;
+
+      // Ajouter la nouvelle
+      final updatedPhotos = [...currentPhotos, url];
+
+      // Mettre à jour en base
+      await _supabase.from('profiles').update({
+        'photos': updatedPhotos,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+
+      // Recharger profil + recalcul complétion
+      await init();
+
+      return url;
+    } catch (e) {
+      print('❌ [ProfileProvider] Erreur addPhotoToGallery: $e');
+      rethrow;
+    }
+  }
+
+  // ✅ Supprimer une photo de la galerie
+  Future<void> removePhotoFromGallery(String photoUrl) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Non authentifié');
+
+      // Extraire le path depuis l'URL publique
+      final path = photoUrl.replaceFirst(
+        '${_supabase.storage.from('profiles').getPublicUrl('')}/',
+        '',
       );
 
-      print('✅ [ProfileProvider] Photo uploadée: $publicUrl');
-      return publicUrl;
-    } catch (e) {
-      print('❌ [ProfileProvider] Erreur upload photo: $e');
-      return null;
-    }
-  }
-
-  /// ✅ Ajouter une photo au carousel (max 6)
-  Future<bool> addPhotoToGallery(File file) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return false;
-
-      // Limite de 6 photos
-      if (photos.length >= 6) {
-        _error = 'Maximum 6 photos atteint';
-        notifyListeners();
-        return false;
-      }
-
-      final fileName =
-          '${userId}/gallery_${DateTime.now().millisecondsSinceEpoch}.jpg';
-
-      await _supabase.storage.from('gallery').upload(fileName, file);
-
-      final publicUrl =
-          _supabase.storage.from('gallery').getPublicUrl(fileName);
-
-      // Ajouter à l'array photos
-      final currentPhotos = List<String>.from(photos);
-      currentPhotos.add(publicUrl);
-
-      await _supabase
-          .from('profiles')
-          .update({'photos': currentPhotos}).eq('id', userId);
-
-      await init();
-      print('✅ [ProfileProvider] Photo ajoutée à la galerie');
-      return true;
-    } catch (e) {
-      print('❌ [ProfileProvider] Erreur ajout photo: $e');
-      _error = 'Erreur lors de l\'ajout de la photo';
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// ✅ Supprimer une photo de la galerie
-  Future<bool> removePhotoFromGallery(String photoUrl) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) return false;
-
-      // Retirer de l'array
-      final currentPhotos = List<String>.from(photos);
-      currentPhotos.remove(photoUrl);
-
-      await _supabase
-          .from('profiles')
-          .update({'photos': currentPhotos}).eq('id', userId);
-
       // Supprimer du storage
-      try {
-        final fileName = photoUrl.split('/').last;
-        await _supabase.storage.from('gallery').remove(['${userId}/$fileName']);
-      } catch (e) {
-        print('⚠️ [ProfileProvider] Erreur suppression storage: $e');
-      }
+      await _supabase.storage.from('profiles').remove([path]);
 
+      // Mettre à jour la liste en base
+      final currentPhotos = photos;
+      final updatedPhotos =
+          currentPhotos.where((url) => url != photoUrl).toList();
+
+      await _supabase.from('profiles').update({
+        'photos': updatedPhotos,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', userId);
+
+      // Recharger + recalcul complétion
       await init();
-      return true;
     } catch (e) {
-      print('❌ [ProfileProvider] Erreur suppression photo: $e');
-      return false;
+      print('❌ [ProfileProvider] Erreur removePhotoFromGallery: $e');
+      rethrow;
     }
   }
 
-  /// ✅ Obtenir les champs manquants pour compléter le profil
+  // ✅ Mise à jour du calcul de complétion (ajusté pour galerie)
+  int _calculateCompletionPercentage() {
+    int score = 0;
+
+    if (fullName.isNotEmpty) score += 15;
+    if (_profileData?['date_of_birth'] != null) score += 15;
+    if (gender != null && gender!.isNotEmpty) score += 10;
+    if (lookingFor != null && lookingFor!.isNotEmpty) score += 10;
+    if (bio.length >= 20) score += 15;
+    if (city != null && city!.isNotEmpty) score += 10;
+    if (photoUrl != null) score += 10; // photo principale
+    if (photos.length >= 2)
+      score += 15; // galerie : min 2 photos supplémentaires
+
+    return score.clamp(0, 100);
+  }
+
+  // ✅ Mise à jour getMissingFields
   List<String> getMissingFields() {
     final missing = <String>[];
 
@@ -316,10 +308,8 @@ class ProfileProvider extends ChangeNotifier {
     if (lookingFor == null) missing.add('Recherche');
     if (bio.length < 20) missing.add('Bio (min 20 caractères)');
     if (city == null) missing.add('Ville');
-    if (occupation == null) missing.add('Profession');
     if (photoUrl == null) missing.add('Photo de profil');
-    if (photos.length < 2) missing.add('Photos (min 2)');
-    if (interests.length < 3) missing.add('Centres d\'intérêt (min 3)');
+    if (photos.length < 2) missing.add('Au moins 2 photos dans la galerie');
 
     return missing;
   }
@@ -336,6 +326,7 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   Future<void> refresh() async {
+    _hasInitialized = false;
     await init();
   }
 
@@ -345,5 +336,11 @@ class ProfileProvider extends ChangeNotifier {
     if (errorStr.contains('network')) return 'Pas de connexion Internet';
     if (errorStr.contains('auth')) return 'Session expirée';
     return 'Une erreur est survenue';
+  }
+
+  @override
+  void dispose() {
+    _hasInitialized = false;
+    super.dispose();
   }
 }
