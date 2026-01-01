@@ -5,9 +5,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../core/data/repositories/discovery_repository_impl.dart';
+import '../../../objectBox/Entity.dart';
 import '../../core/swipe_action_enum.dart';
-import '../profile/profile.dart';
+import 'discovery_repository_impl.dart';
 
 class DiscoveryProvider extends ChangeNotifier {
   final DiscoveryRepositoryImpl repo = DiscoveryRepositoryImpl();
@@ -16,15 +16,18 @@ class DiscoveryProvider extends ChangeNotifier {
   List<Profile> _profiles = [];
   bool _loading = true;
   String? _error;
-  StreamSubscription? _sub;
+  StreamSubscription<List<Profile>>? _sub;
 
   // ✅ Getters publics
   List<Profile> get profiles => List.unmodifiable(_profiles);
+
   bool get loading => _loading;
+
   String? get error => _error;
+
   bool get hasProfiles => _profiles.isNotEmpty;
 
-  /// ✅ AMÉLIORATION: Initialisation avec gestion d'erreur
+  /// ✅ Initialisation avec gestion d'erreur
   Future<void> init() async {
     try {
       _loading = true;
@@ -56,7 +59,7 @@ class DiscoveryProvider extends ChangeNotifier {
       // Annuler l'ancien stream
       await _sub?.cancel();
 
-      // ✅ Écoute du stream de recommandations
+      // ✅ CORRECTION : Typage explicite du stream
       _sub = repo
           .getRecommendations(
         userId: userId,
@@ -64,7 +67,8 @@ class DiscoveryProvider extends ChangeNotifier {
         userLon: lon,
       )
           .listen(
-        (data) {
+        (List<Profile> data) {
+          // ✅ Typage explicite
           _profiles = data;
           _loading = false;
           _error = null;
@@ -79,7 +83,7 @@ class DiscoveryProvider extends ChangeNotifier {
         },
       );
 
-      // ✅ Synchroniser les swipes en attente
+      // Synchroniser les swipes en attente
       await repo.syncSwipes();
     } catch (e, stackTrace) {
       _error = _getErrorMessage(e);
@@ -90,9 +94,9 @@ class DiscoveryProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ AMÉLIORATION: Swipe avec animation optimiste + rollback
+  /// ✅ Swipe avec animation optimiste + rollback
   Future<void> onSwipe(Profile profile, SwipeAction action) async {
-    // ✅ Optimistic update: retirer le profil immédiatement
+    // Optimistic update: retirer le profil immédiatement
     final index = _profiles.indexWhere((p) => p.id == profile.id);
 
     if (index == -1) {
@@ -105,7 +109,7 @@ class DiscoveryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // ✅ Envoi du swipe
+      // Envoi du swipe
       await repo.swipe(
         swipedId: profile.id,
         action: action,
@@ -114,12 +118,12 @@ class DiscoveryProvider extends ChangeNotifier {
       print(
           '✅ [DiscoveryProvider] Swipe ${action.name} sur ${profile.fullName}');
 
-      // ✅ Vérifier si c'est un match (si like ou superlike)
+      // Vérifier si c'est un match (si like ou superlike)
       if (action == SwipeAction.like || action == SwipeAction.superlike) {
         await _checkForMatch(profile.id);
       }
     } catch (e) {
-      // ✅ Rollback: remettre le profil en cas d'erreur critique
+      // Rollback: remettre le profil en cas d'erreur critique
       print('❌ [DiscoveryProvider] Erreur swipe, rollback: $e');
 
       _profiles = List.from(_profiles)..insert(index, removedProfile);
@@ -128,7 +132,7 @@ class DiscoveryProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ NOUVEAU: Vérifier si un match s'est créé
+  /// ✅ Vérifier si un match s'est créé
   Future<void> _checkForMatch(String swipedId) async {
     try {
       final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -149,12 +153,12 @@ class DiscoveryProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ NOUVEAU: Recharger les profils
+  /// ✅ Recharger les profils
   Future<void> refresh() async {
     await init();
   }
 
-  /// ✅ AMÉLIORATION: Messages d'erreur utilisateur-friendly
+  /// ✅ Messages d'erreur utilisateur-friendly
   String _getErrorMessage(dynamic error) {
     final errorStr = error.toString().toLowerCase();
 

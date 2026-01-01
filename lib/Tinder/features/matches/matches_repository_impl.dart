@@ -1,14 +1,12 @@
-// lib/Tinder/core/data/repositories/matches_repository_impl.dart
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../../objectBox/Entity.dart';
+import 'tinder_match_model.dart';
 
 class MatchesRepositoryImpl {
   final _supabase = Supabase.instance.client;
 
-  /// ✅ SOLUTION 1: Stream avec filtrage côté client (Simple et fiable)
-  Stream<List<Match>> getMatchesStream() {
+  /// ✅ Stream de matches avec profils joints
+  Stream<List<TinderMatch>> getMatchesStream() {
     final currentUserId = _supabase.auth.currentUser?.id;
 
     if (currentUserId == null) {
@@ -16,72 +14,51 @@ class MatchesRepositoryImpl {
       return Stream.value([]);
     }
 
-    // ✅ Stream sans filtre, on filtre côté client
+    // ✅ CORRECTION : Stream avec filtrage côté client
     return _supabase
         .from('matches')
         .stream(primaryKey: ['id'])
         .order('last_message_at', ascending: false)
         .map((list) {
           try {
-            // ✅ Filtrer les matches de l'utilisateur courant
+            // Filtrer les matches de l'utilisateur courant
             final userMatches = list.where((json) {
               final user1Id = json['user1_id'] as String?;
               final user2Id = json['user2_id'] as String?;
               return user1Id == currentUserId || user2Id == currentUserId;
-            });
+            }).toList();
 
-            // ✅ Parser en objets Match
+            // Parser en TinderMatch
             return userMatches
                 .map((json) {
                   try {
-                    return Match.fromMap(json);
+                    return TinderMatch.fromMap(json, currentUserId);
                   } catch (e) {
                     print('❌ [MatchesRepo] Erreur parsing match: $e');
                     print('   JSON: $json');
                     return null;
                   }
                 })
-                .whereType<Match>()
+                .whereType<TinderMatch>()
                 .toList();
           } catch (e) {
             print('❌ [MatchesRepo] Erreur transformation: $e');
-            return <Match>[];
+            return <TinderMatch>[];
           }
         })
         .handleError((error) {
           print('❌ [MatchesRepo] Erreur stream: $error');
-          return <Match>[];
+          return <TinderMatch>[];
         });
   }
 
-  /// ✅ SOLUTION 2: Récupération ponctuelle avec RPC (Performant)
-  /// Utilise la fonction RPC Supabase si disponible
-  Future<List<Match>> getMatchesList({int limit = 50, int offset = 0}) async {
+  /// ✅ Récupération ponctuelle avec profils joints
+  Future<List<TinderMatch>> getMatchesList({int limit = 50}) async {
     try {
       final currentUserId = _supabase.auth.currentUser?.id;
       if (currentUserId == null) return [];
 
-      // ✅ Essayer d'abord avec RPC (optimal)
-      try {
-        final response = await _supabase.rpc(
-          'get_user_matches',
-          params: {
-            'p_user_id': currentUserId,
-            'p_limit': limit,
-            'p_offset': offset,
-          },
-        );
-
-        if (response is List) {
-          return response
-              .map((json) => Match.fromMap(json as Map<String, dynamic>))
-              .toList();
-        }
-      } catch (rpcError) {
-        print('⚠️ [MatchesRepo] RPC non disponible, fallback query normale');
-      }
-
-      // ✅ Fallback: Query classique avec deux requêtes
+      // Deux requêtes séparées
       final user1Matches = await _supabase
           .from('matches')
           .select()
@@ -96,7 +73,7 @@ class MatchesRepositoryImpl {
           .order('last_message_at', ascending: false)
           .limit(limit);
 
-      // ✅ Fusionner et trier
+      // Fusionner et trier
       final allMatches = [...user1Matches, ...user2Matches];
       allMatches.sort((a, b) {
         final aDate = a['last_message_at'] as String?;
@@ -107,7 +84,10 @@ class MatchesRepositoryImpl {
         return bDate.compareTo(aDate);
       });
 
-      return allMatches.take(limit).map((json) => Match.fromMap(json)).toList();
+      return allMatches
+          .take(limit)
+          .map((json) => TinderMatch.fromMap(json, currentUserId))
+          .toList();
     } catch (e) {
       print('❌ [MatchesRepo] Erreur getMatchesList: $e');
       return [];
@@ -115,12 +95,15 @@ class MatchesRepositoryImpl {
   }
 
   /// ✅ Récupérer un match spécifique
-  Future<Match?> getMatch(String matchId) async {
+  Future<TinderMatch?> getMatch(String matchId) async {
     try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      if (currentUserId == null) return null;
+
       final data =
           await _supabase.from('matches').select().eq('id', matchId).single();
 
-      return Match.fromMap(data);
+      return TinderMatch.fromMap(data, currentUserId);
     } catch (e) {
       print('❌ [MatchesRepo] Erreur récupération match: $e');
       return null;
@@ -140,11 +123,10 @@ class MatchesRepositoryImpl {
     }
   }
 
-  /// ✅ Supprimer un match (unmatch)
+  /// ✅ Supprimer un match
   Future<void> deleteMatch(String matchId) async {
     try {
       await _supabase.from('matches').delete().eq('id', matchId);
-
       print('✅ [MatchesRepo] Match $matchId supprimé');
     } catch (e) {
       print('❌ [MatchesRepo] Erreur suppression match: $e');
@@ -152,70 +134,40 @@ class MatchesRepositoryImpl {
     }
   }
 
-  /// ✅ Compter les matches non lus
+  /// ✅ Compter les matches non lus (CORRIGÉ)
   Future<int> getUnreadCount() async {
     try {
       final currentUserId = _supabase.auth.currentUser?.id;
       if (currentUserId == null) return 0;
 
-      // ✅ Essayer avec RPC d'abord
-      try {
-        final result = await _supabase.rpc(
-          'count_unread_matches',
-          params: {'p_user_id': currentUserId},
-        );
-
-        return result as int? ?? 0;
-      } catch (rpcError) {
-        print('⚠️ [MatchesRepo] RPC count non disponible, fallback');
-      }
-
-      // ✅ Fallback: Deux requêtes séparées
-      final user1Response = await _supabase
+      // ✅ CORRECTION : Utiliser .filter() au lieu de .is_()
+      // Méthode 1 : Filtrer avec .filter()
+      final user1Matches = await _supabase
           .from('matches')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('user1_id', currentUserId)
-          .isNull('last_read_at');
+          .filter('last_read_at', 'is', null);
 
-      final user2Response = await _supabase
+      final user2Matches = await _supabase
           .from('matches')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('user2_id', currentUserId)
-          .isNull('last_read_at');
+          .filter('last_read_at', 'is', null);
 
-      return (user1Response.count ?? 0) + (user2Response.count ?? 0);
+      return (user1Matches as List).length + (user2Matches as List).length;
     } catch (e) {
       print('❌ [MatchesRepo] Erreur count unread: $e');
       return 0;
     }
   }
 
-  /// ✅ NOUVEAU: Vérifier si un like mutuel crée un match
+  /// ✅ Vérifier si un like mutuel crée un match
   Future<String?> checkForMatch(String otherUserId) async {
     try {
       final currentUserId = _supabase.auth.currentUser?.id;
       if (currentUserId == null) return null;
 
-      // ✅ Essayer avec RPC
-      try {
-        final result = await _supabase.rpc(
-          'check_mutual_like',
-          params: {
-            'user1': currentUserId,
-            'user2': otherUserId,
-          },
-        ).single();
-
-        if (result['is_match'] == true) {
-          return result['match_id'] as String?;
-        }
-        return null;
-      } catch (rpcError) {
-        print('⚠️ [MatchesRepo] RPC check_mutual_like non disponible');
-      }
-
-      // ✅ Fallback: Vérification manuelle
-      // Vérifier si current user a liké other user
+      // Vérifier like mutuel
       final myLike = await _supabase
           .from('swipe_actions')
           .select('id')
@@ -225,7 +177,6 @@ class MatchesRepositoryImpl {
 
       if (myLike == null) return null;
 
-      // Vérifier si other user a liké current user
       final theirLike = await _supabase
           .from('swipe_actions')
           .select('id')
@@ -235,7 +186,7 @@ class MatchesRepositoryImpl {
 
       if (theirLike == null) return null;
 
-      // ✅ Match mutuel détecté, créer le match
+      // Vérifier si match existe
       final existingMatch = await _supabase
           .from('matches')
           .select('id')

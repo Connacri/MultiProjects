@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'features/discovery/discovery_screen.dart';
 import 'features/matches/matches_screen.dart';
-import 'features/profile/profile.dart';
+import 'features/profile/profile_page.dart';
 import 'location.dart';
 import 'star.dart';
 
@@ -18,26 +18,18 @@ class BottomNav extends StatefulWidget {
 class _BottomNavState extends State<BottomNav> {
   int _currentIndex = 0;
 
-  // ✅ CORRECTION: Déclaration correcte de la liste d'écrans
   late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ Initialisation dans initState
     _screens = [
       const DiscoveryScreen(),
       const Location(),
-      const Star(), // Placeholder pour Star
+      const Star(),
       const MatchesScreen(),
-      Profile(
-          id: '',
-          fullName: '',
-          age: null,
-          photos: [],
-          city: '',
-          distanceKm: null),
+      const ProfilePage(),
     ];
   }
 
@@ -57,7 +49,6 @@ class _BottomNavState extends State<BottomNav> {
             selectedIcon: Icons.location_on_sharp,
             label: 'Location',
           ),
-          // ✅ AMÉLIORATION: Custom widget pour l'icône centrale
           const NavigationDestination(
             icon: _StarIcon(),
             label: '',
@@ -87,7 +78,6 @@ class _BottomNavState extends State<BottomNav> {
     );
   }
 
-  /// ✅ AMÉLIORATION: Builder pour les destinations
   NavigationDestination _buildNavDestination({
     required IconData icon,
     required IconData selectedIcon,
@@ -106,7 +96,6 @@ class _BottomNavState extends State<BottomNav> {
     );
   }
 
-  /// ✅ AMÉLIORATION: AppBar configurée
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: const Text('목이길어슬픈기린님의 새로운 스팟'),
@@ -116,7 +105,6 @@ class _BottomNavState extends State<BottomNav> {
             const Icon(Icons.location_on),
       ),
       actions: [
-        // ✅ Badge étoiles
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(1000.0),
@@ -142,8 +130,6 @@ class _BottomNavState extends State<BottomNav> {
             ],
           ),
         ),
-
-        // ✅ Badge notifications
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 8),
           child: const Badge(
@@ -155,7 +141,6 @@ class _BottomNavState extends State<BottomNav> {
   }
 }
 
-/// ✅ Widget personnalisé pour l'icône Star
 class _StarIcon extends StatelessWidget {
   const _StarIcon();
 

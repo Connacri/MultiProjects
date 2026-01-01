@@ -4,21 +4,21 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../../../../../objectBox/Entity.dart';
-import '../../core/data/repositories/matches_repository_impl.dart';
+import 'matches_repository_impl.dart';
+import 'tinder_match_model.dart';
 
 class MatchesProvider extends ChangeNotifier {
   final MatchesRepositoryImpl repo = MatchesRepositoryImpl();
 
   // ✅ État privé
-  List<Match> _matches = [];
+  List<TinderMatch> _matches = [];
   bool _loading = true;
   String? _error;
   int _unreadCount = 0;
   StreamSubscription? _subscription;
 
   // ✅ Getters publics
-  List<Match> get matches => List.unmodifiable(_matches);
+  List<TinderMatch> get matches => List.unmodifiable(_matches);
 
   bool get loading => _loading;
 
@@ -33,7 +33,7 @@ class MatchesProvider extends ChangeNotifier {
     _loadUnreadCount();
   }
 
-  /// ✅ AMÉLIORATION: Chargement avec gestion d'erreur
+  /// ✅ Chargement avec gestion d'erreur
   void _loadMatches() {
     _subscription?.cancel();
 
@@ -54,7 +54,7 @@ class MatchesProvider extends ChangeNotifier {
     );
   }
 
-  /// ✅ NOUVEAU: Charger le nombre de matches non lus
+  /// ✅ Charger le nombre de matches non lus
   Future<void> _loadUnreadCount() async {
     try {
       _unreadCount = await repo.getUnreadCount();
@@ -64,7 +64,7 @@ class MatchesProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ NOUVEAU: Marquer un match comme lu
+  /// ✅ Marquer un match comme lu
   Future<void> markAsRead(String matchId) async {
     try {
       await repo.markMatchAsRead(matchId);
@@ -74,10 +74,10 @@ class MatchesProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ NOUVEAU: Supprimer un match
+  /// ✅ Supprimer un match
   Future<bool> deleteMatch(String matchId) async {
     try {
-      // ✅ Optimistic update
+      // Optimistic update
       final index = _matches.indexWhere((m) => m.id == matchId);
       if (index == -1) return false;
 
@@ -85,14 +85,14 @@ class MatchesProvider extends ChangeNotifier {
       _matches = List.from(_matches)..removeAt(index);
       notifyListeners();
 
-      // ✅ Suppression API
+      // Suppression API
       await repo.deleteMatch(matchId);
       print('✅ [MatchesProvider] Match supprimé');
       return true;
     } catch (e) {
       print('❌ [MatchesProvider] Erreur suppression: $e');
 
-      // ✅ Rollback si échec
+      // Rollback si échec
       _loading = true;
       notifyListeners();
       _loadMatches();
@@ -101,7 +101,7 @@ class MatchesProvider extends ChangeNotifier {
     }
   }
 
-  /// ✅ NOUVEAU: Rafraîchir manuellement
+  /// ✅ Rafraîchir manuellement
   Future<void> refresh() async {
     _loading = true;
     _error = null;
@@ -111,8 +111,8 @@ class MatchesProvider extends ChangeNotifier {
     await _loadUnreadCount();
   }
 
-  /// ✅ NOUVEAU: Filtrer les matches par recherche
-  List<Match> searchMatches(String query) {
+  /// ✅ Filtrer les matches par recherche
+  List<TinderMatch> searchMatches(String query) {
     if (query.isEmpty) return _matches;
 
     final lowerQuery = query.toLowerCase();

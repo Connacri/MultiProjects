@@ -5,9 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectbox.g.dart';
-import '../../../features/profile/profile.dart';
-import '../../objectbox.dart';
-import '../../swipe_action_enum.dart';
+import '../../core/objectbox.dart';
+import '../../core/swipe_action_enum.dart';
 import 'discovery_repository.dart';
 
 class DiscoveryRepositoryImpl implements DiscoveryRepository {

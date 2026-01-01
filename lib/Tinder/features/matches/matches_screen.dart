@@ -18,6 +18,17 @@ class _MatchesScreenState extends State<MatchesScreen> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    // ✅ Initialiser au premier build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Provider déjà initialisé dans le constructeur
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -29,80 +40,17 @@ class _MatchesScreenState extends State<MatchesScreen> {
       builder: (context, provider, _) {
         // ✅ Gestion d'erreur
         if (provider.error != null) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    provider.error!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.red,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: provider.refresh,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _buildErrorScreen(context, provider);
         }
 
         // ✅ Loading
         if (provider.loading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return _buildLoadingScreen();
         }
 
         // ✅ État vide
         if (provider.matches.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.favorite_border,
-                    size: 80,
-                    color: Colors.grey,
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Aucun match pour le moment',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Commencez à swiper pour trouver des matchs !',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _buildEmptyScreen(context, provider);
         }
 
         // ✅ Filtrer les matches par recherche
@@ -112,15 +60,15 @@ class _MatchesScreenState extends State<MatchesScreen> {
 
         return Column(
           children: [
-            // ✅ Barre de recherche
+            // Barre de recherche
             _buildSearchBar(),
 
-            // ✅ Liste des matches
+            // Liste des matches
             Expanded(
               child: RefreshIndicator(
                 onRefresh: provider.refresh,
                 child: filteredMatches.isEmpty
-                    ? _buildEmptySearch()
+                    ? _buildEmptySearchResults()
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: filteredMatches.length,
@@ -130,18 +78,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
                           return Dismissible(
                             key: Key(match.id),
                             direction: DismissDirection.endToStart,
-                            background: Container(
-                              alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.only(right: 20),
-                              color: Colors.red,
-                              child: const Icon(
-                                Icons.delete,
-                                color: Colors.white,
-                              ),
-                            ),
-                            confirmDismiss: (direction) async {
-                              return await _confirmDelete(context);
-                            },
+                            background: _buildDismissBackground(),
+                            confirmDismiss: (direction) =>
+                                _confirmDelete(context),
                             onDismissed: (direction) {
                               provider.deleteMatch(match.id);
 
@@ -169,7 +108,112 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
-  /// ✅ Barre de recherche
+  // ========================================================================
+  // WIDGETS UI
+  // ========================================================================
+
+  Widget _buildErrorScreen(BuildContext context, MatchesProvider provider) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.red,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              provider.error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.red,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: provider.refresh,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingScreen() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  Widget _buildEmptyScreen(BuildContext context, MatchesProvider provider) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.favorite_border,
+              size: 80,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Aucun match pour le moment',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Commencez à swiper pour trouver des matchs !',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptySearchResults() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.search_off,
+              size: 64,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Aucun résultat pour "$_searchQuery"',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -202,35 +246,18 @@ class _MatchesScreenState extends State<MatchesScreen> {
     );
   }
 
-  /// ✅ État vide de recherche
-  Widget _buildEmptySearch() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.search_off,
-              size: 64,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Aucun résultat pour "$_searchQuery"',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
+  Widget _buildDismissBackground() {
+    return Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      color: Colors.red,
+      child: const Icon(
+        Icons.delete,
+        color: Colors.white,
       ),
     );
   }
 
-  /// ✅ Tile de match
   Widget _buildMatchTile(
     BuildContext context,
     match,
@@ -286,7 +313,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
               ),
             ),
 
-            // ✅ Badge "nouveau" si pas de message
+            // Badge "nouveau" si pas de message
             if (match.lastMessagePreview == null)
               Container(
                 margin: const EdgeInsets.only(top: 4),
@@ -310,7 +337,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
           ],
         ),
         onTap: () {
-          // ✅ Marquer comme lu
+          // Marquer comme lu
           provider.markAsRead(match.id);
 
           // TODO: Navigator.push vers ChatScreen

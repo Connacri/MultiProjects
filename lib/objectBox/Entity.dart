@@ -1,8 +1,5 @@
 import 'dart:convert';
 
-import 'package:objectbox/objectbox.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../objectbox.g.dart';
 
 @Entity()
@@ -2175,41 +2172,68 @@ class SwipeQueue {
 
 // features/matches/domain/entities/match.dart
 
+// lib/Tinder/core/domain/entities/match.dart
 class Match {
   final String id;
-  final String otherUserId;
   final String otherUserName;
   final String? otherUserPhoto;
-  final DateTime matchedAt;
-  final DateTime? lastMessageAt;
   final String? lastMessagePreview;
+  final DateTime? lastMessageAt;
+  final DateTime matchedAt;
 
   Match({
     required this.id,
-    required this.otherUserId,
     required this.otherUserName,
     this.otherUserPhoto,
-    required this.matchedAt,
-    this.lastMessageAt,
     this.lastMessagePreview,
+    this.lastMessageAt,
+    required this.matchedAt,
   });
 
   factory Match.fromMap(Map<String, dynamic> map) {
-    final currentUserId = Supabase.instance.client.auth.currentUser!.id;
-    final otherId =
-        map['user1_id'] == currentUserId ? map['user2_id'] : map['user1_id'];
-    final otherProfile = map['other_profile'] as Map<String, dynamic>?;
-
     return Match(
-      id: map['id'],
-      otherUserId: otherId,
-      otherUserName: otherProfile?['full_name'] ?? 'Inconnu',
-      otherUserPhoto: (otherProfile?['photos'] as List?)?.firstOrNull,
-      matchedAt: DateTime.parse(map['matched_at']),
+      id: map['id'] as String,
+      otherUserName: map['other_user_name'] as String? ?? 'Inconnu',
+      otherUserPhoto: map['other_user_photo'] as String?,
+      lastMessagePreview: map['last_message_preview'] as String?,
       lastMessageAt: map['last_message_at'] != null
-          ? DateTime.parse(map['last_message_at'])
+          ? DateTime.parse(map['last_message_at'] as String)
           : null,
-      lastMessagePreview: map['last_message_preview'],
+      matchedAt: DateTime.parse(map['matched_at'] as String),
+    );
+  }
+}
+
+// features/discovery/domain/entities/profile.dart
+class Profile {
+  final String id;
+  final String fullName;
+  final int age;
+  final String? bio;
+  final List<String> photos;
+  final String city;
+  final double distanceKm;
+
+  Profile({
+    required this.id,
+    required this.fullName,
+    required this.age,
+    this.bio,
+    required this.photos,
+    required this.city,
+    required this.distanceKm,
+  });
+
+  factory Profile.fromMap(Map<String, dynamic> map) {
+    final photos = List<String>.from(map['photos'] ?? []);
+    return Profile(
+      id: map['id'],
+      fullName: map['full_name'] ?? '',
+      age: DateTime.now().year - DateTime.parse(map['date_of_birth']).year,
+      bio: map['bio'],
+      photos: photos,
+      city: map['city'] ?? '',
+      distanceKm: (map['distance_km'] as num?)?.toDouble() ?? 0,
     );
   }
 }

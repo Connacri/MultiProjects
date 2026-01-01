@@ -1,6 +1,5 @@
 // lib/Tinder/core/domain/enums/swipe_action.dart
 
-/// Actions possibles lors du swipe
 enum SwipeAction {
   pass(0, 'pass'),
   like(1, 'like'),
@@ -11,18 +10,16 @@ enum SwipeAction {
 
   const SwipeAction(this.value, this.name);
 
-  /// Convertit depuis CardSwiperDirection
   static SwipeAction fromDirection(dynamic direction) {
     final directionStr = direction.toString();
-    
+
     if (directionStr.contains('left')) return SwipeAction.pass;
     if (directionStr.contains('right')) return SwipeAction.like;
     if (directionStr.contains('top')) return SwipeAction.superlike;
-    
-    return SwipeAction.pass; // Fallback
+
+    return SwipeAction.pass;
   }
 
-  /// Convertit depuis un int
   static SwipeAction fromInt(int value) {
     return SwipeAction.values.firstWhere(
       (action) => action.value == value,
@@ -30,7 +27,6 @@ enum SwipeAction {
     );
   }
 
-  /// Convertit depuis un String
   static SwipeAction fromString(String name) {
     return SwipeAction.values.firstWhere(
       (action) => action.name == name,

@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/domain/enums/swipe_action.dart';
+import '../../../objectBox/Entity.dart';
 import '../../core/swipe_action_enum.dart';
-import '../profile/profile.dart';
 import '../profile/profile_card.dart';
 import 'discovery_provider.dart';
 
@@ -22,7 +21,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // ✅ Initialiser une seule fois
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DiscoveryProvider>().init();
     });
@@ -39,7 +37,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
       builder: (context, data, __) {
         final (loading, profiles, error) = data;
 
-        // ✅ Écran d'erreur avec retry
         if (error != null) {
           return Center(
             child: Padding(
@@ -74,7 +71,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           );
         }
 
-        // ✅ Loading state
         if (loading) {
           return const Center(
             child: Column(
@@ -91,7 +87,6 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           );
         }
 
-        // ✅ État vide
         if (profiles.isEmpty) {
           return Center(
             child: Padding(
@@ -115,16 +110,12 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Revenez plus tard ou augmentez votre rayon de recherche',
+                    'Élargissez vos critères ou revenez plus tard !',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () =>
-                        context.read<DiscoveryProvider>().refresh(),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Actualiser'),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
                   ),
                 ],
               ),
@@ -132,25 +123,19 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
           );
         }
 
-        // ✅ Swiper avec profils
         return Stack(
           children: [
-            // Cards swipables
             CardSwiper(
               cardsCount: profiles.length,
-              allowedSwipeDirection: const AllowedSwipeDirection.all(),
-              onSwipe: (previousIndex, currentIndex, direction) async {
-                if (previousIndex == null) return false;
-
+              onSwipe: (previousIndex, currentIndex, direction) {
                 final profile = profiles[previousIndex];
                 final action = SwipeAction.fromDirection(direction);
 
-                // ✅ Appel asynchrone sans bloquer l'UI
                 context.read<DiscoveryProvider>().onSwipe(profile, action);
 
                 return true;
               },
-              cardBuilder: (context, index) {
+              cardBuilder: (context, index, _, __) {
                 if (index >= profiles.length) return const SizedBox.shrink();
                 return ProfileCard(profile: profiles[index]);
               },

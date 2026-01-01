@@ -33,6 +33,7 @@ import '../MyListLotties.dart';
 import '../Tinder/features/auth/auth_provider.dart';
 import '../Tinder/features/discovery/discovery_provider.dart';
 import '../Tinder/features/matches/matches_provider.dart';
+import '../Tinder/features/profile/profile_provider.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import 'Entity.dart';
@@ -110,6 +111,12 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TinderAuthProvider()),
         ChangeNotifierProvider(create: (_) => DiscoveryProvider()),
         ChangeNotifierProvider(create: (_) => MatchesProvider()),
+        ChangeNotifierProvider.value(
+          value: DiscoveryProvider(),
+        ),
+        ChangeNotifierProvider.value(
+          value: ProfileProvider(),
+        ),
         // ChangeNotifierProvider(create: (_) => AuthService()),
         // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(
         //   create: (ctx) => ProfileProvider(auth: ctx.read<AuthService>()),

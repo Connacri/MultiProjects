@@ -1,7 +1,7 @@
 // lib/Tinder/core/data/repositories/discovery_repository.dart
 
-import '../../../features/profile/profile.dart';
-import '../../swipe_action_enum.dart';
+import '../../../objectBox/Entity.dart';
+import '../../core/swipe_action_enum.dart';
 
 abstract class DiscoveryRepository {
   /// Enregistre une action de swipe
