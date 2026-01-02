@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../Tinder/bottom_nav.dart';
 import 'auth_provider_v2.dart';
 
 /// 🎯 Écran de complétion du profil - Style onboarding moderne
@@ -95,23 +96,26 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Complétez votre profil',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Étape ${_currentStep + 1} sur $_totalSteps',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Complétez votre profil',
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Étape ${_currentStep + 1} sur $_totalSteps',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                ),
+              ],
+            ),
           ),
           TextButton(
             onPressed: _handleSkip,
@@ -521,20 +525,19 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
     final role = user.userMetadata?['role'] as String? ?? 'parent';
 
-    // ✅ FIX: Construire le nom complet pour la colonne "name"
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
     final fullName = '$firstName $lastName'.trim();
 
     final profileData = {
-      'name': fullName, // ← CRITIQUE : Remplit la contrainte NOT NULL
+      'name': fullName,
       'first_name': firstName,
       'last_name': lastName,
       'phone_number': _phoneController.text.trim(),
       'address': _addressController.text.trim(),
       'city': _cityController.text.trim(),
       'postal_code': _postalCodeController.text.trim(),
-      'profile_completed': true,
+      'profile_completed': true, // ← important pour ne plus revenir ici
       'updated_at': DateTime.now().toIso8601String(),
     };
 
@@ -542,7 +545,6 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       profileData['organization_name'] =
           _organizationNameController.text.trim();
     }
-
     if (role == 'coach') {
       profileData['license_number'] = _licenseNumberController.text.trim();
     }
@@ -552,9 +554,16 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     if (!mounted) return;
 
     if (result.success) {
-      _showSnackBar('Profil mis à jour avec succès', isError: false);
+      _showSnackBar('Profil complété avec succès !', isError: false);
+
+      // Redirection immédiate vers le dashboard principal
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const BottomNav()),
+        (route) => false,
+      );
     } else {
-      _showSnackBar(result.message!, isError: true);
+      _showSnackBar(result.message ?? 'Erreur lors de la sauvegarde',
+          isError: true);
     }
   }
 
@@ -580,6 +589,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     );
   }
 
+// Correction ciblée : _handleSkip doit quitter l'écran de complétion
+// et rediriger vers le dashboard principal
+
   void _handleSkip() {
     showDialog(
       context: context,
@@ -590,14 +602,33 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context), // Annuler le dialog
             child: const Text('Annuler'),
           ),
           FilledButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Marquer le profil comme "skip" et rediriger vers le dashboard
-              _showSnackBar('Vous pourrez compléter votre profil plus tard',
+            onPressed: () async {
+              Navigator.pop(context); // Ferme le dialog
+
+              // Optionnel : marquer explicitement que l'utilisateur a skip
+              // pour ne plus le montrer au prochain login
+              final authProvider = context.read<AuthProviderV2>();
+              await authProvider.updateUserProfile({
+                'profile_completed': false,
+                // ou un champ dédié 'onboarding_skipped': true
+                'updated_at': DateTime.now().toIso8601String(),
+              });
+
+              // Quitte définitivement l'écran de complétion
+              if (mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const BottomNav()),
+                  // ← ton dashboard principal
+                  (route) => false, // supprime tout le stack précédent
+                );
+              }
+
+              _showSnackBar(
+                  'Profil complétable plus tard depuis les paramètres',
                   isError: false);
             },
             child: const Text('Confirmer'),

@@ -23,7 +23,7 @@ class ProfileProvider extends ChangeNotifier {
 
   int get completionPercentage => _profileData?['completion_percentage'] ?? 0;
 
-  // ✅ Getters sécurisés
+  // Getters sécurisés
   String get fullName => _profileData?['full_name'] as String? ?? '';
 
   String get email => _supabase.auth.currentUser?.email ?? '';
@@ -55,6 +55,8 @@ class ProfileProvider extends ChangeNotifier {
 
   String? get city => _profileData?['city'] as String?;
 
+  String? get country => _profileData?['country'] as String?;
+
   String? get gender => _profileData?['gender'] as String?;
 
   String? get lookingFor => _profileData?['looking_for'] as String?;
@@ -63,6 +65,21 @@ class ProfileProvider extends ChangeNotifier {
       List<String>.from(_profileData?['interests'] ?? []);
 
   List<String> get photos => List<String>.from(_profileData?['photos'] ?? []);
+
+  int? get heightCm => _profileData?['height_cm'] as int?;
+
+  String? get education => _profileData?['education'] as String?;
+
+  String? get relationshipStatus =>
+      _profileData?['relationship_status'] as String?;
+
+  String? get instagramHandle => _profileData?['instagram_handle'] as String?;
+
+  String? get spotifyAnthem => _profileData?['spotify_anthem'] as String?;
+
+  double? get latitude => _profileData?['latitude'] as double?;
+
+  double? get longitude => _profileData?['longitude'] as double?;
 
   Future<void> init() async {
     if (_hasInitialized) return;
@@ -89,7 +106,7 @@ class ProfileProvider extends ChangeNotifier {
 
       if (response == null) {
         await _createProfile(user.id);
-        await init(); // Recharge après création
+        await init();
         return;
       }
 
@@ -111,8 +128,6 @@ class ProfileProvider extends ChangeNotifier {
         'email': _supabase.auth.currentUser?.email,
         'created_at': now,
         'updated_at': now,
-        'profile_completed': false,
-        'completion_percentage': 0,
       });
     } catch (e) {
       rethrow;
@@ -125,7 +140,7 @@ class ProfileProvider extends ChangeNotifier {
       if (userId == null) throw Exception('Non authentifié');
 
       final extension = file.path.split('.').last;
-      final path = '$userId/${isCover ? 'cover' : 'avatar'}.$extension';
+      final path = '$userId/${isCover ? 'cover' : 'photo'}.$extension';
 
       await _supabase.storage.from('profiles').upload(
             path,
@@ -140,7 +155,53 @@ class ProfileProvider extends ChangeNotifier {
 
       return url;
     } catch (e) {
-      print('❌ [ProfileProvider] Erreur upload: $e');
+      print('❌ Erreur upload photo: $e');
+      rethrow;
+    }
+  }
+
+  Future<String?> addPhotoToGallery(File file) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Non authentifié');
+
+      final extension = file.path.split('.').last;
+      final path =
+          '$userId/gallery/${DateTime.now().millisecondsSinceEpoch}.$extension';
+
+      await _supabase.storage.from('profiles').upload(
+            path,
+            file,
+            fileOptions: const FileOptions(upsert: true),
+          );
+
+      final url = _supabase.storage.from('profiles').getPublicUrl(path);
+
+      final currentPhotos = photos..add(url);
+
+      await updateProfile(photos: currentPhotos);
+
+      return url;
+    } catch (e) {
+      print('❌ Erreur add to gallery: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> removePhotoFromGallery(String url) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('Non authentifié');
+
+      final path = url.split('profiles/')[1];
+
+      await _supabase.storage.from('profiles').remove([path]);
+
+      final updatedPhotos = photos..remove(url);
+
+      await updateProfile(photos: updatedPhotos);
+    } catch (e) {
+      print('❌ Erreur remove from gallery: $e');
       rethrow;
     }
   }
@@ -150,12 +211,21 @@ class ProfileProvider extends ChangeNotifier {
     String? bio,
     String? occupation,
     String? city,
-    String? photoUrl,
-    String? coverUrl,
+    String? country,
     DateTime? dateOfBirth,
     String? gender,
     String? lookingFor,
     List<String>? interests,
+    int? heightCm,
+    String? education,
+    String? relationshipStatus,
+    String? instagramHandle,
+    String? spotifyAnthem,
+    double? latitude,
+    double? longitude,
+    String? photoUrl,
+    String? coverUrl,
+    List<String>? photos,
   }) async {
     try {
       _loading = true;
@@ -166,39 +236,42 @@ class ProfileProvider extends ChangeNotifier {
 
       final updates = <String, dynamic>{
         'updated_at': DateTime.now().toIso8601String(),
-        if (fullName != null && fullName.isNotEmpty) 'full_name': fullName,
+        if (fullName != null) 'full_name': fullName,
         if (bio != null) 'bio': bio,
-        if (occupation != null && occupation.isNotEmpty)
-          'occupation': occupation,
-        if (city != null && city.isNotEmpty) 'city': city,
-        if (photoUrl != null) 'photo_url': photoUrl,
-        if (coverUrl != null) 'cover_url': coverUrl,
+        if (occupation != null) 'occupation': occupation,
+        if (city != null) 'city': city,
+        if (country != null) 'country': country,
         if (dateOfBirth != null)
           'date_of_birth': dateOfBirth.toIso8601String().split('T')[0],
-        if (gender != null && gender.isNotEmpty) 'gender': gender,
-        if (lookingFor != null && lookingFor.isNotEmpty)
-          'looking_for': lookingFor,
-        if (interests != null && interests.isNotEmpty) 'interests': interests,
+        if (gender != null) 'gender': gender,
+        if (lookingFor != null) 'looking_for': lookingFor,
+        if (interests != null) 'interests': interests,
+        if (heightCm != null) 'height_cm': heightCm,
+        if (education != null) 'education': education,
+        if (relationshipStatus != null)
+          'relationship_status': relationshipStatus,
+        if (instagramHandle != null) 'instagram_handle': instagramHandle,
+        if (spotifyAnthem != null) 'spotify_anthem': spotifyAnthem,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+        if (photoUrl != null) 'photo_url': photoUrl,
+        if (coverUrl != null) 'cover_url': coverUrl,
+        if (photos != null) 'photos': photos,
       };
 
       await _supabase.from('profiles').update(updates).eq('id', userId);
 
-      // Recharger les données
-      await init();
+      await init(); // Recharge
 
-      // Calculer et mettre à jour la complétion
       final percentage = _calculateCompletionPercentage();
-      final completed = percentage >= 90;
+      final completed = percentage >= 80;
 
       await _supabase.from('profiles').update({
         'completion_percentage': percentage,
         'profile_completed': completed,
       }).eq('id', userId);
 
-      // Recharger une dernière fois
       await init();
-
-      _error = null;
     } catch (e) {
       _error = _getErrorMessage(e);
     } finally {
@@ -207,97 +280,30 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
-  // ✅ Ajouter une photo à la galerie
-  Future<String?> addPhotoToGallery(File file) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('Non authentifié');
-
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final extension = file.path.split('.').last;
-      final path = '$userId/gallery/$timestamp.$extension';
-
-      await _supabase.storage.from('profiles').upload(
-            path,
-            file,
-            fileOptions: const FileOptions(upsert: true),
-          );
-
-      final url = _supabase.storage.from('profiles').getPublicUrl(path);
-
-      // Récupérer la liste actuelle
-      final currentPhotos = photos;
-
-      // Ajouter la nouvelle
-      final updatedPhotos = [...currentPhotos, url];
-
-      // Mettre à jour en base
-      await _supabase.from('profiles').update({
-        'photos': updatedPhotos,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
-
-      // Recharger profil + recalcul complétion
-      await init();
-
-      return url;
-    } catch (e) {
-      print('❌ [ProfileProvider] Erreur addPhotoToGallery: $e');
-      rethrow;
-    }
-  }
-
-  // ✅ Supprimer une photo de la galerie
-  Future<void> removePhotoFromGallery(String photoUrl) async {
-    try {
-      final userId = _supabase.auth.currentUser?.id;
-      if (userId == null) throw Exception('Non authentifié');
-
-      // Extraire le path depuis l'URL publique
-      final path = photoUrl.replaceFirst(
-        '${_supabase.storage.from('profiles').getPublicUrl('')}/',
-        '',
-      );
-
-      // Supprimer du storage
-      await _supabase.storage.from('profiles').remove([path]);
-
-      // Mettre à jour la liste en base
-      final currentPhotos = photos;
-      final updatedPhotos =
-          currentPhotos.where((url) => url != photoUrl).toList();
-
-      await _supabase.from('profiles').update({
-        'photos': updatedPhotos,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', userId);
-
-      // Recharger + recalcul complétion
-      await init();
-    } catch (e) {
-      print('❌ [ProfileProvider] Erreur removePhotoFromGallery: $e');
-      rethrow;
-    }
-  }
-
-  // ✅ Mise à jour du calcul de complétion (ajusté pour galerie)
   int _calculateCompletionPercentage() {
     int score = 0;
 
-    if (fullName.isNotEmpty) score += 15;
-    if (_profileData?['date_of_birth'] != null) score += 15;
-    if (gender != null && gender!.isNotEmpty) score += 10;
-    if (lookingFor != null && lookingFor!.isNotEmpty) score += 10;
-    if (bio.length >= 20) score += 15;
-    if (city != null && city!.isNotEmpty) score += 10;
-    if (photoUrl != null) score += 10; // photo principale
-    if (photos.length >= 2)
-      score += 15; // galerie : min 2 photos supplémentaires
+    if (fullName.isNotEmpty) score += 10;
+    if (_profileData?['date_of_birth'] != null) score += 10;
+    if (gender != null) score += 5;
+    if (lookingFor != null) score += 5;
+    if (bio.isNotEmpty) score += 10;
+    if (city != null) score += 5;
+    if (country != null) score += 5;
+    if (photoUrl != null) score += 10;
+    if (coverUrl != null) score += 10;
+    if (photos.length >= 2) score += 10;
+    if (interests.isNotEmpty) score += 5;
+    if (heightCm != null) score += 5;
+    if (education != null) score += 5;
+    if (relationshipStatus != null) score += 5;
+    if (instagramHandle != null) score += 5;
+    if (spotifyAnthem != null) score += 5;
+    if (latitude != null && longitude != null) score += 5;
 
     return score.clamp(0, 100);
   }
 
-  // ✅ Mise à jour getMissingFields
   List<String> getMissingFields() {
     final missing = <String>[];
 
@@ -306,7 +312,7 @@ class ProfileProvider extends ChangeNotifier {
       missing.add('Date de naissance');
     if (gender == null) missing.add('Genre');
     if (lookingFor == null) missing.add('Recherche');
-    if (bio.length < 20) missing.add('Bio (min 20 caractères)');
+    if (bio.isEmpty) missing.add('Bio');
     if (city == null) missing.add('Ville');
     if (photoUrl == null) missing.add('Photo de profil');
     if (photos.length < 2) missing.add('Au moins 2 photos dans la galerie');
@@ -320,7 +326,7 @@ class ProfileProvider extends ChangeNotifier {
       _profileData = null;
       notifyListeners();
     } catch (e) {
-      print('❌ [ProfileProvider] Erreur déconnexion: $e');
+      print('❌ Erreur déconnexion: $e');
       rethrow;
     }
   }

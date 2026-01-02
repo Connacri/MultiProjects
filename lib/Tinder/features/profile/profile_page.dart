@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'profile_completion_screen.dart';
 import 'profile_provider.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -123,7 +124,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         provider.fullName.isNotEmpty
                             ? provider.fullName[0].toUpperCase()
                             : 'U',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineLarge
+                            ?.copyWith(
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
                       )
@@ -194,13 +198,28 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ],
             const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => _showEditDialog(context, provider),
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('Modifier'),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (ctx) => ProfileCompletion())),
+                    icon: const Icon(Icons.edit_note),
+                    label: const Text('Completer'),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _showEditDialog(context, provider),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Modifier'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -400,8 +419,7 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Déconnexion'),
-        content:
-            const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+        content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
