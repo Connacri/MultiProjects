@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../Tinder/bottom_nav.dart';
 import 'auth_provider_v2.dart';
 
 /// 🎯 Écran de complétion du profil - Style onboarding moderne
@@ -557,10 +556,10 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       _showSnackBar('Profil complété avec succès !', isError: false);
 
       // Redirection immédiate vers le dashboard principal
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const BottomNav()),
-        (route) => false,
-      );
+      // Navigator.of(context).pushAndRemoveUntil(
+      //   MaterialPageRoute(builder: (_) => const BottomNav()),
+      //   (route) => false,
+      // );
     } else {
       _showSnackBar(result.message ?? 'Erreur lors de la sauvegarde',
           isError: true);
@@ -620,11 +619,11 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
 
               // Quitte définitivement l'écran de complétion
               if (mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const BottomNav()),
-                  // ← ton dashboard principal
-                  (route) => false, // supprime tout le stack précédent
-                );
+                // Navigator.of(context).pushAndRemoveUntil(
+                //   MaterialPageRoute(builder: (_) => const BottomNav()),
+                //   // ← ton dashboard principal
+                //   (route) => false, // supprime tout le stack précédent
+                // );
               }
 
               _showSnackBar(

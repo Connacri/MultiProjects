@@ -30,10 +30,6 @@ import '../Kids/providers/child_enrollment_provider.dart';
 import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
 import '../MyListLotties.dart';
-import '../Tinder/features/auth/auth_provider.dart';
-import '../Tinder/features/discovery/discovery_provider.dart';
-import '../Tinder/features/matches/matches_provider.dart';
-import '../Tinder/features/profile/profile_provider.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
 import 'Entity.dart';
@@ -110,24 +106,24 @@ class MyApp9 extends StatelessWidget {
         /////////////////////////////tinder/////////////////////////////////////
         // 🎯 Fournir ObjectBox comme Provider value
         Provider<ObjectBox>.value(value: objectBox),
-        ChangeNotifierProvider(create: (_) => TinderAuthProvider()),
-        // ChangeNotifierProvider(create: (_) => DiscoveryProvider()),
-        ChangeNotifierProxyProvider<ObjectBox, DiscoveryProvider>(
-          create: (_) => DiscoveryProvider(), // Création initiale
-          update: (context, objectBox, previous) {
-            // ✅ Garantit que ObjectBox est prêt avant création
-            return previous ?? DiscoveryProvider();
-          },
-        ),
-        ChangeNotifierProvider(create: (_) => MatchesProvider()),
+        // ChangeNotifierProvider(create: (_) => TinderAuthProvider()),
+        // // ChangeNotifierProvider(create: (_) => DiscoveryProvider()),
+        // ChangeNotifierProxyProvider<ObjectBox, DiscoveryProvider>(
+        //   create: (_) => DiscoveryProvider(), // Création initiale
+        //   update: (context, objectBox, previous) {
+        //     // ✅ Garantit que ObjectBox est prêt avant création
+        //     return previous ?? DiscoveryProvider();
+        //   },
+        // ),
+        // ChangeNotifierProvider(create: (_) => MatchesProvider()),
         // Dans lib/objectBox/MyApp.dart (ou là où se trouve MyApp9)
 
-        ChangeNotifierProvider(
-          create: (_) => ProfileProvider()
-            ..init(), // 👈 Ajoute "..init()" pour lancer le chargement
-          lazy:
-              false, // 👈 Ajoute "lazy: false" pour forcer la création au boot
-        ),
+        // ChangeNotifierProvider(
+        //   create: (_) => ProfileProvider()
+        //     ..init(), // 👈 Ajoute "..init()" pour lancer le chargement
+        //   lazy:
+        //       false, // 👈 Ajoute "lazy: false" pour forcer la création au boot
+        // ),
 
         // ChangeNotifierProvider(create: (_) => AuthService()),
         // ChangeNotifierProxyProvider<AuthService, ProfileProvider>(

@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 
 import 'Hopital/TableauStaff.dart';
 import 'Kids/main.dart';
-import 'Tinder/main.dart';
 import 'checkit/HomePage.dart';
 import 'dependences/calendar_timeline/home.dart';
 import 'objectBox/MyApp.dart';
@@ -151,17 +150,17 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         ],
         destination: HomePageCalendar(),
       ),
-      PageCardData(
-        title: 'Tinder Clone',
-        subtitle: 'Découvrez des profils à proximité',
-        imageUrl: 'assets/ai-generated-8302736_1280.jpg',
-        // ✅ Garde cette image ou change
-        gradientColors: [
-          const Color(0xFFFF655B).withOpacity(0.9), // Rose Tinder officiel
-          const Color(0xFFFD297B).withOpacity(0.9), // Rouge Tinder
-        ],
-        destination: const MyApp_TinderClone(),
-      ),
+      // PageCardData(
+      //   title: 'Tinder Clone',
+      //   subtitle: 'Découvrez des profils à proximité',
+      //   imageUrl: 'assets/ai-generated-8302736_1280.jpg',
+      //   // ✅ Garde cette image ou change
+      //   gradientColors: [
+      //     const Color(0xFFFF655B).withOpacity(0.9), // Rose Tinder officiel
+      //     const Color(0xFFFD297B).withOpacity(0.9), // Rouge Tinder
+      //   ],
+      //   destination: const MyApp_TinderClone(),
+      // ),
     ];
 
     return Scaffold(

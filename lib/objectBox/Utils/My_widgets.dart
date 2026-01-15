@@ -9,7 +9,6 @@ import 'package:mime/mime.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../Tinder/main.dart';
 import '../../checkit/HomePage.dart';
 import '../../checkit/home.dart';
 import '../../checkit/providerF.dart';
@@ -914,19 +913,19 @@ class ReservationNavigationButtons extends StatelessWidget {
                   },
                   child: Text('Hotel V3'),
                 ),
-                ElevatedButton(
-                  style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStateProperty.all<Color>(Colors.blue),
-                    foregroundColor:
-                        WidgetStateProperty.all<Color>(Colors.white),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (ctx) => MyApp_TinderClone()));
-                  },
-                  child: Text('Tinder Clone'),
-                ),
+                // ElevatedButton(
+                //   style: ButtonStyle(
+                //     backgroundColor:
+                //         WidgetStateProperty.all<Color>(Colors.blue),
+                //     foregroundColor:
+                //         WidgetStateProperty.all<Color>(Colors.white),
+                //   ),
+                //   onPressed: () {
+                //     Navigator.of(context).push(MaterialPageRoute(
+                //         builder: (ctx) => MyApp_TinderClone()));
+                //   },
+                //   child: Text('Tinder Clone'),
+                // ),
                 SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: () {
