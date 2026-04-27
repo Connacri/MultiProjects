@@ -166,7 +166,7 @@ class HotelManagementState extends State<Hotel_Management> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar:  _buildAppBar(),
       drawer: AppDrawer(
         currentHotel: _currentHotel,
       ),
@@ -421,6 +421,12 @@ class HotelManagementState extends State<Hotel_Management> {
       //   ),
       //),
       actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(Icons.arrow_back),
+        ),
         // IconButton(
         //   onPressed: () {
         //     Navigator.of(context)

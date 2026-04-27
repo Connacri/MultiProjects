@@ -32,6 +32,7 @@ class _HomePageCalendarState extends State<HomePageCalendar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       backgroundColor: const Color(0xFF333A47),
       body: SafeArea(
         child: Column(
