@@ -69,56 +69,82 @@ class ObjectBox {
 
   Future<void> init() async {
     final dir = await getApplicationDocumentsDirectory();
-    final dbPath = '${dir.path}/objectbox';
+    final dbPath = join(dir.path, 'objectbox');
 
     // ✅ CORRECTION 1: Vérifiez si le store est déjà ouvert
     if (!Store.isOpen(dbPath)) {
-      store = await openStore(directory: dbPath);
-      userBox = Box<Usero>(store);
-      crudBox = Box<Crud>(store);
-      produitBox = Box<Produit>(store);
-      approvisionnementBox = Box<Approvisionnement>(store);
-      fournisseurBox = Box<Fournisseur>(store);
-      factureBox = Box<Document>(store);
-      ligneFacture = Box<LigneDocument>(store);
-      clientBox = Box<Client>(store);
-      deletedProduct = Box<DeletedProduct>(store);
-      annonces = Box<Annonces>(store);
-      roomBox = Box<Room>(store);
-      reservationBox = Box<Reservation>(store);
-      guestBox = Box<Guest>(store);
-      employeeBox = Box<Employee>(store);
-      hotelBox = Box<Hotel>(store);
-      roomCategory = Box<RoomCategory>(store);
-      boardBasis = Box<BoardBasis>(store);
-      extraService = Box<ExtraService>(store);
-      reservationExtra = Box<ReservationExtra>(store);
-      seasonalPricing = Box<SeasonalPricing>(store);
+      try {
+        store = await openStore(directory: dbPath);
+        _initializeBoxes();
+        // ✅ CORRECTION 2: Initialisez Admin correctement
+        await _initializeAdmin();
+      } catch (e) {
+        print('❌ Erreur lors de l\'ouverture du store ObjectBox : $e');
+        if (e.toString().contains('does not match existing UID') || 
+            e.toString().contains('failed to create store')) {
+          print('⚠️ Mismatch de modèle détecté. Tentative de suppression et recréation de la base de données...');
+          await _forceDeleteDatabase(dbPath);
+          store = await openStore(directory: dbPath);
+          _initializeBoxes();
+          await _initializeAdmin();
+          print('✅ Base de données réinitialisée avec succès.');
+        } else {
+          rethrow;
+        }
+      }
+    }
+  }
 
-      staffBox = Box<Staff>(store);
-      activiteBox = Box<ActiviteJour>(store);
-      branchBox = Box<Branch>(store);
-      timeOffBox = Box<TimeOff>(store);
-      planificationBox = Box<Planification>(store);
-      // 🆕 BOXES MANQUANTES INITIALISÉES
-      planningHebdoBox = Box<PlanningHebdo>(store);
-      typeActiviteBox = Box<TypeActivite>(store);
+  void _initializeBoxes() {
+    userBox = Box<Usero>(store);
+    crudBox = Box<Crud>(store);
+    produitBox = Box<Produit>(store);
+    approvisionnementBox = Box<Approvisionnement>(store);
+    fournisseurBox = Box<Fournisseur>(store);
+    factureBox = Box<Document>(store);
+    ligneFacture = Box<LigneDocument>(store);
+    clientBox = Box<Client>(store);
+    deletedProduct = Box<DeletedProduct>(store);
+    annonces = Box<Annonces>(store);
+    roomBox = Box<Room>(store);
+    reservationBox = Box<Reservation>(store);
+    guestBox = Box<Guest>(store);
+    employeeBox = Box<Employee>(store);
+    hotelBox = Box<Hotel>(store);
+    roomCategory = Box<RoomCategory>(store);
+    boardBasis = Box<BoardBasis>(store);
+    extraService = Box<ExtraService>(store);
+    reservationExtra = Box<ReservationExtra>(store);
+    seasonalPricing = Box<SeasonalPricing>(store);
 
-      // ✅ MESSAGING BOXES - INITIALISÉES
-      messageBox = Box<Message>(store);
-      conversationBox = Box<Conversation>(store);
-      messageReceiptBox = Box<MessageReceipt>(store);
-      conversationParticipantBox = Box<ConversationParticipant>(store);
-      messageSyncQueueBox = Box<MessageSyncQueue>(store);
-      messageSearchIndexBox = Box<MessageSearchIndex>(store);
+    staffBox = Box<Staff>(store);
+    activiteBox = Box<ActiviteJour>(store);
+    branchBox = Box<Branch>(store);
+    timeOffBox = Box<TimeOff>(store);
+    planificationBox = Box<Planification>(store);
+    // 🆕 BOXES MANQUANTES INITIALISÉES
+    planningHebdoBox = Box<PlanningHebdo>(store);
+    typeActiviteBox = Box<TypeActivite>(store);
 
-      // ✅ TINDER
-      swipeQueueBox = Box<SwipeQueue>(store);
-      matchBox = Box<Match>(store);
-      profileBox = Box<Profile>(store);
+    // ✅ MESSAGING BOXES - INITIALISÉES
+    messageBox = Box<Message>(store);
+    conversationBox = Box<Conversation>(store);
+    messageReceiptBox = Box<MessageReceipt>(store);
+    conversationParticipantBox = Box<ConversationParticipant>(store);
+    messageSyncQueueBox = Box<MessageSyncQueue>(store);
+    messageSearchIndexBox = Box<MessageSearchIndex>(store);
 
-      // ✅ CORRECTION 2: Initialisez Admin correctement
-      await _initializeAdmin();
+    // ✅ TINDER
+    swipeQueueBox = Box<SwipeQueue>(store);
+    matchBox = Box<Match>(store);
+    profileBox = Box<Profile>(store);
+  }
+
+  Future<void> _forceDeleteDatabase(String path) async {
+    final dir = Directory(path);
+    if (await dir.exists()) {
+      await dir.delete(recursive: true);
+      print('🗑️ Répertoire ObjectBox supprimé : $path');
     }
   }
 
@@ -943,53 +969,20 @@ class ObjectBox {
 
   Future<void> deleteDatabase() async {
     final directory = await getApplicationDocumentsDirectory();
-    print('Directory: $directory');
+    final dbPath = join(directory.path, 'objectbox');
 
-    final path = join(directory.path, 'objectbox');
-    print('Path: $path');
+    print('🗑️ Tentative de suppression de la base de données ObjectBox...');
 
-    final dir = Directory(path);
-    print('Directory exists: ${await dir.exists()}');
-    // if (await dir.exists()) {
-    //   await dir.delete(recursive: true);
-    // }
-    print('Suppression des approvisionnements');
-    approvisionnementBox.removeAll();
-    print('Approvisionnements Succefully Deleted');
+    try {
+      if (Store.isOpen(dbPath)) {
+        await dispose();
+      }
+      await _forceDeleteDatabase(dbPath);
+      print('✅ Base de données ObjectBox supprimée.');
+    } catch (e) {
+      print('❌ Erreur lors de la suppression de la base de données : $e');
+    }
 
-    print('Suppression des ligneFacture');
-    ligneFacture.removeAll();
-    print('ligneFacture Succefully Deleted');
-
-    print('Suppression des crudBox');
-    crudBox.removeAll();
-    print('crudBox Succefully Deleted');
-
-    print('Suppression des produitBox');
-    produitBox.removeAll();
-    print('produitBox Succefully Deleted');
-
-    print('Suppression des fournisseurBox');
-    fournisseurBox.removeAll();
-    print('fournisseurBox Succefully Deleted');
-
-    print('Suppression des clientBox');
-    clientBox.removeAll();
-    print('clientBox Succefully Deleted');
-
-    print('Suppression des userBox');
-    userBox.removeAll();
-    print('userBox Succefully Deleted');
-
-    print('Suppression des factureBox');
-    factureBox.removeAll();
-    print('factureBox Succefully Deleted');
-
-    print('Suppression des deletedProduct');
-    deletedProduct.removeAll();
-    print('deletedProduct Succefully Deleted');
-
-    //await deleteDatabase();
     await init();
   }
 

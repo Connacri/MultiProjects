@@ -43,23 +43,6 @@ Future<String?> generateAndSaveMonthPlanningPDF(
     fontWeight: pw.FontWeight.bold,
   );
 
-  // ⭐ NOUVEAU : Fonction pour obtenir la priorité de l'équipe
-  int getEquipePriority(String? equipe) {
-    if (equipe == null) return 5;
-    switch (equipe.toUpperCase()) {
-      case 'A':
-        return 1;
-      case 'B':
-        return 2;
-      case 'C':
-        return 3;
-      case 'D':
-        return 4;
-      default:
-        return 5;
-    }
-  }
-
   // ⭐ NOUVELLE FONCTION : Tri personnalisé exactement comme TableauStaffPage
   void sortStaffList(List membres) {
     membres.sort((a, b) {
@@ -72,14 +55,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
       if (a.ordre != null) return -1;
       if (b.ordre != null) return 1;
 
-      // 3. Sinon, trier par équipe puis par nom (comportement par défaut)
-      int priorityA = getEquipePriority(a.equipe);
-      int priorityB = getEquipePriority(b.equipe);
-
-      if (priorityA != priorityB) {
-        return priorityA.compareTo(priorityB);
-      }
-
+      // 3. Sinon, trier par nom (comme TableauStaff)
       return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
     });
   }
@@ -222,7 +198,8 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                     style: baseStyle.copyWith(fontSize: 12)),
               ],
             ),
-            pw.SizedBox(height: 6),
+           // pw.SizedBox(height: 6),
+            pw.Spacer(),
             pw.Center(
               child: pw.Text(
                 'TABLEAU D\'ACTIVITÉ DU MOIS ${prefix.toUpperCase()}${monthName.toUpperCase()} $year | $title',
@@ -232,7 +209,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
             // pw.SizedBox(height: 4),
             // pw.Center(
             //     child: pw.Text(title, style: bold.copyWith(fontSize: 12))),
-            pw.SizedBox(height: 8),
+            pw.SizedBox(height: 4),
             pw.Center(
               child: _buildGroupTable(list, daysInMonth, oswald, year, month),
             ),
@@ -257,6 +234,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
           footer: (ctx) => pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+             // pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
@@ -359,23 +337,6 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
     fontWeight: pw.FontWeight.bold,
   );
 
-  // ✅ Fonction de tri (identique à TableauStaffPage)
-  int getEquipePriority(String? equipe) {
-    if (equipe == null) return 5;
-    switch (equipe.toUpperCase()) {
-      case 'A':
-        return 1;
-      case 'B':
-        return 2;
-      case 'C':
-        return 3;
-      case 'D':
-        return 4;
-      default:
-        return 5;
-    }
-  }
-
   void sortStaffList(List membres) {
     membres.sort((a, b) {
       if (a.ordre != null && b.ordre != null) {
@@ -384,11 +345,6 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
       if (a.ordre != null) return -1;
       if (b.ordre != null) return 1;
 
-      int priorityA = getEquipePriority(a.equipe);
-      int priorityB = getEquipePriority(b.equipe);
-      if (priorityA != priorityB) {
-        return priorityA.compareTo(priorityB);
-      }
       return (a.nom ?? '').toString().compareTo((b.nom ?? '').toString());
     });
   }
@@ -442,8 +398,20 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
         subGroups.add(medecins);
         currentOption = medicalOption;
         pageTitle = '08h–16h – Personnel Médical';
-        _addActivityPage(pdf, medecins, daysInMonth, oswald, year, month,
-            pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
+        _addActivityPage(
+            pdf,
+            medecins,
+            daysInMonth,
+            oswald,
+            year,
+            month,
+            pageTitle,
+            currentOption,
+            logo,
+            bold,
+            baseStyle,
+            prefix,
+            monthName);
       }
 
       // Administratifs
@@ -452,8 +420,20 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
               .any((o) => o.type == PdfPageType.activiteTableauAdministratif)) {
         currentOption = administratifOption;
         pageTitle = '08h–16h';
-        _addActivityPage(pdf, autres, daysInMonth, oswald, year, month,
-            pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
+        _addActivityPage(
+            pdf,
+            autres,
+            daysInMonth,
+            oswald,
+            year,
+            month,
+            pageTitle,
+            currentOption,
+            logo,
+            bold,
+            baseStyle,
+            prefix,
+            monthName);
       }
       return;
     } else {
@@ -468,8 +448,20 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
 
     // Générer les pages pour les groupes simples
     for (var list in subGroups) {
-      _addActivityPage(pdf, list, daysInMonth, oswald, year, month, pageTitle,
-          currentOption, logo, bold, baseStyle, prefix, monthName);
+      _addActivityPage(
+          pdf,
+          list,
+          daysInMonth,
+          oswald,
+          year,
+          month,
+          pageTitle,
+          currentOption,
+          logo,
+          bold,
+          baseStyle,
+          prefix,
+          monthName);
     }
   });
 
@@ -619,6 +611,7 @@ pw.Widget _buildPageFooter(pw.TextStyle baseStyle) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
+      pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
       pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
         children: [
@@ -731,7 +724,6 @@ pw.Widget _buildGroupTable(
 // ✅ Headers avec nombre de jours dynamique (retourne Map)
   final headers = hasEquipes
       ? <Map<String, dynamic>>[
-          {'jour': 'N°', 'nomJour': ''},
           {'jour': 'Nom et Prénom', 'nomJour': ''},
           {'jour': 'Grade', 'nomJour': ''},
           {'jour': 'Équipe', 'nomJour': ''},
@@ -746,7 +738,6 @@ pw.Widget _buildGroupTable(
           }),
         ]
       : <Map<String, dynamic>>[
-          {'jour': 'N°', 'nomJour': ''},
           {'jour': 'Nom et Prénom', 'nomJour': ''},
           {'jour': 'Grade', 'nomJour': ''},
           ...List.generate(daysInMonth, (i) {
@@ -761,7 +752,6 @@ pw.Widget _buildGroupTable(
         ];
 
   final data = <List<String>>[];
-  int index = 1;
 
   // ⭐ IMPORTANT : Les membres sont déjà triés par sortStaffList()
   // On respecte donc l'ordre personnalisé
@@ -773,7 +763,6 @@ pw.Widget _buildGroupTable(
 
     final row = hasEquipes
         ? <String>[
-            index.toString(), // Numéro séquentiel basé sur l'ordre trié
             nom,
             grade,
             equipe, // ⭐ Colonne équipe ajoutée
@@ -787,7 +776,6 @@ pw.Widget _buildGroupTable(
             }),
           ]
         : <String>[
-            index.toString(),
             nom,
             grade,
             ...List.generate(daysInMonth, (d) {
@@ -801,24 +789,22 @@ pw.Widget _buildGroupTable(
           ];
 
     data.add(row);
-    index++;
   }
 
   // ⭐ Largeurs de colonnes ajustées selon la présence d'équipe
   final columnWidths = <int, pw.TableColumnWidth>{
-    0: const pw.FixedColumnWidth(13),
-    1: const pw.FlexColumnWidth(2),
-    2: const pw.FlexColumnWidth(1.7),
+    0: const pw.FlexColumnWidth(1.22), // Nom -10%
+    1: const pw.FlexColumnWidth(1.1), // Grade -20%
   };
 
   if (hasEquipes) {
-    columnWidths[3] = const pw.FixedColumnWidth(25); // Colonne Équipe
+    columnWidths[2] = const pw.FixedColumnWidth(25); // Colonne Équipe
     for (int i = 0; i < daysInMonth; i++) {
-      columnWidths[4 + i] = const pw.FixedColumnWidth(18);
+      columnWidths[3 + i] = const pw.FixedColumnWidth(18);
     }
   } else {
     for (int i = 0; i < daysInMonth; i++) {
-      columnWidths[3 + i] = const pw.FixedColumnWidth(18);
+      columnWidths[2 + i] = const pw.FixedColumnWidth(18);
     }
   }
 
@@ -827,7 +813,7 @@ pw.Widget _buildGroupTable(
     bool isWeekend = false;
 
     // ⭐ Ajuster l'offset selon la présence de la colonne Équipe
-    final dayColumnStart = hasEquipes ? 4 : 3;
+    final dayColumnStart = hasEquipes ? 3 : 2;
 
     if (ci >= dayColumnStart) {
       final day = ci - dayColumnStart + 1;
@@ -885,7 +871,7 @@ pw.Widget _buildGroupTable(
       bool isWeekend = false;
 
       // ⭐ Ajuster l'offset selon la présence de la colonne Équipe
-      final dayColumnStart = hasEquipes ? 4 : 3;
+      final dayColumnStart = hasEquipes ? 3 : 2;
 
       if (ci >= dayColumnStart) {
         final day = ci - dayColumnStart + 1;

@@ -534,26 +534,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return;
       }
 
-      // Récupérer l'ordre du mois précédent (premier jour ouvrable)
-      final joursOuvrablesPrecedent = <int>[];
+      // Récupérer l'ordre du mois précédent (jour 1 -> dernier jour)
+      final joursPlanifiesPrecedent = <int>[];
       final daysInPreviousMonth = DateUtils.getDaysInMonth(fromYear, fromMonth);
 
       for (int day = 1; day <= daysInPreviousMonth; day++) {
-        final date = DateTime(fromYear, fromMonth, day);
-        if (date.weekday != DateTime.friday &&
-            date.weekday != DateTime.saturday) {
-          joursOuvrablesPrecedent.add(day);
-        }
+        joursPlanifiesPrecedent.add(day);
       }
 
-      if (joursOuvrablesPrecedent.isEmpty) return;
+      if (joursPlanifiesPrecedent.isEmpty) return;
 
       // Trouver l'ordre des agents dans le mois précédent
       final ordreAgents = <Staff>[];
-      for (final jourOuvrable in joursOuvrablesPrecedent) {
+      for (final jourPlanifie in joursPlanifiesPrecedent) {
         for (final agent in agentsHygiene) {
           final activites =
-              agent.activites.where((a) => a.jour == jourOuvrable).toList();
+              agent.activites.where((a) => a.jour == jourPlanifie).toList();
           if (activites.isNotEmpty && activites.first.statut == 'N') {
             if (!ordreAgents.contains(agent)) {
               ordreAgents.add(agent);
@@ -570,16 +566,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       print("   Ordre trouvé: ${ordreAgents.map((a) => a.nom).join(' → ')}");
 
-      // Calculer les jours ouvrables du nouveau mois
-      final joursOuvrables = <int>[];
+      // Calculer les jours planifiés du nouveau mois (week-ends inclus)
+      final joursPlanifies = <int>[];
       final daysInMonth = DateUtils.getDaysInMonth(toYear, toMonth);
 
       for (int day = 1; day <= daysInMonth; day++) {
-        final date = DateTime(toYear, toMonth, day);
-        if (date.weekday != DateTime.friday &&
-            date.weekday != DateTime.saturday) {
-          joursOuvrables.add(day);
-        }
+        joursPlanifies.add(day);
       }
 
       // Analyser les congés du nouveau mois
@@ -588,7 +580,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // Appliquer la rotation
       await _executerPlanificationAgentsHygiene(
         ordreAgents,
-        joursOuvrables,
+        joursPlanifies,
         congesParAgent,
       );
 
@@ -5143,8 +5135,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
 // ✅ NOUVELLE MÉTHODE : Déterminer le statut à restaurer après suppression d'un congé
   String _determinerStatutApresSuppressionConge(Staff staff, DateTime date) {
-    // 1. Vérifier si c'est un weekend
-    if (date.weekday == DateTime.friday || date.weekday == DateTime.saturday) {
+    final groupe = staff.groupe?.toUpperCase() ?? '';
+    final isHygiene =
+        groupe.contains('08H-12H') || staff.grade.toLowerCase().contains('hygiène');
+
+    // 1. Vérifier si c'est un weekend (sauf hygiène: week-ends inclus)
+    if (!isHygiene &&
+        (date.weekday == DateTime.friday || date.weekday == DateTime.saturday)) {
       return "RE"; // Récupération pour tout le monde
     }
 
@@ -5159,12 +5156,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
 
     // 3. Déterminer selon le groupe
-    final groupe = staff.groupe.toUpperCase() ?? '';
     final equipe = staff.equipe?.toUpperCase();
 
     // Agents d'hygiène (12H)
-    if (groupe.contains('08H-12H') ||
-        staff.grade.toLowerCase().contains('hygiène')) {
+    if (isHygiene) {
       // Vérifier la rotation en cours
       return _getStatutAgentHygiene(staff, date);
     }
@@ -5218,18 +5213,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       if (agentsHygiene.isEmpty) return 'RE';
 
-      // Calculer les jours ouvrables jusqu'à cette date
-      int joursOuvrablesAvant = 0;
-      for (int d = 1; d < date.day; d++) {
-        final testDate = DateTime(date.year, date.month, d);
-        if (testDate.weekday != DateTime.friday &&
-            testDate.weekday != DateTime.saturday) {
-          joursOuvrablesAvant++;
-        }
-      }
+      // Calculer les jours écoulés jusqu'à cette date (week-ends inclus)
+      final joursAvant = date.day - 1;
 
       // Déterminer quel agent travaille ce jour
-      final agentIndex = joursOuvrablesAvant % agentsHygiene.length;
+      final agentIndex = joursAvant % agentsHygiene.length;
       final agentQuiTravaille = agentsHygiene[agentIndex];
 
       return (agentQuiTravaille.id == staff.id) ? 'N' : 'RE';
@@ -7129,14 +7117,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       return;
     }
 
-    // 2. Calculer les jours de travail disponibles (exclure weekends)
-    final joursOuvrables = <int>[];
+    // 2. Calculer les jours à planifier (week-ends inclus)
+    final joursPlanifies = <int>[];
     for (int day = 1; day <= _daysInSelectedMonth; day++) {
-      final date = DateTime(_selectedYear, _selectedMonth, day);
-      if (date.weekday != DateTime.friday &&
-          date.weekday != DateTime.saturday) {
-        joursOuvrables.add(day);
-      }
+      joursPlanifies.add(day);
     }
 
     // 3. Analyser les congés existants
@@ -7144,20 +7128,20 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     // 4. Calculer la répartition optimale
     final repartitionOptimale = _calculerRepartitionOptimale(
-        agentsHygiene, joursOuvrables, congesParAgent);
+        agentsHygiene, joursPlanifies, congesParAgent);
 
     // 5. Afficher le dialog de planification
     final ordreAgents = await _showOrderAgentsHygieneDialog(
       agentsHygiene,
       repartitionOptimale,
-      joursOuvrables.length,
+      joursPlanifies.length,
     );
 
     if (ordreAgents == null) return;
 
     // 6. Exécuter la planification intelligente
     await _executerPlanificationAgentsHygiene(
-        ordreAgents, joursOuvrables, congesParAgent);
+        ordreAgents, joursPlanifies, congesParAgent);
   }
 
 // MÉTHODE : Analyser les congés des agents
@@ -7212,27 +7196,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
 // MÉTHODE : Calculer la répartition optimale
   Map<String, dynamic> _calculerRepartitionOptimale(List<Staff> agents,
-      List<int> joursOuvrables, Map<Staff, List<int>> congesParAgent) {
+      List<int> joursPlanifies, Map<Staff, List<int>> congesParAgent) {
     final nombreAgents = agents.length;
-    final nombreJoursOuvrables = joursOuvrables.length;
+    final nombreJoursPlanifies = joursPlanifies.length;
 
     // Calculer les jours disponibles par agent
     final joursDisponiblesParAgent = <Staff, int>{};
     for (final agent in agents) {
       final conges = congesParAgent[agent] ?? [];
-      final joursCongeOuvrables =
-          conges.where((jour) => joursOuvrables.contains(jour)).length;
+      final joursCongePlanifies =
+          conges.where((jour) => joursPlanifies.contains(jour)).length;
       joursDisponiblesParAgent[agent] =
-          nombreJoursOuvrables - joursCongeOuvrables;
+          nombreJoursPlanifies - joursCongePlanifies;
     }
 
     // Répartition théorique
-    final joursParAgent = nombreJoursOuvrables ~/ nombreAgents;
-    final joursSupplementaires = nombreJoursOuvrables % nombreAgents;
+    final joursParAgent = nombreJoursPlanifies ~/ nombreAgents;
+    final joursSupplementaires = nombreJoursPlanifies % nombreAgents;
 
     return {
       'nombreAgents': nombreAgents,
-      'nombreJoursOuvrables': nombreJoursOuvrables,
+      'nombreJoursPlanifies': nombreJoursPlanifies,
       'joursParAgent': joursParAgent,
       'joursSupplementaires': joursSupplementaires,
       'joursDisponiblesParAgent': joursDisponiblesParAgent,
@@ -7243,7 +7227,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<List<Staff>?> _showOrderAgentsHygieneDialog(
     List<Staff> agents,
     Map<String, dynamic> repartition,
-    int nombreJoursOuvrables,
+    int nombreJoursPlanifies,
   ) async {
     List<Staff> agentsOrdonnes = List.from(agents);
 
@@ -7305,7 +7289,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               Text(
                                   "${agents.length} agents d'hygiène détectés"),
                               Text(
-                                  "$nombreJoursOuvrables jours ouvrables (hors weekends)"),
+                                  "$nombreJoursPlanifies jours planifiés (week-ends inclus)"),
                               Text(
                                   "${repartition['joursParAgent']} jours/agent + ${repartition['joursSupplementaires']} jour(s) supplémentaire(s)"),
                               SizedBox(height: 8),
@@ -7344,7 +7328,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                         ),
                         SizedBox(height: 8),
                         Text(
-                          "Glissez pour réorganiser. Le 1er agent commence au 1er jour ouvrable.",
+                          "Glissez pour réorganiser. Le 1er agent commence au 1er jour du mois.",
                           style: TextStyle(
                               fontSize: 13, color: Colors.grey.shade600),
                         ),
@@ -7471,9 +7455,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 ),
                               ),
                               SizedBox(height: 8),
-                              Text("• Un seul agent par jour ouvrable",
+                              Text("• Un seul agent par jour",
                                   style: TextStyle(fontSize: 12)),
-                              Text("• Weekends: tous en 'RE'",
+                              Text("• Week-ends inclus dans la rotation",
                                   style: TextStyle(fontSize: 12)),
                               Text("• Congés automatiquement exclus",
                                   style: TextStyle(fontSize: 12)),
@@ -7514,7 +7498,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 // MÉTHODE : Exécution de la planification intelligente
   Future<void> _executerPlanificationAgentsHygiene(
     List<Staff> agentsOrdonnes,
-    List<int> joursOuvrables,
+    List<int> joursPlanifies,
     Map<Staff, List<int>> congesParAgent,
   ) async {
     try {
@@ -7522,38 +7506,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final activiteProvider = ActiviteProvider();
 
       int totalModifications = 0;
-      int weekendsTraites = 0;
       int joursAssignes = 0;
       int congesRespected = 0;
       Map<Staff, int> assignationParAgent = {};
 
-      print("🔄 PHASE 1: Attribution des weekends (RE pour tous)");
+      print("🔄 PHASE 1: Attribution intelligente des jours");
 
-      // PHASE 1: Weekends - tous les agents en 'RE'
-      for (final agent in agentsOrdonnes) {
-        for (int day = 1; day <= _daysInSelectedMonth; day++) {
-          final date = DateTime(_selectedYear, _selectedMonth, day);
-          if (date.weekday == DateTime.friday ||
-              date.weekday == DateTime.saturday) {
-            await activiteProvider.forceUpdateActiviteIgnoringLeave(
-              agent.id,
-              day,
-              "RE",
-              year: _selectedYear,
-              month: _selectedMonth,
-            );
-            totalModifications++;
-            if (agent == agentsOrdonnes.first) weekendsTraites++;
-          }
-        }
-      }
-
-      print("🔄 PHASE 2: Attribution intelligente des jours ouvrables");
-
-      // PHASE 2: Répartition intelligente des jours ouvrables
+      // PHASE 1: Répartition intelligente des jours planifiés
       int agentIndex = 0;
 
-      for (final jourOuvrable in joursOuvrables) {
+      for (final jourPlanifie in joursPlanifies) {
         bool jourAssigne = false;
         int tentatives = 0;
 
@@ -7562,13 +7524,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           final agentCandadat = agentsOrdonnes[agentIndex];
           final congesAgent = congesParAgent[agentCandadat] ?? [];
 
-          if (!congesAgent.contains(jourOuvrable)) {
-            // Agent disponible - assigner 'N' à lui, '-' aux autres
+          if (!congesAgent.contains(jourPlanifie)) {
+            // Agent disponible - assigner 'N' à lui, 'RE' aux autres
             for (final agent in agentsOrdonnes) {
               String statut = (agent == agentCandadat) ? "N" : "RE";
               await activiteProvider.forceUpdateActiviteIgnoringLeave(
                 agent.id,
-                jourOuvrable,
+                jourPlanifie,
                 statut,
                 year: _selectedYear,
                 month: _selectedMonth,
@@ -7581,11 +7543,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             jourAssigne = true;
             joursAssignes++;
 
-            print("  Jour $jourOuvrable: ${agentCandadat.nom} (N)");
+            print("  Jour $jourPlanifie: ${agentCandadat.nom} (N)");
           } else {
             congesRespected++;
             print(
-                "  Jour $jourOuvrable: ${agentCandadat.nom} en congé, passage au suivant");
+                "  Jour $jourPlanifie: ${agentCandadat.nom} en congé, passage au suivant");
           }
 
           // Passer à l'agent suivant dans la rotation
@@ -7595,11 +7557,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
         if (!jourAssigne) {
           // Tous les agents sont en congé ce jour-là - assigner '-' à tous
-          print("  Jour $jourOuvrable: tous les agents en congé");
+          print("  Jour $jourPlanifie: tous les agents en congé");
           for (final agent in agentsOrdonnes) {
             await activiteProvider.forceUpdateActiviteIgnoringLeave(
               agent.id,
-              jourOuvrable,
+              jourPlanifie,
               "-",
               year: _selectedYear,
               month: _selectedMonth,
