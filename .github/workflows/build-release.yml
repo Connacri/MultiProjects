@@ -115,7 +115,7 @@ jobs:
       - name: Renommer l'APK avec la version
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/AAMRO-${VERSION_FULL}.apk
+             build/app/outputs/flutter-apk/kenzy-${VERSION_FULL}.apk
 
       - uses: actions/upload-artifact@v4
         with:
@@ -279,9 +279,9 @@ jobs:
           draft:      false
           prerelease: false
           body: |
-            ## 🩺 AAMRO – Release ${{ env.VERSION_FULL }}
+            ## 🩺 kenzy – Release ${{ env.VERSION_FULL }}
 
-            ### Planning du Personnel Médical & Paramédical
+            ### Planning Hospitalier
             Application Flutter multiplateforme (Android + Windows Desktop)
             Powered by ObjectBox · Provider · Material 3
 
@@ -378,8 +378,8 @@ jobs:
           WIN_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/installer.exe"
 
           cat > README.md << HEREDOC
-          # 🩺 AAMRO
-          ### *Advancing Rheumatology through international collaboration*
+          # 🩺 kenzy
+          ### *A new Hospital DZ project*
 
           ---
 
@@ -399,8 +399,7 @@ jobs:
 
           ## 🩺 À propos
 
-          Application Flutter de **planification du personnel médical & paramédical**
-          pour l'Établissement Hospitalier d'Aïn El Türck — Service Rhumatologie.
+          Application Flutter de **planification hospitalière**.
 
           - **Stack** : Flutter · Dart · ObjectBox · Provider · Material 3
           - **Plateformes** : Android · Windows Desktop
@@ -410,7 +409,7 @@ jobs:
 
           ## 🔗 Site officiel
 
-          👉 https://connacri.github.io/Rheumatology/
+          👉 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
 
           ---
 

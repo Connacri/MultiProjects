@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AAMRO – Planning Médical</title>
+  <title>kenzy – Planning Hospitalier</title>
 
   <!-- SEO / Open Graph -->
-  <meta name="description" content="Application Flutter de planification du personnel médical et paramédical. Congrès de Rhumatologie d'Oran." />
-  <meta property="og:title"       content="AAMRO – Planning Médical" />
+  <meta name="description" content="Application Flutter de planification du personnel hospitalier." />
+  <meta property="og:title"       content="kenzy – Planning Hospitalier" />
   <meta property="og:description" content="Application Flutter multiplateforme — Android & Windows Desktop" />
-  <meta property="og:url"         content="https://connacri.github.io/Rheumatology/" />
-  <meta property="og:image"       content="https://connacri.github.io/Rheumatology/assets/1775811758912.png" />
+  <meta property="og:url"         content="https://connacri.github.io/MultiProjects/" />
+  <meta property="og:image"       content="https://connacri.github.io/MultiProjects/assets/images/logo_hopital.png" />
   <meta property="og:type"        content="website" />
   <meta name="twitter:card"       content="summary_large_image" />
 
@@ -345,13 +345,12 @@
 
   <!-- ── Hero ──────────────────────────────────────────────────────── -->
   <header>
-    <div class="badge">🩺 Planification Médicale</div>
+    <div class="badge">🩺 Planning Hospitalier</div>
 
-    <h1>AAMRO<br>Medical Staff Planning</h1>
+    <h1>kenzy<br>Medical Staff Planning</h1>
 
     <p class="subtitle">
-      Application Flutter multiplateforme de gestion et planification du personnel médical
-      et paramédical — Service de Rhumatologie, Aïn El Türck.
+      Application Flutter multiplateforme de gestion et planification du personnel hospitalier.
     </p>
 
     <!-- Version dynamique injectée par GitHub Actions -->
@@ -366,7 +365,7 @@
       <!-- ANDROID — href mis à jour par: sed -i "s|data-platform=\"android\" href=\"[^\"]*\"|..." -->
       <a
         data-platform="android"
-        href="https://github.com/Connacri/Rheumatology/releases/latest/download/app-release.apk"
+        href="https://github.com/Connacri/MultiProjects/releases/latest/download/app-release.apk"
         class="btn-dl btn-android"
         download
         aria-label="Télécharger l'APK Android"
@@ -384,7 +383,7 @@
       <!-- WINDOWS — href mis à jour par: sed -i "s|data-platform=\"windows\" href=\"[^\"]*\"|..." -->
       <a
         data-platform="windows"
-        href="https://github.com/Connacri/Rheumatology/releases/latest/download/installer.exe"
+        href="https://github.com/Connacri/MultiProjects/releases/latest/download/installer.exe"
         class="btn-dl btn-windows"
         download
         aria-label="Télécharger l'installeur Windows"
@@ -484,7 +483,7 @@
         <p>Application native Flutter optimisée Android 6+. Export PDF vers Documents/Plannings.</p>
         <a
           data-platform="android"
-          href="https://github.com/Connacri/Rheumatology/releases/latest/download/app-release.apk"
+          href="https://github.com/Connacri/MultiProjects/releases/latest/download/app-release.apk"
           class="btn-dl btn-android"
           download
           aria-label="Télécharger APK Android"
@@ -506,7 +505,7 @@
         <p>Installeur Inno Setup pour Windows 10/11 x64. Interface optimisée grand écran.</p>
         <a
           data-platform="windows"
-          href="https://github.com/Connacri/Rheumatology/releases/latest/download/installer.exe"
+          href="https://github.com/Connacri/MultiProjects/releases/latest/download/installer.exe"
           class="btn-dl btn-windows"
           download
           aria-label="Télécharger installeur Windows"
@@ -530,7 +529,7 @@
       Développé par <strong>Ramzi Guedouar</strong> — <a href="mailto:ramzi.guedouar@gmail.com">ramzi.guedouar@gmail.com</a><br>
       <a href="https://walletdz-d12e0.web.app/" target="_blank" rel="noopener">FORSLOG LTD</a> · Oran, Algérie 🇩🇿<br>
       <br>
-      © 2025 AAMRO — 14th Orano-Eurelian Meeting of Rheumatology &amp; 2nd International Congress<br>
+      © 2025 kenzy — Hospital DZ Project<br>
       <small style="color:#475569">Déploiement automatique via GitHub Actions · <span id="footer-version"></span></small>
     </p>
   </footer>
@@ -548,7 +547,7 @@
   (function () {
     'use strict';
 
-    const REPO = 'Connacri/Rheumatology';
+    const REPO = 'Connacri/MultiProjects';
     const RELEASE_JSON_URL = `https://raw.githubusercontent.com/${REPO}/master/release.json`;
 
     /**
@@ -636,7 +635,7 @@
         updateReleaseBanner(data);
 
       } catch (err) {
-        console.warn('[AAMRO] Impossible de charger release.json :', err.message);
+        console.warn('[kenzy] Impossible de charger release.json :', err.message);
 
         // Fallback : lire la version depuis l'attribut data-version déjà pré-patché par le workflow
         const pill = document.getElementById('version-pill');

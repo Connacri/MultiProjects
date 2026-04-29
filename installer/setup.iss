@@ -1,6 +1,6 @@
-#define AppName      "Congrès Rhumatologie Oran"
-#define AppVersion   "1.0.2.55"
-#define AppPublisher "AAMRO"
+#define AppName      "kenzy"
+#define AppVersion   "1.0.8.8"
+#define AppPublisher "Hospital DZ"
 #define BuildDir     "..\build\windows\x64\runner\Release"
 
 [Setup]
@@ -10,7 +10,7 @@ AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\{#AppName}
 OutputDir=..\installer\output
-OutputBaseFilename=CongressOran_Setup_{#AppVersion}
+OutputBaseFilename=kenzy_Setup_{#AppVersion}
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -25,8 +25,8 @@ Name: "french"; MessagesFile: "compiler:Languages\French.isl"
 Source: "{#BuildDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\congres.exe"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\congres.exe"
+Name: "{group}\{#AppName}"; Filename: "{app}\kenzy.exe"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\kenzy.exe"
 
 [Run]
-Filename: "{app}\congres.exe"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\kenzy.exe"; Flags: nowait postinstall skipifsilent
