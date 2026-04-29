@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AAMRO – Planning Médical</title>
+
+  <!-- SEO / Open Graph -->
+  <meta name="description" content="Application Flutter de planification du personnel médical et paramédical. Congrès de Rhumatologie d'Oran." />
+  <meta property="og:title"       content="AAMRO – Planning Médical" />
+  <meta property="og:description" content="Application Flutter multiplateforme — Android & Windows Desktop" />
+  <meta property="og:url"         content="https://connacri.github.io/Rheumatology/" />
+  <meta property="og:image"       content="https://connacri.github.io/Rheumatology/assets/1775811758912.png" />
+  <meta property="og:type"        content="website" />
+  <meta name="twitter:card"       content="summary_large_image" />
+
+  <style>
+    /* ── Reset & variables ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0a0e17;
+      --surface:     #111827;
+      --surface2:    #1a2236;
+      --border:      rgba(255,255,255,.08);
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-green:#22c55e;
+      --accent-win:  #0078d4;
+      --text:        #f1f5f9;
+      --text-muted:  #94a3b8;
+      --radius:      14px;
+      --shadow:      0 4px 32px rgba(0,0,0,.45);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Fond animé ─────────────────────────────────────────────────── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 70% 60% at 20% 10%,  rgba(59,130,246,.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 50% at 80% 80%,  rgba(6,182,212,.10)  0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 50% 100%, rgba(34,197,94,.06)  0%, transparent 70%);
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────── */
+    .container { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Header / Hero ──────────────────────────────────────────────── */
+    header {
+      padding: 72px 0 56px;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(59,130,246,.15);
+      border: 1px solid rgba(59,130,246,.35);
+      color: #93c5fd;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: .78rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .badge::before { content:''; width:8px; height:8px; border-radius:50%; background:#3b82f6; animation: pulse 2s infinite; }
+
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(1.4); }
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #f1f5f9 0%, #93c5fd 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 560px;
+      margin: 0 auto 40px;
+      line-height: 1.65;
+    }
+
+    /* Version pill */
+    #version-pill {
+      display: inline-block;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: .8rem;
+      color: var(--text-muted);
+      margin-bottom: 48px;
+      transition: opacity .3s;
+    }
+
+    /* ── Boutons de téléchargement ──────────────────────────────────── */
+    .download-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      margin-bottom: 72px;
+    }
+
+    .btn-dl {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform .18s, box-shadow .18s, opacity .18s;
+      cursor: pointer;
+      border: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-dl::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.08);
+      opacity: 0;
+      transition: opacity .18s;
+    }
+    .btn-dl:hover::after { opacity: 1; }
+    .btn-dl:hover { transform: translateY(-3px); }
+    .btn-dl:active { transform: translateY(0); }
+
+    /* Android */
+    .btn-android {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(34,197,94,.30);
+    }
+    .btn-android:hover { box-shadow: 0 12px 40px rgba(34,197,94,.45); }
+
+    /* Windows */
+    .btn-windows {
+      background: linear-gradient(135deg, #0078d4, #005a9e);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0,120,212,.30);
+    }
+    .btn-windows:hover { box-shadow: 0 12px 40px rgba(0,120,212,.45); }
+
+    /* Icônes SVG inline */
+    .btn-dl svg { width: 24px; height: 24px; flex-shrink: 0; }
+
+    .btn-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.2;
+    }
+    .btn-label-small {
+      font-size: .72rem;
+      font-weight: 400;
+      opacity: .85;
+      letter-spacing: .02em;
+    }
+    .btn-label-main {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    /* ── Section Features ───────────────────────────────────────────── */
+    .section-title {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 40px;
+      color: var(--text);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-bottom: 80px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: transform .2s, box-shadow .2s, border-color .2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.35);
+      border-color: rgba(59,130,246,.3);
+    }
+
+    .feature-icon {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .feature-card p {
+      font-size: .875rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* ── Section Tech Stack ─────────────────────────────────────────── */
+    .tech-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 80px;
+    }
+
+    .tech-chip {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: .85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: border-color .2s, color .2s;
+    }
+    .tech-chip:hover { border-color: var(--accent-blue); color: var(--text); }
+    .tech-chip .dot { width:8px; height:8px; border-radius:50%; }
+
+    /* ── Section Plateforme ─────────────────────────────────────────── */
+    .platform-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 80px;
+    }
+    @media(max-width:600px){ .platform-row { grid-template-columns: 1fr; } }
+
+    .platform-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .platform-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+
+    .platform-card .plat-icon { font-size: 3rem; margin-bottom: 16px; display: block; }
+    .platform-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .platform-card p  { font-size: .85rem; color: var(--text-muted); margin-bottom: 20px; line-height:1.5; }
+
+    .platform-card .btn-dl {
+      display: inline-flex;
+      font-size: .9rem;
+      padding: 11px 22px;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      text-align: center;
+    }
+    footer p { font-size: .82rem; color: var(--text-muted); line-height: 1.8; }
+    footer a { color: var(--accent-blue); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+    @media(max-width:480px) {
+      .btn-dl { padding: 12px 20px; font-size: .9rem; }
+      header  { padding: 48px 0 36px; }
+    }
+
+    /* ── Spinner de chargement ──────────────────────────────────────── */
+    .loading {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Bandeau release-info ───────────────────────────────────────── */
+    #release-info {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 72px;
+      flex-wrap: wrap;
+    }
+    .release-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      flex-shrink: 0;
+    }
+    #release-info .ri-text { flex: 1; min-width: 200px; }
+    #release-info .ri-text strong { display: block; font-size: .95rem; margin-bottom: 2px; }
+    #release-info .ri-text span   { font-size: .8rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<div class="bg-glow" aria-hidden="true"></div>
+
+<div class="container">
+
+  <!-- ── Hero ──────────────────────────────────────────────────────── -->
+  <header>
+    <div class="badge">🩺 Planification Médicale</div>
+
+    <h1>AAMRO<br>Medical Staff Planning</h1>
+
+    <p class="subtitle">
+      Application Flutter multiplateforme de gestion et planification du personnel médical
+      et paramédical — Service de Rhumatologie, Aïn El Türck.
+    </p>
+
+    <!-- Version dynamique injectée par GitHub Actions -->
+    <div id="version-pill" data-version="1.0.0.0">
+      Version <strong id="version-text">1.0.0.0</strong>
+    </div>
+
+    <!-- Boutons de téléchargement principaux -->
+    <!-- Les attributs href sont mis à jour automatiquement par le workflow CI/CD -->
+    <div class="download-row">
+
+      <!-- ANDROID — href mis à jour par: sed -i "s|data-platform=\"android\" href=\"[^\"]*\"|..." -->
+      <a
+        data-platform="android"
+        href="https://github.com/Connacri/Rheumatology/releases/latest/download/app-release.apk"
+        class="btn-dl btn-android"
+        download
+        aria-label="Télécharger l'APK Android"
+      >
+        <!-- Icon Android -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M17.523 15.342a.96.96 0 0 1-.96-.96V9.64a.96.96 0 0 1 1.92 0v4.742a.96.96 0 0 1-.96.96zm-11.046 0a.96.96 0 0 1-.96-.96V9.64a.96.96 0 0 1 1.92 0v4.742a.96.96 0 0 1-.96.96zM5.18 8.113c0-.27.22-.488.49-.488h12.66c.27 0 .49.218.49.488v9.793c0 .27-.22.488-.49.488H5.67a.489.489 0 0 1-.49-.488V8.113zm1.65-3.577 1.04-1.84a.23.23 0 0 0-.087-.316.232.232 0 0 0-.317.087L6.4 4.35A7.127 7.127 0 0 0 3.5 7.8h17a7.128 7.128 0 0 0-2.9-3.45l-1.067-1.886a.232.232 0 0 0-.317-.087.23.23 0 0 0-.087.316l1.04 1.84A6.144 6.144 0 0 0 15.5 7.8H8.5a6.144 6.144 0 0 0-1.67-3.264zM9.5 5.8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm5 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm-3 13.5v1.74a.96.96 0 0 0 1.92 0V19.3h-1.92z"/>
+        </svg>
+        <span class="btn-info">
+          <span class="btn-label-small">Télécharger pour</span>
+          <span class="btn-label-main">Android APK</span>
+        </span>
+      </a>
+
+      <!-- WINDOWS — href mis à jour par: sed -i "s|data-platform=\"windows\" href=\"[^\"]*\"|..." -->
+      <a
+        data-platform="windows"
+        href="https://github.com/Connacri/Rheumatology/releases/latest/download/installer.exe"
+        class="btn-dl btn-windows"
+        download
+        aria-label="Télécharger l'installeur Windows"
+      >
+        <!-- Icon Windows -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3 12V6.75l6-1.32v6.57H3zm17 0V5.25l-9 1.98v4.77h9zM3 13h6v6.42L3 18.03V13zm17 0v7.5l-9-1.98V13h9z"/>
+        </svg>
+        <span class="btn-info">
+          <span class="btn-label-small">Télécharger pour</span>
+          <span class="btn-label-main">Windows Installer</span>
+        </span>
+      </a>
+
+    </div>
+
+    <!-- Bandeau dernière release -->
+    <div id="release-info">
+      <span class="release-dot"></span>
+      <div class="ri-text">
+        <strong id="release-version">Dernière version disponible</strong>
+        <span id="release-date">Chargement des informations de release…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Features ──────────────────────────────────────────────────── -->
+  <section aria-labelledby="features-title">
+    <h2 class="section-title" id="features-title">Fonctionnalités</h2>
+    <div class="features-grid">
+
+      <article class="feature-card">
+        <div class="feature-icon" style="background:rgba(59,130,246,.15);">📅</div>
+        <h3>Planning mensuel</h3>
+        <p>Tableau interactif jour par jour pour chaque personnel. Navigation entre mois avec sauvegarde automatique.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon" style="background:rgba(34,197,94,.15);">👥</div>
+        <h3>Gestion du personnel</h3>
+        <p>Médecins, paramédical, administratif et agents d'hygiène. Groupes, équipes A/B/C/D, ordre personnalisé.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon" style="background:rgba(245,158,11,.15);">🔄</div>
+        <h3>Planification automatique</h3>
+        <p>Rotation intelligente des gardes, respect des congés TimeOff, copie continuité mois précédent.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon" style="background:rgba(168,85,247,.15);">📋</div>
+        <h3>Export PDF professionnel</h3>
+        <p>Génération de plannings signés, listes du personnel, planning hebdomadaire médecins — avec tampon.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon" style="background:rgba(6,182,212,.15);">🌐</div>
+        <h3>Sync P2P décentralisée</h3>
+        <p>Blockchain-Powered Decentralized Storage. Synchronisation réseau local entre appareils sans serveur.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon" style="background:rgba(239,68,68,.15);">💬</div>
+        <h3>Messagerie intégrée</h3>
+        <p>Système de messagerie P2P entre noeuds du réseau. Conversations chiffrées, badges non-lus.</p>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── Tech Stack ─────────────────────────────────────────────────── -->
+  <section aria-labelledby="tech-title">
+    <h2 class="section-title" id="tech-title">Technologies</h2>
+    <div class="tech-row">
+      <span class="tech-chip"><span class="dot" style="background:#54c5f8"></span>Flutter / Dart</span>
+      <span class="tech-chip"><span class="dot" style="background:#27ae60"></span>ObjectBox</span>
+      <span class="tech-chip"><span class="dot" style="background:#9c27b0"></span>Provider</span>
+      <span class="tech-chip"><span class="dot" style="background:#e65100"></span>Material 3</span>
+      <span class="tech-chip"><span class="dot" style="background:#f06292"></span>Firebase</span>
+      <span class="tech-chip"><span class="dot" style="background:#3ecf8e"></span>Supabase</span>
+      <span class="tech-chip"><span class="dot" style="background:#0078d4"></span>GitHub Actions</span>
+      <span class="tech-chip"><span class="dot" style="background:#e74c3c"></span>PDF Generation</span>
+      <span class="tech-chip"><span class="dot" style="background:#2980b9"></span>P2P UDP Broadcast</span>
+      <span class="tech-chip"><span class="dot" style="background:#f39c12"></span>Inno Setup</span>
+    </div>
+  </section>
+
+  <!-- ── Plateformes ───────────────────────────────────────────────── -->
+  <section aria-labelledby="platforms-title">
+    <h2 class="section-title" id="platforms-title">Plateformes</h2>
+    <div class="platform-row">
+
+      <!-- Android -->
+      <div class="platform-card">
+        <span class="plat-icon" aria-hidden="true">🤖</span>
+        <h3>Android</h3>
+        <p>Application native Flutter optimisée Android 6+. Export PDF vers Documents/Plannings.</p>
+        <a
+          data-platform="android"
+          href="https://github.com/Connacri/Rheumatology/releases/latest/download/app-release.apk"
+          class="btn-dl btn-android"
+          download
+          aria-label="Télécharger APK Android"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+            <path d="M17.523 15.342a.96.96 0 0 1-.96-.96V9.64a.96.96 0 0 1 1.92 0v4.742a.96.96 0 0 1-.96.96zm-11.046 0a.96.96 0 0 1-.96-.96V9.64a.96.96 0 0 1 1.92 0v4.742a.96.96 0 0 1-.96.96zM5.18 8.113c0-.27.22-.488.49-.488h12.66c.27 0 .49.218.49.488v9.793c0 .27-.22.488-.49.488H5.67a.489.489 0 0 1-.49-.488V8.113zm1.65-3.577 1.04-1.84a.23.23 0 0 0-.087-.316.232.232 0 0 0-.317.087L6.4 4.35A7.127 7.127 0 0 0 3.5 7.8h17a7.128 7.128 0 0 0-2.9-3.45l-1.067-1.886a.232.232 0 0 0-.317-.087.23.23 0 0 0-.087.316l1.04 1.84A6.144 6.144 0 0 0 15.5 7.8H8.5a6.144 6.144 0 0 0-1.67-3.264zM9.5 5.8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm5 0a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zm-3 13.5v1.74a.96.96 0 0 0 1.92 0V19.3h-1.92z"/>
+          </svg>
+          <span class="btn-info">
+            <span class="btn-label-small">Télécharger</span>
+            <span class="btn-label-main">APK Android</span>
+          </span>
+        </a>
+      </div>
+
+      <!-- Windows -->
+      <div class="platform-card">
+        <span class="plat-icon" aria-hidden="true">🪟</span>
+        <h3>Windows Desktop</h3>
+        <p>Installeur Inno Setup pour Windows 10/11 x64. Interface optimisée grand écran.</p>
+        <a
+          data-platform="windows"
+          href="https://github.com/Connacri/Rheumatology/releases/latest/download/installer.exe"
+          class="btn-dl btn-windows"
+          download
+          aria-label="Télécharger installeur Windows"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true">
+            <path d="M3 12V6.75l6-1.32v6.57H3zm17 0V5.25l-9 1.98v4.77h9zM3 13h6v6.42L3 18.03V13zm17 0v7.5l-9-1.98V13h9z"/>
+          </svg>
+          <span class="btn-info">
+            <span class="btn-label-small">Télécharger</span>
+            <span class="btn-label-main">Windows Installer</span>
+          </span>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <footer>
+    <p>
+      Développé par <strong>Ramzi Guedouar</strong> — <a href="mailto:ramzi.guedouar@gmail.com">ramzi.guedouar@gmail.com</a><br>
+      <a href="https://walletdz-d12e0.web.app/" target="_blank" rel="noopener">FORSLOG LTD</a> · Oran, Algérie 🇩🇿<br>
+      <br>
+      © 2025 AAMRO — 14th Orano-Eurelian Meeting of Rheumatology &amp; 2nd International Congress<br>
+      <small style="color:#475569">Déploiement automatique via GitHub Actions · <span id="footer-version"></span></small>
+    </p>
+  </footer>
+
+</div><!-- /container -->
+
+<script>
+  /**
+   * Charge release.json depuis le même dépôt GitHub Pages
+   * et met à jour dynamiquement les boutons + informations de version.
+   *
+   * Le workflow CI/CD met à jour les href via sed avant chaque commit,
+   * ce script sert de fallback JS pour afficher la version dynamiquement.
+   */
+  (function () {
+    'use strict';
+
+    const REPO = 'Connacri/Rheumatology';
+    const RELEASE_JSON_URL = `https://raw.githubusercontent.com/${REPO}/master/release.json`;
+
+    /**
+     * Formate une date ISO en texte lisible (fr-FR)
+     */
+    function formatDate(isoString) {
+      try {
+        const d = new Date(isoString);
+        return d.toLocaleDateString('fr-FR', {
+          day: '2-digit', month: 'long', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
+        }) + ' UTC';
+      } catch (_) {
+        return isoString;
+      }
+    }
+
+    /**
+     * Met à jour tous les boutons [data-platform="android"|"windows"]
+     */
+    function updateButtons(platforms) {
+      ['android', 'windows'].forEach(function (platform) {
+        const info = platforms[platform];
+        if (!info || !info.url) return;
+
+        document.querySelectorAll(`[data-platform="${platform}"]`).forEach(function (el) {
+          el.href = info.url;
+          // Retirer le flag download si l'URL pointe déjà vers GitHub Releases
+          // (le navigateur gère le téléchargement correctement)
+          el.setAttribute('download', '');
+        });
+      });
+    }
+
+    /**
+     * Met à jour l'affichage de la version
+     */
+    function updateVersionDisplay(version) {
+      const pill    = document.getElementById('version-pill');
+      const vText   = document.getElementById('version-text');
+      const footer  = document.getElementById('footer-version');
+
+      if (pill)   pill.setAttribute('data-version', version);
+      if (vText)  vText.textContent = version;
+      if (footer) footer.textContent = 'v' + version;
+    }
+
+    /**
+     * Met à jour le bandeau de release
+     */
+    function updateReleaseBanner(data) {
+      const rvEl  = document.getElementById('release-version');
+      const rdEl  = document.getElementById('release-date');
+
+      if (rvEl) rvEl.textContent = 'Version ' + data.version;
+      if (rdEl) rdEl.textContent = 'Publiée le ' + formatDate(data.date)
+        + (data.build_number ? '  ·  Build #' + data.build_number : '');
+    }
+
+    /**
+     * Chargement principal
+     */
+    async function loadReleaseInfo() {
+      const rdEl = document.getElementById('release-date');
+
+      try {
+        // Cache-busting pour éviter les CDN stale
+        const response = await fetch(RELEASE_JSON_URL + '?t=' + Date.now(), {
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+
+        const data = await response.json();
+
+        // Validation minimale
+        if (!data.version || !data.platforms) {
+          throw new Error('Format release.json invalide');
+        }
+
+        updateVersionDisplay(data.version);
+        updateButtons(data.platforms);
+        updateReleaseBanner(data);
+
+      } catch (err) {
+        console.warn('[AAMRO] Impossible de charger release.json :', err.message);
+
+        // Fallback : lire la version depuis l'attribut data-version déjà pré-patché par le workflow
+        const pill = document.getElementById('version-pill');
+        const fallbackVersion = pill ? pill.getAttribute('data-version') : null;
+
+        if (fallbackVersion && fallbackVersion !== '1.0.0.0') {
+          updateVersionDisplay(fallbackVersion);
+        }
+
+        if (rdEl) {
+          rdEl.textContent = 'Informations de release non disponibles — vérifiez votre connexion.';
+        }
+      }
+    }
+
+    // Lancer après le chargement du DOM
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadReleaseInfo);
+    } else {
+      loadReleaseInfo();
+    }
+  })();
+</script>
+
+</body>
+</html>

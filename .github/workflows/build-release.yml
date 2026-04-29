@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - 'index.html'
       - 'README.md'
+      - 'release.json'
 
 permissions:
   contents: write
@@ -20,6 +21,7 @@ permissions:
 # ─────────────────────────────────────────────
 
 jobs:
+
   # ═══════════════════════════════════════════
   # JOB 0 – Extraire la version (partagée)
   # ═══════════════════════════════════════════
@@ -28,25 +30,28 @@ jobs:
     outputs:
       version_name: ${{ steps.ver.outputs.version_name }}
       version_full: ${{ steps.ver.outputs.version_full }}
-      tag: ${{ steps.ver.outputs.tag }}
+      tag:          ${{ steps.ver.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Extraire VERSION_NAME depuis pubspec.yaml
         id: ver
         run: |
-          VERSION_NAME=$(grep '^version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1 | tr -d '[:space:]')
+          VERSION_NAME=$(grep '^version:' pubspec.yaml \
+            | sed 's/version:[[:space:]]*//' \
+            | cut -d'+' -f1 \
+            | tr -d '[:space:]')
           VERSION_FULL="${VERSION_NAME}.${{ github.run_number }}"
           TAG="v${VERSION_FULL}"
-          echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
-          echo "version_full=${VERSION_FULL}"  >> $GITHUB_OUTPUT
-          echo "tag=${TAG}"                    >> $GITHUB_OUTPUT
+          echo "version_name=${VERSION_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version_full=${VERSION_FULL}"  >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}"                    >> "$GITHUB_OUTPUT"
           echo "▶ VERSION_NAME = ${VERSION_NAME}"
           echo "▶ VERSION_FULL = ${VERSION_FULL}"
           echo "▶ TAG          = ${TAG}"
 
   # ═══════════════════════════════════════════
-  # JOB 1 – Tests
+  # JOB 1 – Tests unitaires
   # ═══════════════════════════════════════════
   test:
     needs: extract-version
@@ -56,15 +61,17 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
-      - run: flutter pub get
+      - name: Installer les dépendances
+        run: flutter pub get
 
       - name: Installer ObjectBox native
         run: bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-dart/main/install.sh) --quiet
 
-      - run: flutter test
+      - name: Lancer les tests
+        run: flutter test
 
   # ═══════════════════════════════════════════
   # JOB 2 – Build Android APK
@@ -80,24 +87,41 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
-      - run: flutter pub get
+      # Patcher pubspec.yaml avant le build
+      - name: Patcher pubspec.yaml (build number)
+        run: |
+          sed -i "s/^version: .*/version: ${VERSION_NAME}+${{ github.run_number }}/" pubspec.yaml
+          echo "✅ pubspec.yaml → version: ${VERSION_NAME}+${{ github.run_number }}"
+          grep '^version:' pubspec.yaml
+
+      - name: Installer les dépendances
+        run: flutter pub get
+
+      - name: Installer ObjectBox native
+        run: bash <(curl -s https://raw.githubusercontent.com/objectbox/objectbox-dart/main/install.sh) --quiet
 
       - name: Build APK release
         run: |
           flutter build apk --release \
             --build-name="${VERSION_NAME}" \
-            --build-number=${{ github.run_number }}
+            --build-number="${{ github.run_number }}"
 
-      - name: Vérification artefact
+      - name: Vérification artefact APK
         run: ls -lh build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Renommer l'APK avec la version
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/AAMRO-${VERSION_FULL}.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
 
   # ═══════════════════════════════════════════
   # JOB 3 – Build Windows + Inno Setup
@@ -113,52 +137,99 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          channel: stable
           cache: true
 
-      - name: Patcher pubspec.yaml & setup.iss avec VERSION_FULL
+      # Patcher pubspec.yaml ET setup.iss en une seule étape PowerShell
+      - name: Patcher pubspec.yaml et setup.iss
         shell: pwsh
         run: |
-          $versionName = "$env:VERSION_NAME"
-          $versionFull = "$env:VERSION_FULL"
+          $versionName = $env:VERSION_NAME
+          $versionFull = $env:VERSION_FULL
           $buildNumber = "${{ github.run_number }}"
 
-          # --- pubspec.yaml ---
-          $pub = Get-Content pubspec.yaml -Raw
-          $pub -replace '^version: .*', "version: $versionName+$buildNumber" |
-            Set-Content pubspec.yaml -NoNewline
+          # ── pubspec.yaml ──────────────────────────────────────────────
+          $pubPath = "pubspec.yaml"
+          $pubContent = Get-Content $pubPath -Raw -Encoding UTF8
+          # Regex robuste : remplace la ligne version quelle que soit l'indentation
+          $pubPatched = $pubContent -replace '(?m)^version:\s+.*', "version: $versionName+$buildNumber"
+          [System.IO.File]::WriteAllText($pubPath, $pubPatched, [System.Text.Encoding]::UTF8)
           Write-Host "✅ pubspec.yaml → version: $versionName+$buildNumber"
+          Select-String -Path $pubPath -Pattern '^version:'
 
-          # --- installer/setup.iss ---
-          $iss = Get-Content installer/setup.iss -Raw
-          $iss -replace '#define AppVersion\s+"[^"]*"', "#define AppVersion `"$versionFull`"" |
-            Set-Content installer/setup.iss -NoNewline
-          Write-Host "✅ setup.iss → AppVersion = $versionFull"
+          # ── installer/setup.iss ───────────────────────────────────────
+          $issPath = "installer\setup.iss"
+          if (Test-Path $issPath) {
+            $issContent = Get-Content $issPath -Raw -Encoding UTF8
+            # Remplace la ligne #define AppVersion "..." (avec espaces variables)
+            $issPatched = $issContent -replace '(?m)^(#define\s+AppVersion\s+)"[^"]*"', "`$1`"$versionFull`""
+            [System.IO.File]::WriteAllText($issPath, $issPatched, [System.Text.Encoding]::UTF8)
+            Write-Host "✅ setup.iss → AppVersion = $versionFull"
+            Select-String -Path $issPath -Pattern 'AppVersion'
+          } else {
+            Write-Host "⚠️ installer\setup.iss introuvable — étape ignorée"
+          }
 
-      - run: flutter pub get
+      - name: Installer les dépendances
+        run: flutter pub get
 
-      - name: Build Windows
+      - name: Activer le support Desktop Windows
+        run: flutter config --enable-windows-desktop
+
+      - name: Build Windows release
         run: flutter build windows --release
 
-      - name: Vérification build
-        run: dir build\windows\x64\runner\Release
+      - name: Vérification du build Windows
+        shell: pwsh
+        run: |
+          $releasePath = "build\windows\x64\runner\Release"
+          if (Test-Path $releasePath) {
+            Get-ChildItem $releasePath | Select-Object Name, Length
+          } else {
+            Write-Error "❌ Dossier Release introuvable : $releasePath"
+            exit 1
+          }
 
-      - name: Installer Inno Setup
-        run: choco install innosetup -y
+      - name: Installer Inno Setup via Chocolatey
+        run: choco install innosetup --yes --no-progress
 
-      - name: Build installeur .exe
-        run: iscc installer/setup.iss
+      - name: Créer le dossier de sortie de l'installeur
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path "installer\output" | Out-Null
 
-      - name: Vérification installeur
-        run: dir installer\output
+      - name: Build installeur .exe avec Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            # Fallback : chercher dans PATH
+            $iscc = "iscc"
+          }
+          & $iscc "installer\setup.iss"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "❌ Inno Setup a échoué (code $LASTEXITCODE)"
+            exit $LASTEXITCODE
+          }
+
+      - name: Vérification de l'installeur généré
+        shell: pwsh
+        run: |
+          $outputDir = "installer\output"
+          $files = Get-ChildItem $outputDir -Filter "*.exe"
+          if ($files.Count -eq 0) {
+            Write-Error "❌ Aucun .exe trouvé dans $outputDir"
+            exit 1
+          }
+          $files | ForEach-Object { Write-Host "✅ $($_.Name)  ($([math]::Round($_.Length/1MB, 2)) MB)" }
 
       - uses: actions/upload-artifact@v4
         with:
           name: installer.exe
           path: installer/output/*.exe
+          retention-days: 7
 
   # ═══════════════════════════════════════════
-  # JOB 4 – Release GitHub + Mise à jour fichiers
+  # JOB 4 – Release GitHub + mise à jour fichiers
   # ═══════════════════════════════════════════
   release-and-update:
     needs: [extract-version, build-android, build-windows]
@@ -170,49 +241,64 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Token avec droit push pour le commit final
           token: ${{ secrets.GITHUB_TOKEN }}
+          # Récupère l'historique complet pour que git push fonctionne
+          fetch-depth: 0
 
-      # ── Récupérer les artefacts ──────────────
-      - name: Télécharger APK
+      # ── Récupérer les artefacts ──────────────────────────────────────
+      - name: Télécharger l'APK
         uses: actions/download-artifact@v4
         with:
           name: app-release.apk
           path: dist/
 
-      - name: Télécharger installeur Windows
+      - name: Télécharger l'installeur Windows
         uses: actions/download-artifact@v4
         with:
           name: installer.exe
           path: dist/
 
-      - name: Renommer installeur (nom fixe)
+      - name: Normaliser les noms des artefacts
         run: |
           cd dist
-          # L'artifact Windows peut avoir un nom variable → on le normalise
+          # Renommer l'APK en nom fixe
+          if [ ! -f app-release.apk ]; then
+            find . -name "*.apk" -exec mv {} app-release.apk \;
+          fi
+          # Renommer l'exe en nom fixe
           find . -name "*.exe" -exec mv {} installer.exe \;
+          echo "── Contenu de dist/ ──"
           ls -lh
 
-      # ── Créer la GitHub Release ──────────────
+      # ── Créer la GitHub Release ──────────────────────────────────────
       - name: Créer la Release GitHub
         uses: softprops/action-gh-release@v2
         with:
           tag_name:   ${{ env.TAG }}
           name:       "Release ${{ env.VERSION_FULL }}"
+          draft:      false
+          prerelease: false
           body: |
             ## 🩺 AAMRO – Release ${{ env.VERSION_FULL }}
 
-            | Plateforme | Fichier |
-            |---|---|
-            | 🤖 Android | [app-release.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/app-release.apk) |
-            | 🪟 Windows | [installer.exe](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/installer.exe) |
+            ### Planning du Personnel Médical & Paramédical
+            Application Flutter multiplateforme (Android + Windows Desktop)
+            Powered by ObjectBox · Provider · Material 3
+
+            | Plateforme | Fichier | Taille |
+            |---|---|---|
+            | 🤖 Android APK | [app-release.apk](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/app-release.apk) | — |
+            | 🪟 Windows Installer | [installer.exe](https://github.com/${{ github.repository }}/releases/download/${{ env.TAG }}/installer.exe) | — |
+
+            ---
+            *Build automatique — ${{ github.run_number }} — ${{ github.sha }}*
           files: |
             dist/app-release.apk
             dist/installer.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── Générer release.json ─────────────────
+      # ── Générer release.json ─────────────────────────────────────────
       - name: Générer release.json
         run: |
           APK_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/app-release.apk"
@@ -224,14 +310,16 @@ jobs:
             "version": "${VERSION_FULL}",
             "tag": "${TAG}",
             "date": "${DATE}",
+            "build_number": "${{ github.run_number }}",
+            "commit": "${{ github.sha }}",
             "platforms": {
               "android": {
                 "url": "${APK_URL}",
-                "name": "app-release.apk"
+                "filename": "app-release.apk"
               },
               "windows": {
                 "url": "${WIN_URL}",
-                "name": "installer.exe"
+                "filename": "installer.exe"
               }
             }
           }
@@ -240,137 +328,119 @@ jobs:
           echo "✅ release.json généré :"
           cat release.json
 
-      # ── Mettre à jour index.html ─────────────
-      - name: Mettre à jour le bouton dans index.html
-        run: |
-          APK_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/app-release.apk"
-          # Remplace l'href du bouton downloadBtn (href statique de fallback)
-          sed -i "s|href=\"https://github.com/Connacri/Rheumatology/releases/.*download/app-release.apk\"|href=\"${APK_URL}\"|g" index.html
-          echo "✅ index.html mis à jour avec l'URL : ${APK_URL}"
-
-      # ── Mettre à jour README.md ──────────────
-      - name: Mettre à jour README.md
+      # ── Mettre à jour index.html ─────────────────────────────────────
+      - name: Mettre à jour index.html
         run: |
           APK_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/app-release.apk"
           WIN_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/installer.exe"
 
-          cat > README.md << 'HEREDOC'
-          # 🩺 AAMRO
-          ### *Advancing Rheumatology through international collaboration*
+          # Mise à jour href bouton APK (data-platform="android")
+          sed -i \
+            "s|data-platform=\"android\" href=\"[^\"]*\"|data-platform=\"android\" href=\"${APK_URL}\"|g" \
+            index.html
 
-          ![AAMRO Banner](https://connacri.github.io/Rheumatology/assets/1775811758912.png)
+          # Mise à jour href bouton Windows (data-platform="windows")
+          sed -i \
+            "s|data-platform=\"windows\" href=\"[^\"]*\"|data-platform=\"windows\" href=\"${WIN_URL}\"|g" \
+            index.html
 
-          ---
+          # Mise à jour de la version affichée
+          sed -i \
+            "s|data-version=\"[^\"]*\"|data-version=\"${VERSION_FULL}\"|g" \
+            index.html
 
-          ## 🌍 About the Event
+          echo "✅ index.html mis à jour"
+          grep -n 'data-platform\|data-version' index.html
 
-          **AAMRO** (*14th Orano-Eurelian Meeting of Rheumatology & 2nd International Congress*) is a prestigious international gathering dedicated to advancing the field of rheumatology.
-
-          Held in the heart of **Oran**, this event brings together leading experts, researchers, and healthcare professionals to share knowledge, innovations, and scientific excellence.
-
-          ---
-
-          ## 📲 Download the App
-
-          <p align="center">
-
-          <a href="PLACEHOLDER_APK_URL" target="_blank">
-            <img src="https://img.shields.io/badge/Android-APK_PLACEHOLDER_VERSION-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Android APK"/>
-          </a>
-          &nbsp;&nbsp;
-          <a href="PLACEHOLDER_WIN_URL" target="_blank">
-            <img src="https://img.shields.io/badge/Windows-Installer_PLACEHOLDER_VERSION-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer"/>
-          </a>
-
-          </p>
-
-          ---
-
-          ## 🎯 Objectives
-
-          - 🤝 Strengthen international collaboration
-          - 🔬 Promote cutting-edge research in rheumatology
-          - 📚 Share clinical expertise and best practices
-          - 🌐 Build a global network of specialists
-
-          ---
-
-          ## 📍 Location
-
-          **Oran, Algeria** 🇩🇿
-
-          ---
-
-          ## 🔗 Official Website
-
-          👉 https://connacri.github.io/Rheumatology/
-
-          ---
-
-          ## 📢 Highlights
-
-          - International speakers
-          - Scientific sessions & workshops
-          - Networking opportunities
-          - Latest innovations in rheumatology
-
-          ---
-
-          ## 🖼️ Preview
-
-          ![Preview](https://connacri.github.io/Rheumatology/assets/1775811758912.png)
-
-          ---
-
-          ## 📣 Social Sharing
-
-          This project is optimized for social media sharing using **Open Graph** and **Twitter Cards**, ensuring a rich preview with image, title, and description.
-
-          ---
-
-          ## ⚙️ Meta Tags Used
-
-          ```html
-          <meta property="og:title" content="AAMRO" />
-          <meta property="og:description" content="Advancing Rheumatology through international collaboration and scientific excellence in the heart of Oran." />
-          <meta property="og:url" content="https://connacri.github.io/Rheumatology/" />
-          <meta property="og:image" content="https://connacri.github.io/Rheumatology/assets/1775811758912.png" />
-          <meta property="og:site_name" content="14th Orano-Eurelian Meeting of Rheumatology & 2nd International Congress" />
-          <meta property="og:type" content="website" />
-          <meta name="twitter:card" content="summary_large_image" />
-          ```
-          HEREDOC
-
-          # Injecter les URLs dynamiques dans le README
-          sed -i "s|PLACEHOLDER_APK_URL|${APK_URL}|g" README.md
-          sed -i "s|PLACEHOLDER_WIN_URL|${WIN_URL}|g" README.md
-          sed -i "s|PLACEHOLDER_VERSION|${VERSION_FULL}|g" README.md
-
-          echo "✅ README.md mis à jour"
-
-      # ── Patcher pubspec.yaml avec version finale ─
+      # ── Patcher pubspec.yaml (version finale pour commit) ────────────
       - name: Patcher pubspec.yaml (version finale)
         run: |
           sed -i "s/^version: .*/version: ${VERSION_NAME}+${{ github.run_number }}/" pubspec.yaml
           echo "✅ pubspec.yaml → version: ${VERSION_NAME}+${{ github.run_number }}"
 
-      # ── Patcher setup.iss ────────────────────
+      # ── Patcher setup.iss ────────────────────────────────────────────
       - name: Patcher installer/setup.iss
         run: |
-          sed -i "s/#define AppVersion   \"[^\"]*\"/#define AppVersion   \"${VERSION_FULL}\"/" installer/setup.iss
-          echo "✅ setup.iss → AppVersion = ${VERSION_FULL}"
+          if [ -f installer/setup.iss ]; then
+            sed -i \
+              "s|^\(#define[[:space:]]\+AppVersion[[:space:]]\+\)\"[^\"]*\"|\1\"${VERSION_FULL}\"|" \
+              installer/setup.iss
+            echo "✅ setup.iss → AppVersion = ${VERSION_FULL}"
+            grep 'AppVersion' installer/setup.iss
+          else
+            echo "⚠️ installer/setup.iss introuvable — étape ignorée"
+          fi
 
-      # ── Commit final [skip ci] ───────────────
-      - name: Commit & push (version + release.json + index + README)
+      # ── Mettre à jour README.md ───────────────────────────────────────
+      - name: Mettre à jour README.md
+        run: |
+          APK_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/app-release.apk"
+          WIN_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/installer.exe"
+
+          cat > README.md << HEREDOC
+          # 🩺 AAMRO
+          ### *Advancing Rheumatology through international collaboration*
+
+          ---
+
+          ## 📲 Télécharger l'application
+
+          <p align="center">
+            <a href="${APK_URL}">
+              <img src="https://img.shields.io/badge/Android-APK_${VERSION_FULL}-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Android APK"/>
+            </a>
+            &nbsp;&nbsp;
+            <a href="${WIN_URL}">
+              <img src="https://img.shields.io/badge/Windows-Installer_${VERSION_FULL}-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer"/>
+            </a>
+          </p>
+
+          ---
+
+          ## 🩺 À propos
+
+          Application Flutter de **planification du personnel médical & paramédical**
+          pour l'Établissement Hospitalier d'Aïn El Türck — Service Rhumatologie.
+
+          - **Stack** : Flutter · Dart · ObjectBox · Provider · Material 3
+          - **Plateformes** : Android · Windows Desktop
+          - **Version** : ${VERSION_FULL}
+
+          ---
+
+          ## 🔗 Site officiel
+
+          👉 https://connacri.github.io/Rheumatology/
+
+          ---
+
+          *Build ${VERSION_FULL} — Généré automatiquement par GitHub Actions*
+          HEREDOC
+
+          echo "✅ README.md mis à jour"
+
+      # ── Commit final [skip ci] ───────────────────────────────────────
+      - name: Commit & push (version bump + assets)
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add \
             pubspec.yaml \
-            installer/setup.iss \
             release.json \
             index.html \
             README.md
-          git diff --cached --quiet && echo "Rien à commiter" && exit 0
+
+          # Ajouter setup.iss seulement s'il existe
+          if [ -f installer/setup.iss ]; then
+            git add installer/setup.iss
+          fi
+
+          # Vérifier s'il y a quelque chose à commiter
+          if git diff --cached --quiet; then
+            echo "ℹ️ Rien à commiter — tout est déjà à jour"
+            exit 0
+          fi
+
           git commit -m "chore: release ${VERSION_FULL} — bump version & update assets [skip ci]"
-          git push origin master
+          git push origin HEAD:master
