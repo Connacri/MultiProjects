@@ -2,7 +2,7 @@ name: Build multiplateforme & Release
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
     paths-ignore:
       - 'index.html'
       - 'README.md'
@@ -442,4 +442,4 @@ jobs:
           fi
 
           git commit -m "chore: release ${VERSION_FULL} — bump version & update assets [skip ci]"
-          git push origin HEAD:master
+          git push origin HEAD:main
