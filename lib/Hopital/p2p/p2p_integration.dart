@@ -95,12 +95,17 @@ class P2PIntegration with ChangeNotifier {
 
       // 7. Démarrer la découverte réseau
       _updateStatus('Démarrage de la découverte réseau...');
-      await _initWithTimeout('DiscoveryManager.start', () async {
-        await _discoveryManager.start(
-          _p2pManager.nodeId,
-          _connectionManager.serverPort,
-        );
-      });
+      try {
+        await _initWithTimeout('DiscoveryManager.start', () async {
+          await _discoveryManager.start(
+            _p2pManager.nodeId,
+            _connectionManager.serverPort,
+          );
+        });
+      } catch (e) {
+        print('[P2PIntegration] ⚠️ Échec démarrage DiscoveryManager (possiblement pas de réseau): $e');
+        // On continue quand même l'initialisation pour ne pas bloquer l'app
+      }
 
       // 8. Écouter les messages entrants
       _setupMessageListener();

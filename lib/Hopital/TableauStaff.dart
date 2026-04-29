@@ -191,9 +191,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   // Variables pour gérer l'édition
   Map<String, bool> _editingCells = {}; // Clé: "staffId-jour"
   Map<String, String> _tempValues = {}; // Valeurs temporaires pendant l'édition
+  Set<int> _selectedStaffIds = {}; // IDs des personnels sélectionnés
 
   // Liste des statuts disponibles pour le dropdown
-  final List<String> _statutsDisponibles = ['G', "RE", 'C', 'CM', 'N', '-'];
+  final List<String> _statutsDisponibles = ['G', "RE", 'C', 'CM','M', 'N','F', '-'];
 
   // ⭐ NOUVEAU : Liste des mois en français
   final List<String> _moisNoms = [
@@ -1074,170 +1075,51 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       key: ValueKey(
           'staff_table_${staffProvider.lastUpdateTimestamp}_${staffProvider.staffs.length}'),
       appBar: AppBar(
-        title: Tooltip(
-            message: 'Hospital Planning (Decentralized Storage Database)',
-            child: Text('Hospital Planning (Decentralized Storage Database)')),
+        title: const Text('Hospital Planning', 
+          style: TextStyle(fontSize: 18),
+          overflow: TextOverflow.ellipsis,
+        ),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          _buildDiagnosticButton(context), // ← NOUVEAU
           IconButton(
-            icon: Icon(Icons.refresh),
-            tooltip: 'Force Refresh (${staffProvider.remoteChangesReceived})',
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Force Refresh',
             onPressed: () async {
-              print('[UI] 🔄 Force refresh manuel...');
               await staffProvider.forceRefresh();
-              setState(() {}); // Force rebuild local aussi
+              setState(() {});
             },
           ),
-          IconButton(
-            icon: Icon(Icons.bug_report),
-            tooltip: 'Vérifier classification',
-            onPressed: () {
-              final staffProvider =
-                  Provider.of<StaffProvider>(context, listen: false);
-              final grouped = _groupStaffs(staffProvider.staffs);
-
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text('Classification des staffs'),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: grouped.entries.map((e) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${e.key} (${e.value.length})',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            ...e.value.map((s) {
-                              final staff = s['staff'] as Staff;
-                              return Text(
-                                  '  • ${staff.id} ${staff.ordre} ${staff.nom} - ${staff.groupe}');
-                            }),
-                            Divider(),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text('OK'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          CorrectionGroupsButton(),
-          // IconButton(
-          //   icon: Icon(Icons.message),
-          //   color: Colors.white,
-          //   onPressed: () {
-          //     Navigator.push(
-          //       context,
-          //       MaterialPageRoute(
-          //         builder: (context) =>
-          //             HomeScreenEnhanced(), // HomeScreenWithMessaging(),
-          //       ),
-          //     );
-          //   },
-          // ),
-          // Dans un widget sous MultiProvider
+          // Messaging icon with badge
           Consumer3<MessagingManager, P2PManager, ConnectionManager>(
             builder: (context, messagingManager, p2p, conn, _) {
               final isReady = p2p.nodeId.isNotEmpty;
               final isConnected = conn.isRunning && conn.neighbors.isNotEmpty;
-              if (!isReady || !isConnected) return SizedBox.shrink();
+              if (!isReady || !isConnected) return const SizedBox.shrink();
               return BadgeIcon(
                 icon: FontAwesomeIcons.message,
                 count: messagingManager.totalUnreadCount,
                 badgeColor: Colors.red,
-                tooltip:
-                    'Messages (${messagingManager.totalUnreadCount} non lus)',
+                tooltip: 'Messages (${messagingManager.totalUnreadCount} non lus)',
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => SelectNodePage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => SelectNodePage()),
                   );
                 },
               );
             },
           ),
-
-          // MessengerIconWithBadge(
-          //   onPressed: () {
-          //     showModalBottomSheet(
-          //       context: context,
-          //       isScrollControlled: true,
-          //       builder: (_) => const ConversationsBottomSheet(),
-          //     );
-          //   },
-          // ),
-          // ✅ Indicateur P2P compact
-          // Consumer<P2PManager>(
-          //   builder: (context, p2p, _) {
-          //     return IconButton(
-          //       icon: Icon(
-          //         p2p.nodeId.isNotEmpty ? Icons.cloud_done : Icons.cloud_off,
-          //         color: p2p.nodeId.isNotEmpty ? Colors.green : Colors.grey,
-          //       ),
-          //       onPressed: () => Navigator.push(
-          //         context,
-          //         MaterialPageRoute(
-          //           builder: (_) => P2PDiagnosticPage(),
-          //         ),
-          //       ),
-          //     );
-          //   },
-          // ),
           IconButton(
-            icon: Icon(Icons.account_balance),
-            color: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AboutAppPage()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.verified_user),
-            color: Colors.yellowAccent,
-            onPressed: () {
-              Navigator.of(context)
-                  .push(MaterialPageRoute(builder: (_) => LicenseInfoPage()));
-            },
-          ),
-          _buildSavePdfButton(context),
-          _buildSavePdfButtonWithOption(context),
-          staffProvider.staffs.isEmpty
-              ? SizedBox.shrink()
-              : IconButton(
-                  onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PlanningHebdoWidget(),
-                        ),
-                      ),
-                  icon: Icon(Icons.calendar_month)),
-          staffProvider.staffs.isEmpty
-              ? IconButton(
-                  onPressed: () => _insertActivitiesWithConfirmation(context),
-                  icon: Icon(Icons.add_road_outlined))
-              : _buildMobileActions(context),
-
-          SizedBox(
-            width: 20,
-          ),
-          //  _buildDesktopActions(context),
+              onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PlanningHebdoWidget(),
+                    ),
+                  ),
+              icon: const Icon(Icons.calendar_month)),
+          _buildMobileActions(context),
+          const SizedBox(width: 8),
         ],
       ),
       body: Consumer2<StaffProvider, BranchProvider>(
@@ -1527,8 +1409,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                     'C', _getStatusColor('C'), 'Congé'),
                                 _buildLegendItem('CM', _getStatusColor('CM'),
                                     'Congé Maladie'),
+                                _buildLegendItem('M', _getStatusColor('M'),
+                                    'Maternité'),
                                 _buildLegendItem(
                                     'N', _getStatusColor('N'), 'Normal'),
+                                _buildLegendItem('F', _getStatusColor('F'),
+                                    'Jour Férié'),
                                 _buildLegendItem(
                                     '-', _getStatusColor('-'), 'Aucun'),
                                 // ElevatedButton.icon(
@@ -2130,6 +2016,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             columnSpacing: 5,
             headingRowHeight: 40,
             dataRowHeight: 40,
+            showCheckboxColumn: true,
             headingRowColor: WidgetStateProperty.all(Colors.grey.shade300),
             border: TableBorder.all(color: Colors.grey.shade300, width: 0.5),
             columns: [
@@ -2221,6 +2108,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               final timeOffs = staff.timeOff.toList();
 
               return DataRow(
+                selected: _selectedStaffIds.contains(staff.id),
+                onSelectChanged: (selected) {
+                  setState(() {
+                    if (selected == true) {
+                      _selectedStaffIds.add(staff.id);
+                    } else {
+                      _selectedStaffIds.remove(staff.id);
+                    }
+                  });
+                },
                 color: WidgetStateProperty.resolveWith<Color?>(
                   (states) => states.contains(WidgetState.hovered)
                       ? Colors.blue.shade50
@@ -3716,8 +3613,257 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
+  /// Dialogue pour ajouter des jours fériés en masse
+  Future<void> _showAddHolidayDialog(BuildContext context) async {
+    final daysInMonth = DateTime(_selectedYear, _selectedMonth + 1, 0).day;
+    final List<int> selectedDays = [];
+    
+    // Groupes disponibles
+    final List<String> availableGroups = [
+      if (_selectedStaffIds.isNotEmpty) 'Personnes sélectionnées (${_selectedStaffIds.length})',
+      'Tous',
+      'Personnel Médical',
+      'Personnel Paramédical (24h)',
+      'Agents d\'hygiène (12h)',
+      'Personnel Administratif (08h-16h)'
+    ];
+
+    // Initialiser avec 'Tous' ou les personnes sélectionnées
+    final List<String> selectedGroups = [
+      _selectedStaffIds.isNotEmpty 
+          ? 'Personnes sélectionnées (${_selectedStaffIds.length})' 
+          : 'Tous'
+    ];
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            title: Row(
+              children: [
+                Icon(Icons.event_available, color: Colors.orange.shade700),
+                SizedBox(width: 10),
+                Text('Ajouter des jours fériés'),
+              ],
+            ),
+            content: SizedBox(
+              width: 450,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('1. Sélectionnez les jours :',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.blue.shade200 : Colors.blue.shade800)),
+                    SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: List.generate(daysInMonth, (index) {
+                        final day = index + 1;
+                        final isSelected = selectedDays.contains(day);
+                        final date = DateTime(_selectedYear, _selectedMonth, day);
+                        final isWeekend = date.weekday == DateTime.friday || date.weekday == DateTime.saturday;
+                        
+                        return ChoiceChip(
+                          label: SizedBox(
+                            width: 25,
+                            child: Text('$day', textAlign: TextAlign.center),
+                          ),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setDialogState(() {
+                              if (selected) {
+                                selectedDays.add(day);
+                              } else {
+                                selectedDays.remove(day);
+                              }
+                            });
+                          },
+                          selectedColor: Colors.orange.shade700,
+                          labelStyle: TextStyle(
+                            color: isSelected 
+                                ? Colors.white 
+                                : (isWeekend ? (isDark ? Colors.red.shade200 : Colors.red.shade700) : (isDark ? Colors.white : Colors.black)),
+                            fontWeight: isSelected || isWeekend ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          backgroundColor: isWeekend 
+                              ? (isDark ? Colors.red.shade900.withOpacity(0.3) : Colors.red.shade50)
+                              : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                        );
+                      }),
+                    ),
+                    SizedBox(height: 24),
+                    Text('2. Appliquer à (plusieurs choix possibles) :',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.blue.shade200 : Colors.blue.shade800)),
+                    SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        children: availableGroups.map((group) {
+                          final isSelected = selectedGroups.contains(group);
+                          return CheckboxListTile(
+                            title: Text(group, style: TextStyle(fontSize: 14)),
+                            value: isSelected,
+                            dense: true,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            onChanged: (bool? value) {
+                              setDialogState(() {
+                                if (value == true) {
+                                  if (group == 'Tous') {
+                                    selectedGroups.clear();
+                                    selectedGroups.add('Tous');
+                                  } else {
+                                    selectedGroups.remove('Tous');
+                                    selectedGroups.add(group);
+                                  }
+                                } else {
+                                  selectedGroups.remove(group);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                    Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.amber.shade900.withOpacity(0.2) : Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDark ? Colors.amber.shade700 : Colors.amber.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : Colors.amber.shade800),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Le statut "F" (Férié) sera appliqué aux jours sélectionnés pour tous les groupes cochés.',
+                              style: TextStyle(fontSize: 12, color: isDark ? Colors.amber.shade100 : Colors.amber.shade900),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Annuler'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange.shade700,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: (selectedDays.isEmpty || selectedGroups.isEmpty)
+                    ? null
+                    : () async {
+                        Navigator.pop(ctx);
+                        await _applyHolidays(selectedDays, selectedGroups);
+                      },
+                child: Text('Appliquer'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Applique le statut férié aux personnels et jours sélectionnés
+  Future<void> _applyHolidays(List<int> days, List<String> groups) async {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final allStaffs = staffProvider.staffs;
+
+    Set<int> targetStaffIds = {};
+    
+    if (groups.contains('Tous')) {
+      targetStaffIds = allStaffs.map((s) => s.id).toSet();
+    } else {
+      for (var group in groups) {
+        if (group.startsWith('Personnes sélectionnées')) {
+          targetStaffIds.addAll(_selectedStaffIds);
+        } else {
+          final staffsInGroup = allStaffs.where((s) => _getGroupeAffichage(s) == group).map((s) => s.id);
+          targetStaffIds.addAll(staffsInGroup);
+        }
+      }
+    }
+
+    if (targetStaffIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('⚠️ Aucun personnel trouvé')),
+      );
+      return;
+    }
+
+    int totalUpdates = 0;
+    
+    // Afficher un dialogue de chargement
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final activiteProvider = ActiviteProvider();
+      for (var staffId in targetStaffIds) {
+        for (var day in days) {
+          await activiteProvider.updateActivite(
+            staffId,
+            day,
+            'F',
+            year: _selectedYear,
+            month: _selectedMonth,
+          );
+          totalUpdates++;
+        }
+      }
+
+      await staffProvider.fetchStaffs();
+      
+      if (mounted) {
+        Navigator.pop(context); // Fermer le loader
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ $totalUpdates jours fériés appliqués pour ${targetStaffIds.length} personnes'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() {
+          _selectedStaffIds.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('❌ Erreur : $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   /// Construit les actions pour Mobile (menu dropdown)
   Widget _buildMobileActions(BuildContext context) {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: Colors.white),
       onSelected: (value) => _handleMobileMenuAction(context, value),
@@ -3729,6 +3875,68 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               Icon(Icons.save_alt, size: 20),
               SizedBox(width: 8),
               Text("Sauvegarder en PDF"),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'save_pdf_options',
+          child: Row(
+            children: [
+              Icon(Icons.save_as, color: Colors.green, size: 20),
+              SizedBox(width: 8),
+              Text("PDF avec options"),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'diagnostic',
+          child: Row(
+            children: [
+              Icon(Icons.medical_information, color: Colors.blue, size: 20),
+              SizedBox(width: 8),
+              Text("Diagnostic des ordres"),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'bug_report',
+          child: Row(
+            children: [
+              Icon(Icons.bug_report, color: Colors.orange, size: 20),
+              SizedBox(width: 8),
+              Text("Classification staffs"),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'about',
+          child: Row(
+            children: [
+              Icon(Icons.account_balance, size: 20),
+              SizedBox(width: 8),
+              Text("À propos de l'app"),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'license',
+          child: Row(
+            children: [
+              Icon(Icons.verified_user, color: Colors.orange, size: 20),
+              SizedBox(width: 8),
+              Text("Licence"),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'add_holiday',
+          child: Row(
+            children: [
+              Icon(Icons.event_available, color: Colors.orange, size: 20),
+              SizedBox(width: 8),
+              Text("Ajouter jours fériés"),
             ],
           ),
         ),
@@ -3766,19 +3974,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           value: 'insert',
           child: Row(
             children: [
-              Icon(Icons.add, color: Colors.blue, size: 20),
+              Icon(Icons.add_road_outlined, color: Colors.blue, size: 20),
               SizedBox(width: 8),
-              Text("Ajouter les activités"),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'refresh',
-          child: Row(
-            children: [
-              Icon(Icons.refresh, size: 20),
-              SizedBox(width: 8),
-              Text("Rafraîchir"),
+              Text("Réinitialiser Staff"),
             ],
           ),
         ),
@@ -3791,7 +3989,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       BuildContext context, String value) async {
     switch (value) {
       case 'save_pdf':
-        await _savePlanningToPdf(context);
+        await _savePlanningToPdf2(context);
+        break;
+      case 'save_pdf_options':
+        await _showPdfOptionsAndGenerate(context);
+        break;
+      case 'diagnostic':
+        await _diagnosticAndFixOrdres(context);
+        break;
+      case 'bug_report':
+        _showClassificationDialog(context);
+        break;
+      case 'about':
+        Navigator.push(context, MaterialPageRoute(builder: (context) => AboutAppPage()));
+        break;
+      case 'license':
+        Navigator.push(context, MaterialPageRoute(builder: (_) => LicenseInfoPage()));
         break;
       case 'clear_month':
         await _clearCurrentMonthData();
@@ -3805,10 +4018,49 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       case 'insert':
         await _insertActivitiesWithConfirmation(context);
         break;
-      case 'refresh':
-        await context.read<StaffProvider>().fetchStaffs();
+      case 'add_holiday':
+        await _showAddHolidayDialog(context);
         break;
     }
+  }
+
+  void _showClassificationDialog(BuildContext context) {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final grouped = _groupStaffs(staffProvider.staffs);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Classification des staffs'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: grouped.entries.map((e) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${e.key} (${e.value.length})',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  ...e.value.map((s) {
+                    final staff = s['staff'] as Staff;
+                    return Text('  • ${staff.id} ${staff.ordre} ${staff.nom} - ${staff.groupe}');
+                  }),
+                  const Divider(),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4570,10 +4822,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return Colors.deepOrange.shade700;
       case 'CM':
         return Colors.purple.shade700;
+      case 'M':
+        return Colors.red.shade700;
       case 'N':
         return Colors.green.shade500;
       case 'R':
         return Colors.brown.shade700;
+      case 'F':
+        return Colors.orange.shade700;
       default:
         return Colors.grey.shade500;
     }
@@ -4857,7 +5113,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     String motif = timeOff.motif ?? 'Congé';
 
     // 🔹 Liste de motifs possibles (à personnaliser selon ton besoin)
-    final List<String> motifsDisponibles = ['G', "RE", 'C', 'CM', 'N', '-'];
+    final List<String> motifsDisponibles = ['G', "RE", 'C', 'CM','M', 'N','F', '-'];
 
     await showDialog(
       context: context,
@@ -4884,10 +5140,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             final date = await showDatePicker(
                               context: context,
                               initialDate: dateDebut,
-                              firstDate: DateTime(2025, 11, 1),
-                              // _selectedYear, _selectedMonth, 1),
-                              lastDate: DateTime(
-                                  _selectedYear, _selectedMonth + 5, 0),
+                              firstDate: DateTime(2020, 1, 1),
+                              lastDate: DateTime(2030, 12, 31),
                             );
                             if (date != null) {
                               setState(() {
@@ -4919,8 +5173,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               context: context,
                               initialDate: dateFin,
                               firstDate: dateDebut,
-                              lastDate: DateTime(
-                                  _selectedYear, _selectedMonth + 1, 0),
+                              lastDate: DateTime(2030, 12, 31),
                             );
                             if (date != null) {
                               setState(() {
@@ -5320,7 +5573,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // Récupérer les activités de congé pour le mois sélectionné uniquement
     final congesActivites = staff.activites
         .where((a) =>
-            (a.statut == 'C' || a.statut == 'CM') &&
+            (a.statut == 'C' || a.statut == 'CM' || a.statut == 'M') &&
             a.jour >= 1 &&
             a.jour <= _daysInSelectedMonth)
         .toList();
@@ -5590,10 +5843,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return 'Congé';
       case 'CM':
         return 'Congé Maladie';
+      case 'M':
+        return 'Maternité';
       case 'G':
         return 'Garde';
       case 'RE':
         return 'Récupération';
+      case 'F':
+        return 'Jour Férié';
       case '-':
         return 'Repos';
       default:
@@ -5712,7 +5969,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           Text(
                               "• Rotation circulaire selon l'ordre réorganisé."),
                           Text(
-                              "• Les congés (TimeOff/activités C/CM) sont respectés."),
+                              "• Les congés (TimeOff/activités C/CM/M) sont respectés."),
                         ],
                       ),
                     ),
@@ -6082,7 +6339,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                "Les congés et activités existantes (C, CM) seront préservés automatiquement.",
+                                "Les congés et activités existantes (C, CM, M) seront préservés automatiquement.",
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: Colors.amber.shade700,
@@ -6163,11 +6420,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             dateJour.isAfter(timeOff.debut.subtract(Duration(days: 1))) &&
             dateJour.isBefore(timeOff.fin.add(Duration(days: 1))));
 
-        // Vérifier activités existantes C/CM
+        // Vérifier activités existantes C/CM/M
         final activites = staff.activites.toList();
         bool enCongeActivite = activites.any((activite) =>
             activite.jour == jour &&
-            (activite.statut == 'C' || activite.statut == 'CM'));
+            (activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M'));
 
         return enCongeTimeOff || enCongeActivite;
       }
@@ -6781,7 +7038,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  "Les congés existants (TimeOff et activités C/CM) seront automatiquement préservés.",
+                                  "Les congés existants (TimeOff et activités C/CM/M) seront automatiquement préservés.",
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.amber.shade700,
@@ -6895,11 +7152,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         }
       }
 
-      // --- Congés depuis ActiviteJour (C/CM)
+      // --- Congés depuis ActiviteJour (C/CM/M)
       for (final staff in personnelMedical) {
         congesParStaff.putIfAbsent(staff.id, () => {});
         for (var activite in staff.activites) {
-          if ((activite.statut == 'C' || activite.statut == 'CM') &&
+          if ((activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M') &&
               activite.jour >= 1 &&
               activite.jour <= daysInMonth) {
             congesParStaff[staff.id]![activite.jour] = activite.statut;
@@ -7091,6 +7348,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     } else if (motif.contains('récupération') ||
         motif.contains('recuperation')) {
       return 'RE';
+    } else if (motif.contains('maternité') || motif.contains('maternite')) {
+      return 'M';
     } else {
       return 'C'; // Congé par défaut
     }
@@ -7180,7 +7439,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       activiteQuery.close();
 
       for (var activite in activites) {
-        if ((activite.statut == 'C' || activite.statut == 'CM') &&
+        if ((activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M') &&
             activite.jour >= 1 &&
             activite.jour <= _daysInSelectedMonth &&
             !joursConge.contains(activite.jour)) {
@@ -7688,7 +7947,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // Compter les congés activités du mois
     final congesActivites = activites
         .where((a) =>
-            (a.statut == 'C' || a.statut == 'CM') &&
+            (a.statut == 'C' || a.statut == 'CM' || a.statut == 'M') &&
             a.jour >= 1 &&
             a.jour <= _daysInSelectedMonth)
         .length;
@@ -8076,7 +8335,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final String statut = groupe['statut'] as String;
 
     final int duree = end.difference(start).inDays + 1;
-    final String label = (statut == 'CM') ? "Congé Maladie" : "Congé";
+    final String label = (statut == 'CM') ? "Congé Maladie" : (statut == 'M' ? "Maternité" : "Congé");
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -8085,7 +8344,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         leading: CircleAvatar(
           backgroundColor: (statut == 'CM')
               ? Colors.purple.shade600
-              : Colors.orange.shade600,
+              : (statut == 'M' ? Colors.red.shade600 : Colors.orange.shade600),
           radius: 18,
           child: Text(
             statut,
@@ -8554,7 +8813,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                 if (activites.isNotEmpty) {
                   String ancienStatut = activites.first.statut;
-                  if (ancienStatut != 'C' && ancienStatut != 'CM') {
+                  if (ancienStatut != 'C' && ancienStatut != 'CM' && ancienStatut != 'M') {
                     gardesEcrasees++;
                     print("      Jour $jour: $ancienStatut → C (TimeOff)");
                   }
@@ -9699,8 +9958,8 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                   final date = await showDatePicker(
                     context: context,
                     initialDate: initialDate,
-                    firstDate: firstDate,
-                    lastDate: lastDate,
+                    firstDate: DateTime(2020, 1, 1),
+                    lastDate: DateTime(2030, 12, 31),
                   );
 
                   if (date != null) {
@@ -9742,8 +10001,7 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                                 initialDate: dateFin ??
                                     dateDebut!.add(Duration(days: 1)),
                                 firstDate: dateDebut!,
-                                lastDate: DateTime(widget.selectedYear,
-                                    widget.selectedMonth + 1, 0),
+                                lastDate: DateTime(2030, 12, 31),
                               );
                               if (date != null) {
                                 setState(() {
@@ -9789,7 +10047,7 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
         Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: ['C', 'CM'].map((statut) {
+          children: ['C', 'CM', 'M'].map((statut) {
             String label;
             switch (statut) {
               case 'C':
@@ -9797,6 +10055,9 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                 break;
               case 'CM':
                 label = 'Congé Maladie';
+                break;
+              case 'M':
+                label = 'Maternité';
                 break;
               default:
                 label = statut;
@@ -10030,6 +10291,8 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
         return 'Congé';
       case 'CM':
         return 'Congé Maladie';
+      case 'M':
+        return 'Maternité';
       default:
         return statut;
     }
@@ -10062,7 +10325,7 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
   late DateTime dateFin;
   late String motif;
 
-  final List<String> motifsDisponibles = ['G', "RE", 'C', 'CM', 'N', '-'];
+  final List<String> motifsDisponibles = ['G', "RE", 'C', 'CM','M', 'N','F', '-'];
 
   @override
   void initState() {
@@ -10092,10 +10355,8 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                     final date = await showDatePicker(
                       context: context,
                       initialDate: dateDebut,
-                      firstDate: DateTime(2025, 11, 1),
-                      // widget.selectedYear, widget.selectedMonth, 1),
-                      lastDate: DateTime(
-                          widget.selectedYear, widget.selectedMonth + 5, 0),
+                      firstDate: DateTime(2020, 1, 1),
+                      lastDate: DateTime(2030, 12, 31),
                     );
                     if (date != null) {
                       setState(() {
@@ -10126,8 +10387,7 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                       context: context,
                       initialDate: dateFin,
                       firstDate: dateDebut,
-                      lastDate: DateTime(
-                          widget.selectedYear, widget.selectedMonth + 1, 0),
+                      lastDate: DateTime(2030, 12, 31),
                     );
                     if (date != null) {
                       setState(() {
@@ -10251,8 +10511,8 @@ class OrdreMonitorWidget extends StatelessWidget {
         final hasProblems = doublons > 0 || staffsSansOrdre.isNotEmpty;
 
         return Container(
-          margin: EdgeInsets.all(8),
-          padding: EdgeInsets.all(12),
+          margin: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: hasProblems ? Colors.orange.shade50 : Colors.green.shade50,
             borderRadius: BorderRadius.circular(8),
@@ -10261,56 +10521,62 @@ class OrdreMonitorWidget extends StatelessWidget {
               width: 2,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+          child: Wrap(
+            alignment: WrapAlignment.start,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 16,
+            runSpacing: 8,
             children: [
-              Icon(
-                hasProblems ? Icons.warning : Icons.check_circle,
-                color: hasProblems ? Colors.orange : Colors.green,
-                size: 20,
-              ),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'État des ordres',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                  Icon(
+                    hasProblems ? Icons.warning : Icons.check_circle,
+                    color: hasProblems ? Colors.orange : Colors.green,
+                    size: 20,
                   ),
-                  SizedBox(height: 4),
-                  Row(
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _buildStat('Total', '${staffs.length}', Colors.blue),
-                      SizedBox(width: 12),
-                      _buildStat('Doublons', '$doublons',
-                          doublons > 0 ? Colors.red : Colors.green),
-                      SizedBox(width: 12),
-                      _buildStat(
-                          'Sans ordre',
-                          '${staffsSansOrdre.length}',
-                          staffsSansOrdre.isEmpty
-                              ? Colors.green
-                              : Colors.orange),
+                      const Text(
+                        'État des ordres',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 4,
+                        children: [
+                          _buildStat('Total', '${staffs.length}', Colors.blue),
+                          _buildStat('Doublons', '$doublons',
+                              doublons > 0 ? Colors.red : Colors.green),
+                          _buildStat(
+                              'Sans ordre',
+                              '${staffsSansOrdre.length}',
+                              staffsSansOrdre.isEmpty
+                                  ? Colors.green
+                                  : Colors.orange),
+                        ],
+                      ),
                     ],
                   ),
                 ],
               ),
-              if (hasProblems) ...[
-                SizedBox(width: 16),
+              if (hasProblems)
                 ElevatedButton.icon(
-                  icon: Icon(Icons.build, size: 14),
-                  label: Text('Corriger', style: TextStyle(fontSize: 12)),
+                  icon: const Icon(Icons.build, size: 14),
+                  label: const Text('Corriger', style: TextStyle(fontSize: 12)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   onPressed: () {
-                    // Utiliser la méthode de diagnostic ou correction rapide
                     _TableauStaffPageState? state = context
                         .findAncestorStateOfType<_TableauStaffPageState>();
                     if (state != null) {
@@ -10318,7 +10584,6 @@ class OrdreMonitorWidget extends StatelessWidget {
                     }
                   },
                 ),
-              ],
             ],
           ),
         );
@@ -10327,31 +10592,29 @@ class OrdreMonitorWidget extends StatelessWidget {
   }
 
   Widget _buildStat(String label, String value, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        SizedBox(width: 4),
-        Text(
-          '$label: ',
-          style: TextStyle(fontSize: 11),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: color,
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '$label: $value',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -26,11 +26,13 @@ class MessagingP2PIntegration with ChangeNotifier {
   StreamSubscription? _messageSubscription;
 
   bool _isRunning = false;
+  bool _isInitialized = false;
 
   int _messagesSynced = 0;
   int _messagesFailed = 0;
 
   bool get isRunning => _isRunning;
+  bool get isInitialized => _isInitialized;
 
   int get messagesSynced => _messagesSynced;
 
@@ -49,6 +51,7 @@ class MessagingP2PIntegration with ChangeNotifier {
       _messagingManager = messagingManager;
       _connectionManager = connectionManager;
       _objectBox = objectBox;
+      _isInitialized = true;
 
       print('[MessagingP2P] ✅ Initialisé');
     } catch (e) {

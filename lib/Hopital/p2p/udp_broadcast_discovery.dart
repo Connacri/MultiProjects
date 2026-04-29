@@ -74,24 +74,30 @@ class DiscoveryManagerBroadcast with ChangeNotifier {
 
   /// Écoute les changements de connectivité réseau
   Future<void> _setupConnectivityListener() async {
-    _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen((result) async {
-      print('[Discovery] Changement de connectivité: $result');
+    try {
+      _connectivitySubscription =
+          _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) async {
+        print('[Discovery] Changement de connectivité: $results');
 
-      if (result == ConnectivityResult.none) {
-        if (_running) {
-          print('[Discovery] Réseau perdu, arrêt de la découverte');
-          stop();
+        if (results.contains(ConnectivityResult.none) || results.isEmpty) {
+          if (_running) {
+            print('[Discovery] Réseau perdu, arrêt de la découverte');
+            stop();
+          }
+        } else {
+          // Réseau rétabli
+          await _detectNetworkInterfaces();
+          if (_running) {
+            print('[Discovery] Réseau rétabli, redémarrage de la découverte');
+            await _restartSockets();
+          }
         }
-      } else {
-        // Réseau rétabli
-        await _detectNetworkInterfaces();
-        if (_running) {
-          print('[Discovery] Réseau rétabli, redémarrage de la découverte');
-          await _restartSockets();
-        }
-      }
-    });
+      }, onError: (e) {
+        print('[Discovery] Erreur flux connectivité: $e');
+      });
+    } catch (e) {
+      print('[Discovery] Impossible d\'écouter les changements de connectivité: $e');
+    }
   }
 
   /// Démarre la découverte et les annonces
@@ -106,7 +112,7 @@ class DiscoveryManagerBroadcast with ChangeNotifier {
     try {
       // Vérifier la connectivité
       final connectivity = await _connectivity.checkConnectivity();
-      if (connectivity == ConnectivityResult.none) {
+      if (connectivity.contains(ConnectivityResult.none) || connectivity.isEmpty) {
         throw Exception('Pas de connexion réseau disponible');
       }
 

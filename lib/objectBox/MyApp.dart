@@ -2572,9 +2572,10 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
   }
 
   Future<void> _checkInternetConnection() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
 
-    if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty) {
       // Pas de connexion Internet
       final prefs = await SharedPreferences.getInstance();
       final lastOnlineCheckString = prefs.getString('lastOnlineCheck');
@@ -2603,6 +2604,14 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
         _isOfflineForMoreThan2Days = false;
         _isLoading = false;
       });
+    }
+    } catch (e) {
+      print('Erreur vérification connectivité: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -1668,10 +1668,11 @@ class ConnectionStatusProvider extends ChangeNotifier {
   }
 
   Future<void> checkInternetConnection() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    final prefs = await SharedPreferences.getInstance();
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      final prefs = await SharedPreferences.getInstance();
 
-    if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty) {
       final lastOnline = prefs.getString('lastOnlineCheck');
       if (lastOnline != null) {
         _offlineDuration =
@@ -1685,6 +1686,9 @@ class ConnectionStatusProvider extends ChangeNotifier {
       _isOnline = true;
       _isBlocked = false;
       _offlineDuration = Duration.zero;
+    }
+    } catch (e) {
+      print('Erreur vérification connectivité: $e');
     }
   }
 

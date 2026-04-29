@@ -131,26 +131,27 @@ void main() async {
   // ========================================================================
   print('[Main] =========== Initialisation Messaging ===========');
 
+  // ✅ Initialiser messagingP2P ici pour éviter LateInitializationError
+  messagingP2P = MessagingP2PIntegration();
+
   try {
     // 1. Initialiser MessagingManager avec objectBox initialisé
     messagingManager = MessagingManager();
     await messagingManager.initialize(objectBox, p2pManager.nodeId);
     print('✅ MessagingManager initialisé');
-    // ✅ AJOUTER CES LIGNES
+    
     // 2. Initialiser NodesManager avec les vrais nœuds
-    // Initialiser NodesManager
     final nodesManager = NodesManager();
     await nodesManager.initialize(p2pManager, connectionManager);
-
     print('✅ NodesManager initialisé');
-    // 2. Initialiser MessagingP2PIntegration
-    messagingP2P = MessagingP2PIntegration();
+    
+    // 3. Initialiser MessagingP2PIntegration
     await messagingP2P.initialize(
         messagingManager, p2pIntegration, connectionManager, objectBox);
     messagingP2P.start();
     print('✅ MessagingP2PIntegration initialisé et démarré');
 
-    // 3. Initialiser sync observer pour messaging
+    // 4. Initialiser sync observer pour messaging
     final messagingSyncObserver = MessagingSyncObserver();
     await messagingSyncObserver.initialize(objectBox, messagingP2P);
     messagingSyncObserver.start();
@@ -160,15 +161,6 @@ void main() async {
   }
 
   print('[Main] ======================================');
-  //////////////////////////////////////////////////////////////////////////////
-
-  await messagingP2P.initialize(
-    messagingManager,
-    p2pIntegration,
-    connectionManager,
-    objectBox,
-  );
-  messagingP2P.start(); // Lance la synchronisation
 
 // Initialisation Supabase (IMPORTANT pour la persistance)
   // if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
@@ -287,13 +279,13 @@ Future<void> _setupNetworkPermissions() async {
 
     // Vérifier la connectivité
     final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity == ConnectivityResult.none) {
+    if (connectivity.contains(ConnectivityResult.none) || connectivity.isEmpty) {
       print('[Main] ⚠️ Aucune connexion réseau disponible');
     } else {
       print('[Main] ✅ Connectivité réseau OK: $connectivity');
     }
   } catch (e) {
-    print('[Main] ❌ Erreur configuration permissions: $e');
+    print('[Main] ❌ Erreur configuration permissions ou connectivité: $e');
   }
 }
 
@@ -302,6 +294,10 @@ Future<void> _initializeP2P() async {
   try {
     print('[Main] =========== Initialisation P2P ===========');
     p2pIntegration = P2PIntegration();
+    
+    // ✅ Initialiser les références AVANT l'initialisation système pour éviter LateInitializationError
+    p2pManager = p2pIntegration.p2pManager;
+    connectionManager = p2pIntegration.connectionManager;
 
     await p2pIntegration.initializeP2PSystem();
 
@@ -312,12 +308,12 @@ Future<void> _initializeP2P() async {
         .setBroadcastCallback((delta) => p2pIntegration.broadcastDelta(delta));
     print('[Main] ✅ Callback configuré');
 
-    p2pManager = P2PManager();
-    connectionManager = p2pIntegration.connectionManager;
-
     print('[Main] ✅ P2P System initialisé');
   } catch (e) {
     print('[Main] ❌ Erreur initialisation P2P: $e');
+    // On s'assure que les variables sont quand même initialisées si p2pIntegration existe
+    p2pManager = p2pIntegration.p2pManager;
+    connectionManager = p2pIntegration.connectionManager;
   }
 }
 

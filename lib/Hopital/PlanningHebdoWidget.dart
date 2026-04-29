@@ -211,31 +211,61 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Planning Médical Hebdomadaire'),
+        title: const Text('Planning Hebdo', style: TextStyle(fontSize: 18)),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
         actions: [
-          // 🆕 NOUVEAU BOUTON
-          const RemplirPlanningAutoButton(),
-          const SizedBox(width: 8),
-          const Center(child: AjouterActivitesButton()),
-          // Bouton Clear Activités
-          IconButton(
-            icon: const Icon(Icons.clear_all),
-            tooltip: 'Effacer toutes les activités',
-            onPressed: () => _confirmClearAllActivities(),
-          ),
-          // Gérer les types d'activités
-          IconButton(
-            icon: const Icon(Icons.category),
-            tooltip: 'Types d\'activités',
-            onPressed: () => _showTypesActivitesDialog(),
-          ),
-          // Actualiser
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Actualiser',
             onPressed: () => _loadData(),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              switch (value) {
+                case 'fill_auto':
+                  const RemplirPlanningAutoButton().confirmerRemplissage(context);
+                  break;
+                case 'add_types':
+                  _showTypesActivitesDialog();
+                  break;
+                case 'clear_all':
+                  _confirmClearAllActivities();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'fill_auto',
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('Remplir Auto'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'add_types',
+                child: Row(
+                  children: [
+                    Icon(Icons.category, color: Colors.blue),
+                    SizedBox(width: 8),
+                    Text('Types d\'activités'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'clear_all',
+                child: Row(
+                  children: [
+                    Icon(Icons.clear_all, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Effacer tout'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -571,7 +601,8 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
     if (codeLower.contains('serv')) return Colors.grey.shade300;
     if (codeLower == 'ped') return Colors.amber.shade300;
     if (codeLower == 'bio') return Colors.blueGrey.shade300;
-    if (codeLower == 'c' || codeLower == 'cm') return Colors.red.shade300;
+    if (codeLower == 'c' || codeLower == 'cm' || codeLower == 'm') return Colors.red.shade300;
+    if (codeLower == 'f') return Colors.orange.shade300;
     if (codeLower == 'n') return Colors.indigo.shade300;
     return Colors.grey.shade200;
   }
@@ -1618,7 +1649,7 @@ class RemplirPlanningAutoButton extends StatelessWidget {
   }
 
   /// ⚠️ Confirmation avant remplissage
-  Future<void> _confirmerRemplissage(BuildContext context) async {
+  Future<void> confirmerRemplissage(BuildContext context) async {
     final confirme = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1748,7 +1779,7 @@ class RemplirPlanningAutoButton extends StatelessWidget {
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
-      onPressed: () => _confirmerRemplissage(context),
+      onPressed: () => confirmerRemplissage(context),
     );
   }
 }

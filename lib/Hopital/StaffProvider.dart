@@ -855,7 +855,7 @@ class ActiviteProvider with ChangeNotifier {
     final activites = staff.activites.toList();
     return activites.any((activite) =>
         activite.jour == dateJour.day &&
-        (activite.statut == 'C' || activite.statut == 'CM'));
+        (activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M'));
   }
 
   /// ✅ MÉTHODE CORRIGÉE : Création d'activités avec prise en compte des congés et obs

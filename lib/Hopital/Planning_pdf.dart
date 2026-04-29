@@ -219,6 +219,14 @@ Future<String?> generatePersonnelListsPDF(
             ),
             pw.SizedBox(height: 8),
             _buildWeeklyScheduleTableImproved(medecins, oswald),
+            pw.SizedBox(height: 10),
+            pw.Text(
+              'OBS : Journée de RCP tous les Mardis à 11 h',
+              style: baseStyle.copyWith(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 10,
+              ),
+            ),
             pw.Spacer(),
             _buildFooter(baseStyle),
           ],
@@ -630,6 +638,14 @@ Future<String?> generatePersonnelListsPDFWithOptions(
             ),
             pw.SizedBox(height: 8),
             _buildWeeklyScheduleTableImproved(medecins, oswald),
+            pw.SizedBox(height: 10),
+            pw.Text(
+              'OBS : Journée de RCP tous les Mardis à 11 h',
+              style: baseStyle.copyWith(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 10,
+              ),
+            ),
 
             // ✅ Utiliser les notes de medecinPlanningOption au lieu de medicalOption
             _buildNotesSection(

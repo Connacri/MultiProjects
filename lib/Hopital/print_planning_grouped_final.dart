@@ -213,12 +213,23 @@ Future<String?> generateAndSaveMonthPlanningPDF(
             pw.Center(
               child: _buildGroupTable(list, daysInMonth, oswald, year, month),
             ),
+            // if (isMedecinsGroup && groupe.toUpperCase().contains('16H')) ...[
+            //   pw.SizedBox(height: 5),
+            //   // pw.Text(
+            //   //   'OBS : Journée de RCP tous les Mardis à 11 h',
+            //   //   style: baseStyle.copyWith(
+            //   //     fontWeight: pw.FontWeight.bold,
+            //   //     fontSize: 11,
+            //   //   ),
+            //   // ),
+            // ],
+
             pw.SizedBox(height: 8),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    'G : Garde       RE : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+                    'G : Garde       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
                     style: baseStyle),
                 pw.Text(
                     'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
@@ -556,8 +567,21 @@ void _addActivityPage(
         pw.Center(
             child:
                 _buildGroupTable(staffList, daysInMonth, oswald, year, month)),
+        // if (subtitle.contains('Personnel Médical')) ...[
+        //   pw.SizedBox(height: 5),
+        //   // pw.Text(
+        //   //   'OBS : Journée de RCP tous les Mardis à 11 h',
+        //   //   style: baseStyle.copyWith(
+        //   //     fontWeight: pw.FontWeight.bold,
+        //   //     fontSize: 11,
+        //   //   ),
+        //   // ),
+        // ],
+
         pw.SizedBox(height: 8),
-        _buildPageFooterContent(baseStyle),
+        _buildPageFooterContent(baseStyle),pw.SizedBox(height: 8),
+        pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
+
         pw.Spacer(),
       ],
       footer: (ctx) => _buildPageFooter(baseStyle),
@@ -598,8 +622,9 @@ pw.Widget _buildPageFooterContent(pw.TextStyle baseStyle) {
     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
     children: [
       pw.Text(
-          'G : Garde       RE : Récupération       C : Congé       CM : Congé Maladie       N : Normal',
+          'G : Garde       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
           style: baseStyle),
+
       pw.Text(
           'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
           style: baseStyle),
@@ -611,7 +636,6 @@ pw.Widget _buildPageFooter(pw.TextStyle baseStyle) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
-      pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
       pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
         children: [
