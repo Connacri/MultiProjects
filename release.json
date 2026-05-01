@@ -1,16 +1,16 @@
 {
-  "version": "1.0.8.4",
-  "tag": "v1.0.8.4",
-  "date": "2026-04-29T11:07:06Z",
-  "build_number": "4",
-  "commit": "b24029a8f1e74bd316927f439d351780a330a698",
+  "version": "1.0.8.5",
+  "tag": "v1.0.8.5",
+  "date": "2026-05-01T20:46:20Z",
+  "build_number": "5",
+  "commit": "e69d20fe36f004c7f2319bdfe920f7472233ae48",
   "platforms": {
     "android": {
-      "url": "https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.4/app-release.apk",
+      "url": "https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.5/app-release.apk",
       "filename": "app-release.apk"
     },
     "windows": {
-      "url": "https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.4/installer.exe",
+      "url": "https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.5/installer.exe",
       "filename": "installer.exe"
     }
   }
