@@ -167,6 +167,20 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
       appBar: AppBar(
         title: const Text('Sélection de Module'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.backup),
+            tooltip: 'Exporter la base de données',
+            onPressed: () async {
+              final result = await objectBox.exportDatabase();
+              if (result != null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(result)),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: Center(
         child: SingleChildScrollView(

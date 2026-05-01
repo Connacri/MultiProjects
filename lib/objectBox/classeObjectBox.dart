@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -1097,4 +1098,39 @@ class ObjectBox {
 //     'authLogs': authAuditLogBox.count(),
 //   };
 // }
+
+  Future<String?> exportDatabase() async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final dbPath = join(dir.path, 'objectbox');
+      final dbDir = Directory(dbPath);
+
+      if (!await dbDir.exists()) {
+        return "Erreur: La base de données n'existe pas.";
+      }
+
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Sélectionnez le dossier d\'exportation',
+      );
+
+      if (selectedDirectory == null) {
+        return "Exportation annulée.";
+      }
+
+      final destinationPath = join(selectedDirectory, 'kenzy_backup_${DateTime.now().millisecondsSinceEpoch}');
+      final destinationDir = Directory(destinationPath);
+      await destinationDir.create(recursive: true);
+
+      await for (var entity in dbDir.list(recursive: false)) {
+        if (entity is File) {
+          final fileName = basename(entity.path);
+          await entity.copy(join(destinationPath, fileName));
+        }
+      }
+
+      return "Base de données exportée avec succès vers $destinationPath";
+    } catch (e) {
+      return "Erreur lors de l'exportation: $e";
+    }
+  }
 }

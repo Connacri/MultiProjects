@@ -18,6 +18,7 @@ import 'ActivitePersonne.dart';
 import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
+import 'SupabaseHospitalService.dart';
 import 'license/LicenseInfoPage.dart';
 import 'p2p/connection_manager.dart';
 import 'p2p/messenger/messaging_manager.dart';
@@ -3980,6 +3981,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             ],
           ),
         ),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+          value: 'export_supabase',
+          child: Row(
+            children: [
+              Icon(Icons.cloud_upload, color: Colors.blue, size: 20),
+              SizedBox(width: 8),
+              Text("Exporter vers Supabase"),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -4021,6 +4033,32 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       case 'add_holiday':
         await _showAddHolidayDialog(context);
         break;
+      case 'export_supabase':
+        await _exportToSupabase(context);
+        break;
+    }
+  }
+
+  Future<void> _exportToSupabase(BuildContext context) async {
+    final supabaseService = SupabaseHospitalService();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await supabaseService.exportAllToSupabase();
+      if (mounted) {
+        Navigator.pop(context); // Fermer le loader
+        _showSnackbar("✅ Exportation vers Supabase réussie !", Colors.green);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Fermer le loader
+        _showSnackbar("❌ Erreur d'exportation : $e", Colors.red);
+      }
     }
   }
 
