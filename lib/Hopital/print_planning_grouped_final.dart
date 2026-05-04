@@ -224,7 +224,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
             //   // ),
             // ],
 
-            pw.SizedBox(height: 8),
+            pw.SizedBox(height: 4),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -236,7 +236,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                     style: baseStyle),
               ],
             ),
-            pw.SizedBox(height: 6),
+            pw.SizedBox(height: 4),
             pw.Text(
                 'N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction',
                 style: baseStyle),
@@ -535,7 +535,7 @@ void _addActivityPage(
                 style: baseStyle.copyWith(fontSize: 12)),
           ],
         ),
-        pw.SizedBox(height: 6),
+        pw.Spacer(),
 
         // ✅ Titre avec texte personnalisé sur la même ligne
         pw.Center(
@@ -563,7 +563,7 @@ void _addActivityPage(
           ),
         ),
 
-        pw.SizedBox(height: 8),
+        pw.SizedBox(height: 4),
         pw.Center(
             child:
                 _buildGroupTable(staffList, daysInMonth, oswald, year, month)),
@@ -578,10 +578,12 @@ void _addActivityPage(
         //   // ),
         // ],
 
-        pw.SizedBox(height: 8),
-        _buildPageFooterContent(baseStyle),pw.SizedBox(height: 8),
-        pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
+        pw.SizedBox(height: 4),
 
+        _buildPageFooterContent(baseStyle),pw.SizedBox(height: 8),
+        pw.Text(
+            'N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction',
+            style: baseStyle),
         pw.Spacer(),
       ],
       footer: (ctx) => _buildPageFooter(baseStyle),
