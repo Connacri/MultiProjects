@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' show Random;
 import 'dart:math';
+import 'dart:convert';
 
 import 'package:faker/faker.dart';
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:csv/csv.dart';
 
 import '../objectbox.g.dart';
 import 'Entity.dart';
@@ -1131,6 +1133,135 @@ class ObjectBox {
       return "Base de données exportée avec succès vers $destinationPath";
     } catch (e) {
       return "Erreur lors de l'exportation: $e";
+    }
+  }
+
+  // --- EXPORT JSON ---
+  Future<String?> exportAllToJson() async {
+    try {
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Dossier d\'exportation JSON',
+      );
+      if (selectedDirectory == null) return "Exportation annulée.";
+
+      final data = {
+        'produits': produitBox.getAll().map((e) => e.toJson()).toList(),
+        'clients': clientBox.getAll().map((e) => e.toJson()).toList(),
+        'fournisseurs': fournisseurBox.getAll().map((e) => e.toJson()).toList(),
+        'staff': staffBox.getAll().map((e) => e.toJson()).toList(),
+        'factures': factureBox.getAll().map((e) => e.toJson()).toList(),
+        'lignesFactures': ligneFacture.getAll().map((e) => e.toJson()).toList(),
+      };
+
+      final filePath = join(selectedDirectory, 'kenzy_export_${DateTime.now().millisecondsSinceEpoch}.json');
+      final file = File(filePath);
+      await file.writeAsString(jsonEncode(data));
+
+      return "Export JSON réussi : $filePath";
+    } catch (e) {
+      return "Erreur JSON: $e";
+    }
+  }
+
+  // --- IMPORT JSON ---
+  Future<String?> importAllFromJson() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result == null) return "Importation annulée.";
+
+      final file = File(result.files.single.path!);
+      final String content = await file.readAsString();
+      final Map<String, dynamic> data = jsonDecode(content);
+
+      int count = 0;
+      if (data.containsKey('produits')) {
+        final list = (data['produits'] as List).map((e) => Produit.fromJson(e)).toList();
+        produitBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('clients')) {
+        final list = (data['clients'] as List).map((e) => Client.fromJson(e)).toList();
+        clientBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('fournisseurs')) {
+        final list = (data['fournisseurs'] as List).map((e) => Fournisseur.fromJson(e)).toList();
+        fournisseurBox.putMany(list);
+        count += list.length;
+      }
+
+      return "Import JSON réussi : $count éléments importés";
+    } catch (e) {
+      return "Erreur Import JSON: $e";
+    }
+  }
+
+  // --- EXPORT CSV (PRODUITS) ---
+  Future<String?> exportProduitsToCsv() async {
+    try {
+      String? selectedDirectory = await FilePicker.platform.getDirectoryPath(
+        dialogTitle: 'Dossier d\'exportation CSV',
+      );
+      if (selectedDirectory == null) return "Exportation annulée.";
+
+      List<Produit> produits = produitBox.getAll();
+      List<List<dynamic>> rows = [
+        ["ID", "QR", "Nom", "Prix Vente", "Stock Minim", "Description"]
+      ];
+
+      for (var p in produits) {
+        rows.add([p.id, p.qr, p.nom, p.prixVente, p.minimStock, p.description]);
+      }
+
+      String csvData = const ListToCsvConverter().convert(rows);
+      final filePath = join(selectedDirectory, 'produits_${DateTime.now().millisecondsSinceEpoch}.csv');
+      final file = File(filePath);
+      await file.writeAsString(csvData);
+
+      return "CSV Produits exporté : $filePath";
+    } catch (e) {
+      return "Erreur CSV: $e";
+    }
+  }
+
+  // --- IMPORT CSV (PRODUITS) ---
+  Future<String?> importProduitsFromCsv() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+      if (result == null) return "Importation annulée.";
+
+      final file = File(result.files.single.path!);
+      final String csvContent = await file.readAsString();
+      final List<List<dynamic>> fields = const CsvToListConverter().convert(csvContent);
+
+      if (fields.length <= 1) return "Fichier vide ou invalide";
+
+      List<Produit> toImport = [];
+      // Skip header
+      for (var i = 1; i < fields.length; i++) {
+        var row = fields[i];
+        if (row.length < 3) continue;
+        
+        toImport.add(Produit(
+          qr: row[1]?.toString(),
+          nom: row[2]?.toString() ?? "Inconnu",
+          prixVente: double.tryParse(row[3]?.toString() ?? '0') ?? 0.0,
+          minimStock: double.tryParse(row[4]?.toString() ?? '0') ?? 0.0,
+          description: row.length > 5 ? row[5]?.toString() : null,
+          derniereModification: DateTime.now(),
+        ));
+      }
+
+      produitBox.putMany(toImport);
+      return "${toImport.length} produits importés";
+    } catch (e) {
+      return "Erreur Import CSV: $e";
     }
   }
 }

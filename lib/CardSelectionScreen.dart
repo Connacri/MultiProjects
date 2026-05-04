@@ -120,16 +120,6 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         ],
         destination: adaptiveHome(objectBox: objectBox),
       ),
-      // PageCardData(
-      //   title: 'Tinder',
-      //   subtitle: 'Social',
-      //   imageUrl: 'assets/100.png',
-      //   gradientColors: [
-      //     Colors.blue.shade800.withOpacity(0.8),
-      //     Colors.black.withOpacity(0.5)
-      //   ],
-      //   destination: MyApp_TinderClone(),
-      // ),
       PageCardData(
         title: 'Kids',
         subtitle: 'Childrens',
@@ -150,17 +140,6 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         ],
         destination: HomePageCalendar(),
       ),
-      // PageCardData(
-      //   title: 'Tinder Clone',
-      //   subtitle: 'Découvrez des profils à proximité',
-      //   imageUrl: 'assets/ai-generated-8302736_1280.jpg',
-      //   // ✅ Garde cette image ou change
-      //   gradientColors: [
-      //     const Color(0xFFFF655B).withOpacity(0.9), // Rose Tinder officiel
-      //     const Color(0xFFFD297B).withOpacity(0.9), // Rouge Tinder
-      //   ],
-      //   destination: const MyApp_TinderClone(),
-      // ),
     ];
 
     return Scaffold(
@@ -170,21 +149,14 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.backup),
-            tooltip: 'Exporter la base de données',
-            onPressed: () async {
-              final result = await objectBox.exportDatabase();
-              if (result != null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(result)),
-                );
-              }
-            },
+            tooltip: 'Gestion des données (Export/Import)',
+            onPressed: () => _showBackupOptions(context, objectBox),
           ),
         ],
       ),
       body: Center(
         child: SingleChildScrollView(
-          controller: _scrollController, // ← Important !
+          controller: _scrollController,
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Wrap(
@@ -201,12 +173,97 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
     );
   }
 
+  void _showBackupOptions(BuildContext context, ObjectBox objectBox) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Gestion des données',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.storage, color: Colors.blue),
+                title: const Text('Sauvegarde complète de la base (.mdb)'),
+                subtitle: const Text('Copie les fichiers bruts de la base de données'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await objectBox.exportDatabase();
+                  if (result != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                  }
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.code, color: Colors.green),
+                title: const Text('Exporter en JSON'),
+                subtitle: const Text('Export de toutes les tables principales'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await objectBox.exportAllToJson();
+                  if (result != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.table_chart, color: Colors.orange),
+                title: const Text('Exporter en CSV (Produits)'),
+                subtitle: const Text('Idéal pour Excel / Tableurs'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await objectBox.exportProduitsToCsv();
+                  if (result != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                  }
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.file_open, color: Colors.purple),
+                title: const Text('Importer depuis JSON'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await objectBox.importAllFromJson();
+                  if (result != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.grid_on, color: Colors.teal),
+                title: const Text('Importer depuis CSV (Produits)'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final result = await objectBox.importProduitsFromCsv();
+                  if (result != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                  }
+                },
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildCard(BuildContext context, PageCardData data,
       ValueNotifier<double> scrollOffset) {
     final bool isMobile = MediaQuery.of(context).size.width < 800;
     final double cardHeight = isMobile ? 200 : 400;
-    final double sensitivity =
-        isMobile ? 3.5 : 5.0; // Ajuste l'intensité du parallax
+    final double sensitivity = isMobile ? 3.5 : 5.0;
 
     return InkWell(
       onTap: () {
@@ -226,14 +283,12 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Parallax avec AnimatedBuilder (très performant)
               AnimatedBuilder(
                 animation: scrollOffset,
                 builder: (context, child) {
                   final double parallax = scrollOffset.value / sensitivity;
                   return Transform.translate(
                     offset: Offset(0, -parallax),
-                    // Négatif pour un effet "derrière"
                     child: child,
                   );
                 },
@@ -258,8 +313,6 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   ),
                 ),
               ),
-
-              // Overlay gradient
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -274,8 +327,6 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   ),
                 ),
               ),
-
-              // Texte et bouton
               Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
@@ -338,8 +389,6 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   ],
                 ),
               ),
-
-              // Icône dashboard
               Positioned(
                 top: 20,
                 right: 20,

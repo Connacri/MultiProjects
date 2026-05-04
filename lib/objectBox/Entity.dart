@@ -174,6 +174,23 @@ class Produit {
           : DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'qr': qr,
+      'image': image,
+      'nom': nom,
+      'description': description,
+      'prixVente': prixVente,
+      'tax': tax,
+      'qtyPartiel': qtyPartiel,
+      'pricePartielVente': pricePartielVente,
+      'minimStock': minimStock,
+      'alertPeremption': alertPeremption,
+      'derniereModification': derniereModification.millisecondsSinceEpoch,
+    };
+  }
 }
 
 @Entity()
@@ -310,6 +327,17 @@ class Fournisseur {
           : DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'qr': qr,
+      'nom': nom,
+      'phone': phone,
+      'adresse': adresse,
+      'derniereModification': derniereModification.millisecondsSinceEpoch,
+    };
+  }
 }
 
 @Entity()
@@ -356,6 +384,18 @@ class Client {
           ? DateTime.fromMillisecondsSinceEpoch(json['derniereModification'])
           : DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'qr': qr,
+      'nom': nom,
+      'phone': phone,
+      'adresse': adresse,
+      'description': description,
+      'derniereModification': derniereModification.millisecondsSinceEpoch,
+    };
   }
 }
 
@@ -436,6 +476,20 @@ class Document {
           : DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'qrReference': qrReference,
+      'impayer': impayer,
+      'date': date.toIso8601String(),
+      'derniereModification': derniereModification.millisecondsSinceEpoch,
+      'clientId': client.targetId,
+      'fournisseurId': fournisseur.targetId,
+      'montantVerse': montantVerse,
+    };
+  }
 }
 
 @Entity()
@@ -473,6 +527,17 @@ class LigneDocument {
           ? DateTime.fromMillisecondsSinceEpoch(json['derniereModification'])
           : DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'quantite': quantite,
+      'prixUnitaire': prixUnitaire,
+      'derniereModification': derniereModification.millisecondsSinceEpoch,
+      'produitId': produit.targetId,
+      'factureId': facture.targetId,
+    };
   }
 }
 
