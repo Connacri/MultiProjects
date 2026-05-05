@@ -1358,18 +1358,23 @@ class Staff {
     };
   }
 
-  // ✅ AJOUTER fromJson() optionnel
+  // ✅ AJOUTER fromJson()
   factory Staff.fromJson(Map<String, dynamic> json) {
-    return Staff(
+    final staff = Staff(
       id: json['id'] ?? 0,
       nom: json['nom'] ?? '',
       grade: json['grade'] ?? '',
       groupe: json['groupe'] ?? '',
       equipe: json['equipe'],
-      // obs: json['obs'],
       ordre: json['ordre'],
     );
+    if (json['branchId'] != null) {
+      staff.branch.targetId = json['branchId'];
+    }
+    return staff;
   }
+
+
 }
 
 @Entity()
@@ -1389,13 +1394,24 @@ class ActiviteJour {
     return ActiviteJour(jour: 0, statut: '');
   }
 
-  // ✅ AJOUTER toJson()
+  factory ActiviteJour.fromJson(Map<String, dynamic> json) {
+    final activite = ActiviteJour(
+      id: json['id'] ?? 0,
+      jour: json['jour'] ?? 0,
+      statut: json['statut'] ?? '',
+    );
+    if (json['staffId'] != null) {
+      activite.staff.targetId = json['staffId'];
+    }
+    return activite;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'jour': jour,
       'statut': statut,
-      'staffId': staff.targetId, // ✅ Utiliser targetId
+      'staffId': staff.targetId,
     };
   }
 }
@@ -1407,7 +1423,13 @@ class Branch {
 
   Branch({this.id = 0, required this.branchNom});
 
-  // ✅ AJOUTER toJson()
+  factory Branch.fromJson(Map<String, dynamic> json) {
+    return Branch(
+      id: json['id'] ?? 0,
+      branchNom: json['branchNom'] ?? '',
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -1431,14 +1453,26 @@ class TimeOff {
     this.motif,
   });
 
-  // ✅ AJOUTER toJson()
+  factory TimeOff.fromJson(Map<String, dynamic> json) {
+    final timeOff = TimeOff(
+      id: json['id'] ?? 0,
+      debut: DateTime.fromMillisecondsSinceEpoch(json['debut']),
+      fin: DateTime.fromMillisecondsSinceEpoch(json['fin']),
+      motif: json['motif'],
+    );
+    if (json['staffId'] != null) {
+      timeOff.staff.targetId = json['staffId'];
+    }
+    return timeOff;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'debut': debut.millisecondsSinceEpoch,
       'fin': fin.millisecondsSinceEpoch,
       'motif': motif,
-      'staffId': staff.targetId, // ✅ Utiliser targetId
+      'staffId': staff.targetId,
     };
   }
 }
@@ -1459,6 +1493,20 @@ class Planification {
     required this.ordreEquipes,
     this.activitesJson,
   });
+
+  factory Planification.fromJson(Map<String, dynamic> json) {
+    final planification = Planification(
+      id: json['id'] ?? 0,
+      mois: json['mois'] ?? 1,
+      annee: json['annee'] ?? 2024,
+      ordreEquipes: json['ordreEquipes'] ?? '',
+      activitesJson: json['activitesJson'],
+    );
+    if (json['branchId'] != null) {
+      planification.branch.targetId = json['branchId'];
+    }
+    return planification;
+  }
 
   // ✅ AJOUTER toJson()
   Map<String, dynamic> toJson() {
@@ -1499,6 +1547,29 @@ class PlanningHebdo {
     this.dateDebut,
     this.dateFin,
   });
+
+  factory PlanningHebdo.fromJson(Map<String, dynamic> json) {
+    final planning = PlanningHebdo(
+      id: json['id'] ?? 0,
+      dimanche: json['dimanche'],
+      lundi: json['lundi'],
+      mardi: json['mardi'],
+      mercredi: json['mercredi'],
+      jeudi: json['jeudi'],
+      vendredi: json['vendredi'],
+      samedi: json['samedi'],
+      dateDebut: json['dateDebut'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['dateDebut'])
+          : null,
+      dateFin: json['dateFin'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(json['dateFin'])
+          : null,
+    );
+    if (json['staffId'] != null) {
+      planning.staff.targetId = json['staffId'];
+    }
+    return planning;
+  }
 
   String? getActiviteJour(int jourSemaine) {
     switch (jourSemaine) {
@@ -1580,6 +1651,16 @@ class TypeActivite {
     this.description,
     this.couleurHex,
   });
+
+  factory TypeActivite.fromJson(Map<String, dynamic> json) {
+    return TypeActivite(
+      id: json['id'] ?? 0,
+      code: json['code'] ?? '',
+      libelle: json['libelle'] ?? '',
+      description: json['description'],
+      couleurHex: json['couleurHex'],
+    );
+  }
 
   // ✅ AJOUTER toJson()
   Map<String, dynamic> toJson() {

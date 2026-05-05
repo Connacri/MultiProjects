@@ -7,10 +7,10 @@ import 'Hopital/TableauStaff.dart';
 import 'Kids/main.dart';
 import 'checkit/HomePage.dart';
 import 'dependences/calendar_timeline/home.dart';
-import 'objectBox/MyApp.dart';
-import 'objectBox/classeObjectBox.dart';
-import 'objectBox/pages/invoice/FacturationPageUI.dart';
-import 'objectBox/tests/timelines/mistral/claude.dart';
+import 'package:kenzy/objectBox/classeObjectBox.dart';
+import 'package:kenzy/objectBox/MyApp.dart';
+import 'package:kenzy/objectBox/pages/invoice/FacturationPageUI.dart';
+import 'package:kenzy/objectBox/tests/timelines/mistral/claude.dart';
 
 // 1. Modèle de données pour les cartes
 class PageCardData {

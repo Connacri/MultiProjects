@@ -1056,51 +1056,6 @@ class ObjectBox {
     return annonces.getAll();
   }
 
-// /// Nettoyer toutes les données (ATTENTION: irréversible!)
-// void clearAll() {
-//   staffBox.removeAll();
-//   activiteBox.removeAll();
-//   branchBox.removeAll();
-//   timeOffBox.removeAll();
-//   planificationBox.removeAll();
-//   planningHebdoBox.removeAll();
-//   typeActiviteBox.removeAll();
-//   messageBox.removeAll();
-//   conversationBox.removeAll();
-//   messageReceiptBox.removeAll();
-//   conversationParticipantBox.removeAll();
-//   messageSyncQueueBox.removeAll();
-//   messageSearchIndexBox.removeAll();
-//   staffCredentialsBox.removeAll();
-//   staffSessionBox.removeAll();
-//   authAuditLogBox.removeAll();
-// }
-//
-// /// Nettoyer uniquement les données d'authentification
-// void clearAuthData() {
-//   staffCredentialsBox.removeAll();
-//   staffSessionBox.removeAll();
-//   authAuditLogBox.removeAll();
-// }
-//
-// /// Statistiques de la base de données
-// Map<String, int> getStats() {
-//   return {
-//     'staff': staffBox.count(),
-//     'activites': activiteBox.count(),
-//     'branches': branchBox.count(),
-//     'timeOffs': timeOffBox.count(),
-//     'planifications': planificationBox.count(),
-//     'planningsHebdo': planningHebdoBox.count(),
-//     'typeActivites': typeActiviteBox.count(),
-//     'messages': messageBox.count(),
-//     'conversations': conversationBox.count(),
-//     'credentials': staffCredentialsBox.count(),
-//     'sessions': staffSessionBox.count(),
-//     'authLogs': authAuditLogBox.count(),
-//   };
-// }
-
   Future<String?> exportDatabase() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
@@ -1149,6 +1104,12 @@ class ObjectBox {
         'clients': clientBox.getAll().map((e) => e.toJson()).toList(),
         'fournisseurs': fournisseurBox.getAll().map((e) => e.toJson()).toList(),
         'staff': staffBox.getAll().map((e) => e.toJson()).toList(),
+        'activites': activiteBox.getAll().map((e) => e.toJson()).toList(),
+        'branches': branchBox.getAll().map((e) => e.toJson()).toList(),
+        'timeOffs': timeOffBox.getAll().map((e) => e.toJson()).toList(),
+        'planifications': planificationBox.getAll().map((e) => e.toJson()).toList(),
+        'planningHebdo': planningHebdoBox.getAll().map((e) => e.toJson()).toList(),
+        'typeActivites': typeActiviteBox.getAll().map((e) => e.toJson()).toList(),
         'factures': factureBox.getAll().map((e) => e.toJson()).toList(),
         'lignesFactures': ligneFacture.getAll().map((e) => e.toJson()).toList(),
       };
@@ -1190,6 +1151,51 @@ class ObjectBox {
       if (data.containsKey('fournisseurs')) {
         final list = (data['fournisseurs'] as List).map((e) => Fournisseur.fromJson(e)).toList();
         fournisseurBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('staff')) {
+        final list = (data['staff'] as List).map((e) => Staff.fromJson(e)).toList();
+        staffBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('activites')) {
+        final list = (data['activites'] as List).map((e) => ActiviteJour.fromJson(e)).toList();
+        activiteBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('branches')) {
+        final list = (data['branches'] as List).map((e) => Branch.fromJson(e)).toList();
+        branchBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('timeOffs')) {
+        final list = (data['timeOffs'] as List).map((e) => TimeOff.fromJson(e)).toList();
+        timeOffBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('planifications')) {
+        final list = (data['planifications'] as List).map((e) => Planification.fromJson(e)).toList();
+        planificationBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('planningHebdo')) {
+        final list = (data['planningHebdo'] as List).map((e) => PlanningHebdo.fromJson(e)).toList();
+        planningHebdoBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('typeActivites')) {
+        final list = (data['typeActivites'] as List).map((e) => TypeActivite.fromJson(e)).toList();
+        typeActiviteBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('factures')) {
+        final list = (data['factures'] as List).map((e) => Document.fromJson(e)).toList();
+        factureBox.putMany(list);
+        count += list.length;
+      }
+      if (data.containsKey('lignesFactures')) {
+        final list = (data['lignesFactures'] as List).map((e) => LigneDocument.fromJson(e)).toList();
+        ligneFacture.putMany(list);
         count += list.length;
       }
 

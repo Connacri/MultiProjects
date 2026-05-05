@@ -36,8 +36,8 @@ import 'Kids/screens/coach_dashboard_screen.dart';
 import 'Kids/screens/parent_dashboard_screen.dart';
 import 'Kids/screens/school_dashboard_screen.dart';
 import 'firebase_options.dart';
-import 'objectBox/MyApp.dart';
-import 'objectBox/classeObjectBox.dart';
+import 'package:kenzy/objectBox/MyApp.dart';
+import 'package:kenzy/objectBox/classeObjectBox.dart';
 
 // ============================================================================
 // GLOBAL VARIABLES
