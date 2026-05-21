@@ -6,12 +6,12 @@
 ## 📲 Télécharger l'application
 
 <p align="center">
-  <a href="https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.5/app-release.apk">
-    <img src="https://img.shields.io/badge/Android-APK_1.0.8.5-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Android APK"/>
+  <a href="https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.8/app-release.apk">
+    <img src="https://img.shields.io/badge/Android-APK_1.0.8.8-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Android APK"/>
   </a>
   &nbsp;&nbsp;
-  <a href="https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.5/installer.exe">
-    <img src="https://img.shields.io/badge/Windows-Installer_1.0.8.5-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer"/>
+  <a href="https://github.com/Connacri/MultiProjects/releases/download/v1.0.8.8/installer.exe">
+    <img src="https://img.shields.io/badge/Windows-Installer_1.0.8.8-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer"/>
   </a>
 </p>
 
@@ -23,7 +23,7 @@ Application Flutter de **planification hospitalière**.
 
 - **Stack** : Flutter · Dart · ObjectBox · Provider · Material 3
 - **Plateformes** : Android · Windows Desktop
-- **Version** : 1.0.8.5
+- **Version** : 1.0.8.8
 
 ---
 
@@ -33,4 +33,4 @@ Application Flutter de **planification hospitalière**.
 
 ---
 
-*Build 1.0.8.5 — Généré automatiquement par GitHub Actions*
+*Build 1.0.8.8 — Généré automatiquement par GitHub Actions*
