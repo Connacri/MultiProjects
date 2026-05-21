@@ -1,0 +1,21 @@
+- [x] Fixing FontAwesome icon type mismatch
+	- [x] Research FontAwesome usage in project
+	- [x] Fix type mismatch in `lib/Oauth/login.dart`
+- [x] Verify fix with `analyze_file`
+- [x] Fixing unmounted State exception in `TableauStaff.dart`
+	- [x] Research code at line 7353 in `TableauStaff.dart`
+	- [x] Apply fix to `_executerPlanificationGardesSimple`
+	- [x] Check for other similar issues in `TableauStaff.dart`
+- [x] Verify fix with `analyze_file`
+- [x] Resolving CMake warnings
+	- [x] Identify problematic `CMakeLists.txt` files
+	- [x] Update `windows/CMakeLists.txt` with policy overrides
+- [x] Verify fix with `analyze_file`
+- [x] Upgrading Gradle and Kotlin versions
+	- [x] Research current versions in `gradle-wrapper.properties` and `settings.gradle`
+	- [x] Update Gradle to 8.14.0 and Kotlin to 2.2.20
+- [/] Fixing JVM target mismatch in Android build
+	- [x] Research `build.gradle` and `app/build.gradle`
+	- [/] Update `build.gradle` with subprojects override
+	- [ ] Update `app/build.gradle` to use JVM 17
+- [ ] Verify changes
