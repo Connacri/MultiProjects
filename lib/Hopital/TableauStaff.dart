@@ -240,7 +240,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     await Future.delayed(const Duration(milliseconds: 300));
 
     await provider.fetchStaffs();
-    await _loadMonth(_selectedYear, _selectedMonth);
+    
+    // Utiliser la logique intelligente dès le démarrage
+    await _loadMonthWithIntelligentLogic(
+      _selectedYear,
+      _selectedMonth,
+      isForward: true, // Considéré comme une avancée initiale
+    );
 
     if (mounted) {
       setState(() {
@@ -318,36 +324,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       print("   Mois existe: $monthExists");
 
       if (!isForward) {
-        // ⬅️ RECULER : Afficher ce qui existe ou laisser vide
+        // ⬅️ RECULER
         if (monthExists) {
           await staffProvider.loadMonthActivities(year, month);
-          // ✅ FORCER le refresh de l'interface
           await staffProvider.forceRefresh();
-
-          _showSnackbar(
-            "📂 Mois ${_moisNoms[month - 1]} $year chargé",
-            Colors.blue,
-          );
+          _showSnackbar("📂 Mois ${_moisNoms[month - 1]} $year chargé", Colors.blue);
         } else {
-          // Tableau vide
-          await _clearCurrentMonthDataSilently();
-          _showEmptyMonthDialog(month, year, isRecul: true);
+          // Nouveau : Remplissage automatique même au recul si vide
+          await _autoFillNewMonth(year, month);
         }
       } else {
-        // ➡️ AVANCER : Logique intelligente
+        // ➡️ AVANCER
         if (monthExists) {
-          // Mois existe : afficher ce qui est enregistré
           await staffProvider.loadMonthActivities(year, month);
-          // ✅ FORCER le refresh de l'interface
           await staffProvider.forceRefresh();
-
-          // Vérifier si des tableaux sont vides
           await _checkAndNotifyEmptyGroups(month, year);
-
-          _showSnackbar(
-            "📂 Mois ${_moisNoms[month - 1]} $year chargé",
-            Colors.blue,
-          );
+          _showSnackbar("📂 Mois ${_moisNoms[month - 1]} $year chargé", Colors.blue);
         } else {
           // Nouveau mois : remplissage automatique intelligent
           await _autoFillNewMonth(year, month);
@@ -394,8 +386,20 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         for (int day = 1; day <= daysInMonth; day++) {
           final date = DateTime(year, month, day);
 
-          // Vérifier congés
-          if (_isStaffOnLeaveForDate(staff, date)) {
+          // 1️⃣ Vérifier jours fériés
+          if (_isAlgerianHoliday(date)) {
+            await activiteProvider.forceUpdateActiviteIgnoringLeave(
+              staff.id,
+              day,
+              'F',
+              year: year,
+              month: month,
+            );
+            continue;
+          }
+
+          // 2️⃣ Vérifier congés (TimeOff uniquement maintenant)
+          if (_isStaffOnTimeOff(staff, date)) {
             await activiteProvider.forceUpdateActiviteIgnoringLeave(
               staff.id,
               day,
@@ -406,7 +410,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             continue;
           }
 
-          // Déterminer le statut
+          // 3️⃣ Déterminer le statut standard
           String statut;
           if (date.weekday == DateTime.friday ||
               date.weekday == DateTime.saturday) {
@@ -449,7 +453,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
-// 6. Copier la rotation paramédical du mois précédent
+// 6. Copier la rotation paramédical avec continuité mathématique
   Future<void> _copyParamedicalRotation(
     int fromYear,
     int fromMonth,
@@ -457,14 +461,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     int toMonth,
   ) async {
     try {
-      print(
-          "🔄 Copie rotation paramédical: $fromMonth/$fromYear → $toMonth/$toYear");
+      print("🔄 Calcul continuité rotation paramédical pour $toMonth/$toYear");
 
       final objectBox = ObjectBox();
-      final activiteProvider = ActiviteProvider();
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
-      // Récupérer la planification du mois précédent
+      // Récupérer la planification (pour l'ordre des équipes)
       final query = objectBox.planificationBox
           .query(Planification_.mois.equals(fromMonth) &
               Planification_.annee.equals(fromYear))
@@ -472,45 +474,35 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final previousPlanif = query.findFirst();
       query.close();
 
-      if (previousPlanif == null || previousPlanif.ordreEquipes.isEmpty) {
-        print("⚠️ Pas de planification paramédical dans le mois précédent");
-        return;
+      List<String> equipesOrdonnees = ['A', 'B', 'C', 'D'];
+      if (previousPlanif != null && previousPlanif.ordreEquipes.isNotEmpty) {
+        equipesOrdonnees = previousPlanif.ordreEquipes.split(',').map((e) => e.trim()).toList();
       }
 
-      // Récupérer l'ordre des équipes
-      final equipesOrdonnees =
-          previousPlanif.ordreEquipes.split(',').map((e) => e.trim()).toList();
-      print("   Ordre trouvÃ©: ${equipesOrdonnees.join(' â†')}");
-// âœ… CALCULER quelle Ã©quipe doit commencer dans le nouveau mois
-      final daysInPreviousMonth = DateUtils.getDaysInMonth(fromYear, fromMonth);
+      // ✅ LOGIQUE MATHÉMATIQUE : Continuité absolue depuis une date de référence
+      final dateReference = DateTime(2024, 1, 1); // Point de départ arbitraire (Équipe A)
+      final dateCible = DateTime(toYear, toMonth, 1);
+      final totalDays = dateCible.difference(dateReference).inDays;
+      
+      // Index de l'équipe qui doit commencer le 1er du mois cible
+      int startEquipeIndex = totalDays % equipesOrdonnees.length;
 
-      // Trouver quelle Ã©quipe Ã©tait de garde le dernier jour du mois prÃ©cÃ©dent
-      int lastDayEquipeIndex =
-          (daysInPreviousMonth - 1) % equipesOrdonnees.length;
-
-      // L'Ã©quipe suivante commence le nouveau mois
-      int startEquipeIndex = (lastDayEquipeIndex + 1) % equipesOrdonnees.length;
-
-      // RÃ©organiser l'ordre pour que cette Ã©quipe soit en premier
+      // Réorganiser l'ordre pour que cette équipe soit à l'index 0
       final newOrder = <String>[];
       for (int i = 0; i < equipesOrdonnees.length; i++) {
         int index = (startEquipeIndex + i) % equipesOrdonnees.length;
         newOrder.add(equipesOrdonnees[index]);
       }
 
-      print("   Nouvel ordre (continuitÃ©): ${newOrder.join(' â†')}");
-      print("   Ã‰quipe ${newOrder[0]} commence le jour 1");
+      print("   Continuité: Équipe ${newOrder[0]} commence le 1er ($totalDays jours depuis réf)");
 
-      // Appliquer au nouveau mois avec le nouvel ordre
       await _executerPlanificationGardesSimple(newOrder);
-
-      print("âœ… Rotation paramÃ©dical copiÃ©e avec continuitÃ©");
     } catch (e) {
       print("❌ Erreur _copyParamedicalRotation: $e");
     }
   }
 
-// 7. Copier la rotation hygiène du mois précédent
+// 7. Copier la rotation hygiène avec continuité mathématique
   Future<void> _copyHygieneRotation(
     int fromYear,
     int fromMonth,
@@ -518,85 +510,45 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     int toMonth,
   ) async {
     try {
-      print(
-          "🧹 Copie rotation hygiène: $fromMonth/$fromYear → $toMonth/$toYear");
+      print("🧹 Calcul continuité rotation hygiène pour $toMonth/$toYear");
 
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-      final objectBox = ObjectBox();
 
-      // Identifier les agents d'hygiène
       final agentsHygiene = staffProvider.staffs
-          .where((s) =>
-              s.grade.toLowerCase().contains('hygiène') ||
-              s.groupe == '08H-12H')
+          .where((s) => s.grade.toLowerCase().contains('hygiène') || s.groupe == '12H')
           .toList();
 
-      if (agentsHygiene.isEmpty) {
-        print("⚠️ Aucun agent d'hygiène trouvé");
-        return;
-      }
+      if (agentsHygiene.isEmpty) return;
 
-      // Récupérer l'ordre du mois précédent (jour 1 -> dernier jour)
-      final joursPlanifiesPrecedent = <int>[];
-      final daysInPreviousMonth = DateUtils.getDaysInMonth(fromYear, fromMonth);
+      // Trier les agents pour avoir un ordre stable (par ID ou nom)
+      agentsHygiene.sort((a, b) => a.id.compareTo(b.id));
 
-      for (int day = 1; day <= daysInPreviousMonth; day++) {
-        joursPlanifiesPrecedent.add(day);
-      }
+      // ✅ LOGIQUE MATHÉMATIQUE : Continuité absolue
+      final dateReference = DateTime(2024, 1, 1);
+      final dateCible = DateTime(toYear, toMonth, 1);
+      final totalDays = dateCible.difference(dateReference).inDays;
+      
+      int startAgentIndex = totalDays % agentsHygiene.length;
 
-      if (joursPlanifiesPrecedent.isEmpty) return;
-
-      // Trouver l'ordre des agents dans le mois précédent
-      final ordreAgents = <Staff>[];
-      for (final jourPlanifie in joursPlanifiesPrecedent) {
-        for (final agent in agentsHygiene) {
-          final activites =
-              agent.activites.where((a) => a.jour == jourPlanifie).toList();
-          if (activites.isNotEmpty && activites.first.statut == 'N') {
-            if (!ordreAgents.contains(agent)) {
-              ordreAgents.add(agent);
-            }
-            break;
-          }
-        }
-      }
-
-      if (ordreAgents.isEmpty) {
-        print("⚠️ Impossible de déterminer l'ordre du mois précédent");
-        return;
-      }
-
-      print("   Ordre trouvé: ${ordreAgents.map((a) => a.nom).join(' → ')}");
-
-      // Calculer les jours planifiés du nouveau mois (week-ends inclus)
-      final joursPlanifies = <int>[];
-      final daysInMonth = DateUtils.getDaysInMonth(toYear, toMonth);
-
-      for (int day = 1; day <= daysInMonth; day++) {
-        joursPlanifies.add(day);
-      }
-
-      // Analyser les congés du nouveau mois
+      final joursPlanifies = List.generate(DateUtils.getDaysInMonth(toYear, toMonth), (i) => i + 1);
       final congesParAgent = await _analyserCongesAgents(agentsHygiene);
 
-      // Appliquer la rotation
       await _executerPlanificationAgentsHygiene(
-        ordreAgents,
+        agentsHygiene,
         joursPlanifies,
         congesParAgent,
+        agentStartIndex: startAgentIndex,
       );
 
-      print("✅ Rotation hygiène copiée");
+      print("✅ Rotation hygiène appliquée (début index $startAgentIndex)");
     } catch (e) {
       print("❌ Erreur _copyHygieneRotation: $e");
     }
   }
 
-// 8. Vérifier si un staff est en congé à une date
-  bool _isStaffOnLeaveForDate(Staff staff, DateTime date) {
+  // ✅ 8. Vérifier si un staff est en congé (TimeOff uniquement)
+  bool _isStaffOnTimeOff(Staff staff, DateTime date) {
     final objectBox = ObjectBox();
-
-    // TimeOff
     final timeOffs = objectBox.timeOffBox
         .query(TimeOff_.staff.equals(staff.id))
         .build()
@@ -608,7 +560,35 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return true;
       }
     }
+    return false;
+  }
 
+  // ✅ 8. Vérifier si un staff est en congé (incluant jours fériés algériens)
+  bool _isStaffOnLeaveForDate(Staff staff, DateTime date) {
+    if (_isAlgerianHoliday(date)) return true;
+    return _isStaffOnTimeOff(staff, date);
+  }
+
+  bool _isAlgerianHoliday(DateTime date) {
+    // Jours fixes
+    if (date.month == 1 && date.day == 1) return true;   // Nouvel an
+    if (date.month == 5 && date.day == 1) return true;   // Fête du travail
+    if (date.month == 7 && date.day == 5) return true;   // Indépendance
+    if (date.month == 11 && date.day == 1) return true;  // Révolution
+    
+    // Jours mobiles (Dates pour 2024-2026 approx.)
+    // Note: Dans une version pro, utiliser une API ou un calcul lunaire
+    final holidays = {
+      2024: ["04-10", "04-11", "06-16", "06-17", "07-07", "07-16", "09-15"],
+      2025: ["03-30", "03-31", "06-06", "06-07", "06-26", "07-05", "09-04"],
+      2026: ["03-20", "03-21", "05-27", "05-28", "06-16", "06-25", "08-25"],
+    };
+
+    final dateStr = "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    if (holidays.containsKey(date.year) && holidays[date.year]!.contains(dateStr)) {
+      return true;
+    }
+    
     return false;
   }
 
@@ -1098,7 +1078,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               final isConnected = conn.isRunning && conn.neighbors.isNotEmpty;
               if (!isReady || !isConnected) return const SizedBox.shrink();
               return BadgeIcon(
-                icon: FontAwesomeIcons.message,
+                icon: const FaIcon(FontAwesomeIcons.message),
                 count: messagingManager.totalUnreadCount,
                 badgeColor: Colors.red,
                 tooltip: 'Messages (${messagingManager.totalUnreadCount} non lus)',
@@ -3320,8 +3300,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   Future<void> _onYearChanged(int? value) async {
     if (value != null && value != _selectedYear) {
+      // Déterminer la direction
+      final isForward = value > _selectedYear;
+      _isNavigatingForward = isForward;
+
       // Sauvegarder l'ancien mois/année
       await _saveCurrentMonth();
+
+      // Mémoriser l'ancien mois/année pour la rotation
+      _previousMonth = _selectedMonth;
+      _previousYear = _selectedYear;
 
       // Changer d'année
       setState(() {
@@ -3330,8 +3318,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         _tempValues.clear();
       });
 
-      // Charger le mois avec la nouvelle année
-      await _loadMonth(value, _selectedMonth);
+      // Charger le mois avec la nouvelle année (logique intelligente)
+      await _loadMonthWithIntelligentLogic(
+        value,
+        _selectedMonth,
+        isForward: isForward,
+      );
     }
   }
 
@@ -6424,6 +6416,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     required List<String> equipesOrdonnees,
     required int jourDepart,
   }) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       final activiteProvider = ActiviteProvider();
@@ -6520,7 +6513,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           .join(", ");
 
       // Afficher le résultat
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 8),
@@ -6566,13 +6560,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           action: SnackBarAction(
             label: "OK",
             textColor: Colors.white,
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+            onPressed: () => messenger.hideCurrentSnackBar(),
           ),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text("❌ Erreur lors de la planification: $e"),
           backgroundColor: Colors.red,
@@ -7116,6 +7110,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   Future<void> _executerPlanificationGardesSimple(
       List<String> equipesOrdonnees) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       final activiteProvider = ActiviteProvider();
@@ -7293,7 +7288,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       await staffProvider.saveMonthActivities(_selectedYear, _selectedMonth);
 
       // ✅ 8. Affichage
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 10),
@@ -7357,14 +7353,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           action: SnackBarAction(
             label: "OK",
             textColor: Colors.white,
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+            onPressed: () => messenger.hideCurrentSnackBar(),
           ),
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       print("❌ ERREUR PLANIFICATION: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
           content: Text("❌ Erreur lors de la planification: $e"),
           backgroundColor: Colors.red,
@@ -7796,8 +7792,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<void> _executerPlanificationAgentsHygiene(
     List<Staff> agentsOrdonnes,
     List<int> joursPlanifies,
-    Map<Staff, List<int>> congesParAgent,
-  ) async {
+    Map<Staff, List<int>> congesParAgent, {
+    int agentStartIndex = 0,
+  }) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
       final activiteProvider = ActiviteProvider();
@@ -7810,7 +7808,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       print("🔄 PHASE 1: Attribution intelligente des jours");
 
       // PHASE 1: Répartition intelligente des jours planifiés
-      int agentIndex = 0;
+      int agentIndex = agentStartIndex % agentsOrdonnes.length;
 
       for (final jourPlanifie in joursPlanifies) {
         bool jourAssigne = false;
@@ -7908,7 +7906,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           .map((e) => "${e.key.nom}: ${e.value}j")
           .join(", ");
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 8),
@@ -7951,13 +7950,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           action: SnackBarAction(
             label: "OK",
             textColor: Colors.white,
-            onPressed: () =>
-                ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+            onPressed: () => messenger.hideCurrentSnackBar(),
           ),
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted) return;
+      messenger.showSnackBar(
         SnackBar(
           content: Text("❌ Erreur lors de la planification: $e"),
           backgroundColor: Colors.red,

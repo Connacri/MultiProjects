@@ -152,20 +152,39 @@ const ck       = (gid,mi,j) => `${gid}:${mi}:${j}`;
 const ci       = code => CODES.find(c=>c.code===code);
 const mnPrefix = mn => "aeiouâéèêîôûœ".includes(mn[0].toLowerCase())?"d'":"de ";
 
+// ─── Jours fériés Algériens ──────────────────────────────────────────────────
+function isAlgerianHoliday(y, m, d) {
+  // Fixes
+  if (m === 1 && d === 1) return true;
+  if (m === 1 && d === 12) return true; // Yennayer
+  if (m === 5 && d === 1) return true;
+  if (m === 7 && d === 5) return true;
+  if (m === 11 && d === 1) return true;
+  
+  // Mobiles (approx 2024-2026)
+  const mobiles = {
+    2024: ["04-10", "04-11", "06-16", "06-17", "07-07", "07-16", "09-15"],
+    2025: ["03-30", "03-31", "06-06", "06-07", "06-26", "07-05", "09-04"],
+    2026: ["03-20", "03-21", "05-27", "05-28", "06-16", "06-25", "08-25"],
+  };
+  const fmt = `${String(m).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+  return mobiles[y]?.includes(fmt) || false;
+}
+
 // ─── Calcul rotation gardes ───────────────────────────────────────────────────
 // Pour le mois M, l'équipe qui commence la garde = rotation depuis janv. 2024
 // Chaque mois décale d'une équipe selon l'ordre personnalisé
 function getEquipeDebutMois(annee, mois, ordreEquipes) {
-  // Mois de référence : Janvier 2024 → équipe A (index 0)
-  const ref = (2024 - 1) * 12 + 1;
-  const cur = (annee - 1) * 12 + mois;
-  const delta = ((cur - ref) % 4 + 4) % 4;
-  return ordreEquipes[delta];
+  // Date de référence fixe pour continuité mathématique
+  const refDate = new Date(2024, 0, 1);
+  const curDate = new Date(annee, mois - 1, 1);
+  const deltaDays = Math.floor((curDate - refDate) / (1000 * 60 * 60 * 24));
+  const idx = ((deltaDays % ordreEquipes.length) + ordreEquipes.length) % ordreEquipes.length;
+  return ordreEquipes[idx];
 }
 
 // Assigner automatiquement les gardes pour un groupe paramédical
 // Règle : chaque équipe fait sa garde un jour sur 4 en rotation
-// Jours ouvrables (dim→jeu) : rotations de 24h ; ven/sam : gardes maintenues
 function autoGardes(annee, mois, membres, ordreEquipes) {
   const days = getDays(annee, mois);
   const equipeDebut = getEquipeDebutMois(annee, mois, ordreEquipes);
@@ -174,14 +193,49 @@ function autoGardes(annee, mois, membres, ordreEquipes) {
   const result = {}; // { "mi:jour": code }
 
   for (let d = 1; d <= days; d++) {
-    // Quelle équipe est en garde ce jour ?
     const eqIdx = ((d - 1 + debutIdx) % 4 + 4) % 4;
     const equipeGarde = ordreEquipes[eqIdx];
 
     membres.forEach((m, mi) => {
       if (m.equipe === equipeGarde) {
         result[`${mi}:${d}`] = "G";
+      } else {
+        result[`${mi}:${d}`] = "RE";
       }
+    });
+  }
+  return result;
+}
+
+// Assigner automatiquement pour hygiene (rotation indexée)
+function autoHygiene(annee, mois, membres) {
+  const days = getDays(annee, mois);
+  const refDate = new Date(2024, 0, 1);
+  const curDate = new Date(annee, mois - 1, 1);
+  const deltaDays = Math.floor((curDate - refDate) / (1000 * 60 * 60 * 24));
+  
+  const result = {};
+  for (let d = 1; d <= days; d++) {
+    const agentIdx = ((deltaDays + d - 1) % membres.length + membres.length) % membres.length;
+    membres.forEach((m, mi) => {
+      result[`${mi}:${d}`] = (mi === agentIdx) ? "N" : "RE";
+    });
+  }
+  return result;
+}
+
+// Assigner pour bureau (08-16h)
+function autoBureau(annee, mois, membres) {
+  const days = getDays(annee, mois);
+  const result = {};
+  for (let d = 1; d <= days; d++) {
+    const dow = getDow(annee, mois, d);
+    let code = "N";
+    if (isAlgerianHoliday(annee, mois, d)) code = "F";
+    else if (isWE(dow)) code = "RE";
+    
+    membres.forEach((m, mi) => {
+      result[`${mi}:${d}`] = code;
     });
   }
   return result;
@@ -231,24 +285,38 @@ export default function App() {
   const daysInMo = getDays(year, month);
   const g        = groupes[activeGi];
 
-  // ─── Auto-gardes au changement de mois/ordre ─────────────────────────────
+  // ─── Remplissage automatique de TOUS les groupes au changement de mois ───
   useEffect(() => {
     if (!autoMode) return;
-    const paraGi = groupes.findIndex(x=>x.id==="paramedical");
-    if (paraGi < 0) return;
-    const pm = groupes[paraGi];
-    const autoR = autoGardes(year, month, pm.membres, ordreEq);
-
+    
     setConges(prev => {
       const next = { ...prev };
-      // Effacer anciennes gardes auto du paramédical
-      Object.keys(next).filter(k=>k.startsWith("paramedical:")).forEach(k=>{ if(next[k]==="G") delete next[k]; });
-      // Appliquer nouvelles gardes auto (seulement si pas de code manuel)
-      Object.entries(autoR).forEach(([key, code]) => {
-        const [mi, jour] = key.split(":").map(Number);
-        const fullKey = ck("paramedical", mi, jour);
-        if (!next[fullKey]) next[fullKey] = code;
+      
+      groupes.forEach(gg => {
+        let autoR = {};
+        if (gg.id === "paramedical") {
+          autoR = autoGardes(year, month, gg.membres, ordreEq);
+        } else if (gg.id === "hygiene") {
+          autoR = autoHygiene(year, month, gg.membres);
+        } else {
+          // Medecins & Admin
+          autoR = autoBureau(year, month, gg.membres);
+        }
+
+        // Effacer anciennes valeurs auto du groupe (optionnel, ou juste écraser)
+        // Object.keys(next).filter(k=>k.startsWith(`${gg.id}:`)).forEach(k=>delete next[k]);
+
+        // Appliquer nouvelles valeurs auto (seulement si pas de code manuel ou si on veut forcer)
+        Object.entries(autoR).forEach(([key, code]) => {
+          const [mi, jour] = key.split(":").map(Number);
+          const fullKey = ck(gg.id, mi, jour);
+          // On n'écrase que si c'est vide ou si on est en autoMode strict
+          if (!next[fullKey] || next[fullKey] === "N" || next[fullKey] === "RE" || next[fullKey] === "F" || next[fullKey] === "G") {
+            next[fullKey] = code;
+          }
+        });
       });
+      
       return next;
     });
   }, [year, month, ordreEq, autoMode, groupes]);

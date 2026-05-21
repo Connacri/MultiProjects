@@ -2041,7 +2041,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
     }
   }
 
-  Widget _buildDateField(icon, String label, DateTime? date,
+  Widget _buildDateField(FaIconData icon, String label, DateTime? date,
       Function(DateTime) onDateSelected, bool departarrive) {
     return InkWell(
       onTap: () async {
@@ -2085,7 +2085,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                       fontSize: 16),
                   children: [
                     WidgetSpan(
-                      child: Icon(
+                      child: FaIcon(
                         icon,
                         size: 16,
                         color:
@@ -2878,7 +2878,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                         children: [
                           Expanded(
                             child: RadioListTile<String>(
-                              title: Icon(FontAwesomeIcons.percent),
+                              title: FaIcon(FontAwesomeIcons.percent),
                               dense: true,
                               // Text('Pourcentage'),
                               value: 'percentage',
@@ -2889,7 +2889,7 @@ class _ReservationDialogContentState extends State<ReservationDialogContent> {
                           ),
                           Expanded(
                             child: RadioListTile<String>(
-                              title: Icon(FontAwesomeIcons.dollarSign),
+                              title: FaIcon(FontAwesomeIcons.dollarSign),
                               //Text('Montant fixe'),
                               value: 'amount',
                               groupValue: _discountType,

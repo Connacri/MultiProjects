@@ -566,7 +566,7 @@ class _HomePage3State extends State<HomePage3> {
                                         _showDetail = !_showDetail;
                                       });
                                     },
-                                    icon: Icon(
+                                    icon: FaIcon(
                                       _showDetail
                                           ? FontAwesomeIcons.plus
                                           : null,
@@ -615,7 +615,7 @@ class _HomePage3State extends State<HomePage3> {
                                       _showDetail = !_showDetail;
                                     });
                                   },
-                                  icon: Icon(
+                                  icon: FaIcon(
                                     FontAwesomeIcons.minus,
                                     size: 17,
                                   ),
@@ -985,7 +985,7 @@ class _googleBtnState extends State<googleBtn> {
                       borderRadius: BorderRadius.circular(15)),
                   elevation: 4.0,
                   minimumSize: const Size.fromHeight(50)),
-              icon: Icon(
+              icon: FaIcon(
                 FontAwesomeIcons.google,
                 color: Colors.red,
               ),

@@ -771,7 +771,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
           Consumer<MessagingManager>(
             builder: (context, messagingManager, _) {
               return BadgeIcon(
-                icon: Icons.message,
+                icon: const Icon(Icons.message),
                 count: messagingManager.totalUnreadCount,
                 onPressed: () => Navigator.pop(context),
                 tooltip:
@@ -783,7 +783,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
           const SizedBox(width: 8),
           // ✅ Badge des métadonnées reçues
           BadgeIcon(
-            icon: Icons.info_outline,
+            icon: const Icon(Icons.info_outline),
             count: _metadataInitialized
                 ? _metadataManager.remoteMetadata.length
                 : 0,

@@ -486,7 +486,7 @@ class _StaffBranchTextState extends State<StaffBranchText> {
 
 /// Widget réutilisable pour badge sur icône
 class BadgeIcon extends StatelessWidget {
-  final IconData icon;
+  final Widget icon;
   final int count;
   final VoidCallback? onPressed;
   final String? tooltip;
@@ -508,7 +508,7 @@ class BadgeIcon extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         IconButton(
-          icon: Icon(icon),
+          icon: icon,
           onPressed: onPressed,
           tooltip: tooltip,
         ),

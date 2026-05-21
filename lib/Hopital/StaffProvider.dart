@@ -425,8 +425,43 @@ class StaffProvider with ChangeNotifier {
       }
       print('✅ $obsRestored observations restaurées');
 
-      // ✅ 3. Restaurer les activités (depuis code existant, assume inchangé)
-      // ... (ajoute ici la partie pour activites si tronquée)
+      // ✅ 3. Restaurer les activités depuis le snapshot
+      final activitesSnapshot = snapshot['activites'] as List<dynamic>?;
+      if (activitesSnapshot != null) {
+        // Optionnel: Nettoyer les activités actuelles pour éviter les doublons/conflits
+        // Mais attention, forceUpdateActiviteIgnoringLeave gère déjà l'existence.
+        // Pour être propre, on pourrait faire un batch update.
+        
+        for (var staffEntry in activitesSnapshot) {
+          final staffId = staffEntry['staffId'] as int;
+          final jours = staffEntry['jours'] as List<dynamic>;
+          
+          for (var jourEntry in jours) {
+            final jour = jourEntry['jour'] as int;
+            final statut = jourEntry['statut'] as String;
+            
+            // On utilise la logique de forceUpdate pour restaurer
+            final activiteQuery = _objectBox.activiteBox
+                .query(ActiviteJour_.staff.equals(staffId) & ActiviteJour_.jour.equals(jour))
+                .build();
+            final existing = activiteQuery.find();
+            activiteQuery.close();
+            
+            if (existing.isNotEmpty) {
+              existing.first.statut = statut;
+              _objectBox.activiteBox.put(existing.first);
+            } else {
+              final staff = _objectBox.staffBox.get(staffId);
+              if (staff != null) {
+                final nouvelle = ActiviteJour(jour: jour, statut: statut)
+                  ..staff.target = staff;
+                _objectBox.activiteBox.put(nouvelle);
+              }
+            }
+          }
+        }
+        print('✅ ${activitesSnapshot.length} staffs restaurés (activités)');
+      }
 
       await fetchStaffs();
       notifyListeners();

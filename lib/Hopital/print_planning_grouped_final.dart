@@ -906,8 +906,16 @@ pw.Widget _buildGroupTable(
             date.weekday == DateTime.saturday;
       }
 
-      final bg = isWeekend ? PdfColors.grey900 : PdfColors.white;
-      final txtColor = isWeekend ? PdfColors.white : PdfColors.grey900;
+      final statut = row[ci];
+      
+      PdfColor bg = isWeekend ? PdfColors.grey900 : PdfColors.white;
+      PdfColor txtColor = isWeekend ? PdfColors.white : PdfColors.grey900;
+
+      // ✅ Ajouter couleur pour Jour Férié (F)
+      if (statut == 'F') {
+        bg = PdfColors.orange;
+        txtColor = PdfColors.white;
+      }
 
       cells.add(
         pw.Container(
@@ -916,7 +924,7 @@ pw.Widget _buildGroupTable(
           decoration: pw.BoxDecoration(color: bg),
           alignment: pw.Alignment.center,
           child: pw.Text(
-            row[ci],
+            statut,
             style: pw.TextStyle(font: oswald, fontSize: 9, color: txtColor),
             textAlign: pw.TextAlign.center,
           ),

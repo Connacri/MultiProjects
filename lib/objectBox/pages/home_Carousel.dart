@@ -270,7 +270,7 @@ class _CarouselExampleState extends State<CarouselExample> {
                 ),
               )),
               label: Text('Hotel Screen'),
-              icon: Icon(FontAwesomeIcons.hotel),
+              icon: FaIcon(FontAwesomeIcons.hotel),
             ),
           ),
           const Padding(

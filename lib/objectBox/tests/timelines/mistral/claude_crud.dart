@@ -2275,7 +2275,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(
+            leading: const FaIcon(
               FontAwesomeIcons.hospital,
               color: Colors.red,
             ),

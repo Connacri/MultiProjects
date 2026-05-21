@@ -1405,12 +1405,12 @@ class _FactureListState extends State<FactureList> {
                                           : Colors.green,
                                       child: estEnEdition
                                           ? (isEditing && hasChanges
-                                              ? Icon(
+                                              ? FaIcon(
                                                   FontAwesomeIcons.penToSquare,
                                                   color: Colors.orange)
-                                              : Icon(FontAwesomeIcons.check,
+                                              : FaIcon(FontAwesomeIcons.check,
                                                   color: Colors.green))
-                                          : Icon(FontAwesomeIcons.check,
+                                          : FaIcon(FontAwesomeIcons.check,
                                               color: Colors.white70),
                                     ),
                                     title: Column(

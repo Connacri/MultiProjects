@@ -341,7 +341,7 @@ class PriceCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(
+                          FaIcon(
                             isHigher
                                 ? FontAwesomeIcons.arrowUp
                                 : FontAwesomeIcons.arrowDown,
@@ -369,7 +369,7 @@ class PriceCard extends StatelessWidget {
                   )
                 : Row(
                     children: [
-                      Icon(
+                      FaIcon(
                         isHigher
                             ? FontAwesomeIcons.arrowUp
                             : FontAwesomeIcons.arrowDown,
@@ -490,7 +490,7 @@ class PriceCard22 extends StatelessWidget {
                   // Variation + flèche
                   Row(
                     children: [
-                      Icon(
+                      FaIcon(
                         isHigher
                             ? FontAwesomeIcons.arrowUp
                             : FontAwesomeIcons.arrowDown,
@@ -941,7 +941,7 @@ class BentoCard extends StatelessWidget {
     if (name.toLowerCase().contains("ete")) return Icons.wb_sunny;
     if (name.toLowerCase().contains("automne")) return Icons.park;
     if (name.toLowerCase().contains("ramadan"))
-      return FontAwesomeIcons.starAndCrescent;
+      return FontAwesomeIcons.starAndCrescent.data;
     if (name.toLowerCase().contains("fête")) return Icons.celebration;
     if (name.toLowerCase().contains("festival")) return Icons.music_note;
     if (name.toLowerCase().contains("conférence")) return Icons.business;
@@ -1627,7 +1627,7 @@ class SeasonalPricingCard2 extends StatelessWidget {
                       // Variation + flèche
                       Row(
                         children: [
-                          Icon(
+                          FaIcon(
                             isHigher
                                 ? FontAwesomeIcons.arrowUp
                                 : FontAwesomeIcons.arrowDown,

@@ -31,7 +31,7 @@ dependencies:
   lottie: ^3.3.2
   provider: ^6.1.5+1
   fluttertoast: ^9.0.0
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter: ^11.0.0
 
   shared_preferences: ^2.5.4
   avatar_glow: ^3.0.1
@@ -75,7 +75,6 @@ dependencies:
   network_info_plus: ^7.0.0
   multicast_dns: ^0.3.3
   percent_indicator: ^4.2.5
-  icons_plus: ^5.0.0
   feedback: ^3.2.0
   win32: ^5.15.0
   msix: ^3.16.12

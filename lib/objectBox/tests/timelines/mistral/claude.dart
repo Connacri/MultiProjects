@@ -2246,7 +2246,7 @@ class HotelManagementState extends State<Hotel_Management> {
             // Check-in
             Column(
               children: [
-                Icon(FontAwesomeIcons.planeArrival,
+                FaIcon(FontAwesomeIcons.planeArrival,
                     color: Colors.green.shade700, size: 28),
                 SizedBox(height: 6),
                 Text(
@@ -2270,7 +2270,7 @@ class HotelManagementState extends State<Hotel_Management> {
             // Check-out
             Column(
               children: [
-                Icon(FontAwesomeIcons.planeDeparture,
+                FaIcon(FontAwesomeIcons.planeDeparture,
                     color: Colors.red.shade700, size: 28),
                 SizedBox(height: 6),
                 Text(

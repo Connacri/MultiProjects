@@ -260,7 +260,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                                           elevation: 4.0,
                                           minimumSize:
                                               const Size.fromHeight(50)),
-                                      icon: Icon(
+                                      icon: FaIcon(
                                         FontAwesomeIcons.google,
                                         color: Colors.red,
                                       ),
@@ -499,7 +499,7 @@ class googleButtonAuth extends StatelessWidget {
                           borderRadius: BorderRadius.circular(15)),
                       elevation: 4.0,
                       minimumSize: const Size.fromHeight(50)),
-                  icon: Icon(
+                  icon: FaIcon(
                     FontAwesomeIcons.google,
                     color: Colors.red,
                   ),

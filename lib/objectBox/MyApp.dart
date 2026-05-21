@@ -545,7 +545,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                           ),
                         )),
                         label: Text('Hotel'),
-                        icon: Icon(FontAwesomeIcons.hotel),
+                        icon: FaIcon(FontAwesomeIcons.hotel),
                       ),
                     ),
                     ConnectionStatusIndicator(),
@@ -1433,7 +1433,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                         ),
                       )),
                       label: Text('Hotel Screen'),
-                      icon: Icon(FontAwesomeIcons.hotel),
+                      icon: FaIcon(FontAwesomeIcons.hotel),
                     ),
                   ),
                   ConnectionStatusIndicator(),
@@ -1665,7 +1665,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
       onPressed: () {
         cleanQrCodes();
       },
-      icon: Icon(FontAwesomeIcons.radiation),
+      icon: FaIcon(FontAwesomeIcons.radiation),
     );
   }
 
@@ -1839,7 +1839,7 @@ class _adaptiveHomeState extends State<adaptiveHome> {
                 ),
               )),
               label: Text('Hotel Screen'),
-              icon: Icon(FontAwesomeIcons.hotel),
+              icon: FaIcon(FontAwesomeIcons.hotel),
             ),
           ),
           // Padding(

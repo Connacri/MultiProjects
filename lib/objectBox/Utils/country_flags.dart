@@ -146,7 +146,7 @@ class CountryDisplay extends StatelessWidget {
                 child: Container(
                     height: height,
                     width: width,
-                    child: Icon(
+                    child: FaIcon(
                       FontAwesomeIcons.globe,
                       size: 20,
                     )),
@@ -308,7 +308,7 @@ class CountryDisplayOnlyFlag extends StatelessWidget {
               child: Container(
                 height: height,
                 width: width,
-                child: Icon(
+                child: FaIcon(
                   FontAwesomeIcons.globe,
                   size: 20,
                 ),
