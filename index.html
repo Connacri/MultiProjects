@@ -14,6 +14,7 @@
   <meta property="og:type"        content="website" />
   <meta name="twitter:card"       content="summary_large_image" />
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* ── Reset & variables ──────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -301,6 +302,292 @@
       header  { padding: 48px 0 36px; }
     }
 
+    /* ── Section Supabase Planning ──────────────────────────────────── */
+    #supabase-section {
+      margin-bottom: 80px;
+    }
+    #supabase-section h2 {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .conn-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      font-size: .85rem;
+      color: var(--text-muted);
+    }
+    .conn-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block;
+    }
+    .conn-connected .conn-dot { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+    .conn-disconnected .conn-dot { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+
+    .supabase-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .supabase-controls select {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: .9rem;
+      cursor: pointer;
+      outline: none;
+      min-width: 180px;
+    }
+    .supabase-controls select:focus {
+      border-color: var(--accent-blue);
+    }
+    .supabase-controls select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .btn-planning {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .18s, box-shadow .18s;
+      box-shadow: 0 4px 16px rgba(59,130,246,.30);
+    }
+    .btn-planning:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(59,130,246,.45);
+    }
+    .btn-planning:active {
+      transform: translateY(0);
+    }
+    .btn-planning.active {
+      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      box-shadow: 0 4px 16px rgba(139,92,246,.30);
+    }
+
+    .data-count {
+      font-size: .85rem;
+      color: var(--text-muted);
+      padding: 10px 0;
+    }
+
+    #data-error {
+      background: rgba(239,68,68,.12);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #fca5a5;
+      padding: 12px 18px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: .85rem;
+    }
+    #data-empty {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+      font-size: .9rem;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Table standard */
+    #table-view {
+      overflow-x: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+    }
+    #table-view table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+      min-width: 600px;
+    }
+    #table-view th {
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    #table-view td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #table-view tr:hover td {
+      background: rgba(59,130,246,.06);
+      color: var(--text);
+    }
+
+    /* ── Planning Grid View ─────────────────────────────────────────── */
+    #planning-view {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      overflow-x: auto;
+    }
+    .planning-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .8rem;
+      min-width: 500px;
+    }
+    .planning-grid th {
+      background: var(--surface2);
+      color: var(--text);
+      font-weight: 600;
+      text-align: center;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .planning-grid th:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--surface2);
+    }
+    .planning-grid td {
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .75rem;
+    }
+    .planning-grid td:first-child {
+      text-align: left;
+      font-weight: 600;
+      color: var(--text);
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      background: var(--surface);
+      white-space: nowrap;
+    }
+    .planning-grid td.cell-empty {
+      color: #2d3748;
+    }
+    .planning-grid td.cell-active {
+      background: rgba(59,130,246,.15);
+      color: #93c5fd;
+    }
+    .planning-grid td.cell-repos {
+      background: rgba(34,197,94,.12);
+      color: #86efac;
+    }
+    .planning-grid td.cell-garde {
+      background: rgba(239,68,68,.12);
+      color: #fca5a5;
+    }
+    .planning-grid td.cell-formation {
+      background: rgba(168,85,247,.12);
+      color: #d8b4fe;
+    }
+    .planning-grid td.cell-conge {
+      background: rgba(245,158,11,.12);
+      color: #fcd34d;
+    }
+    .planning-grid td.cell-maladie {
+      background: rgba(239,68,68,.18);
+      color: #fca5a5;
+    }
+
+    /* Staff cards planning mode */
+    .staff-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .staff-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: transform .18s, box-shadow .18s;
+    }
+    .staff-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,.3);
+    }
+    .staff-card .sc-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .staff-card .sc-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700;
+      font-size: .85rem;
+      flex-shrink: 0;
+    }
+    .staff-card .sc-name {
+      font-weight: 600;
+      font-size: .9rem;
+    }
+    .staff-card .sc-grade {
+      font-size: .75rem;
+      color: var(--text-muted);
+    }
+    .staff-card .sc-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 12px;
+      font-size: .78rem;
+    }
+    .staff-card .sc-details dt {
+      color: var(--text-muted);
+    }
+    .staff-card .sc-details dd {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Planning hebdo grid special */
+    .planning-hebdo-grid th {
+      font-size: .75rem;
+    }
+    .planning-hebdo-grid td {
+      min-width: 70px;
+      max-width: 120px;
+    }
+
+    /* ── Responsive ─────────────────────────────────────────────────── */
+    @media(max-width:480px) {
+      .btn-dl { padding: 12px 20px; font-size: .9rem; }
+      header  { padding: 48px 0 36px; }
+    }
+
     /* ── Spinner de chargement ──────────────────────────────────────── */
     .loading {
       display: inline-block;
@@ -523,6 +810,44 @@
     </div>
   </section>
 
+  <!-- ── Supabase Planning Section ─────────────────────────────────── -->
+  <section id="supabase-section" aria-labelledby="supabase-title">
+    <h2 class="section-title" id="supabase-title">📊 Données Supabase</h2>
+
+    <div id="conn-status" class="conn-bar conn-disconnected">
+      <span class="conn-dot"></span>
+      <span id="conn-label">Déconnecté</span>
+    </div>
+
+    <div class="supabase-controls">
+      <select id="table-select">
+        <option value="branches">🏢 Branches</option>
+        <option value="staffs">👥 Personnel</option>
+        <option value="type_activites">🏷️ Types d'activités</option>
+        <option value="activite_jours">📅 Activités par jour</option>
+        <option value="time_offs">🏖️ Congés</option>
+        <option value="planifications">📋 Planifications</option>
+        <option value="planning_hebdos">📆 Planning Hebdo</option>
+      </select>
+      <button id="btn-planning" class="btn-planning">📅 Voir comme planning</button>
+      <span id="data-count" class="data-count">—</span>
+    </div>
+
+    <div id="data-error" class="hidden"></div>
+    <div id="data-empty" class="hidden">📭 Aucune donnée trouvée dans cette table.</div>
+
+    <!-- Mode tableau standard -->
+    <div id="table-view">
+      <table>
+        <thead id="data-thead"></thead>
+        <tbody id="data-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Mode planning -->
+    <div id="planning-view" class="hidden"></div>
+  </section>
+
   <!-- ── Footer ────────────────────────────────────────────────────── -->
   <footer>
     <p>
@@ -669,6 +994,7 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inllc3dobWhseWp6anFjcGF3eGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjEyMTMsImV4cCI6MjA5MzE5NzIxM30.scYw27RB-gL9gxWV_q78vWVbreAMuectXLri6Qh4rMA';
 
     var supabaseClient = null;
+    var planningMode = false;
 
     var connDot    = document.querySelector('#conn-status .conn-dot');
     var connLabel  = document.getElementById('conn-label');
@@ -679,6 +1005,9 @@
     var emptyEl    = document.getElementById('data-empty');
     var errorEl    = document.getElementById('data-error');
     var countEl    = document.getElementById('data-count');
+    var tableView  = document.getElementById('table-view');
+    var planningView = document.getElementById('planning-view');
+    var btnPlanning = document.getElementById('btn-planning');
 
     function setConnected(ok) {
       connStatus.className = ok ? 'conn-connected' : 'conn-disconnected';
@@ -693,15 +1022,40 @@
       return div.innerHTML;
     }
 
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.remove('hidden');
+      emptyEl.classList.add('hidden');
+      planningView.classList.add('hidden');
+      tableView.classList.remove('hidden');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      countEl.textContent = '—';
+    }
+
+    function setViewMode(mode) {
+      planningMode = (mode === 'planning');
+      if (planningMode) {
+        tableView.classList.add('hidden');
+        planningView.classList.remove('hidden');
+        btnPlanning.classList.add('active');
+        btnPlanning.textContent = '📋 Voir tableau';
+      } else {
+        tableView.classList.remove('hidden');
+        planningView.classList.add('hidden');
+        btnPlanning.classList.remove('active');
+        btnPlanning.textContent = '📅 Voir comme planning';
+      }
+    }
+
+    // ── Table standard ───────────────────────────────────────────────
     function renderTable(rows, columns) {
-      // Header
       var headerHtml = '';
       columns.forEach(function (col) {
         headerHtml += '<th>' + escapeHtml(col) + '</th>';
       });
       thead.innerHTML = headerHtml;
 
-      // Body
       if (!rows || rows.length === 0) {
         tbody.innerHTML = '';
         emptyEl.classList.remove('hidden');
@@ -730,15 +1084,237 @@
       countEl.textContent = rows.length + ' ' + label;
     }
 
-    function showError(msg) {
-      errorEl.textContent = msg;
-      errorEl.classList.remove('hidden');
-      emptyEl.classList.add('hidden');
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
-      countEl.textContent = '—';
+    // ── Planning view ────────────────────────────────────────────────
+    function renderPlanning(rows, tableName) {
+      if (!rows || rows.length === 0) {
+        planningView.innerHTML = '<div id="data-empty">📭 Aucune donnée à afficher en mode planning.</div>';
+        return;
+      }
+
+      var html = '';
+      switch (tableName) {
+        case 'staffs':
+          html = renderStaffPlanning(rows);
+          break;
+        case 'planning_hebdos':
+          html = renderPlanningHebdo(rows);
+          break;
+        case 'activite_jours':
+          html = renderActiviteJours(rows);
+          break;
+        case 'branches':
+          html = renderBranchesPlanning(rows);
+          break;
+        case 'type_activites':
+          html = renderTypeActivitesPlanning(rows);
+          break;
+        case 'time_offs':
+          html = renderTimeOffsPlanning(rows);
+          break;
+        case 'planifications':
+          html = renderPlanificationsPlanning(rows);
+          break;
+        default:
+          html = renderGenericPlanning(rows);
+      }
+
+      planningView.innerHTML = html;
+      countEl.textContent = rows.length + ' élément' + (rows.length > 1 ? 's' : '');
     }
 
+    function renderStaffPlanning(rows) {
+      var html = '<div class="staff-cards">';
+      var colors = ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
+      rows.forEach(function (staff, i) {
+        var initial = (staff.nom || '?').charAt(0).toUpperCase();
+        var color = colors[i % colors.length];
+        var groupe = staff.groupe || '—';
+        var equipe = staff.equipe || '—';
+        var grade  = staff.grade || '—';
+        html += '<div class="staff-card">' +
+          '<div class="sc-header">' +
+            '<div class="sc-avatar" style="background:linear-gradient(135deg,' + color + ',' + color + '88)">' + escapeHtml(initial) + '</div>' +
+            '<div><div class="sc-name">' + escapeHtml(staff.nom) + '</div>' +
+            '<div class="sc-grade">' + escapeHtml(grade) + '</div></div>' +
+          '</div>' +
+          '<dl class="sc-details">' +
+            '<dt>Groupe</dt><dd>' + escapeHtml(groupe) + '</dd>' +
+            '<dt>Équipe</dt><dd>' + escapeHtml(equipe) + '</dd>' +
+            '<dt>Ordre</dt><dd>' + (staff.ordre != null ? staff.ordre : '—') + '</dd>' +
+            (staff.branch_id != null ? '<dt>Branche</dt><dd>' + staff.branch_id + '</dd>' : '') +
+          '</dl>' +
+        '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function renderPlanningHebdo(rows) {
+      var jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+      var cols = ['staff_id', 'date_debut', 'date_fin'].concat(jours.map(function (j) { return j.toLowerCase(); }));
+      var html = '<table class="planning-grid planning-hebdo-grid">' +
+        '<thead><tr><th>Staff</th><th>Début</th><th>Fin</th>';
+      jours.forEach(function (j) { html += '<th>' + j.charAt(0) + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      rows.forEach(function (row) {
+        html += '<tr>';
+        html += '<td>' + escapeHtml(row.staff_id != null ? '#' + row.staff_id : '?') + '</td>';
+        html += '<td>' + (row.date_debut ? new Date(row.date_debut).toLocaleDateString('fr-FR') : '—') + '</td>';
+        html += '<td>' + (row.date_fin ? new Date(row.date_fin).toLocaleDateString('fr-FR') : '—') + '</td>';
+        jours.forEach(function (j) {
+          var key = j.toLowerCase();
+          var val = row[key];
+          var cls = 'cell-empty';
+          if (val && val !== 'repos') {
+            cls = 'cell-active';
+            if (val.toLowerCase().indexOf('garde') !== -1 || val.toLowerCase().indexOf('nuit') !== -1) cls = 'cell-garde';
+            else if (val.toLowerCase().indexOf('cong') !== -1 || val.toLowerCase().indexOf('time_off') !== -1) cls = 'cell-conge';
+            else if (val.toLowerCase().indexOf('format') !== -1) cls = 'cell-formation';
+            else if (val.toLowerCase().indexOf('malad') !== -1) cls = 'cell-maladie';
+          } else if (!val || val === 'repos' || val === '') {
+            val = '—';
+            cls = 'cell-empty';
+          }
+          html += '<td class="' + cls + '" title="' + escapeHtml(j) + '">' + escapeHtml(val) + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function renderActiviteJours(rows) {
+      var staffIds = [];
+      var joursMap = {};
+      rows.forEach(function (row) {
+        var sid = row.staff_id;
+        if (!staffIds.includes(sid)) staffIds.push(sid);
+        if (!joursMap[sid]) joursMap[sid] = {};
+        joursMap[sid][row.jour] = row.statut;
+      });
+      staffIds.sort();
+
+      var jours = [];
+      for (var d = 1; d <= 31; d++) jours.push(d);
+
+      var html = '<table class="planning-grid">' +
+        '<thead><tr><th>Staff</th>';
+      jours.forEach(function (d) { html += '<th>' + d + '</th>'; });
+      html += '</tr></thead><tbody>';
+
+      staffIds.forEach(function (sid) {
+        html += '<tr><td>#' + sid + '</td>';
+        jours.forEach(function (d) {
+          var statut = joursMap[sid] && joursMap[sid][d];
+          var cls = 'cell-empty';
+          if (statut) {
+            var s = statut.toLowerCase();
+            if (s.indexOf('garde') !== -1 || s.indexOf('nuit') !== -1) cls = 'cell-garde';
+            else if (s.indexOf('cong') !== -1 || s.indexOf('time_off') !== -1) cls = 'cell-conge';
+            else if (s.indexOf('format') !== -1) cls = 'cell-formation';
+            else if (s.indexOf('malad') !== -1) cls = 'cell-maladie';
+            else if (s.indexOf('repos') === -1) cls = 'cell-active';
+          }
+          html += '<td class="' + cls + '" title="Jour ' + d + '">' + (statut ? escapeHtml(statut.substring(0, 4)) : '—') + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function renderBranchesPlanning(rows) {
+      var html = '<div class="staff-cards">';
+      var icons = ['🏢', '🏥', '🏨', '🏛️', '🏪'];
+      rows.forEach(function (b, i) {
+        html += '<div class="staff-card">' +
+          '<div class="sc-header">' +
+            '<div style="font-size:1.5rem">' + (icons[i % icons.length]) + '</div>' +
+            '<div><div class="sc-name">' + escapeHtml(b.branch_nom) + '</div>' +
+            '<div class="sc-grade">ID #' + b.id + '</div></div>' +
+          '</div>' +
+        '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function renderTypeActivitesPlanning(rows) {
+      var html = '<div class="staff-cards">';
+      rows.forEach(function (act) {
+        var color = act.couleur_hex != null ? '#' + act.couleur_hex.toString(16).padStart(6, '0') : '#3b82f6';
+        html += '<div class="staff-card">' +
+          '<div class="sc-header">' +
+            '<div style="width:28px;height:28px;border-radius:6px;background:' + color + ';flex-shrink:0"></div>' +
+            '<div><div class="sc-name">' + escapeHtml(act.libelle || act.code) + '</div>' +
+            '<div class="sc-grade">Code: ' + escapeHtml(act.code) + '</div></div>' +
+          '</div>' +
+          (act.description ? '<p style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + escapeHtml(act.description) + '</p>' : '') +
+        '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    function renderTimeOffsPlanning(rows) {
+      var html = '<table class="planning-grid">' +
+        '<thead><tr><th>Staff</th><th>Début</th><th>Fin</th><th>Motif</th></tr></thead><tbody>';
+      rows.forEach(function (to) {
+        var debut = to.debut ? new Date(to.debut).toLocaleDateString('fr-FR') : '—';
+        var fin   = to.fin ? new Date(to.fin).toLocaleDateString('fr-FR') : '—';
+        html += '<tr>' +
+          '<td>' + escapeHtml(to.staff_id != null ? '#' + to.staff_id : '?') + '</td>' +
+          '<td class="cell-conge">' + debut + '</td>' +
+          '<td class="cell-conge">' + fin + '</td>' +
+          '<td>' + escapeHtml(to.motif || '—') + '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function renderPlanificationsPlanning(rows) {
+      var html = '<table class="planning-grid">' +
+        '<thead><tr><th>ID</th><th>Mois</th><th>Année</th><th>Branche</th><th>Ordre équipes</th></tr></thead><tbody>';
+      rows.forEach(function (p) {
+        var mois = [
+          'Janvier','Février','Mars','Avril','Mai','Juin',
+          'Juillet','Août','Septembre','Octobre','Novembre','Décembre'
+        ];
+        var moisNom = (p.mois >= 1 && p.mois <= 12) ? mois[p.mois - 1] : p.mois;
+        html += '<tr>' +
+          '<td>' + p.id + '</td>' +
+          '<td><strong>' + moisNom + '</strong></td>' +
+          '<td>' + (p.annee || '—') + '</td>' +
+          '<td>' + (p.branch_id != null ? '#' + p.branch_id : '—') + '</td>' +
+          '<td style="font-size:.7rem">' + escapeHtml(p.ordre_equipes || '—') + '</td>' +
+        '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    function renderGenericPlanning(rows) {
+      var columns = Object.keys(rows[0] || {});
+      var html = '<table class="planning-grid">' +
+        '<thead><tr>';
+      columns.forEach(function (col) { html += '<th>' + escapeHtml(col) + '</th>'; });
+      html += '</tr></thead><tbody>';
+      rows.forEach(function (row) {
+        html += '<tr>';
+        columns.forEach(function (col) {
+          var val = row[col];
+          if (val && typeof val === 'object') val = JSON.stringify(val);
+          html += '<td>' + escapeHtml(val) + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // ── Fetch & render ───────────────────────────────────────────────
     async function fetchTable(tableName) {
       if (!supabaseClient) {
         showError('Supabase non initialisé');
@@ -757,24 +1333,39 @@
         }
 
         var rows = res.data || [];
-
-        if (rows.length === 0) {
-          thead.innerHTML = '';
-          tbody.innerHTML = '';
-          emptyEl.classList.remove('hidden');
-          errorEl.classList.add('hidden');
-          countEl.textContent = '0 ligne';
-          return;
-        }
-
-        var columns = Object.keys(rows[0]);
-        renderTable(rows, columns);
         setConnected(true);
+
+        if (planningMode) {
+          renderPlanning(rows, tableName);
+        } else {
+          if (rows.length === 0) {
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+            emptyEl.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            countEl.textContent = '0 ligne';
+            return;
+          }
+          var columns = Object.keys(rows[0]);
+          renderTable(rows, columns);
+        }
       } catch (err) {
         showError('Erreur réseau : ' + err.message);
       }
     }
 
+    // ── Event listeners ──────────────────────────────────────────────
+    tableSelect.addEventListener('change', function () {
+      fetchTable(tableSelect.value);
+    });
+
+    btnPlanning.addEventListener('click', function () {
+      var newMode = planningMode ? 'table' : 'planning';
+      setViewMode(newMode);
+      fetchTable(tableSelect.value);
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────
     function initSupabase() {
       if (typeof supabase === 'undefined' || !supabase.createClient) {
         showError('SDK Supabase non chargé');
@@ -790,12 +1381,6 @@
       }
     }
 
-    // Listen for table change
-    tableSelect.addEventListener('change', function () {
-      fetchTable(tableSelect.value);
-    });
-
-    // Init on load
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initSupabase);
     } else {
