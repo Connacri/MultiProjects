@@ -52,25 +52,8 @@ import 'tests/cruds.dart' as cruds;
 class MyMain extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return FutureProvider<ObjectBox?>(
-      create: (_) async {
-        final objectBox = ObjectBox();
-        try {
-          await objectBox.init();
-          if (objectBox.isAdminAvailable()) {
-            print('isAdminAvailable');
-          }
-        } catch (e) {
-          print('Error initializing ObjectBox: $e');
-          return null;
-        }
-        return objectBox;
-      },
-      initialData: null,
-      catchError: (context, error) {
-        print('Error in FutureProvider: $error');
-        return null;
-      },
+    return Provider<ObjectBox?>.value(
+      value: ObjectBox(),
       child: MyApp9(),
     );
   }

@@ -205,19 +205,11 @@ class _LoginWidgetState extends State<LoginWidget> {
                                             fontSize: 24, color: Colors.white),
                                       ),
                                       onPressed: () async {
-                                        signIn().then((value) =>
-                                            Navigator.of(context).popUntil(
-                                                (route) => route.isFirst));
-                                        // .whenComplete(() => Navigator.of(context)
-                                        //             .push(MaterialPageRoute(
-                                        //           builder: (context) =>
-                                        //               verifi_auth(),
-                                        //         ))
-
-                                        //     .whenComplete(
-                                        //   () => Navigator.of(context)
-                                        //       .popUntil((route) => route.isFirst),
-                                        //  );
+                                        bool success = await signIn();
+                                        if (success && mounted) {
+                                          Navigator.of(context).popUntil(
+                                              (route) => route.isFirst);
+                                        }
                                       },
                                     ), // Entrer
                                   ],
@@ -333,11 +325,10 @@ class _LoginWidgetState extends State<LoginWidget> {
     );
   }
 
-  Future signIn() async {
+  Future<bool> signIn() async {
     showDialog<void>(
         context: context,
-        barrierDismissible: true,
-        //false = user must tap button, true = tap outside dialog
+        barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()));
 
     try {
@@ -346,61 +337,68 @@ class _LoginWidgetState extends State<LoginWidget> {
               email: emailController.text.trim(),
               password: passwordController.text.trim());
 
-      checkIfDocExists(FirebaseAuth.instance.currentUser!.uid);
-    } on FirebaseException catch (e) {
-      if (e.code == 'invalid-email') {
-        Navigator.of(context).pop();
-        //navigatorKey.currentState!.popUntil((route) => route.isFirst);
-
-        return Fluttertoast.showToast(
-          msg: 'E-mail Invalide',
-        );
-      } else if (e.code == 'user-disabled') {
-        Navigator.of(context).pop();
-        //navigatorKey.currentState!.popUntil((route) => route.isFirst);
-        return Fluttertoast.showToast(
-            msg: 'Utlisateur Désactivé',
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 14.0);
-      } else if (e.code == 'user-not-found') {
-        // Navigator.of(context).pop();
-        //navigatorKey.currentState!.popUntil((route) => route.isFirst);
-        bool isLogin = true;
-        void toggle() => setState(() => isLogin = !isLogin);
-
-        return Fluttertoast.showToast(
-                msg: 'Utilisateur Non Trouvé',
-                toastLength: Toast.LENGTH_LONG,
-                gravity: ToastGravity.CENTER,
-                timeInSecForIosWeb: 1,
-                backgroundColor: Colors.red,
-                textColor: Colors.white,
-                fontSize: 14.0)
-            .whenComplete(() => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => SignUpWidget(
-                    onClickedSignIn: toggle,
-                  ),
-                )));
-      } else {
-        //Navigator.of(context).pop();
-        //navigatorKey.currentState!.popUntil((route) => route.isFirst);
-
-        return Fluttertoast.showToast(
-            msg: 'Mot de passe incorrect',
-            toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 14.0);
+      await checkIfDocExists(userCredential.user!.uid);
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading spinner
       }
+      return true;
+    } on FirebaseException catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading spinner
+      }
+      String msg = 'Une erreur est survenue';
+      if (e.code == 'invalid-email') {
+        msg = 'E-mail Invalide';
+      } else if (e.code == 'user-disabled') {
+        msg = 'Utilisateur Désactivé';
+      } else if (e.code == 'user-not-found') {
+        msg = 'Utilisateur Non Trouvé';
+        Fluttertoast.showToast(
+            msg: msg,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 14.0);
+        
+        if (mounted) {
+          bool isLogin = true;
+          void toggle() => setState(() => isLogin = !isLogin);
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => SignUpWidget(
+              onClickedSignIn: toggle,
+            ),
+          ));
+        }
+        return false;
+      } else if (e.code == 'wrong-password') {
+        msg = 'Mot de passe incorrect';
+      } else {
+        msg = e.message ?? msg;
+      }
+      
+      Fluttertoast.showToast(
+          msg: msg,
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+          fontSize: 14.0);
+      return false;
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading spinner
+      }
+      Fluttertoast.showToast(
+          msg: 'Erreur: $e',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white);
+      return false;
     }
-    //navigatorKey.currentState!.popUntil((route) => route.isFirst);
-    //Navigator.of(context, rootNavigator: true).pop((route) => route.isFirst);
   }
 }
 

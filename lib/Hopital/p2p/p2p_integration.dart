@@ -344,7 +344,9 @@ class P2PIntegration with ChangeNotifier {
     await initializeP2PSystem();
   }
 
+  @override
   void dispose() {
     shutdown();
+    super.dispose();
   }
 }

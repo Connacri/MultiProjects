@@ -200,7 +200,9 @@ class AutoConnectService with ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void dispose() {
     stop();
+    super.dispose();
   }
 }

@@ -10,7 +10,6 @@ import '../models/user_model.dart';
 import '../providers/course_provider_complete.dart';
 import '../services/responsive_layout_helper.dart';
 import '../widgets/modern_course_card_widget.dart';
-import 'ParentDashboard.dart';
 import 'course_details_screen.dart';
 import 'create_course_screen.dart';
 
@@ -164,15 +163,14 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
       appBar: AppBar(
         title: const Text('Gestion des Cours'),
         actions: [
-          if (!_isLoading) // ✅ Masquer pendant chargement
+          if (!_isLoading)
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () => _navigateToCreateCourse(),
             ),
-          _buildIconButton(
-            Icons.logout,
-            () => authProvider.logout(),
-            GhibliTheme.sunsetOrange,
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => authProvider.logout(),
           ),
         ],
       ),
@@ -213,10 +211,9 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
     return Scaffold(
       appBar: AppBar(
         actions: [
-          _buildIconButton(
-            Icons.logout,
-            () => authProvider.logout(),
-            GhibliTheme.sunsetOrange,
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => authProvider.logout(),
           ),
         ],
       ),
@@ -661,27 +658,6 @@ class _SchoolDashboardState extends State<SchoolDashboard> {
     Share.share(
       'Découvrez ce cours: ${course.title}\n${course.description}',
       subject: course.title,
-    );
-  }
-
-  Widget _buildIconButton(IconData icon, VoidCallback onTap, Color color) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(icon, color: color, size: 24),
-      ),
     );
   }
 }

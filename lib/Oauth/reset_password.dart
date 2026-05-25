@@ -140,69 +140,76 @@ class _reset_passwordState extends State<reset_password> {
   Future resetPassword() async {
     showDialog<void>(
         context: context,
-        barrierDismissible: true,
-        //false = user must tap button, true = tap outside dialog
+        barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()));
     try {
       await FirebaseAuth.instance
           .sendPasswordResetEmail(email: emailController.text.trim());
-      // Fluttertoast.showToast(
-      //     msg: 'Mot de Passe à été Envoyer Vers Ton Email Verifier Votre Spam ou Courrier Indesirable :'+ emailController.text,
-      //     toastLength: Toast.LENGTH_LONG,
-      //     gravity: ToastGravity.CENTER,
-      //     timeInSecForIosWeb: 1,
-      //     backgroundColor: Colors.red,
-      //     textColor: Colors.white,
-      //     fontSize: 15.0);
-      //navigatorKey.currentState!.popUntil((route) => route.isFirst);
-      //Navigator.of(context).pop();
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        // false = user must tap button, true = tap outside dialog
-        builder: (BuildContext dialogContext) {
-          return AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            titleTextStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Oswald',
-                fontSize: 15),
-            alignment: Alignment.topCenter,
-            title: const Text(
-              'Votre Email',
-              style: TextStyle(
-                  color: Colors.red,
+      
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading spinner
+      }
+      
+      if (mounted) {
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext dialogContext) {
+            return AlertDialog(
+              actionsAlignment: MainAxisAlignment.center,
+              titleTextStyle: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  fontFamily: 'Oswald'),
-            ),
-            content: Text(
-              'Un Liens de Reinitialisation de Mot de Passe à été Envoyer Vers Ton Email Verifier Votre Spam ou Courrier Indesirable : ${emailController.text}',
-              maxLines: 6,
-              textAlign: TextAlign.center,
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Ok'),
-                onPressed: () {
-                  //Navigator.of(dialogContext).pop(); // Dismiss alert dialog
-                  navigatorKey.currentState!.popUntil((route) => route.isFirst);
-                },
+                  fontFamily: 'Oswald',
+                  fontSize: 15),
+              alignment: Alignment.topCenter,
+              title: const Text(
+                'Votre Email',
+                style: TextStyle(
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Oswald'),
               ),
-            ],
-          );
-        },
-      );
+              content: Text(
+                'Un Liens de Reinitialisation de Mot de Passe à été Envoyer Vers Ton Email Verifier Votre Spam ou Courrier Indesirable : ${emailController.text}',
+                maxLines: 6,
+                textAlign: TextAlign.center,
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Ok'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop(); // Dismiss alert dialog
+                    if (mounted) {
+                      Navigator.of(context).pop(); // Pop reset password screen back to login
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
     } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading spinner
+      }
       print(e);
       Fluttertoast.showToast(
-          msg: 'Error email virifih mlih',
+          msg: e.message ?? 'Erreur lors de la réinitialisation',
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.CENTER,
           timeInSecForIosWeb: 1,
           backgroundColor: Colors.red,
           textColor: Colors.white,
-          fontSize: 25.0);
-      Navigator.of(context).pop();
+          fontSize: 16.0);
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Dismiss loading spinner
+      }
+      Fluttertoast.showToast(
+          msg: 'Erreur: $e',
+          backgroundColor: Colors.red,
+          textColor: Colors.white);
     }
   }
 }

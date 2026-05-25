@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:kenzy/checkit/HomePage.dart';
+import 'package:kenzy/objectBox/MyApp.dart';
 
 class CheckRole extends StatelessWidget {
   final String documentId;
@@ -31,9 +32,9 @@ class CheckRole extends StatelessWidget {
           var userRole = data['role'];
           // Check user role
           if (userRole == "admin") {
-            return HomePage3(); // Normalement Tani Premium Page
+            return MyMain(); // Premium commerce/management app
           } else {
-            return HomePage3();
+            return HomePage3(); // Standard checkit app
           }
         } else
           return Scaffold(

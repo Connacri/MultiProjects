@@ -24,6 +24,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../Kids/providers/locale_provider.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_extensions.dart';
 import 'Hopital/p2p/connection_manager.dart';
 import 'Hopital/p2p/delta_generator_real.dart';
 import 'Hopital/p2p/messenger/NodesManager.dart';
@@ -50,7 +52,8 @@ late MessagingManager messagingManager;
 late MessagingP2PIntegration messagingP2P;
 
 bool isFirebaseInitialized = false;
-bool isFirebaseSupported = false;
+final bool isFirebaseSupported =
+    kIsWeb || (!kIsWeb && (Platform.isAndroid || Platform.isIOS));
 
 class CustomScrollBehavior extends MaterialScrollBehavior {
   @override
@@ -139,12 +142,12 @@ void main() async {
     messagingManager = MessagingManager();
     await messagingManager.initialize(objectBox, p2pManager.nodeId);
     print('✅ MessagingManager initialisé');
-    
+
     // 2. Initialiser NodesManager avec les vrais nœuds
     final nodesManager = NodesManager();
     await nodesManager.initialize(p2pManager, connectionManager);
     print('✅ NodesManager initialisé');
-    
+
     // 3. Initialiser MessagingP2PIntegration
     await messagingP2P.initialize(
         messagingManager, p2pIntegration, connectionManager, objectBox);
@@ -211,9 +214,9 @@ void main() async {
   // ========================================================================
   try {
     await Supabase.initialize(
-      url: 'https://ftaqbokfeahvfndorzuf.supabase.co',
+      url: 'https://yeswhmhlyjzjqcpawxbm.supabase.co',
       anonKey:
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0YXFib2tmZWFodmZuZG9yenVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NDE5MDEsImV4cCI6MjA4MDMxNzkwMX0.I_pvSiN5S8Y31XS3NV2Gw5dVrCDNjXqmUUSloycXhcw',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inllc3dobWhseWp6anFjcGF3eGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjEyMTMsImV4cCI6MjA5MzE5NzIxM30.scYw27RB-gL9gxWV_q78vWVbreAMuectXLri6Qh4rMA',
       authOptions: FlutterAuthClientOptions(
         authFlowType: AuthFlowType.pkce,
         autoRefreshToken: true,
@@ -279,7 +282,8 @@ Future<void> _setupNetworkPermissions() async {
 
     // Vérifier la connectivité
     final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity.contains(ConnectivityResult.none) || connectivity.isEmpty) {
+    if (connectivity.contains(ConnectivityResult.none) ||
+        connectivity.isEmpty) {
       print('[Main] ⚠️ Aucune connexion réseau disponible');
     } else {
       print('[Main] ✅ Connectivité réseau OK: $connectivity');
@@ -294,7 +298,7 @@ Future<void> _initializeP2P() async {
   try {
     print('[Main] =========== Initialisation P2P ===========');
     p2pIntegration = P2PIntegration();
-    
+
     // ✅ Initialiser les références AVANT l'initialisation système pour éviter LateInitializationError
     p2pManager = p2pIntegration.p2pManager;
     connectionManager = p2pIntegration.connectionManager;
@@ -705,75 +709,21 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: globalScaffoldMessengerKey,
-
       scrollBehavior: CustomScrollBehavior(),
-      // Applique le nouveau ScrollBehavior
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        fontFamily: 'OSWALD',
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(color: Colors.black87),
-        ),
-        chipTheme: ChipThemeData(
-          backgroundColor: Colors.black87, // fond foncé
-          labelStyle: const TextStyle(color: Colors.white), // texte clair
-          shape: StadiumBorder(), // arrondi moderne
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        ),
-      ),
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       locale: const Locale('fr', 'CA'),
-
-      //scaffoldMessengerKey: Utils.messengerKey,
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
-      title: 'Ramzi',
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: Colors.blueGrey,
-        textTheme: TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-        ),
-        chipTheme: ChipThemeData(
-          backgroundColor: Colors.white, // fond clair
-          labelStyle: const TextStyle(color: Colors.black87), // texte foncé
-          shape: StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        ),
-      ),
-      home: //LicenseCheckScreen(),
-          // Platform.isAndroid || Platform.isIOS
-          //     ?.
-          SplashScreen(),
-      //     SplashMaster.lottie(
-      //   source: AssetSource('assets/lotties/1 (104).json'),
-      //   lottieConfig: LottieConfig(
-      //     fit: BoxFit.contain,
-      //     // conserve le ratio original
-      //     overrideBoxFit: false,
-      //     // empêche SplashMaster de forcer le BoxFit
-      //     alignment: Alignment.center,
-      //     //centre l’animation
-      //     repeat: true,
-      //     // si tu veux que ça boucle
-      //     animate: true,
-      //     // démarre automatiquement
-      //     filterQuality: FilterQuality.high,
-      //     // meilleure qualité d’affichage
-      //     visibilityEnum: VisibilityEnum.none,
-      //   ),
-      //   nextScreen: MyMain(),
-      // ),
-
-      //     : _isLicenseValidated || _isLicenseDemoValidated
-      //         ? MyMain()
-      //         : hashPage()
+      title: 'Kenzy',
+      home: SplashScreen(),
     );
   }
 }
 
 // ===========================================
-// SplashScreen
+// SplashScreen - M3 Premium
 // ===========================================
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -782,17 +732,45 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeIn;
+  late Animation<double> _scale;
+  late Animation<double> _slideUp;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _fadeIn = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0, 0.6, curve: Curves.easeOut),
+      ),
+    );
+    _scale = Tween<double>(begin: 0.6, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0, 0.6, curve: Curves.easeOutBack),
+      ),
+    );
+    _slideUp = Tween<double>(begin: 30, end: 0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.4, 1, curve: Curves.easeOut),
+      ),
+    );
+    _controller.forward();
     _checkAuth();
   }
 
   Future<void> _checkAuth() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    // Attendre que loading soit terminé
     int attempts = 0;
     while (auth.loading && attempts < 50) {
       await Future.delayed(const Duration(milliseconds: 100));
@@ -801,23 +779,17 @@ class _SplashScreenState extends State<SplashScreen> {
 
     if (!mounted) return;
 
-    logStep('🔍 État final:');
-    logStep('   - isSupabase: ${auth.isSupabase}');
-    logStep('   - isLoggedIn: ${auth.isLoggedIn}');
-    logStep('   - email: ${auth.userEmail}');
-
-    await Future.delayed(const Duration(milliseconds: 300));
+    // Minimum splash display time
+    await Future.delayed(const Duration(milliseconds: 1800));
 
     if (!mounted) return;
 
     if (auth.isLoggedIn) {
-      logStep('✅ → HomeScreen');
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => AuthWrapper()), //const HomeScreen()),
+        MaterialPageRoute(builder: (_) => AuthWrapper()),
       );
     } else {
-      logStep('❌ → LoginScreen');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -826,16 +798,92 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Chargement...'),
-          ],
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colorScheme.primary,
+              colorScheme.primaryContainer,
+              colorScheme.tertiary,
+            ],
+          ),
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeIn,
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _scale.value,
+                  child: Transform.translate(
+                    offset: Offset(0, _slideUp.value),
+                    child: child,
+                  ),
+                );
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(28),
+                    ),
+                    child: Icon(
+                      Icons.sports_soccer_rounded,
+                      size: 56,
+                      color: colorScheme.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  Text(
+                    'Kenzy',
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onPrimary,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Votre plateforme sportive',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: colorScheme.onPrimary.withValues(alpha: 0.8),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 48),
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation(
+                        colorScheme.onPrimary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -843,7 +891,7 @@ class _SplashScreenState extends State<SplashScreen> {
 }
 
 // ===========================================
-// LoginScreen
+// LoginScreen - M3 Premium
 // ===========================================
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -852,69 +900,238 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen>
+    with SingleTickerProviderStateMixin {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late AnimationController _animController;
+  late Animation<double> _fadeSlide;
+  bool _obscurePass = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeSlide = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    emailCtrl.dispose();
+    passCtrl.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: emailCtrl,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: passCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: "Mot de passe"),
-              ),
-              const SizedBox(height: 24),
-              if (auth.loading)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton(
-                  onPressed: () async {
-                    final result = await auth.login(
-                      emailCtrl.text.trim(),
-                      passCtrl.text.trim(),
-                    );
-                    if (result != null) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result)),
-                        );
-                      }
-                    } else {
-                      if (context.mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HomeScreen()),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text("Connexion"),
-                ),
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SignupScreen()),
-                  );
-                },
-                child: const Text("Créer un compte"),
-              ),
+      body: Container(
+        height: size.height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              colorScheme.primaryContainer.withValues(alpha: 0.4),
+              colorScheme.surface,
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: FadeTransition(
+                opacity: _fadeSlide,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _animController,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Icon(
+                              Icons.sports_soccer_rounded,
+                              size: 44,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Bienvenue',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Connectez-vous à votre compte',
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                        ),
+                        const SizedBox(height: 40),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Email requis';
+                            }
+                            if (!v.contains('@')) return 'Email invalide';
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: passCtrl,
+                          obscureText: _obscurePass,
+                          textInputAction: TextInputAction.done,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Mot de passe requis';
+                            }
+                            if (v.length < 6) {
+                              return 'Minimum 6 caractères';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Mot de passe',
+                            prefixIcon: const Icon(Icons.lock_outlined),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePass
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePass = !_obscurePass,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {},
+                            style: TextButton.styleFrom(
+                              foregroundColor: colorScheme.primary,
+                            ),
+                            child: const Text('Mot de passe oublié ?'),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: FilledButton(
+                            onPressed: auth.loading
+                                ? null
+                                : () async {
+                                    if (!(_formKey.currentState?.validate() ??
+                                        false)) {
+                                      return;
+                                    }
+                                    final result = await auth.login(
+                                      emailCtrl.text.trim(),
+                                      passCtrl.text.trim(),
+                                    );
+                                    if (result != null && context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(content: Text(result)),
+                                      );
+                                    } else if (context.mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const HomeScreen(),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            child: auth.loading
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: colorScheme.onPrimary,
+                                    ),
+                                  )
+                                : const Text('Se connecter'),
+                          ),
+                        ),
+                        const SizedBox(height: 28),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Pas encore de compte ? ',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const SignupScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text("S'inscrire"),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -923,7 +1140,7 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 // ===========================================
-// SignupScreen
+// SignupScreen - M3 Premium
 // ===========================================
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -932,81 +1149,258 @@ class SignupScreen extends StatefulWidget {
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends State<SignupScreen>
+    with SingleTickerProviderStateMixin {
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   final confirmPassCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late AnimationController _animController;
+  late Animation<double> _fadeSlide;
+  bool _obscurePass = true;
+  bool _obscureConfirm = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeSlide = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOut),
+    );
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    emailCtrl.dispose();
+    passCtrl.dispose();
+    confirmPassCtrl.dispose();
+    _animController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Inscription")),
-      body: Center(
-        child: SizedBox(
-          width: 350,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: emailCtrl,
-                decoration: const InputDecoration(labelText: "Email"),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: passCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: "Mot de passe"),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: confirmPassCtrl,
-                obscureText: true,
-                decoration: const InputDecoration(
-                    labelText: "Confirmer le mot de passe"),
-              ),
-              const SizedBox(height: 24),
-              if (auth.loading)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton(
-                  onPressed: () async {
-                    if (passCtrl.text != confirmPassCtrl.text) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content:
-                                Text("Les mots de passe ne correspondent pas"),
-                          ),
-                        );
-                      }
-                      return;
-                    }
-
-                    final result = await auth.signup(
-                      emailCtrl.text.trim(),
-                      passCtrl.text.trim(),
-                    );
-
-                    if (result != null) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(result)),
-                        );
-                      }
-                    } else {
-                      if (context.mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HomeScreen()),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text("S'inscrire"),
-                ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              colorScheme.primaryContainer.withValues(alpha: 0.4),
+              colorScheme.surface,
             ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: FadeTransition(
+                opacity: _fadeSlide,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0, 0.1),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: _animController,
+                      curve: Curves.easeOut,
+                    ),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          width: 72,
+                          height: 72,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(22),
+                            ),
+                            child: Icon(
+                              Icons.person_add_rounded,
+                              size: 38,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Créer un compte',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Rejoignez-nous dès maintenant',
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                        ),
+                        const SizedBox(height: 36),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Email requis';
+                            }
+                            if (!v.contains('@')) return 'Email invalide';
+                            return null;
+                          },
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: passCtrl,
+                          obscureText: _obscurePass,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Mot de passe requis';
+                            }
+                            if (v.length < 6) {
+                              return 'Minimum 6 caractères';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Mot de passe',
+                            prefixIcon: const Icon(Icons.lock_outlined),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePass
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscurePass = !_obscurePass,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: confirmPassCtrl,
+                          obscureText: _obscureConfirm,
+                          textInputAction: TextInputAction.done,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Confirmation requise';
+                            }
+                            if (v != passCtrl.text) {
+                              return 'Les mots de passe ne correspondent pas';
+                            }
+                            return null;
+                          },
+                          decoration: InputDecoration(
+                            labelText: 'Confirmer le mot de passe',
+                            prefixIcon: const Icon(Icons.lock_outlined),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirm
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                              onPressed: () => setState(
+                                () => _obscureConfirm = !_obscureConfirm,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: FilledButton(
+                            onPressed: auth.loading
+                                ? null
+                                : () async {
+                                    if (!(_formKey.currentState?.validate() ??
+                                        false)) {
+                                      return;
+                                    }
+                                    final result = await auth.signup(
+                                      emailCtrl.text.trim(),
+                                      passCtrl.text.trim(),
+                                    );
+                                    if (result != null && context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(content: Text(result)),
+                                      );
+                                    } else if (context.mounted) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const HomeScreen(),
+                                        ),
+                                      );
+                                    }
+                                  },
+                            child: auth.loading
+                                ? SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: colorScheme.onPrimary,
+                                    ),
+                                  )
+                                : const Text("S'inscrire"),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Déjà un compte ? ',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Se connecter'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -1015,7 +1409,7 @@ class _SignupScreenState extends State<SignupScreen> {
 }
 
 // ===========================================
-// HomeScreen
+// HomeScreen - M3 Premium
 // ===========================================
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1027,7 +1421,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
+  late Animation<double> _fadeSlide;
 
   @override
   void initState() {
@@ -1036,8 +1430,8 @@ class _HomeScreenState extends State<HomeScreen>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    _fadeSlide = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
     _controller.forward();
   }
@@ -1051,7 +1445,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: Container(
@@ -1059,42 +1453,33 @@ class _HomeScreenState extends State<HomeScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    const Color(0xFF1a1a2e),
-                    const Color(0xFF16213e),
-                    const Color(0xFF0f3460),
-                  ]
-                : [
-                    const Color(0xFF667eea),
-                    const Color(0xFF764ba2),
-                    const Color(0xFFf093fb),
-                  ],
+            colors: [
+              cs.primaryContainer.withValues(alpha: 0.3),
+              cs.surface,
+              cs.tertiaryContainer.withValues(alpha: 0.2),
+            ],
           ),
         ),
         child: SafeArea(
           child: FadeTransition(
-            opacity: _fadeAnimation,
+            opacity: _fadeSlide,
             child: Column(
               children: [
-                // Header moderne
-                _buildHeader(context, auth, isDark),
-
-                // Contenu principal
+                _buildHeader(auth, cs),
                 Expanded(
                   child: SingleChildScrollView(
                     physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.all(24.0),
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildWelcomeCard(auth, isDark),
+                        _buildWelcomeCard(auth, cs),
                         const SizedBox(height: 24),
-                        _buildStatsGrid(isDark),
+                        _buildStatsGrid(cs),
                         const SizedBox(height: 24),
-                        _buildQuickActions(context, isDark),
+                        _buildQuickActions(cs),
                         const SizedBox(height: 24),
-                        _buildRecentActivity(isDark),
+                        _buildRecentActivity(cs),
                       ],
                     ),
                   ),
@@ -1107,9 +1492,9 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildHeader(BuildContext context, AuthProvider auth, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+  Widget _buildHeader(AuthProvider auth, ColorScheme cs) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -1118,44 +1503,32 @@ class _HomeScreenState extends State<HomeScreen>
             children: [
               Text(
                 'Dashboard',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white.withOpacity(0.95),
-                ),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold, color: cs.onSurface),
               ),
               const SizedBox(height: 4),
               Text(
                 _getGreeting(),
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white.withOpacity(0.7),
-                ),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
               ),
             ],
           ),
           Row(
             children: [
-              _buildIconButton(
-                Icons.notifications_outlined,
-                () {},
-                isDark,
-              ),
-              const SizedBox(width: 12),
-              _buildIconButton(
-                Icons.logout,
-                () async {
-                  await auth.logout();
-                  if (context.mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  }
-                },
-                isDark,
-                isDestructive: true,
-              ),
+              _buildIconCircle(
+                  cs, Icons.notifications_outlined, cs.primary, () {}),
+              const SizedBox(width: 8),
+              _buildIconCircle(cs, Icons.logout, cs.error, () async {
+                await auth.logout();
+                if (context.mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                }
+              }),
             ],
           ),
         ],
@@ -1163,120 +1536,87 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildIconButton(IconData icon, VoidCallback onTap, bool isDark,
-      {bool isDestructive = false}) {
-    return InkWell(
-      onTap: onTap,
+  Widget _buildIconCircle(
+      ColorScheme cs, IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: cs.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDestructive
-              ? Colors.red.withOpacity(0.2)
-              : Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDestructive
-                ? Colors.red.withOpacity(0.3)
-                : Colors.white.withOpacity(0.2),
-          ),
-        ),
-        child: Icon(
-          icon,
-          color: isDestructive ? Colors.red[300] : Colors.white,
-          size: 22,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(11),
+          child: Icon(icon, color: color, size: 22),
         ),
       ),
     );
   }
 
-  Widget _buildWelcomeCard(AuthProvider auth, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+  Widget _buildWelcomeCard(AuthProvider auth, ColorScheme cs) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: cs.primaryContainer,
+              child: Icon(Icons.person_rounded,
+                  size: 28, color: cs.onPrimaryContainer),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bienvenue,',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    auth.userEmail ?? 'Invité',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: cs.onSurface,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'En ligne',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: cs.onPrimaryContainer,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.person,
-              size: 32,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Bienvenue,',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  auth.userEmail ?? 'Invité',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  Widget _buildStatsGrid(bool isDark) {
+  Widget _buildStatsGrid(ColorScheme cs) {
     final stats = [
-      {
-        'icon': Icons.task_alt,
-        'label': 'Tâches',
-        'value': '24',
-        'color': Colors.blue
-      },
+      {'icon': Icons.task_alt, 'label': 'Tâches', 'value': '24'},
       {
         'icon': Icons.notifications_active,
         'label': 'Notifications',
-        'value': '8',
-        'color': Colors.orange
+        'value': '8'
       },
-      {
-        'icon': Icons.trending_up,
-        'label': 'Progression',
-        'value': '76%',
-        'color': Colors.green
-      },
-      {
-        'icon': Icons.star,
-        'label': 'Points',
-        'value': '1.2K',
-        'color': Colors.purple
-      },
+      {'icon': Icons.trending_up, 'label': 'Progression', 'value': '76%'},
+      {'icon': Icons.star, 'label': 'Points', 'value': '1.2K'},
     ];
 
     return GridView.builder(
@@ -1291,147 +1631,101 @@ class _HomeScreenState extends State<HomeScreen>
       itemCount: stats.length,
       itemBuilder: (context, index) {
         final stat = stats[index];
-        return _buildStatCard(
-          icon: stat['icon'] as IconData,
-          label: stat['label'] as String,
-          value: stat['value'] as String,
-          color: stat['color'] as Color,
-          isDark: isDark,
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(stat['icon'] as IconData,
+                      color: cs.onPrimaryContainer, size: 22),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      stat['value'] as String,
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: cs.onSurface,
+                              ),
+                    ),
+                    Text(
+                      stat['label'] as String,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
   }
 
-  Widget _buildStatCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-    required bool isDark,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withOpacity(0.6),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context, bool isDark) {
+  Widget _buildQuickActions(ColorScheme cs) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Actions Rapides',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white.withOpacity(0.9),
-          ),
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.w600, color: cs.onSurface),
         ),
         const SizedBox(height: 16),
         Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
-            _buildActionChip(
-                Icons.add_circle_outline, 'Nouveau', Colors.blue, isDark),
-            _buildActionChip(Icons.search, 'Rechercher', Colors.purple, isDark),
-            _buildActionChip(
-                Icons.filter_list, 'Filtrer', Colors.orange, isDark),
-            _buildActionChip(Icons.settings, 'Paramètres', Colors.teal, isDark),
+            _buildActionChip(cs, Icons.add_circle_outlined, 'Nouveau'),
+            _buildActionChip(cs, Icons.search, 'Rechercher'),
+            _buildActionChip(cs, Icons.filter_list, 'Filtrer'),
+            _buildActionChip(cs, Icons.settings_outlined, 'Paramètres'),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildActionChip(
-      IconData icon, String label, Color color, bool isDark) {
-    return InkWell(
-      onTap: () {},
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildActionChip(ColorScheme cs, IconData icon, String label) {
+    return FilterChip(
+      avatar: Icon(icon, size: 18),
+      label: Text(label),
+      onSelected: (_) {},
+      selected: false,
+      showCheckmark: false,
     );
   }
 
-  Widget _buildRecentActivity(bool isDark) {
+  Widget _buildRecentActivity(ColorScheme cs) {
     final activities = [
       {
         'title': 'Tâche complétée',
         'subtitle': 'Il y a 2 heures',
-        'icon': Icons.check_circle
+        'icon': Icons.check_circle_outlined
       },
       {
         'title': 'Nouveau message',
         'subtitle': 'Il y a 5 heures',
-        'icon': Icons.message
+        'icon': Icons.message_outlined
       },
       {
         'title': 'Mise à jour système',
         'subtitle': 'Hier',
-        'icon': Icons.system_update
+        'icon': Icons.system_update_outlined
       },
     ];
 
@@ -1440,78 +1734,36 @@ class _HomeScreenState extends State<HomeScreen>
       children: [
         Text(
           'Activité Récente',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white.withOpacity(0.9),
-          ),
+          style: Theme.of(context)
+              .textTheme
+              .titleLarge
+              ?.copyWith(fontWeight: FontWeight.w600, color: cs.onSurface),
         ),
         const SizedBox(height: 16),
-        ...activities.map((activity) => _buildActivityItem(
-              title: activity['title'] as String,
-              subtitle: activity['subtitle'] as String,
-              icon: activity['icon'] as IconData,
-              isDark: isDark,
+        ...activities.map((a) => Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: cs.primaryContainer,
+                  child: Icon(a['icon'] as IconData,
+                      color: cs.onPrimaryContainer, size: 20),
+                ),
+                title: Text(
+                  a['title'] as String,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: cs.onSurface,
+                      ),
+                ),
+                subtitle: Text(
+                  a['subtitle'] as String,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                ),
+                trailing: Icon(Icons.chevron_right, color: cs.onSurfaceVariant),
+              ),
             )),
       ],
-    );
-  }
-
-  Widget _buildActivityItem({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required bool isDark,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(isDark ? 0.05 : 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: Colors.white70, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right,
-            color: Colors.white.withOpacity(0.3),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1874,8 +2126,6 @@ class AuthWrapper extends StatelessWidget {
       final email = authProvider.userEmail;
       if (email == null) return null;
 
-      // TODO: Implémenter la récupération depuis Firestore/Supabase
-      // Exemple pour Supabase:
       if (authProvider.isSupabase) {
         final response = await Supabase.instance.client
             .from('users')
@@ -1883,19 +2133,16 @@ class AuthWrapper extends StatelessWidget {
             .eq('email', email)
             .single();
         return UserModel.fromSupabase(response);
+      } else {
+        final doc = await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(authProvider.firebaseUser!.uid)
+            .get();
+        if (doc.exists) {
+          return UserModel.fromFirestore(doc);
+        }
+        return null;
       }
-
-      // Exemple pour Firebase:
-      // else {
-      //   final doc = await FirebaseFirestore.instance
-      //       .collection('users')
-      //       .doc(authProvider.firebaseUser!.uid)
-      //       .get();
-      //   return UserModel.fromJson(doc.data()!);
-      // }
-
-      // Pour l'instant, retourner null pour forcer l'implémentation
-      return null;
     } catch (e) {
       logError('Erreur récupération user data', e);
       return null;
@@ -1975,56 +2222,25 @@ class KidsAcademyApp extends StatelessWidget {
     return Consumer<LocaleProvider>(
       builder: (context, localeProvider, _) {
         return MaterialApp(
-          // ============================================================
-          // CONFIGURATION DE BASE
-          // ============================================================
           title: 'Kids Sports Academy',
-          //debugShowCheckedModeBanner: false,
-          // ============================================================
-          // LOCALISATION - ✅ FIX: Add localizationsDelegates
-          // ============================================================
-
+          debugShowCheckedModeBanner: false,
           supportedLocales: const [
             Locale('fr', 'FR'),
             Locale('en', 'US'),
             Locale('ar', 'DZ'),
           ],
-          // ✅ ADD THIS - Critical for Material widgets localization
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          // ============================================================
-          // LOCALISATION
-          // ============================================================
           locale: localeProvider.locale,
-
-          // ============================================================
-          // THEME - Material Design 3
-          // ============================================================
-          theme: _buildLightTheme(),
-          darkTheme: _buildDarkTheme(),
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
           themeMode: ThemeMode.system,
-
-          // ============================================================
-          // NAVIGATION
-          // ============================================================
           navigatorKey: GlobalKey<NavigatorState>(),
-
-          // ============================================================
-          // ÉCRAN PRINCIPAL
-          // ============================================================
           home: const AuthWrapperRefactored(),
-
-          // ============================================================
-          // GESTION DES ROUTES
-          // ============================================================
           onGenerateRoute: _generateRoute,
-
-          // ============================================================
-          // CONFIGURATION SCROLL
-          // ============================================================
           scrollBehavior: const MaterialScrollBehavior().copyWith(
             scrollbars: false,
           ),
@@ -2033,171 +2249,8 @@ class KidsAcademyApp extends StatelessWidget {
     );
   }
 
-  /// Génère les routes de l'application
   Route<dynamic>? _generateRoute(RouteSettings settings) {
-    // TODO: Implémenter le routing nommé
     return null;
-  }
-
-  /// Thème clair Material Design 3
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      fontFamily: 'oswald',
-
-      // Palette de couleurs
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF6750A4), // Violet moderne
-        brightness: Brightness.light,
-      ),
-
-      // Typographie
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 57,
-          fontWeight: FontWeight.w400,
-          letterSpacing: -0.25,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 45,
-          fontWeight: FontWeight.w400,
-        ),
-        displaySmall: TextStyle(
-          fontSize: 36,
-          fontWeight: FontWeight.w400,
-        ),
-        headlineLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w400,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w400,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w400,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w500,
-        ),
-        titleMedium: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.15,
-        ),
-        titleSmall: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.1,
-        ),
-        bodyLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.5,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.25,
-        ),
-        bodySmall: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          letterSpacing: 0.4,
-        ),
-        labelLarge: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.1,
-        ),
-        labelMedium: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-        ),
-        labelSmall: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          letterSpacing: 0.5,
-        ),
-      ),
-
-      // Composants
-      appBarTheme: const AppBarTheme(
-        centerTitle: false,
-        elevation: 0,
-      ),
-
-      cardTheme: CardThemeData(
-        elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-
-      chipTheme: ChipThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 1,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 12,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 12,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Thème sombre Material Design 3
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      fontFamily: 'oswald',
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF6750A4),
-        brightness: Brightness.dark,
-      ),
-
-      // Reprendre la configuration du thème clair
-      textTheme: _buildLightTheme().textTheme,
-      appBarTheme: _buildLightTheme().appBarTheme,
-      cardTheme: _buildLightTheme().cardTheme,
-      chipTheme: _buildLightTheme().chipTheme,
-      inputDecorationTheme: _buildLightTheme().inputDecorationTheme,
-      elevatedButtonTheme: _buildLightTheme().elevatedButtonTheme,
-      filledButtonTheme: _buildLightTheme().filledButtonTheme,
-    );
   }
 }
 

@@ -70,7 +70,17 @@ class ObjectBox {
 
   ObjectBox._internal();
 
+  Future<void>? _initFuture;
+
   Future<void> init() async {
+    if (_initFuture != null) {
+      return _initFuture;
+    }
+    _initFuture = _doInit();
+    return _initFuture;
+  }
+
+  Future<void> _doInit() async {
     final dir = await getApplicationDocumentsDirectory();
     final dbPath = join(dir.path, 'objectbox');
 
@@ -92,6 +102,7 @@ class ObjectBox {
           await _initializeAdmin();
           print('✅ Base de données réinitialisée avec succès.');
         } else {
+          _initFuture = null; // Reset on failure so it can be retried
           rethrow;
         }
       }

@@ -697,10 +697,12 @@ class MessagingManager with ChangeNotifier {
     }
   }
 
+  @override
   void dispose() {
     _messageReceivedController.close();
     _conversationUpdateController.close();
     _messageStatusChangeController.close();
+    super.dispose();
   }
 }
 

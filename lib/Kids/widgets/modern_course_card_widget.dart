@@ -25,33 +25,37 @@ class CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Protection contre données invalides
+    final cs = Theme.of(context).colorScheme;
+
     if (course.id.isEmpty || course.title.isEmpty) {
-      print('⚠️ [CourseCard] Cours invalide détecté');
       return const SizedBox.shrink();
     }
 
-    final isDesktop = MediaQuery.of(context).size.width > 1200;
-
     return Card(
-      elevation: isDesktop ? 4 : 2,
+      elevation: 0,
       clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: cs.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // ✅ CRITIQUE : Évite size: MISSING
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildImage(context),
-            _buildContent(context),
+            _buildImage(context, cs),
+            _buildContent(context, cs),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildImage(BuildContext context) {
-    // ✅ SÉCURISÉ : Vérification stricte avec null-safety
+  Widget _buildImage(BuildContext context, ColorScheme cs) {
     final imageUrl = course.images.isNotEmpty &&
             course.images.first.supabaseUrl != null &&
             course.images.first.supabaseUrl!.isNotEmpty
@@ -59,59 +63,56 @@ class CourseCard extends StatelessWidget {
         : null;
 
     return SizedBox(
-      height: 180, // ✅ Hauteur fixe au lieu de contraintes dynamiques
+      height: 180,
       width: double.infinity,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Image
           imageUrl != null
               ? CachedNetworkImage(
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
-                    color: Colors.grey.shade200,
+                    color: cs.surfaceContainerHighest,
                     child: const Center(
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   ),
-                  errorWidget: (context, url, error) {
-                    print('⚠️ [CourseCard] Erreur chargement image: $error');
-                    return Container(
-                      color: Colors.grey.shade300,
-                      child: const Icon(Icons.image_not_supported, size: 40),
-                    );
-                  },
+                  errorWidget: (context, url, error) => Container(
+                    color: cs.surfaceContainerHighest,
+                    child: Icon(Icons.image_not_supported,
+                        size: 40, color: cs.onSurfaceVariant),
+                  ),
                 )
               : Container(
-                  color: Colors.grey.shade300,
-                  child: const Icon(Icons.school, size: 48),
+                  color: cs.surfaceContainerHighest,
+                  child:
+                      Icon(Icons.school, size: 48, color: cs.onSurfaceVariant),
                 ),
-
-          // Badge statut (top-right)
           Positioned(
             top: 8,
             right: 8,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: course.isAvailableNow() ? Colors.green : Colors.orange,
-                borderRadius: BorderRadius.circular(12),
+                color:
+                    course.isAvailableNow() ? cs.primary : cs.tertiaryContainer,
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 course.isAvailableNow()
                     ? 'Disponible'
                     : course.season.displayName,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: course.isAvailableNow()
+                      ? cs.onPrimary
+                      : cs.onTertiaryContainer,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
-
-          // Badge distance (top-left)
           if (distance != null)
             Positioned(
               top: 8,
@@ -120,19 +121,19 @@ class CourseCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(12),
+                  color: cs.inverseSurface.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on,
-                        size: 12, color: Colors.white),
+                    Icon(Icons.location_on,
+                        size: 12, color: cs.onInverseSurface),
                     const SizedBox(width: 3),
                     Text(
                       distance!,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: cs.onInverseSurface,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -146,14 +147,13 @@ class CourseCard extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(BuildContext context, ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // ✅ CRITIQUE
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Titre avec actions
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -163,6 +163,7 @@ class CourseCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         height: 1.2,
+                        color: cs.onSurface,
                       ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -171,74 +172,61 @@ class CourseCard extends StatelessWidget {
               if (showActions) ...[
                 const SizedBox(width: 4),
                 IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
+                  icon: Icon(Icons.edit, size: 20, color: cs.onSurfaceVariant),
                   onPressed: onEdit,
                   tooltip: 'Modifier',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red, size: 20),
+                  icon: Icon(Icons.delete, color: cs.error, size: 20),
                   onPressed: onDelete,
                   tooltip: 'Supprimer',
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
                 if (onShare != null)
                   IconButton(
-                    icon: const Icon(Icons.share, color: Colors.blue, size: 20),
+                    icon: Icon(Icons.share, color: cs.primary, size: 20),
                     onPressed: onShare,
                     tooltip: 'Partager',
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
               ],
             ],
           ),
           const SizedBox(height: 8),
-
-          // Chip catégorie
           Chip(
             label: Text(
               course.category.displayName,
               style: const TextStyle(fontSize: 11),
             ),
-            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-            labelStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onPrimaryContainer,
-            ),
+            backgroundColor: cs.primaryContainer,
+            labelStyle: TextStyle(color: cs.onPrimaryContainer),
             padding: const EdgeInsets.symmetric(horizontal: 6),
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           const SizedBox(height: 8),
-
-          // Description
           Text(
             course.description,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   height: 1.3,
+                  color: cs.onSurfaceVariant,
                 ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 8),
-
-          // ✅ SÉCURISÉ : Localisation avec null-safety
           Row(
             children: [
               Icon(
                 Icons.location_on,
                 size: 14,
-                color: Theme.of(context).colorScheme.secondary,
+                color: cs.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
               Expanded(
@@ -246,6 +234,7 @@ class CourseCard extends StatelessWidget {
                   course.location.city ?? course.location.address,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontSize: 11,
+                        color: cs.onSurfaceVariant,
                       ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -254,17 +243,14 @@ class CourseCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-
-          // ✅ SÉCURISÉ : Prix et étudiants
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Prix
               if (course.price != null && course.price! > 0)
                 Text(
                   '${course.price!.toStringAsFixed(2)} DZD',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                        color: cs.primary,
                         fontWeight: FontWeight.bold,
                       ),
                 )
@@ -272,24 +258,24 @@ class CourseCard extends StatelessWidget {
                 Text(
                   'Gratuit',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: Colors.green,
+                        color: cs.tertiary,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-
-              // Étudiants
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.people,
                     size: 14,
-                    color: Theme.of(context).colorScheme.secondary,
+                    color: cs.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '${course.currentStudents}/${course.maxStudents}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                   ),
                 ],
               ),
@@ -301,18 +287,12 @@ class CourseCard extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// Extension Helper pour CourseImage (SÉCURISÉE)
-// ============================================================================
-
 extension CourseImageHelper on CourseImage {
-  /// Retourne l'URL de l'image disponible (Supabase uniquement)
   String? get imageUrl {
     if (supabaseUrl != null && supabaseUrl!.isNotEmpty) return supabaseUrl;
     return null;
   }
 
-  /// Vérifie si l'image a au moins une URL valide
   bool get hasValidUrl {
     return (supabaseUrl != null && supabaseUrl!.isNotEmpty);
   }

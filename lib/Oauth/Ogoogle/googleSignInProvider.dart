@@ -116,9 +116,7 @@ class SignInDemo extends StatelessWidget {
             try {
               await auth.signInWithGoogle();
             } catch (error) {
-              auth
-                ..errorMessage = error.toString()
-                ..notifyListeners();
+              print('Google sign in error: $error');
             }
           },
         )

@@ -379,8 +379,10 @@ class DiscoveryManagerBroadcast with ChangeNotifier {
   }
 
   /// Nettoyage complet
+  @override
   void dispose() {
     stop();
     _connectivitySubscription?.cancel();
+    super.dispose();
   }
 }

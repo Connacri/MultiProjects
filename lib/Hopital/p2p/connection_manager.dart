@@ -547,9 +547,11 @@ class ConnectionManager with ChangeNotifier {
     };
   }
 
+  @override
   void dispose() {
     _metadataBroadcastTimer?.cancel();
     _messageController.close();
     stop();
+    super.dispose();
   }
 }

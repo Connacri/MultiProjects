@@ -197,30 +197,53 @@ class UserModel {
     this.metadata,
   }) : profileImages = profileImages ?? UserProfileImages();
 
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.parse(value);
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    try {
+      return DateTime.parse(value.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
+  }
+
+  static DateTime? _parseDateTimeNullable(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.parse(value);
+    if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
+    try {
+      return DateTime.parse(value.toString());
+    } catch (_) {
+      return null;
+    }
+  }
+
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return UserModel(
       uid: doc.id,
       email: data['email'] ?? '',
-      name: data['name'] ?? '',
+      name: data['name'] ?? data['displayName'] ?? '',
       role: UserRole.fromJson(data['role'] ?? 'parent'),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
-      isActive: data['isActive'] ?? true,
-      deactivatedAt: data['deactivatedAt'] != null
-          ? (data['deactivatedAt'] as Timestamp).toDate()
-          : null,
-      scheduledDeletionDate: data['scheduledDeletionDate'] != null
-          ? (data['scheduledDeletionDate'] as Timestamp).toDate()
-          : null,
+      createdAt: _parseDateTime(data['createdAt']),
+      updatedAt: _parseDateTime(data['updatedAt']),
+      isActive: data['isActive'] ?? data['state'] ?? true,
+      deactivatedAt: _parseDateTimeNullable(data['deactivatedAt']),
+      scheduledDeletionDate: _parseDateTimeNullable(data['scheduledDeletionDate']),
       profileImages: data['profileImages'] != null
           ? UserProfileImages.fromMap(data['profileImages'])
-          : UserProfileImages(),
+          : UserProfileImages(
+              profileImageFirebase: data['avatar'],
+              coverImageFirebase: data['timeline'],
+            ),
       location: data['location'] != null
           ? AppLocation.fromMap(data['location'])
           : null,
       bio: data['bio'],
-      phoneNumber: data['phoneNumber'],
+      phoneNumber: data['phoneNumber'] ?? (data['phone'] != null ? data['phone'].toString() : null),
       metadata: data['metadata'],
     );
   }

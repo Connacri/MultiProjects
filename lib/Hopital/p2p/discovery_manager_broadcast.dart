@@ -382,9 +382,11 @@ class DiscoveryManager with ChangeNotifier {
   }
 
   /// Nettoyage complet (appelle stop())
+  @override
   void dispose() {
     stop();
     _connectivitySubscription?.cancel();
     print('[Discovery] 🗑️ Ressources libérées');
+    super.dispose();
   }
 }

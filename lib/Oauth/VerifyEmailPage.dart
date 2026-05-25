@@ -25,14 +25,21 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   @override
   void initState() {
     super.initState();
-    isEmailVerified = FirebaseAuth.instance.currentUser!.emailVerified;
+    isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
+    
+    if (!isEmailVerified) {
+      sendVerificationEmail();
+      
+      timer = Timer.periodic(
+        const Duration(seconds: 3),
+        (_) => checkEmailVerified(),
+      );
+    }
   }
 
   Future verification() async {
     if (!isEmailVerified) {
-      sendVerificationEmail();
-      timer = Timer.periodic(
-          const Duration(seconds: 5), (_) => checkEmailVerified());
+      await sendVerificationEmail();
     }
   }
 
@@ -43,13 +50,22 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   }
 
   Future checkEmailVerified() async {
-    // call after email verified
-    await FirebaseAuth.instance.currentUser!.reload();
-    setState(() {
-      isEmailVerified = FirebaseAuth.instance.currentUser!.emailVerified;
-    });
-
-    if (isEmailVerified) timer?.cancel();
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.reload();
+        if (mounted) {
+          setState(() {
+            isEmailVerified = FirebaseAuth.instance.currentUser!.emailVerified;
+          });
+        }
+        if (isEmailVerified) {
+          timer?.cancel();
+        }
+      }
+    } catch (e) {
+      print('Erreur vérification statut email : $e');
+    }
   }
 
   Future sendVerificationEmail() async {
@@ -57,20 +73,31 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
       final user = FirebaseAuth.instance.currentUser!;
       await user.sendEmailVerification();
 
-      setState(() => canResendEmail = false);
+      if (mounted) {
+        setState(() => canResendEmail = false);
+      }
 
       await Future.delayed(const Duration(seconds: 5));
 
-      setState(() => canResendEmail = true);
+      if (mounted) {
+        setState(() => canResendEmail = true);
+      }
     } catch (e) {
-      Fluttertoast.showToast(
-          msg: e.toString(),
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.deepOrange,
-          textColor: Colors.white,
-          fontSize: 15.0);
+      if (mounted) {
+        Fluttertoast.showToast(
+            msg: e.toString(),
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.deepOrange,
+            textColor: Colors.white,
+            fontSize: 15.0);
+      }
+      
+      await Future.delayed(const Duration(seconds: 5));
+      if (mounted) {
+        setState(() => canResendEmail = true);
+      }
     }
   }
 
