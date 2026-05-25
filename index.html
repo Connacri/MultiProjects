@@ -660,5 +660,149 @@
   })();
 </script>
 
+<script>
+  (function () {
+    'use strict';
+
+    var SUPABASE_URL = 'https://yeswhmhlyjzjqcpawxbm.supabase.co';
+    var SUPABASE_ANON_KEY =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inllc3dobWhseWp6anFjcGF3eGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjEyMTMsImV4cCI6MjA5MzE5NzIxM30.scYw27RB-gL9gxWV_q78vWVbreAMuectXLri6Qh4rMA';
+
+    var supabaseClient = null;
+
+    var connDot    = document.querySelector('#conn-status .conn-dot');
+    var connLabel  = document.getElementById('conn-label');
+    var connStatus = document.getElementById('conn-status');
+    var tableSelect = document.getElementById('table-select');
+    var thead      = document.getElementById('data-thead');
+    var tbody      = document.getElementById('data-tbody');
+    var emptyEl    = document.getElementById('data-empty');
+    var errorEl    = document.getElementById('data-error');
+    var countEl    = document.getElementById('data-count');
+
+    function setConnected(ok) {
+      connStatus.className = ok ? 'conn-connected' : 'conn-disconnected';
+      connLabel.textContent = ok ? 'Connecté' : 'Déconnecté';
+    }
+
+    function escapeHtml(str) {
+      if (str == null) return '';
+      var s = String(str);
+      var div = document.createElement('div');
+      div.appendChild(document.createTextNode(s));
+      return div.innerHTML;
+    }
+
+    function renderTable(rows, columns) {
+      // Header
+      var headerHtml = '';
+      columns.forEach(function (col) {
+        headerHtml += '<th>' + escapeHtml(col) + '</th>';
+      });
+      thead.innerHTML = headerHtml;
+
+      // Body
+      if (!rows || rows.length === 0) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden');
+        errorEl.classList.add('hidden');
+        countEl.textContent = '0 ligne';
+        return;
+      }
+      emptyEl.classList.add('hidden');
+      errorEl.classList.add('hidden');
+
+      var bodyHtml = '';
+      rows.forEach(function (row) {
+        bodyHtml += '<tr>';
+        columns.forEach(function (col) {
+          var val = row[col];
+          if (val && typeof val === 'object') {
+            val = JSON.stringify(val);
+          }
+          bodyHtml += '<td title="' + escapeHtml(val) + '">' + escapeHtml(val) + '</td>';
+        });
+        bodyHtml += '</tr>';
+      });
+      tbody.innerHTML = bodyHtml;
+
+      var label = rows.length > 1 ? 'lignes' : 'ligne';
+      countEl.textContent = rows.length + ' ' + label;
+    }
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.remove('hidden');
+      emptyEl.classList.add('hidden');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      countEl.textContent = '—';
+    }
+
+    async function fetchTable(tableName) {
+      if (!supabaseClient) {
+        showError('Supabase non initialisé');
+        return;
+      }
+
+      try {
+        var res = await supabaseClient
+          .from(tableName)
+          .select('*')
+          .limit(500);
+
+        if (res.error) {
+          showError('Erreur PostgREST : ' + res.error.message);
+          return;
+        }
+
+        var rows = res.data || [];
+
+        if (rows.length === 0) {
+          thead.innerHTML = '';
+          tbody.innerHTML = '';
+          emptyEl.classList.remove('hidden');
+          errorEl.classList.add('hidden');
+          countEl.textContent = '0 ligne';
+          return;
+        }
+
+        var columns = Object.keys(rows[0]);
+        renderTable(rows, columns);
+        setConnected(true);
+      } catch (err) {
+        showError('Erreur réseau : ' + err.message);
+      }
+    }
+
+    function initSupabase() {
+      if (typeof supabase === 'undefined' || !supabase.createClient) {
+        showError('SDK Supabase non chargé');
+        return;
+      }
+
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        setConnected(true);
+        fetchTable(tableSelect.value);
+      } catch (err) {
+        showError('Erreur init Supabase : ' + err.message);
+      }
+    }
+
+    // Listen for table change
+    tableSelect.addEventListener('change', function () {
+      fetchTable(tableSelect.value);
+    });
+
+    // Init on load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSupabase);
+    } else {
+      initSupabase();
+    }
+  })();
+</script>
+
 </body>
 </html>
