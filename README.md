@@ -19,17 +19,43 @@
 
 ## 🩺 À propos
 
-Application Flutter de **planification hospitalière**.
+Solution professionnelle de **gestion et planification du personnel médical** (médecins, paramédical, administratif) pour les établissements hospitaliers.
 
-- **Stack** : Flutter · Dart · ObjectBox · Provider · Material 3
-- **Plateformes** : Android · Windows Desktop
-- **Version** : 1.0.8.17
+### ✨ Fonctionnalités clés
+- 📅 **Planning mensuel interactif** : Visualisation et édition facile des gardes.
+- 👥 **Gestion complète du personnel** : Groupes, équipes et spécialités.
+- 🔄 **Planification automatique** : Algorithmes intelligents respectant les contraintes.
+- 🌐 **Sync P2P décentralisée** : Blockchain-Powered pour une sécurité maximale.
+- 💬 **Messagerie intégrée** : Communication sécurisée entre les membres.
+- 📋 **Exports PDF** : Génération de documents professionnels signés.
+
+### 🛠️ Stack Technique
+- **Framework** : Flutter (Multiplateforme)
+- **Base de données** : ObjectBox (NoSQL ultra-rapide) + Supabase
+- **Design** : Material 3 (Responsive Dark/Light)
+- **Architecture** : Provider / Clean UI
 
 ---
 
-## 🔗 Site officiel
+## 🤝 Sponsoring & Soutien
 
-👉 https://Connacri.github.io/MultiProjects/
+Soutenez le développement de ce projet innovant ! Votre contribution nous aide à améliorer la gestion de la santé en Algérie. 🇩🇿
+
+<p align="center">
+  <img src="assets/qrcode/qr.jpg" width="200" alt="QR Code Wimpay CPA Sponsoring"/>
+  <br>
+  <b>Scanner pour soutenir via Wimpay CPA</b>
+</p>
+
+> **Devenir partenaire** : Vous souhaitez collaborer ou sponsoriser officiellement le projet ? 
+> [Contactez-nous par email](mailto:ramzi.guedouar@gmail.com?subject=Sponsoring%20Medical%20Staff%20Planning)
+
+---
+
+## 🔗 Liens Utiles
+
+👉 **Site officiel** : [https://Connacri.github.io/MultiProjects/](https://Connacri.github.io/MultiProjects/)  
+👉 **Version Web Mobile** : [WalletDZ](https://walletdz-d12e0.web.app/)
 
 ---
 

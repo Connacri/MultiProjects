@@ -399,7 +399,7 @@ jobs:
 
           ## 🩺 À propos
 
-          Application Flutter de **planification hospitalière**.
+          Solution professionnelle de **gestion et planification du personnel médical** pour les établissements hospitaliers.
 
           - **Stack** : Flutter · Dart · ObjectBox · Provider · Material 3
           - **Plateformes** : Android · Windows Desktop
@@ -407,9 +407,22 @@ jobs:
 
           ---
 
-          ## 🔗 Site officiel
+          ## 🤝 Sponsoring & Soutien
 
-          👉 https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+          Soutenez le développement de ce projet ! 🇩🇿
+
+          <p align="center">
+            <img src="assets/qrcode/qr.jpg" width="200" alt="QR Code Wimpay CPA Sponsoring"/>
+            <br>
+            <b>Scanner pour soutenir via Wimpay CPA</b>
+          </p>
+
+          ---
+
+          ## 🔗 Liens Utiles
+
+          👉 **Site officiel** : https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/  
+          👉 **WalletDZ** : https://walletdz-d12e0.web.app/
 
           ---
 
