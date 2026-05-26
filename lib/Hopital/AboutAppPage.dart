@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutAppPage extends StatefulWidget {
@@ -12,25 +14,19 @@ class _AboutAppPageState extends State<AboutAppPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  final Uri _walletDzUri = Uri.parse('https://walletdz-d12e0.web.app/');
+  final Uri _walletDzUri = Uri.parse('');//https://walletdz-d12e0.web.app/
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeIn),
     );
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _controller.forward();
   }
@@ -48,7 +44,7 @@ class _AboutAppPageState extends State<AboutAppPage>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Impossible d\'ouvrir $url'),
-            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -57,408 +53,150 @@ class _AboutAppPageState extends State<AboutAppPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0F2027),
-              Color(0xFF203A43),
-              Color(0xFF2C5364),
-            ],
+      backgroundColor: colorScheme.surface,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          SliverAppBar.large(
+            title: Text(
+              'À Propos',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            centerTitle: true,
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
+            expandedHeight: 150,
           ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: CustomScrollView(
-                slivers: [
-                  // App Bar personnalisée
-                  SliverAppBar(
-                    expandedHeight: 200,
-                    floating: false,
-                    pinned: true,
-                    backgroundColor: Colors.transparent,
-                    flexibleSpace: FlexibleSpaceBar(
-                      title: Text(
-                        'À Propos',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      background: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.cyan.withOpacity(0.3),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.medical_services,
-                            size: 80,
-                            color: Colors.cyan.shade300,
-                          ),
-                        ),
-                      ),
+          SliverToBoxAdapter(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final bool isWide = constraints.maxWidth > 800;
+                        return Column(
+                          children: [
+                            _buildHeroSection(colorScheme, isDark),
+                            const SizedBox(height: 32),
+                            if (isWide)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildInfoCard(
+                                        colorScheme, isDark, isWide),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Expanded(
+                                    child: _buildFeaturesSection(
+                                        colorScheme, isDark),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                children: [
+                                  _buildInfoCard(colorScheme, isDark, isWide),
+                                  const SizedBox(height: 24),
+                                  _buildFeaturesSection(colorScheme, isDark),
+                                ],
+                              ),
+                            const SizedBox(height: 24),
+                            if (isWide)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildDeveloperSection(
+                                        colorScheme, isDark),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  Expanded(
+                                    child: _buildQrSection(colorScheme, isDark),
+                                  ),
+                                ],
+                              )
+                            else
+                              Column(
+                                children: [
+                                  _buildDeveloperSection(colorScheme, isDark),
+                                  const SizedBox(height: 24),
+                                  _buildQrSection(colorScheme, isDark),
+                                ],
+                              ),
+                            const SizedBox(height: 24),
+                            _buildContactSection(colorScheme, isDark, isWide),
+                            const SizedBox(height: 48),
+                            _buildFooter(colorScheme),
+                            const SizedBox(height: 32),
+                          ],
+                        );
+                      },
                     ),
                   ),
-
-                  // Contenu
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: [
-                          // Section Logiciel
-                          _buildGlassCard(
-                            child: Column(
-                              children: [
-                                _buildSectionTitle(
-                                  'Medical Staff Planning\nBlockchain-Powered\nDecentralized Storage & Messaging',
-                                  Icons.app_settings_alt_rounded,
-                                ),
-                                SizedBox(height: 20),
-                                _buildInfoRow(
-                                  Icons.code,
-                                  'Version',
-                                  '1.0.2',
-                                ),
-                                _buildInfoRow(
-                                  Icons.calendar_today,
-                                  'Date de sortie',
-                                  'Octobre 2025',
-                                ),
-                                SizedBox(height: 15),
-                                Text(
-                                  'Solution professionnelle de gestion et planification du personnel médical et paramédical pour les établissements hospitaliers.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                    height: 1.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 20),
-
-                          // Fonctionnalités
-                          _buildGlassCard(
-                            child: Column(
-                              children: [
-                                _buildSectionTitle(
-                                  'Fonctionnalités Principales',
-                                  Icons.stars_rounded,
-                                ),
-                                SizedBox(height: 20),
-                                _buildFeature(
-                                  Icons.schedule,
-                                  'Planification automatique',
-                                  'Gestion intelligente des gardes et rotations',
-                                ),
-                                _buildFeature(
-                                  Icons.people_alt,
-                                  'Gestion du personnel',
-                                  'Suivi complet des équipes médicales',
-                                ),
-                                _buildFeature(
-                                  Icons.event_busy,
-                                  'Gestion des congés',
-                                  'Système avancé de TimeOff',
-                                ),
-                                _buildFeature(
-                                  Icons.picture_as_pdf,
-                                  'Export PDF',
-                                  'Génération de plannings professionnels',
-                                ),
-                                _buildFeature(
-                                  Icons.analytics,
-                                  'Statistiques',
-                                  'Tableaux de bord et rapports',
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 20),
-
-                          // Section Développeur
-                          _buildGlassCard(
-                            child: Column(
-                              children: [
-                                _buildSectionTitle(
-                                  'Project Local @Blockchain-Powered\nDecentralized Storage Database',
-                                  Icons.person_rounded,
-                                ),
-                                SizedBox(height: 20),
-                                Container(
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.cyan.shade400,
-                                        Colors.blue.shade600,
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.cyan.withOpacity(0.5),
-                                        blurRadius: 20,
-                                        spreadRadius: 5,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      'RG',
-                                      style: TextStyle(
-                                        fontSize: 36,
-                                        fontWeight: FontWeight.w500,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(height: 20),
-                                Text(
-                                  'Ramzi Guedouar',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Full-Stack DevOps',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.cyan.shade300,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 20),
-
-                          // Section Entreprise
-                          _buildGlassCard(
-                            child: Column(
-                              children: [
-                                _buildSectionTitle(
-                                  'FORSLOG LTD',
-                                  Icons.business_rounded,
-                                ),
-                                SizedBox(height: 20),
-                                Container(
-                                  padding: EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.cyan.withOpacity(0.2),
-                                        Colors.blue.withOpacity(0.2),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(15),
-                                    border: Border.all(
-                                      color: Colors.cyan.withOpacity(0.3),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.apartment_rounded,
-                                        size: 50,
-                                        color: Colors.cyan.shade300,
-                                      ),
-                                      SizedBox(height: 15),
-                                      Text(
-                                        'Solutions logicielles décentralisées pour une santé connectée et sécurisée',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 20),
-
-                          // Section Contact
-                          _buildGlassCard(
-                            child: Column(
-                              children: [
-                                _buildSectionTitle(
-                                  'Contact',
-                                  Icons.contact_mail_rounded,
-                                ),
-                                SizedBox(height: 20),
-                                _buildContactButton(
-                                  Icons.phone,
-                                  '+213 696 410 953',
-                                  'tel:+213696410953',
-                                  Colors.green,
-                                ),
-                                SizedBox(height: 12),
-                                _buildContactButton(
-                                  Icons.email,
-                                  'ramzi.guedouar@gmail.com',
-                                  'mailto:ramzi.guedouar@gmail.com',
-                                  Colors.red,
-                                ),
-                                SizedBox(height: 12),
-                                _buildContactButton(
-                                  Icons.location_on,
-                                  'Oran, Algérie',
-                                  'https://maps.app.goo.gl/PpmeqfinpKZcErDk8',
-                                  Colors.blue,
-                                ),
-                                SizedBox(height: 12),
-                                TextButton(
-                                  onPressed: openWalletDZ,
-                                  child: const Text('Ouvrir WalletDZ'),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: 20),
-
-                          // // Technologies utilisées
-                          // _buildGlassCard(
-                          //   child: Column(
-                          //     children: [
-                          //       _buildSectionTitle(
-                          //         'Technologies',
-                          //         Icons.code_rounded,
-                          //       ),
-                          //       SizedBox(height: 20),
-                          //       Wrap(
-                          //         spacing: 10,
-                          //         runSpacing: 10,
-                          //         alignment: WrapAlignment.center,
-                          //         children: [
-                          //           _buildTechChip('Flutter', Colors.blue),
-                          //           _buildTechChip('Dart', Colors.cyan),
-                          //           _buildTechChip('ObjectBox', Colors.green),
-                          //           _buildTechChip('PDF', Colors.red),
-                          //           _buildTechChip(
-                          //               'Material Design', Colors.purple),
-                          //         ],
-                          //       ),
-                          //     ],
-                          //   ),
-                          // ),
-                          //
-                          // SizedBox(height: 30),
-
-                          // Footer
-                          Text(
-                            '© 2025 FORSLOG LTD. Tous droits réservés.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: 12,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Proudly crafted with in Oran 🇩🇿',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.cyan.shade200,
-                              fontSize: 12,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                          SizedBox(height: 30),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildGlassCard({required Widget child}) {
+  Widget _buildHeroSection(ColorScheme colorScheme, bool isDark) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(25),
+      padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         gradient: LinearGradient(
+          colors: [
+            colorScheme.primaryContainer.withValues(alpha: 0.5),
+            colorScheme.surface,
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withOpacity(0.1),
-            Colors.white.withOpacity(0.05),
-          ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
-          width: 1.5,
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 5,
-          ),
-        ],
       ),
-      child: child,
-    );
-  }
-
-  Widget _buildSectionTitle(String title, IconData icon) {
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Column(
         children: [
           Icon(
-            icon,
-            color: Colors.cyan.shade300,
-            size: 28,
+            Icons.medical_services_rounded,
+            size: 80,
+            color: colorScheme.primary,
           ),
-          SizedBox(width: 12),
+          const SizedBox(height: 24),
           Text(
-            title,
+            'Medical Staff Planning',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-              letterSpacing: 1.2,
+            style: GoogleFonts.poppins(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Blockchain-Powered • Decentralized • Secure',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: colorScheme.secondary,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -466,72 +204,400 @@ class _AboutAppPageState extends State<AboutAppPage>
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.cyan.shade300, size: 20),
-          SizedBox(width: 12),
-          Text(
-            '$label: ',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: Colors.white,
+  Widget _buildInfoCard(ColorScheme colorScheme, bool isDark, bool isWide) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+                colorScheme, 'Informations', Icons.info_outline_rounded),
+            const SizedBox(height: 24),
+            _buildDetailRow(colorScheme, 'Version', '1.0.8+14', Icons.vignette),
+            _buildDetailRow(
+                colorScheme, 'Build Date', 'Mai 2026', Icons.calendar_month),
+            _buildDetailRow(
+                colorScheme, 'Platform', 'Cross-Platform', Icons.devices),
+            const SizedBox(height: 16),
+            Text(
+              'Une solution de pointe pour la gestion des ressources humaines dans le secteur hospitalier, intégrant des technologies de registre distribué pour une intégrité maximale des données.',
+              style: GoogleFonts.inter(
                 fontSize: 14,
+                height: 1.6,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturesSection(ColorScheme colorScheme, bool isDark) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(
+                colorScheme, 'Fonctionnalités', Icons.auto_awesome_rounded),
+            const SizedBox(height: 24),
+            _buildFeatureItem(colorScheme, 'Planning Automatique',
+                'Algorithmes d\'optimisation de gardes.', Icons.schedule),
+            _buildFeatureItem(colorScheme, 'Stockage Décentralisé',
+                'Sécurité accrue via IPFS/Blockchain.', Icons.security),
+            _buildFeatureItem(colorScheme, 'Exports Professionnels',
+                'Génération PDF haute fidélité.', Icons.picture_as_pdf),
+            _buildFeatureItem(colorScheme, 'Analytique Avancée',
+                'Tableaux de bord interactifs.', Icons.insights),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeveloperSection(ColorScheme colorScheme, bool isDark) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildSectionHeader(
+                colorScheme, 'Développement', Icons.code_rounded),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [colorScheme.primary, colorScheme.tertiary],
+                ),
+              ),
+              child: const CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.white,
+                child: Text(
+                  'RG',
+                  style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Ramzi Guedouar',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              'Full-Stack DevOps Engineer',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: colorScheme.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
+            const SizedBox(height: 16),
+            Text(
+              'Passionné par le Web3 et les architectures résilientes.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSponsorSection(ColorScheme colorScheme, bool isDark) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.tertiaryContainer.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colorScheme.tertiary.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildSectionHeader(
+                colorScheme, 'Sponsoring', Icons.volunteer_activism_rounded),
+            const SizedBox(height: 16),
+            Text(
+              'Soutenez le développement de ce projet innovant. Nous recherchons des partenaires pour propulser cette solution vers de nouveaux sommets.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: colorScheme.onTertiaryContainer,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(10),
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colorScheme.tertiary.withValues(alpha: 0.2)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/qrcode/qr.jpg',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'QR Sponsoring Wimpay',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.tertiary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.tonalIcon(
+              onPressed: () => _launchUrl('mailto:ramzi.guedouar@gmail.com?subject=Sponsoring%20Medical%20Staff%20Planning'),
+              icon: const Icon(Icons.handshake_rounded),
+              label: const Text('Devenir Sponsor'),
+              style: FilledButton.styleFrom(
+                backgroundColor: colorScheme.tertiary,
+                foregroundColor: colorScheme.onTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQrSection(ColorScheme colorScheme, bool isDark) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colorScheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildSectionHeader(
+                colorScheme, 'Paiement Sécurisé', Icons.payments_rounded),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/qrcode/qr.jpg',
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Scannez pour payer via Wimpay CPA',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Solution de paiement mobile sécurisée',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => _launchUrl(_walletDzUri.toString()),
+              icon: const Icon(Icons.account_balance_wallet_rounded, size: 18),
+              label: const Text('Ouvrir Wimpay'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContactSection(ColorScheme colorScheme, bool isDark, bool isWide) {
+    return Card(
+      elevation: 0,
+      color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+        side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            _buildSectionHeader(
+                colorScheme, 'Contactez-nous', Icons.alternate_email_rounded),
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.center,
+              children: [
+                _buildContactChip(
+                  colorScheme,
+                  'Téléphone',
+                  '+213 696 410 953',
+                  Icons.phone_rounded,
+                  () => _launchUrl('tel:+213696410953'),
+                ),
+                _buildContactChip(
+                  colorScheme,
+                  'Email',
+                  'ramzi.guedouar@gmail.com',
+                  Icons.mail_rounded,
+                  () => _launchUrl('mailto:ramzi.guedouar@gmail.com'),
+                ),
+                _buildContactChip(
+                  colorScheme,
+                  'Localisation',
+                  'Oran, Algérie',
+                  Icons.location_on_rounded,
+                  () => _launchUrl('https://maps.app.goo.gl/PpmeqfinpKZcErDk8'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(ColorScheme colorScheme, String title, IconData icon) {
+    return Row(
+      children: [
+        Icon(icon, color: colorScheme.primary, size: 24),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(
+      ColorScheme colorScheme, String label, String value, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: colorScheme.secondary),
+          const SizedBox(width: 12),
+          Text(
+            '$label: ',
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFeature(IconData icon, String title, String description) {
+  Widget _buildFeatureItem(
+      ColorScheme colorScheme, String title, String subtitle, IconData icon) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.cyan.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(10),
+              color: colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: Colors.cyan.shade300,
-              size: 24,
-            ),
+            child: Icon(icon, color: colorScheme.primary, size: 20),
           ),
-          SizedBox(width: 15),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: colorScheme.onSurface,
                   ),
                 ),
-                SizedBox(height: 4),
                 Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.white60,
+                  subtitle,
+                  style: GoogleFonts.inter(
                     fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -542,97 +608,85 @@ class _AboutAppPageState extends State<AboutAppPage>
     );
   }
 
-  Widget _buildContactButton(
-    IconData icon,
-    String text,
-    String url,
-    Color color,
-  ) {
+  Widget _buildContactChip(ColorScheme colorScheme, String label, String value,
+      IconData icon, VoidCallback onTap) {
     return InkWell(
-      onTap: () => _launchUrl(url),
-      borderRadius: BorderRadius.circular(15),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color.withOpacity(0.3),
-              color.withOpacity(0.1),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
-            color: color.withOpacity(0.5),
-          ),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: color, size: 24),
-            SizedBox(width: 15),
-            Expanded(
-              child: Text(
-                text,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+            Icon(icon, size: 20, color: colorScheme.primary),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
+                Text(
+                  value,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(ColorScheme colorScheme) {
+    return Column(
+      children: [
+        const Divider(),
+        const SizedBox(height: 24),
+        Text(
+          '© 2026 FORSLOG LTD. Tous droits réservés.',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Propulsé par ',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              color: Colors.white38,
-              size: 16,
+            Text(
+              'RMZ dev',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.primary,
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
-  }
-
-  Widget _buildTechChip(String label, Color color) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withOpacity(0.3),
-            color.withOpacity(0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: color.withOpacity(0.5),
-        ),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-
-  Future<void> openWalletDZ() async {
-    // Essaie d’ouvrir avec le comportement par défaut de la plateforme.
-    final ok = await launchUrl(
-      _walletDzUri,
-      mode: LaunchMode.platformDefault,
-      // externe sur desktop/mobile, nouvel onglet sur web
-      webOnlyWindowName: '_blank', // ouvre un nouvel onglet sur Flutter Web
-    );
-    if (!ok) {
-      // Fallback explicite : forcer l’ouverture externe (utile sur desktop)
-      final okExternal = await launchUrl(
-        _walletDzUri,
-        mode: LaunchMode.externalApplication,
-      );
-      if (!okExternal) {
-        throw 'Impossible d’ouvrir ${_walletDzUri.toString()}';
-      }
-    }
   }
 }

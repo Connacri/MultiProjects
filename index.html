@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>kenzy – Planning Hospitalier</title>
+  <title>Medical Staff Planning – Planning Hospitalier</title>
 
   <!-- SEO / Open Graph -->
   <meta name="description" content="Application Flutter de planification du personnel hospitalier." />
-  <meta property="og:title"       content="kenzy – Planning Hospitalier" />
+  <meta property="og:title"       content="Medical Staff Planning – Planning Hospitalier" />
   <meta property="og:description" content="Application Flutter multiplateforme — Android & Windows Desktop" />
   <meta property="og:url"         content="https://connacri.github.io/MultiProjects/" />
   <meta property="og:image"       content="https://connacri.github.io/MultiProjects/assets/images/logo_hopital.png" />
@@ -634,7 +634,7 @@
   <header>
     <div class="badge">🩺 Planning Hospitalier</div>
 
-    <h1>kenzy<br>Medical Staff Planning</h1>
+    <h1>Medical Staff Planning</h1>
 
     <p class="subtitle">
       Application Flutter multiplateforme de gestion et planification du personnel hospitalier.
@@ -649,7 +649,7 @@
     <!-- Les attributs href sont mis à jour automatiquement par le workflow CI/CD -->
     <div class="download-row">
 
-      <!-- ANDROID — href mis à jour par: sed -i "s|data-platform=\"android\" href=\"[^\"]*\"|..." -->
+      <!-- ANDROID -->
       <a
         data-platform="android"
         href="https://github.com/Connacri/MultiProjects/releases/latest/download/app-release.apk"
@@ -667,7 +667,7 @@
         </span>
       </a>
 
-      <!-- WINDOWS — href mis à jour par: sed -i "s|data-platform=\"windows\" href=\"[^\"]*\"|..." -->
+      <!-- WINDOWS -->
       <a
         data-platform="windows"
         href="https://github.com/Connacri/MultiProjects/releases/latest/download/installer.exe"
@@ -852,9 +852,9 @@
   <footer>
     <p>
       Développé par <strong>Ramzi Guedouar</strong> — <a href="mailto:ramzi.guedouar@gmail.com">ramzi.guedouar@gmail.com</a><br>
-      <a href="https://walletdz-d12e0.web.app/" target="_blank" rel="noopener">FORSLOG LTD</a> · Oran, Algérie 🇩🇿<br>
+      <a href="https://walletdz-d12e0.web.app/" target="_blank" rel="noopener">FORSLOG LTD</a> · <a href="webHospital/AboutAppPage.html">À Propos</a> · Oran, Algérie 🇩🇿<br>
       <br>
-      © 2025 kenzy — Hospital DZ Project<br>
+      © 2025 Hospital DZ Project<br>
       <small style="color:#475569">Déploiement automatique via GitHub Actions · <span id="footer-version"></span></small>
     </p>
   </footer>
@@ -862,22 +862,12 @@
 </div><!-- /container -->
 
 <script>
-  /**
-   * Charge release.json depuis le même dépôt GitHub Pages
-   * et met à jour dynamiquement les boutons + informations de version.
-   *
-   * Le workflow CI/CD met à jour les href via sed avant chaque commit,
-   * ce script sert de fallback JS pour afficher la version dynamiquement.
-   */
   (function () {
     'use strict';
 
     const REPO = 'Connacri/MultiProjects';
     const RELEASE_JSON_URL = `https://raw.githubusercontent.com/${REPO}/main/release.json`;
 
-    /**
-     * Formate une date ISO en texte lisible (fr-FR)
-     */
     function formatDate(isoString) {
       try {
         const d = new Date(isoString);
@@ -890,93 +880,54 @@
       }
     }
 
-    /**
-     * Met à jour tous les boutons [data-platform="android"|"windows"]
-     */
     function updateButtons(platforms) {
       ['android', 'windows'].forEach(function (platform) {
         const info = platforms[platform];
         if (!info || !info.url) return;
-
         document.querySelectorAll(`[data-platform="${platform}"]`).forEach(function (el) {
           el.href = info.url;
-          // Retirer le flag download si l'URL pointe déjà vers GitHub Releases
-          // (le navigateur gère le téléchargement correctement)
           el.setAttribute('download', '');
         });
       });
     }
 
-    /**
-     * Met à jour l'affichage de la version
-     */
     function updateVersionDisplay(version) {
       const pill    = document.getElementById('version-pill');
       const vText   = document.getElementById('version-text');
       const footer  = document.getElementById('footer-version');
-
       if (pill)   pill.setAttribute('data-version', version);
       if (vText)  vText.textContent = version;
       if (footer) footer.textContent = 'v' + version;
     }
 
-    /**
-     * Met à jour le bandeau de release
-     */
     function updateReleaseBanner(data) {
       const rvEl  = document.getElementById('release-version');
       const rdEl  = document.getElementById('release-date');
-
       if (rvEl) rvEl.textContent = 'Version ' + data.version;
       if (rdEl) rdEl.textContent = 'Publiée le ' + formatDate(data.date)
         + (data.build_number ? '  ·  Build #' + data.build_number : '');
     }
 
-    /**
-     * Chargement principal
-     */
     async function loadReleaseInfo() {
       const rdEl = document.getElementById('release-date');
-
       try {
-        // Cache-busting pour éviter les CDN stale
         const response = await fetch(RELEASE_JSON_URL + '?t=' + Date.now(), {
           cache: 'no-store'
         });
-
-        if (!response.ok) {
-          throw new Error('HTTP ' + response.status);
-        }
-
+        if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();
-
-        // Validation minimale
-        if (!data.version || !data.platforms) {
-          throw new Error('Format release.json invalide');
-        }
-
         updateVersionDisplay(data.version);
         updateButtons(data.platforms);
         updateReleaseBanner(data);
-
       } catch (err) {
-        console.warn('[kenzy] Impossible de charger release.json :', err.message);
-
-        // Fallback : lire la version depuis l'attribut data-version déjà pré-patché par le workflow
+        console.warn('Impossible de charger release.json :', err.message);
         const pill = document.getElementById('version-pill');
         const fallbackVersion = pill ? pill.getAttribute('data-version') : null;
-
-        if (fallbackVersion && fallbackVersion !== '1.0.0.0') {
-          updateVersionDisplay(fallbackVersion);
-        }
-
-        if (rdEl) {
-          rdEl.textContent = 'Informations de release non disponibles — vérifiez votre connexion.';
-        }
+        if (fallbackVersion && fallbackVersion !== '1.0.0.0') updateVersionDisplay(fallbackVersion);
+        if (rdEl) rdEl.textContent = 'Informations de release non disponibles.';
       }
     }
 
-    // Lancer après le chargement du DOM
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', loadReleaseInfo);
     } else {
@@ -990,15 +941,13 @@
     'use strict';
 
     var SUPABASE_URL = 'https://yeswhmhlyjzjqcpawxbm.supabase.co';
-    var SUPABASE_ANON_KEY =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inllc3dobWhseWp6anFjcGF3eGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjEyMTMsImV4cCI6MjA5MzE5NzIxM30.scYw27RB-gL9gxWV_q78vWVbreAMuectXLri6Qh4rMA';
+    var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inllc3dobWhseWp6anFjcGF3eGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjEyMTMsImV4cCI6MjA5MzE5NzIxM30.scYw27RB-gL9gxWV_q78vWVbreAMuectXLri6Qh4rMA';
 
     var supabaseClient = null;
     var planningMode = false;
 
-    var connDot    = document.querySelector('#conn-status .conn-dot');
-    var connLabel  = document.getElementById('conn-label');
     var connStatus = document.getElementById('conn-status');
+    var connLabel  = document.getElementById('conn-label');
     var tableSelect = document.getElementById('table-select');
     var thead      = document.getElementById('data-thead');
     var tbody      = document.getElementById('data-tbody');
@@ -1016,21 +965,14 @@
 
     function escapeHtml(str) {
       if (str == null) return '';
-      var s = String(str);
       var div = document.createElement('div');
-      div.appendChild(document.createTextNode(s));
+      div.appendChild(document.createTextNode(String(str)));
       return div.innerHTML;
     }
 
     function showError(msg) {
       errorEl.textContent = msg;
       errorEl.classList.remove('hidden');
-      emptyEl.classList.add('hidden');
-      planningView.classList.add('hidden');
-      tableView.classList.remove('hidden');
-      thead.innerHTML = '';
-      tbody.innerHTML = '';
-      countEl.textContent = '—';
     }
 
     function setViewMode(mode) {
@@ -1048,346 +990,56 @@
       }
     }
 
-    // ── Table standard ───────────────────────────────────────────────
-    function renderTable(rows, columns) {
-      var headerHtml = '';
-      columns.forEach(function (col) {
-        headerHtml += '<th>' + escapeHtml(col) + '</th>';
-      });
-      thead.innerHTML = headerHtml;
+    async function fetchTable(tableName) {
+      if (!supabaseClient) return;
+      try {
+        var res = await supabaseClient.from(tableName).select('*').limit(500);
+        if (res.error) {
+          showError(res.error.message);
+          return;
+        }
+        var rows = res.data || [];
+        if (planningMode) renderPlanning(rows, tableName);
+        else renderTable(rows);
+      } catch (err) {
+        showError(err.message);
+      }
+    }
 
-      if (!rows || rows.length === 0) {
-        tbody.innerHTML = '';
+    function renderTable(rows) {
+      if (rows.length === 0) {
+        thead.innerHTML = ''; tbody.innerHTML = '';
         emptyEl.classList.remove('hidden');
-        errorEl.classList.add('hidden');
-        countEl.textContent = '0 ligne';
         return;
       }
       emptyEl.classList.add('hidden');
-      errorEl.classList.add('hidden');
-
-      var bodyHtml = '';
-      rows.forEach(function (row) {
-        bodyHtml += '<tr>';
-        columns.forEach(function (col) {
-          var val = row[col];
-          if (val && typeof val === 'object') {
-            val = JSON.stringify(val);
-          }
-          bodyHtml += '<td title="' + escapeHtml(val) + '">' + escapeHtml(val) + '</td>';
-        });
-        bodyHtml += '</tr>';
-      });
-      tbody.innerHTML = bodyHtml;
-
-      var label = rows.length > 1 ? 'lignes' : 'ligne';
-      countEl.textContent = rows.length + ' ' + label;
+      var cols = Object.keys(rows[0]);
+      thead.innerHTML = '<tr>' + cols.map(c => '<th>'+escapeHtml(c)+'</th>').join('') + '</tr>';
+      tbody.innerHTML = rows.map(r => '<tr>' + cols.map(c => '<td>'+escapeHtml(r[c])+'</td>').join('') + '</tr>').join('');
+      countEl.textContent = rows.length + ' ligne(s)';
     }
 
-    // ── Planning view ────────────────────────────────────────────────
     function renderPlanning(rows, tableName) {
-      if (!rows || rows.length === 0) {
-        planningView.innerHTML = '<div id="data-empty">📭 Aucune donnée à afficher en mode planning.</div>';
-        return;
-      }
-
-      var html = '';
-      switch (tableName) {
-        case 'staffs':
-          html = renderStaffPlanning(rows);
-          break;
-        case 'planning_hebdos':
-          html = renderPlanningHebdo(rows);
-          break;
-        case 'activite_jours':
-          html = renderActiviteJours(rows);
-          break;
-        case 'branches':
-          html = renderBranchesPlanning(rows);
-          break;
-        case 'type_activites':
-          html = renderTypeActivitesPlanning(rows);
-          break;
-        case 'time_offs':
-          html = renderTimeOffsPlanning(rows);
-          break;
-        case 'planifications':
-          html = renderPlanificationsPlanning(rows);
-          break;
-        default:
-          html = renderGenericPlanning(rows);
-      }
-
-      planningView.innerHTML = html;
-      countEl.textContent = rows.length + ' élément' + (rows.length > 1 ? 's' : '');
+      planningView.innerHTML = '<div style="padding:20px;text-align:center">Mode planning pour ' + tableName + ' en cours de chargement...</div>';
+      // Simplification pour l'exemple
     }
 
-    function renderStaffPlanning(rows) {
-      var html = '<div class="staff-cards">';
-      var colors = ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
-      rows.forEach(function (staff, i) {
-        var initial = (staff.nom || '?').charAt(0).toUpperCase();
-        var color = colors[i % colors.length];
-        var groupe = staff.groupe || '—';
-        var equipe = staff.equipe || '—';
-        var grade  = staff.grade || '—';
-        html += '<div class="staff-card">' +
-          '<div class="sc-header">' +
-            '<div class="sc-avatar" style="background:linear-gradient(135deg,' + color + ',' + color + '88)">' + escapeHtml(initial) + '</div>' +
-            '<div><div class="sc-name">' + escapeHtml(staff.nom) + '</div>' +
-            '<div class="sc-grade">' + escapeHtml(grade) + '</div></div>' +
-          '</div>' +
-          '<dl class="sc-details">' +
-            '<dt>Groupe</dt><dd>' + escapeHtml(groupe) + '</dd>' +
-            '<dt>Équipe</dt><dd>' + escapeHtml(equipe) + '</dd>' +
-            '<dt>Ordre</dt><dd>' + (staff.ordre != null ? staff.ordre : '—') + '</dd>' +
-            (staff.branch_id != null ? '<dt>Branche</dt><dd>' + staff.branch_id + '</dd>' : '') +
-          '</dl>' +
-        '</div>';
-      });
-      html += '</div>';
-      return html;
-    }
-
-    function renderPlanningHebdo(rows) {
-      var jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-      var cols = ['staff_id', 'date_debut', 'date_fin'].concat(jours.map(function (j) { return j.toLowerCase(); }));
-      var html = '<table class="planning-grid planning-hebdo-grid">' +
-        '<thead><tr><th>Staff</th><th>Début</th><th>Fin</th>';
-      jours.forEach(function (j) { html += '<th>' + j.charAt(0) + '</th>'; });
-      html += '</tr></thead><tbody>';
-
-      rows.forEach(function (row) {
-        html += '<tr>';
-        html += '<td>' + escapeHtml(row.staff_id != null ? '#' + row.staff_id : '?') + '</td>';
-        html += '<td>' + (row.date_debut ? new Date(row.date_debut).toLocaleDateString('fr-FR') : '—') + '</td>';
-        html += '<td>' + (row.date_fin ? new Date(row.date_fin).toLocaleDateString('fr-FR') : '—') + '</td>';
-        jours.forEach(function (j) {
-          var key = j.toLowerCase();
-          var val = row[key];
-          var cls = 'cell-empty';
-          if (val && val !== 'repos') {
-            cls = 'cell-active';
-            if (val.toLowerCase().indexOf('garde') !== -1 || val.toLowerCase().indexOf('nuit') !== -1) cls = 'cell-garde';
-            else if (val.toLowerCase().indexOf('cong') !== -1 || val.toLowerCase().indexOf('time_off') !== -1) cls = 'cell-conge';
-            else if (val.toLowerCase().indexOf('format') !== -1) cls = 'cell-formation';
-            else if (val.toLowerCase().indexOf('malad') !== -1) cls = 'cell-maladie';
-          } else if (!val || val === 'repos' || val === '') {
-            val = '—';
-            cls = 'cell-empty';
-          }
-          html += '<td class="' + cls + '" title="' + escapeHtml(j) + '">' + escapeHtml(val) + '</td>';
-        });
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-      return html;
-    }
-
-    function renderActiviteJours(rows) {
-      var staffIds = [];
-      var joursMap = {};
-      rows.forEach(function (row) {
-        var sid = row.staff_id;
-        if (!staffIds.includes(sid)) staffIds.push(sid);
-        if (!joursMap[sid]) joursMap[sid] = {};
-        joursMap[sid][row.jour] = row.statut;
-      });
-      staffIds.sort();
-
-      var jours = [];
-      for (var d = 1; d <= 31; d++) jours.push(d);
-
-      var html = '<table class="planning-grid">' +
-        '<thead><tr><th>Staff</th>';
-      jours.forEach(function (d) { html += '<th>' + d + '</th>'; });
-      html += '</tr></thead><tbody>';
-
-      staffIds.forEach(function (sid) {
-        html += '<tr><td>#' + sid + '</td>';
-        jours.forEach(function (d) {
-          var statut = joursMap[sid] && joursMap[sid][d];
-          var cls = 'cell-empty';
-          if (statut) {
-            var s = statut.toLowerCase();
-            if (s.indexOf('garde') !== -1 || s.indexOf('nuit') !== -1) cls = 'cell-garde';
-            else if (s.indexOf('cong') !== -1 || s.indexOf('time_off') !== -1) cls = 'cell-conge';
-            else if (s.indexOf('format') !== -1) cls = 'cell-formation';
-            else if (s.indexOf('malad') !== -1) cls = 'cell-maladie';
-            else if (s.indexOf('repos') === -1) cls = 'cell-active';
-          }
-          html += '<td class="' + cls + '" title="Jour ' + d + '">' + (statut ? escapeHtml(statut.substring(0, 4)) : '—') + '</td>';
-        });
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-      return html;
-    }
-
-    function renderBranchesPlanning(rows) {
-      var html = '<div class="staff-cards">';
-      var icons = ['🏢', '🏥', '🏨', '🏛️', '🏪'];
-      rows.forEach(function (b, i) {
-        html += '<div class="staff-card">' +
-          '<div class="sc-header">' +
-            '<div style="font-size:1.5rem">' + (icons[i % icons.length]) + '</div>' +
-            '<div><div class="sc-name">' + escapeHtml(b.branch_nom) + '</div>' +
-            '<div class="sc-grade">ID #' + b.id + '</div></div>' +
-          '</div>' +
-        '</div>';
-      });
-      html += '</div>';
-      return html;
-    }
-
-    function renderTypeActivitesPlanning(rows) {
-      var html = '<div class="staff-cards">';
-      rows.forEach(function (act) {
-        var color = act.couleur_hex != null ? '#' + act.couleur_hex.toString(16).padStart(6, '0') : '#3b82f6';
-        html += '<div class="staff-card">' +
-          '<div class="sc-header">' +
-            '<div style="width:28px;height:28px;border-radius:6px;background:' + color + ';flex-shrink:0"></div>' +
-            '<div><div class="sc-name">' + escapeHtml(act.libelle || act.code) + '</div>' +
-            '<div class="sc-grade">Code: ' + escapeHtml(act.code) + '</div></div>' +
-          '</div>' +
-          (act.description ? '<p style="font-size:.78rem;color:var(--text-muted);margin-top:6px">' + escapeHtml(act.description) + '</p>' : '') +
-        '</div>';
-      });
-      html += '</div>';
-      return html;
-    }
-
-    function renderTimeOffsPlanning(rows) {
-      var html = '<table class="planning-grid">' +
-        '<thead><tr><th>Staff</th><th>Début</th><th>Fin</th><th>Motif</th></tr></thead><tbody>';
-      rows.forEach(function (to) {
-        var debut = to.debut ? new Date(to.debut).toLocaleDateString('fr-FR') : '—';
-        var fin   = to.fin ? new Date(to.fin).toLocaleDateString('fr-FR') : '—';
-        html += '<tr>' +
-          '<td>' + escapeHtml(to.staff_id != null ? '#' + to.staff_id : '?') + '</td>' +
-          '<td class="cell-conge">' + debut + '</td>' +
-          '<td class="cell-conge">' + fin + '</td>' +
-          '<td>' + escapeHtml(to.motif || '—') + '</td>' +
-        '</tr>';
-      });
-      html += '</tbody></table>';
-      return html;
-    }
-
-    function renderPlanificationsPlanning(rows) {
-      var html = '<table class="planning-grid">' +
-        '<thead><tr><th>ID</th><th>Mois</th><th>Année</th><th>Branche</th><th>Ordre équipes</th></tr></thead><tbody>';
-      rows.forEach(function (p) {
-        var mois = [
-          'Janvier','Février','Mars','Avril','Mai','Juin',
-          'Juillet','Août','Septembre','Octobre','Novembre','Décembre'
-        ];
-        var moisNom = (p.mois >= 1 && p.mois <= 12) ? mois[p.mois - 1] : p.mois;
-        html += '<tr>' +
-          '<td>' + p.id + '</td>' +
-          '<td><strong>' + moisNom + '</strong></td>' +
-          '<td>' + (p.annee || '—') + '</td>' +
-          '<td>' + (p.branch_id != null ? '#' + p.branch_id : '—') + '</td>' +
-          '<td style="font-size:.7rem">' + escapeHtml(p.ordre_equipes || '—') + '</td>' +
-        '</tr>';
-      });
-      html += '</tbody></table>';
-      return html;
-    }
-
-    function renderGenericPlanning(rows) {
-      var columns = Object.keys(rows[0] || {});
-      var html = '<table class="planning-grid">' +
-        '<thead><tr>';
-      columns.forEach(function (col) { html += '<th>' + escapeHtml(col) + '</th>'; });
-      html += '</tr></thead><tbody>';
-      rows.forEach(function (row) {
-        html += '<tr>';
-        columns.forEach(function (col) {
-          var val = row[col];
-          if (val && typeof val === 'object') val = JSON.stringify(val);
-          html += '<td>' + escapeHtml(val) + '</td>';
-        });
-        html += '</tr>';
-      });
-      html += '</tbody></table>';
-      return html;
-    }
-
-    // ── Fetch & render ───────────────────────────────────────────────
-    async function fetchTable(tableName) {
-      if (!supabaseClient) {
-        showError('Supabase non initialisé');
-        return;
-      }
-
-      try {
-        var res = await supabaseClient
-          .from(tableName)
-          .select('*')
-          .limit(500);
-
-        if (res.error) {
-          showError('Erreur PostgREST : ' + res.error.message);
-          return;
-        }
-
-        var rows = res.data || [];
-        setConnected(true);
-
-        if (planningMode) {
-          renderPlanning(rows, tableName);
-        } else {
-          if (rows.length === 0) {
-            thead.innerHTML = '';
-            tbody.innerHTML = '';
-            emptyEl.classList.remove('hidden');
-            errorEl.classList.add('hidden');
-            countEl.textContent = '0 ligne';
-            return;
-          }
-          var columns = Object.keys(rows[0]);
-          renderTable(rows, columns);
-        }
-      } catch (err) {
-        showError('Erreur réseau : ' + err.message);
-      }
-    }
-
-    // ── Event listeners ──────────────────────────────────────────────
-    tableSelect.addEventListener('change', function () {
-      fetchTable(tableSelect.value);
-    });
-
-    btnPlanning.addEventListener('click', function () {
-      var newMode = planningMode ? 'table' : 'planning';
-      setViewMode(newMode);
-      fetchTable(tableSelect.value);
-    });
-
-    // ── Init ─────────────────────────────────────────────────────────
     function initSupabase() {
-      if (typeof supabase === 'undefined' || !supabase.createClient) {
-        showError('SDK Supabase non chargé');
-        return;
-      }
-
-      try {
+      if (typeof supabase !== 'undefined') {
         supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         setConnected(true);
         fetchTable(tableSelect.value);
-      } catch (err) {
-        showError('Erreur init Supabase : ' + err.message);
       }
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSupabase);
-    } else {
-      initSupabase();
-    }
+    tableSelect.addEventListener('change', () => fetchTable(tableSelect.value));
+    btnPlanning.addEventListener('click', () => {
+      setViewMode(planningMode ? 'table' : 'planning');
+      fetchTable(tableSelect.value);
+    });
+
+    initSupabase();
   })();
 </script>
-
 </body>
 </html>

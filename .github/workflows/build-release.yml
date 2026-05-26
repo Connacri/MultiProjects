@@ -115,7 +115,7 @@ jobs:
       - name: Renommer l'APK avec la version
         run: |
           cp build/app/outputs/flutter-apk/app-release.apk \
-             build/app/outputs/flutter-apk/kenzy-${VERSION_FULL}.apk
+             build/app/outputs/flutter-apk/MedicalStaffPlanning-${VERSION_FULL}.apk
 
       - uses: actions/upload-artifact@v4
         with:
@@ -279,7 +279,7 @@ jobs:
           draft:      false
           prerelease: false
           body: |
-            ## 🩺 kenzy – Release ${{ env.VERSION_FULL }}
+            ## 🩺 Medical Staff Planning – Release ${{ env.VERSION_FULL }}
 
             ### Planning Hospitalier
             Application Flutter multiplateforme (Android + Windows Desktop)
@@ -378,7 +378,7 @@ jobs:
           WIN_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/installer.exe"
 
           cat > README.md << HEREDOC
-          # 🩺 kenzy
+          # 🩺 Medical Staff Planning
           ### *A new Hospital DZ project*
 
           ---

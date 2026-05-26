@@ -229,6 +229,7 @@ flutter:
     - assets/location.png
     - assets/heart.png
     - assets/lotties/
+    - assets/qrcode/
     - assets/images/ic_launcher/1024.png
     - assets/images/744878.png
     - assets/images/icon.png

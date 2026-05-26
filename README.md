@@ -1,4 +1,4 @@
-# 🩺 kenzy
+# 🩺 Medical Staff Planning
 ### *A new Hospital DZ project*
 
 ---
