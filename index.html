@@ -993,7 +993,16 @@
     async function fetchTable(tableName) {
       if (!supabaseClient) return;
       try {
-        var res = await supabaseClient.from(tableName).select('*').limit(500);
+        var query = supabaseClient.from(tableName).select('*');
+        
+        // Optimisation pour le mode planning : jointures pour avoir les noms
+        if (tableName === 'activite_jours' || tableName === 'time_offs' || tableName === 'planning_hebdos') {
+          query = supabaseClient.from(tableName).select('*, staffs(nom)');
+        } else if (tableName === 'staffs') {
+          query = supabaseClient.from(tableName).select('*, branches(branch_nom)');
+        }
+        
+        var res = await query.limit(500);
         if (res.error) {
           showError(res.error.message);
           return;
@@ -1015,13 +1024,97 @@
       emptyEl.classList.add('hidden');
       var cols = Object.keys(rows[0]);
       thead.innerHTML = '<tr>' + cols.map(c => '<th>'+escapeHtml(c)+'</th>').join('') + '</tr>';
-      tbody.innerHTML = rows.map(r => '<tr>' + cols.map(c => '<td>'+escapeHtml(r[c])+'</td>').join('') + '</tr>').join('');
+      
+      tbody.innerHTML = rows.map(r => {
+        return '<tr>' + cols.map(c => {
+          var val = r[c];
+          if (val && typeof val === 'object') {
+            val = val.nom || val.branch_nom || val.name || JSON.stringify(val);
+          }
+          return '<td>' + escapeHtml(val) + '</td>';
+        }).join('') + '</tr>';
+      }).join('');
+      
       countEl.textContent = rows.length + ' ligne(s)';
     }
 
     function renderPlanning(rows, tableName) {
-      planningView.innerHTML = '<div style="padding:20px;text-align:center">Mode planning pour ' + tableName + ' en cours de chargement...</div>';
-      // Simplification pour l'exemple
+      if (rows.length === 0) {
+        planningView.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">📭 Aucune donnée disponible pour générer le planning.</div>';
+        return;
+      }
+
+      // Detection du type de planning
+      if (tableName === 'activite_jours' || rows[0].hasOwnProperty('jour')) {
+        renderMonthlyPlanning(rows);
+      } else if (tableName === 'planning_hebdos' || rows[0].hasOwnProperty('lundi')) {
+        renderWeeklyPlanning(rows);
+      } else {
+        planningView.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">⚠️ Mode planning non supporté pour la table <b>' + tableName + '</b>.<br><small>Utilisez "Activités par jour" ou "Planning Hebdo".</small></div>';
+      }
+    }
+
+    function renderMonthlyPlanning(rows) {
+      var staffMap = {};
+      var maxDay = 0;
+
+      rows.forEach(r => {
+        var sId = r.staff_id || 'unassigned';
+        var sName = (r.staffs && r.staffs.nom) || ('Staff #' + sId);
+        var day = parseInt(r.jour);
+        if (!staffMap[sId]) staffMap[sId] = { name: sName, days: {} };
+        staffMap[sId].days[day] = r.statut || 'OK';
+        if (day > maxDay) maxDay = day;
+      });
+
+      if (maxDay === 0) maxDay = 31;
+
+      var html = '<table class="planning-grid"><thead><tr><th>Personnel</th>';
+      for (var d = 1; d <= maxDay; d++) html += '<th>' + d + '</th>';
+      html += '</tr></thead><tbody>';
+
+      Object.keys(staffMap).sort((a,b) => staffMap[a].name.localeCompare(staffMap[b].name)).forEach(id => {
+        var s = staffMap[id];
+        html += '<tr><td>' + escapeHtml(s.name) + '</td>';
+        for (var d = 1; d <= maxDay; d++) {
+          var code = s.days[d] || '';
+          var cls = 'cell-empty';
+          if (code) {
+            cls = 'cell-active';
+            var c = code.toUpperCase();
+            if (c === 'G') cls = 'cell-garde';
+            else if (c === 'R' || c === 'RE' || c === 'REC') cls = 'cell-repos';
+            else if (c === 'C' || c === 'CON') cls = 'cell-conge';
+            else if (c === 'M' || c === 'MAL') cls = 'cell-maladie';
+          }
+          html += '<td class="' + cls + '">' + escapeHtml(code) + '</td>';
+        }
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      planningView.innerHTML = html;
+    }
+
+    function renderWeeklyPlanning(rows) {
+      var html = '<table class="planning-grid"><thead><tr>' +
+        '<th>Personnel</th><th>Dim</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th>' +
+        '</tr></thead><tbody>';
+
+      rows.forEach(r => {
+        var sName = (r.staffs && r.staffs.nom) || ('Staff #' + r.staff_id);
+        html += '<tr>' +
+          '<td>' + escapeHtml(sName) + '</td>' +
+          '<td class="'+(r.dimanche?'cell-active':'')+'">' + escapeHtml(r.dimanche||'') + '</td>' +
+          '<td class="'+(r.lundi?'cell-active':'')+'">' + escapeHtml(r.lundi||'') + '</td>' +
+          '<td class="'+(r.mardi?'cell-active':'')+'">' + escapeHtml(r.mardi||'') + '</td>' +
+          '<td class="'+(r.mercredi?'cell-active':'')+'">' + escapeHtml(r.mercredi||'') + '</td>' +
+          '<td class="'+(r.jeudi?'cell-active':'')+'">' + escapeHtml(r.jeudi||'') + '</td>' +
+          '<td class="'+(r.vendredi?'cell-active':'')+'">' + escapeHtml(r.vendredi||'') + '</td>' +
+          '<td class="'+(r.samedi?'cell-active':'')+'">' + escapeHtml(r.samedi||'') + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      planningView.innerHTML = html;
     }
 
     function initSupabase() {
