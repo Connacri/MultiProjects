@@ -6647,7 +6647,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     equipesDisponibles.sort();
 
-      if (equipesDisponibles.isEmpty) {
+    if (equipesDisponibles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Aucune équipe paramédicale trouvée (A,B,C,D)"),
