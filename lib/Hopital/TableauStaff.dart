@@ -371,12 +371,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       int modifications = 0;
 
       // 1️⃣ PERSONNEL MÉDICAL ET ADMINISTRATIF : Remplissage automatique
-      final personnelMedicalAdmin = staffProvider.staffs.where((staff) {
-        return (staff.grade.toLowerCase().contains('médecin') ||
-                staff.groupe == '08H-16H') &&
-            staff.groupe != 'Garde 24H' &&
-            staff.grade != "Agent d'hygiène";
-      }).toList();
+      final personnelMedicalAdmin = staffProvider.staffs
+          .where(_isMedicalOrAdministrativePlanningStaff)
+          .toList();
 
       for (final staff in personnelMedicalAdmin) {
         final equipe = staff.equipe?.toUpperCase();
@@ -514,9 +511,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
-      final agentsHygiene = staffProvider.staffs
-          .where((s) => s.grade.toLowerCase().contains('hygiène') || s.groupe == '12H')
-          .toList();
+      final agentsHygiene =
+          staffProvider.staffs.where(_isHygieneStaff).toList();
 
       if (agentsHygiene.isEmpty) return;
 
@@ -941,18 +937,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     for (var staff in staffsOrdonnes) {
       String groupeAffichage;
 
-      // Classification des groupes (inchangé)
-      if (staff.grade.toLowerCase().contains('médecin') ||
-          staff.grade.toLowerCase().contains('rhumatologue')) {
+      if (_isMedicalStaff(staff)) {
         groupeAffichage = 'Personnel Médical';
-      } else if (staff.groupe == '12H' ||
-          staff.grade.toLowerCase().contains('hygiène')) {
+      } else if (_isHygieneStaff(staff)) {
         groupeAffichage = 'Agents d\'hygiène (12h)';
-      } else if (staff.groupe == '08H-16H') {
+      } else if (_isAdministrativeStaff(staff)) {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
-      } else if (staff.groupe == '24H' ||
-          staff.groupe.toLowerCase() == 'Garde 24H' ||
-          staff.groupe.toLowerCase() == 'garde 24h') {
+      } else if (_isParamedicalStaff(staff)) {
         groupeAffichage = 'Personnel Paramédical (24h)';
       } else {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
@@ -3223,19 +3214,72 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
+  String _normalizedGroup(String groupe) => groupe.trim().toUpperCase();
+
+  bool _isMedicalStaff(Staff staff) {
+    final grade = staff.grade.toLowerCase();
+    return grade.contains('médecin') ||
+        grade.contains('medecin') ||
+        grade.contains('rhumatologue');
+  }
+
+  bool _isHygieneStaff(Staff staff) {
+    final groupe = _normalizedGroup(staff.groupe);
+    final grade = staff.grade.toLowerCase();
+    return groupe == '12H' ||
+        groupe.contains('08H-12H') ||
+        grade.contains('hygiène') ||
+        grade.contains('hygiene');
+  }
+
+  bool _isParamedicalGroup(String groupeValue) {
+    final groupe = _normalizedGroup(groupeValue);
+    return groupe == '24H' ||
+        groupe.contains('GARDE 24') ||
+        groupe.contains('GARDE 12H') ||
+        groupe.contains('08H-08H');
+  }
+
+  bool _isParamedicalStaff(Staff staff) {
+    if (_isParamedicalGroup(staff.groupe)) return true;
+    if (!_isMedicalStaff(staff) && !_isHygieneStaff(staff)) {
+      final equipe = staff.equipe?.toUpperCase();
+      if (equipe != null && ['A', 'B', 'C', 'D'].contains(equipe)) return true;
+    }
+    return false;
+  }
+
+  bool _isAdministrativeStaff(Staff staff) {
+    final groupe = _normalizedGroup(staff.groupe);
+    return groupe.contains('08H-16H') &&
+        !_isMedicalStaff(staff) &&
+        !_isParamedicalStaff(staff) &&
+        !_isHygieneStaff(staff);
+  }
+
+  bool _isMedicalOrAdministrativePlanningStaff(Staff staff) {
+    if (_isParamedicalStaff(staff) || _isHygieneStaff(staff)) {
+      return false;
+    }
+
+    return _isMedicalStaff(staff) ||
+        _normalizedGroup(staff.groupe).contains('08H-16H');
+  }
+
+  bool _hasEquipeInOrder(Staff staff, List<String> equipesOrdonnees) {
+    final equipe = staff.equipe?.toUpperCase();
+    return equipe != null && equipesOrdonnees.contains(equipe);
+  }
+
   /// ✅ HELPER : Déterminer le groupe d'affichage d'un staff
   String _getGroupeAffichage(Staff staff) {
-    if (staff.grade.toLowerCase().contains('médecin') ||
-        staff.grade.toLowerCase().contains('rhumatologue')) {
+    if (_isMedicalStaff(staff)) {
       return 'Personnel Médical';
-    } else if (staff.groupe == '12H' ||
-        staff.grade.toLowerCase().contains('hygiène')) {
+    } else if (_isHygieneStaff(staff)) {
       return 'Agents d\'hygiène (12h)';
-    } else if (staff.groupe == '08H-16H') {
+    } else if (_isAdministrativeStaff(staff)) {
       return 'Personnel Administratif (08h-16h)';
-    } else if (staff.groupe == '24H' ||
-        staff.groupe.toLowerCase() == 'Garde 24H' ||
-        staff.groupe.toLowerCase() == 'garde 24h') {
+    } else if (_isParamedicalStaff(staff)) {
       return 'Personnel Paramédical (24h)';
     } else {
       return 'Personnel Administratif (08h-16h)';
@@ -4901,12 +4945,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             // Déterminer si on affiche l'équipe
             bool showEquipe = false;
             if (!isCreatingNewGroupe && selectedGroupe != null) {
-              showEquipe = selectedGroupe!.toUpperCase().contains('08H-08H') ||
-                  selectedGroupe!.toUpperCase().contains('GARDE 24H');
+              showEquipe = _isParamedicalGroup(selectedGroupe!);
             } else if (isCreatingNewGroupe) {
-              final newText = newGroupeCtrl.text.toUpperCase();
-              showEquipe =
-                  newText.contains('08H-08H') || newText.contains('GARDE 24H');
+              showEquipe = _isParamedicalGroup(newGroupeCtrl.text);
             }
 
             return AlertDialog(
@@ -4965,8 +5006,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                               selectedGroupe = null;
                             } else {
                               selectedGroupe = value;
-                              if (!value!.toUpperCase().contains('08H-08H') &&
-                                  !value.toUpperCase().contains('GARDE 24H')) {
+                              if (!_isParamedicalGroup(value!)) {
                                 selectedEquipe = null;
                               }
                             }
@@ -5418,9 +5458,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
 // ✅ NOUVELLE MÉTHODE : Déterminer le statut à restaurer après suppression d'un congé
   String _determinerStatutApresSuppressionConge(Staff staff, DateTime date) {
-    final groupe = staff.groupe?.toUpperCase() ?? '';
-    final isHygiene =
-        groupe.contains('08H-12H') || staff.grade.toLowerCase().contains('hygiène');
+    final groupe = _normalizedGroup(staff.groupe);
+    final isHygiene = _isHygieneStaff(staff);
 
     // 1. Vérifier si c'est un weekend (sauf hygiène: week-ends inclus)
     if (!isHygiene &&
@@ -5448,7 +5487,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
 
     // Personnel médical avec équipes (08H-08H ou Garde 12H)
-    if ((groupe.contains('08H-08H') || groupe.contains('GARDE 24H')) &&
+    if (_isParamedicalStaff(staff) &&
         equipe != null &&
         ['A', 'B', 'C', 'D'].contains(equipe)) {
       // Vérifier la rotation en cours
@@ -5489,9 +5528,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       // Récupérer tous les agents d'hygiène
       final agentsHygiene = objectBox.staffBox
           .getAll()
-          .where((s) =>
-              s.grade.toLowerCase().contains('hygiène') ||
-              s.groupe == '08H-12H')
+          .where(_isHygieneStaff)
           .toList();
 
       if (agentsHygiene.isEmpty) return 'RE';
@@ -6599,21 +6636,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<void> _showSimplePlanificationDialog() async {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
-    // 1. Identifier les équipes médicales disponibles
+    // 1. Identifier les équipes paramédicales disponibles
     final equipesDisponibles = staffProvider.staffs
         .where((staff) =>
-            staff.equipe != null &&
-            ['A', 'B', 'C', 'D'].contains(staff.equipe!.toUpperCase()))
+            _isParamedicalStaff(staff) &&
+            _hasEquipeInOrder(staff, ['A', 'B', 'C', 'D']))
         .map((staff) => staff.equipe!.toUpperCase())
         .toSet()
         .toList();
 
     equipesDisponibles.sort();
 
-    if (equipesDisponibles.isEmpty) {
+      if (equipesDisponibles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Aucune équipe médicale trouvée (A,B,C,D)"),
+          content: Text("Aucune équipe paramédicale trouvée (A,B,C,D)"),
           backgroundColor: Colors.red,
         ),
       );
@@ -7148,16 +7185,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         objectBox.planificationBox.put(planif);
       }
 
-      // ✅ 2. Sélectionner le personnel médical concerné
-      final personnelMedical = staffProvider.staffs
+      // ✅ 2. Sélectionner uniquement le personnel paramédical concerné
+      final personnelParamedical = staffProvider.staffs
           .where((staff) =>
-              staff.equipe != null &&
-              equipesOrdonnees.contains(staff.equipe!.toUpperCase()))
+              _isParamedicalStaff(staff) &&
+              _hasEquipeInOrder(staff, equipesOrdonnees))
           .toList();
 
-      if (personnelMedical.isEmpty) {
+      if (personnelParamedical.isEmpty) {
         throw Exception(
-            "Aucun personnel médical trouvé avec les équipes sélectionnées");
+            "Aucun personnel paramédical trouvé avec les équipes sélectionnées");
       }
 
       // ✅ 3. Collecter TOUS les congés (TimeOff + activités C/CM) pour le mois sélectionné
@@ -7186,7 +7223,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       // --- Congés depuis ActiviteJour (C/CM/M)
-      for (final staff in personnelMedical) {
+      for (final staff in personnelParamedical) {
         congesParStaff.putIfAbsent(staff.id, () => {});
         for (var activite in staff.activites) {
           if ((activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M') &&
@@ -7202,7 +7239,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         int equipeIndex = (day - 1) % equipesOrdonnees.length;
         String equipeDeGarde = equipesOrdonnees[equipeIndex];
 
-        for (final staff in personnelMedical) {
+        for (final staff in personnelParamedical) {
           if (congesParStaff[staff.id]!.containsKey(day)) continue;
 
           String nouveauStatut =
@@ -7228,7 +7265,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       // ✅ 5. Appliquer les congés et écraser si nécessaire
-      for (final staff in personnelMedical) {
+      for (final staff in personnelParamedical) {
         for (var entry in congesParStaff[staff.id]!.entries) {
           int jour = entry.key;
           String statutConge = entry.value;
@@ -8725,7 +8762,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             child: Text(
               "Cette action va :\n"
               "PHASE 1 - Attribution initiale :\n"
-              "• Planification Réussite pour Tout Le STaff\n"
+              "• Planification du personnel médical/administratif uniquement\n"
               "PHASE 2 - Application des congés :\n"
               "• Les congés existants vont etre assigné\n"
               "• Aucun congé ne sera perdu\n"
@@ -8765,20 +8802,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       int staffAutres = 0;
       int congesAppliques = 0;
       int gardesEcrasees = 0;
+      final personnelPlanifiable = staffProvider.staffs
+          .where(_isMedicalOrAdministrativePlanningStaff)
+          .toList();
+
+      if (personnelPlanifiable.isEmpty) {
+        throw Exception("Aucun personnel médical ou administratif à planifier");
+      }
 
       print("🔄 PHASE 1: Attribution automatique (ignorant les congés)");
 
       // PHASE 1: ATTRIBUTION AUTOMATIQUE
-      for (final staff in staffProvider.staffs) {
-        if (staff.groupe == "Garde 24") {
-          print("⏩ ${staff.nom} ignoré car groupe = Garde 24H");
-          continue;
-        }
-        if (staff.grade == "Agent d'hygiène") {
-          print("⏩ ${staff.nom} ignoré car Grade = Agent d'hygiène");
-          continue;
-        }
-
+      for (final staff in personnelPlanifiable) {
         final equipe = staff.equipe?.toUpperCase();
         final isEquipeABCD =
             equipe != null && ['A', 'B', 'C', 'D'].contains(equipe);
@@ -8796,12 +8831,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           if (date.weekday == DateTime.friday ||
               date.weekday == DateTime.saturday) {
             statutAAffecter = "RE";
-            if (staff == staffProvider.staffs.first) {
+            if (staff == personnelPlanifiable.first) {
               weekendDaysCount++;
             }
           } else {
             statutAAffecter = isEquipeABCD ? "-" : "N";
-            if (staff == staffProvider.staffs.first) {
+            if (staff == personnelPlanifiable.first) {
               normalDaysCount++;
             }
           }
@@ -8820,9 +8855,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       print("🔄 PHASE 2: Application des congés (écrasement)");
 
       // PHASE 2: APPLIQUER LES CONGÉS
-      for (final staff in staffProvider.staffs) {
-        if (staff.groupe == "Garde 24H") continue;
-
+      for (final staff in personnelPlanifiable) {
         print("  Traitement congés pour ${staff.nom}...");
 
         final timeOffQuery =
@@ -8874,6 +8907,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       await staffProvider.fetchStaffs();
+      await staffProvider.saveMonthActivities(_selectedYear, _selectedMonth);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
@@ -8957,8 +8991,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 ? newGroupeCtrl.text.toUpperCase()
                 : (selectedGroupe ?? "").toUpperCase();
 
-            final showEquipe = groupeTexte.contains('08H-08H') ||
-                groupeTexte.contains('GARDE 24H');
+            final showEquipe = _isParamedicalGroup(groupeTexte);
             final show08h16hCategorie = groupeTexte.contains('08H-16H');
             final show08h12h = groupeTexte.contains('08H-12H'); // 🆕 AJOUTT
 
