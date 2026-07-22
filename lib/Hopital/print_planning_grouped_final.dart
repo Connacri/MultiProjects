@@ -911,10 +911,47 @@ pw.Widget _buildGroupTable(
       PdfColor bg = isWeekend ? PdfColors.grey900 : PdfColors.white;
       PdfColor txtColor = isWeekend ? PdfColors.white : PdfColors.grey900;
 
-      // ✅ Ajouter couleur pour Jour Férié (F)
-      if (statut == 'F') {
-        bg = PdfColors.orange;
-        txtColor = PdfColors.white;
+      // Reprendre les mêmes couleurs que le tableau paramédical à l'écran.
+      // Les week-ends restent noirs afin de préserver le repérage des jours.
+      if (!isWeekend) {
+        switch (statut.trim().toUpperCase()) {
+          case 'GJ':
+          case 'G':
+          case 'JOUR':
+            bg = PdfColors.blue700;
+            txtColor = PdfColors.white;
+            break;
+          case 'GN':
+          case 'NUIT':
+            bg = PdfColors.indigo;
+            txtColor = PdfColors.white;
+            break;
+          case 'RE':
+          case 'RÉ':
+            bg = PdfColors.grey700;
+            txtColor = PdfColors.white;
+            break;
+          case 'C':
+            bg = PdfColors.deepOrange;
+            txtColor = PdfColors.white;
+            break;
+          case 'CM':
+            bg = PdfColors.purple;
+            txtColor = PdfColors.white;
+            break;
+          case 'M':
+            bg = PdfColors.red;
+            txtColor = PdfColors.white;
+            break;
+          case 'N':
+            bg = PdfColors.green;
+            txtColor = PdfColors.white;
+            break;
+          case 'F':
+            bg = PdfColors.orange;
+            txtColor = PdfColors.white;
+            break;
+        }
       }
 
       cells.add(
