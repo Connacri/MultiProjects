@@ -154,7 +154,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
           groupe.toUpperCase().contains('16H')) {
         title = '08h–16h';
       } else {
-        title = '24h'; //groupe;
+        title = '16h'; // Libellé PDF du tableau paramédical.
       }
 
       final prefix = getMonthPrefix(monthName);
@@ -229,7 +229,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                    'GJ : Jour       GN : Nuit       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
+                    'Jour       Nuit       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
                     style: baseStyle),
                 pw.Text(
                     'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
@@ -454,7 +454,7 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
       currentOption = paramedicalOption;
       sortStaffList(membres);
       subGroups.add(membres);
-      pageTitle = '24h';
+      pageTitle = '16h';
     }
 
     // Générer les pages pour les groupes simples
@@ -624,7 +624,7 @@ pw.Widget _buildPageFooterContent(pw.TextStyle baseStyle) {
     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
     children: [
       pw.Text(
-          'GJ : Jour       GN : Nuit       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
+          'Jour       Nuit       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
           style: baseStyle),
 
       pw.Text(
@@ -819,34 +819,31 @@ pw.Widget _buildGroupTable(
 
   // ⭐ Largeurs de colonnes ajustées selon la présence d'équipe
   final columnWidths = <int, pw.TableColumnWidth>{
-    0: const pw.FlexColumnWidth(1.22), // Nom -10%
-    1: const pw.FlexColumnWidth(1.1), // Grade -20%
+    0: const pw.FlexColumnWidth(0.94), // Nom/prénom élargi de 10 %
+    1: const pw.FlexColumnWidth(0.55), // Grade : -50 %
   };
 
   if (hasEquipes) {
     columnWidths[2] = const pw.FixedColumnWidth(25); // Colonne Équipe
     for (int i = 0; i < daysInMonth; i++) {
-      columnWidths[3 + i] = const pw.FixedColumnWidth(18);
+      columnWidths[3 + i] = const pw.FixedColumnWidth(20);
     }
   } else {
     for (int i = 0; i < daysInMonth; i++) {
-      columnWidths[2 + i] = const pw.FixedColumnWidth(18);
+      columnWidths[2 + i] = const pw.FixedColumnWidth(20);
     }
   }
 
   final headerCells = <pw.Widget>[];
   for (int ci = 0; ci < headers.length; ci++) {
-    bool isWeekend = false;
-
-    // ⭐ Ajuster l'offset selon la présence de la colonne Équipe
     final dayColumnStart = hasEquipes ? 3 : 2;
-
-    if (ci >= dayColumnStart) {
-      final day = ci - dayColumnStart + 1;
-      final date = DateTime(year, month, day);
-      isWeekend =
-          date.weekday == DateTime.friday || date.weekday == DateTime.saturday;
-    }
+    final isWeekend = ci >= dayColumnStart &&
+        (() {
+          final day = ci - dayColumnStart + 1;
+          final date = DateTime(year, month, day);
+          return date.weekday == DateTime.friday ||
+              date.weekday == DateTime.saturday;
+        })();
     final bg = isWeekend ? PdfColors.black : PdfColors.grey300;
     final txtColor = isWeekend ? PdfColors.white : PdfColors.black;
 
@@ -894,75 +891,41 @@ pw.Widget _buildGroupTable(
     final row = data[r];
     final cells = <pw.Widget>[];
     for (int ci = 0; ci < row.length; ci++) {
-      bool isWeekend = false;
-
-      // ⭐ Ajuster l'offset selon la présence de la colonne Équipe
       final dayColumnStart = hasEquipes ? 3 : 2;
+      final isWeekend = ci >= dayColumnStart &&
+          (() {
+            final day = ci - dayColumnStart + 1;
+            final date = DateTime(year, month, day);
+            return date.weekday == DateTime.friday ||
+                date.weekday == DateTime.saturday;
+          })();
+      final rawStatut = row[ci].trim();
+      final statut = switch (rawStatut.toUpperCase()) {
+        'GJ' || 'G' || 'JOUR' => 'Jour',
+        'GN' || 'NUIT' => 'Nuit',
+        _ => rawStatut,
+      };
 
-      if (ci >= dayColumnStart) {
-        final day = ci - dayColumnStart + 1;
-        final date = DateTime(year, month, day);
-        isWeekend = date.weekday == DateTime.friday ||
-            date.weekday == DateTime.saturday;
-      }
-
-      final statut = row[ci];
-      
-      PdfColor bg = isWeekend ? PdfColors.grey900 : PdfColors.white;
-      PdfColor txtColor = isWeekend ? PdfColors.white : PdfColors.grey900;
-
-      // Reprendre les mêmes couleurs que le tableau paramédical à l'écran.
-      // Les week-ends restent noirs afin de préserver le repérage des jours.
-      if (!isWeekend) {
-        switch (statut.trim().toUpperCase()) {
-          case 'GJ':
-          case 'G':
-          case 'JOUR':
-            bg = PdfColors.blue700;
-            txtColor = PdfColors.white;
-            break;
-          case 'GN':
-          case 'NUIT':
-            bg = PdfColors.indigo;
-            txtColor = PdfColors.white;
-            break;
-          case 'RE':
-          case 'RÉ':
-            bg = PdfColors.grey700;
-            txtColor = PdfColors.white;
-            break;
-          case 'C':
-            bg = PdfColors.deepOrange;
-            txtColor = PdfColors.white;
-            break;
-          case 'CM':
-            bg = PdfColors.purple;
-            txtColor = PdfColors.white;
-            break;
-          case 'M':
-            bg = PdfColors.red;
-            txtColor = PdfColors.white;
-            break;
-          case 'N':
-            bg = PdfColors.green;
-            txtColor = PdfColors.white;
-            break;
-          case 'F':
-            bg = PdfColors.orange;
-            txtColor = PdfColors.white;
-            break;
-        }
-      }
+      // Les tableaux PDF restent monochromes, avec F en gris foncé.
+      final bg = isWeekend ? PdfColors.black : PdfColors.white;
+      final txtColor = isWeekend ? PdfColors.white : PdfColors.black;
+      final cellBg = rawStatut.toUpperCase() == 'F'
+          ? PdfColors.grey800
+          : bg;
+      final cellTextColor = rawStatut.toUpperCase() == 'F'
+          ? PdfColors.white
+          : txtColor;
 
       cells.add(
         pw.Container(
           height: 18,
           padding: const pw.EdgeInsets.symmetric(vertical: 2, horizontal: 3),
-          decoration: pw.BoxDecoration(color: bg),
+          decoration: pw.BoxDecoration(color: cellBg),
           alignment: pw.Alignment.center,
           child: pw.Text(
             statut,
-            style: pw.TextStyle(font: oswald, fontSize: 9, color: txtColor),
+            style: pw.TextStyle(
+                font: oswald, fontSize: 9, color: cellTextColor),
             textAlign: pw.TextAlign.center,
           ),
         ),

@@ -935,7 +935,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final ordreGroupes = [
       'Personnel Médical',
       'Personnel Administratif (08h-16h)',
-      'Personnel Paramédical (24h)',
+      'Personnel Paramédical (16h)',
       'Agents d\'hygiène (12h)',
     ];
 
@@ -972,7 +972,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       } else if (_isAdministrativeStaff(staff)) {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
       } else if (_isParamedicalStaff(staff)) {
-        groupeAffichage = 'Personnel Paramédical (24h)';
+        groupeAffichage = 'Personnel Paramédical (16h)';
       } else {
         groupeAffichage = 'Personnel Administratif (08h-16h)';
       }
@@ -1184,14 +1184,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           final groupedStaffs = _groupStaffs(staffs);
           Map<String, String> groupNameToImage = {
             "Personnel Médical": "assets/photos/hopital/d (1).jpg",
-            "Personnel Paramédical (24h)": "assets/photos/hopital/d (8).jpg",
+            "Personnel Paramédical (16h)": "assets/photos/hopital/d (8).jpg",
             "Agents d'hygiène (12h)": "assets/photos/hopital/q (1).jpg",
             "Personnel Administratif (08h-16h)":
                 "assets/photos/hopital/s2 (10).jpg",
           };
           Map<String, List<Color>> groupNameToGradient = {
             "Personnel Médical": [Color(0x6636E3FF), Color(0x6613D6B4)],
-            "Personnel Paramédical (24h)": [
+            "Personnel Paramédical (16h)": [
               Color(0x66FF9A9E),
               Color(0x66FAD0C4)
             ],
@@ -1205,7 +1205,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             "Personnel Médical": () async {
               await runPlanificationAutomatique(context);
             },
-            "Personnel Paramédical (24h)": () =>
+            "Personnel Paramédical (16h)": () =>
                 _showSimplePlanificationDialog(),
             "Agents d'hygiène (12h)": () async {
               await _showPlanificationAgentsHygieneDialog();
@@ -2677,7 +2677,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final ordreGroupes = [
         'Personnel Médical',
         'Personnel Administratif (08h-16h)',
-        'Personnel Paramédical (24h)',
+        'Personnel Paramédical (16h)',
         'Agents d\'hygiène (12h)',
       ];
 
@@ -2944,7 +2944,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final ordreGroupes = [
         'Personnel Médical',
         'Personnel Administratif (08h-16h)',
-        'Personnel Paramédical (24h)',
+        'Personnel Paramédical (16h)',
         'Agents d\'hygiène (12h)',
       ];
 
@@ -3040,7 +3040,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final ordreGroupes = [
         'Personnel Médical',
         'Personnel Administratif (08h-16h)',
-        'Personnel Paramédical (24h)',
+        'Personnel Paramédical (16h)',
         'Agents d\'hygiène (12h)',
       ];
 
@@ -3310,7 +3310,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     } else if (_isAdministrativeStaff(staff)) {
       return 'Personnel Administratif (08h-16h)';
     } else if (_isParamedicalStaff(staff)) {
-      return 'Personnel Paramédical (24h)';
+      return 'Personnel Paramédical (16h)';
     } else {
       return 'Personnel Administratif (08h-16h)';
     }
@@ -3690,7 +3690,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       if (_selectedStaffIds.isNotEmpty) 'Personnes sélectionnées (${_selectedStaffIds.length})',
       'Tous',
       'Personnel Médical',
-      'Personnel Paramédical (24h)',
+      'Personnel Paramédical (16h)',
       'Agents d\'hygiène (12h)',
       'Personnel Administratif (08h-16h)'
     ];
@@ -10680,13 +10680,13 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                 child: TextButton.icon(
                   onPressed: () {
                     setState(() {
-                      ordreJour = ['A', 'C', 'B', 'D'];
-                      ordreNuit = ['D', 'A', 'C', 'B'];
+                      ordreJour = ['A', 'C', 'D', 'B'];
+                      ordreNuit = ['B', 'A', 'C', 'D'];
                     });
                   },
                   icon: Icon(Icons.restart_alt, size: 16, color: Colors.teal.shade600),
                   label: Text(
-                          "Réinitialiser (Jour: A→C→B→D, Nuit: D→A→C→B)",
+                          "Réinitialiser (Jour: A→C→D→B, Nuit: B→A→C→D)",
                     style: TextStyle(fontSize: 11, color: Colors.teal.shade600),
                   ),
                 ),

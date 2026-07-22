@@ -1122,7 +1122,7 @@ pw.Widget _buildParamedicalStaffTable(
 
   final groupe08h08h = paramedical.where((s) {
     final groupe = (s.groupe ?? '').toString().toUpperCase();
-    return groupe.contains('GARDE') && groupe.contains('24H');
+    return groupe.contains('GARDE') && groupe.contains('24H');///
   }).toList();
 
   final groupe08h12h = paramedical.where((s) {
@@ -1199,7 +1199,7 @@ pw.Widget _buildParamedicalStaffTable(
                 _buildMergedCell('08h-16h', oswald, 10, 80,
                     getTotalHeightForGroup(groupe08h16h),
                     bold: true, fullBorder: true, isHoraireBoundary: true),
-                _buildMergedCell('24h', oswald, 10, 80,
+                _buildMergedCell('16h', oswald, 10, 80,
                     getTotalHeightFor08h08h(groupesEquipe, ordreGroupes),
                     bold: true, fullBorder: true, isHoraireBoundary: true),
                 _buildMergedCell(
