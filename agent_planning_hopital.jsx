@@ -119,7 +119,8 @@ create policy if not exists "pub_all" on rotation_state using (true) with check 
 const MOIS_FR  = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const JOURS_FR = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 const CODES = [
-  { code:"G",  label:"Garde",        color:"#ef4444", bg:"#450a0a" },
+  { code:"GJ", label:"Jour",         color:"#3b82f6", bg:"#0c1a3a" },
+  { code:"GN", label:"Nuit",         color:"#6366f1", bg:"#1e1b4b" },
   { code:"RE", label:"Récupération", color:"#f97316", bg:"#431407" },
   { code:"C",  label:"Congé",        color:"#3b82f6", bg:"#0c1a3a" },
   { code:"CM", label:"C. Maladie",   color:"#a855f7", bg:"#2e1065" },
@@ -183,8 +184,9 @@ function getEquipeDebutMois(annee, mois, ordreEquipes) {
   return ordreEquipes[idx];
 }
 
-// Assigner automatiquement les gardes pour un groupe paramédical
-// Règle : chaque équipe fait sa garde un jour sur 4 en rotation
+// Assigner automatiquement les gardes pour un groupe paramédical (Jour/Nuit)
+// Règle : chaque équipe fait Jour→Nuit→2×Repos en rotation
+// Jour=(d-1)%4, Nuit=(d+2)%4, les 2 autres RE
 function autoGardes(annee, mois, membres, ordreEquipes) {
   const days = getDays(annee, mois);
   const equipeDebut = getEquipeDebutMois(annee, mois, ordreEquipes);
@@ -193,12 +195,16 @@ function autoGardes(annee, mois, membres, ordreEquipes) {
   const result = {}; // { "mi:jour": code }
 
   for (let d = 1; d <= days; d++) {
-    const eqIdx = ((d - 1 + debutIdx) % 4 + 4) % 4;
-    const equipeGarde = ordreEquipes[eqIdx];
+    const dayShiftIdx = ((d - 1 + debutIdx) % 4 + 4) % 4;
+    const nightShiftIdx = ((d + 2 + debutIdx) % 4 + 4) % 4;
+    const equipeJour = ordreEquipes[dayShiftIdx];
+    const equipeNuit = ordreEquipes[nightShiftIdx];
 
     membres.forEach((m, mi) => {
-      if (m.equipe === equipeGarde) {
-        result[`${mi}:${d}`] = "G";
+      if (m.equipe === equipeJour) {
+        result[`${mi}:${d}`] = "GJ";
+      } else if (m.equipe === equipeNuit) {
+        result[`${mi}:${d}`] = "GN";
       } else {
         result[`${mi}:${d}`] = "RE";
       }
@@ -596,7 +602,7 @@ Sinon → JSON : {"action":"message","message":"..."}`;
         <div class="unite">Service : ${service?.nom||""}</div>
         <div class="ptitle">${title}</div>
         <div class="tw"><table><thead><tr>${hdr}</tr></thead><tbody>${rows}</tbody></table></div>
-        <div class="leg">G:Garde &nbsp; RE:Récupération &nbsp; C:Congé &nbsp; CM:Congé Maladie &nbsp; M:Maternité &nbsp; N:Normal &nbsp; F:Férié
+        <div class="leg">GJ:Jour &nbsp; GN:Nuit &nbsp; RE:Récupération &nbsp; C:Congé &nbsp; CM:Congé Maladie &nbsp; M:Maternité &nbsp; N:Normal &nbsp; F:Férié
           <span>Aïn el Türck le : ${todayFmt()}</span></div>
         <div class="nb">Rotation gardes ce mois : ${ordreEq.join("→")} (début ${getEquipeDebutMois(year,month,ordreEq)})</div>
         <div class="sigs"><span>Le Médecin Chef</span><span>Le Surveillant Médical</span><span>DAPM</span><span>Le Directeur Général</span></div>
@@ -889,7 +895,7 @@ claude "Crée toutes les tables planning hospitalier dans Supabase"`}</pre>
                           const d=i+1,dow=getDow(year,month,d),we=isWE(dow);
                           const code=conges[ck(g.id,mi,d)]||"";
                           const cInfo=ci(code);
-                          const isAutoGarde = autoMode&&g.id==="paramedical"&&code==="G";
+                          const isAutoGarde = autoMode&&g.id==="paramedical"&&(code==="GJ"||code==="GN"||code==="G");
                           return (
                             <td key={d} style={{...PTD,width:22,padding:0,background:we?"rgba(40,15,0,.6)":isAutoGarde?"rgba(239,68,68,.07)":"transparent",position:"relative"}}>
                               <input value={code} maxLength={3}
@@ -915,7 +921,7 @@ claude "Crée toutes les tables planning hospitalier dans Supabase"`}</pre>
               <div style={{marginTop:10,display:"flex",gap:10,flexWrap:"wrap",fontSize:10,alignItems:"center"}}>
                 {CODES.map(c=><span key={c.code}><b style={{color:c.color}}>{c.code}</b><span style={{color:"#334155"}}> {c.label}</span></span>)}
                 <span style={{marginLeft:"auto",color:"#334155",fontSize:9}}>
-                  <span style={{color:"#f97316"}}>■</span> Weekend &nbsp; <i style={{color:"#ef4444"}}>G</i>=auto
+                  <span style={{color:"#f97316"}}>■</span> Weekend &nbsp; <i style={{color:"#3b82f6"}}>GJ</i>/<i style={{color:"#6366f1"}}>GN</i>=auto
                 </span>
               </div>
 
@@ -1019,11 +1025,11 @@ claude "Crée toutes les tables planning hospitalier dans Supabase"`}</pre>
                 {ordreEq.map((eq,eqi)=>{
                   const paraGi=groupes.findIndex(x=>x.id==="paramedical");
                   const membres=paraGi>=0?groupes[paraGi].membres.filter(m=>m.equipe===eq):[];
-                  // Compter les gardes ce mois
+                  // Compter les gardes ce mois (GJ + GN)
                   const nbGardes=membres.reduce((acc,m,mi)=>{
                     const realMi=groupes[paraGi]?.membres.indexOf(m);
                     let cnt=0;
-                    for(let d=1;d<=daysInMo;d++){if(conges[ck("paramedical",realMi,d)]==="G")cnt++;}
+                    for(let d=1;d<=daysInMo;d++){const c=conges[ck("paramedical",realMi,d)];if(c==="GJ"||c==="GN"||c==="G")cnt++;}
                     return acc+cnt;
                   },0);
                   return (

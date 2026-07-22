@@ -1204,7 +1204,7 @@ class ActiviteProvider with ChangeNotifier {
     }
   }
 
-  /// 🔹 NOUVELLE MÉTHODE : Planification intelligente des gardes
+  /// 🔹 NOUVELLE MÉTHODE : Planification intelligente des gardes (Jour/Nuit)
   Future<PlanificationResult> planifierGardesAvancees({
     required List<String> equipesOrdonnees,
     required int jourDepart,
@@ -1215,8 +1215,9 @@ class ActiviteProvider with ChangeNotifier {
     try {
       int totalModifications = 0;
       int congesRespectes = 0;
-      Map<String, int> gardesParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> recuperationsParEquipe = {
+      Map<String, int> gardesJourParEquipe = {for (var e in equipesOrdonnees) e: 0};
+      Map<String, int> gardesNuitParEquipe = {for (var e in equipesOrdonnees) e: 0};
+      Map<String, int> reposParEquipe = {
         for (var e in equipesOrdonnees) e: 0
       };
 
@@ -1233,43 +1234,51 @@ class ActiviteProvider with ChangeNotifier {
             "Aucun personnel médical trouvé avec les équipes: ${equipesOrdonnees.join(', ')}");
       }
 
-      // LOGIQUE DE ROTATION CORRIGÉE
+      // ROTATION Jour/Nuit
       for (int day = 1; day <= daysInMonth; day++) {
-        // Calculer l'équipe de garde pour ce jour
         int joursDepuisDebut = (day - jourDepart + daysInMonth) % daysInMonth;
-        int equipeIndex = joursDepuisDebut % equipesOrdonnees.length;
-        String equipeDeGarde = equipesOrdonnees[equipeIndex];
+        int dayShiftIdx = joursDepuisDebut % equipesOrdonnees.length;
+        int nightShiftIdx = (joursDepuisDebut + 3) % equipesOrdonnees.length;
+        String equipeJour = equipesOrdonnees[dayShiftIdx];
+        String equipeNuit = equipesOrdonnees[nightShiftIdx];
 
-        // Planifier chaque membre du personnel
         for (final staff in personnelMedical) {
           final staffEquipe = staff.equipe!.toUpperCase();
           final dateJour = DateTime(year, month, day);
 
-          // Vérifier les congés
           if (isStaffOnLeave(staff, dateJour)) {
             congesRespectes++;
             print("🚫 ${staff.nom} en congé le jour $day - ignoré");
             continue;
           }
 
-          // Déterminer le statut
           String statutAAffecter;
-          if (staffEquipe == equipeDeGarde) {
-            statutAAffecter = "G"; // Garde
-            gardesParEquipe[staffEquipe] =
-                (gardesParEquipe[staffEquipe] ?? 0) + 1;
+          if (staffEquipe == equipeJour) {
+            statutAAffecter = "GJ";
+            gardesJourParEquipe[staffEquipe] =
+                (gardesJourParEquipe[staffEquipe] ?? 0) + 1;
+          } else if (staffEquipe == equipeNuit) {
+            statutAAffecter = "GN";
+            gardesNuitParEquipe[staffEquipe] =
+                (gardesNuitParEquipe[staffEquipe] ?? 0) + 1;
           } else {
-            statutAAffecter = "RE"; // Récupération
-            recuperationsParEquipe[staffEquipe] =
-                (recuperationsParEquipe[staffEquipe] ?? 0) + 1;
+            statutAAffecter = "RE";
+            reposParEquipe[staffEquipe] =
+                (reposParEquipe[staffEquipe] ?? 0) + 1;
           }
 
-          // Appliquer la modification
           await updateActivite(staff.id, day, statutAAffecter,
               year: year, month: month);
           totalModifications++;
         }
       }
+
+      // Combine jour+nuit for backward compat
+      Map<String, int> gardesParEquipe = {};
+      for (var e in equipesOrdonnees) {
+        gardesParEquipe[e] = (gardesJourParEquipe[e] ?? 0) + (gardesNuitParEquipe[e] ?? 0);
+      }
+      Map<String, int> recuperationsParEquipe = reposParEquipe;
 
       return PlanificationResult(
         success: true,
