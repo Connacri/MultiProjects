@@ -22,6 +22,9 @@ class RotationContinuityResolver {
       return null;
     }
 
+    // The repository contract interprets this as: return the latest published
+    // snapshot strictly before targetDate. Implementations must not return the
+    // target month itself.
     final previous = await planningRepository.findPreviousPublished(
       year: targetDate.year,
       month: targetDate.month,
@@ -43,8 +46,8 @@ class RotationContinuityResolver {
       if (assignment.date.year == lastDay.year &&
           assignment.date.month == lastDay.month &&
           assignment.date.day == lastDay.day &&
-          assignment.teamId != null) {
-        shifts[assignment.teamId!] = assignment.shift;
+          assignment.team != null) {
+        shifts[assignment.team!] = assignment.shift;
       }
     }
 
