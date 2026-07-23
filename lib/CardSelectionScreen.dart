@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'Hopital/GestionCongesScreen.dart';
+import 'Hopital/conges_management_screen.dart';
 import 'Hopital/TableauStaff.dart';
 import 'Kids/main.dart';
 import 'checkit/HomePage.dart';
@@ -83,7 +83,7 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
           Colors.teal.shade800.withOpacity(0.8),
           Colors.green.shade800.withOpacity(0.8)
         ],
-        destination: GestionCongesScreen(),
+        destination: const CongesManagementScreen(),
       ),
       PageCardData(
         title: 'POS',
