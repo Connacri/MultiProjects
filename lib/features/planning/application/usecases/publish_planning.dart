@@ -22,7 +22,7 @@ class PublishPlanning {
     required this.validator,
   });
 
-  Future<void> call(PlanningSnapshot snapshot) async {
+  Future<PlanningSnapshot> call(PlanningSnapshot snapshot) async {
     final validation = validator.validate(snapshot);
     if (!validation.isValid) {
       throw InvalidPlanningException(validation.errors);
@@ -46,5 +46,6 @@ class PublishPlanning {
     );
 
     await planningRepository.publish(published);
+    return published;
   }
 }
