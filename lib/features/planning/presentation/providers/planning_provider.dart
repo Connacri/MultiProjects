@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import '../../domain/entities/planning_override.dart';
+import '../../application/usecases/generate_planning_draft.dart';
+import '../../application/usecases/publish_planning.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/entities/rotation_configuration.dart';
+import '../../domain/entities/planning_override.dart';
 import '../../domain/entities/staff_availability.dart';
-import '../../domain/services/generate_planning.dart';
-import '../../domain/services/publish_planning.dart';
 
 class PlanningProvider extends ChangeNotifier {
   final GeneratePlanning generatePlanning;
@@ -37,10 +37,10 @@ class PlanningProvider extends ChangeNotifier {
     List<PlanningOverride> overrides = const [],
     int? branchId,
   }) async {
-    if (_isGenerating || _isPublishing) return;
-
-    _setBusy(generating: true);
+    if (isBusy) return;
+    _isGenerating = true;
     _error = null;
+    notifyListeners();
 
     try {
       _draft = await generatePlanning(
@@ -57,7 +57,8 @@ class PlanningProvider extends ChangeNotifier {
       _error = error.toString();
       rethrow;
     } finally {
-      _setBusy(generating: false);
+      _isGenerating = false;
+      notifyListeners();
     }
   }
 
@@ -66,38 +67,35 @@ class PlanningProvider extends ChangeNotifier {
     if (draft == null) {
       throw StateError('No planning draft is available for publication.');
     }
-    if (_isGenerating || _isPublishing) return;
+    if (isBusy) return;
 
-    _setBusy(publishing: true);
+    _isPublishing = true;
     _error = null;
+    notifyListeners();
 
     try {
-      final publication = await publishPlanning(draft);
-      _draft = publication.snapshot;
+      _draft = await publishPlanning(draft);
     } catch (error) {
       _error = error.toString();
       rethrow;
     } finally {
-      _setBusy(publishing: false);
+      _isPublishing = false;
+      notifyListeners();
     }
   }
 
+  void setDraft(PlanningSnapshot snapshot) {
+    _draft = snapshot;
+    notifyListeners();
+  }
+
   void clearDraft() {
-    if (_isGenerating || _isPublishing) return;
     _draft = null;
-    _error = null;
     notifyListeners();
   }
 
   void clearError() {
-    if (_error == null) return;
     _error = null;
-    notifyListeners();
-  }
-
-  void _setBusy({bool? generating, bool? publishing}) {
-    if (generating != null) _isGenerating = generating;
-    if (publishing != null) _isPublishing = publishing;
     notifyListeners();
   }
 }
