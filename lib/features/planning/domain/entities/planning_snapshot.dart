@@ -16,6 +16,7 @@ class PlanningSnapshot {
   final int revision;
   final DateTime createdAt;
   final DateTime? publishedAt;
+  final DateTime? continuityDate;
   final List<PlanningAssignment> assignments;
 
   const PlanningSnapshot({
@@ -30,6 +31,7 @@ class PlanningSnapshot {
     this.branchId,
     this.rotationPeriodId,
     this.publishedAt,
+    this.continuityDate,
     this.assignments = const [],
   });
 
@@ -45,6 +47,7 @@ class PlanningSnapshot {
     int? revision,
     DateTime? createdAt,
     DateTime? publishedAt,
+    DateTime? continuityDate,
     List<PlanningAssignment>? assignments,
   }) {
     return PlanningSnapshot(
@@ -59,6 +62,7 @@ class PlanningSnapshot {
       revision: revision ?? this.revision,
       createdAt: createdAt ?? this.createdAt,
       publishedAt: publishedAt ?? this.publishedAt,
+      continuityDate: continuityDate ?? this.continuityDate,
       assignments: assignments ?? this.assignments,
     );
   }
