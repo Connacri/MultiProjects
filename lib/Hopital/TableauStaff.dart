@@ -19,6 +19,7 @@ import 'PlanningHebdoWidget.dart';
 import 'Planning_pdf.dart';
 import 'StaffProvider.dart';
 import 'SupabaseHospitalService.dart';
+import 'conges_management_screen.dart';
 import 'license/LicenseInfoPage.dart';
 import 'p2p/connection_manager.dart';
 import 'p2p/messenger/messaging_manager.dart';
@@ -207,7 +208,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     if (encoded.contains('|')) {
       final parts = encoded.split('|');
       final jour = parts[0].split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-      final nuit = parts[1].split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      final nuit = (parts.length > 1 ? parts[1] : '')
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      if (nuit.isEmpty) {
+        final n = jour.length;
+        return [jour, List.generate(n, (i) => jour[(i + n - 1) % n])];
+      }
       return [jour, nuit];
     }
     // backward compat
@@ -3927,9 +3936,135 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
   }
 
+  /// Propose la suppression des jours qui portent actuellement le statut F.
+  Future<void> _showRemoveHolidayDialog(BuildContext context) async {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final holidayDays = staffProvider.staffs
+        .expand((staff) => staff.activites)
+        .where((activite) => activite.statut.toUpperCase() == 'F')
+        .map((activite) => activite.jour)
+        .toSet()
+        .toList()
+      ..sort();
+
+    if (holidayDays.isEmpty) return;
+    final selectedDays = holidayDays.toSet();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          title: const Row(
+            children: [
+              Icon(Icons.event_busy, color: Colors.red),
+              SizedBox(width: 10),
+              Text('Supprimer les jours fériés'),
+            ],
+          ),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Sélectionnez les jours à retirer du planning :'),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: holidayDays.map((day) {
+                    final selected = selectedDays.contains(day);
+                    return FilterChip(
+                      label: Text('$day'),
+                      selected: selected,
+                      selectedColor: Colors.red.shade100,
+                      checkmarkColor: Colors.red.shade900,
+                      onSelected: (value) => setDialogState(() {
+                        if (value) {
+                          selectedDays.add(day);
+                        } else {
+                          selectedDays.remove(day);
+                        }
+                      }),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Seules les cellules actuellement marquées « F » seront remises à « - ».',
+                  style: TextStyle(fontSize: 12, color: Colors.red.shade800),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: selectedDays.isEmpty
+                  ? null
+                  : () async {
+                      Navigator.pop(ctx);
+                      await _removeHolidays(selectedDays);
+                    },
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Supprimer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removeHolidays(Set<int> days) async {
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final activiteProvider = ActiviteProvider();
+    var totalUpdates = 0;
+
+    try {
+      for (final staff in staffProvider.staffs) {
+        for (final activite in staff.activites) {
+          if (activite.statut.toUpperCase() == 'F' && days.contains(activite.jour)) {
+            await activiteProvider.forceUpdateActiviteIgnoringLeave(
+              staff.id,
+              activite.jour,
+              '-',
+              year: _selectedYear,
+              month: _selectedMonth,
+            );
+            totalUpdates++;
+          }
+        }
+      }
+      await staffProvider.fetchStaffs();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ $totalUpdates statut(s) férié supprimé(s)'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('❌ Erreur : $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   /// Construit les actions pour Mobile (menu dropdown)
   Widget _buildMobileActions(BuildContext context) {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    final hasHolidays = staffProvider.staffs
+        .any((staff) => staff.activites.any((activite) => activite.statut.toUpperCase() == 'F'));
     
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: Colors.white),
@@ -3998,6 +4133,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         ),
         const PopupMenuDivider(),
         const PopupMenuItem(
+          value: 'manage_time_off',
+          child: Row(
+            children: [
+              Icon(Icons.event_note, color: Colors.deepOrange, size: 20),
+              SizedBox(width: 8),
+              Text('Gestion des congés'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
           value: 'add_holiday',
           child: Row(
             children: [
@@ -4007,6 +4152,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             ],
           ),
         ),
+        if (hasHolidays)
+          const PopupMenuItem(
+            value: 'remove_holiday',
+            child: Row(
+              children: [
+                Icon(Icons.event_busy, color: Colors.red, size: 20),
+                SizedBox(width: 8),
+                Text('Supprimer jours fériés'),
+              ],
+            ),
+          ),
         const PopupMenuItem(
           value: 'clear_month',
           child: Row(
@@ -4098,6 +4254,14 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         break;
       case 'add_holiday':
         await _showAddHolidayDialog(context);
+        break;
+      case 'manage_time_off':
+        await Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CongesManagementScreen()),
+        );
+        break;
+      case 'remove_holiday':
+        await _showRemoveHolidayDialog(context);
         break;
       case 'export_supabase':
         await _exportToSupabase(context);
@@ -5663,22 +5827,16 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Widget _buildCongesListView(Staff staff, StateSetter setState) {
     final objectBox = ObjectBox();
 
-    // ⭐ CORRECTION : Filtrer les TimeOff par mois/année sélectionnés
-    final freshTimeOffs = objectBox.timeOffBox
+    // Afficher l'historique complet des congés de cette personne.
+    final timeOffQuery = objectBox.timeOffBox
         .query(TimeOff_.staff.equals(staff.id))
-        .build()
-        .find()
-        .where((timeOff) {
-      // Vérifier si le congé chevauche le mois sélectionné
-      final debutMois = DateTime(_selectedYear, _selectedMonth, 1);
-      final finMois = DateTime(_selectedYear, _selectedMonth + 1, 0);
-
-      return (timeOff.debut.isBefore(finMois.add(Duration(days: 1))) &&
-          timeOff.fin.isAfter(debutMois.subtract(Duration(days: 1))));
-    }).toList();
+        .build();
+    final freshTimeOffs = timeOffQuery.find()
+      ..sort((a, b) => b.debut.compareTo(a.debut));
+    timeOffQuery.close();
 
     print(
-        "📊 _buildCongesListView : ${freshTimeOffs.length} congés pour $_selectedMonthName $_selectedYear");
+        "📊 _buildCongesListView : ${freshTimeOffs.length} congés au total");
 
     // Récupérer les activités de congé pour le mois sélectionné uniquement
     final congesActivites = staff.activites
@@ -5694,7 +5852,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // TimeOff congés - filtrés par mois
+          // TimeOff : historique complet des congés
           if (freshTimeOffs.isNotEmpty) ...[
             Container(
               padding: EdgeInsets.all(8),
@@ -5708,7 +5866,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       size: 16, color: Colors.blue.shade600),
                   SizedBox(width: 8),
                   Text(
-                    "Congés planifiés\n${freshTimeOffs.length} - $_selectedMonthName $_selectedYear",
+                    "Congés enregistrés\n${freshTimeOffs.length}",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -6759,26 +6917,23 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final existingPlanif = query.findFirst();
     query.close();
 
-    // Ordre unique : nuit = même ordre décalé de -1 (qui a fait jour hier fait nuit ce soir)
-    // Par défaut : A(J1jour/J2nuit) → C(J2jour/J3nuit) → B(J3jour/J4nuit) → D(J4jour/J5nuit)
-    List<String> ordreUnique;
+    List<String> ordreJour;
     List<String> ordreNuit;
 
     if (existingPlanif != null && existingPlanif.ordreEquipes.isNotEmpty) {
       final decoded = _decodeOrders(existingPlanif.ordreEquipes);
-      ordreUnique = List.from(decoded[0]);
+      ordreJour = List.from(decoded[0]);
       ordreNuit = List.from(decoded[1]);
     } else {
-      ordreUnique = _defaultParamedicalDayOrder();
+      ordreJour = _defaultParamedicalDayOrder();
       ordreNuit = _defaultParamedicalNightOrder();
     }
 
-    // Ne présenter/applyquer que les équipes réellement disponibles, tout en
-    // conservant l'ordre métier A → C → B → D pour les équipes présentes.
+    // Ne présenter/appliquer que les équipes réellement disponibles
     final available = equipesDisponibles.map((e) => e.toUpperCase()).toSet();
-    List<String> normalizeOrder(List<String> order, List<String> fallback) {
+    List<String> normalizeOrder(List<String> order) {
       final result = <String>[];
-      for (final equipe in order.followedBy(fallback)) {
+      for (final equipe in order) {
         final normalized = equipe.toUpperCase();
         if (available.contains(normalized) && !result.contains(normalized)) {
           result.add(normalized);
@@ -6786,15 +6941,28 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
       return result;
     }
-    ordreUnique = normalizeOrder(ordreUnique, _defaultParamedicalDayOrder());
-    ordreNuit = normalizeOrder(ordreNuit, _defaultParamedicalNightOrder());
+    List<String> completeOrder(List<String> current, List<String> defaults) {
+      final normalized = normalizeOrder(current);
+      for (final equipe in defaults) {
+        if (available.contains(equipe) && !normalized.contains(equipe)) {
+          normalized.add(equipe);
+        }
+      }
+      for (final equipe in available) {
+        if (!normalized.contains(equipe)) normalized.add(equipe);
+      }
+      return normalized;
+    }
+
+    ordreJour = completeOrder(ordreJour, _defaultParamedicalDayOrder());
+    ordreNuit = completeOrder(ordreNuit, _defaultParamedicalNightOrder());
 
     return await showDialog<List<List<String>>>(
       context: context,
       useRootNavigator: false,
       builder: (dialogContext) {
         return _OrderEquipesDialog(
-          ordreJourInitial: ordreUnique,
+          ordreJourInitial: ordreJour,
           ordreNuitInitial: ordreNuit,
           equipesDisponibles: equipesDisponibles,
           getEquipeColor: _getEquipeColor,
@@ -6807,8 +6975,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   }
 
   Future<void> _executerPlanificationGardesSimple(
-      List<String> equipesOrdonnees,
-      {List<String>? nightOrder}) async {
+      List<String> equipesOrdonnees, {required List<String> nightOrder}) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
@@ -6816,17 +6983,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final objectBox = ObjectBox();
       final daysInMonth = _daysInSelectedMonth;
 
-      final allEquipes = equipesOrdonnees.toList();
-
       int totalModifications = 0;
       int gardesEcrasees = 0;
 
-      Map<String, int> gardesJourParEquipe = {for (var e in allEquipes) e: 0};
-      Map<String, int> gardesNuitParEquipe = {for (var e in allEquipes) e: 0};
+      Map<String, int> gardesJourParEquipe = {for (var e in equipesOrdonnees) e: 0};
+      Map<String, int> gardesNuitParEquipe = {for (var e in equipesOrdonnees) e: 0};
       Map<String, int> reposParEquipe = {
-        for (var e in allEquipes) e: 0
+        for (var e in equipesOrdonnees) e: 0
       };
-      Map<String, int> congesAppliques = {for (var e in allEquipes) e: 0};
+      Map<String, int> congesAppliques = {for (var e in equipesOrdonnees) e: 0};
 
       // ✅ 1. Sauvegarder l'ordre des équipes
       final query = objectBox.planificationBox
@@ -6838,13 +7003,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       Planification? existingPlanif = query.findFirst();
       query.close();
 
-      final effectiveNightOrder = nightOrder ??
-          List.generate(
-            equipesOrdonnees.length,
-            (i) => equipesOrdonnees[
-                (i + equipesOrdonnees.length - 1) % equipesOrdonnees.length],
-          );
-      final encoded = _encodeOrders(equipesOrdonnees, effectiveNightOrder);
+      final encoded = _encodeOrders(equipesOrdonnees, nightOrder);
       if (existingPlanif != null) {
         existingPlanif.ordreEquipes = encoded;
         objectBox.planificationBox.put(existingPlanif);
@@ -6869,11 +7028,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
             "Aucun personnel paramédical trouvé avec les équipes sélectionnées");
       }
 
-      // ✅ 3. Collecter TOUS les congés (TimeOff + activités C/CM) pour le mois sélectionné
-      Map<int, Map<int, String>> congesParStaff =
-          {}; // {staffId: {jour: statut}}
+      // ✅ 3. Collecter TOUS les congés
+      Map<int, Map<int, String>> congesParStaff = {};
 
-      // --- TimeOff : ⭐ CORRECTION - Ne traiter que les congés du mois sélectionné
       final allTimeOffs = objectBox.timeOffBox.getAll();
       for (var timeOff in allTimeOffs) {
         if (timeOff.staff.target != null) {
@@ -6906,19 +7063,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         }
       }
 
-      // Les listes correspondent directement aux jours affichés dans l'aperçu.
+      // ✅ 4. Les deux ordres affichés dans la dialog sont appliqués tels quels.
       final int n = equipesOrdonnees.length;
-      final appliedNightOrder = effectiveNightOrder.length == n
-          ? effectiveNightOrder
-          : List.generate(
-              n,
-              (i) => equipesOrdonnees[(i + n - 1) % n],
-            );
       for (int day = 1; day <= daysInMonth; day++) {
         int dayShiftIdx = (day - 1) % n;
-        int nightShiftIdx = (day - 1) % n;
+        int nightShiftIdx = (day - 1) % nightOrder.length;
         String equipeJour = equipesOrdonnees[dayShiftIdx];
-        String equipeNuit = appliedNightOrder[nightShiftIdx];
+        String equipeNuit = nightOrder[nightShiftIdx];
 
         for (final staff in personnelParamedical) {
           if (congesParStaff[staff.id]!.containsKey(day)) continue;
@@ -10410,18 +10561,20 @@ class _OrderEquipesDialog extends StatefulWidget {
 }
 
 class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
-  late List<String> ordreJour;
+  late List<String> ordreUnique;
   late List<String> ordreNuit;
 
   @override
   void initState() {
     super.initState();
-    ordreJour = List.from(widget.ordreJourInitial);
+    ordreUnique = List.from(widget.ordreJourInitial);
     ordreNuit = List.from(widget.ordreNuitInitial);
   }
 
   @override
   Widget build(BuildContext context) {
+    final int n = ordreUnique.length;
+
     return AlertDialog(
       title: Row(
         children: [
@@ -10479,6 +10632,7 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                 ),
               ),
               SizedBox(height: 16),
+
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -10486,94 +10640,106 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade100,
-                            borderRadius: BorderRadius.circular(6),
+              // ── Ordre Jour ─────────────────────────────────────────────
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.teal.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.teal.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_vert, size: 16, color: Colors.teal.shade700),
+                    SizedBox(width: 6),
+                    Text(
+                        "Ordre Jour",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade800,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "(glissez-déposez pour réorganiser)",
+                        style: TextStyle(fontSize: 11, color: Colors.teal.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 8),
+
+              // ── Liste unique drag & drop ────────────────────────────────
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.teal.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: ordreUnique.length,
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      if (newIndex > oldIndex) newIndex--;
+                      final item = ordreUnique.removeAt(oldIndex);
+                      ordreUnique.insert(newIndex, item);
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final equipe = ordreUnique[index];
+                    return Container(
+                      key: ValueKey('unique_$equipe'),
+                      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Card(
+                        color: index == 0 ? Colors.teal.shade50 : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: index == 0 ? Colors.teal.shade300 : Colors.grey.shade200,
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.wb_sunny, size: 16, color: Colors.orange.shade700),
-                              SizedBox(width: 6),
-                              Text(
-                                "Ordre Jour",
+                        ),
+                        child: ListTile(
+                          dense: true,
+                          leading: Container(
+                            width: 32, height: 32,
+                            decoration: BoxDecoration(
+                              color: widget.getEquipeColor(equipe),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                equipe,
                                 style: TextStyle(
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.orange.shade800,
+                                  fontSize: 13,
                                 ),
                               ),
+                            ),
+                          ),
+                          title: Text(
+                            "Équipe $equipe",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: index == 0 ? FontWeight.bold : FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Icon(Icons.wb_sunny, size: 11, color: Colors.orange.shade600),
+                              Text(" Jour J${index + 1}", style: TextStyle(fontSize: 10)),
                             ],
                           ),
+                        //  trailing: Icon(Icons.drag_handle, color: Colors.grey.shade400, size: 20),
                         ),
-                        SizedBox(height: 8),
-                        Container(
-                          key: ValueKey('jour_list_${ordreJour.join()}'),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.orange.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ReorderableListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: ordreJour.length,
-                            onReorder: (oldIndex, newIndex) {
-                              setState(() {
-                                if (newIndex > oldIndex) newIndex--;
-                                final item = ordreJour.removeAt(oldIndex);
-                                ordreJour.insert(newIndex, item);
-                              });
-                            },
-                            itemBuilder: (context, index) {
-                              final equipe = ordreJour[index];
-                              return Container(
-                                key: ValueKey('jour_$equipe'),
-                                margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                child: Card(
-                                  color: index == 0 ? Colors.orange.shade50 : Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: BorderSide(
-                                      color: index == 0 ? Colors.orange.shade300 : Colors.grey.shade200,
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    dense: true,
-                                    leading: Container(
-                                      width: 32, height: 32,
-                                      decoration: BoxDecoration(
-                                        color: widget.getEquipeColor(equipe),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          equipe,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      "Équipe $equipe",
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: index == 0 ? FontWeight.bold : FontWeight.w500,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      index == 0 ? "Jour au J1" : "Jour au J${index + 1}",
-                                      style: TextStyle(fontSize: 10),
-                                    ),
-                                    trailing: Icon(Icons.drag_handle, color: Colors.grey.shade400, size: 20),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
                       ],
                     ),
                   ),
@@ -10582,118 +10748,146 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.indigo.shade100,
-                            borderRadius: BorderRadius.circular(6),
+
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: Colors.indigo.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.nights_stay, size: 16, color: Colors.indigo.shade700),
+                    SizedBox(width: 6),
+                    Text(
+                      "Ordre Nuit",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo.shade800,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "(glissez-déposez pour réorganiser)",
+                        style: TextStyle(fontSize: 11, color: Colors.indigo.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.indigo.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: ordreNuit.length,
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      if (newIndex > oldIndex) newIndex--;
+                      final item = ordreNuit.removeAt(oldIndex);
+                      ordreNuit.insert(newIndex, item);
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    final equipe = ordreNuit[index];
+                    return Container(
+                      key: ValueKey('night_$equipe'),
+                      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Card(
+                        color: index == 0 ? Colors.indigo.shade50 : Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: index == 0
+                                ? Colors.indigo.shade300
+                                : Colors.grey.shade200,
                           ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.nights_stay, size: 16, color: Colors.indigo.shade700),
-                              SizedBox(width: 6),
-                              Text(
-                                "Ordre Nuit",
+                        ),
+                        child: ListTile(
+                          dense: true,
+                          leading: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: widget.getEquipeColor(equipe),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                equipe,
                                 style: TextStyle(
+                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.indigo.shade800,
+                                  fontSize: 13,
                                 ),
                               ),
+                            ),
+                          ),
+                          title: Text(
+                            'Équipe $equipe',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: index == 0
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                          subtitle: Row(
+                            children: [
+                              Icon(Icons.nights_stay,
+                                  size: 11, color: Colors.indigo.shade600),
+                              Text(' Nuit J${index + 1}',
+                                  style: TextStyle(fontSize: 10)),
                             ],
                           ),
+                          // trailing: Icon(Icons.drag_handle,
+                          //     color: Colors.grey.shade400, size: 20),
                         ),
-                        SizedBox(height: 8),
-                        Container(
-                          key: ValueKey('nuit_list_${ordreNuit.join()}'),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.indigo.shade300),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ReorderableListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount: ordreNuit.length,
-                            onReorder: (oldIndex, newIndex) {
-                              setState(() {
-                                if (newIndex > oldIndex) newIndex--;
-                                final item = ordreNuit.removeAt(oldIndex);
-                                ordreNuit.insert(newIndex, item);
-                              });
-                            },
-                            itemBuilder: (context, index) {
-                              final equipe = ordreNuit[index];
-                              return Container(
-                                key: ValueKey('nuit_$equipe'),
-                                margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                child: Card(
-                                  color: index == 0 ? Colors.indigo.shade50 : Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: BorderSide(
-                                      color: index == 0 ? Colors.indigo.shade300 : Colors.grey.shade200,
-                                    ),
-                                  ),
-                                  child: ListTile(
-                                    dense: true,
-                                    leading: Container(
-                                      width: 32, height: 32,
-                                      decoration: BoxDecoration(
-                                        color: widget.getEquipeColor(equipe),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          equipe,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    title: Text(
-                                      "Équipe $equipe",
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: index == 0 ? FontWeight.bold : FontWeight.w500,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      index == 0 ? "Nuit au J1" : "Nuit au J${index + 1}",
-                                      style: TextStyle(fontSize: 10),
-                                    ),
-                                    trailing: Icon(Icons.drag_handle, color: Colors.grey.shade400, size: 20),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
                       ],
                     ),
                   ),
                 ],
               ),
               SizedBox(height: 12),
+
+              // ── Bouton reset ───────────────────────────────────────────
               Center(
                 child: TextButton.icon(
                   onPressed: () {
                     setState(() {
-                      ordreJour = ['A', 'C', 'D', 'B'];
-                      ordreNuit = ['B', 'A', 'C', 'D'];
+                      // Ordre par défaut selon spécification :
+                      // A: J1 jour/J2 nuit — C: J2 jour/J3 nuit — B: J3 jour/J4 nuit — D: J4 jour/J5 nuit
+                      ordreUnique = ['A', 'C', 'B', 'D']
+                          .where((e) => widget.equipesDisponibles.contains(e))
+                          .toList();
+                      ordreNuit = ['D', 'A', 'C', 'B']
+                          .where((e) => widget.equipesDisponibles.contains(e))
+                          .toList();
                     });
                   },
                   icon: Icon(Icons.restart_alt, size: 16, color: Colors.teal.shade600),
                   label: Text(
-                          "Réinitialiser (Jour: A→C→D→B, Nuit: B→A→C→D)",
+                    "Réinitialiser (A→J1, C→J2, B→J3, D→J4)",
                     style: TextStyle(fontSize: 11, color: Colors.teal.shade600),
                   ),
                 ),
               ),
               SizedBox(height: 12),
+
+              // ── Aperçu ────────────────────────────────────────────────
               Container(
-                key: ValueKey('apercu_${ordreJour.join()}_${ordreNuit.join()}'),
+                key: ValueKey('apercu_${ordreUnique.join()}_${ordreNuit.join()}'),
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
@@ -10708,22 +10902,23 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                         Icon(Icons.preview, color: Colors.blue.shade700, size: 18),
                         SizedBox(width: 8),
                         Text(
-                          "Aperçu Jour/Nuit (8h–16h / 16h–8h)",
+                          "Aperçu du planning (4 premiers jours)",
                           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
                         ),
                       ],
                     ),
                     SizedBox(height: 8),
-                    ...List.generate(4, (index) {
+                    ...List.generate(n > 0 ? n : 0, (index) {
                       final jour = index + 1;
-                      final dayShiftIdx = (jour - 1) % ordreJour.length;
+                      // Les deux listes affichées sont la source de vérité.
+                      final dayShiftIdx = (jour - 1) % n;
                       final nightShiftIdx = (jour - 1) % ordreNuit.length;
-                      final equipeJour = ordreJour[dayShiftIdx];
+                      final equipeJour = ordreUnique[dayShiftIdx];
                       final equipeNuit = ordreNuit[nightShiftIdx];
                       final date = DateTime(widget.selectedYear, widget.selectedMonth, jour);
                       final nomJour = DateFormat('EEEE', 'fr_FR').format(date);
                       return Padding(
-                        padding: EdgeInsets.symmetric(vertical: 2),
+                        padding: EdgeInsets.symmetric(vertical: 3),
                         child: Row(
                           children: [
                             Container(
@@ -10736,12 +10931,17 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                                 child: Text(equipeJour, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
                               ),
                             ),
-                            SizedBox(width: 4),
-                            Text("Jour $jour ($nomJour)  ", style: TextStyle(fontSize: 11)),
+                            SizedBox(width: 6),
+                            Expanded(
+                              child: Text("J$jour ($nomJour)", style: TextStyle(fontSize: 11)),
+                            ),
                             Icon(Icons.wb_sunny, size: 12, color: Colors.orange.shade600),
-                            Text("${equipeJour}  ", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade700)),
+                            SizedBox(width: 2),
+                            Text("$equipeJour", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade800)),
+                            SizedBox(width: 10),
                             Icon(Icons.nights_stay, size: 12, color: Colors.indigo.shade600),
-                            Text("${equipeNuit}", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo.shade700)),
+                            SizedBox(width: 2),
+                            Text("$equipeNuit", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo.shade800)),
                           ],
                         ),
                       );
@@ -10750,6 +10950,8 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                 ),
               ),
               SizedBox(height: 8),
+
+              // ── Note ──────────────────────────────────────────────────
               Container(
                 padding: EdgeInsets.all(10),
                 decoration: BoxDecoration(
@@ -10764,7 +10966,8 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        "Formule : Jour/Nuit au J{N} = la position {N} de chaque ordre. Les congés existants sont préservés.",
+                        "Les ordres Jour et Nuit ci-dessus sont sauvegardés et appliqués tels quels.\n"
+                        "Les congés existants sont préservés.",
                         style: TextStyle(fontSize: 11, color: Colors.amber.shade700),
                       ),
                     ),
@@ -10788,7 +10991,7 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
             foregroundColor: Colors.white,
             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           ),
-          onPressed: () => Navigator.of(context).pop([ordreJour, ordreNuit]),
+          onPressed: () => Navigator.of(context).pop([ordreUnique, ordreNuit]),
         ),
       ],
     );
@@ -10796,5 +10999,3 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'Hopital/GestionCongesScreen.dart';
 import 'Hopital/TableauStaff.dart';
 import 'Kids/main.dart';
 import 'checkit/HomePage.dart';
@@ -73,6 +74,16 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
           Colors.black.withOpacity(0.5)
         ],
         destination: const LoadingScreen(destination: 'staff'),
+      ),
+      PageCardData(
+        title: 'Gestion des\nCongés',
+        subtitle: 'CRUD congés du personnel',
+        imageUrl: 'assets/photos/hopital/m1 (12).jpg',
+        gradientColors: [
+          Colors.teal.shade800.withOpacity(0.8),
+          Colors.green.shade800.withOpacity(0.8)
+        ],
+        destination: GestionCongesScreen(),
       ),
       PageCardData(
         title: 'POS',

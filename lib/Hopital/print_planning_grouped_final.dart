@@ -819,8 +819,8 @@ pw.Widget _buildGroupTable(
 
   // ⭐ Largeurs de colonnes ajustées selon la présence d'équipe
   final columnWidths = <int, pw.TableColumnWidth>{
-    0: const pw.FlexColumnWidth(0.94), // Nom/prénom élargi de 10 %
-    1: const pw.FlexColumnWidth(0.55), // Grade : -50 %
+    0: const pw.FlexColumnWidth(0.94),
+    1: const pw.FlexColumnWidth(0.55),
   };
 
   if (hasEquipes) {
