@@ -33,6 +33,36 @@ class PlanningSnapshot {
     this.assignments = const [],
   });
 
+  PlanningSnapshot copyWith({
+    String? id,
+    int? year,
+    int? month,
+    int? branchId,
+    String? configurationId,
+    int? configurationVersion,
+    String? rotationPeriodId,
+    String? engineVersion,
+    int? revision,
+    DateTime? createdAt,
+    DateTime? publishedAt,
+    List<PlanningAssignment>? assignments,
+  }) {
+    return PlanningSnapshot(
+      id: id ?? this.id,
+      year: year ?? this.year,
+      month: month ?? this.month,
+      branchId: branchId ?? this.branchId,
+      configurationId: configurationId ?? this.configurationId,
+      configurationVersion: configurationVersion ?? this.configurationVersion,
+      rotationPeriodId: rotationPeriodId ?? this.rotationPeriodId,
+      engineVersion: engineVersion ?? this.engineVersion,
+      revision: revision ?? this.revision,
+      createdAt: createdAt ?? this.createdAt,
+      publishedAt: publishedAt ?? this.publishedAt,
+      assignments: assignments ?? this.assignments,
+    );
+  }
+
   int get daysInMonth => DateTime(year, month + 1, 0).day;
 
   bool get isPublished => publishedAt != null;
