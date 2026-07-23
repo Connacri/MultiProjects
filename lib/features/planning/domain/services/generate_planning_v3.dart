@@ -17,11 +17,15 @@ class GeneratePlanningV3 {
   }) {
     _validate(input);
 
+    final previousState = continuityState == null
+        ? null
+        : rotationEngine.stateFromSnapshot(continuityState);
+
     final days = rotationEngine.generateMonth(
       year: input.year,
       month: input.month,
       configuration: input.rotation,
-      previousState: continuityState == null ? null : _continuity(continuityState),
+      previousState: previousState,
     );
 
     final staffByTeam = <String, List<StaffMember>>{};
@@ -33,7 +37,6 @@ class GeneratePlanningV3 {
     }
 
     final assignments = <PlanningAssignmentV2>[];
-
     for (final day in days) {
       for (final entry in staffByTeam.entries) {
         final theoretical = _shift(day.phaseByTeam[entry.key]);
@@ -41,7 +44,6 @@ class GeneratePlanningV3 {
           final leave = input.leaves.any(
             (item) => item.staffId == staff.id && item.covers(day.date),
           );
-
           assignments.add(
             PlanningAssignmentV2(
               staffId: staff.id,
@@ -58,8 +60,9 @@ class GeneratePlanningV3 {
       }
     }
 
+    final now = DateTime.now();
     final snapshot = PlanningSnapshot(
-      id: 'draft-${input.year}-${input.month}-${DateTime.now().microsecondsSinceEpoch}',
+      id: 'draft-${input.year}-${input.month}-${now.microsecondsSinceEpoch}',
       year: input.year,
       month: input.month,
       branchId: input.branchId,
@@ -67,19 +70,30 @@ class GeneratePlanningV3 {
       configurationVersion: input.rotation.version,
       engineVersion: 'rotation-engine-v2',
       revision: 1,
-      createdAt: DateTime.now(),
+      createdAt: now,
       publishedAt: null,
-      assignments: const [],
+      assignments: List.unmodifiable(assignments),
       continuityDate: assignments.isEmpty ? null : assignments.last.date,
+    );
+
+    final finalState = rotationEngine.stateAt(
+      configuration: input.rotation,
+      date: DateTime(input.year, input.month + 1, 0),
+      previousState: previousState,
     );
 
     return PlanningGenerationResult(
       snapshot: snapshot,
       assignments: List.unmodifiable(assignments),
+      rotationState: rotationEngine.snapshotState(
+        state: finalState,
+        configuration: input.rotation,
+      ),
     );
   }
 
   void _validate(PlanningInput input) {
+    if (input.year < 2000 || input.year > 2200) throw ArgumentError('Invalid year');
     if (input.month < 1 || input.month > 12) throw ArgumentError('Invalid month');
     if (input.staff.isEmpty) throw StateError('No staff provided');
     final ids = <int>{};
@@ -99,19 +113,29 @@ class GeneratePlanningV3 {
 
   ShiftType _shift(String? value) {
     switch (value?.toLowerCase()) {
-      case 'day': case 'jour': return ShiftType.day;
-      case 'night': case 'nuit': return ShiftType.night;
-      case 'rest': case 'repos': return ShiftType.rest;
-      default: return ShiftType.other;
+      case 'day':
+      case 'jour':
+        return ShiftType.day;
+      case 'night':
+      case 'nuit':
+        return ShiftType.night;
+      case 'rest':
+      case 'repos':
+        return ShiftType.rest;
+      default:
+        return ShiftType.other;
     }
   }
-
-  dynamic _continuity(RotationStateSnapshot state) => null;
 }
 
 class PlanningGenerationResult {
   final PlanningSnapshot snapshot;
   final List<PlanningAssignmentV2> assignments;
+  final RotationStateSnapshot rotationState;
 
-  const PlanningGenerationResult({required this.snapshot, required this.assignments});
+  const PlanningGenerationResult({
+    required this.snapshot,
+    required this.assignments,
+    required this.rotationState,
+  });
 }
