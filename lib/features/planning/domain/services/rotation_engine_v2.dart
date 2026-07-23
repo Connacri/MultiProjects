@@ -1,5 +1,6 @@
 import '../entities/rotation_configuration_v2.dart';
 import '../entities/rotation_state_v2.dart';
+import '../entities/rotation_state_snapshot.dart';
 
 class RotationDayV2 {
   final DateTime date;
@@ -8,11 +9,8 @@ class RotationDayV2 {
   const RotationDayV2({required this.date, required this.phaseByTeam});
 }
 
-/// Pure deterministic rotation engine.
-///
-/// The engine does not know about ObjectBox, Flutter or Staff. It only maps a
-/// date and a configuration to team phases. The cycle is continuous across
-/// calendar boundaries by using the configured reference date and phase.
+/// Pure deterministic rotation engine. It has no Flutter, ObjectBox or staff
+/// dependencies. Staff availability is applied by the generation use case.
 class RotationEngineV2 {
   const RotationEngineV2();
 
@@ -35,12 +33,12 @@ class RotationEngineV2 {
 
     return List.generate(count, (index) {
       final date = DateTime(year, month, index + 1);
-      final dayPhase = (startPhase + index) % configuration.cycle.length;
+      final dayPhase = _mod(startPhase + index, configuration.cycle.length);
       final phases = <String, String>{};
 
       for (var teamIndex = 0; teamIndex < configuration.teamOrder.length; teamIndex++) {
         final team = configuration.teamOrder[teamIndex];
-        final phase = (dayPhase + teamIndex) % configuration.cycle.length;
+        final phase = _mod(dayPhase + teamIndex, configuration.cycle.length);
         phases[team] = configuration.cycle[phase];
       }
 
@@ -51,18 +49,38 @@ class RotationEngineV2 {
   RotationStateV2 stateAt({
     required RotationConfigurationV2 configuration,
     required DateTime date,
-    required RotationStateV2? previousState,
+    RotationStateV2? previousState,
   }) {
     final phase = _resolveStartPhase(date, configuration, previousState);
-    final map = <String, int>{};
-    for (var i = 0; i < configuration.teamOrder.length; i++) {
-      map[configuration.teamOrder[i]] =
-          (phase + i) % configuration.cycle.length;
-    }
     return RotationStateV2(
-      date: DateTime(date.year, date.month, date.day),
+      date: _day(date),
       phaseIndex: phase,
-      teamPhaseByTeam: Map.unmodifiable(map),
+      teamPhaseByTeam: Map.unmodifiable({
+        for (var i = 0; i < configuration.teamOrder.length; i++)
+          configuration.teamOrder[i] =>
+              _mod(phase + i, configuration.cycle.length),
+      }),
+    );
+  }
+
+  RotationStateV2 stateFromSnapshot(RotationStateSnapshot snapshot) {
+    return RotationStateV2(
+      date: _day(snapshot.date),
+      phaseIndex: snapshot.phaseIndex,
+      teamPhaseByTeam: Map.unmodifiable(snapshot.teamPhaseByTeam),
+    );
+  }
+
+  RotationStateSnapshot snapshotState({
+    required RotationStateV2 state,
+    required RotationConfigurationV2 configuration,
+  }) {
+    return RotationStateSnapshot(
+      date: _day(state.date),
+      configurationId: configuration.id,
+      configurationVersion: configuration.version,
+      phaseIndex: state.phaseIndex,
+      teamPhaseByTeam: Map.unmodifiable(state.teamPhaseByTeam),
     );
   }
 
@@ -72,25 +90,15 @@ class RotationEngineV2 {
     RotationStateV2? previousState,
   ) {
     if (previousState != null) {
-      final delta = DateTime(target.year, target.month, target.day)
-          .difference(DateTime(
-            previousState.date.year,
-            previousState.date.month,
-            previousState.date.day,
-          ))
-          .inDays;
+      final delta = _day(target).difference(_day(previousState.date)).inDays;
       return _mod(previousState.phaseIndex + delta, configuration.cycle.length);
     }
 
-    final delta = DateTime(target.year, target.month, target.day)
-        .difference(DateTime(
-          configuration.referenceDate.year,
-          configuration.referenceDate.month,
-          configuration.referenceDate.day,
-        ))
-        .inDays;
+    final delta = _day(target).difference(_day(configuration.referenceDate)).inDays;
     return _mod(configuration.referencePhaseIndex + delta, configuration.cycle.length);
   }
+
+  DateTime _day(DateTime value) => DateTime(value.year, value.month, value.day);
 
   int _mod(int value, int divisor) => ((value % divisor) + divisor) % divisor;
 }
