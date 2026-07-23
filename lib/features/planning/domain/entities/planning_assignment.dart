@@ -1,6 +1,9 @@
 import '../enums/shift_type.dart';
 
 /// Immutable domain representation of one staff assignment for one day.
+///
+/// `team` is a snapshot value. It is intentionally stored with the assignment
+/// so historical planning remains stable when a staff member changes team.
 class PlanningAssignment {
   final int staffId;
   final DateTime date;
