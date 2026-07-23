@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import '../../application/usecases/generate_planning_draft.dart';
 import '../../application/usecases/publish_planning.dart';
+import '../../domain/entities/planning_override.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/entities/rotation_configuration.dart';
-import '../../domain/entities/planning_override.dart';
 import '../../domain/entities/staff_availability.dart';
+import '../../domain/services/generate_planning.dart';
 
 class PlanningProvider extends ChangeNotifier {
   final GeneratePlanning generatePlanning;
