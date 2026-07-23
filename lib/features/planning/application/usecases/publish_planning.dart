@@ -41,6 +41,10 @@ class PublishPlanning {
       );
     }
 
-    await planningRepository.publish(snapshot);
+    final published = snapshot.copyWith(
+      publishedAt: DateTime.now(),
+    );
+
+    await planningRepository.publish(published);
   }
 }
