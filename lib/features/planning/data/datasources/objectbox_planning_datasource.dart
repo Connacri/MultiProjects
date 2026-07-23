@@ -1,37 +1,161 @@
+import 'package:objectbox/objectbox.dart';
+
 import '../../../../objectBox/Entity.dart';
 import '../../../../objectBox/classeObjectBox.dart';
+import '../../../../objectbox.g.dart';
 import '../../domain/entities/planning_snapshot.dart';
-import '../mappers/legacy_planning_mapper.dart';
+import '../mappers/planning_snapshot_mapper.dart';
 import '../models/planning_persistence_record.dart';
+import '../objectbox/planning_objectbox_entities.dart';
 
-/// ObjectBox-only data source for planning persistence.
-///
-/// It reads legacy `Planification` entities without recalculating their
-/// activities. The existing ObjectBox database remains the source of truth
-/// during migration.
 class ObjectBoxPlanningDataSource {
-  final ObjectBox objectBox;
-  final LegacyPlanningMapper mapper;
+  final ObjectBox legacyObjectBox;
+  final Store store;
+  final PlanningSnapshotMapper mapper;
 
-  const ObjectBoxPlanningDataSource({
-    required this.objectBox,
-    this.mapper = const LegacyPlanningMapper(),
+  late final Box<PlanningSnapshotEntity> snapshotBox =
+      Box<PlanningSnapshotEntity>(store);
+  late final Box<PlanningAssignmentEntity> assignmentBox =
+      Box<PlanningAssignmentEntity>(store);
+
+  ObjectBoxPlanningDataSource({
+    required this.legacyObjectBox,
+    required this.store,
+    this.mapper = const PlanningSnapshotMapper(),
   });
 
-  PlanningSnapshot? findByMonth({
+  Future<PlanningSnapshot?> findByMonth({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async {
+    final current = _findNewByMonth(
+      year: year,
+      month: month,
+      branchId: branchId,
+    );
+    if (current != null) return mapper.fromObjectBox(current);
+
+    final legacy = _findLegacyByMonth(
+      year: year,
+      month: month,
+      branchId: branchId,
+    );
+    return legacy == null ? null : mapper.fromLegacyRecord(legacy);
+  }
+
+  Future<PlanningSnapshot?> findPreviousPublished({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async {
+    final candidates = <PlanningSnapshot>[];
+
+    for (final entity in snapshotBox.getAll()) {
+      if (entity.publishedAtEpochMs == null) continue;
+      if (!_isBefore(entity.year, entity.month, year, month)) continue;
+      if (branchId != null && entity.branchId != branchId) continue;
+      candidates.add(mapper.fromObjectBox(entity));
+    }
+
+    for (final legacy in legacyObjectBox.planificationBox.getAll()) {
+      if (!_isBefore(legacy.annee, legacy.mois, year, month)) continue;
+      if (branchId != null && legacy.branch.targetId != branchId) continue;
+      candidates.add(
+        mapper.fromLegacyRecord(
+          PlanningPersistenceRecord(
+            id: legacy.id,
+            month: legacy.mois,
+            year: legacy.annee,
+            teamOrder: legacy.ordreEquipes,
+            branchId: legacy.branch.targetId,
+            snapshotJson: legacy.activitesJson,
+          ),
+        ),
+      );
+    }
+
+    if (candidates.isEmpty) return null;
+    candidates.sort((a, b) {
+      final left = a.year * 100 + a.month;
+      final right = b.year * 100 + b.month;
+      return right.compareTo(left);
+    });
+    return candidates.first;
+  }
+
+  Future<bool> exists({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async {
+    return (await findByMonth(year: year, month: month, branchId: branchId)) !=
+        null;
+  }
+
+  Future<void> publish(PlanningSnapshot snapshot) async {
+    store.runInTx(TxMode.write, () {
+      final existing = _findNewByMonth(
+        year: snapshot.year,
+        month: snapshot.month,
+        branchId: snapshot.branchId,
+      );
+      if (existing != null) {
+        throw StateError(
+          'A planning snapshot already exists for ${snapshot.year}-${snapshot.month}.',
+        );
+      }
+
+      final entity = mapper.toObjectBox(snapshot);
+      final snapshotId = snapshotBox.put(entity);
+      for (final assignment in entity.assignments) {
+        assignment.snapshot.targetId = snapshotId;
+        assignmentBox.put(assignment);
+      }
+    });
+  }
+
+  PlanningSnapshotEntity? _findNewByMonth({
     required int year,
     required int month,
     int? branchId,
   }) {
-    final query = objectBox.planificationBox
+    final query = snapshotBox
+        .query(
+          PlanningSnapshotEntity_.year.equals(year) &
+              PlanningSnapshotEntity_.month.equals(month),
+        )
+        .build();
+    try {
+      for (final entity in query.find()) {
+        if (branchId == null || entity.branchId == branchId) return entity;
+      }
+      return null;
+    } finally {
+      query.close();
+    }
+  }
+
+  PlanningPersistenceRecord? _findLegacyByMonth({
+    required int year,
+    required int month,
+    int? branchId,
+  }) {
+    final query = legacyObjectBox.planificationBox
         .query(Planification_.annee.equals(year) & Planification_.mois.equals(month))
         .build();
 
     try {
-      final records = query.find();
-      for (final record in records) {
-        if (branchId == null || record.branch.targetId == branchId) {
-          return mapper.toDomain(_toRecord(record));
+      for (final legacy in query.find()) {
+        if (branchId == null || legacy.branch.targetId == branchId) {
+          return PlanningPersistenceRecord(
+            id: legacy.id,
+            month: legacy.mois,
+            year: legacy.annee,
+            teamOrder: legacy.ordreEquipes,
+            branchId: legacy.branch.targetId,
+            snapshotJson: legacy.activitesJson,
+          );
         }
       }
       return null;
@@ -40,37 +164,8 @@ class ObjectBoxPlanningDataSource {
     }
   }
 
-  List<PlanningSnapshot> findPublishedBefore({
-    required int year,
-    required int month,
-    int? branchId,
-  }) {
-    final all = objectBox.planificationBox.getAll();
-    final records = all
-        .where((record) {
-          if (branchId != null && record.branch.targetId != branchId) return false;
-          if (record.annee < year) return true;
-          return record.annee == year && record.mois < month;
-        })
-        .map(mapper.toDomain)
-        .toList()
-      ..sort((a, b) {
-        final aKey = a.year * 100 + a.month;
-        final bKey = b.year * 100 + b.month;
-        return bKey.compareTo(aKey);
-      });
-
-    return List.unmodifiable(records);
-  }
-
-  PlanningPersistenceRecord _toRecord(Planification entity) {
-    return PlanningPersistenceRecord(
-      id: entity.id,
-      month: entity.mois,
-      year: entity.annee,
-      teamOrder: entity.ordreEquipes,
-      branchId: entity.branch.targetId,
-      snapshotJson: entity.activitesJson,
-    );
+  bool _isBefore(int leftYear, int leftMonth, int rightYear, int rightMonth) {
+    if (leftYear != rightYear) return leftYear < rightYear;
+    return leftMonth < rightMonth;
   }
 }
