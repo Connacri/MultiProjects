@@ -1,5 +1,11 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+
+# FlutterFire's bundled Firebase C++ SDK still declares CMake 3.1.  CMake 4
+# no longer accepts compatibility requests below 3.5, so raise its minimum
+# policy compatibility while retaining the SDK supplied by the plugin.
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING
+  "Minimum CMake policy version for third-party projects")
 project(kenzy LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
