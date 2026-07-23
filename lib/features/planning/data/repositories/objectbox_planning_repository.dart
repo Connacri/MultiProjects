@@ -16,12 +16,11 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
     required int month,
     int? branchId,
   }) async {
-    return dataSource.findByMonth(
-          year: year,
-          month: month,
-          branchId: branchId,
-        ) !=
-        null;
+    return dataSource.exists(
+      year: year,
+      month: month,
+      branchId: branchId,
+    );
   }
 
   @override
@@ -43,19 +42,15 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
     required int month,
     int? branchId,
   }) async {
-    final snapshots = dataSource.findPublishedBefore(
+    return dataSource.findPreviousPublished(
       year: year,
       month: month,
       branchId: branchId,
     );
-    return snapshots.isEmpty ? null : snapshots.first;
   }
 
   @override
   Future<void> publish(PlanningSnapshot snapshot) async {
-    throw UnimplementedError(
-      'Publishing through the new repository is intentionally disabled until '
-      'the ObjectBox schema migration and atomic write transaction are in place.',
-    );
+    await dataSource.publish(snapshot);
   }
 }
