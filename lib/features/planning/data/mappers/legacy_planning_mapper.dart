@@ -25,11 +25,19 @@ class LegacyPlanningMapper {
       revision: 1,
       createdAt: DateTime(record.year, record.month, 1),
       publishedAt: DateTime(record.year, record.month, 1),
-      assignments: _parseAssignments(record.snapshotJson),
+      assignments: _parseAssignments(
+        record.snapshotJson,
+        year: record.year,
+        month: record.month,
+      ),
     );
   }
 
-  List<PlanningAssignment> _parseAssignments(String? json) {
+  List<PlanningAssignment> _parseAssignments(
+    String? json, {
+    required int year,
+    required int month,
+  }) {
     if (json == null || json.isEmpty) return const [];
 
     try {
@@ -39,6 +47,8 @@ class LegacyPlanningMapper {
       if (raw is! List) return const [];
 
       final result = <PlanningAssignment>[];
+      final maxDay = DateTime(year, month + 1, 0).day;
+
       for (final staffEntry in raw) {
         if (staffEntry is! Map) continue;
         final staffId = _toInt(staffEntry['staffId']);
@@ -49,12 +59,12 @@ class LegacyPlanningMapper {
         for (final dayEntry in days) {
           if (dayEntry is! Map) continue;
           final day = _toInt(dayEntry['jour']);
-          if (day == null || day < 1) continue;
+          if (day == null || day < 1 || day > maxDay) continue;
           final status = dayEntry['statut']?.toString() ?? '';
           result.add(
             PlanningAssignment(
               staffId: staffId,
-              date: DateTime(0, 1, day),
+              date: DateTime(year, month, day),
               shift: _mapShift(status),
               code: status,
             ),
