@@ -20,6 +20,7 @@ void main() {
   const required = {
     'PlanningSnapshotEntity',
     'PlanningAssignmentEntity',
+    'RotationStateSnapshotEntity',
     'RotationConfigurationEntity',
     'RotationPeriodEntity',
     'PlanningOverrideEntity',
@@ -30,7 +31,7 @@ void main() {
   if (missing.isNotEmpty) {
     stderr.writeln(
       'Planning ObjectBox model is incomplete. Missing entities: '
-      '${missing.toList()..sort()}',\n'
+      '${missing.toList()..sort()}\n'
       'Run the ObjectBox generator after registering the entities in the '
       'application Store model entry point.',
     );
