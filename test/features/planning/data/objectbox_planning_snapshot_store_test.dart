@@ -31,6 +31,7 @@ void main() {
     required int month,
     required int revision,
     int status = 0,
+    int? publishedAtEpochMs,
   }) {
     return PlanningSnapshotEntity()
       ..branchId = branchId
@@ -41,7 +42,8 @@ void main() {
       ..engineVersion = 'test'
       ..revision = revision
       ..status = status
-      ..createdAtEpochMs = DateTime(year, month, 1).millisecondsSinceEpoch;
+      ..createdAtEpochMs = DateTime(year, month, 1).millisecondsSinceEpoch
+      ..publishedAtEpochMs = publishedAtEpochMs;
   }
 
   test('putAtomically persists snapshot and all assignments in one transaction', () {
@@ -60,7 +62,7 @@ void main() {
 
     snapshotStore.putAtomically(entity, [assignment]);
 
-    final stored = snapshotStore.findByMonth(
+    final stored = snapshotStore.findLatestByMonth(
       year: 2026,
       month: 7,
       branchId: 1,
@@ -73,33 +75,14 @@ void main() {
     expect(stored.assignments.first.team, 'A');
   });
 
-  test('findByMonth isolates snapshots by branch', () {
-    snapshotStore.putAtomically(
-      snapshot(branchId: 1, year: 2026, month: 7, revision: 1),
-      const [],
-    );
-    snapshotStore.putAtomically(
-      snapshot(branchId: 2, year: 2026, month: 7, revision: 3),
-      const [],
-    );
-
-    expect(
-      snapshotStore.findByMonth(year: 2026, month: 7, branchId: 1)!.branchId,
-      1,
-    );
-    expect(
-      snapshotStore.findByMonth(year: 2026, month: 7, branchId: 2)!.branchId,
-      2,
-    );
-  });
-
-  test('snapshot remains independent from a later revision', () {
+  test('latest and published reads are deterministic', () {
     final published = snapshot(
       branchId: 1,
       year: 2026,
       month: 7,
       revision: 1,
       status: 1,
+      publishedAtEpochMs: DateTime(2026, 7, 10).millisecondsSinceEpoch,
     );
     final modified = snapshot(
       branchId: 1,
@@ -112,14 +95,77 @@ void main() {
     snapshotStore.putAtomically(published, const []);
     snapshotStore.putAtomically(modified, const []);
 
-    final stored = snapshotStore.findByMonth(
+    expect(
+      snapshotStore.findPublishedByMonth(
+        year: 2026,
+        month: 7,
+        branchId: 1,
+      )!.revision,
+      1,
+    );
+    expect(
+      snapshotStore.findLatestByMonth(
+        year: 2026,
+        month: 7,
+        branchId: 1,
+      )!.revision,
+      2,
+    );
+  });
+
+  test('findByRevision returns the exact immutable snapshot', () {
+    snapshotStore.putAtomically(
+      snapshot(
+        branchId: 1,
+        year: 2026,
+        month: 7,
+        revision: 1,
+        status: 1,
+        publishedAtEpochMs: DateTime(2026, 7, 10).millisecondsSinceEpoch,
+      ),
+      const [],
+    );
+    snapshotStore.putAtomically(
+      snapshot(
+        branchId: 1,
+        year: 2026,
+        month: 7,
+        revision: 2,
+        status: 2,
+      ),
+      const [],
+    );
+
+    final revisionOne = snapshotStore.findByRevision(
       year: 2026,
       month: 7,
+      revision: 1,
       branchId: 1,
     );
 
-    expect(stored, isNotNull);
-    expect(stored!.revision, 1);
-    expect(stored.status, 1);
+    expect(revisionOne, isNotNull);
+    expect(revisionOne!.revision, 1);
+    expect(revisionOne.status, 1);
+    expect(revisionOne.publishedAtEpochMs, isNotNull);
+  });
+
+  test('reads isolate snapshots by branch', () {
+    snapshotStore.putAtomically(
+      snapshot(branchId: 1, year: 2026, month: 7, revision: 1),
+      const [],
+    );
+    snapshotStore.putAtomically(
+      snapshot(branchId: 2, year: 2026, month: 7, revision: 3),
+      const [],
+    );
+
+    expect(
+      snapshotStore.findLatestByMonth(year: 2026, month: 7, branchId: 1)!.branchId,
+      1,
+    );
+    expect(
+      snapshotStore.findLatestByMonth(year: 2026, month: 7, branchId: 2)!.branchId,
+      2,
+    );
   });
 }
