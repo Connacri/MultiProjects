@@ -1,39 +1,28 @@
 import '../entities/planning.dart';
 import '../entities/rotation_configuration.dart';
+import '../entities/rotation_state.dart';
 import '../enums/shift_type.dart';
 
 /// Pure domain service responsible for deterministic team rotation.
 ///
-/// This service has two interfaces:
-/// 1. Legacy methods: rotate(), nextMonth(), previousMonth() for backward compatibility
-/// 2. Clean Architecture methods: shiftFor(), shiftsForDate(), generateMonth()
+/// Team identity is the continuity key. `teamOrder` only defines the current
+/// configured ordering and must never reinterpret a previously published
+/// team's phase when the user reorders teams.
 ///
 /// No Flutter, Provider, ObjectBox or network dependency is allowed here.
-/// A published planning is never recalculated by this service.
 class RotationEngine {
   const RotationEngine();
 
-  // ============================================================================
-  // LEGACY INTERFACE - For backward compatibility
-  // ============================================================================
-
-  /// Rotates a team order by one position to obtain the next monthly state.
-  ///
-  /// Example: A,C,B,D -> C,B,D,A.
   List<String> rotate(List<String> order, {int steps = 1}) {
     if (order.isEmpty) return const [];
-
     final normalizedSteps = steps % order.length;
     if (normalizedSteps == 0) return List.unmodifiable(order);
-
     return List.unmodifiable([
       ...order.skip(normalizedSteps),
       ...order.take(normalizedSteps),
     ]);
   }
 
-  /// Computes the next month's rotation while keeping the day/night orders
-  /// independently controlled.
   Planning nextMonth(Planning current) {
     return current.copyWith(
       year: current.month == 12 ? current.year + 1 : current.year,
@@ -44,7 +33,6 @@ class RotationEngine {
     );
   }
 
-  /// Computes the previous month's rotation.
   Planning previousMonth(Planning current) {
     return current.copyWith(
       year: current.month == 1 ? current.year - 1 : current.year,
@@ -56,33 +44,47 @@ class RotationEngine {
     );
   }
 
-  // ============================================================================
-  // CLEAN ARCHITECTURE INTERFACE - New deterministic engine
-  // ============================================================================
-
+  /// Returns the shift for a team on a date.
+  ///
+  /// With [continuity], the team's own previously published shift is the
+  /// authoritative anchor. The team's position in `teamOrder` is ignored for
+  /// continuation, so reordering teams cannot silently change their phases.
   ShiftType shiftFor({
     required String team,
     required DateTime date,
     required RotationConfiguration configuration,
+    RotationState? continuity,
   }) {
-    final teamIndex = configuration.teamOrder.indexOf(team);
-    if (teamIndex < 0) {
+    if (!configuration.teamOrder.contains(team)) {
       throw ArgumentError.value(team, 'team', 'Team is not in configuration');
     }
+    if (configuration.cycle.isEmpty) {
+      throw StateError('Rotation cycle cannot be empty');
+    }
 
-    final days = _dateOnly(date)
-        .difference(_dateOnly(configuration.referenceDate))
-        .inDays;
-    final phase = _floorMod(
-      configuration.referencePhaseIndex + days - teamIndex,
-      configuration.cycle.length,
+    final previousShift = continuity?.shiftFor(team);
+    if (previousShift != null && continuity != null) {
+      final days = _dateOnly(date).difference(_dateOnly(continuity.date)).inDays;
+      final previousPhase = configuration.cycle.indexOf(previousShift);
+      if (previousPhase >= 0 && days >= 1) {
+        return configuration.cycle[
+          _floorMod(previousPhase + days, configuration.cycle.length)
+        ];
+      }
+      if (days == 0) return previousShift;
+    }
+
+    return _shiftFromReference(
+      team: team,
+      date: date,
+      configuration: configuration,
     );
-    return configuration.cycle[phase];
   }
 
   Map<String, ShiftType> shiftsForDate({
     required DateTime date,
     required RotationConfiguration configuration,
+    RotationState? continuity,
   }) {
     return Map.unmodifiable({
       for (final team in configuration.teamOrder)
@@ -90,6 +92,7 @@ class RotationEngine {
           team: team,
           date: date,
           configuration: configuration,
+          continuity: continuity,
         ),
     });
   }
@@ -98,6 +101,7 @@ class RotationEngine {
     required int year,
     required int month,
     required RotationConfiguration configuration,
+    RotationState? continuity,
   }) {
     final days = DateTime(year, month + 1, 0).day;
     return List.unmodifiable([
@@ -105,8 +109,25 @@ class RotationEngine {
         shiftsForDate(
           date: DateTime(year, month, day),
           configuration: configuration,
+          continuity: continuity,
         ),
     ]);
+  }
+
+  ShiftType _shiftFromReference({
+    required String team,
+    required DateTime date,
+    required RotationConfiguration configuration,
+  }) {
+    final teamIndex = configuration.teamOrder.indexOf(team);
+    final days = _dateOnly(date)
+        .difference(_dateOnly(configuration.referenceDate))
+        .inDays;
+    final phase = _floorMod(
+      configuration.referencePhaseIndex + days - teamIndex,
+      configuration.cycle.length,
+    );
+    return configuration.cycle[phase];
   }
 
   int _floorMod(int value, int modulus) {
