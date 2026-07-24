@@ -1,11 +1,13 @@
 import '../entities/planning_assignment.dart';
 import '../entities/rotation_configuration.dart';
+import '../entities/rotation_state.dart';
 import '../enums/shift_type.dart';
 import 'rotation_engine.dart';
 
 /// Generates the team-level schedule first, then projects it to staff.
 ///
 /// This avoids recalculating the same rotation for every staff member.
+/// Continuity is keyed by team identity, never by team position.
 class TeamScheduleGenerator {
   final RotationEngine rotationEngine;
 
@@ -15,6 +17,7 @@ class TeamScheduleGenerator {
     required int year,
     required int month,
     required RotationConfiguration configuration,
+    RotationState? continuity,
   }) {
     final result = <DateTime, Map<String, ShiftType>>{};
     final days = DateTime(year, month + 1, 0).day;
@@ -24,6 +27,7 @@ class TeamScheduleGenerator {
       result[date] = rotationEngine.shiftsForDate(
         date: date,
         configuration: configuration,
+        continuity: continuity,
       );
     }
 
