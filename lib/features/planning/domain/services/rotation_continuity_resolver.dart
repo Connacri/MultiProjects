@@ -1,14 +1,16 @@
 import '../entities/rotation_configuration.dart';
 import '../entities/rotation_state.dart';
+import '../entities/rotation_state_snapshot.dart';
 import '../enums/rotation_policy.dart';
-import '../enums/shift_type.dart';
 import '../repositories/planning_repository.dart';
 
-/// Resolves the state from which a new planning period must continue.
+/// Resolves the persisted rotation checkpoint from which a new planning
+/// period must continue.
 ///
-/// Published snapshots are historical facts. This service only reads them and
-/// reconstructs continuity by team identity. The current `teamOrder` is never
-/// used to remap a previously published team's phase.
+/// Continuity is restored from the last published RotationStateSnapshot, never
+/// reconstructed from mutable assignments. This guarantees that editing leave
+/// or team order in the current month cannot silently change the next month's
+/// rotation checkpoint.
 class RotationContinuityResolver {
   final PlanningRepository planningRepository;
 
@@ -29,40 +31,28 @@ class RotationContinuityResolver {
       branchId: branchId,
     );
 
-    if (previous == null || previous.assignments.isEmpty) return null;
+    final checkpoint = previous?.rotationState;
+    if (checkpoint == null) return null;
 
-    final lastDay = DateTime(
-      previous.year,
-      previous.month,
-      previous.daysInMonth,
+    return _toRotationState(
+      checkpoint,
+      configuration: configuration,
     );
+  }
 
-    final shifts = <String, ShiftType>{};
-    for (final assignment in previous.assignments) {
-      if (assignment.date.year == lastDay.year &&
-          assignment.date.month == lastDay.month &&
-          assignment.date.day == lastDay.day &&
-          assignment.team != null) {
-        shifts[assignment.team!] = assignment.shift;
-      }
-    }
-
-    if (shifts.isEmpty) return null;
-
-    // A configuration reorder must not discard continuity for teams that were
-    // already published. Keep only teams that still exist in the new config;
-    // newly introduced teams fall back to the reference-date calculation.
+  RotationState _toRotationState(
+    RotationStateSnapshot checkpoint, {
+    required RotationConfiguration configuration,
+  }) {
     final currentTeams = configuration.teamOrder.toSet();
-    final retained = <String, ShiftType>{
-      for (final entry in shifts.entries)
+    final retained = <String, int>{
+      for (final entry in checkpoint.teamPhaseByTeam.entries)
         if (currentTeams.contains(entry.key)) entry.key: entry.value,
     };
 
-    if (retained.isEmpty) return null;
-
     return RotationState(
-      date: lastDay,
-      teamShifts: Map.unmodifiable(retained),
+      date: checkpoint.date,
+      teamPhases: Map.unmodifiable(retained),
     );
   }
 }
