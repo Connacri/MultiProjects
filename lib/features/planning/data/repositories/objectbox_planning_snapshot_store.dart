@@ -71,6 +71,35 @@ class ObjectBoxPlanningSnapshotStore {
     }
   }
 
+  PlanningSnapshotEntity? findPreviousPublished({
+    required int year,
+    required int month,
+    int? branchId,
+  }) {
+    final targetMonth = year * 100 + month;
+    final candidates = snapshotBox
+        .getAll()
+        .where(
+          (snapshot) =>
+              snapshot.publishedAtEpochMs != null &&
+              _matchesBranch(snapshot, branchId) &&
+              (snapshot.year * 100 + snapshot.month) < targetMonth,
+        )
+        .toList();
+
+    if (candidates.isEmpty) return null;
+
+    candidates.sort((a, b) {
+      final monthCompare = (b.year * 100 + b.month).compareTo(a.year * 100 + a.month);
+      if (monthCompare != 0) return monthCompare;
+      final revisionCompare = b.revision.compareTo(a.revision);
+      if (revisionCompare != 0) return revisionCompare;
+      return b.id.compareTo(a.id);
+    });
+
+    return candidates.first;
+  }
+
   /// Persists snapshot, its rotation checkpoint and assignments atomically.
   ///
   /// The rotation checkpoint is attached to the snapshot before the snapshot
