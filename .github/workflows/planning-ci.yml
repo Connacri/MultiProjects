@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -34,8 +36,32 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Verify ObjectBox generation contract
-        run: dart run tool/check_objectbox_build_runner.dart
+      - name: Detect ObjectBox entity changes
+        id: objectbox_changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            CHANGED_FILES="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}")"
+          else
+            CHANGED_FILES="$(git diff --name-only HEAD^ HEAD)"
+          fi
+          echo "Changed files:"
+          printf '%s\n' "$CHANGED_FILES"
+          {
+            echo 'CHANGED_FILES<<EOF'
+            printf '%s\n' "$CHANGED_FILES"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+          if CHANGED_FILES="$CHANGED_FILES" dart run tool/should_run_objectbox_build.dart | grep -q '^true$'; then
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'run=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate ObjectBox code
+        if: steps.objectbox_changes.outputs.run == 'true'
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Verify ObjectBox generated code contract
         run: dart run tool/check_objectbox_generation_contract.dart
