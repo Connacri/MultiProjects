@@ -6,8 +6,13 @@ import '../../../../objectbox.g.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../mappers/planning_snapshot_mapper.dart';
 import '../models/planning_persistence_record.dart';
-import '../objectbox/planning_objectbox_entities.dart';
+import '../objectbox/planning_snapshot_entity.dart';
 
+/// ObjectBox data source for immutable Planning snapshots.
+///
+/// New v2 snapshots are preferred. Legacy Planification records remain
+/// readable for migration/backward compatibility, but are never overwritten
+/// by the v2 publication path.
 class ObjectBoxPlanningDataSource {
   final ObjectBox legacyObjectBox;
   final Store store;
@@ -93,6 +98,10 @@ class ObjectBoxPlanningDataSource {
         null;
   }
 
+  /// Publishes a snapshot exactly once.
+  ///
+  /// A month/branch that already has a v2 snapshot is immutable and cannot be
+  /// replaced through this API. Legacy data is read-only from the v2 path.
   Future<void> publish(PlanningSnapshot snapshot) async {
     store.runInTx(TxMode.write, () {
       final existing = _findNewByMonth(
@@ -142,7 +151,10 @@ class ObjectBoxPlanningDataSource {
     int? branchId,
   }) {
     final query = legacyObjectBox.planificationBox
-        .query(Planification_.annee.equals(year) & Planification_.mois.equals(month))
+        .query(
+          Planification_.annee.equals(year) &
+              Planification_.mois.equals(month),
+        )
         .build();
 
     try {
