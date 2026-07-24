@@ -2,7 +2,7 @@ name: kenzy
 description: "A new Hospital DZ project."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 2.0.0-rc.1+1
+version: 2.0.0-rc.1+167
 
 environment:
   sdk: ^3.5.0

@@ -1,5 +1,5 @@
 #define AppName      "kenzy"
-#define AppVersion   "1.0.8.26"
+#define AppVersion   "2.0.0-rc.1.167"
 #define AppPublisher "Hospital DZ"
 #define BuildDir     "..\build\windows\x64\runner\Release"
 
