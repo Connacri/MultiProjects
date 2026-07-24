@@ -1,15 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:multi_projects/features/planning/domain/entities/planning_snapshot.dart';
-import 'package:multi_projects/features/planning/domain/entities/rotation_configuration.dart';
-import 'package:multi_projects/features/planning/domain/enums/rotation_policy.dart';
-import 'package:multi_projects/features/planning/domain/enums/shift_type.dart';
-import 'package:multi_projects/features/planning/domain/services/generate_planning.dart';
-import 'package:multi_projects/features/planning/domain/services/planning_draft_pipeline.dart';
-import 'package:multi_projects/features/planning/domain/services/planning_validator.dart';
-import 'package:multi_projects/features/planning/domain/services/rotation_continuity_resolver.dart';
-import 'package:multi_projects/features/planning/domain/services/team_schedule_generator.dart';
-import 'package:multi_projects/features/planning/domain/repositories/planning_repository.dart';
+import 'package:kenzy/features/planning/application/usecases/generate_planning_draft.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_assignment.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_snapshot.dart';
+import 'package:kenzy/features/planning/domain/entities/rotation_configuration.dart';
+import 'package:kenzy/features/planning/domain/entities/rotation_state_snapshot.dart';
+import 'package:kenzy/features/planning/domain/enums/rotation_policy.dart';
+import 'package:kenzy/features/planning/domain/enums/shift_type.dart';
+import 'package:kenzy/features/planning/domain/repositories/planning_repository.dart';
+import 'package:kenzy/features/planning/domain/services/generate_planning.dart';
+import 'package:kenzy/features/planning/domain/services/planning_draft_pipeline.dart';
+import 'package:kenzy/features/planning/domain/services/planning_validator.dart';
+import 'package:kenzy/features/planning/domain/services/rotation_continuity_resolver.dart';
+import 'package:kenzy/features/planning/domain/services/rotation_engine.dart';
+import 'package:kenzy/features/planning/domain/services/team_schedule_generator.dart';
 
 class _InMemoryPlanningRepository implements PlanningRepository {
   final Map<String, PlanningSnapshot> snapshots = {};
@@ -17,26 +21,51 @@ class _InMemoryPlanningRepository implements PlanningRepository {
   String _key(int year, int month, int? branchId) => '$year-$month-${branchId ?? 0}';
 
   @override
-  Future<PlanningSnapshot?> findByMonth({
+  Future<PlanningSnapshot?> findPublishedByMonth({
     required int year,
     required int month,
     int? branchId,
   }) async => snapshots[_key(year, month, branchId)];
 
   @override
-  Future<void> publish(PlanningSnapshot snapshot) async {
+  Future<PlanningSnapshot?> findLatestByMonth({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async => snapshots[_key(year, month, branchId)];
+
+  @override
+  Future<PlanningSnapshot?> findByRevision({
+    required int year,
+    required int month,
+    required int revision,
+    int? branchId,
+  }) async {
+    final snapshot = snapshots[_key(year, month, branchId)];
+    if (snapshot == null || snapshot.revision != revision) return null;
+    return snapshot;
+  }
+
+  @override
+  Future<PlanningSnapshot?> findPreviousPublished({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async => null;
+
+  @override
+  Future<void> saveRevision(PlanningSnapshot snapshot) async {
+    snapshots[_key(snapshot.year, snapshot.month, snapshot.branchId)] = snapshot;
+  }
+
+  @override
+  Future<void> publishRevision(PlanningSnapshot snapshot) async {
     snapshots[_key(snapshot.year, snapshot.month, snapshot.branchId)] = snapshot;
   }
 }
 
-class _StubContinuityResolver extends RotationContinuityResolver {
-  final Map<String, dynamic> states;
-
-  _StubContinuityResolver(this.states) : super(planningRepository: _InMemoryPlanningRepository());
-}
-
 void main() {
-  test('GeneratePlanning stores configuration version in generated snapshot', () async {
+  test('GeneratePlanning stores rotation checkpoint in generated snapshot', () async {
     final repository = _InMemoryPlanningRepository();
     final configuration = RotationConfiguration(
       id: 'four-team',
@@ -49,7 +78,7 @@ void main() {
 
     final useCase = GeneratePlanning(
       planningRepository: repository,
-      teamScheduleGenerator: TeamScheduleGenerator(),
+      teamScheduleGenerator: const TeamScheduleGenerator(RotationEngine()),
       continuityResolver: RotationContinuityResolver(planningRepository: repository),
       draftPipeline: const PlanningDraftPipeline(),
       validator: const PlanningValidator(),
@@ -65,6 +94,10 @@ void main() {
 
     expect(snapshot.configurationId, 'four-team');
     expect(snapshot.configurationVersion, 2);
+    expect(snapshot.rotationState, isNotNull);
+    expect(snapshot.rotationState!.configurationId, 'four-team');
+    expect(snapshot.rotationState!.configurationVersion, 2);
+    expect(snapshot.rotationState!.teamPhaseByTeam, isNotEmpty);
   });
 
   test('GeneratePlanning refuses to overwrite an existing historical snapshot', () async {
@@ -80,7 +113,7 @@ void main() {
 
     final useCase = GeneratePlanning(
       planningRepository: repository,
-      teamScheduleGenerator: TeamScheduleGenerator(),
+      teamScheduleGenerator: const TeamScheduleGenerator(RotationEngine()),
       continuityResolver: RotationContinuityResolver(planningRepository: repository),
       draftPipeline: const PlanningDraftPipeline(),
       validator: const PlanningValidator(),
@@ -93,7 +126,7 @@ void main() {
       staffIds: const [1],
       staffTeams: const {1: 'A'},
     );
-    await repository.publish(first);
+    await repository.publishRevision(first);
 
     expect(
       () => useCase(
