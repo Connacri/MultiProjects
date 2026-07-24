@@ -6,8 +6,9 @@ import '../repositories/planning_repository.dart';
 
 /// Resolves the state from which a new planning period must continue.
 ///
-/// Existing published snapshots are treated as historical facts. This service
-/// only reads them and never recalculates or mutates them.
+/// Published snapshots are historical facts. This service only reads them and
+/// reconstructs continuity by team identity. The current `teamOrder` is never
+/// used to remap a previously published team's phase.
 class RotationContinuityResolver {
   final PlanningRepository planningRepository;
 
@@ -22,18 +23,13 @@ class RotationContinuityResolver {
       return null;
     }
 
-    // The repository contract interprets this as: return the latest published
-    // snapshot strictly before targetDate. Implementations must not return the
-    // target month itself.
     final previous = await planningRepository.findPreviousPublished(
       year: targetDate.year,
       month: targetDate.month,
       branchId: branchId,
     );
 
-    if (previous == null || previous.assignments.isEmpty) {
-      return null;
-    }
+    if (previous == null || previous.assignments.isEmpty) return null;
 
     final lastDay = DateTime(
       previous.year,
@@ -53,9 +49,20 @@ class RotationContinuityResolver {
 
     if (shifts.isEmpty) return null;
 
+    // A configuration reorder must not discard continuity for teams that were
+    // already published. Keep only teams that still exist in the new config;
+    // newly introduced teams fall back to the reference-date calculation.
+    final currentTeams = configuration.teamOrder.toSet();
+    final retained = <String, ShiftType>{
+      for (final entry in shifts.entries)
+        if (currentTeams.contains(entry.key)) entry.key: entry.value,
+    };
+
+    if (retained.isEmpty) return null;
+
     return RotationState(
       date: lastDay,
-      teamShifts: Map.unmodifiable(shifts),
+      teamShifts: Map.unmodifiable(retained),
     );
   }
 }
