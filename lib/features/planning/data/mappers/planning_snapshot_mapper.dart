@@ -3,9 +3,15 @@ import 'dart:convert';
 import '../../domain/entities/planning_assignment.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/enums/shift_type.dart';
-import '../objectbox/planning_objectbox_entities.dart';
+import '../objectbox/planning_snapshot_entity.dart';
 import '../models/planning_persistence_record.dart';
 
+/// Maps the immutable planning domain snapshot to/from ObjectBox.
+///
+/// The ObjectBox schema is intentionally kept aligned with the current
+/// PlanningSnapshotEntity model. Rotation continuity is reconstructed from
+/// the published assignments by RotationContinuityResolver rather than being
+/// duplicated as an unversioned JSON field in the snapshot entity.
 class PlanningSnapshotMapper {
   const PlanningSnapshotMapper();
 
@@ -17,14 +23,15 @@ class PlanningSnapshotMapper {
       branchId: entity.branchId == 0 ? null : entity.branchId,
       configurationId: entity.configurationId,
       configurationVersion: entity.configurationVersion,
-      rotationPeriodId: entity.rotationPeriodId,
       engineVersion: entity.engineVersion,
       revision: entity.revision,
       createdAt: DateTime.fromMillisecondsSinceEpoch(entity.createdAtEpochMs),
       publishedAt: entity.publishedAtEpochMs == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(entity.publishedAtEpochMs!),
-      assignments: entity.assignments.map(fromObjectBoxAssignment).toList(),
+      assignments: List.unmodifiable(
+        entity.assignments.map(fromObjectBoxAssignment),
+      ),
     );
   }
 
@@ -66,16 +73,16 @@ class PlanningSnapshotMapper {
       ..month = snapshot.month
       ..configurationId = snapshot.configurationId
       ..configurationVersion = snapshot.configurationVersion
-      ..rotationPeriodId = snapshot.rotationPeriodId
       ..engineVersion = snapshot.engineVersion
       ..revision = snapshot.revision
+      ..status = snapshot.publishedAt == null ? 0 : 1
       ..createdAtEpochMs = snapshot.createdAt.millisecondsSinceEpoch
-      ..publishedAtEpochMs = snapshot.publishedAt?.millisecondsSinceEpoch
-      ..rotationStateJson = _rotationStateJson(snapshot);
+      ..publishedAtEpochMs = snapshot.publishedAt?.millisecondsSinceEpoch;
 
     for (final assignment in snapshot.assignments) {
       entity.assignments.add(toObjectBoxAssignment(assignment));
     }
+
     return entity;
   }
 
@@ -176,31 +183,5 @@ class PlanningSnapshotMapper {
       default:
         return ShiftType.rest;
     }
-  }
-
-  String _rotationStateJson(PlanningSnapshot snapshot) {
-    final lastDate = snapshot.assignments.isEmpty
-        ? null
-        : snapshot.assignments.map((a) => a.date).reduce((a, b) => a.isAfter(b) ? a : b);
-
-    final teamPhaseByTeam = <String, String>{};
-    if (lastDate != null) {
-      for (final assignment in snapshot.assignments) {
-        if (assignment.date.year == lastDate.year &&
-            assignment.date.month == lastDate.month &&
-            assignment.date.day == lastDate.day &&
-            assignment.team != null) {
-          teamPhaseByTeam[assignment.team!] = assignment.shift.name;
-        }
-      }
-    }
-
-    return jsonEncode({
-      'date': (lastDate ?? snapshot.createdAt).toIso8601String(),
-      'configurationId': snapshot.configurationId,
-      'configurationVersion': snapshot.configurationVersion,
-      'phaseIndex': 0,
-      'teamPhaseByTeam': teamPhaseByTeam,
-    });
   }
 }
