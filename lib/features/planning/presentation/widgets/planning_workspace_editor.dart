@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../providers/planning_editor_provider.dart';
 import '../providers/planning_provider.dart';
-import 'planning_draft_editor.dart';
+import 'editable_planning_snapshot_grid.dart';
 import 'planning_workspace_controller.dart';
 
 /// Responsive editor surface for the current Planning draft.
+///
+/// The draft is edited through PlanningEditorProvider only. The grid is backed
+/// directly by PlanningSnapshot; no legacy Planning conversion is performed.
 class PlanningWorkspaceEditor extends StatelessWidget {
   final PlanningProvider planningProvider;
   final PlanningEditorProvider editorProvider;
@@ -22,7 +25,8 @@ class PlanningWorkspaceEditor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!controller.isEditing) {
+    final draft = editorProvider.draft;
+    if (!controller.isEditing || draft == null) {
       return const SizedBox.shrink();
     }
 
@@ -32,8 +36,21 @@ class PlanningWorkspaceEditor extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PlanningDraftEditor(
-              provider: editorProvider,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Édition du brouillon — ${draft.year}/${draft.month}',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Chip(label: Text('${editorProvider.overrides.length} modification(s)')),
+              ],
+            ),
+            const SizedBox(height: 12),
+            EditablePlanningSnapshotGrid(
+              snapshot: draft,
+              editorProvider: editorProvider,
               staffNames: staffNames,
             ),
             const SizedBox(height: 12),
@@ -55,19 +72,6 @@ class PlanningWorkspaceEditor extends StatelessWidget {
                       : controller.applyEditorDraft,
                   icon: const Icon(Icons.check),
                   label: const Text('Appliquer au brouillon'),
-                ),
-                FilledButton.icon(
-                  onPressed: planningProvider.isBusy
-                      ? null
-                      : controller.publishEditedDraft,
-                  icon: planningProvider.isPublishing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.publish),
-                  label: const Text('Appliquer et publier'),
                 ),
               ],
             ),
