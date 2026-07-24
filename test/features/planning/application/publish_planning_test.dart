@@ -1,36 +1,70 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:kenzy/features/planning/application/usecases/publish_planning.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_assignment.dart';
 import 'package:kenzy/features/planning/domain/entities/planning_snapshot.dart';
+import 'package:kenzy/features/planning/domain/entities/rotation_state_snapshot.dart';
 import 'package:kenzy/features/planning/domain/repositories/planning_repository.dart';
 import 'package:kenzy/features/planning/domain/services/planning_validator.dart';
 
 class _FakePlanningRepository implements PlanningRepository {
-  bool alreadyExists;
   PlanningSnapshot? published;
 
-  _FakePlanningRepository({this.alreadyExists = false});
+  String _key(int year, int month, int? branchId) => '$year-$month-${branchId ?? 0}';
 
   @override
-  Future<bool> exists({required int year, required int month, int? branchId}) async =>
-      alreadyExists;
+  Future<PlanningSnapshot?> findPublishedByMonth({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async => published != null && _key(published!.year, published!.month, published!.branchId) == _key(year, month, branchId)
+      ? published
+      : null;
 
   @override
-  Future<PlanningSnapshot?> findByMonth({required int year, required int month, int? branchId}) async =>
-      published;
+  Future<PlanningSnapshot?> findLatestByMonth({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async => published != null && _key(published!.year, published!.month, published!.branchId) == _key(year, month, branchId)
+      ? published
+      : null;
 
   @override
-  Future<PlanningSnapshot?> findPreviousPublished({required int year, required int month, int? branchId}) async =>
-      null;
+  Future<PlanningSnapshot?> findByRevision({
+    required int year,
+    required int month,
+    required int revision,
+    int? branchId,
+  }) async => published != null &&
+          published!.year == year &&
+          published!.month == month &&
+          published!.revision == revision &&
+          published!.branchId == branchId
+      ? published
+      : null;
 
   @override
-  Future<void> publish(PlanningSnapshot snapshot) async {
+  Future<PlanningSnapshot?> findPreviousPublished({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async => null;
+
+  @override
+  Future<void> saveRevision(PlanningSnapshot snapshot) async {
+    published = snapshot;
+  }
+
+  @override
+  Future<void> publishRevision(PlanningSnapshot snapshot) async {
     published = snapshot;
   }
 }
 
 PlanningSnapshot _snapshot({
   List<PlanningAssignment> assignments = const [],
+  RotationStateSnapshot? rotationState,
 }) {
   return PlanningSnapshot(
     id: 'draft-1',
@@ -41,6 +75,14 @@ PlanningSnapshot _snapshot({
     engineVersion: 'test',
     revision: 1,
     createdAt: DateTime(2026, 7, 24),
+    rotationState: rotationState ??
+        RotationStateSnapshot(
+          date: DateTime(2026, 7, 31),
+          configurationId: 'config-1',
+          configurationVersion: 1,
+          phaseIndex: 2,
+          teamPhaseByTeam: const {'A': 2},
+        ),
     assignments: assignments,
   );
 }
@@ -69,7 +111,8 @@ void main() {
   });
 
   test('publication rejects replacing an existing snapshot', () async {
-    final repository = _FakePlanningRepository(alreadyExists: true);
+    final repository = _FakePlanningRepository();
+    repository.published = _snapshot();
     final useCase = PublishPlanning(
       planningRepository: repository,
       validator: const PlanningValidator(),
@@ -89,6 +132,6 @@ void main() {
       () => useCase(snapshot),
       throwsA(isA<StateError>()),
     );
-    expect(repository.published, isNull);
+    expect(repository.published, isNotNull);
   });
 }
