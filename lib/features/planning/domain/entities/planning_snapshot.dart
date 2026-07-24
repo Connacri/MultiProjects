@@ -1,9 +1,10 @@
 import 'planning_assignment.dart';
 
-/// Immutable published planning snapshot.
+/// Immutable planning snapshot representing one revision of a monthly plan.
 ///
-/// Published snapshots are historical facts. They must never be silently
-/// recalculated when configuration or staff data changes.
+/// A snapshot is never updated in place after persistence. A modification of
+/// an existing plan creates a new revision. Published revisions remain
+/// historical facts and are never overwritten.
 class PlanningSnapshot {
   final String id;
   final int year;
@@ -70,4 +71,34 @@ class PlanningSnapshot {
   int get daysInMonth => DateTime(year, month + 1, 0).day;
 
   bool get isPublished => publishedAt != null;
+
+  /// A snapshot can only be published once it has been validated by the
+  /// application layer. Persistence must not infer validation from this flag.
+  bool get isHistorical => isPublished;
+
+  /// Stable business key used by persistence and transaction guards.
+  String get monthKey => '${branchId ?? 0}:$year:${month.toString().padLeft(2, '0')}';
+
+  /// Creates the next immutable revision while preserving the current
+  /// configuration and assignments unless explicitly replaced.
+  PlanningSnapshot nextRevision({
+    required DateTime createdAt,
+    List<PlanningAssignment>? assignments,
+    DateTime? continuityDate,
+  }) {
+    return PlanningSnapshot(
+      id: '',
+      year: year,
+      month: month,
+      branchId: branchId,
+      configurationId: configurationId,
+      configurationVersion: configurationVersion,
+      rotationPeriodId: rotationPeriodId,
+      engineVersion: engineVersion,
+      revision: revision + 1,
+      createdAt: createdAt,
+      continuityDate: continuityDate ?? this.continuityDate,
+      assignments: List.unmodifiable(assignments ?? this.assignments),
+    );
+  }
 }
