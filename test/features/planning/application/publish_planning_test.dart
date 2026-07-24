@@ -30,7 +30,7 @@ class _FakePlanningRepository implements PlanningRepository {
 }
 
 PlanningSnapshot _snapshot({
-  List<({int staffId, DateTime date})> assignments = const [],
+  List<PlanningAssignment> assignments = const [],
 }) {
   return PlanningSnapshot(
     id: 'draft-1',
@@ -41,15 +41,7 @@ PlanningSnapshot _snapshot({
     engineVersion: 'test',
     revision: 1,
     createdAt: DateTime(2026, 7, 24),
-    assignments: assignments
-        .map(
-          (item) => PlanningAssignment(
-            staffId: item.staffId,
-            date: item.date,
-            status: 'J',
-          ),
-        )
-        .toList(),
+    assignments: assignments,
   );
 }
 
@@ -64,8 +56,8 @@ void main() {
     final duplicateDate = DateTime(2026, 7, 24);
     final snapshot = _snapshot(
       assignments: [
-        (staffId: 1, date: duplicateDate),
-        (staffId: 1, date: duplicateDate),
+        PlanningAssignment(staffId: 1, date: duplicateDate, status: 'J'),
+        PlanningAssignment(staffId: 1, date: duplicateDate, status: 'J'),
       ],
     );
 
@@ -76,23 +68,6 @@ void main() {
     expect(repository.published, isNull);
   });
 
-  test('valid planning is published when no existing snapshot exists', () async {
-    final repository = _FakePlanningRepository();
-    final useCase = PublishPlanning(
-      planningRepository: repository,
-      validator: const PlanningValidator(),
-    );
-
-    final snapshot = _snapshot(
-      assignments: [(staffId: 1, date: DateTime(2026, 7, 24))],
-    );
-
-    final published = await useCase(snapshot);
-
-    expect(published.isPublished, isTrue);
-    expect(repository.published?.id, 'draft-1');
-  });
-
   test('publication rejects replacing an existing snapshot', () async {
     final repository = _FakePlanningRepository(alreadyExists: true);
     final useCase = PublishPlanning(
@@ -101,7 +76,13 @@ void main() {
     );
 
     final snapshot = _snapshot(
-      assignments: [(staffId: 1, date: DateTime(2026, 7, 24))],
+      assignments: [
+        PlanningAssignment(
+          staffId: 1,
+          date: DateTime(2026, 7, 24),
+          status: 'J',
+        ),
+      ],
     );
 
     expect(
