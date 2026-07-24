@@ -13,6 +13,10 @@ class InvalidPlanningException implements Exception {
 
 /// Validates and publishes a draft. Repository implementations must persist
 /// the snapshot and its assignments atomically.
+///
+/// Publication always validates the snapshot at the application boundary;
+/// UI validation state is only a presentation optimization and can never be
+/// used to bypass the business validation rule.
 class PublishPlanning {
   final PlanningRepository planningRepository;
   final PlanningValidator validator;
