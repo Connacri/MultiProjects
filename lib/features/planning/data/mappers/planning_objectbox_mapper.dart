@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import '../../domain/entities/planning_assignment.dart';
 import '../../domain/entities/planning_snapshot.dart';
+import '../../domain/entities/rotation_state_snapshot.dart';
 import '../../domain/enums/shift_type.dart';
 import '../objectbox/planning_snapshot_entity.dart';
+import '../objectbox/rotation_state_snapshot_entity.dart';
 
 class PlanningObjectBoxMapper {
   const PlanningObjectBoxMapper();
@@ -20,9 +24,33 @@ class PlanningObjectBoxMapper {
       publishedAt: entity.publishedAtEpochMs == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(entity.publishedAtEpochMs!),
+      rotationState: entity.rotationState.target == null
+          ? null
+          : _rotationStateToDomain(entity.rotationState.target!),
       assignments: List.unmodifiable(
         entity.assignments.map(_assignmentToDomain),
       ),
+    );
+  }
+
+  RotationStateSnapshot _rotationStateToDomain(
+    RotationStateSnapshotEntity entity,
+  ) {
+    final decoded = jsonDecode(entity.teamPhaseByTeamJson);
+    final teamPhaseByTeam = decoded is Map
+        ? Map<String, int>.from(
+            decoded.map(
+              (key, value) => MapEntry(key.toString(), (value as num).toInt()),
+            ),
+          )
+        : const <String, int>{};
+
+    return RotationStateSnapshot(
+      date: DateTime.fromMillisecondsSinceEpoch(entity.dateEpochMs),
+      configurationId: entity.configurationId,
+      configurationVersion: entity.configurationVersion,
+      phaseIndex: entity.phaseIndex,
+      teamPhaseByTeam: Map.unmodifiable(teamPhaseByTeam),
     );
   }
 
@@ -37,6 +65,27 @@ class PlanningObjectBoxMapper {
     );
   }
 
+  RotationStateSnapshotEntity rotationStateToEntity(
+    RotationStateSnapshot state, {
+    required int branchId,
+    required int year,
+    required int month,
+    required int revision,
+  }) {
+    return RotationStateSnapshotEntity()
+      ..branchId = branchId
+      ..year = year
+      ..month = month
+      ..revision = revision
+      ..dateEpochMs = state.date.millisecondsSinceEpoch
+      ..configurationId = state.configurationId
+      ..configurationVersion = state.configurationVersion
+      ..phaseIndex = state.phaseIndex
+      ..teamPhaseByTeamJson = jsonEncode(state.teamPhaseByTeam);
+  }
+
+  String shiftToString(ShiftType shift) => shift.name;
+
   ShiftType _shiftFromString(String value) {
     switch (value.toLowerCase()) {
       case 'day':
@@ -47,6 +96,4 @@ class PlanningObjectBoxMapper {
         return ShiftType.rest;
     }
   }
-
-  String shiftToString(ShiftType shift) => shift.name;
 }
