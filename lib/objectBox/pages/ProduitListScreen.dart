@@ -1,4 +1,4 @@
-import 'dart:io' show File;
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:cached_network_image/cached_network_image.dart';

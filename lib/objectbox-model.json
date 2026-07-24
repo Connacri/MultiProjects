@@ -4,496 +4,691 @@
   "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
-      "id": "1:1607491491677936871",
-      "lastPropertyId": "15:314844036761733771",
-      "name": "Fournisseur",
+      "id": "1:4300676312471225723",
+      "lastPropertyId": "4:7306136932606974753",
+      "name": "ActiviteJour",
       "properties": [
         {
-          "id": "1:4128254359789025437",
+          "id": "1:2731764589176768851",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:8758188655905488373",
-          "name": "qr",
-          "indexId": "17:2877145562524481358",
-          "type": 9,
-          "flags": 2080
-        },
-        {
-          "id": "3:414205311028485250",
-          "name": "nom",
-          "indexId": "32:1188588350291102772",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "4:8919268741099517413",
-          "name": "phone",
-          "indexId": "33:2493509042219465699",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "5:7832871292473157035",
-          "name": "adresse",
-          "type": 9
-        },
-        {
-          "id": "11:3848006787260901234",
-          "name": "crudId",
-          "indexId": "14:7929166363009161217",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Crud"
-        },
-        {
-          "id": "13:4779008141956767120",
-          "name": "derniereModification",
-          "type": 10
-        },
-        {
-          "id": "14:3375205513092501614",
-          "name": "isSynced",
-          "type": 1
-        },
-        {
-          "id": "15:314844036761733771",
-          "name": "syncedAt",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "2:8606136097133066204",
-      "lastPropertyId": "29:2286177814278967554",
-      "name": "Produit",
-      "properties": [
-        {
-          "id": "1:3899042760461107286",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:1144798314351403869",
-          "name": "qr",
-          "indexId": "18:7055039884597715807",
-          "type": 9,
-          "flags": 34848
-        },
-        {
-          "id": "3:257039154436617685",
-          "name": "image",
-          "type": 9
-        },
-        {
-          "id": "4:8034655794147681628",
-          "name": "nom",
-          "indexId": "34:8146061910766790005",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "5:9164585532905782971",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "7:8989117107807645988",
-          "name": "prixVente",
-          "type": 8
-        },
-        {
-          "id": "15:8209867430423604798",
-          "name": "minimStock",
-          "type": 8
-        },
-        {
-          "id": "20:5939741701584325095",
-          "name": "alertPeremption",
+          "id": "2:4883805107121548625",
+          "name": "jour",
           "type": 6
         },
         {
-          "id": "21:756056403567528122",
-          "name": "crudId",
-          "indexId": "15:6599275986272761304",
+          "id": "3:1052746808356475587",
+          "name": "statut",
+          "type": 9
+        },
+        {
+          "id": "4:7306136932606974753",
+          "name": "staffId",
+          "indexId": "1:4291481272151312147",
           "type": 11,
           "flags": 520,
-          "relationTarget": "Crud"
-        },
-        {
-          "id": "23:6464151985494045530",
-          "name": "derniereModification",
-          "type": 10
-        },
-        {
-          "id": "24:2777806409493290922",
-          "name": "qrCodeList",
-          "type": 30
-        },
-        {
-          "id": "25:6126043269540820132",
-          "name": "qtyPartiel",
-          "type": 8
-        },
-        {
-          "id": "26:5893296646474378066",
-          "name": "pricePartielVente",
-          "type": 8
-        },
-        {
-          "id": "27:1007742783416435591",
-          "name": "isSynced",
-          "type": 1
-        },
-        {
-          "id": "28:8143084923991520618",
-          "name": "syncedAt",
-          "type": 10
-        },
-        {
-          "id": "29:2286177814278967554",
-          "name": "tax",
-          "type": 8
+          "relationTarget": "Staff"
         }
       ],
       "relations": []
     },
     {
-      "id": "3:7968206822164606643",
-      "lastPropertyId": "17:8166723147148390905",
-      "name": "Client",
+      "id": "2:6494003186487303452",
+      "lastPropertyId": "5:6017943449960910309",
+      "name": "Annonces",
       "properties": [
         {
-          "id": "1:3550449193447442136",
+          "id": "1:2834520236910064518",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:4262833269610261032",
-          "name": "qr",
-          "indexId": "26:747865436254373365",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "3:36313311528968912",
-          "name": "nom",
-          "indexId": "27:1211366738345630251",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "4:3647177150120252920",
-          "name": "phone",
-          "indexId": "28:1147151805433091062",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "5:8510624876376955688",
-          "name": "adresse",
+          "id": "2:2547377272266505114",
+          "name": "titre",
           "type": 9
         },
         {
-          "id": "6:7948986094101501762",
-          "name": "description",
+          "id": "3:5649876029417099024",
+          "name": "prix",
           "type": 9
         },
         {
-          "id": "13:8071587812397237522",
-          "name": "crudId",
-          "indexId": "11:3197865575425084963",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Crud"
+          "id": "4:4081605596929194249",
+          "name": "lien",
+          "type": 9
         },
         {
-          "id": "15:4136216909705007359",
-          "name": "derniereModification",
-          "type": 10
-        },
-        {
-          "id": "16:159023210248503274",
-          "name": "isSynced",
-          "type": 1
-        },
-        {
-          "id": "17:8166723147148390905",
-          "name": "syncedAt",
-          "type": 10
+          "id": "5:6017943449960910309",
+          "name": "categorie",
+          "type": 9
         }
       ],
       "relations": []
     },
     {
-      "id": "7:4476248726244800597",
-      "lastPropertyId": "15:3434699105202300507",
-      "name": "DeletedProduct",
-      "properties": [
-        {
-          "id": "1:7813442985589411931",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:5897104726740693875",
-          "name": "name",
-          "indexId": "29:2487146194513112985",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "3:3113702929616874283",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "4:5134769009321365682",
-          "name": "price",
-          "type": 8
-        },
-        {
-          "id": "5:5435292101446515439",
-          "name": "quantity",
-          "type": 6
-        },
-        {
-          "id": "10:9099144569081360726",
-          "name": "delaisPeremption",
-          "type": 6
-        },
-        {
-          "id": "11:6451279107967271452",
-          "name": "crudId",
-          "indexId": "12:7365983068633329326",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Crud"
-        },
-        {
-          "id": "13:1404231877362453953",
-          "name": "derniereModification",
-          "type": 10
-        },
-        {
-          "id": "14:8951242137165174450",
-          "name": "isSynced",
-          "type": 1
-        },
-        {
-          "id": "15:3434699105202300507",
-          "name": "syncedAt",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "9:5406683045265354164",
-      "lastPropertyId": "14:6213884162894576039",
+      "id": "3:7679427506646369180",
+      "lastPropertyId": "10:8430189381618842",
       "name": "Approvisionnement",
       "properties": [
         {
-          "id": "1:1427127697992029180",
+          "id": "1:2859337516731302765",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:6586041333414819153",
+          "id": "2:5881007820170204386",
           "name": "quantite",
           "type": 8
         },
         {
-          "id": "4:9010323130560500227",
+          "id": "3:5592473507426159007",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "4:6210635274126373795",
+          "name": "prixAchat",
+          "type": 8
+        },
+        {
+          "id": "5:8272968488704683286",
+          "name": "derniereModification",
+          "indexId": "2:16813017867465331",
+          "type": 10,
+          "flags": 8
+        },
+        {
+          "id": "6:1452144231128979590",
+          "name": "syncedAt",
+          "type": 10
+        },
+        {
+          "id": "7:6003112675978736812",
           "name": "datePeremption",
           "type": 10
         },
         {
-          "id": "5:5002393926981366444",
+          "id": "8:6345800675957013354",
           "name": "produitId",
-          "indexId": "8:8838837656771167107",
+          "indexId": "3:4822577405389037703",
           "type": 11,
           "flags": 520,
           "relationTarget": "Produit"
         },
         {
-          "id": "6:5704210873674130259",
+          "id": "9:7788857351330372625",
           "name": "fournisseurId",
-          "indexId": "9:7561266591184972565",
+          "indexId": "4:4122516615179742651",
           "type": 11,
           "flags": 520,
           "relationTarget": "Fournisseur"
         },
         {
-          "id": "7:2585586109804824705",
-          "name": "prixAchat",
-          "type": 8
-        },
-        {
-          "id": "8:9118065618411486750",
+          "id": "10:8430189381618842",
           "name": "crudId",
-          "indexId": "10:5642106981620853966",
+          "indexId": "5:5220362459383198660",
           "type": 11,
           "flags": 520,
           "relationTarget": "Crud"
-        },
-        {
-          "id": "10:5497082426338993749",
-          "name": "derniereModification",
-          "indexId": "25:662889821288420783",
-          "type": 10,
-          "flags": 8
-        },
-        {
-          "id": "13:1406747372132519505",
-          "name": "isSynced",
-          "type": 1
-        },
-        {
-          "id": "14:6213884162894576039",
-          "name": "syncedAt",
-          "type": 10
         }
       ],
       "relations": []
     },
     {
-      "id": "10:8291227482886202026",
-      "lastPropertyId": "9:3643444017163806039",
-      "name": "Crud",
+      "id": "4:8644159334954604775",
+      "lastPropertyId": "18:6825916532681709963",
+      "name": "BoardBasis",
       "properties": [
         {
-          "id": "1:7323118425901327966",
+          "id": "1:441960281086377595",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:1206276988640976169",
+          "id": "2:2250600669224289385",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:6962403097001152452",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "4:6372852306146572510",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "5:9107629448191501698",
+          "name": "photosJson",
+          "type": 9
+        },
+        {
+          "id": "6:2217412474080003487",
+          "name": "includesBreakfast",
+          "type": 1
+        },
+        {
+          "id": "7:319034342719563048",
+          "name": "includesLunch",
+          "type": 1
+        },
+        {
+          "id": "8:5568699090652877536",
+          "name": "includesDinner",
+          "type": 1
+        },
+        {
+          "id": "9:8770272010053956560",
+          "name": "includesSnacks",
+          "type": 1
+        },
+        {
+          "id": "10:8005427893844854870",
+          "name": "includesDrinks",
+          "type": 1
+        },
+        {
+          "id": "11:8915129820738709597",
+          "name": "includesAlcoholicDrinks",
+          "type": 1
+        },
+        {
+          "id": "12:1442592385757028616",
+          "name": "includesRoomService",
+          "type": 1
+        },
+        {
+          "id": "13:7469884179688700023",
+          "name": "includesMinibar",
+          "type": 1
+        },
+        {
+          "id": "14:7214000628531201890",
+          "name": "pricePerPerson",
+          "type": 8
+        },
+        {
+          "id": "15:6976371959966022657",
+          "name": "childDiscount",
+          "type": 8
+        },
+        {
+          "id": "16:3722311014535327914",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "17:6486763774965133786",
+          "name": "sortOrder",
+          "type": 6
+        },
+        {
+          "id": "18:6825916532681709963",
+          "name": "notes",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "5:4813572480829950144",
+      "lastPropertyId": "2:854938109647671776",
+      "name": "Branch",
+      "properties": [
+        {
+          "id": "1:4620108613733808871",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:854938109647671776",
+          "name": "branchNom",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "6:4653079993855603394",
+      "lastPropertyId": "10:7239834452040588274",
+      "name": "Client",
+      "properties": [
+        {
+          "id": "1:8956833438782272842",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2824445806765376960",
+          "name": "qr",
+          "indexId": "6:4688860169267970241",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:5537567645934063052",
+          "name": "nom",
+          "indexId": "7:3820281967993667136",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "4:1155517775414067192",
+          "name": "phone",
+          "indexId": "8:4565453531451702752",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "5:6305440589423368413",
+          "name": "adresse",
+          "type": 9
+        },
+        {
+          "id": "6:8262196370343908468",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "7:9092375723326198161",
+          "name": "derniereModification",
+          "type": 10
+        },
+        {
+          "id": "8:2571674910541473011",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "9:3251208165807370702",
+          "name": "syncedAt",
+          "type": 10
+        },
+        {
+          "id": "10:7239834452040588274",
+          "name": "crudId",
+          "indexId": "9:6572600901289857879",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Crud"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "7:3435606876397987575",
+      "lastPropertyId": "20:5065705023812161616",
+      "name": "Conversation",
+      "properties": [
+        {
+          "id": "1:7758828766307270020",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:2457814500731669015",
+          "name": "conversationId",
+          "indexId": "10:6279337018138996023",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:6770520531430302961",
+          "name": "typeValue",
+          "type": 6
+        },
+        {
+          "id": "4:4585665777559380614",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "5:7616746830512210079",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "6:5918872199088499568",
+          "name": "avatarPath",
+          "type": 9
+        },
+        {
+          "id": "7:4786354645088098650",
+          "name": "participantNodeIds",
+          "type": 9
+        },
+        {
+          "id": "8:327139305371712836",
+          "name": "creatorNodeId",
+          "type": 9
+        },
+        {
+          "id": "9:7113839446717949423",
+          "name": "createdTimestamp",
+          "type": 6
+        },
+        {
+          "id": "10:4002685169193138167",
+          "name": "lastActivityTimestamp",
+          "type": 6
+        },
+        {
+          "id": "11:1803757077067988301",
+          "name": "lastMessageId",
+          "type": 9
+        },
+        {
+          "id": "12:5876093320644927823",
+          "name": "lastMessagePreview",
+          "type": 9
+        },
+        {
+          "id": "13:5671703696695477332",
+          "name": "unreadCount",
+          "type": 6
+        },
+        {
+          "id": "14:6005247701004849155",
+          "name": "messageCount",
+          "type": 6
+        },
+        {
+          "id": "15:7042011183928031627",
+          "name": "isArchived",
+          "type": 1
+        },
+        {
+          "id": "16:2993008674677042325",
+          "name": "isDeleted",
+          "type": 1
+        },
+        {
+          "id": "17:3760649358183397921",
+          "name": "isPinned",
+          "type": 1
+        },
+        {
+          "id": "18:404999059978127045",
+          "name": "isMuted",
+          "type": 1
+        },
+        {
+          "id": "19:9038719990828258435",
+          "name": "lastSyncTimestamp",
+          "type": 6
+        },
+        {
+          "id": "20:5065705023812161616",
+          "name": "metadata",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "8:5257839193937814050",
+      "lastPropertyId": "10:7672897225255814333",
+      "name": "ConversationParticipant",
+      "properties": [
+        {
+          "id": "1:5117524968947496096",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8914690819993032093",
+          "name": "conversationId",
+          "type": 9
+        },
+        {
+          "id": "3:3214172215423603692",
+          "name": "nodeId",
+          "type": 9
+        },
+        {
+          "id": "4:6389549292856039802",
+          "name": "displayName",
+          "type": 9
+        },
+        {
+          "id": "5:8867139376943161474",
+          "name": "role",
+          "type": 9
+        },
+        {
+          "id": "6:2171339715480831673",
+          "name": "joinedTimestamp",
+          "type": 6
+        },
+        {
+          "id": "7:1034503413904638341",
+          "name": "leftTimestamp",
+          "type": 6
+        },
+        {
+          "id": "8:5604478726296256391",
+          "name": "notificationsEnabled",
+          "type": 1
+        },
+        {
+          "id": "9:5242309090289519085",
+          "name": "lastReadMessageId",
+          "type": 9
+        },
+        {
+          "id": "10:7672897225255814333",
+          "name": "lastAccessTimestamp",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "9:8818813607861773666",
+      "lastPropertyId": "9:4409377731166722945",
+      "name": "Crud",
+      "properties": [
+        {
+          "id": "1:2261851511864657488",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3564459853154285465",
           "name": "createdBy",
           "type": 6
         },
         {
-          "id": "3:5202312321941210318",
+          "id": "3:3308684967595155033",
           "name": "updatedBy",
           "type": 6
         },
         {
-          "id": "4:4930449318114207416",
+          "id": "4:1855850608824405230",
           "name": "deletedBy",
           "type": 6
         },
         {
-          "id": "5:1919427341188381926",
-          "name": "dateCreation",
-          "type": 10
-        },
-        {
-          "id": "6:128479208281606900",
-          "name": "derniereModification",
-          "type": 10
-        },
-        {
-          "id": "7:4395263194595226905",
-          "name": "dateDeleting",
-          "type": 10
-        },
-        {
-          "id": "8:6753791247286746620",
+          "id": "5:5336829363639594310",
           "name": "isSynced",
           "type": 1
         },
         {
-          "id": "9:3643444017163806039",
+          "id": "6:529138769502546645",
+          "name": "dateCreation",
+          "type": 10
+        },
+        {
+          "id": "7:2302925352296434238",
           "name": "syncedAt",
+          "type": 10
+        },
+        {
+          "id": "8:6962758331797093142",
+          "name": "derniereModification",
+          "type": 10
+        },
+        {
+          "id": "9:4409377731166722945",
+          "name": "dateDeleting",
           "type": 10
         }
       ],
       "relations": []
     },
     {
-      "id": "15:2855331488523553781",
-      "lastPropertyId": "12:3933310820785329583",
-      "name": "Document",
+      "id": "10:4392049361055900450",
+      "lastPropertyId": "10:3656985987289789792",
+      "name": "DeletedProduct",
       "properties": [
         {
-          "id": "1:4237791499931033119",
+          "id": "1:8680703282854732636",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:3985891523293286709",
-          "name": "type",
-          "indexId": "30:8404744021006484376",
+          "id": "2:5683656300514042463",
+          "name": "name",
+          "indexId": "11:4360710998247906449",
           "type": 9,
           "flags": 2048
         },
         {
-          "id": "3:7726161578765442765",
-          "name": "qrReference",
-          "indexId": "31:5952869850140077389",
-          "type": 9,
-          "flags": 2048
+          "id": "3:4908792148204932239",
+          "name": "description",
+          "type": 9
         },
         {
-          "id": "4:835359165134542184",
-          "name": "impayer",
+          "id": "4:1727250888228815647",
+          "name": "price",
           "type": 8
         },
         {
-          "id": "5:5505107835250131667",
+          "id": "5:4272325478703588103",
+          "name": "quantity",
+          "type": 6
+        },
+        {
+          "id": "6:5055615957050195498",
+          "name": "delaisPeremption",
+          "type": 6
+        },
+        {
+          "id": "7:5104064495641904700",
           "name": "derniereModification",
           "type": 10
         },
         {
-          "id": "6:334968220961204506",
+          "id": "8:6547705219403517669",
           "name": "isSynced",
           "type": 1
         },
         {
-          "id": "7:6918906124049023416",
+          "id": "9:7983443777975034512",
           "name": "syncedAt",
           "type": 10
         },
         {
-          "id": "8:6675712082848843966",
+          "id": "10:3656985987289789792",
+          "name": "crudId",
+          "indexId": "12:1516636446031267270",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Crud"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "11:2447198703323707153",
+      "lastPropertyId": "12:1171575831413787908",
+      "name": "Document",
+      "properties": [
+        {
+          "id": "1:6195469553432636948",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5229678395558731989",
+          "name": "type",
+          "indexId": "13:2716670374806560091",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:5129410614148410341",
+          "name": "qrReference",
+          "indexId": "14:7598368378207387436",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "4:7894759655216953386",
+          "name": "impayer",
+          "type": 8
+        },
+        {
+          "id": "5:708897911102724001",
+          "name": "derniereModification",
+          "type": 10
+        },
+        {
+          "id": "6:7468547128610131679",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "7:8720898298373275529",
+          "name": "syncedAt",
+          "type": 10
+        },
+        {
+          "id": "8:1760714954126465005",
           "name": "date",
           "type": 10
         },
         {
-          "id": "9:4664916555777117313",
+          "id": "9:5645201261523144473",
           "name": "clientId",
-          "indexId": "20:3151200795533087506",
+          "indexId": "15:864130881441825015",
           "type": 11,
           "flags": 520,
           "relationTarget": "Client"
         },
         {
-          "id": "10:4701486699852357867",
+          "id": "10:8068229346609505927",
           "name": "fournisseurId",
-          "indexId": "21:7593563520958121057",
+          "indexId": "16:3344696906073608725",
           "type": 11,
           "flags": 520,
           "relationTarget": "Fournisseur"
         },
         {
-          "id": "11:8943818526450160785",
+          "id": "11:4217540304615763044",
           "name": "crudId",
-          "indexId": "22:8855833750708756558",
+          "indexId": "17:1295212711047303500",
           "type": 11,
           "flags": 520,
           "relationTarget": "Crud"
         },
         {
-          "id": "12:3933310820785329583",
+          "id": "12:1171575831413787908",
           "name": "montantVerse",
           "type": 8
         }
@@ -501,53 +696,335 @@
       "relations": []
     },
     {
-      "id": "16:6384163625204797289",
-      "lastPropertyId": "8:2922646589130360037",
-      "name": "LigneDocument",
+      "id": "12:9012763135783953430",
+      "lastPropertyId": "5:2702280415173054771",
+      "name": "Employee",
       "properties": [
         {
-          "id": "1:864096671946263408",
+          "id": "1:7573221125352281999",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:1374050035982448901",
-          "name": "quantite",
+          "id": "2:8064935800189611978",
+          "name": "fullName",
+          "type": 9
+        },
+        {
+          "id": "3:3497768279287323993",
+          "name": "phoneNumber",
+          "type": 9
+        },
+        {
+          "id": "4:7675057811932193438",
+          "name": "email",
+          "type": 9
+        },
+        {
+          "id": "5:2702280415173054771",
+          "name": "photosJson",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "13:3333604413711310315",
+      "lastPropertyId": "17:7143247660862072497",
+      "name": "ExtraService",
+      "properties": [
+        {
+          "id": "1:1864594703239846050",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7801160745746023411",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:432479386055273588",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "4:7905441929015419393",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "5:650528824012765165",
+          "name": "category",
+          "type": 9
+        },
+        {
+          "id": "6:2867663934843677947",
+          "name": "photosJson",
+          "type": 9
+        },
+        {
+          "id": "7:5902006603389720488",
+          "name": "price",
           "type": 8
         },
         {
-          "id": "3:6868220462476377885",
-          "name": "prixUnitaire",
-          "type": 8
+          "id": "8:1207296335556603699",
+          "name": "pricingUnit",
+          "type": 9
         },
         {
-          "id": "4:700606146638982059",
+          "id": "9:928594456435024166",
+          "name": "isPercentage",
+          "type": 1
+        },
+        {
+          "id": "10:1107378133239798872",
+          "name": "requiresAdvanceBooking",
+          "type": 1
+        },
+        {
+          "id": "11:4752196544119655700",
+          "name": "advanceHours",
+          "type": 6
+        },
+        {
+          "id": "12:5975317751664916646",
+          "name": "maxQuantity",
+          "type": 6
+        },
+        {
+          "id": "13:6460491834915408673",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "14:5579265688310197811",
+          "name": "sortOrder",
+          "type": 6
+        },
+        {
+          "id": "15:4739227015984557540",
+          "name": "notes",
+          "type": 9
+        },
+        {
+          "id": "16:6485976498816397307",
+          "name": "isPackage",
+          "type": 1
+        },
+        {
+          "id": "17:7143247660862072497",
+          "name": "packageIncludes",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "14:819773123195778674",
+      "lastPropertyId": "9:8726117238701372260",
+      "name": "Fournisseur",
+      "properties": [
+        {
+          "id": "1:1210492249027570441",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1278442304079000376",
+          "name": "qr",
+          "indexId": "18:2155986149652930240",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "3:3395560941175658597",
+          "name": "nom",
+          "indexId": "19:8149285712649537875",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "4:7169810804489429950",
+          "name": "phone",
+          "indexId": "20:2945912403480361245",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "5:6394161931759348565",
+          "name": "adresse",
+          "type": 9
+        },
+        {
+          "id": "6:5071048513216833455",
           "name": "derniereModification",
           "type": 10
         },
         {
-          "id": "5:665638284434107564",
+          "id": "7:3805548681633118446",
           "name": "isSynced",
           "type": 1
         },
         {
-          "id": "6:3180509861732758781",
+          "id": "8:296912513661968683",
           "name": "syncedAt",
           "type": 10
         },
         {
-          "id": "7:3988161801854014953",
+          "id": "9:8726117238701372260",
+          "name": "crudId",
+          "indexId": "21:8798604607337814640",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Crud"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "15:3669795733185736906",
+      "lastPropertyId": "7:425215270539308742",
+      "name": "Guest",
+      "properties": [
+        {
+          "id": "1:3633371665668705096",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6845532224324357554",
+          "name": "fullName",
+          "type": 9
+        },
+        {
+          "id": "3:3313607921503888633",
+          "name": "phoneNumber",
+          "type": 9
+        },
+        {
+          "id": "4:3414961827314113345",
+          "name": "email",
+          "type": 9
+        },
+        {
+          "id": "5:8131275140372984126",
+          "name": "idCardNumber",
+          "type": 9
+        },
+        {
+          "id": "6:1478724185743683008",
+          "name": "nationality",
+          "type": 9
+        },
+        {
+          "id": "7:425215270539308742",
+          "name": "photosJson",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "16:5117122180394408675",
+      "lastPropertyId": "7:2399256088837559542",
+      "name": "Hotel",
+      "properties": [
+        {
+          "id": "1:3742526721047738584",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7596197083340512270",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:6128142027890186037",
+          "name": "floors",
+          "type": 6
+        },
+        {
+          "id": "4:2155119400651158053",
+          "name": "roomsPerFloor",
+          "type": 6
+        },
+        {
+          "id": "5:4471432301727366798",
+          "name": "avoidedNumbers",
+          "type": 9
+        },
+        {
+          "id": "6:3705417724035468871",
+          "name": "photosJson",
+          "type": 9
+        },
+        {
+          "id": "7:2399256088837559542",
+          "name": "selectedSeasonalPricingId",
+          "indexId": "22:5698463803607554554",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "SeasonalPricing"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "17:509431598677901685",
+      "lastPropertyId": "8:8114902301000050900",
+      "name": "LigneDocument",
+      "properties": [
+        {
+          "id": "1:7297882175012265975",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7236767426181220589",
+          "name": "quantite",
+          "type": 8
+        },
+        {
+          "id": "3:2010271208689340818",
+          "name": "prixUnitaire",
+          "type": 8
+        },
+        {
+          "id": "4:1531740330595480276",
+          "name": "derniereModification",
+          "type": 10
+        },
+        {
+          "id": "5:2239511246804053477",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "6:7732856888970598292",
+          "name": "syncedAt",
+          "type": 10
+        },
+        {
+          "id": "7:6794982220140936285",
           "name": "produitId",
-          "indexId": "23:2599477206857474289",
+          "indexId": "23:6908723184065981069",
           "type": 11,
           "flags": 520,
           "relationTarget": "Produit"
         },
         {
-          "id": "8:2922646589130360037",
+          "id": "8:8114902301000050900",
           "name": "factureId",
-          "indexId": "24:6359461765771555142",
+          "indexId": "24:7149142853509751477",
           "type": 11,
           "flags": 520,
           "relationTarget": "Document"
@@ -556,1308 +1033,176 @@
       "relations": []
     },
     {
-      "id": "18:1295029246707820096",
-      "lastPropertyId": "5:5990510379300656032",
-      "name": "Annonces",
+      "id": "18:6624425083763406244",
+      "lastPropertyId": "7:6103373582990654790",
+      "name": "Match",
       "properties": [
         {
-          "id": "1:4118486568026104770",
-          "name": "id",
+          "id": "1:5070026655748699168",
+          "name": "localId",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:8821472229031143722",
-          "name": "titre",
-          "type": 9
-        },
-        {
-          "id": "3:323758001308013708",
-          "name": "prix",
-          "type": 9
-        },
-        {
-          "id": "4:2024727189370315073",
-          "name": "lien",
-          "type": 9
-        },
-        {
-          "id": "5:5990510379300656032",
-          "name": "categorie",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "22:4405813060867310126",
-      "lastPropertyId": "40:8739156301039298736",
-      "name": "Reservation",
-      "properties": [
-        {
-          "id": "1:1242301058089560553",
+          "id": "2:5468908856903766503",
           "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "7:8094705632954396714",
-          "name": "status",
-          "type": 9
-        },
-        {
-          "id": "8:4207049100248279198",
-          "name": "roomId",
-          "indexId": "42:5139934148839172087",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Room"
-        },
-        {
-          "id": "13:6141768167787054189",
-          "name": "boardBasisId",
-          "indexId": "49:2870925328515029735",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "BoardBasis"
-        },
-        {
-          "id": "27:2070806968783296453",
-          "name": "receptionistId",
-          "indexId": "73:5379984811269586421",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Employee"
-        },
-        {
-          "id": "28:1023067695828263888",
-          "name": "from",
-          "type": 10
-        },
-        {
-          "id": "29:7799290966463506762",
-          "name": "to",
-          "type": 10
-        },
-        {
-          "id": "30:6944122415397417690",
-          "name": "pricePerNight",
-          "type": 8
-        },
-        {
-          "id": "31:5122105286008898270",
-          "name": "cachedBoardBasisPrice",
-          "type": 8
-        },
-        {
-          "id": "32:3092973566861730351",
-          "name": "cachedExtrasTotal",
-          "type": 8
-        },
-        {
-          "id": "33:50080880719226551",
-          "name": "discountPercent",
-          "type": 8
-        },
-        {
-          "id": "34:693625170472915462",
-          "name": "discountAmount",
-          "type": 8
-        },
-        {
-          "id": "36:5384985485401190875",
-          "name": "seasonalPricingId",
-          "indexId": "76:2947701071097954536",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "SeasonalPricing"
-        },
-        {
-          "id": "37:5805441321577982475",
-          "name": "seasonalMultiplier",
-          "type": 8
-        },
-        {
-          "id": "38:1651456108692123069",
-          "name": "selectedDiscountItems",
-          "type": 9
-        },
-        {
-          "id": "39:6592741216757473113",
-          "name": "discountType",
-          "type": 9
-        },
-        {
-          "id": "40:8739156301039298736",
-          "name": "discountAppliedTo",
-          "type": 9
-        }
-      ],
-      "relations": [
-        {
-          "id": "5:6501254024098551487",
-          "name": "guests",
-          "targetId": "26:8000924420460436742"
-        }
-      ]
-    },
-    {
-      "id": "23:7337300309619921213",
-      "lastPropertyId": "16:8434304324101682248",
-      "name": "Room",
-      "properties": [
-        {
-          "id": "1:637049683963529414",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:6116319056575073965",
-          "name": "code",
-          "indexId": "38:1512712429349035826",
+          "indexId": "25:691305168864037078",
           "type": 9,
           "flags": 2048
         },
         {
-          "id": "7:8623170392646704505",
-          "name": "hotelId",
-          "indexId": "48:6647289054193467337",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Hotel"
-        },
-        {
-          "id": "8:524088588929358564",
-          "name": "categoryId",
-          "indexId": "52:7673993612212876620",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "RoomCategory"
-        },
-        {
-          "id": "14:3736744018751654018",
-          "name": "status",
-          "type": 9
-        },
-        {
-          "id": "16:8434304324101682248",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "25:6525685758623725352",
-      "lastPropertyId": "13:4149790836478463359",
-      "name": "Employee",
-      "properties": [
-        {
-          "id": "1:6826609570519850791",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "3:5038317782540214290",
-          "name": "phoneNumber",
-          "type": 9
-        },
-        {
-          "id": "4:8292504175695973705",
-          "name": "email",
-          "type": 9
-        },
-        {
-          "id": "11:7669064762153100021",
-          "name": "fullName",
-          "type": 9
-        },
-        {
-          "id": "13:4149790836478463359",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "26:8000924420460436742",
-      "lastPropertyId": "15:2318127558024854039",
-      "name": "Guest",
-      "properties": [
-        {
-          "id": "1:4458209531626236505",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "3:8517011698045308518",
-          "name": "phoneNumber",
-          "type": 9
-        },
-        {
-          "id": "4:8095325002963241056",
-          "name": "email",
-          "type": 9
-        },
-        {
-          "id": "5:1532627139958349817",
-          "name": "idCardNumber",
-          "type": 9
-        },
-        {
-          "id": "6:7286398386806383933",
-          "name": "nationality",
-          "type": 9
-        },
-        {
-          "id": "13:5580332256023722647",
-          "name": "fullName",
-          "type": 9
-        },
-        {
-          "id": "15:2318127558024854039",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "29:6276934219192680664",
-      "lastPropertyId": "8:8122189067926806935",
-      "name": "Hotel",
-      "properties": [
-        {
-          "id": "1:4218070294234456234",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:5524436409225457701",
-          "name": "name",
-          "type": 9
-        },
-        {
-          "id": "3:7469800429925950739",
-          "name": "floors",
-          "type": 6
-        },
-        {
-          "id": "4:1952149702277239994",
-          "name": "roomsPerFloor",
-          "type": 6
-        },
-        {
-          "id": "5:1851608130218872598",
-          "name": "avoidedNumbers",
-          "type": 9
-        },
-        {
-          "id": "6:1926354658288891923",
-          "name": "selectedSeasonalPricingId",
-          "indexId": "74:1977960640627402338",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "SeasonalPricing"
-        },
-        {
-          "id": "8:8122189067926806935",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "30:7290228926903551263",
-      "lastPropertyId": "27:3767595173140025459",
-      "name": "BoardBasis",
-      "properties": [
-        {
-          "id": "1:4530137353809660381",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:4283286826990067445",
-          "name": "name",
-          "type": 9
-        },
-        {
-          "id": "3:70220248764783600",
-          "name": "code",
-          "type": 9
-        },
-        {
-          "id": "4:3029038983868230196",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "13:2631356797616963865",
-          "name": "pricePerPerson",
-          "type": 8
-        },
-        {
-          "id": "14:6805029213942642479",
-          "name": "childDiscount",
-          "type": 8
-        },
-        {
-          "id": "15:174828151617387017",
-          "name": "isActive",
-          "type": 1
-        },
-        {
-          "id": "16:5152526603879992591",
-          "name": "sortOrder",
-          "type": 6
-        },
-        {
-          "id": "17:5004752143751814683",
-          "name": "notes",
-          "type": 9
-        },
-        {
-          "id": "18:2327737323758570364",
-          "name": "includesBreakfast",
-          "type": 1
-        },
-        {
-          "id": "19:7691692283537146121",
-          "name": "includesLunch",
-          "type": 1
-        },
-        {
-          "id": "20:2618229742866877205",
-          "name": "includesDinner",
-          "type": 1
-        },
-        {
-          "id": "21:8570504991409972520",
-          "name": "includesSnacks",
-          "type": 1
-        },
-        {
-          "id": "22:4224115378409199462",
-          "name": "includesDrinks",
-          "type": 1
-        },
-        {
-          "id": "23:4537694869296161529",
-          "name": "includesAlcoholicDrinks",
-          "type": 1
-        },
-        {
-          "id": "24:7327972696543202091",
-          "name": "includesRoomService",
-          "type": 1
-        },
-        {
-          "id": "25:1881526249683023702",
-          "name": "includesMinibar",
-          "type": 1
-        },
-        {
-          "id": "27:3767595173140025459",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "31:8720453165107695461",
-      "lastPropertyId": "26:7212381107658597400",
-      "name": "ExtraService",
-      "properties": [
-        {
-          "id": "1:6884015300454747185",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:2028537258922361773",
-          "name": "name",
-          "type": 9
-        },
-        {
-          "id": "4:6472625101402773330",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "6:5325250809395087385",
-          "name": "price",
-          "type": 8
-        },
-        {
-          "id": "7:735955542708406055",
-          "name": "pricingUnit",
-          "type": 9
-        },
-        {
-          "id": "8:4197972840480356185",
-          "name": "isPercentage",
-          "type": 1
-        },
-        {
-          "id": "12:7809698357657561823",
-          "name": "isActive",
-          "type": 1
-        },
-        {
-          "id": "13:2045817351476652463",
-          "name": "sortOrder",
-          "type": 6
-        },
-        {
-          "id": "17:3432572492641074152",
-          "name": "code",
-          "type": 9
-        },
-        {
-          "id": "18:2445824044549859156",
-          "name": "category",
-          "type": 9
-        },
-        {
-          "id": "19:4811490492090793475",
-          "name": "requiresAdvanceBooking",
-          "type": 1
-        },
-        {
-          "id": "20:1991078110101956090",
-          "name": "advanceHours",
-          "type": 6
-        },
-        {
-          "id": "21:7054511939413990442",
-          "name": "maxQuantity",
-          "type": 6
-        },
-        {
-          "id": "22:5785115311409483258",
-          "name": "notes",
-          "type": 9
-        },
-        {
-          "id": "23:4748113468767234976",
-          "name": "isPackage",
-          "type": 1
-        },
-        {
-          "id": "24:7777161809952552651",
-          "name": "packageIncludes",
-          "type": 9
-        },
-        {
-          "id": "26:7212381107658597400",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "32:3615433433326310219",
-      "lastPropertyId": "13:7492550311388921760",
-      "name": "ReservationExtra",
-      "properties": [
-        {
-          "id": "1:8655124161211359062",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:3314824480482820513",
-          "name": "reservationId",
-          "indexId": "50:7183380162715384670",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Reservation"
-        },
-        {
-          "id": "3:1825975888783886447",
-          "name": "extraServiceId",
-          "indexId": "51:1053655105886020985",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "ExtraService"
-        },
-        {
-          "id": "4:3603926991519911924",
-          "name": "quantity",
-          "type": 6
-        },
-        {
-          "id": "5:7784953811959429089",
-          "name": "unitPrice",
-          "type": 8
-        },
-        {
-          "id": "9:3788314108711866989",
-          "name": "notes",
-          "type": 9
-        },
-        {
-          "id": "11:3274800292343061622",
-          "name": "totalPrice",
-          "type": 8
-        },
-        {
-          "id": "12:5849130501860966931",
-          "name": "status",
-          "type": 9
-        },
-        {
-          "id": "13:7492550311388921760",
-          "name": "scheduledDate",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "33:9080334102041473885",
-      "lastPropertyId": "20:7646756539935645075",
-      "name": "RoomCategory",
-      "properties": [
-        {
-          "id": "1:2568248138601092777",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:3813851193575656960",
-          "name": "name",
-          "type": 9
-        },
-        {
-          "id": "3:7346374217022060470",
-          "name": "code",
-          "type": 9
-        },
-        {
-          "id": "4:1323448037724873935",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "6:1567277605713817372",
-          "name": "capacity",
-          "type": 6
-        },
-        {
-          "id": "10:2452253208877716589",
-          "name": "basePrice",
-          "type": 8
-        },
-        {
-          "id": "11:190862208682122807",
-          "name": "seasonMultiplier",
-          "type": 8
-        },
-        {
-          "id": "12:5566527027724676675",
-          "name": "weekendMultiplier",
-          "type": 8
-        },
-        {
-          "id": "13:1648077368679519942",
-          "name": "allowsExtraBed",
-          "type": 1
-        },
-        {
-          "id": "14:3425178181326399723",
-          "name": "extraBedPrice",
-          "type": 8
-        },
-        {
-          "id": "15:1069616426456551574",
-          "name": "isActive",
-          "type": 1
-        },
-        {
-          "id": "16:5502208330901818712",
-          "name": "sortOrder",
-          "type": 6
-        },
-        {
-          "id": "17:6680911196620139151",
-          "name": "bedType",
-          "type": 9
-        },
-        {
-          "id": "18:2095742824792551267",
-          "name": "standing",
-          "type": 9
-        },
-        {
-          "id": "19:9214872896429457316",
-          "name": "viewType",
-          "type": 9
-        },
-        {
-          "id": "20:7646756539935645075",
-          "name": "amenities",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "34:637841729528048361",
-      "lastPropertyId": "18:4297814468444447790",
-      "name": "SeasonalPricing",
-      "properties": [
-        {
-          "id": "1:4430538349624674169",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:3282109772050831814",
-          "name": "name",
-          "type": 9
-        },
-        {
-          "id": "3:509219021300827484",
-          "name": "startDate",
-          "type": 10
-        },
-        {
-          "id": "4:7034378394523086494",
-          "name": "endDate",
-          "type": 10
-        },
-        {
-          "id": "8:6774078347196111807",
-          "name": "isActive",
-          "type": 1
-        },
-        {
-          "id": "9:9146187163573348736",
-          "name": "priority",
-          "type": 6
-        },
-        {
-          "id": "10:6857763841208440508",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "14:189160434603562783",
-          "name": "multiplier",
-          "type": 8
-        },
-        {
-          "id": "15:4549856139048882366",
-          "name": "applicationType",
-          "type": 9
-        },
-        {
-          "id": "16:8639205115021756438",
-          "name": "targetIds",
-          "type": 9
-        },
-        {
-          "id": "18:4297814468444447790",
-          "name": "photosJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "59:7892213973742006565",
-      "lastPropertyId": "41:1222208436961999428",
-      "name": "Staff",
-      "properties": [
-        {
-          "id": "1:1152091593661511263",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "6:6301141709924423207",
-          "name": "grade",
-          "type": 9
-        },
-        {
-          "id": "33:4444461065263258057",
-          "name": "nom",
-          "type": 9
-        },
-        {
-          "id": "34:2338193905816421559",
-          "name": "groupe",
-          "type": 9
-        },
-        {
-          "id": "35:1532972616967204292",
-          "name": "equipe",
-          "type": 9
-        },
-        {
-          "id": "40:7268369681695897981",
-          "name": "branchId",
-          "indexId": "145:3025151161047139801",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Branch"
-        },
-        {
-          "id": "41:1222208436961999428",
-          "name": "ordre",
-          "type": 6
-        }
-      ],
-      "relations": [
-        {
-          "id": "11:6355601734277678121",
-          "name": "timeOff",
-          "targetId": "64:5212567268726366170"
-        }
-      ]
-    },
-    {
-      "id": "60:1632757783293151936",
-      "lastPropertyId": "5:6145709618723973282",
-      "name": "ActiviteJour",
-      "properties": [
-        {
-          "id": "1:1996013505165340777",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:7905729552352877469",
-          "name": "jour",
-          "type": 6
-        },
-        {
-          "id": "4:2576819619403990954",
-          "name": "staffId",
-          "indexId": "142:6706610394050757592",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Staff"
-        },
-        {
-          "id": "5:6145709618723973282",
-          "name": "statut",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "63:8684591826737852263",
-      "lastPropertyId": "3:4638893510237506986",
-      "name": "Branch",
-      "properties": [
-        {
-          "id": "1:8783211361608906964",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "3:4638893510237506986",
-          "name": "branchNom",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "64:5212567268726366170",
-      "lastPropertyId": "7:4439141467620706675",
-      "name": "TimeOff",
-      "properties": [
-        {
-          "id": "1:7479846253910505008",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "4:323931155620664522",
-          "name": "motif",
-          "type": 9
-        },
-        {
-          "id": "5:4350831529526660812",
-          "name": "staffId",
-          "indexId": "146:4505509574144870846",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Staff"
-        },
-        {
-          "id": "6:3855453386933017518",
-          "name": "debut",
-          "type": 10
-        },
-        {
-          "id": "7:4439141467620706675",
-          "name": "fin",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "65:4929433361385066189",
-      "lastPropertyId": "6:936065242258029342",
-      "name": "Planification",
-      "properties": [
-        {
-          "id": "1:674854889463390568",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:2984333881401830721",
-          "name": "mois",
-          "type": 6
-        },
-        {
-          "id": "3:5315833448038085611",
-          "name": "annee",
-          "type": 6
-        },
-        {
-          "id": "4:1970772358704446035",
-          "name": "ordreEquipes",
-          "type": 9
-        },
-        {
-          "id": "5:461988957453692681",
-          "name": "branchId",
-          "indexId": "147:51939098627082601",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Branch"
-        },
-        {
-          "id": "6:936065242258029342",
-          "name": "activitesJson",
-          "type": 9
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "66:2133857694054394805",
-      "lastPropertyId": "11:1727050637846303899",
-      "name": "PlanningHebdo",
-      "properties": [
-        {
-          "id": "1:5791694103916015229",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:4116119930786891909",
-          "name": "staffId",
-          "indexId": "148:1808765289227918884",
-          "type": 11,
-          "flags": 520,
-          "relationTarget": "Staff"
-        },
-        {
-          "id": "3:3939060121171724845",
-          "name": "dimanche",
-          "type": 9
-        },
-        {
-          "id": "4:4941341543843136788",
-          "name": "lundi",
-          "type": 9
-        },
-        {
-          "id": "5:7441751232417510266",
-          "name": "mardi",
-          "type": 9
-        },
-        {
-          "id": "6:134243836745998626",
-          "name": "mercredi",
-          "type": 9
-        },
-        {
-          "id": "7:2623983698415199785",
-          "name": "jeudi",
-          "type": 9
-        },
-        {
-          "id": "8:690377551775321548",
-          "name": "vendredi",
-          "type": 9
-        },
-        {
-          "id": "9:4681044308484978952",
-          "name": "samedi",
-          "type": 9
-        },
-        {
-          "id": "10:5388006133506746721",
-          "name": "dateDebut",
-          "type": 10
-        },
-        {
-          "id": "11:1727050637846303899",
-          "name": "dateFin",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "67:8687022429842144867",
-      "lastPropertyId": "5:7663215378098680851",
-      "name": "TypeActivite",
-      "properties": [
-        {
-          "id": "1:1661068837455088411",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:8446311274044770115",
-          "name": "code",
-          "type": 9
-        },
-        {
-          "id": "3:6161524609933954781",
-          "name": "libelle",
-          "type": 9
-        },
-        {
-          "id": "4:9175215416399424206",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "5:7663215378098680851",
-          "name": "couleurHex",
-          "type": 6
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "79:335575276020234399",
-      "lastPropertyId": "20:6557728819474357646",
-      "name": "Conversation",
-      "properties": [
-        {
-          "id": "1:7714879042878194239",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:4290247608745611711",
-          "name": "conversationId",
-          "indexId": "157:974651041253507259",
-          "type": 9,
-          "flags": 2080
-        },
-        {
-          "id": "3:1538239298202989387",
-          "name": "typeValue",
-          "type": 6
-        },
-        {
-          "id": "4:100727444096259320",
-          "name": "title",
-          "type": 9
-        },
-        {
-          "id": "5:4638396318762942540",
-          "name": "description",
-          "type": 9
-        },
-        {
-          "id": "6:2026406170236798630",
-          "name": "avatarPath",
-          "type": 9
-        },
-        {
-          "id": "7:7573413853478695872",
-          "name": "participantNodeIds",
-          "type": 9
-        },
-        {
-          "id": "8:2419056840764729479",
-          "name": "creatorNodeId",
+          "id": "3:7655732099338379113",
+          "name": "otherUserName",
           "type": 9
-        },
-        {
-          "id": "9:6438626976377056081",
-          "name": "createdTimestamp",
-          "type": 6
-        },
-        {
-          "id": "10:4596553731234786842",
-          "name": "lastActivityTimestamp",
-          "type": 6
         },
         {
-          "id": "11:5936530353600857523",
-          "name": "lastMessageId",
+          "id": "4:6903123273740936556",
+          "name": "otherUserPhoto",
           "type": 9
         },
         {
-          "id": "12:8068232876282634902",
+          "id": "5:6168834020263351140",
           "name": "lastMessagePreview",
           "type": 9
         },
         {
-          "id": "13:2974826697912472305",
-          "name": "unreadCount",
-          "type": 6
+          "id": "6:3097084842581832845",
+          "name": "lastMessageAt",
+          "type": 10
         },
         {
-          "id": "14:6681617207985568207",
-          "name": "messageCount",
-          "type": 6
-        },
-        {
-          "id": "15:2550210851274227800",
-          "name": "isArchived",
-          "type": 1
-        },
-        {
-          "id": "16:8613829804901215371",
-          "name": "isDeleted",
-          "type": 1
-        },
-        {
-          "id": "17:9092768176239831808",
-          "name": "isPinned",
-          "type": 1
-        },
-        {
-          "id": "18:4711762046493247239",
-          "name": "isMuted",
-          "type": 1
-        },
-        {
-          "id": "19:9169693829227472946",
-          "name": "lastSyncTimestamp",
-          "type": 6
-        },
-        {
-          "id": "20:6557728819474357646",
-          "name": "metadata",
-          "type": 9
+          "id": "7:6103373582990654790",
+          "name": "matchedAt",
+          "type": 10
         }
       ],
       "relations": []
     },
     {
-      "id": "80:7104064602033784235",
-      "lastPropertyId": "10:5179264194312251814",
-      "name": "ConversationParticipant",
-      "properties": [
-        {
-          "id": "1:5786995907247368641",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:1297263380520161607",
-          "name": "conversationId",
-          "type": 9
-        },
-        {
-          "id": "3:4140380562361545335",
-          "name": "nodeId",
-          "type": 9
-        },
-        {
-          "id": "4:3655372790663242202",
-          "name": "displayName",
-          "type": 9
-        },
-        {
-          "id": "5:3830270408516889495",
-          "name": "role",
-          "type": 9
-        },
-        {
-          "id": "6:3509433600397329291",
-          "name": "joinedTimestamp",
-          "type": 6
-        },
-        {
-          "id": "7:2909271026258690371",
-          "name": "leftTimestamp",
-          "type": 6
-        },
-        {
-          "id": "8:4401490736004685190",
-          "name": "notificationsEnabled",
-          "type": 1
-        },
-        {
-          "id": "9:5624230259608604708",
-          "name": "lastReadMessageId",
-          "type": 9
-        },
-        {
-          "id": "10:5179264194312251814",
-          "name": "lastAccessTimestamp",
-          "type": 6
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "81:5106666550252404711",
-      "lastPropertyId": "24:8824909670013964747",
+      "id": "19:8275792059751478402",
+      "lastPropertyId": "24:8936394837651368788",
       "name": "Message",
       "properties": [
         {
-          "id": "1:2245998002032985441",
+          "id": "1:432828048955846336",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:3879012367427851800",
+          "id": "2:1312976448043300503",
           "name": "messageId",
-          "indexId": "158:6129618788912298121",
+          "indexId": "26:1878520269401150356",
           "type": 9,
           "flags": 2080
         },
         {
-          "id": "3:7467284166860010547",
+          "id": "3:615292443042176705",
           "name": "conversationId",
           "type": 9
         },
         {
-          "id": "4:8788124502705172821",
+          "id": "4:5907078751313302786",
           "name": "fromNodeId",
           "type": 9
         },
         {
-          "id": "5:2735588970479456795",
+          "id": "5:7962960366961040080",
           "name": "toNodeId",
           "type": 9
         },
         {
-          "id": "6:7563495462731441869",
+          "id": "6:6845974185440062840",
           "name": "typeValue",
           "type": 6
         },
         {
-          "id": "7:8036529596221323398",
+          "id": "7:2073376457145108768",
           "name": "content",
           "type": 9
         },
         {
-          "id": "8:3805348980183384230",
+          "id": "8:3253858561602693466",
           "name": "mediaPath",
           "type": 9
         },
         {
-          "id": "9:2359824673603272203",
+          "id": "9:2955207058555050538",
           "name": "mediaSize",
           "type": 6
         },
         {
-          "id": "10:4110470034196587056",
+          "id": "10:1468920288889421932",
           "name": "mediaMimeType",
           "type": 9
         },
         {
-          "id": "11:6561456710049859292",
+          "id": "11:352054755222278923",
           "name": "mediaDuration",
           "type": 6
         },
         {
-          "id": "12:6513648454866599139",
+          "id": "12:120388285373668057",
           "name": "sentTimestamp",
           "type": 6
         },
         {
-          "id": "13:7232343512463046938",
+          "id": "13:126108806554900397",
           "name": "receivedTimestamp",
           "type": 6
         },
         {
-          "id": "14:2284542011724003954",
+          "id": "14:1994884365579853254",
           "name": "readTimestamp",
           "type": 6
         },
         {
-          "id": "15:2569594470331254948",
+          "id": "15:1083459537129697187",
           "name": "statusValue",
           "type": 6
         },
         {
-          "id": "16:4021427179408420964",
+          "id": "16:892423971505969963",
           "name": "replyToMessageId",
           "type": 9
         },
         {
-          "id": "17:5807255424904023261",
+          "id": "17:7930521900559040380",
           "name": "replyToContent",
           "type": 9
         },
         {
-          "id": "18:1512427126230356531",
+          "id": "18:1262507203495819303",
           "name": "replyToFromNodeId",
           "type": 9
         },
         {
-          "id": "19:1158028137936183797",
+          "id": "19:2379419997298999914",
           "name": "isFavorite",
           "type": 1
         },
         {
-          "id": "20:3464111892846402267",
+          "id": "20:2811649388515720610",
           "name": "isDeleted",
           "type": 1
         },
         {
-          "id": "21:6869281061855454141",
+          "id": "21:4338801918186880442",
           "name": "encryptionKeyId",
           "type": 9
         },
         {
-          "id": "22:5214876228397391896",
+          "id": "22:7494343706204185676",
           "name": "contentHash",
           "type": 9
         },
         {
-          "id": "23:4950707770912556005",
+          "id": "23:3631591876491028061",
           "name": "sendAttempts",
           "type": 6
         },
         {
-          "id": "24:8824909670013964747",
+          "id": "24:8936394837651368788",
           "name": "lastErrorMessage",
           "type": 9
         }
@@ -1865,38 +1210,38 @@
       "relations": []
     },
     {
-      "id": "82:5676782676485557924",
-      "lastPropertyId": "6:2476548374551796732",
+      "id": "20:4272736097313811250",
+      "lastPropertyId": "6:719603300938910551",
       "name": "MessageReceipt",
       "properties": [
         {
-          "id": "1:8318467414492320584",
+          "id": "1:5065217453763696995",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:6523204904344652487",
+          "id": "2:2583586762789043",
           "name": "messageId",
           "type": 9
         },
         {
-          "id": "3:5845011657731712804",
+          "id": "3:3576556981885174371",
           "name": "recipientNodeId",
           "type": 9
         },
         {
-          "id": "4:825494675929501758",
+          "id": "4:4971696114901374874",
           "name": "statusValue",
           "type": 6
         },
         {
-          "id": "5:6385488380143330221",
+          "id": "5:1758843234095597042",
           "name": "confirmedTimestamp",
           "type": 6
         },
         {
-          "id": "6:2476548374551796732",
+          "id": "6:719603300938910551",
           "name": "messageHash",
           "type": 9
         }
@@ -1904,38 +1249,38 @@
       "relations": []
     },
     {
-      "id": "83:8403941016085689245",
-      "lastPropertyId": "6:5690773461434553583",
+      "id": "21:5267922992660224831",
+      "lastPropertyId": "6:4521354906732307877",
       "name": "MessageSearchIndex",
       "properties": [
         {
-          "id": "1:9150270439718951760",
+          "id": "1:2095155852171067212",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:5371462698725532210",
+          "id": "2:8589038601957333193",
           "name": "messageId",
           "type": 9
         },
         {
-          "id": "3:6503523898187297041",
+          "id": "3:8738105073602612609",
           "name": "conversationId",
           "type": 9
         },
         {
-          "id": "4:5204406762936235417",
+          "id": "4:3692486819144684809",
           "name": "searchContent",
           "type": 9
         },
         {
-          "id": "5:8528411167841684793",
+          "id": "5:1249571954285057203",
           "name": "messageTimestamp",
           "type": 6
         },
         {
-          "id": "6:5690773461434553583",
+          "id": "6:4521354906732307877",
           "name": "typeValue",
           "type": 6
         }
@@ -1943,58 +1288,58 @@
       "relations": []
     },
     {
-      "id": "84:3839897350712567337",
-      "lastPropertyId": "10:4144679423216451343",
+      "id": "22:240295330024920628",
+      "lastPropertyId": "10:5141481708314327014",
       "name": "MessageSyncQueue",
       "properties": [
         {
-          "id": "1:2310384840593278311",
+          "id": "1:1267599240813381684",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:9073643950670215774",
+          "id": "2:1993114033834535994",
           "name": "messageId",
           "type": 9
         },
         {
-          "id": "3:8409975648404296006",
+          "id": "3:1805677610542135486",
           "name": "operation",
           "type": 9
         },
         {
-          "id": "4:8978451710461804683",
+          "id": "4:5363027998885906451",
           "name": "targetNodeIds",
           "type": 9
         },
         {
-          "id": "5:326332709432026714",
+          "id": "5:5988602126449170070",
           "name": "attemptCount",
           "type": 6
         },
         {
-          "id": "6:2867212974167710416",
+          "id": "6:46756218165645166",
           "name": "createdTimestamp",
           "type": 6
         },
         {
-          "id": "7:5038072031944375910",
+          "id": "7:6772736684859470224",
           "name": "nextRetryTimestamp",
           "type": 6
         },
         {
-          "id": "8:6434178041696581680",
+          "id": "8:8409590436644640728",
           "name": "status",
           "type": 9
         },
         {
-          "id": "9:1425913614835990718",
+          "id": "9:1004522782302043428",
           "name": "errorMessage",
           "type": 9
         },
         {
-          "id": "10:4144679423216451343",
+          "id": "10:5141481708314327014",
           "name": "priority",
           "type": 6
         }
@@ -2002,69 +1347,1149 @@
       "relations": []
     },
     {
-      "id": "85:7206661662610396735",
-      "lastPropertyId": "11:7512330271752126070",
-      "name": "Usero",
+      "id": "23:8478161738148410273",
+      "lastPropertyId": "6:280642064870129275",
+      "name": "Planification",
       "properties": [
         {
-          "id": "1:3340310943802111851",
+          "id": "1:8645864189123908485",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:1828378042965196379",
-          "name": "photo",
+          "id": "2:6163177237506860521",
+          "name": "mois",
+          "type": 6
+        },
+        {
+          "id": "3:1754131078291857141",
+          "name": "annee",
+          "type": 6
+        },
+        {
+          "id": "4:492678889993354591",
+          "name": "ordreEquipes",
           "type": 9
         },
         {
-          "id": "3:8671592158660274431",
-          "name": "username",
-          "indexId": "159:8155913009579860823",
-          "type": 9,
-          "flags": 2048
+          "id": "5:3165486952803851005",
+          "name": "branchId",
+          "indexId": "27:322172722192881390",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Branch"
         },
         {
-          "id": "4:6868858723862206118",
-          "name": "password",
+          "id": "6:280642064870129275",
+          "name": "activitesJson",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "24:2265978457161302611",
+      "lastPropertyId": "11:1784545878556645035",
+      "name": "PlanningHebdo",
+      "properties": [
+        {
+          "id": "1:88160742288167265",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7945732049144826587",
+          "name": "staffId",
+          "indexId": "28:6993874527851291751",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Staff"
+        },
+        {
+          "id": "3:7454104091723197237",
+          "name": "dimanche",
           "type": 9
         },
         {
-          "id": "5:8702954558360676679",
-          "name": "email",
+          "id": "4:936765658359436099",
+          "name": "lundi",
           "type": 9
         },
         {
-          "id": "6:1613334619495566590",
-          "name": "phone",
-          "indexId": "160:5639403949129370182",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "7:722175339689256736",
-          "name": "role",
+          "id": "5:9117560237212725653",
+          "name": "mardi",
           "type": 9
         },
         {
-          "id": "8:2229890034161971439",
-          "name": "derniereModification",
+          "id": "6:8366290799267562185",
+          "name": "mercredi",
+          "type": 9
+        },
+        {
+          "id": "7:7934392353898804470",
+          "name": "jeudi",
+          "type": 9
+        },
+        {
+          "id": "8:6100463810218001367",
+          "name": "vendredi",
+          "type": 9
+        },
+        {
+          "id": "9:7606749378501794290",
+          "name": "samedi",
+          "type": 9
+        },
+        {
+          "id": "10:4851941348871459783",
+          "name": "dateDebut",
           "type": 10
         },
         {
-          "id": "9:2285330264434875505",
+          "id": "11:1784545878556645035",
+          "name": "dateFin",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "25:5807100378385715167",
+      "lastPropertyId": "8:8949219337641319281",
+      "name": "PlanningOverrideEntity",
+      "properties": [
+        {
+          "id": "1:2779308469509018142",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7632587861873952755",
+          "name": "snapshotId",
+          "indexId": "29:8465596390592338362",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:6664574497188135809",
+          "name": "staffId",
+          "indexId": "30:3026432243518853936",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "4:4401722661142073140",
+          "name": "dateEpochMs",
+          "indexId": "31:3244996865053857217",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "5:4845480797576897351",
+          "name": "team",
+          "type": 9
+        },
+        {
+          "id": "6:2167763488999698895",
+          "name": "shift",
+          "type": 9
+        },
+        {
+          "id": "7:4254291175615049861",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "8:8949219337641319281",
+          "name": "note",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "26:3636335305723735758",
+      "lastPropertyId": "11:2439151026240514587",
+      "name": "PlanningRevisionEntity",
+      "properties": [
+        {
+          "id": "1:6507404977003786295",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5239945685871449841",
+          "name": "revisionId",
+          "type": 9
+        },
+        {
+          "id": "3:2145268390587585253",
+          "name": "baseSnapshotId",
+          "type": 9
+        },
+        {
+          "id": "4:5559616133738808577",
+          "name": "effectiveSnapshotId",
+          "type": 9
+        },
+        {
+          "id": "5:8712430756882275574",
+          "name": "year",
+          "type": 6
+        },
+        {
+          "id": "6:5622796871620572637",
+          "name": "month",
+          "type": 6
+        },
+        {
+          "id": "7:5631021251632276591",
+          "name": "revision",
+          "type": 6
+        },
+        {
+          "id": "8:2897643954043226409",
+          "name": "modifiedAtEpochMs",
+          "type": 6
+        },
+        {
+          "id": "9:1762985332544380119",
+          "name": "modifiedBy",
+          "type": 9
+        },
+        {
+          "id": "10:6020103823472493496",
+          "name": "changedFieldsJson",
+          "type": 9
+        },
+        {
+          "id": "11:2439151026240514587",
+          "name": "validated",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "27:5818226628902249415",
+      "lastPropertyId": "16:2573876991075225434",
+      "name": "Produit",
+      "properties": [
+        {
+          "id": "1:1666119016022678979",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8372274423406366126",
+          "name": "qr",
+          "indexId": "32:368982951991282047",
+          "type": 9,
+          "flags": 34848
+        },
+        {
+          "id": "3:7906752397018895473",
+          "name": "image",
+          "type": 9
+        },
+        {
+          "id": "4:448880007148541697",
+          "name": "nom",
+          "indexId": "33:5034384984770175875",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "5:829701766816515438",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "6:3140604111489304716",
+          "name": "prixVente",
+          "type": 8
+        },
+        {
+          "id": "7:2971790640373289521",
+          "name": "tax",
+          "type": 8
+        },
+        {
+          "id": "8:3860318370731158920",
+          "name": "qtyPartiel",
+          "type": 8
+        },
+        {
+          "id": "9:7395224240780908365",
+          "name": "pricePartielVente",
+          "type": 8
+        },
+        {
+          "id": "10:1471011568176991556",
+          "name": "minimStock",
+          "type": 8
+        },
+        {
+          "id": "11:1788567327101380890",
+          "name": "alertPeremption",
+          "type": 6
+        },
+        {
+          "id": "12:708363138260573861",
           "name": "isSynced",
           "type": 1
         },
         {
-          "id": "10:6812106546705952776",
+          "id": "13:8551729231756891400",
           "name": "syncedAt",
           "type": 10
         },
         {
-          "id": "11:7512330271752126070",
+          "id": "14:8437222597404472241",
+          "name": "derniereModification",
+          "type": 10
+        },
+        {
+          "id": "15:2217573427839110108",
           "name": "crudId",
-          "indexId": "161:7467537001383645146",
+          "indexId": "34:5492759747761034766",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Crud"
+        },
+        {
+          "id": "16:2573876991075225434",
+          "name": "qrCodeList",
+          "type": 30
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "28:7751060513151682217",
+      "lastPropertyId": "8:1852498867821200769",
+      "name": "Profile",
+      "properties": [
+        {
+          "id": "1:4892964277968087309",
+          "name": "localId",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8645562654320297287",
+          "name": "id",
+          "indexId": "35:6873522436146914017",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:1147565419849096801",
+          "name": "fullName",
+          "type": 9
+        },
+        {
+          "id": "4:4389371837130712021",
+          "name": "age",
+          "type": 6
+        },
+        {
+          "id": "5:6213564513201645379",
+          "name": "bio",
+          "type": 9
+        },
+        {
+          "id": "6:4822126198307136066",
+          "name": "photos",
+          "type": 30
+        },
+        {
+          "id": "7:3132045682108775014",
+          "name": "city",
+          "type": 9
+        },
+        {
+          "id": "8:1852498867821200769",
+          "name": "distanceKm",
+          "type": 8
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "29:6841698225470885228",
+      "lastPropertyId": "17:1935767591768913661",
+      "name": "Reservation",
+      "properties": [
+        {
+          "id": "1:63901206266627300",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8575019624616118560",
+          "name": "roomId",
+          "indexId": "36:1355997232838499902",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Room"
+        },
+        {
+          "id": "3:2897830973623939202",
+          "name": "receptionistId",
+          "indexId": "37:3005765112075207287",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Employee"
+        },
+        {
+          "id": "4:3803521646323650550",
+          "name": "boardBasisId",
+          "indexId": "38:3027860777219189640",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "BoardBasis"
+        },
+        {
+          "id": "5:4994786351128773521",
+          "name": "seasonalPricingId",
+          "indexId": "39:8478181964556689694",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "SeasonalPricing"
+        },
+        {
+          "id": "6:5805780471509545858",
+          "name": "seasonalMultiplier",
+          "type": 8
+        },
+        {
+          "id": "7:3729877908575754335",
+          "name": "from",
+          "type": 10
+        },
+        {
+          "id": "8:1944156337689208358",
+          "name": "to",
+          "type": 10
+        },
+        {
+          "id": "9:3086909007621789127",
+          "name": "pricePerNight",
+          "type": 8
+        },
+        {
+          "id": "10:7879923997694188292",
+          "name": "status",
+          "type": 9
+        },
+        {
+          "id": "11:8941034931188872154",
+          "name": "discountPercent",
+          "type": 8
+        },
+        {
+          "id": "12:2010836801661946800",
+          "name": "discountAmount",
+          "type": 8
+        },
+        {
+          "id": "13:4225888372403662312",
+          "name": "discountType",
+          "type": 9
+        },
+        {
+          "id": "14:3607675497921083506",
+          "name": "discountAppliedTo",
+          "type": 9
+        },
+        {
+          "id": "15:5932426030105202270",
+          "name": "selectedDiscountItems",
+          "type": 9
+        },
+        {
+          "id": "16:7939220375003518987",
+          "name": "cachedBoardBasisPrice",
+          "type": 8
+        },
+        {
+          "id": "17:1935767591768913661",
+          "name": "cachedExtrasTotal",
+          "type": 8
+        }
+      ],
+      "relations": [
+        {
+          "id": "1:7336784443324215840",
+          "name": "guests",
+          "targetId": "15:3669795733185736906"
+        }
+      ]
+    },
+    {
+      "id": "30:6825251221887859456",
+      "lastPropertyId": "9:4138871217134068871",
+      "name": "ReservationExtra",
+      "properties": [
+        {
+          "id": "1:3086951914754236009",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4841348995294340366",
+          "name": "reservationId",
+          "indexId": "40:7299955686599644086",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Reservation"
+        },
+        {
+          "id": "3:3214761271110687555",
+          "name": "extraServiceId",
+          "indexId": "41:4128543570052212782",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "ExtraService"
+        },
+        {
+          "id": "4:4142387730759200323",
+          "name": "quantity",
+          "type": 6
+        },
+        {
+          "id": "5:5564870172945485208",
+          "name": "unitPrice",
+          "type": 8
+        },
+        {
+          "id": "6:7526842521867873633",
+          "name": "totalPrice",
+          "type": 8
+        },
+        {
+          "id": "7:7962210574994566387",
+          "name": "status",
+          "type": 9
+        },
+        {
+          "id": "8:2559705617358806228",
+          "name": "scheduledDate",
+          "type": 10
+        },
+        {
+          "id": "9:4138871217134068871",
+          "name": "notes",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "31:1264935862099339532",
+      "lastPropertyId": "6:6630863486353392427",
+      "name": "Room",
+      "properties": [
+        {
+          "id": "1:6251549109214760213",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5705865866882918663",
+          "name": "code",
+          "indexId": "42:3402886594073602368",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:423081606015597282",
+          "name": "status",
+          "type": 9
+        },
+        {
+          "id": "4:7953412901349893810",
+          "name": "photosJson",
+          "type": 9
+        },
+        {
+          "id": "5:1026309929149323285",
+          "name": "categoryId",
+          "indexId": "43:5075873476653491386",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "RoomCategory"
+        },
+        {
+          "id": "6:6630863486353392427",
+          "name": "hotelId",
+          "indexId": "44:4028596364750397089",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Hotel"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "32:2664504695835256339",
+      "lastPropertyId": "16:2570991697647468981",
+      "name": "RoomCategory",
+      "properties": [
+        {
+          "id": "1:6521393720786857240",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8917443231715213605",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:886163662028581930",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "4:2436923887211537795",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "5:7033681274337150646",
+          "name": "bedType",
+          "type": 9
+        },
+        {
+          "id": "6:4334976111762819189",
+          "name": "capacity",
+          "type": 6
+        },
+        {
+          "id": "7:5157776731189355430",
+          "name": "standing",
+          "type": 9
+        },
+        {
+          "id": "8:6674981461765597444",
+          "name": "viewType",
+          "type": 9
+        },
+        {
+          "id": "9:5955441421941585017",
+          "name": "amenities",
+          "type": 9
+        },
+        {
+          "id": "10:6457340934685451036",
+          "name": "basePrice",
+          "type": 8
+        },
+        {
+          "id": "11:273988440682900203",
+          "name": "seasonMultiplier",
+          "type": 8
+        },
+        {
+          "id": "12:8455478330441752359",
+          "name": "weekendMultiplier",
+          "type": 8
+        },
+        {
+          "id": "13:8971243714760042166",
+          "name": "allowsExtraBed",
+          "type": 1
+        },
+        {
+          "id": "14:3689717774924763937",
+          "name": "extraBedPrice",
+          "type": 8
+        },
+        {
+          "id": "15:5283420260062879464",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "16:2570991697647468981",
+          "name": "sortOrder",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "33:2132799295903607852",
+      "lastPropertyId": "10:626296263731285820",
+      "name": "RotationConfigurationEntity",
+      "properties": [
+        {
+          "id": "1:996525407642917146",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7265470300246045836",
+          "name": "branchId",
+          "indexId": "45:7455838266726932382",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:5722100588852162525",
+          "name": "version",
+          "indexId": "46:677400575797883357",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "4:5926191279635064030",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "5:2398276673686068958",
+          "name": "teamOrderJson",
+          "type": 9
+        },
+        {
+          "id": "6:2578599518504010356",
+          "name": "cycleJson",
+          "type": 9
+        },
+        {
+          "id": "7:3451771604765189530",
+          "name": "policy",
+          "type": 6
+        },
+        {
+          "id": "8:7238234852846230850",
+          "name": "referenceDateEpochMs",
+          "type": 6
+        },
+        {
+          "id": "9:7231093515751557035",
+          "name": "referencePhaseIndex",
+          "type": 6
+        },
+        {
+          "id": "10:626296263731285820",
+          "name": "active",
+          "type": 1
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "34:2554180411572094629",
+      "lastPropertyId": "5:5678704226778735801",
+      "name": "RotationPeriodEntity",
+      "properties": [
+        {
+          "id": "1:3476539760150981413",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6951540014022577058",
+          "name": "branchId",
+          "indexId": "47:3802831289752057690",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:2069367251480350905",
+          "name": "startDateEpochMs",
+          "indexId": "48:4104528137764830756",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "4:7682356493649876964",
+          "name": "endDateEpochMs",
+          "type": 6
+        },
+        {
+          "id": "5:5678704226778735801",
+          "name": "configurationId",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "35:3685136100368224392",
+      "lastPropertyId": "10:993168276931050140",
+      "name": "RotationStateSnapshotEntity",
+      "properties": [
+        {
+          "id": "1:5817258725121204955",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5781551358667658627",
+          "name": "branchId",
+          "indexId": "49:3196030303395740449",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:7835234981726505561",
+          "name": "year",
+          "indexId": "50:2047467925502368059",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "4:4901766595923695531",
+          "name": "month",
+          "indexId": "51:8592944138473755164",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "5:4598918740088738354",
+          "name": "revision",
+          "indexId": "52:2151695522840598580",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "6:7964301025224276744",
+          "name": "dateEpochMs",
+          "type": 6
+        },
+        {
+          "id": "7:5743197052369253785",
+          "name": "configurationId",
+          "type": 9
+        },
+        {
+          "id": "8:3474684498646092061",
+          "name": "configurationVersion",
+          "type": 6
+        },
+        {
+          "id": "9:4652694938951999033",
+          "name": "phaseIndex",
+          "type": 6
+        },
+        {
+          "id": "10:993168276931050140",
+          "name": "teamPhaseByTeamJson",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "36:7928225900270035692",
+      "lastPropertyId": "11:633237580051186514",
+      "name": "SeasonalPricing",
+      "properties": [
+        {
+          "id": "1:7265391830410972713",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8986108231327074752",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:3860150092722300917",
+          "name": "startDate",
+          "type": 10
+        },
+        {
+          "id": "4:5120959277315752486",
+          "name": "endDate",
+          "type": 10
+        },
+        {
+          "id": "5:8072980863094876963",
+          "name": "multiplier",
+          "type": 8
+        },
+        {
+          "id": "6:5016930724446787943",
+          "name": "photosJson",
+          "type": 9
+        },
+        {
+          "id": "7:6063979726532408058",
+          "name": "applicationType",
+          "type": 9
+        },
+        {
+          "id": "8:8278342772736831518",
+          "name": "targetIds",
+          "type": 9
+        },
+        {
+          "id": "9:4704168525329799506",
+          "name": "isActive",
+          "type": 1
+        },
+        {
+          "id": "10:235591120786164335",
+          "name": "priority",
+          "type": 6
+        },
+        {
+          "id": "11:633237580051186514",
+          "name": "description",
+          "type": 9
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "37:3537110633732926529",
+      "lastPropertyId": "7:6486567806341130035",
+      "name": "Staff",
+      "properties": [
+        {
+          "id": "1:3594660663812022164",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:1688261116405047709",
+          "name": "nom",
+          "type": 9
+        },
+        {
+          "id": "3:1992418392384555391",
+          "name": "grade",
+          "type": 9
+        },
+        {
+          "id": "4:8107642407087099221",
+          "name": "groupe",
+          "type": 9
+        },
+        {
+          "id": "5:7182653218804174653",
+          "name": "equipe",
+          "type": 9
+        },
+        {
+          "id": "6:7980227449511393337",
+          "name": "ordre",
+          "type": 6
+        },
+        {
+          "id": "7:6486567806341130035",
+          "name": "branchId",
+          "indexId": "53:427536841792836415",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Branch"
+        }
+      ],
+      "relations": [
+        {
+          "id": "2:2077761314559475613",
+          "name": "timeOff",
+          "targetId": "39:6134013368513084305"
+        }
+      ]
+    },
+    {
+      "id": "38:7793349533990843172",
+      "lastPropertyId": "6:3148428808766316151",
+      "name": "SwipeQueue",
+      "properties": [
+        {
+          "id": "1:3848498211019431151",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4496423827868757834",
+          "name": "swipedId",
+          "indexId": "54:2378902806551506196",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:8914210610198047594",
+          "name": "action",
+          "type": 6
+        },
+        {
+          "id": "4:2069454217249862592",
+          "name": "status",
+          "type": 6
+        },
+        {
+          "id": "5:1084725684473146800",
+          "name": "attemptCount",
+          "type": 6
+        },
+        {
+          "id": "6:3148428808766316151",
+          "name": "createdAt",
+          "type": 10
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "39:6134013368513084305",
+      "lastPropertyId": "5:2715584899154220966",
+      "name": "TimeOff",
+      "properties": [
+        {
+          "id": "1:2290370366209544335",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:36889040918096656",
+          "name": "debut",
+          "type": 10
+        },
+        {
+          "id": "3:8476816794968629952",
+          "name": "fin",
+          "type": 10
+        },
+        {
+          "id": "4:5339709427693521230",
+          "name": "motif",
+          "type": 9
+        },
+        {
+          "id": "5:2715584899154220966",
+          "name": "staffId",
+          "indexId": "55:5839217286998303455",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "Staff"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "40:6789195199470750192",
+      "lastPropertyId": "5:8594960106276708723",
+      "name": "TypeActivite",
+      "properties": [
+        {
+          "id": "1:6830763831917959796",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8554900375854671561",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "3:2255481976159515867",
+          "name": "libelle",
+          "type": 9
+        },
+        {
+          "id": "4:6693028155626689808",
+          "name": "description",
+          "type": 9
+        },
+        {
+          "id": "5:8594960106276708723",
+          "name": "couleurHex",
+          "type": 6
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "41:525749819713116837",
+      "lastPropertyId": "11:6512349502963470033",
+      "name": "Usero",
+      "properties": [
+        {
+          "id": "1:4878124541466294045",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:7172339614227995883",
+          "name": "photo",
+          "type": 9
+        },
+        {
+          "id": "3:4346671108658386225",
+          "name": "username",
+          "indexId": "56:4522149747820936437",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "4:1620786949733525502",
+          "name": "password",
+          "type": 9
+        },
+        {
+          "id": "5:6331463657059954787",
+          "name": "email",
+          "type": 9
+        },
+        {
+          "id": "6:1814217960694939735",
+          "name": "phone",
+          "indexId": "57:3707541104004605664",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "7:7558519462211507086",
+          "name": "role",
+          "type": 9
+        },
+        {
+          "id": "8:6245750146312590985",
+          "name": "derniereModification",
+          "type": 10
+        },
+        {
+          "id": "9:4587635263761804698",
+          "name": "isSynced",
+          "type": 1
+        },
+        {
+          "id": "10:2694847680857498446",
+          "name": "syncedAt",
+          "type": 10
+        },
+        {
+          "id": "11:6512349502963470033",
+          "name": "crudId",
+          "indexId": "58:2287133825516306402",
           "type": 11,
           "flags": 520,
           "relationTarget": "Crud"
@@ -2073,790 +2498,149 @@
       "relations": []
     },
     {
-      "id": "86:7142830071251728522",
-      "lastPropertyId": "9:8737131139823455485",
-      "name": "SwipeQueue",
+      "id": "42:965897728256057589",
+      "lastPropertyId": "8:4243213580598862407",
+      "name": "PlanningAssignmentEntity",
       "properties": [
         {
-          "id": "3:4774728254492443856",
-          "name": "action",
+          "id": "1:7250237529276072009",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:6722271217083427924",
+          "name": "staffId",
+          "indexId": "59:6980801220912448614",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:1053930443431897625",
+          "name": "dateEpochMs",
+          "indexId": "60:460696346700979891",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "4:4866488590708633338",
+          "name": "team",
+          "type": 9
+        },
+        {
+          "id": "5:2189750399002241386",
+          "name": "shift",
+          "type": 9
+        },
+        {
+          "id": "6:1398649777188074674",
+          "name": "code",
+          "type": 9
+        },
+        {
+          "id": "7:705563522871037722",
+          "name": "note",
+          "type": 9
+        },
+        {
+          "id": "8:4243213580598862407",
+          "name": "snapshotId",
+          "indexId": "61:1219429430522328884",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "PlanningSnapshotEntity"
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "43:4185490840183125969",
+      "lastPropertyId": "12:6012318090966501854",
+      "name": "PlanningSnapshotEntity",
+      "properties": [
+        {
+          "id": "1:5971263757983122719",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:3068197545843017622",
+          "name": "branchId",
+          "indexId": "62:7695654687457735472",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:2647446887095958676",
+          "name": "year",
+          "indexId": "63:6342927851830603626",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "4:1831949195920219457",
+          "name": "month",
+          "indexId": "64:5339569382208398121",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "5:6116388999748866806",
+          "name": "configurationId",
+          "type": 9
+        },
+        {
+          "id": "6:1830086318677599642",
+          "name": "configurationVersion",
           "type": 6
         },
         {
-          "id": "4:8994184676599511222",
-          "name": "createdAt",
-          "type": 10
+          "id": "7:6131643475032518034",
+          "name": "engineVersion",
+          "type": 9
         },
         {
-          "id": "5:371944036295111510",
-          "name": "attemptCount",
+          "id": "8:1908659731193817746",
+          "name": "revision",
           "type": 6
         },
         {
-          "id": "6:8447726733389834319",
+          "id": "9:6112038126776414836",
           "name": "status",
           "type": 6
         },
         {
-          "id": "7:3243909471887999732",
-          "name": "swipedId",
-          "indexId": "163:723282311552426138",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "9:8737131139823455485",
-          "name": "id",
-          "type": 6,
-          "flags": 1
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "87:4508439693088705582",
-      "lastPropertyId": "7:4406800237696192086",
-      "name": "Match",
-      "properties": [
-        {
-          "id": "1:4240052135893762881",
-          "name": "localId",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:1784493915828393145",
-          "name": "id",
-          "indexId": "164:4171470931828648801",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "3:5326742955753564583",
-          "name": "otherUserName",
-          "type": 9
-        },
-        {
-          "id": "4:3007605894174255943",
-          "name": "otherUserPhoto",
-          "type": 9
-        },
-        {
-          "id": "5:4719544902241924290",
-          "name": "lastMessagePreview",
-          "type": 9
-        },
-        {
-          "id": "6:3610688696722281751",
-          "name": "lastMessageAt",
-          "type": 10
-        },
-        {
-          "id": "7:4406800237696192086",
-          "name": "matchedAt",
-          "type": 10
-        }
-      ],
-      "relations": []
-    },
-    {
-      "id": "88:8967072802053838872",
-      "lastPropertyId": "8:3300156872213894396",
-      "name": "Profile",
-      "properties": [
-        {
-          "id": "1:1687972677604562047",
-          "name": "localId",
-          "type": 6,
-          "flags": 1
-        },
-        {
-          "id": "2:3780202613825790115",
-          "name": "id",
-          "indexId": "165:5741744361424423530",
-          "type": 9,
-          "flags": 2048
-        },
-        {
-          "id": "3:2544068240272643657",
-          "name": "fullName",
-          "type": 9
-        },
-        {
-          "id": "4:2093605709578919325",
-          "name": "age",
+          "id": "10:199392561199377744",
+          "name": "createdAtEpochMs",
           "type": 6
         },
         {
-          "id": "5:8644494285661854017",
-          "name": "bio",
-          "type": 9
+          "id": "11:5899773731861588278",
+          "name": "publishedAtEpochMs",
+          "type": 6
         },
         {
-          "id": "6:4939497280957203649",
-          "name": "photos",
-          "type": 30
-        },
-        {
-          "id": "7:3992495913841600458",
-          "name": "city",
-          "type": 9
-        },
-        {
-          "id": "8:3300156872213894396",
-          "name": "distanceKm",
-          "type": 8
+          "id": "12:6012318090966501854",
+          "name": "rotationStateId",
+          "indexId": "65:7832110427885411726",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "RotationStateSnapshotEntity"
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "88:8967072802053838872",
-  "lastIndexId": "165:5741744361424423530",
-  "lastRelationId": "11:6355601734277678121",
+  "lastEntityId": "43:4185490840183125969",
+  "lastIndexId": "65:7832110427885411726",
+  "lastRelationId": "2:2077761314559475613",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
-  "retiredEntityUids": [
-    6647246884597588827,
-    1285774936409385946,
-    615909935097060499,
-    3443064098621496820,
-    7671421685835368695,
-    4744970031487691026,
-    1300875806629673682,
-    8965560015567899383,
-    4850868634972025342,
-    7366099552629879297,
-    3239230063137108967,
-    4752590594422759574,
-    2330214959262864934,
-    2846533385157794616,
-    1806878392961662062,
-    4048437021561499443,
-    4488590875437013143,
-    4531466892237195894,
-    4160428654019956543,
-    4060395522626165643,
-    2717543384485050169,
-    5529961723732993923,
-    6119221834068341217,
-    5478577903830562238,
-    3093542658583975966,
-    6611960556972074278,
-    783491562628111942,
-    4546320432752991852,
-    3223770380636374366,
-    1825897810017309983,
-    5841557151341947182,
-    6880452506314359223,
-    4414320882310450560,
-    2094998699711199469,
-    2608718223444670659,
-    6970969845640149357,
-    696359892635768631,
-    4317017855221956627,
-    356068960353205892,
-    6686547310239751793,
-    4949588529531051093,
-    1606648018192761720,
-    7880911800507633623,
-    2109867429441744176,
-    8286512320386958416,
-    512390680340790874,
-    221848585703696368,
-    3455322588672139361,
-    7478261893920421096,
-    1187110423454994712,
-    5460189980320568024,
-    4487301589449865946
-  ],
-  "retiredIndexUids": [
-    7680843215305245682,
-    720122404314208774,
-    1359581493053979498,
-    5586704641728874986,
-    5709087898541937546,
-    8837918613306508000,
-    8975580035132150145,
-    3282428703595065053,
-    981589897560461191,
-    2417887039904989190,
-    1604604727978599251,
-    464814572941631309,
-    374051867334777197,
-    1645050276093830234,
-    8482635430657477729,
-    1608692258503986970,
-    3240954611981074186,
-    3715369648097597428,
-    6270285977185657086,
-    3625987433435977267,
-    517944109487583315,
-    1260016742969459391,
-    6146818407166251892,
-    7614381365690749811,
-    2531846313062582022,
-    2542943431848096884,
-    8505935981456089400,
-    8804000867879415370,
-    2878202104548724317,
-    7249903120237511383,
-    4890621087534730258,
-    4289809794667337102,
-    8664461267398711495,
-    780187164246969954,
-    7626901822469274824,
-    5863762058204360024
-  ],
-  "retiredPropertyUids": [
-    8976483595831028651,
-    8205124793224732825,
-    4459084450102477862,
-    2863238699579242918,
-    6338489518372838743,
-    9126168680358256829,
-    7098507666294938412,
-    4094610592500505256,
-    2787760657972690405,
-    8947335276371114795,
-    6863376831137326481,
-    4541506935688772376,
-    789514639796378856,
-    8171432931510958161,
-    4584540760971899695,
-    1036436451411558170,
-    6987534803578766938,
-    880067361688206477,
-    6711389730840919433,
-    2789430178740285634,
-    1404650867823199132,
-    7595078940008474740,
-    4341932180325338788,
-    9088776954073551638,
-    5264206445168036661,
-    6446406569798399453,
-    205619321565883428,
-    1827255615047715957,
-    5341105790295986650,
-    5607971647867899978,
-    78856214289649542,
-    2514304964873444278,
-    78600634238338283,
-    6533552764826989296,
-    4773469945258199278,
-    6070155937091833855,
-    3618662337063473621,
-    7598222863889683261,
-    4130946251832316438,
-    954308828359282192,
-    4941871603543648876,
-    6304311856860433598,
-    5823148951982151747,
-    8060566595666176906,
-    7027322212778181854,
-    6063531051077271532,
-    3164935352830575671,
-    510917551575483361,
-    6450200723927042371,
-    5959659676638121576,
-    8159454970821468214,
-    703887304841839968,
-    142214021994294718,
-    807322010398501475,
-    7593775792342322389,
-    4377413958790530702,
-    3233551067305536959,
-    1535173712481404531,
-    6592955708497446217,
-    1884377143891085364,
-    7495577581902831294,
-    8662175227878512386,
-    2271720061750415984,
-    3968408471191777871,
-    2176273511660132623,
-    5597323246222841857,
-    1437889204080274190,
-    1592701008287979150,
-    221992503793589292,
-    8114817508930789153,
-    7892746565150206372,
-    7048804820784696697,
-    799174612431273081,
-    3360780785940250086,
-    171507787880345142,
-    6751921859296119582,
-    438694468203459940,
-    2170863656777258282,
-    3974501656251074477,
-    456002614587986559,
-    6231378526275961905,
-    5614976642409521551,
-    7933457951281570386,
-    6644119797887124857,
-    5586605444545323190,
-    3529715448568660977,
-    8637938018149963398,
-    9109575267809862897,
-    3785325347410985566,
-    9028789358391785377,
-    3329218410267964700,
-    480484820511362762,
-    6825031182422464461,
-    7836562129924348765,
-    7971951893807814,
-    5838025469781252560,
-    7826982540024954097,
-    8034372973365024384,
-    6898087251775363697,
-    4859254936278751635,
-    3819961798200255032,
-    8473856199391043692,
-    7801409612634167699,
-    5392463383619933493,
-    5187555661795072970,
-    5064643126212306431,
-    1982638660542653469,
-    1929859960092883896,
-    6999117705742170446,
-    8767292972074301570,
-    7217215717936015206,
-    5619313648446334712,
-    2128364980205261936,
-    3864379051465094285,
-    8101665827835091034,
-    2370683961364380821,
-    2486568139009562406,
-    2374839585227326155,
-    6865609035624207843,
-    6978719131581766950,
-    3636620339386423012,
-    3567298765032709809,
-    5417507809529304096,
-    6396157916307560307,
-    272846343231001751,
-    7564205403150408118,
-    107272166621834262,
-    1638713618045098226,
-    7749131471151429248,
-    3107561907592152248,
-    7811084294830313697,
-    6249389163818889916,
-    2423941153392271550,
-    3479634760684101076,
-    4605848210148641345,
-    2545789517890032395,
-    5734347136120605212,
-    8876339502661643564,
-    9106126505446500084,
-    4994120001457133647,
-    6953480594541438406,
-    7709745214526133608,
-    4710393012455644419,
-    8865500647796199066,
-    1939222553205241978,
-    616810425885007797,
-    6945043534110964214,
-    6747344798108479986,
-    8619126654721394380,
-    5119024284031250428,
-    3970828812228493853,
-    2444120869615204042,
-    2557076069156625607,
-    6520148835985721245,
-    143004645354607772,
-    1985756463491080397,
-    7348710715121060365,
-    4230119978967319087,
-    4361382848967768370,
-    1216113560227718132,
-    6539158913829458445,
-    2004715201507779744,
-    5250278558857446708,
-    1365839414049970905,
-    844017942704688296,
-    8864157181284120525,
-    5394094041029593760,
-    2756868877764009154,
-    677444861852313351,
-    7775076242762558278,
-    83130231198060975,
-    682155080228933285,
-    2823255215377136409,
-    6427387201832427819,
-    8811467909449411937,
-    801392555056476780,
-    1237972878263061882,
-    7180852619957135269,
-    5211695606340916837,
-    5960985498408022442,
-    4134663841472574896,
-    6685337339402010492,
-    6109106234072733022,
-    436907946961534106,
-    5885615847098317641,
-    3520583005040795193,
-    1513433256256529277,
-    439213328244616332,
-    1395535329751381554,
-    7626605289243868513,
-    768664685249195402,
-    1728389781645832893,
-    1531868594075702926,
-    3657577393839920908,
-    962876697588346043,
-    1504673429139993182,
-    8002978936373940261,
-    2178273122015494966,
-    5373310603832160681,
-    2075862164259437856,
-    7153419538209140690,
-    8850617197858899233,
-    7076741074656889893,
-    8456196557027803894,
-    6306299392600280219,
-    1571500476598249551,
-    1676526636870640741,
-    2526497660800829701,
-    6892122844718649563,
-    3695625130191720705,
-    1252068720994956193,
-    8381120643630933834,
-    8660233173710677972,
-    8297705663541101231,
-    8813107963892295377,
-    9003163705216900747,
-    488135407398772758,
-    97647871029222672,
-    8296711131194581079,
-    8587139427014815110,
-    4515261093255493091,
-    8792455056654444544,
-    5172980220661294888,
-    8100719055238053942,
-    7609468699421722439,
-    4305092639336897746,
-    3513916606644527898,
-    1285899445252856780,
-    8799060014176562283,
-    4452554524108096241,
-    3259537297487087809,
-    5757132126363856511,
-    2294371935230615525,
-    7495650345969893914,
-    8358090772194301322,
-    7719958318531079219,
-    4229857189863884367,
-    686127309564577120,
-    1171201029039590510,
-    6421061573477842651,
-    7745185543975160981,
-    6283720588037323779,
-    7896876929349474935,
-    7360107830162433745,
-    1845837837895797432,
-    2832806579047419286,
-    3912529585061436506,
-    1232761458506718282,
-    2743118376845724350,
-    7163247152944777273,
-    8018801732111556371,
-    5246117500924186682,
-    657685686400689878,
-    1300545506004575274,
-    5560591115794451517,
-    7173242863589440102,
-    1976720739406416978,
-    7397388381787352463,
-    4159328677983614404,
-    1468926046857927762,
-    2809162169141308415,
-    4432656748806120577,
-    5008491447694780801,
-    3428782766954103107,
-    6266646246571903231,
-    3428977416838829591,
-    4312546509709242664,
-    2168489526555256737,
-    7167655569274157689,
-    8260799672052407917,
-    2263650145058026020,
-    1003759732967968636,
-    2436526717507053436,
-    3196146503711397222,
-    7483240197742055580,
-    6928097277066948927,
-    616157900830012542,
-    3319119933982033415,
-    8345609346399019040,
-    2085420662219568320,
-    6059371853482645892,
-    3940893899546810212,
-    6086531616256518484,
-    7813406315870014154,
-    5282269349009641738,
-    2183648125758056456,
-    8535074483732783915,
-    2285740691736490186,
-    7916160037588885463,
-    4059820310398845966,
-    1402218224236531394,
-    5667403220693651086,
-    5143474728736091881,
-    2447049663456814821,
-    4136996848164320626,
-    6651395837410088707,
-    1755507659422614798,
-    1722985908057451368,
-    3836569665807155847,
-    7678656469693875888,
-    1770667208496124925,
-    4208374894094973049,
-    2771091207870398904,
-    3706730999761202780,
-    8803162958078135179,
-    2683208643097224575,
-    1446531057031960666,
-    3615454929283340522,
-    6313866133463246160,
-    1634437349687407307,
-    3624736205271052490,
-    5999813182214709332,
-    7349427228757656800,
-    8452618099988953233,
-    4671051815183921581,
-    8836539521664929611,
-    886249373498147513,
-    3855732294732015712,
-    2562488008298579975,
-    4565959535459383686,
-    9181658758069997432,
-    4596196641273165173,
-    2290705561970107652,
-    2981129106359984901,
-    942515191417688677,
-    2670103269574213996,
-    2411569095283400576,
-    1801246840000216319,
-    9214846958904586731,
-    4448101302698023572,
-    2233565271214929805,
-    7219118947896314685,
-    1046724886144117691,
-    6137542602646130912,
-    2395113828621404404,
-    4257922996782926404,
-    481642991219465752,
-    6748407295383129617,
-    8096738231154031468,
-    4599108377656369821,
-    6444429739128469266,
-    7522631959721505720,
-    5081491823474748979,
-    2088870319613478853,
-    7647578427452438552,
-    3104480834992262751,
-    7020734441199888681,
-    4170644720871026580,
-    9202840398727023355,
-    2131573003643240448,
-    2448663080748253735,
-    7195895447044563764,
-    9060385516893245945,
-    1395463380278154893,
-    6188230155746119386,
-    7337549334035484456,
-    5647570346051526540,
-    6264354318691880853,
-    2484501987565530985,
-    8760143202620453867,
-    4900526480857530032,
-    2669156905558714904,
-    6381888693510586037,
-    4597734365005597962,
-    2143242231554525019,
-    7356558040851505675,
-    3951079477853437901,
-    7829062700460478056,
-    1964693981062540990,
-    9069953890983479010,
-    1499453643154160968,
-    4066477771751919161,
-    5302931828470575259,
-    8014883655046385378,
-    334717776259647622,
-    2365958813984915487,
-    2472267457839323712,
-    8490284429699837968,
-    9061462179866711356,
-    2472786284142281708,
-    1000376483035344704,
-    3204506852465690199,
-    2493930113821764065,
-    5580194185712901792,
-    1901430889397710847,
-    7065250858067174505,
-    2360762905721991557,
-    126599235391079130,
-    9108001318011992005,
-    213862492482478863,
-    8815354529418430565,
-    262123985321064810,
-    6494981701814064798,
-    7129912726441776662,
-    4975661062963769992,
-    3230720466743530308,
-    3489770541122792175,
-    8684157085831017553,
-    3491579946990900427,
-    2383832815382967971,
-    301612319500002117,
-    3608704201108705106,
-    8009031511021379522,
-    5270503741012402266,
-    7010985967533243877,
-    4739561116944474849,
-    4527767989696361168,
-    9186702705855549324,
-    6543905351124105609,
-    8573314322817892672,
-    5555651851425204294,
-    99535752462277388,
-    557618299998886842,
-    388125948157033181,
-    1838772717391889321,
-    59181043385076698,
-    8615880891325385390,
-    7537712778606976884,
-    2072562480417622341,
-    6948502465832622508,
-    4066658259581225026,
-    747594228262770852,
-    7169868399511554004,
-    1902890239787914377,
-    4931759831926157813,
-    5116551113562688417,
-    507560022344691300,
-    2397974266607899545,
-    5185643442378909980,
-    7139118367940606547,
-    3833304579352436916,
-    5932561079192470908,
-    1801307940923004866,
-    6032483604926378465,
-    2451264681460521229,
-    4748325632112441409,
-    1000110996621150243,
-    4330047765566900986,
-    2024025626707432993,
-    350112914340033834,
-    8079536379158975693,
-    3166163555434044453,
-    1585221117123334633,
-    7370546597363513945,
-    1518700547062313173,
-    3597654469678720062,
-    2279893436055191249,
-    4068601580525673250,
-    4214179531572574584,
-    3260045337058664063,
-    8698340225159272377,
-    6725624215783605724,
-    2632773525836277807,
-    3560494842200612573,
-    7080008118114017363,
-    6571755006798699782,
-    2809192392658834746,
-    6027594897090986430,
-    6792370634510558338,
-    5358706920662216721,
-    1684140144508432224,
-    8659667467777227783,
-    5568233211159177424,
-    3429313198937286234,
-    2979366444072752280,
-    6293262109409289747,
-    6129272501480169638,
-    2139615052610653356,
-    1537454313440961783,
-    8506051555458034277,
-    8644251619592157281,
-    8611130280034642880,
-    2305408892718533765,
-    1324952724408104728,
-    5494600605461586306,
-    6264795209346296387,
-    3018341203361003422,
-    9201784988986451346,
-    2741444486629644751,
-    5971051423726614130,
-    2546743631677061495,
-    7277370430924849773,
-    4305411924181660856,
-    5742799915346562783,
-    3706887794579392245,
-    6903019716323791780,
-    3910664573600207696,
-    6313272294285574591,
-    1025253388767702072,
-    6323466948278403419,
-    5816316813052859296,
-    4096295312337046755,
-    6068100768001242906,
-    705781185924574906,
-    889282668982577327,
-    2188037252492686353,
-    7518220212655950604,
-    6345469929458604324,
-    7365419522295614790,
-    1041646324819417227,
-    7684948545470074042,
-    613705619684699087,
-    3345249419972072876,
-    7428880597746659940,
-    7960744539902228369,
-    4536415815915704139,
-    244667485649299592,
-    4961918772368604828,
-    2504453926939683786,
-    3766836233938344228,
-    8693498026159822845,
-    5817110193658047368,
-    6875082076050171623,
-    8211975747066600722,
-    2935337685815566446,
-    7794225881219156743,
-    7644905541536374479,
-    1953262062209074462,
-    8151707992790261774,
-    625687689912646825,
-    2894606296271993211,
-    7334670778643132426,
-    7247710053128859076,
-    1717935087724239407,
-    2599250494752144505,
-    5236749634256751448,
-    7502244617574886101,
-    4814196349563094451,
-    2646315751348335777,
-    3354385379024341747,
-    4292417183407275029,
-    3611056481111139689,
-    8617873835436875934,
-    4833160626898496718,
-    2473173780032287588,
-    8328591940079026757,
-    5573874058535276651,
-    1780196528697690791,
-    5698251347293826812,
-    8976692773219225816,
-    3108386940871026491
-  ],
-  "retiredRelationUids": [
-    2832941486252609678,
-    4545419348761092860,
-    2939760587369873645,
-    975144785684751343
-  ],
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
   "version": 1
 }

@@ -1,5 +1,6 @@
 import 'package:objectbox/objectbox.dart';
 
+import '../../../../objectbox.g.dart';
 import '../objectbox/planning_snapshot_entity.dart';
 
 /// Low-level ObjectBox store for immutable Planning snapshots.

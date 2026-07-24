@@ -1,4 +1,5 @@
 import 'package:objectbox/objectbox.dart';
+import 'rotation_state_snapshot_entity.dart';
 
 @Entity()
 class PlanningSnapshotEntity {

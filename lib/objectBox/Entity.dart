@@ -1,6 +1,5 @@
 import 'dart:convert';
-
-import '../objectbox.g.dart';
+import 'package:objectbox/objectbox.dart';
 
 @Entity()
 class Usero {

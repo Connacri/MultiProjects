@@ -1,6 +1,5 @@
 import 'package:objectbox/objectbox.dart';
 
-import '../../../../objectBox/Entity.dart';
 import '../../../../objectBox/classeObjectBox.dart';
 import '../../../../objectbox.g.dart';
 import '../../domain/entities/planning_snapshot.dart';
@@ -103,7 +102,7 @@ class ObjectBoxPlanningDataSource {
   /// A month/branch that already has a v2 snapshot is immutable and cannot be
   /// replaced through this API. Legacy data is read-only from the v2 path.
   Future<void> publish(PlanningSnapshot snapshot) async {
-    store.runInTx(TxMode.write, () {
+    store.runInTransaction(TxMode.write, () {
       final existing = _findNewByMonth(
         year: snapshot.year,
         month: snapshot.month,

@@ -1,6 +1,5 @@
 import 'package:objectbox/objectbox.dart';
 
-import '../../../../objectBox/classeObjectBox.dart';
 import '../../../../objectbox.g.dart';
 import '../../domain/entities/rotation_configuration.dart';
 import '../../domain/entities/rotation_period.dart';
@@ -109,7 +108,7 @@ class ObjectBoxRotationConfigurationRepository
             : configuration.version);
 
     final versioned = configuration.copyWith(version: nextVersion);
-    store.runInTx(TxMode.write, () {
+    store.runInTransaction(TxMode.write, () {
       final entity = mapper.toObjectBox(
         configuration: versioned,
         branchId: branchId,
