@@ -28,7 +28,7 @@ class PlanningHistoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _planning = await repository.findByMonth(
+      _planning = await repository.findLatestByMonth(
         year: year,
         month: month,
         branchId: branchId,
