@@ -4,6 +4,7 @@ import '../entities/rotation_configuration.dart';
 import '../entities/rotation_state_snapshot.dart';
 import '../entities/staff_availability.dart';
 import '../entities/planning_override.dart';
+import '../enums/shift_type.dart';
 import '../services/planning_draft_pipeline.dart';
 import '../services/planning_validator.dart';
 import '../services/rotation_continuity_resolver.dart';
@@ -81,7 +82,7 @@ class GeneratePlanning {
     final rotationState = _buildRotationStateSnapshot(
       date: lastDate,
       configuration: configuration,
-      teamShifts: teamSchedule[lastDate] ?? const {},
+      teamShifts: teamSchedule[lastDate] ?? const <String, ShiftType>{},
     );
 
     final snapshot = PlanningSnapshot(
@@ -112,7 +113,7 @@ class GeneratePlanning {
   RotationStateSnapshot _buildRotationStateSnapshot({
     required DateTime date,
     required RotationConfiguration configuration,
-    required Map<String, dynamic> teamShifts,
+    required Map<String, ShiftType> teamShifts,
   }) {
     final teamPhaseByTeam = <String, int>{};
     for (final team in configuration.teamOrder) {
