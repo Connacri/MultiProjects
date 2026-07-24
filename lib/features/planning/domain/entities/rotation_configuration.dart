@@ -45,11 +45,11 @@ class RotationConfiguration {
     );
   }
 
-  static const defaultFourTeam = RotationConfiguration(
+  static final defaultFourTeam = RotationConfiguration(
     id: 'four-team-day-night-rest-rest',
     version: 1,
-    teamOrder: ['A', 'B', 'C', 'D'],
-    cycle: [ShiftType.day, ShiftType.night, ShiftType.rest, ShiftType.rest],
+    teamOrder: const ['A', 'B', 'C', 'D'],
+    cycle: const [ShiftType.day, ShiftType.night, ShiftType.rest, ShiftType.rest],
     policy: RotationPolicy.continueFromPreviousPublished,
     referenceDate: DateTime(2026, 1, 1),
   );
