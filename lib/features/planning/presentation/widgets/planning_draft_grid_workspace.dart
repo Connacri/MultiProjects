@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../domain/entities/planning_snapshot.dart';
 import '../providers/planning_editor_provider.dart';
 import '../providers/planning_validation_provider.dart';
-import 'editable_planning_month_grid.dart';
+import 'editable_planning_snapshot_grid.dart';
 
 /// Draft grid that keeps validation synchronized with editor changes.
+///
+/// The draft is rendered directly from PlanningSnapshot. No legacy Planning
+/// aggregate or presentation conversion is involved.
 class PlanningDraftGridWorkspace extends StatefulWidget {
   final PlanningEditorProvider editorProvider;
   final PlanningValidationProvider validationProvider;
@@ -38,6 +40,10 @@ class _PlanningDraftGridWorkspaceState
       oldWidget.editorProvider.removeListener(_onEditorChanged);
       widget.editorProvider.addListener(_onEditorChanged);
     }
+    if (oldWidget.validationProvider != widget.validationProvider) {
+      oldWidget.validationProvider.clear();
+      _validateCurrentDraft();
+    }
   }
 
   @override
@@ -46,13 +52,14 @@ class _PlanningDraftGridWorkspaceState
     super.dispose();
   }
 
-  void _onEditorChanged() {
+  void _onEditorChanged() => _validateCurrentDraft();
+
+  void _validateCurrentDraft() {
     final draft = widget.editorProvider.draft;
     if (draft == null) {
       widget.validationProvider.clear();
       return;
     }
-
     widget.validationProvider.validate(draft);
   }
 
@@ -76,40 +83,21 @@ class _PlanningDraftGridWorkspaceState
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
-        _DraftMeta(snapshot: draft),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            Chip(label: Text('${draft.year}/${draft.month}')),
+            Chip(label: Text('${draft.assignments.length} affectations')),
+            Chip(label: Text('Révision ${draft.revision}')),
+          ],
+        ),
         const SizedBox(height: 12),
-        EditablePlanningMonthGrid(
-          planning: _toPlanning(draft),
+        EditablePlanningSnapshotGrid(
+          snapshot: draft,
           editorProvider: widget.editorProvider,
           staffNames: widget.staffNames,
         ),
-      ],
-    );
-  }
-
-  // The grid is intentionally a presentation adapter. The immutable snapshot
-  // remains the source of truth for the draft editor and publication pipeline.
-  PlanningSnapshot _toPlanningSnapshot(PlanningSnapshot snapshot) => snapshot;
-
-  dynamic _toPlanning(PlanningSnapshot snapshot) {
-    return _toPlanningSnapshot(snapshot);
-  }
-}
-
-class _DraftMeta extends StatelessWidget {
-  final PlanningSnapshot snapshot;
-
-  const _DraftMeta({required this.snapshot});
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        Chip(label: Text('${snapshot.year}/${snapshot.month}')),
-        Chip(label: Text('${snapshot.assignments.length} affectations')),
-        Chip(label: Text('Révision ${snapshot.revision}')),
       ],
     );
   }
