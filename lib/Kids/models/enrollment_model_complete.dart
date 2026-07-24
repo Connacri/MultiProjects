@@ -106,8 +106,7 @@ class EnrollmentModel {
     this.metadata,
   });
 
-  int get attendanceCount =>
-      attendanceHistory.where((a) => a.isPresent).length;
+  int get attendanceCount => attendanceHistory.where((a) => a.isPresent).length;
 
   double get attendanceRate {
     if (attendanceHistory.isEmpty) return 0;

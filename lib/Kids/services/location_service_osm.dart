@@ -86,8 +86,8 @@ class LocationService {
       // Essayer ipapi.co (gratuit, sans clé API)
       final ipPosition = await _getPositionFromIPApi();
       if (ipPosition != null) {
-        print('✅ [LocationService] Position IP obtenue: ${ipPosition
-            .latitude}, ${ipPosition.longitude}');
+        print(
+            '✅ [LocationService] Position IP obtenue: ${ipPosition.latitude}, ${ipPosition.longitude}');
         return ipPosition;
       }
 
@@ -141,8 +141,8 @@ class LocationService {
       final url = Uri.parse('https://ipapi.co/json/');
 
       final response = await http.get(url).timeout(
-        const Duration(seconds: 6),
-      );
+            const Duration(seconds: 6),
+          );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -171,8 +171,8 @@ class LocationService {
       final url = Uri.parse('http://ip-api.com/json/');
 
       final response = await http.get(url).timeout(
-        const Duration(seconds: 5),
-      );
+            const Duration(seconds: 5),
+          );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -204,8 +204,8 @@ class LocationService {
         ),
       ).timeout(const Duration(seconds: 8));
 
-      print('✅ [Geolocator] Position: ${position.latitude}, ${position
-          .longitude}');
+      print(
+          '✅ [Geolocator] Position: ${position.latitude}, ${position.longitude}');
 
       return GeoPoint(
         latitude: position.latitude,
@@ -221,8 +221,10 @@ class LocationService {
   /// GÉOCODAGE INVERSE (Toujours via Nominatim HTTP)
   /// ============================================================================
 
-  Future<String> getAddressFromCoordinates(double latitude,
-      double longitude,) async {
+  Future<String> getAddressFromCoordinates(
+    double latitude,
+    double longitude,
+  ) async {
     print('🔍 [LocationService] Géocodage inverse: $latitude, $longitude');
 
     // Essayer Nominatim (fonctionne sur TOUTES les plateformes)
@@ -240,8 +242,10 @@ class LocationService {
     return _formatCoordinates(latitude, longitude);
   }
 
-  Future<String?> _getAddressFromNominatim(double latitude,
-      double longitude,) async {
+  Future<String?> _getAddressFromNominatim(
+    double latitude,
+    double longitude,
+  ) async {
     try {
       final url = Uri.parse(
         '$nominatimBaseUrl/reverse?format=json&lat=$latitude&lon=$longitude&zoom=18&addressdetails=1',
@@ -264,8 +268,8 @@ class LocationService {
           final addressParts = <String>[];
 
           if (address['road'] != null) addressParts.add(address['road']);
-          if (address['postcode'] != null) addressParts.add(
-              address['postcode']);
+          if (address['postcode'] != null)
+            addressParts.add(address['postcode']);
           if (address['city'] != null) addressParts.add(address['city']);
           if (address['town'] != null) addressParts.add(address['town']);
           if (address['village'] != null) addressParts.add(address['village']);
@@ -312,8 +316,7 @@ class LocationService {
       }
 
       print(
-          '✅ [LocationService] Position reçue: ${position.latitude}, ${position
-              .longitude}');
+          '✅ [LocationService] Position reçue: ${position.latitude}, ${position.longitude}');
 
       final address = await getAddressFromCoordinates(
         position.latitude,
@@ -423,14 +426,11 @@ class LocationService {
 
   Future<List<LocationSearchResult>> searchLocation(String query) async {
     print('🔍 [LocationService] searchLocation: "$query"');
-    if (query
-        .trim()
-        .isEmpty) return [];
+    if (query.trim().isEmpty) return [];
 
     try {
       final url = Uri.parse(
-        '$nominatimBaseUrl/search?q=${Uri.encodeComponent(
-            query)}&format=json&addressdetails=1&limit=$searchLimit',
+        '$nominatimBaseUrl/search?q=${Uri.encodeComponent(query)}&format=json&addressdetails=1&limit=$searchLimit',
       );
 
       final response = await http.get(
@@ -457,7 +457,8 @@ class LocationService {
   /// ============================================================================
 
   Future<CourseLocation> convertSearchResultToCourseLocation(
-      LocationSearchResult result,) async {
+    LocationSearchResult result,
+  ) async {
     return CourseLocation(
       latitude: result.latitude,
       longitude: result.longitude,
@@ -468,7 +469,8 @@ class LocationService {
   }
 
   Future<AppLocation> convertSearchResultToAppLocation(
-      LocationSearchResult result,) async {
+    LocationSearchResult result,
+  ) async {
     return AppLocation(
       latitude: result.latitude,
       longitude: result.longitude,
@@ -482,10 +484,12 @@ class LocationService {
   /// CALCULS DE DISTANCE
   /// ============================================================================
 
-  double calculateDistance(double lat1,
-      double lon1,
-      double lat2,
-      double lon2,) {
+  double calculateDistance(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
     const double earthRadius = 6371;
     final dLat = _toRadians(lat2 - lat1);
     final dLon = _toRadians(lon2 - lon1);
@@ -511,9 +515,11 @@ class LocationService {
     return degree * math.pi / 180;
   }
 
-  Future<List<CourseModel>> sortCoursesByDistance(List<CourseModel> courses,
-      double userLat,
-      double userLon,) async {
+  Future<List<CourseModel>> sortCoursesByDistance(
+    List<CourseModel> courses,
+    double userLat,
+    double userLon,
+  ) async {
     final coursesWithDistance = courses.map((course) {
       final distance = calculateDistance(
         userLat,
@@ -525,18 +531,19 @@ class LocationService {
     }).toList();
 
     coursesWithDistance.sort(
-            (a, b) =>
-            (a['distance'] as double).compareTo(b['distance'] as double));
+        (a, b) => (a['distance'] as double).compareTo(b['distance'] as double));
 
     return coursesWithDistance
         .map((item) => item['course'] as CourseModel)
         .toList();
   }
 
-  Future<List<CourseModel>> filterCoursesByRadius(List<CourseModel> courses,
-      double centerLat,
-      double centerLon,
-      double radiusKm,) async {
+  Future<List<CourseModel>> filterCoursesByRadius(
+    List<CourseModel> courses,
+    double centerLat,
+    double centerLon,
+    double radiusKm,
+  ) async {
     return courses.where((course) {
       final distance = calculateDistance(
         centerLat,

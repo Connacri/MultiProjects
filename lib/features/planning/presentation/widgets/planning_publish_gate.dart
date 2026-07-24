@@ -31,9 +31,8 @@ class PlanningPublishGate extends StatelessWidget {
       children: [
         PlanningValidationPanel(
           result: validationProvider.result,
-          onValidate: draft == null
-              ? null
-              : () => validationProvider.validate(draft),
+          onValidate:
+              draft == null ? null : () => validationProvider.validate(draft),
         ),
         const SizedBox(height: 12),
         FilledButton.icon(

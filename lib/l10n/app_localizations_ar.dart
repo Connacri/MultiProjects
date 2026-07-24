@@ -96,7 +96,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirm => 'تأكيد';
 
   @override
-  String get deleteWarning => 'سيتم تعطيل حسابك لمدة 60 يومًا قبل الحذف النهائي. يمكنك إعادة تفعيله خلال هذه الفترة.';
+  String get deleteWarning =>
+      'سيتم تعطيل حسابك لمدة 60 يومًا قبل الحذف النهائي. يمكنك إعادة تفعيله خلال هذه الفترة.';
 
   @override
   String get reactivateSuccess => 'تم إعادة تفعيل الحساب بنجاح';
@@ -159,7 +160,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get authError => 'خطأ في المصادقة';
 
   @override
-  String get accountDeactivatedCanReactivate => 'حسابك معطل. سجل الدخول لإعادة تفعيله';
+  String get accountDeactivatedCanReactivate =>
+      'حسابك معطل. سجل الدخول لإعادة تفعيله';
 
   @override
   String get accountDeletedPermanently => 'تم حذف هذا الحساب نهائيًا';

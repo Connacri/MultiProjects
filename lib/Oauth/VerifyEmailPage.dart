@@ -26,10 +26,10 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
   void initState() {
     super.initState();
     isEmailVerified = FirebaseAuth.instance.currentUser?.emailVerified ?? false;
-    
+
     if (!isEmailVerified) {
       sendVerificationEmail();
-      
+
       timer = Timer.periodic(
         const Duration(seconds: 3),
         (_) => checkEmailVerified(),
@@ -93,7 +93,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
             textColor: Colors.white,
             fontSize: 15.0);
       }
-      
+
       await Future.delayed(const Duration(seconds: 5));
       if (mounted) {
         setState(() => canResendEmail = true);

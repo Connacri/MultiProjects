@@ -24,9 +24,8 @@ class PlanningMonthGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final assignmentsByStaff = <int, Map<int, PlanningAssignment>>{};
     for (final assignment in planning.assignments) {
-      assignmentsByStaff
-          .putIfAbsent(assignment.staffId, () => {})[assignment.date.day] =
-          assignment;
+      assignmentsByStaff.putIfAbsent(
+          assignment.staffId, () => {})[assignment.date.day] = assignment;
     }
 
     final staffIds = assignmentsByStaff.keys.toList()..sort();
@@ -105,7 +104,8 @@ class _AssignmentCell extends StatelessWidget {
     };
 
     final content = Tooltip(
-      message: '${value.shift.name}${value.team == null ? '' : ' · ${value.team}'}',
+      message:
+          '${value.shift.name}${value.team == null ? '' : ' · ${value.team}'}',
       child: Text(label),
     );
 

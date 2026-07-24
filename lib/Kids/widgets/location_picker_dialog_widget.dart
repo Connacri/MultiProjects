@@ -49,8 +49,8 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
       _selectedAddress = widget.initialLocation!.address;
       _initialLocationSet = true;
 
-      print('🔵 [LocationPicker] Position initiale fournie: ${initialPosition
-          .latitude}, ${initialPosition.longitude}');
+      print(
+          '🔵 [LocationPicker] Position initiale fournie: ${initialPosition.latitude}, ${initialPosition.longitude}');
     } else {
       // Position par défaut (Mascara, Algérie) - sera remplacée par la position actuelle
       initialPosition = GeoPoint(latitude: 35.3967, longitude: 0.1403);
@@ -90,8 +90,8 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
       final position = await _locationService.getCurrentPosition();
 
       if (position != null && mounted) {
-        print('✅ [LocationPicker] Position obtenue: ${position
-            .latitude}, ${position.longitude}');
+        print(
+            '✅ [LocationPicker] Position obtenue: ${position.latitude}, ${position.longitude}');
 
         setState(() {
           _selectedPosition = position;
@@ -132,8 +132,8 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
     if (!_mapReady) return;
 
     try {
-      print('🔵 [LocationPicker] Centrage carte sur: ${position
-          .latitude}, ${position.longitude}');
+      print(
+          '🔵 [LocationPicker] Centrage carte sur: ${position.latitude}, ${position.longitude}');
 
       await _mapController.changeLocation(position);
       await _mapController.setZoom(zoomLevel: 15);
@@ -146,9 +146,7 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
   }
 
   Future<void> _searchLocation(String query) async {
-    if (query
-        .trim()
-        .isEmpty) {
+    if (query.trim().isEmpty) {
       setState(() {
         _searchResults = [];
         _isSearching = false;
@@ -237,8 +235,8 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
         ),
       );
 
-      print('✅ [LocationPicker] Marqueur ajouté à: ${position
-          .latitude}, ${position.longitude}');
+      print(
+          '✅ [LocationPicker] Marqueur ajouté à: ${position.latitude}, ${position.longitude}');
     } catch (e) {
       print('❌ [LocationPicker] Erreur ajout marqueur: $e');
     }
@@ -257,9 +255,7 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery
-        .of(context)
-        .size;
+    final size = MediaQuery.of(context).size;
     final isLargeScreen = size.width > 600;
 
     return Dialog(
@@ -285,24 +281,16 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .primaryContainer,
+        color: Theme.of(context).colorScheme.primaryContainer,
         border: Border(
-          bottom: BorderSide(color: Theme
-              .of(context)
-              .dividerColor),
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Icons.location_on,
-            color: Theme
-                .of(context)
-                .colorScheme
-                .onPrimaryContainer,
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -311,51 +299,29 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
               children: [
                 Text(
                   'Sélectionner une localisation',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
-                    color: Theme
-                        .of(context)
-                        .colorScheme
-                        .onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 if (_selectedAddress != null)
                   Text(
                     _selectedAddress!,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(
-                      color:
-                      Theme
-                          .of(context)
-                          .colorScheme
-                          .onPrimaryContainer,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   )
-                else
-                  if (_isLoadingCurrentLocation)
-                    Text(
-                      'Recherche de votre position...',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color:
-                        Theme
-                            .of(context)
-                            .colorScheme
-                            .onPrimaryContainer,
-                      ),
-                    ),
+                else if (_isLoadingCurrentLocation)
+                  Text(
+                    'Recherche de votre position...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                  ),
               ],
             ),
           ),
@@ -381,22 +347,22 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _isSearching
                     ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
                     : (_searchController.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchResults = []);
-                  },
-                )
-                    : null),
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchResults = []);
+                            },
+                          )
+                        : null),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -412,10 +378,10 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
           IconButton.filledTonal(
             icon: _isLoadingCurrentLocation
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.my_location),
             onPressed: _isLoadingCurrentLocation ? null : _loadCurrentLocation,
             tooltip: 'Ma position',
@@ -429,14 +395,9 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
     return Container(
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .surface,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Theme
-              .of(context)
-              .dividerColor),
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: ListView.builder(
@@ -515,14 +476,9 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .surface,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: Theme
-              .of(context)
-              .dividerColor),
+          top: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
@@ -534,50 +490,29 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
               children: [
                 Text(
                   'Position sélectionnée',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .labelSmall,
+                  style: Theme.of(context).textTheme.labelSmall,
                 ),
                 if (_selectedAddress != null)
                   Text(
                     _selectedAddress!,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   )
+                else if (_isLoadingCurrentLocation)
+                  Text(
+                    'Recherche de votre position...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                  )
                 else
-                  if (_isLoadingCurrentLocation)
-                    Text(
-                      'Recherche de votre position...',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .secondary,
-                      ),
-                    )
-                  else
-                    Text(
-                      'Cliquez sur la carte pour sélectionner',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .secondary,
-                      ),
-                    ),
+                  Text(
+                    'Cliquez sur la carte pour sélectionner',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                  ),
               ],
             ),
           ),

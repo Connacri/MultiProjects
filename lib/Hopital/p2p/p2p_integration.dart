@@ -103,7 +103,8 @@ class P2PIntegration with ChangeNotifier {
           );
         });
       } catch (e) {
-        print('[P2PIntegration] ⚠️ Échec démarrage DiscoveryManager (possiblement pas de réseau): $e');
+        print(
+            '[P2PIntegration] ⚠️ Échec démarrage DiscoveryManager (possiblement pas de réseau): $e');
         // On continue quand même l'initialisation pour ne pas bloquer l'app
       }
 

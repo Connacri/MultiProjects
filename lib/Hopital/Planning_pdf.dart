@@ -1122,7 +1122,9 @@ pw.Widget _buildParamedicalStaffTable(
 
   final groupe08h08h = paramedical.where((s) {
     final groupe = (s.groupe ?? '').toString().toUpperCase();
-    return groupe.contains('GARDE') && groupe.contains('24H');///
+    return groupe.contains('GARDE') && groupe.contains('24H');
+
+    ///
   }).toList();
 
   final groupe08h12h = paramedical.where((s) {

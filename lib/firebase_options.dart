@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'hotel-f84db.firebasestorage.app',
     measurementId: 'G-ZG3HR845KN',
   );
-
 }

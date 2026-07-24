@@ -81,8 +81,8 @@ class DiscoveryManager with ChangeNotifier {
   /// Écoute les changements de connectivité réseau
   Future<void> _setupConnectivityListener() async {
     try {
-      _connectivitySubscription =
-          _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
+          (List<ConnectivityResult> results) {
         print('[Discovery] Changement de connectivité: $results');
 
         if (results.contains(ConnectivityResult.none) || results.isEmpty) {
@@ -101,7 +101,8 @@ class DiscoveryManager with ChangeNotifier {
         print('[Discovery] ❌ Erreur flux connectivité: $e');
       });
     } catch (e) {
-      print('[Discovery] ❌ Impossible d\'écouter les changements de connectivité: $e');
+      print(
+          '[Discovery] ❌ Impossible d\'écouter les changements de connectivité: $e');
     }
   }
 
@@ -117,7 +118,8 @@ class DiscoveryManager with ChangeNotifier {
     try {
       // Vérifier la connectivité
       final connectivity = await _connectivity.checkConnectivity();
-      if (connectivity.contains(ConnectivityResult.none) || connectivity.isEmpty) {
+      if (connectivity.contains(ConnectivityResult.none) ||
+          connectivity.isEmpty) {
         throw Exception('Pas de connexion réseau disponible');
       }
 
@@ -186,7 +188,7 @@ class DiscoveryManager with ChangeNotifier {
     _discoverySubscription?.cancel();
 
     _discoverySubscription = _discoverySocket!.asBroadcastStream().listen(
-          (RawSocketEvent event) {
+      (RawSocketEvent event) {
         if (event == RawSocketEvent.read && _running) {
           try {
             final datagram = _discoverySocket!.receive();
@@ -251,9 +253,7 @@ class DiscoveryManager with ChangeNotifier {
         'nodeId': nodeId,
         'port': p2pPort,
         'ip': _lastKnownIP ?? 'unknown',
-        'timestamp': DateTime
-            .now()
-            .millisecondsSinceEpoch,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
         'version': '1.0',
       };
       print(
@@ -291,9 +291,7 @@ class DiscoveryManager with ChangeNotifier {
       final nodeKey = '$remoteNodeId@$remoteIp:$remotePort';
 
       // Mettre à jour le timestamp
-      _nodeTimestamps[nodeKey] = DateTime
-          .now()
-          .millisecondsSinceEpoch;
+      _nodeTimestamps[nodeKey] = DateTime.now().millisecondsSinceEpoch;
 
       // Si nouveau nœud, l'ajouter
       if (!_discoveredNodes.contains(nodeKey)) {
@@ -318,9 +316,7 @@ class DiscoveryManager with ChangeNotifier {
 
   /// Supprime les nœuds qui n'ont pas communiqué depuis 30 secondes
   void _cleanupExpiredNodes() {
-    final now = DateTime
-        .now()
-        .millisecondsSinceEpoch;
+    final now = DateTime.now().millisecondsSinceEpoch;
     final toRemove = <String>[];
 
     _nodeTimestamps.forEach((nodeKey, timestamp) {
@@ -344,23 +340,23 @@ class DiscoveryManager with ChangeNotifier {
   List<Map<String, dynamic>> getDiscoveredNodesInfo() {
     return _discoveredNodes
         .map((nodeKey) {
-      final parts = nodeKey.split('@');
-      if (parts.length != 2) return null;
+          final parts = nodeKey.split('@');
+          if (parts.length != 2) return null;
 
-      final nodeId = parts[0];
-      final addressParts = parts[1].split(':');
-      if (addressParts.length != 2) return null;
+          final nodeId = parts[0];
+          final addressParts = parts[1].split(':');
+          if (addressParts.length != 2) return null;
 
-      final ip = addressParts[0];
-      final port = int.tryParse(addressParts[1]) ?? discoveryPort;
+          final ip = addressParts[0];
+          final port = int.tryParse(addressParts[1]) ?? discoveryPort;
 
-      return {
-        'nodeId': nodeId,
-        'ip': ip,
-        'port': port,
-        'key': nodeKey,
-      };
-    })
+          return {
+            'nodeId': nodeId,
+            'ip': ip,
+            'port': port,
+            'key': nodeKey,
+          };
+        })
         .whereType<Map<String, dynamic>>()
         .toList();
   }

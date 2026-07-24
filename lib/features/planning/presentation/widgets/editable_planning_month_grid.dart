@@ -22,8 +22,8 @@ class EditablePlanningMonthGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final byStaff = <int, Map<int, PlanningAssignment>>{};
     for (final assignment in planning.assignments) {
-      byStaff.putIfAbsent(assignment.staffId, () => <int, PlanningAssignment>{})[assignment.date.day] =
-          assignment;
+      byStaff.putIfAbsent(assignment.staffId,
+          () => <int, PlanningAssignment>{})[assignment.date.day] = assignment;
     }
 
     final staffIds = byStaff.keys.toList()..sort();

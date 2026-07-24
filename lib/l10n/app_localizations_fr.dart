@@ -96,7 +96,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get confirm => 'Confirmer';
 
   @override
-  String get deleteWarning => 'Votre compte sera désactivé pendant 60 jours avant suppression définitive. Vous pourrez le réactiver pendant cette période.';
+  String get deleteWarning =>
+      'Votre compte sera désactivé pendant 60 jours avant suppression définitive. Vous pourrez le réactiver pendant cette période.';
 
   @override
   String get reactivateSuccess => 'Compte réactivé avec succès';
@@ -120,7 +121,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get invalidEmail => 'Email invalide';
 
   @override
-  String get weakPassword => 'Le mot de passe doit contenir au moins 6 caractères';
+  String get weakPassword =>
+      'Le mot de passe doit contenir au moins 6 caractères';
 
   @override
   String get loginSuccess => 'Connexion réussie';
@@ -150,7 +152,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get userDisabled => 'Ce compte a été désactivé';
 
   @override
-  String get tooManyRequests => 'Trop de tentatives. Veuillez réessayer plus tard';
+  String get tooManyRequests =>
+      'Trop de tentatives. Veuillez réessayer plus tard';
 
   @override
   String get networkError => 'Erreur de connexion réseau';
@@ -159,10 +162,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get authError => 'Erreur d\'authentification';
 
   @override
-  String get accountDeactivatedCanReactivate => 'Votre compte est désactivé. Connectez-vous pour le réactiver';
+  String get accountDeactivatedCanReactivate =>
+      'Votre compte est désactivé. Connectez-vous pour le réactiver';
 
   @override
-  String get accountDeletedPermanently => 'Ce compte a été supprimé définitivement';
+  String get accountDeletedPermanently =>
+      'Ce compte a été supprimé définitivement';
 
   @override
   String get reactivationPeriodExpired => 'La période de réactivation a expiré';

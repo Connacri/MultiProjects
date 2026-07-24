@@ -105,7 +105,11 @@ class PlanningWorkspace extends StatelessWidget {
               compact
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [rotation, const SizedBox(height: 12), workflow],
+                      children: [
+                        rotation,
+                        const SizedBox(height: 12),
+                        workflow
+                      ],
                     )
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +119,9 @@ class PlanningWorkspace extends StatelessWidget {
                         Expanded(flex: 3, child: workflow),
                       ],
                     ),
-              if (hasIntegratedFlow && !controller.isEditing && planningProvider.hasDraft) ...[
+              if (hasIntegratedFlow &&
+                  !controller.isEditing &&
+                  planningProvider.hasDraft) ...[
                 const SizedBox(height: 12),
                 Align(
                   alignment: Alignment.centerRight,
@@ -168,7 +174,8 @@ class _PlanningStatusCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             if (draft != null) Text('Brouillon : ${draft.year}/${draft.month}'),
-            if (current != null) Text('Publié : ${current.year}/${current.month}'),
+            if (current != null)
+              Text('Publié : ${current.year}/${current.month}'),
             if (draft == null && current == null)
               const Text('Aucun planning chargé.'),
             if (provider.error != null) ...[

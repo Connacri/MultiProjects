@@ -40,7 +40,8 @@ class PlanningCachePolicy {
   }) {
     if (!snapshot.isPublished || rotationState == null) return false;
     if (snapshot.branchId != requested.branchId) return false;
-    if (rotationState.configurationId != requested.configurationId) return false;
+    if (rotationState.configurationId != requested.configurationId)
+      return false;
     if (rotationState.configurationVersion != requested.configurationVersion) {
       return false;
     }

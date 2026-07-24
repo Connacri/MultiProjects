@@ -27,5 +27,6 @@ void main() {
     return;
   }
 
-  stdout.writeln('PlanningRevisionEntity is registered in the ObjectBox model.');
+  stdout
+      .writeln('PlanningRevisionEntity is registered in the ObjectBox model.');
 }

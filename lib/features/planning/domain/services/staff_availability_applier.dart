@@ -40,7 +40,8 @@ class StaffAvailabilityApplier {
     List<StaffAvailability> availability,
   ) {
     for (final item in availability) {
-      if (item.staffId == assignment.staffId && item.contains(assignment.date)) {
+      if (item.staffId == assignment.staffId &&
+          item.contains(assignment.date)) {
         return item;
       }
     }

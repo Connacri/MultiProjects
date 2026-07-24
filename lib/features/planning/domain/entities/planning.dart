@@ -33,8 +33,7 @@ class Planning {
       month: month ?? this.month,
       branchId: branchId ?? this.branchId,
       dayTeamOrder: List.unmodifiable(dayTeamOrder ?? this.dayTeamOrder),
-      nightTeamOrder:
-          List.unmodifiable(nightTeamOrder ?? this.nightTeamOrder),
+      nightTeamOrder: List.unmodifiable(nightTeamOrder ?? this.nightTeamOrder),
       assignments: List.unmodifiable(assignments ?? this.assignments),
     );
   }

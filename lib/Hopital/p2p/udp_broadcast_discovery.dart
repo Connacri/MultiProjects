@@ -75,8 +75,8 @@ class DiscoveryManagerBroadcast with ChangeNotifier {
   /// Écoute les changements de connectivité réseau
   Future<void> _setupConnectivityListener() async {
     try {
-      _connectivitySubscription =
-          _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) async {
+      _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
+          (List<ConnectivityResult> results) async {
         print('[Discovery] Changement de connectivité: $results');
 
         if (results.contains(ConnectivityResult.none) || results.isEmpty) {
@@ -96,7 +96,8 @@ class DiscoveryManagerBroadcast with ChangeNotifier {
         print('[Discovery] Erreur flux connectivité: $e');
       });
     } catch (e) {
-      print('[Discovery] Impossible d\'écouter les changements de connectivité: $e');
+      print(
+          '[Discovery] Impossible d\'écouter les changements de connectivité: $e');
     }
   }
 
@@ -112,7 +113,8 @@ class DiscoveryManagerBroadcast with ChangeNotifier {
     try {
       // Vérifier la connectivité
       final connectivity = await _connectivity.checkConnectivity();
-      if (connectivity.contains(ConnectivityResult.none) || connectivity.isEmpty) {
+      if (connectivity.contains(ConnectivityResult.none) ||
+          connectivity.isEmpty) {
         throw Exception('Pas de connexion réseau disponible');
       }
 

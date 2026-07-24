@@ -96,7 +96,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirm => 'Confirm';
 
   @override
-  String get deleteWarning => 'Your account will be deactivated for 60 days before permanent deletion. You can reactivate it during this period.';
+  String get deleteWarning =>
+      'Your account will be deactivated for 60 days before permanent deletion. You can reactivate it during this period.';
 
   @override
   String get reactivateSuccess => 'Account reactivated successfully';
@@ -159,10 +160,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authError => 'Authentication error';
 
   @override
-  String get accountDeactivatedCanReactivate => 'Your account is deactivated. Log in to reactivate it';
+  String get accountDeactivatedCanReactivate =>
+      'Your account is deactivated. Log in to reactivate it';
 
   @override
-  String get accountDeletedPermanently => 'This account has been permanently deleted';
+  String get accountDeletedPermanently =>
+      'This account has been permanently deleted';
 
   @override
   String get reactivationPeriodExpired => 'Reactivation period has expired';

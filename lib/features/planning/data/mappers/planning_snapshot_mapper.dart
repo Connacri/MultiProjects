@@ -131,7 +131,8 @@ class PlanningSnapshotMapper {
       ..teamPhaseByTeamJson = jsonEncode(snapshot.teamPhaseByTeam);
   }
 
-  PlanningAssignmentEntity toObjectBoxAssignment(PlanningAssignment assignment) {
+  PlanningAssignmentEntity toObjectBoxAssignment(
+      PlanningAssignment assignment) {
     return PlanningAssignmentEntity()
       ..staffId = assignment.staffId
       ..dateEpochMs = DateTime(

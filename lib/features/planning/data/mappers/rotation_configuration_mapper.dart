@@ -45,7 +45,8 @@ class RotationConfigurationMapper {
         configuration.cycle.map((shift) => shift.name).toList(growable: false),
       )
       ..policy = _policyToInt(configuration.policy)
-      ..referenceDateEpochMs = configuration.referenceDate.millisecondsSinceEpoch
+      ..referenceDateEpochMs =
+          configuration.referenceDate.millisecondsSinceEpoch
       ..referencePhaseIndex = configuration.referencePhaseIndex
       ..active = true;
   }

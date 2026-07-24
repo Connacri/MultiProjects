@@ -98,8 +98,8 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
     required int month,
     int? branchId,
   }) async {
-    return (await findLatestByMonth(year: year, month: month, branchId: branchId))
-        !=
+    return (await findLatestByMonth(
+            year: year, month: month, branchId: branchId)) !=
         null;
   }
 

@@ -107,8 +107,8 @@ class _LocationPickerDialogWindowsState
       final position = await _locationService.getCurrentPosition();
 
       if (position != null && mounted) {
-        print('✅ [LocationPickerWindows] Position: ${position
-            .latitude}, ${position.longitude}');
+        print(
+            '✅ [LocationPickerWindows] Position: ${position.latitude}, ${position.longitude}');
 
         final latLng = LatLng(position.latitude, position.longitude);
 
@@ -170,9 +170,7 @@ class _LocationPickerDialogWindowsState
   }
 
   Future<void> _searchLocation(String query) async {
-    if (query
-        .trim()
-        .isEmpty) {
+    if (query.trim().isEmpty) {
       setState(() {
         _searchResults = [];
         _isSearching = false;
@@ -215,8 +213,8 @@ class _LocationPickerDialogWindowsState
     _mapController.move(latLng, 15.0);
     _addMarkerAtPosition(latLng);
 
-    print('✅ [LocationPickerWindows] Résultat recherche sélectionné: ${result
-        .displayName}');
+    print(
+        '✅ [LocationPickerWindows] Résultat recherche sélectionné: ${result.displayName}');
   }
 
   Future<void> _onMapTap(TapPosition tapPosition, LatLng position) async {
@@ -245,8 +243,7 @@ class _LocationPickerDialogWindowsState
           point: position,
           width: 50,
           height: 50,
-          builder: (context) =>
-          const Icon(
+          builder: (context) => const Icon(
             Icons.location_on,
             color: Colors.red,
             size: 50,
@@ -255,8 +252,8 @@ class _LocationPickerDialogWindowsState
       );
     });
 
-    print('✅ [LocationPickerWindows] Marqueur ajouté: ${position
-        .latitude}, ${position.longitude}');
+    print(
+        '✅ [LocationPickerWindows] Marqueur ajouté: ${position.latitude}, ${position.longitude}');
   }
 
   void _confirmSelection() {
@@ -276,9 +273,7 @@ class _LocationPickerDialogWindowsState
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery
-        .of(context)
-        .size;
+    final size = MediaQuery.of(context).size;
     final isLargeScreen = size.width > 600;
 
     return Dialog(
@@ -304,24 +299,16 @@ class _LocationPickerDialogWindowsState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .primaryContainer,
+        color: Theme.of(context).colorScheme.primaryContainer,
         border: Border(
-          bottom: BorderSide(color: Theme
-              .of(context)
-              .dividerColor),
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Icons.location_on,
-            color: Theme
-                .of(context)
-                .colorScheme
-                .onPrimaryContainer,
+            color: Theme.of(context).colorScheme.onPrimaryContainer,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -330,51 +317,29 @@ class _LocationPickerDialogWindowsState
               children: [
                 Text(
                   'Sélectionner une localisation',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
-                    color: Theme
-                        .of(context)
-                        .colorScheme
-                        .onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 if (_selectedAddress != null)
                   Text(
                     _selectedAddress!,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(
-                      color:
-                      Theme
-                          .of(context)
-                          .colorScheme
-                          .onPrimaryContainer,
-                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   )
-                else
-                  if (_isLoadingCurrentLocation)
-                    Text(
-                      'Recherche de votre position...',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color:
-                        Theme
-                            .of(context)
-                            .colorScheme
-                            .onPrimaryContainer,
-                      ),
-                    ),
+                else if (_isLoadingCurrentLocation)
+                  Text(
+                    'Recherche de votre position...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                  ),
               ],
             ),
           ),
@@ -400,22 +365,22 @@ class _LocationPickerDialogWindowsState
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _isSearching
                     ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
+                        padding: EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
                     : (_searchController.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchResults = []);
-                  },
-                )
-                    : null),
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchResults = []);
+                            },
+                          )
+                        : null),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -431,10 +396,10 @@ class _LocationPickerDialogWindowsState
           IconButton.filledTonal(
             icon: _isLoadingCurrentLocation
                 ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.my_location),
             onPressed: _isLoadingCurrentLocation ? null : _loadCurrentLocation,
             tooltip: 'Ma position',
@@ -448,14 +413,9 @@ class _LocationPickerDialogWindowsState
     return Container(
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .surface,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Theme
-              .of(context)
-              .dividerColor),
+          bottom: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: ListView.builder(
@@ -505,14 +465,9 @@ class _LocationPickerDialogWindowsState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .surface,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: Theme
-              .of(context)
-              .dividerColor),
+          top: BorderSide(color: Theme.of(context).dividerColor),
         ),
       ),
       child: Row(
@@ -524,50 +479,29 @@ class _LocationPickerDialogWindowsState
               children: [
                 Text(
                   'Position sélectionnée',
-                  style: Theme
-                      .of(context)
-                      .textTheme
-                      .labelSmall,
+                  style: Theme.of(context).textTheme.labelSmall,
                 ),
                 if (_selectedAddress != null)
                   Text(
                     _selectedAddress!,
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodySmall,
+                    style: Theme.of(context).textTheme.bodySmall,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   )
+                else if (_isLoadingCurrentLocation)
+                  Text(
+                    'Recherche de votre position...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                  )
                 else
-                  if (_isLoadingCurrentLocation)
-                    Text(
-                      'Recherche de votre position...',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .secondary,
-                      ),
-                    )
-                  else
-                    Text(
-                      'Cliquez sur la carte pour sélectionner',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .secondary,
-                      ),
-                    ),
+                  Text(
+                    'Cliquez sur la carte pour sélectionner',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                  ),
               ],
             ),
           ),

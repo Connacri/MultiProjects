@@ -17,7 +17,8 @@ void main() {
     return;
   }
 
-  final model = jsonDecode(modelFile.readAsStringSync()) as Map<String, dynamic>;
+  final model =
+      jsonDecode(modelFile.readAsStringSync()) as Map<String, dynamic>;
   final entities = (model['entities'] as List?) ?? const [];
   final names = entities
       .whereType<Map>()
@@ -56,5 +57,6 @@ void main() {
     return;
   }
 
-  stdout.writeln('ObjectBox Planning model and generated code are synchronized.');
+  stdout
+      .writeln('ObjectBox Planning model and generated code are synchronized.');
 }

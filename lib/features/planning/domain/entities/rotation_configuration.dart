@@ -22,8 +22,8 @@ class RotationConfiguration {
     required this.policy,
     required this.referenceDate,
     this.referencePhaseIndex = 0,
-  }) : assert(teamOrder.length > 0),
-       assert(cycle.length > 0);
+  })  : assert(teamOrder.length > 0),
+        assert(cycle.length > 0);
 
   RotationConfiguration copyWith({
     String? id,
@@ -49,7 +49,12 @@ class RotationConfiguration {
     id: 'four-team-day-night-rest-rest',
     version: 1,
     teamOrder: const ['A', 'B', 'C', 'D'],
-    cycle: const [ShiftType.day, ShiftType.night, ShiftType.rest, ShiftType.rest],
+    cycle: const [
+      ShiftType.day,
+      ShiftType.night,
+      ShiftType.rest,
+      ShiftType.rest
+    ],
     policy: RotationPolicy.continueFromPreviousPublished,
     referenceDate: DateTime(2026, 1, 1),
   );

@@ -211,17 +211,16 @@ class ObjectBox {
       }
       await init();
     } catch (error) {
-      debugPrint('❌ Erreur lors de la suppression explicite de la base : $error');
+      debugPrint(
+          '❌ Erreur lors de la suppression explicite de la base : $error');
       rethrow;
     }
   }
 
   Future<void> insertOrUpdateProduit(Produit produit) async {
     try {
-      final existingProduit = produitBox
-          .query(Produit_.qr.equals(produit.qr!))
-          .build()
-          .findFirst();
+      final existingProduit =
+          produitBox.query(Produit_.qr.equals(produit.qr!)).build().findFirst();
 
       if (existingProduit != null) {
         existingProduit.nom = produit.nom;
@@ -296,31 +295,36 @@ class ObjectBox {
   }
 
   Document _createFacture(Faker faker) {
-    final types = ['vente', 'achat', 'devis', 'facture', 'bon', 'proforma']..shuffle(random);
+    final types = ['vente', 'achat', 'devis', 'facture', 'bon', 'proforma']
+      ..shuffle(random);
     final facture = Document(
       qrReference: faker.randomGenerator.integer(999999).toString(),
       impayer: faker.randomGenerator.decimal(min: 0, scale: 2),
       date: faker.date.dateTime(minYear: 2010, maxYear: 2024),
-      derniereModification: faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+      derniereModification:
+          faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
       type: types.first,
     )..crud.target = Crud(
         createdBy: 1,
         updatedBy: 1,
         deletedBy: 1,
         dateCreation: faker.date.dateTime(minYear: 2010, maxYear: 2024),
-        derniereModification: faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+        derniereModification:
+            faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
       );
 
     final numberOfLignes = faker.randomGenerator.integer(5, min: 1);
     for (var j = 0; j < numberOfLignes; j++) {
       final productCount = produitBox.count();
       if (productCount == 0) break;
-      final produit = produitBox.get(faker.randomGenerator.integer(productCount) + 1);
+      final produit =
+          produitBox.get(faker.randomGenerator.integer(productCount) + 1);
       if (produit == null) continue;
       final ligne = LigneDocument(
         quantite: faker.randomGenerator.decimal(min: 1, scale: 10),
         prixUnitaire: produit.prixVente,
-        derniereModification: faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
+        derniereModification:
+            faker.date.dateTime(minYear: 2000, maxYear: DateTime.now().year),
       );
       ligne.produit.target = produit;
       ligne.facture.target = facture;
@@ -337,7 +341,8 @@ class ObjectBox {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final dbDir = Directory(join(dir.path, 'objectbox'));
-      if (!await dbDir.exists()) return 'Erreur: La base de données n\'existe pas.';
+      if (!await dbDir.exists())
+        return 'Erreur: La base de données n\'existe pas.';
 
       final selectedDirectory = await FilePicker.platform.getDirectoryPath(
         dialogTitle: 'Sélectionnez le dossier d\'exportation',
@@ -348,7 +353,8 @@ class ObjectBox {
         selectedDirectory,
         'kenzy_backup_${DateTime.now().millisecondsSinceEpoch}',
       );
-      final destinationDir = Directory(destinationPath)..createSync(recursive: true);
+      final destinationDir = Directory(destinationPath)
+        ..createSync(recursive: true);
       await for (final entity in dbDir.list(recursive: false)) {
         if (entity is File) {
           await entity.copy(join(destinationPath, basename(entity.path)));
@@ -375,9 +381,12 @@ class ObjectBox {
         'activites': activiteBox.getAll().map((e) => e.toJson()).toList(),
         'branches': branchBox.getAll().map((e) => e.toJson()).toList(),
         'timeOffs': timeOffBox.getAll().map((e) => e.toJson()).toList(),
-        'planifications': planificationBox.getAll().map((e) => e.toJson()).toList(),
-        'planningHebdo': planningHebdoBox.getAll().map((e) => e.toJson()).toList(),
-        'typeActivites': typeActiviteBox.getAll().map((e) => e.toJson()).toList(),
+        'planifications':
+            planificationBox.getAll().map((e) => e.toJson()).toList(),
+        'planningHebdo':
+            planningHebdoBox.getAll().map((e) => e.toJson()).toList(),
+        'typeActivites':
+            typeActiviteBox.getAll().map((e) => e.toJson()).toList(),
         'factures': factureBox.getAll().map((e) => e.toJson()).toList(),
         'lignesFactures': ligneFacture.getAll().map((e) => e.toJson()).toList(),
       };
@@ -399,31 +408,58 @@ class ObjectBox {
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
-      if (result == null || result.files.single.path == null) return 'Importation annulée.';
+      if (result == null || result.files.single.path == null)
+        return 'Importation annulée.';
 
       final file = File(result.files.single.path!);
-      final data = jsonDecode(await file.readAsString()) as Map<String, dynamic>;
+      final data =
+          jsonDecode(await file.readAsString()) as Map<String, dynamic>;
       var count = 0;
 
-      void putList<T>(String key, List<T> Function(List<dynamic>) decode, Box<T> box) {
+      void putList<T>(
+          String key, List<T> Function(List<dynamic>) decode, Box<T> box) {
         if (!data.containsKey(key)) return;
         final list = decode(data[key] as List);
         box.putMany(list);
         count += list.length;
       }
 
-      putList('produits', (list) => list.map((e) => Produit.fromJson(e)).toList(), produitBox);
-      putList('clients', (list) => list.map((e) => Client.fromJson(e)).toList(), clientBox);
-      putList('fournisseurs', (list) => list.map((e) => Fournisseur.fromJson(e)).toList(), fournisseurBox);
-      putList('staff', (list) => list.map((e) => Staff.fromJson(e)).toList(), staffBox);
-      putList('activites', (list) => list.map((e) => ActiviteJour.fromJson(e)).toList(), activiteBox);
-      putList('branches', (list) => list.map((e) => Branch.fromJson(e)).toList(), branchBox);
-      putList('timeOffs', (list) => list.map((e) => TimeOff.fromJson(e)).toList(), timeOffBox);
-      putList('planifications', (list) => list.map((e) => Planification.fromJson(e)).toList(), planificationBox);
-      putList('planningHebdo', (list) => list.map((e) => PlanningHebdo.fromJson(e)).toList(), planningHebdoBox);
-      putList('typeActivites', (list) => list.map((e) => TypeActivite.fromJson(e)).toList(), typeActiviteBox);
-      putList('factures', (list) => list.map((e) => Document.fromJson(e)).toList(), factureBox);
-      putList('lignesFactures', (list) => list.map((e) => LigneDocument.fromJson(e)).toList(), ligneFacture);
+      putList('produits',
+          (list) => list.map((e) => Produit.fromJson(e)).toList(), produitBox);
+      putList('clients', (list) => list.map((e) => Client.fromJson(e)).toList(),
+          clientBox);
+      putList(
+          'fournisseurs',
+          (list) => list.map((e) => Fournisseur.fromJson(e)).toList(),
+          fournisseurBox);
+      putList('staff', (list) => list.map((e) => Staff.fromJson(e)).toList(),
+          staffBox);
+      putList(
+          'activites',
+          (list) => list.map((e) => ActiviteJour.fromJson(e)).toList(),
+          activiteBox);
+      putList('branches',
+          (list) => list.map((e) => Branch.fromJson(e)).toList(), branchBox);
+      putList('timeOffs',
+          (list) => list.map((e) => TimeOff.fromJson(e)).toList(), timeOffBox);
+      putList(
+          'planifications',
+          (list) => list.map((e) => Planification.fromJson(e)).toList(),
+          planificationBox);
+      putList(
+          'planningHebdo',
+          (list) => list.map((e) => PlanningHebdo.fromJson(e)).toList(),
+          planningHebdoBox);
+      putList(
+          'typeActivites',
+          (list) => list.map((e) => TypeActivite.fromJson(e)).toList(),
+          typeActiviteBox);
+      putList('factures',
+          (list) => list.map((e) => Document.fromJson(e)).toList(), factureBox);
+      putList(
+          'lignesFactures',
+          (list) => list.map((e) => LigneDocument.fromJson(e)).toList(),
+          ligneFacture);
 
       return 'Import JSON réussi : $count éléments importés';
     } catch (error) {
@@ -441,14 +477,16 @@ class ObjectBox {
       final rows = <List<dynamic>>[
         ['ID', 'QR', 'Nom', 'Prix Vente', 'Stock Minim', 'Description'],
         ...produitBox.getAll().map(
-              (p) => [p.id, p.qr, p.nom, p.prixVente, p.minimStock, p.description],
+              (p) =>
+                  [p.id, p.qr, p.nom, p.prixVente, p.minimStock, p.description],
             ),
       ];
       final filePath = join(
         selectedDirectory,
         'produits_${DateTime.now().millisecondsSinceEpoch}.csv',
       );
-      await File(filePath).writeAsString(const ListToCsvConverter().convert(rows));
+      await File(filePath)
+          .writeAsString(const ListToCsvConverter().convert(rows));
       return 'CSV Produits exporté : $filePath';
     } catch (error) {
       return 'Erreur CSV: $error';
@@ -461,10 +499,12 @@ class ObjectBox {
         type: FileType.custom,
         allowedExtensions: ['csv'],
       );
-      if (result == null || result.files.single.path == null) return 'Importation annulée.';
+      if (result == null || result.files.single.path == null)
+        return 'Importation annulée.';
 
       final file = File(result.files.single.path!);
-      final fields = const CsvToListConverter().convert(await file.readAsString());
+      final fields =
+          const CsvToListConverter().convert(await file.readAsString());
       final toImport = <Produit>[];
 
       for (var i = 1; i < fields.length; i++) {
@@ -474,8 +514,10 @@ class ObjectBox {
           Produit(
             qr: row[1]?.toString(),
             nom: row[2]?.toString() ?? 'Inconnu',
-            prixVente: double.tryParse(row.length > 3 ? row[3].toString() : '0') ?? 0,
-            minimStock: double.tryParse(row.length > 4 ? row[4].toString() : '0') ?? 0,
+            prixVente:
+                double.tryParse(row.length > 3 ? row[3].toString() : '0') ?? 0,
+            minimStock:
+                double.tryParse(row.length > 4 ? row[4].toString() : '0') ?? 0,
             description: row.length > 5 ? row[5]?.toString() : null,
             derniereModification: DateTime.now(),
           ),

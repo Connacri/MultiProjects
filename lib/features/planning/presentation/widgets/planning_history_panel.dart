@@ -63,7 +63,8 @@ class PlanningHistoryPanel extends StatelessWidget {
               const SizedBox(height: 4),
               Text('Équipe(s) / affectations : ${planning.assignments.length}'),
               const SizedBox(height: 4),
-              const Text('Lecture seule — le planning historique ne peut pas être modifié ici.'),
+              const Text(
+                  'Lecture seule — le planning historique ne peut pas être modifié ici.'),
             ],
             if (provider.error != null) ...[
               const SizedBox(height: 8),

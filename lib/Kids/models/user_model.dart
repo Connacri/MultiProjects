@@ -232,7 +232,8 @@ class UserModel {
       updatedAt: _parseDateTime(data['updatedAt']),
       isActive: data['isActive'] ?? data['state'] ?? true,
       deactivatedAt: _parseDateTimeNullable(data['deactivatedAt']),
-      scheduledDeletionDate: _parseDateTimeNullable(data['scheduledDeletionDate']),
+      scheduledDeletionDate:
+          _parseDateTimeNullable(data['scheduledDeletionDate']),
       profileImages: data['profileImages'] != null
           ? UserProfileImages.fromMap(data['profileImages'])
           : UserProfileImages(
@@ -243,7 +244,8 @@ class UserModel {
           ? AppLocation.fromMap(data['location'])
           : null,
       bio: data['bio'],
-      phoneNumber: data['phoneNumber'] ?? (data['phone'] != null ? data['phone'].toString() : null),
+      phoneNumber: data['phoneNumber'] ??
+          (data['phone'] != null ? data['phone'].toString() : null),
       metadata: data['metadata'],
     );
   }

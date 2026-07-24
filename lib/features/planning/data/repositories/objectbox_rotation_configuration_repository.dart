@@ -16,7 +16,8 @@ class ObjectBoxRotationConfigurationRepository
 
   late final Box<RotationConfigurationEntity> configurationBox =
       Box<RotationConfigurationEntity>(store);
-  late final Box<RotationPeriodEntity> periodBox = Box<RotationPeriodEntity>(store);
+  late final Box<RotationPeriodEntity> periodBox =
+      Box<RotationPeriodEntity>(store);
 
   ObjectBoxRotationConfigurationRepository({
     required this.store,
@@ -49,9 +50,9 @@ class ObjectBoxRotationConfigurationRepository
         .build();
     try {
       final entity = query.find().firstWhere(
-        (item) => item.active,
-        orElse: RotationConfigurationEntity.new,
-      );
+            (item) => item.active,
+            orElse: RotationConfigurationEntity.new,
+          );
       return entity.id == 0 ? null : mapper.fromObjectBox(entity);
     } finally {
       query.close();
@@ -67,14 +68,14 @@ class ObjectBoxRotationConfigurationRepository
         .build();
     try {
       for (final entity in periods.find()) {
-        final start = DateTime.fromMillisecondsSinceEpoch(entity.startDateEpochMs);
+        final start =
+            DateTime.fromMillisecondsSinceEpoch(entity.startDateEpochMs);
         final end = entity.endDateEpochMs == null
             ? null
             : DateTime.fromMillisecondsSinceEpoch(entity.endDateEpochMs!);
         final normalizedStart = DateTime(start.year, start.month, start.day);
-        final normalizedEnd = end == null
-            ? null
-            : DateTime(end.year, end.month, end.day);
+        final normalizedEnd =
+            end == null ? null : DateTime(end.year, end.month, end.day);
         if (!day.isBefore(normalizedStart) &&
             (normalizedEnd == null || !day.isAfter(normalizedEnd))) {
           final configuration = await _findConfigurationByObjectBoxId(

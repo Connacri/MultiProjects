@@ -4,12 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 
 /// 🎯 Service hybride d'image picking optimisé par plateforme
-/// 
+///
 /// **Architecture :**
 /// - Windows Desktop → `file_picker` (non-bloquant, natif)
 /// - Android/iOS → `image_picker` (optimisé mobile avec compression intégrée)
 /// - Web → `file_picker` (compatible navigateurs)
-/// 
+///
 /// **Avantages :**
 /// ✅ Aucun blocage de l'UI sur Windows
 /// ✅ UX mobile optimale avec preview et compression
@@ -33,12 +33,12 @@ class HybridImagePickerService {
   // ============================================================================
 
   /// 📸 Pick une image unique (méthode principale)
-  /// 
+  ///
   /// **Paramètres :**
   /// - [maxWidth], [maxHeight] : Dimensions max (utilisé seulement sur mobile)
   /// - [imageQuality] : Qualité 0-100 (utilisé seulement sur mobile)
   /// - [allowedExtensions] : Extensions autorisées (par défaut: jpg, jpeg, png)
-  /// 
+  ///
   /// **Retour :**
   /// - `File?` : Le fichier image sélectionné ou null si annulé
   static Future<File?> pickImage({
@@ -90,7 +90,7 @@ class HybridImagePickerService {
   }
 
   /// 📸 Pick plusieurs images
-  /// 
+  ///
   /// ⚠️ Sur Windows/Web, utilise `file_picker` (multi-sélection native)
   /// ⚠️ Sur mobile, utilise `image_picker` (avec preview)
   static Future<List<File>> pickMultipleImages({
@@ -181,7 +181,8 @@ class HybridImagePickerService {
         print(
           '⚠️ [HybridPicker] Fichier lourd: ${sizeKB.toStringAsFixed(0)} KB',
         );
-        print('⚠️ [HybridPicker] Recommandation: < 2 MB pour de meilleures performances');
+        print(
+            '⚠️ [HybridPicker] Recommandation: < 2 MB pour de meilleures performances');
       }
 
       return file;

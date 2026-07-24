@@ -41,7 +41,9 @@ class PlanningDraftEditor extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                Chip(label: Text('${provider.overrides.length} modification(s)')),
+                Chip(
+                    label:
+                        Text('${provider.overrides.length} modification(s)')),
               ],
             ),
             const SizedBox(height: 12),
@@ -67,7 +69,8 @@ class PlanningDraftEditor extends StatelessWidget {
   DataRow _buildRow(PlanningAssignment assignment) {
     return DataRow(
       cells: [
-        DataCell(Text(staffNames[assignment.staffId] ?? '#${assignment.staffId}')),
+        DataCell(
+            Text(staffNames[assignment.staffId] ?? '#${assignment.staffId}')),
         DataCell(Text(_formatDate(assignment.date))),
         DataCell(Text(assignment.team ?? '-')),
         DataCell(Text(assignment.shift.label)),

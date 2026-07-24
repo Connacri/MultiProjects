@@ -14,7 +14,8 @@ void main() {
   final pubspecText = pubspec.readAsStringSync();
   final lockText = lockfile.existsSync() ? lockfile.readAsStringSync() : '';
 
-  final hasObjectBox = pubspecText.contains(RegExp(r'^\s*objectbox:\s*', multiLine: true));
+  final hasObjectBox =
+      pubspecText.contains(RegExp(r'^\s*objectbox:\s*', multiLine: true));
   final hasObjectBoxFlutterLibs = pubspecText.contains(
     RegExp(r'^\s*objectbox_flutter_libs:\s*', multiLine: true),
   );
@@ -25,7 +26,10 @@ void main() {
     RegExp(r'^\s*build_runner:\s*', multiLine: true),
   );
 
-  if (!hasObjectBox || !hasObjectBoxFlutterLibs || !hasGenerator || !hasBuildRunner) {
+  if (!hasObjectBox ||
+      !hasObjectBoxFlutterLibs ||
+      !hasGenerator ||
+      !hasBuildRunner) {
     stderr.writeln(
       'ObjectBox build_runner contract is incomplete. Expected objectbox, '
       'objectbox_flutter_libs, objectbox_generator and build_runner.',

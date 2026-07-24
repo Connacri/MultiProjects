@@ -27,7 +27,8 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
   }
 
   void _reload() {
-    final staff = _objectBox.staffBox.getAll()..sort((a, b) => a.nom.compareTo(b.nom));
+    final staff = _objectBox.staffBox.getAll()
+      ..sort((a, b) => a.nom.compareTo(b.nom));
     final leaves = <int, List<TimeOff>>{};
     for (final leave in _objectBox.timeOffBox.getAll()) {
       leaves.putIfAbsent(leave.staff.targetId, () => []).add(leave);
@@ -55,11 +56,13 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
     final grade = TextEditingController(text: existing?.grade ?? '');
     final group = TextEditingController(text: existing?.groupe ?? '');
     final team = TextEditingController(text: existing?.equipe ?? '');
-    final order = TextEditingController(text: existing?.ordre?.toString() ?? '');
+    final order =
+        TextEditingController(text: existing?.ordre?.toString() ?? '');
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(existing == null ? 'Ajouter un membre' : 'Modifier le personnel'),
+        title: Text(
+            existing == null ? 'Ajouter un membre' : 'Modifier le personnel'),
         content: SingleChildScrollView(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             _input(name, 'Nom *'),
@@ -70,16 +73,25 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
           ]),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Annuler')),
           FilledButton(
             onPressed: () {
-              if (name.text.trim().isEmpty || grade.text.trim().isEmpty || group.text.trim().isEmpty) {
+              if (name.text.trim().isEmpty ||
+                  grade.text.trim().isEmpty ||
+                  group.text.trim().isEmpty) {
                 ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(content: Text('Nom, grade et groupe sont obligatoires.')),
+                  const SnackBar(
+                      content: Text('Nom, grade et groupe sont obligatoires.')),
                 );
                 return;
               }
-              final staff = existing ?? Staff(nom: name.text.trim(), grade: grade.text.trim(), groupe: group.text.trim());
+              final staff = existing ??
+                  Staff(
+                      nom: name.text.trim(),
+                      grade: grade.text.trim(),
+                      groupe: group.text.trim());
               staff
                 ..nom = name.text.trim()
                 ..grade = grade.text.trim()
@@ -94,18 +106,23 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
         ],
       ),
     );
-    for (final controller in [name, grade, group, team, order]) { controller.dispose(); }
+    for (final controller in [name, grade, group, team, order]) {
+      controller.dispose();
+    }
     if (saved == true && mounted) _reload();
   }
 
-  TextField _input(TextEditingController controller, String label, {TextInputType? keyboardType}) => TextField(
+  TextField _input(TextEditingController controller, String label,
+          {TextInputType? keyboardType}) =>
+      TextField(
         controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(labelText: label),
       );
 
   Future<void> _deleteStaff(Staff staff) async {
-    if (!await _confirm('Supprimer ${staff.nom} ?', 'Son historique de congés sera également supprimé.')) return;
+    if (!await _confirm('Supprimer ${staff.nom} ?',
+        'Son historique de congés sera également supprimé.')) return;
     final leaves = _leavesByStaff[staff.id] ?? const [];
     _objectBox.timeOffBox.removeMany(leaves.map((leave) => leave.id).toList());
     _objectBox.staffBox.remove(staff.id);
@@ -120,26 +137,46 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(existing == null ? 'Ajouter un congé' : 'Modifier le congé'),
+          title:
+              Text(existing == null ? 'Ajouter un congé' : 'Modifier le congé'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            Align(alignment: Alignment.centerLeft, child: Text(staff.nom, style: Theme.of(context).textTheme.titleMedium)),
-            TextField(controller: reason, decoration: const InputDecoration(labelText: 'Motif (facultatif)')),
-            _DateField(label: 'Début', value: start, formatter: _dateFormat, onChanged: (date) => setDialogState(() => start = date)),
-            _DateField(label: 'Fin', value: end, formatter: _dateFormat, onChanged: (date) => setDialogState(() => end = date)),
+            Align(
+                alignment: Alignment.centerLeft,
+                child: Text(staff.nom,
+                    style: Theme.of(context).textTheme.titleMedium)),
+            TextField(
+                controller: reason,
+                decoration:
+                    const InputDecoration(labelText: 'Motif (facultatif)')),
+            _DateField(
+                label: 'Début',
+                value: start,
+                formatter: _dateFormat,
+                onChanged: (date) => setDialogState(() => start = date)),
+            _DateField(
+                label: 'Fin',
+                value: end,
+                formatter: _dateFormat,
+                onChanged: (date) => setDialogState(() => end = date)),
           ]),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Annuler')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Annuler')),
             FilledButton(
               onPressed: () {
                 if (end.isBefore(start)) {
-                  ScaffoldMessenger.of(dialogContext).showSnackBar(const SnackBar(content: Text('La fin doit être après le début.')));
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(
+                          content: Text('La fin doit être après le début.')));
                   return;
                 }
                 final leave = existing ?? TimeOff(debut: start, fin: end);
                 leave
                   ..debut = start
                   ..fin = end
-                  ..motif = reason.text.trim().isEmpty ? null : reason.text.trim()
+                  ..motif =
+                      reason.text.trim().isEmpty ? null : reason.text.trim()
                   ..staff.targetId = staff.id;
                 _objectBox.timeOffBox.put(leave);
                 Navigator.pop(dialogContext, true);
@@ -155,18 +192,28 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
   }
 
   Future<void> _deleteLeave(TimeOff leave) async {
-    if (!await _confirm('Supprimer ce congé ?', 'Cette action est définitive.')) return;
+    if (!await _confirm('Supprimer ce congé ?', 'Cette action est définitive.'))
+      return;
     _objectBox.timeOffBox.remove(leave.id);
     _reload();
   }
 
   Future<bool> _confirm(String title, String content) async =>
-      await showDialog<bool>(context: context, builder: (context) => AlertDialog(
-        title: Text(title), content: Text(content), actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Supprimer')),
-        ],
-      )) ?? false;
+      await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+                title: Text(title),
+                content: Text(content),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Annuler')),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Supprimer')),
+                ],
+              )) ??
+      false;
 
   @override
   Widget build(BuildContext context) {
@@ -174,7 +221,9 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
     return Scaffold(
       appBar: AppBar(title: Text('Personnel et congés (${_staff.length})')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _editStaff(), icon: const Icon(Icons.person_add), label: const Text('Personnel'),
+        onPressed: () => _editStaff(),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Personnel'),
       ),
       body: RefreshIndicator(
         onRefresh: () async => _reload(),
@@ -188,7 +237,10 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
             padding: const EdgeInsets.all(12),
             itemCount: count + (count < _staff.length ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index == count) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
+              if (index == count)
+                return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()));
               return _StaffHistoryCard(
                 staff: _staff[index],
                 history: _leavesByStaff[_staff[index].id] ?? const [],
@@ -208,7 +260,15 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
 }
 
 class _StaffHistoryCard extends StatelessWidget {
-  const _StaffHistoryCard({required this.staff, required this.history, required this.formatter, required this.onEditStaff, required this.onDeleteStaff, required this.onAddLeave, required this.onEditLeave, required this.onDeleteLeave});
+  const _StaffHistoryCard(
+      {required this.staff,
+      required this.history,
+      required this.formatter,
+      required this.onEditStaff,
+      required this.onDeleteStaff,
+      required this.onAddLeave,
+      required this.onEditLeave,
+      required this.onDeleteLeave});
   final Staff staff;
   final List<TimeOff> history;
   final DateFormat formatter;
@@ -220,38 +280,70 @@ class _StaffHistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    child: ExpansionTile(
-      leading: const CircleAvatar(child: Icon(Icons.person)),
-      title: Text(staff.nom),
-      subtitle: Text('${staff.grade} • ${staff.groupe}${staff.equipe == null ? '' : ' • ${staff.equipe}'}'),
-      trailing: PopupMenuButton<String>(
-        onSelected: (value) { if (value == 'edit') onEditStaff(); if (value == 'delete') onDeleteStaff(); },
-        itemBuilder: (_) => const [PopupMenuItem(value: 'edit', child: Text('Modifier')), PopupMenuItem(value: 'delete', child: Text('Supprimer'))],
-      ),
-      children: [
-        ListTile(leading: const Icon(Icons.add_circle_outline), title: const Text('Ajouter un congé'), onTap: onAddLeave),
-        if (history.isEmpty) const Padding(padding: EdgeInsets.all(16), child: Text('Aucun congé dans l’historique.')),
-        for (final leave in history) ListTile(
-          leading: const Icon(Icons.event_busy),
-          title: Text('${formatter.format(leave.debut)} – ${formatter.format(leave.fin)}'),
-          subtitle: leave.motif?.isNotEmpty == true ? Text(leave.motif!) : null,
-          onTap: () => onEditLeave(leave),
-          trailing: IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => onDeleteLeave(leave)),
+        child: ExpansionTile(
+          leading: const CircleAvatar(child: Icon(Icons.person)),
+          title: Text(staff.nom),
+          subtitle: Text(
+              '${staff.grade} • ${staff.groupe}${staff.equipe == null ? '' : ' • ${staff.equipe}'}'),
+          trailing: PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'edit') onEditStaff();
+              if (value == 'delete') onDeleteStaff();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'edit', child: Text('Modifier')),
+              PopupMenuItem(value: 'delete', child: Text('Supprimer'))
+            ],
+          ),
+          children: [
+            ListTile(
+                leading: const Icon(Icons.add_circle_outline),
+                title: const Text('Ajouter un congé'),
+                onTap: onAddLeave),
+            if (history.isEmpty)
+              const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('Aucun congé dans l’historique.')),
+            for (final leave in history)
+              ListTile(
+                leading: const Icon(Icons.event_busy),
+                title: Text(
+                    '${formatter.format(leave.debut)} – ${formatter.format(leave.fin)}'),
+                subtitle:
+                    leave.motif?.isNotEmpty == true ? Text(leave.motif!) : null,
+                onTap: () => onEditLeave(leave),
+                trailing: IconButton(
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => onDeleteLeave(leave)),
+              ),
+          ],
         ),
-      ],
-    ),
-  );
+      );
 }
 
 class _DateField extends StatelessWidget {
-  const _DateField({required this.label, required this.value, required this.formatter, required this.onChanged});
+  const _DateField(
+      {required this.label,
+      required this.value,
+      required this.formatter,
+      required this.onChanged});
   final String label;
   final DateTime value;
   final DateFormat formatter;
   final ValueChanged<DateTime> onChanged;
   @override
   Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero, title: Text(label), subtitle: Text(formatter.format(value)), trailing: const Icon(Icons.calendar_today_outlined),
-    onTap: () async { final date = await showDatePicker(context: context, initialDate: value, firstDate: DateTime(2000), lastDate: DateTime(2100)); if (date != null) onChanged(date); },
-  );
+        contentPadding: EdgeInsets.zero,
+        title: Text(label),
+        subtitle: Text(formatter.format(value)),
+        trailing: const Icon(Icons.calendar_today_outlined),
+        onTap: () async {
+          final date = await showDatePicker(
+              context: context,
+              initialDate: value,
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100));
+          if (date != null) onChanged(date);
+        },
+      );
 }

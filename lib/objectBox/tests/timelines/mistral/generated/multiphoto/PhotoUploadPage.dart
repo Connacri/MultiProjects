@@ -111,12 +111,11 @@ class _PhotoUploadPageState extends State<PhotoUploadPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8.0,
-                          mainAxisSpacing: 8.0,
-                        ),
-                    itemCount:
-                        photoProvider.images.length +
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 8.0,
+                      mainAxisSpacing: 8.0,
+                    ),
+                    itemCount: photoProvider.images.length +
                         (photoProvider.isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
                       // Indicateur de chargement à la fin
@@ -194,22 +193,20 @@ class ImageGridItem extends StatelessWidget {
           child: CachedNetworkImage(
             imageUrl: imageUrl,
             fit: BoxFit.cover,
-            placeholder:
-                (context, url) => Container(
-                  color: Colors.grey.shade300,
-                  child: const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
+            placeholder: (context, url) => Container(
+              color: Colors.grey.shade300,
+              child: const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-            errorWidget:
-                (context, url, error) => Container(
-                  color: Colors.grey.shade300,
-                  child: const Icon(Icons.error),
-                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey.shade300,
+              child: const Icon(Icons.error),
+            ),
           ),
         ),
 
@@ -334,13 +331,11 @@ class ImagePreviewScreen extends StatelessWidget {
           maxScale: 3.0,
           child: CachedNetworkImage(
             imageUrl: imageUrl,
-            placeholder:
-                (context, url) => const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                ),
-            errorWidget:
-                (context, url, error) =>
-                    const Icon(Icons.error, color: Colors.white, size: 48),
+            placeholder: (context, url) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+            errorWidget: (context, url, error) =>
+                const Icon(Icons.error, color: Colors.white, size: 48),
           ),
         ),
       ),

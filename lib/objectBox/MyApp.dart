@@ -2558,36 +2558,37 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
 
-      if (connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty) {
-      // Pas de connexion Internet
-      final prefs = await SharedPreferences.getInstance();
-      final lastOnlineCheckString = prefs.getString('lastOnlineCheck');
+      if (connectivityResult.contains(ConnectivityResult.none) ||
+          connectivityResult.isEmpty) {
+        // Pas de connexion Internet
+        final prefs = await SharedPreferences.getInstance();
+        final lastOnlineCheckString = prefs.getString('lastOnlineCheck');
 
-      if (lastOnlineCheckString != null) {
-        final lastOnlineCheck = DateTime.parse(lastOnlineCheckString);
-        final now = DateTime.now();
+        if (lastOnlineCheckString != null) {
+          final lastOnlineCheck = DateTime.parse(lastOnlineCheckString);
+          final now = DateTime.now();
+          setState(() {
+            _offlineDuration = now.difference(lastOnlineCheck);
+            _isOfflineForMoreThan2Days = _offlineDuration.inDays >= 2;
+          });
+        }
+
         setState(() {
-          _offlineDuration = now.difference(lastOnlineCheck);
-          _isOfflineForMoreThan2Days = _offlineDuration.inDays >= 2;
+          _isOnline = false;
+          _isLoading = false;
+        });
+      } else {
+        // Connexion Internet disponible
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            'lastOnlineCheck', DateTime.now().toIso8601String());
+
+        setState(() {
+          _isOnline = true;
+          _isOfflineForMoreThan2Days = false;
+          _isLoading = false;
         });
       }
-
-      setState(() {
-        _isOnline = false;
-        _isLoading = false;
-      });
-    } else {
-      // Connexion Internet disponible
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-          'lastOnlineCheck', DateTime.now().toIso8601String());
-
-      setState(() {
-        _isOnline = true;
-        _isOfflineForMoreThan2Days = false;
-        _isLoading = false;
-      });
-    }
     } catch (e) {
       print('Erreur vérification connectivité: $e');
       if (mounted) {

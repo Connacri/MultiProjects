@@ -84,10 +84,8 @@ class PhotoProvider extends ChangeNotifier {
             '${DateTime.now().millisecondsSinceEpoch}_${p.basenameWithoutExtension(file.path)}.webp';
 
         // Définir le chemin dans le storage
-        final firebase_storage.Reference ref = _storage
-            .ref()
-            .child('uploads')
-            .child(fileName);
+        final firebase_storage.Reference ref =
+            _storage.ref().child('uploads').child(fileName);
 
         // Uploader le fichier compressé
         final firebase_storage.UploadTask uploadTask = ref.putFile(
@@ -95,8 +93,8 @@ class PhotoProvider extends ChangeNotifier {
         );
 
         // Attendre la fin de l'upload
-        final firebase_storage.TaskSnapshot snapshot = await uploadTask
-            .whenComplete(() {});
+        final firebase_storage.TaskSnapshot snapshot =
+            await uploadTask.whenComplete(() {});
 
         // Récupérer l'URL de téléchargement
         final String downloadUrl = await snapshot.ref.getDownloadURL();
@@ -154,8 +152,8 @@ class PhotoProvider extends ChangeNotifier {
     try {
       final fileName = DateTime.now().millisecondsSinceEpoch.toString();
       final storageRef = firebase_storage.FirebaseStorage.instance.ref().child(
-        'cours/$fileName.jpg',
-      );
+            'cours/$fileName.jpg',
+          );
       await storageRef.putFile(file);
       return await storageRef.getDownloadURL();
     } catch (e) {
@@ -191,17 +189,15 @@ class PhotoProvider extends ChangeNotifier {
           '${DateTime.now().millisecondsSinceEpoch}_${p.basenameWithoutExtension(photo.path)}.webp';
 
       // Référence de stockage
-      final firebase_storage.Reference ref = _storage
-          .ref()
-          .child('uploads')
-          .child(fileName);
+      final firebase_storage.Reference ref =
+          _storage.ref().child('uploads').child(fileName);
 
       // Upload du fichier compressé
       final firebase_storage.UploadTask uploadTask = ref.putFile(
         compressedFile,
       );
-      final firebase_storage.TaskSnapshot snapshot = await uploadTask
-          .whenComplete(() {});
+      final firebase_storage.TaskSnapshot snapshot =
+          await uploadTask.whenComplete(() {});
 
       // Récupérer l'URL
       final String downloadUrl = await snapshot.ref.getDownloadURL();
@@ -338,11 +334,10 @@ class PhotoProvider extends ChangeNotifier {
       _setLoading(true);
 
       // 1. Trouver et supprimer le document dans Firestore
-      QuerySnapshot querySnapshot =
-          await _firestore
-              .collection('storage')
-              .where('url', isEqualTo: url)
-              .get();
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('storage')
+          .where('url', isEqualTo: url)
+          .get();
 
       if (querySnapshot.docs.isNotEmpty) {
         WriteBatch batch = _firestore.batch();
@@ -391,12 +386,11 @@ class PhotoProvider extends ChangeNotifier {
         final String downloadUrl = await ref.getDownloadURL();
 
         // Vérifier si l'URL existe déjà dans Firestore
-        QuerySnapshot querySnapshot =
-            await _firestore
-                .collection('storage')
-                .where('url', isEqualTo: downloadUrl)
-                .limit(1)
-                .get();
+        QuerySnapshot querySnapshot = await _firestore
+            .collection('storage')
+            .where('url', isEqualTo: downloadUrl)
+            .limit(1)
+            .get();
 
         // Si l'URL n'existe pas dans Firestore, l'ajouter
         if (querySnapshot.docs.isEmpty) {
@@ -429,8 +423,8 @@ class PhotoProvider extends ChangeNotifier {
   Future<void> pickImages({int limit = 10}) async {
     try {
       final List<XFile>? picked = await _picker.pickMultiImage(
-        // on peut également proposer un paramètre « limit »
-      );
+          // on peut également proposer un paramètre « limit »
+          );
       if (picked == null || picked.isEmpty) return;
 
       // Contrainte manuelle de nombre max
@@ -506,16 +500,14 @@ class PhotoProvider extends ChangeNotifier {
 
         final String fileName =
             '${DateTime.now().millisecondsSinceEpoch}_${p.basenameWithoutExtension(xfile.path)}.webp';
-        final firebase_storage.Reference ref = _storage
-            .ref()
-            .child('uploads')
-            .child(fileName);
+        final firebase_storage.Reference ref =
+            _storage.ref().child('uploads').child(fileName);
 
         final firebase_storage.UploadTask uploadTask = ref.putFile(
           compressedFile,
         );
-        final firebase_storage.TaskSnapshot snapshot = await uploadTask
-            .whenComplete(() {});
+        final firebase_storage.TaskSnapshot snapshot =
+            await uploadTask.whenComplete(() {});
 
         final String downloadUrl = await snapshot.ref.getDownloadURL();
         // Ajouter l’URL à Firestore

@@ -205,12 +205,14 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
               ListTile(
                 leading: const Icon(Icons.storage, color: Colors.blue),
                 title: const Text('Sauvegarde complète de la base (.mdb)'),
-                subtitle: const Text('Copie les fichiers bruts de la base de données'),
+                subtitle: const Text(
+                    'Copie les fichiers bruts de la base de données'),
                 onTap: () async {
                   Navigator.pop(context);
                   final result = await objectBox.exportDatabase();
                   if (result != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(result)));
                   }
                 },
               ),
@@ -223,7 +225,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   Navigator.pop(context);
                   final result = await objectBox.exportAllToJson();
                   if (result != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(result)));
                   }
                 },
               ),
@@ -235,7 +238,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   Navigator.pop(context);
                   final result = await objectBox.exportProduitsToCsv();
                   if (result != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(result)));
                   }
                 },
               ),
@@ -247,7 +251,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   Navigator.pop(context);
                   final result = await objectBox.importAllFromJson();
                   if (result != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(result)));
                   }
                 },
               ),
@@ -258,7 +263,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                   Navigator.pop(context);
                   final result = await objectBox.importProduitsFromCsv();
                   if (result != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result)));
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(result)));
                   }
                 },
               ),

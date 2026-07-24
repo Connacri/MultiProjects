@@ -82,7 +82,8 @@ class PlanningSnapshot {
   bool get isHistorical => isPublished;
 
   /// Stable business key used by persistence and transaction guards.
-  String get monthKey => '${branchId ?? 0}:$year:${month.toString().padLeft(2, '0')}';
+  String get monthKey =>
+      '${branchId ?? 0}:$year:${month.toString().padLeft(2, '0')}';
 
   /// Creates the next immutable revision while preserving the current
   /// configuration, continuity checkpoint and assignments unless replaced.

@@ -44,7 +44,9 @@ class PlanningWorkspaceEditor extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
-                Chip(label: Text('${editorProvider.overrides.length} modification(s)')),
+                Chip(
+                    label: Text(
+                        '${editorProvider.overrides.length} modification(s)')),
               ],
             ),
             const SizedBox(height: 12),
@@ -60,9 +62,8 @@ class PlanningWorkspaceEditor extends StatelessWidget {
               alignment: WrapAlignment.end,
               children: [
                 OutlinedButton.icon(
-                  onPressed: planningProvider.isBusy
-                      ? null
-                      : controller.cancelEditing,
+                  onPressed:
+                      planningProvider.isBusy ? null : controller.cancelEditing,
                   icon: const Icon(Icons.close),
                   label: const Text('Annuler'),
                 ),

@@ -20,7 +20,8 @@ class PlanningValidationPanel extends StatelessWidget {
         child: ListTile(
           leading: const Icon(Icons.rule_outlined),
           title: const Text('Validation métier'),
-          subtitle: const Text('Le brouillon doit être validé avant publication.'),
+          subtitle:
+              const Text('Le brouillon doit être validé avant publication.'),
           trailing: FilledButton.icon(
             onPressed: onValidate,
             icon: const Icon(Icons.fact_check_outlined),

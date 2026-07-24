@@ -198,7 +198,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
                     style: baseStyle.copyWith(fontSize: 12)),
               ],
             ),
-           // pw.SizedBox(height: 6),
+            // pw.SizedBox(height: 6),
             pw.Spacer(),
             pw.Center(
               child: pw.Text(
@@ -245,7 +245,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
           footer: (ctx) => pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-             // pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
+              // pw.Text('N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction', style: baseStyle),
               pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
@@ -409,20 +409,8 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
         subGroups.add(medecins);
         currentOption = medicalOption;
         pageTitle = '08h–16h – Personnel Médical';
-        _addActivityPage(
-            pdf,
-            medecins,
-            daysInMonth,
-            oswald,
-            year,
-            month,
-            pageTitle,
-            currentOption,
-            logo,
-            bold,
-            baseStyle,
-            prefix,
-            monthName);
+        _addActivityPage(pdf, medecins, daysInMonth, oswald, year, month,
+            pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
       }
 
       // Administratifs
@@ -431,20 +419,8 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
               .any((o) => o.type == PdfPageType.activiteTableauAdministratif)) {
         currentOption = administratifOption;
         pageTitle = '08h–16h';
-        _addActivityPage(
-            pdf,
-            autres,
-            daysInMonth,
-            oswald,
-            year,
-            month,
-            pageTitle,
-            currentOption,
-            logo,
-            bold,
-            baseStyle,
-            prefix,
-            monthName);
+        _addActivityPage(pdf, autres, daysInMonth, oswald, year, month,
+            pageTitle, currentOption, logo, bold, baseStyle, prefix, monthName);
       }
       return;
     } else {
@@ -459,20 +435,8 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
 
     // Générer les pages pour les groupes simples
     for (var list in subGroups) {
-      _addActivityPage(
-          pdf,
-          list,
-          daysInMonth,
-          oswald,
-          year,
-          month,
-          pageTitle,
-          currentOption,
-          logo,
-          bold,
-          baseStyle,
-          prefix,
-          monthName);
+      _addActivityPage(pdf, list, daysInMonth, oswald, year, month, pageTitle,
+          currentOption, logo, bold, baseStyle, prefix, monthName);
     }
   });
 
@@ -580,7 +544,7 @@ void _addActivityPage(
 
         pw.SizedBox(height: 4),
 
-        _buildPageFooterContent(baseStyle),pw.SizedBox(height: 8),
+        _buildPageFooterContent(baseStyle), pw.SizedBox(height: 8),
         pw.Text(
             'N.B : Toutes modifications de programme ne doivent se faire qu\'après accord de la direction',
             style: baseStyle),
@@ -626,7 +590,6 @@ pw.Widget _buildPageFooterContent(pw.TextStyle baseStyle) {
       pw.Text(
           'Jour       Nuit       RE : Récupération       C : Congé       CM : Congé Maladie       M : Maternité       N : Normal       F : Jour Férié',
           style: baseStyle),
-
       pw.Text(
           'Fait à Aïn el Türck le : ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
           style: baseStyle),
@@ -909,12 +872,9 @@ pw.Widget _buildGroupTable(
       // Les tableaux PDF restent monochromes, avec F en gris foncé.
       final bg = isWeekend ? PdfColors.black : PdfColors.white;
       final txtColor = isWeekend ? PdfColors.white : PdfColors.black;
-      final cellBg = rawStatut.toUpperCase() == 'F'
-          ? PdfColors.grey800
-          : bg;
-      final cellTextColor = rawStatut.toUpperCase() == 'F'
-          ? PdfColors.white
-          : txtColor;
+      final cellBg = rawStatut.toUpperCase() == 'F' ? PdfColors.grey800 : bg;
+      final cellTextColor =
+          rawStatut.toUpperCase() == 'F' ? PdfColors.white : txtColor;
 
       cells.add(
         pw.Container(
@@ -924,8 +884,8 @@ pw.Widget _buildGroupTable(
           alignment: pw.Alignment.center,
           child: pw.Text(
             statut,
-            style: pw.TextStyle(
-                font: oswald, fontSize: 9, color: cellTextColor),
+            style:
+                pw.TextStyle(font: oswald, fontSize: 9, color: cellTextColor),
             textAlign: pw.TextAlign.center,
           ),
         ),

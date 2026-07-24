@@ -1672,21 +1672,22 @@ class ConnectionStatusProvider extends ChangeNotifier {
       final connectivityResult = await Connectivity().checkConnectivity();
       final prefs = await SharedPreferences.getInstance();
 
-      if (connectivityResult.contains(ConnectivityResult.none) || connectivityResult.isEmpty) {
-      final lastOnline = prefs.getString('lastOnlineCheck');
-      if (lastOnline != null) {
-        _offlineDuration =
-            DateTime.now().difference(DateTime.parse(lastOnline));
-        _isBlocked = _offlineDuration.inDays >= 2;
+      if (connectivityResult.contains(ConnectivityResult.none) ||
+          connectivityResult.isEmpty) {
+        final lastOnline = prefs.getString('lastOnlineCheck');
+        if (lastOnline != null) {
+          _offlineDuration =
+              DateTime.now().difference(DateTime.parse(lastOnline));
+          _isBlocked = _offlineDuration.inDays >= 2;
+        }
+        _isOnline = false;
+      } else {
+        await prefs.setString(
+            'lastOnlineCheck', DateTime.now().toIso8601String());
+        _isOnline = true;
+        _isBlocked = false;
+        _offlineDuration = Duration.zero;
       }
-      _isOnline = false;
-    } else {
-      await prefs.setString(
-          'lastOnlineCheck', DateTime.now().toIso8601String());
-      _isOnline = true;
-      _isBlocked = false;
-      _offlineDuration = Duration.zero;
-    }
     } catch (e) {
       print('Erreur vérification connectivité: $e');
     }

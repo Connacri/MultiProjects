@@ -151,8 +151,7 @@ class ObjectBoxPlanningDataSource {
   }) {
     final query = legacyObjectBox.planificationBox
         .query(
-          Planification_.annee.equals(year) &
-              Planification_.mois.equals(month),
+          Planification_.annee.equals(year) & Planification_.mois.equals(month),
         )
         .build();
 

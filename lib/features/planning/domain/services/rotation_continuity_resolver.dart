@@ -54,9 +54,8 @@ class RotationContinuityResolver {
       date: checkpoint.date,
       teamShifts: Map.unmodifiable({
         for (final entry in retained.entries)
-          entry.key: configuration.cycle[
-            entry.value % configuration.cycle.length
-          ],
+          entry.key:
+              configuration.cycle[entry.value % configuration.cycle.length],
       }),
     );
   }

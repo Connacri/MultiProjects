@@ -145,11 +145,11 @@ class _reset_passwordState extends State<reset_password> {
     try {
       await FirebaseAuth.instance
           .sendPasswordResetEmail(email: emailController.text.trim());
-      
+
       if (mounted) {
         Navigator.of(context).pop(); // Dismiss loading spinner
       }
-      
+
       if (mounted) {
         showDialog<void>(
           context: context,
@@ -180,7 +180,8 @@ class _reset_passwordState extends State<reset_password> {
                   onPressed: () {
                     Navigator.of(dialogContext).pop(); // Dismiss alert dialog
                     if (mounted) {
-                      Navigator.of(context).pop(); // Pop reset password screen back to login
+                      Navigator.of(context)
+                          .pop(); // Pop reset password screen back to login
                     }
                   },
                 ),

@@ -431,22 +431,23 @@ class StaffProvider with ChangeNotifier {
         // Optionnel: Nettoyer les activités actuelles pour éviter les doublons/conflits
         // Mais attention, forceUpdateActiviteIgnoringLeave gère déjà l'existence.
         // Pour être propre, on pourrait faire un batch update.
-        
+
         for (var staffEntry in activitesSnapshot) {
           final staffId = staffEntry['staffId'] as int;
           final jours = staffEntry['jours'] as List<dynamic>;
-          
+
           for (var jourEntry in jours) {
             final jour = jourEntry['jour'] as int;
             final statut = jourEntry['statut'] as String;
-            
+
             // On utilise la logique de forceUpdate pour restaurer
             final activiteQuery = _objectBox.activiteBox
-                .query(ActiviteJour_.staff.equals(staffId) & ActiviteJour_.jour.equals(jour))
+                .query(ActiviteJour_.staff.equals(staffId) &
+                    ActiviteJour_.jour.equals(jour))
                 .build();
             final existing = activiteQuery.find();
             activiteQuery.close();
-            
+
             if (existing.isNotEmpty) {
               existing.first.statut = statut;
               _objectBox.activiteBox.put(existing.first);
@@ -890,7 +891,9 @@ class ActiviteProvider with ChangeNotifier {
     final activites = staff.activites.toList();
     return activites.any((activite) =>
         activite.jour == dateJour.day &&
-        (activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M'));
+        (activite.statut == 'C' ||
+            activite.statut == 'CM' ||
+            activite.statut == 'M'));
   }
 
   /// ✅ MÉTHODE CORRIGÉE : Création d'activités avec prise en compte des congés et obs
@@ -1215,11 +1218,13 @@ class ActiviteProvider with ChangeNotifier {
     try {
       int totalModifications = 0;
       int congesRespectes = 0;
-      Map<String, int> gardesJourParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> gardesNuitParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> reposParEquipe = {
+      Map<String, int> gardesJourParEquipe = {
         for (var e in equipesOrdonnees) e: 0
       };
+      Map<String, int> gardesNuitParEquipe = {
+        for (var e in equipesOrdonnees) e: 0
+      };
+      Map<String, int> reposParEquipe = {for (var e in equipesOrdonnees) e: 0};
 
       // Récupérer le personnel médical concerné
       final personnelMedical = _objectBox.staffBox
@@ -1276,7 +1281,8 @@ class ActiviteProvider with ChangeNotifier {
       // Combine jour+nuit for backward compat
       Map<String, int> gardesParEquipe = {};
       for (var e in equipesOrdonnees) {
-        gardesParEquipe[e] = (gardesJourParEquipe[e] ?? 0) + (gardesNuitParEquipe[e] ?? 0);
+        gardesParEquipe[e] =
+            (gardesJourParEquipe[e] ?? 0) + (gardesNuitParEquipe[e] ?? 0);
       }
       Map<String, int> recuperationsParEquipe = reposParEquipe;
 

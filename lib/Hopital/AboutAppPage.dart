@@ -14,7 +14,7 @@ class _AboutAppPageState extends State<AboutAppPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-  final Uri _walletDzUri = Uri.parse('');//https://walletdz-d12e0.web.app/
+  final Uri _walletDzUri = Uri.parse(''); //https://walletdz-d12e0.web.app/
 
   @override
   void initState() {
@@ -369,7 +369,8 @@ class _AboutAppPageState extends State<AboutAppPage>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: colorScheme.tertiary.withValues(alpha: 0.2)),
+                border: Border.all(
+                    color: colorScheme.tertiary.withValues(alpha: 0.2)),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
@@ -390,7 +391,8 @@ class _AboutAppPageState extends State<AboutAppPage>
             ),
             const SizedBox(height: 16),
             FilledButton.tonalIcon(
-              onPressed: () => _launchUrl('mailto:ramzi.guedouar@gmail.com?subject=Sponsoring%20Medical%20Staff%20Planning'),
+              onPressed: () => _launchUrl(
+                  'mailto:ramzi.guedouar@gmail.com?subject=Sponsoring%20Medical%20Staff%20Planning'),
               icon: const Icon(Icons.handshake_rounded),
               label: const Text('Devenir Sponsor'),
               style: FilledButton.styleFrom(
@@ -473,7 +475,8 @@ class _AboutAppPageState extends State<AboutAppPage>
     );
   }
 
-  Widget _buildContactSection(ColorScheme colorScheme, bool isDark, bool isWide) {
+  Widget _buildContactSection(
+      ColorScheme colorScheme, bool isDark, bool isWide) {
     return Card(
       elevation: 0,
       color: colorScheme.primaryContainer.withValues(alpha: 0.3),
@@ -522,7 +525,8 @@ class _AboutAppPageState extends State<AboutAppPage>
     );
   }
 
-  Widget _buildSectionHeader(ColorScheme colorScheme, String title, IconData icon) {
+  Widget _buildSectionHeader(
+      ColorScheme colorScheme, String title, IconData icon) {
     return Row(
       children: [
         Icon(icon, color: colorScheme.primary, size: 24),

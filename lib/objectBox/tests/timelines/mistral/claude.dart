@@ -166,7 +166,7 @@ class HotelManagementState extends State<Hotel_Management> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:  _buildAppBar(),
+      appBar: _buildAppBar(),
       drawer: AppDrawer(
         currentHotel: _currentHotel,
       ),

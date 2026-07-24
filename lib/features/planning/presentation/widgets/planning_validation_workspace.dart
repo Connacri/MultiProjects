@@ -21,9 +21,8 @@ class PlanningValidationWorkspace extends StatelessWidget {
 
     return PlanningValidationPanel(
       result: validationProvider.result,
-      onValidate: draft == null
-          ? null
-          : () => validationProvider.validate(draft),
+      onValidate:
+          draft == null ? null : () => validationProvider.validate(draft),
     );
   }
 }

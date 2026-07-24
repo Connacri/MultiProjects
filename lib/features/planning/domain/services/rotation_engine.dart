@@ -37,9 +37,10 @@ class RotationEngine {
     return current.copyWith(
       year: current.month == 1 ? current.year - 1 : current.year,
       month: current.month == 1 ? 12 : current.month - 1,
-      dayTeamOrder: rotate(current.dayTeamOrder, steps: current.dayTeamOrder.length - 1),
-      nightTeamOrder:
-          rotate(current.nightTeamOrder, steps: current.nightTeamOrder.length - 1),
+      dayTeamOrder:
+          rotate(current.dayTeamOrder, steps: current.dayTeamOrder.length - 1),
+      nightTeamOrder: rotate(current.nightTeamOrder,
+          steps: current.nightTeamOrder.length - 1),
       assignments: const [],
     );
   }
@@ -64,12 +65,12 @@ class RotationEngine {
 
     final previousShift = continuity?.shiftFor(team);
     if (previousShift != null && continuity != null) {
-      final days = _dateOnly(date).difference(_dateOnly(continuity.date)).inDays;
+      final days =
+          _dateOnly(date).difference(_dateOnly(continuity.date)).inDays;
       final previousPhase = configuration.cycle.indexOf(previousShift);
       if (previousPhase >= 0 && days >= 1) {
-        return configuration.cycle[
-          _floorMod(previousPhase + days, configuration.cycle.length)
-        ];
+        return configuration
+            .cycle[_floorMod(previousPhase + days, configuration.cycle.length)];
       }
       if (days == 0) return previousShift;
     }
@@ -135,5 +136,6 @@ class RotationEngine {
     return remainder < 0 ? remainder + modulus : remainder;
   }
 
-  DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+  DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
 }

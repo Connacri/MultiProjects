@@ -10,7 +10,7 @@ class PhotoSelectionPage extends StatefulWidget {
   final String storageFolderPath;
 
   const PhotoSelectionPage({Key? key, required this.storageFolderPath})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<PhotoSelectionPage> createState() => _PhotoSelectionPageState();
@@ -38,9 +38,9 @@ class _PhotoSelectionPageState extends State<PhotoSelectionPage> {
     try {
       // 1) Référence au dossier
       final Reference folderRef = _storage.ref().child(
-        widget.storageFolderPath,
-        // widget.storageFolderPath,
-      );
+            widget.storageFolderPath,
+            // widget.storageFolderPath,
+          );
 
       // 2) appelle listAll() pour lister tous les objets du dossier
       final ListResult listResult = await folderRef.listAll();
@@ -73,56 +73,54 @@ class _PhotoSelectionPageState extends State<PhotoSelectionPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Choisir une photo')),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _downloadUrls.isEmpty
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _downloadUrls.isEmpty
               ? const Center(
-                child: Text(
-                  'Aucune image trouvée dans Storage.',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
-                ),
-              )
-              : Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: GridView.builder(
-                  itemCount: _downloadUrls.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, // 3 colonnes
-                    crossAxisSpacing: 8.0, // espacement entre colonnes
-                    mainAxisSpacing: 8.0, // espacement entre lignes
-                    childAspectRatio: 1.0, // carré
+                  child: Text(
+                    'Aucune image trouvée dans Storage.',
+                    style: TextStyle(fontSize: 16, color: Colors.black54),
                   ),
-                  itemBuilder: (context, index) {
-                    final url = _downloadUrls[index];
-                    return GestureDetector(
-                      onTap: () {
-                        // Retourne immédiatement l'URL sélectionnée
-                        Navigator.of(context).pop(url);
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: CachedNetworkImage(
-                          imageUrl: url,
-                          fit: BoxFit.cover,
-                          placeholder:
-                              (context, _) => Container(
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: GridView.builder(
+                    itemCount: _downloadUrls.length,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3, // 3 colonnes
+                      crossAxisSpacing: 8.0, // espacement entre colonnes
+                      mainAxisSpacing: 8.0, // espacement entre lignes
+                      childAspectRatio: 1.0, // carré
+                    ),
+                    itemBuilder: (context, index) {
+                      final url = _downloadUrls[index];
+                      return GestureDetector(
+                        onTap: () {
+                          // Retourne immédiatement l'URL sélectionnée
+                          Navigator.of(context).pop(url);
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: url,
+                            fit: BoxFit.cover,
+                            placeholder: (context, _) => Container(
+                              color: Colors.grey[300],
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
                                 ),
                               ),
-                          errorWidget:
-                              (context, _, __) =>
-                                  const Icon(Icons.broken_image),
+                            ),
+                            errorWidget: (context, _, __) =>
+                                const Icon(Icons.broken_image),
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
     );
   }
 }

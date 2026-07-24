@@ -224,7 +224,8 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
             onSelected: (value) async {
               switch (value) {
                 case 'fill_auto':
-                  const RemplirPlanningAutoButton().confirmerRemplissage(context);
+                  const RemplirPlanningAutoButton()
+                      .confirmerRemplissage(context);
                   break;
                 case 'add_types':
                   _showTypesActivitesDialog();
@@ -601,7 +602,8 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
     if (codeLower.contains('serv')) return Colors.grey.shade300;
     if (codeLower == 'ped') return Colors.amber.shade300;
     if (codeLower == 'bio') return Colors.blueGrey.shade300;
-    if (codeLower == 'c' || codeLower == 'cm' || codeLower == 'm') return Colors.red.shade300;
+    if (codeLower == 'c' || codeLower == 'cm' || codeLower == 'm')
+      return Colors.red.shade300;
     if (codeLower == 'f') return Colors.orange.shade300;
     if (codeLower == 'n') return Colors.indigo.shade300;
     return Colors.grey.shade200;

@@ -196,7 +196,18 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Set<int> _selectedStaffIds = {}; // IDs des personnels sélectionnés
 
   // Liste des statuts disponibles pour le dropdown
-  final List<String> _statutsDisponibles = ['GJ', 'GN', 'G', "RE", 'C', 'CM','M', 'N','F', '-'];
+  final List<String> _statutsDisponibles = [
+    'GJ',
+    'GN',
+    'G',
+    "RE",
+    'C',
+    'CM',
+    'M',
+    'N',
+    'F',
+    '-'
+  ];
 
   // Helper: encoder ordres Jour + Nuit dans une seule chaîne
   String _encodeOrders(List<String> jour, List<String> nuit) =>
@@ -207,7 +218,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   List<List<String>> _decodeOrders(String encoded) {
     if (encoded.contains('|')) {
       final parts = encoded.split('|');
-      final jour = parts[0].split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      final jour = parts[0]
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
       final nuit = (parts.length > 1 ? parts[1] : '')
           .split(',')
           .map((e) => e.trim())
@@ -220,7 +235,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       return [jour, nuit];
     }
     // backward compat
-    final jour = encoded.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final jour = encoded
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     final n = jour.length;
     final nuit = List.generate(n, (i) => jour[(i + n - 1) % n]);
     return [jour, nuit];
@@ -273,7 +292,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     await Future.delayed(const Duration(milliseconds: 300));
 
     await provider.fetchStaffs();
-    
+
     // Utiliser la logique intelligente dès le démarrage
     await _loadMonthWithIntelligentLogic(
       _selectedYear,
@@ -361,7 +380,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         if (monthExists) {
           await staffProvider.loadMonthActivities(year, month);
           await staffProvider.forceRefresh();
-          _showSnackbar("📂 Mois ${_moisNoms[month - 1]} $year chargé", Colors.blue);
+          _showSnackbar(
+              "📂 Mois ${_moisNoms[month - 1]} $year chargé", Colors.blue);
         } else {
           // Nouveau : Remplissage automatique même au recul si vide
           await _autoFillNewMonth(year, month);
@@ -372,7 +392,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           await staffProvider.loadMonthActivities(year, month);
           await staffProvider.forceRefresh();
           await _checkAndNotifyEmptyGroups(month, year);
-          _showSnackbar("📂 Mois ${_moisNoms[month - 1]} $year chargé", Colors.blue);
+          _showSnackbar(
+              "📂 Mois ${_moisNoms[month - 1]} $year chargé", Colors.blue);
         } else {
           // Nouveau mois : remplissage automatique intelligent
           await _autoFillNewMonth(year, month);
@@ -510,10 +531,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       // ✅ LOGIQUE MATHÉMATIQUE : Continuité absolue depuis une date de référence
-      final dateReference = DateTime(2024, 1, 1); // Point de départ arbitraire (Équipe A)
+      final dateReference =
+          DateTime(2024, 1, 1); // Point de départ arbitraire (Équipe A)
       final dateCible = DateTime(toYear, toMonth, 1);
       final totalDays = dateCible.difference(dateReference).inDays;
-      
+
       // Index de l'équipe qui doit commencer le 1er du mois cible
       int startEquipeIndex = totalDays % equipesOrdonnees.length;
 
@@ -524,13 +546,15 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         newOrder.add(equipesOrdonnees[index]);
       }
 
-      print("   Continuité: Équipe ${newOrder[0]} commence le 1er ($totalDays jours depuis réf)");
+      print(
+          "   Continuité: Équipe ${newOrder[0]} commence le 1er ($totalDays jours depuis réf)");
 
       final nightOrder = List.generate(
         newOrder.length,
         (i) => newOrder[(i + newOrder.length - 1) % newOrder.length],
       );
-      await _executerPlanificationGardesSimple(newOrder, nightOrder: nightOrder);
+      await _executerPlanificationGardesSimple(newOrder,
+          nightOrder: nightOrder);
     } catch (e) {
       print("❌ Erreur _copyParamedicalRotation: $e");
     }
@@ -560,10 +584,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       final dateReference = DateTime(2024, 1, 1);
       final dateCible = DateTime(toYear, toMonth, 1);
       final totalDays = dateCible.difference(dateReference).inDays;
-      
+
       int startAgentIndex = totalDays % agentsHygiene.length;
 
-      final joursPlanifies = List.generate(DateUtils.getDaysInMonth(toYear, toMonth), (i) => i + 1);
+      final joursPlanifies = List.generate(
+          DateUtils.getDaysInMonth(toYear, toMonth), (i) => i + 1);
       final congesParAgent = await _analyserCongesAgents(agentsHygiene);
 
       await _executerPlanificationAgentsHygiene(
@@ -604,11 +629,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   bool _isAlgerianHoliday(DateTime date) {
     // Jours fixes
-    if (date.month == 1 && date.day == 1) return true;   // Nouvel an
-    if (date.month == 5 && date.day == 1) return true;   // Fête du travail
-    if (date.month == 7 && date.day == 5) return true;   // Indépendance
-    if (date.month == 11 && date.day == 1) return true;  // Révolution
-    
+    if (date.month == 1 && date.day == 1) return true; // Nouvel an
+    if (date.month == 5 && date.day == 1) return true; // Fête du travail
+    if (date.month == 7 && date.day == 5) return true; // Indépendance
+    if (date.month == 11 && date.day == 1) return true; // Révolution
+
     // Jours mobiles (Dates pour 2024-2026 approx.)
     // Note: Dans une version pro, utiliser une API ou un calcul lunaire
     final holidays = {
@@ -617,11 +642,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       2026: ["03-20", "03-21", "05-27", "05-28", "06-16", "06-25", "08-25"],
     };
 
-    final dateStr = "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-    if (holidays.containsKey(date.year) && holidays[date.year]!.contains(dateStr)) {
+    final dateStr =
+        "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    if (holidays.containsKey(date.year) &&
+        holidays[date.year]!.contains(dateStr)) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -1084,7 +1111,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       key: ValueKey(
           'staff_table_${staffProvider.lastUpdateTimestamp}_${staffProvider.staffs.length}'),
       appBar: AppBar(
-        title: const Text('Hospital Planning', 
+        title: const Text(
+          'Hospital Planning',
           style: TextStyle(fontSize: 18),
           overflow: TextOverflow.ellipsis,
         ),
@@ -1109,7 +1137,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 icon: const FaIcon(FontAwesomeIcons.message),
                 count: messagingManager.totalUnreadCount,
                 badgeColor: Colors.red,
-                tooltip: 'Messages (${messagingManager.totalUnreadCount} non lus)',
+                tooltip:
+                    'Messages (${messagingManager.totalUnreadCount} non lus)',
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -1410,22 +1439,22 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 //         .push(MaterialPageRoute(
                                 //             builder: (ctx) => CardsPage())),
                                 //     icon: Icon(Icons.dangerous_rounded)),
-                                _buildLegendItem('GJ',
-                                    _getStatusColor('GJ'), 'Jour'),
-                                _buildLegendItem('GN',
-                                    _getStatusColor('GN'), 'Nuit'),
+                                _buildLegendItem(
+                                    'GJ', _getStatusColor('GJ'), 'Jour'),
+                                _buildLegendItem(
+                                    'GN', _getStatusColor('GN'), 'Nuit'),
                                 _buildLegendItem('RE', _getStatusColor('RE'),
                                     'Récupération'),
                                 _buildLegendItem(
                                     'C', _getStatusColor('C'), 'Congé'),
                                 _buildLegendItem('CM', _getStatusColor('CM'),
                                     'Congé Maladie'),
-                                _buildLegendItem('M', _getStatusColor('M'),
-                                    'Maternité'),
+                                _buildLegendItem(
+                                    'M', _getStatusColor('M'), 'Maternité'),
                                 _buildLegendItem(
                                     'N', _getStatusColor('N'), 'Normal'),
-                                _buildLegendItem('F', _getStatusColor('F'),
-                                    'Jour Férié'),
+                                _buildLegendItem(
+                                    'F', _getStatusColor('F'), 'Jour Férié'),
                                 _buildLegendItem(
                                     '-', _getStatusColor('-'), '-'),
                                 // ElevatedButton.icon(
@@ -3693,10 +3722,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   Future<void> _showAddHolidayDialog(BuildContext context) async {
     final daysInMonth = DateTime(_selectedYear, _selectedMonth + 1, 0).day;
     final List<int> selectedDays = [];
-    
+
     // Groupes disponibles
     final List<String> availableGroups = [
-      if (_selectedStaffIds.isNotEmpty) 'Personnes sélectionnées (${_selectedStaffIds.length})',
+      if (_selectedStaffIds.isNotEmpty)
+        'Personnes sélectionnées (${_selectedStaffIds.length})',
       'Tous',
       'Personnel Médical',
       'Personnel Paramédical (16h)',
@@ -3706,8 +3736,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     // Initialiser avec 'Tous' ou les personnes sélectionnées
     final List<String> selectedGroups = [
-      _selectedStaffIds.isNotEmpty 
-          ? 'Personnes sélectionnées (${_selectedStaffIds.length})' 
+      _selectedStaffIds.isNotEmpty
+          ? 'Personnes sélectionnées (${_selectedStaffIds.length})'
           : 'Tous'
     ];
 
@@ -3716,9 +3746,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          
+
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             title: Row(
               children: [
                 Icon(Icons.event_available, color: Colors.orange.shade700),
@@ -3734,7 +3765,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('1. Sélectionnez les jours :',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.blue.shade200 : Colors.blue.shade800)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? Colors.blue.shade200
+                                : Colors.blue.shade800)),
                     SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -3742,9 +3777,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       children: List.generate(daysInMonth, (index) {
                         final day = index + 1;
                         final isSelected = selectedDays.contains(day);
-                        final date = DateTime(_selectedYear, _selectedMonth, day);
-                        final isWeekend = date.weekday == DateTime.friday || date.weekday == DateTime.saturday;
-                        
+                        final date =
+                            DateTime(_selectedYear, _selectedMonth, day);
+                        final isWeekend = date.weekday == DateTime.friday ||
+                            date.weekday == DateTime.saturday;
+
                         return ChoiceChip(
                           label: SizedBox(
                             width: 25,
@@ -3762,24 +3799,41 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           },
                           selectedColor: Colors.orange.shade700,
                           labelStyle: TextStyle(
-                            color: isSelected 
-                                ? Colors.white 
-                                : (isWeekend ? (isDark ? Colors.red.shade200 : Colors.red.shade700) : (isDark ? Colors.white : Colors.black)),
-                            fontWeight: isSelected || isWeekend ? FontWeight.bold : FontWeight.normal,
+                            color: isSelected
+                                ? Colors.white
+                                : (isWeekend
+                                    ? (isDark
+                                        ? Colors.red.shade200
+                                        : Colors.red.shade700)
+                                    : (isDark ? Colors.white : Colors.black)),
+                            fontWeight: isSelected || isWeekend
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
-                          backgroundColor: isWeekend 
-                              ? (isDark ? Colors.red.shade900.withOpacity(0.3) : Colors.red.shade50)
-                              : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
+                          backgroundColor: isWeekend
+                              ? (isDark
+                                  ? Colors.red.shade900.withOpacity(0.3)
+                                  : Colors.red.shade50)
+                              : (isDark
+                                  ? Colors.grey.shade800
+                                  : Colors.grey.shade100),
                         );
                       }),
                     ),
                     SizedBox(height: 24),
                     Text('2. Appliquer à (plusieurs choix possibles) :',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.blue.shade200 : Colors.blue.shade800)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark
+                                ? Colors.blue.shade200
+                                : Colors.blue.shade800)),
                     SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
-                        border: Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.grey.shade700
+                                : Colors.grey.shade300),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -3813,18 +3867,31 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     Container(
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isDark ? Colors.amber.shade900.withOpacity(0.2) : Colors.amber.shade50,
+                        color: isDark
+                            ? Colors.amber.shade900.withOpacity(0.2)
+                            : Colors.amber.shade50,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isDark ? Colors.amber.shade700 : Colors.amber.shade200),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.amber.shade700
+                                : Colors.amber.shade200),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, size: 18, color: isDark ? Colors.amber.shade200 : Colors.amber.shade800),
+                          Icon(Icons.info_outline,
+                              size: 18,
+                              color: isDark
+                                  ? Colors.amber.shade200
+                                  : Colors.amber.shade800),
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Le statut "F" (Férié) sera appliqué aux jours sélectionnés pour tous les groupes cochés.',
-                              style: TextStyle(fontSize: 12, color: isDark ? Colors.amber.shade100 : Colors.amber.shade900),
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.amber.shade100
+                                      : Colors.amber.shade900),
                             ),
                           ),
                         ],
@@ -3843,7 +3910,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange.shade700,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 onPressed: (selectedDays.isEmpty || selectedGroups.isEmpty)
                     ? null
@@ -3866,7 +3934,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final allStaffs = staffProvider.staffs;
 
     Set<int> targetStaffIds = {};
-    
+
     if (groups.contains('Tous')) {
       targetStaffIds = allStaffs.map((s) => s.id).toSet();
     } else {
@@ -3874,7 +3942,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         if (group.startsWith('Personnes sélectionnées')) {
           targetStaffIds.addAll(_selectedStaffIds);
         } else {
-          final staffsInGroup = allStaffs.where((s) => _getGroupeAffichage(s) == group).map((s) => s.id);
+          final staffsInGroup = allStaffs
+              .where((s) => _getGroupeAffichage(s) == group)
+              .map((s) => s.id);
           targetStaffIds.addAll(staffsInGroup);
         }
       }
@@ -3888,7 +3958,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     }
 
     int totalUpdates = 0;
-    
+
     // Afficher un dialogue de chargement
     showDialog(
       context: context,
@@ -3912,12 +3982,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       await staffProvider.fetchStaffs();
-      
+
       if (mounted) {
         Navigator.pop(context); // Fermer le loader
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('✅ $totalUpdates jours fériés appliqués pour ${targetStaffIds.length} personnes'),
+            content: Text(
+                '✅ $totalUpdates jours fériés appliqués pour ${targetStaffIds.length} personnes'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
@@ -3954,7 +4025,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           title: const Row(
             children: [
               Icon(Icons.event_busy, color: Colors.red),
@@ -4031,7 +4103,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     try {
       for (final staff in staffProvider.staffs) {
         for (final activite in staff.activites) {
-          if (activite.statut.toUpperCase() == 'F' && days.contains(activite.jour)) {
+          if (activite.statut.toUpperCase() == 'F' &&
+              days.contains(activite.jour)) {
             await activiteProvider.forceUpdateActiviteIgnoringLeave(
               staff.id,
               activite.jour,
@@ -4063,9 +4136,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
   /// Construit les actions pour Mobile (menu dropdown)
   Widget _buildMobileActions(BuildContext context) {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
-    final hasHolidays = staffProvider.staffs
-        .any((staff) => staff.activites.any((activite) => activite.statut.toUpperCase() == 'F'));
-    
+    final hasHolidays = staffProvider.staffs.any((staff) => staff.activites
+        .any((activite) => activite.statut.toUpperCase() == 'F'));
+
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, color: Colors.white),
       onSelected: (value) => _handleMobileMenuAction(context, value),
@@ -4235,10 +4308,12 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         _showClassificationDialog(context);
         break;
       case 'about':
-        Navigator.push(context, MaterialPageRoute(builder: (context) => AboutAppPage()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => AboutAppPage()));
         break;
       case 'license':
-        Navigator.push(context, MaterialPageRoute(builder: (_) => LicenseInfoPage()));
+        Navigator.push(
+            context, MaterialPageRoute(builder: (_) => LicenseInfoPage()));
         break;
       case 'clear_month':
         await _clearCurrentMonthData();
@@ -4313,7 +4388,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                   ),
                   ...e.value.map((s) {
                     final staff = s['staff'] as Staff;
-                    return Text('  • ${staff.id} ${staff.ordre} ${staff.nom} - ${staff.groupe}');
+                    return Text(
+                        '  • ${staff.id} ${staff.ordre} ${staff.nom} - ${staff.groupe}');
                   }),
                   const Divider(),
                 ],
@@ -4797,7 +4873,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
               child: Container(
                 width: double.infinity,
                 child: Text(
-                  statut == 'GJ' ? 'Jour' : statut == 'GN' ? 'Nuit' : statut,
+                  statut == 'GJ'
+                      ? 'Jour'
+                      : statut == 'GN'
+                          ? 'Nuit'
+                          : statut,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 11,
@@ -4911,7 +4991,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 ),
                 child: Center(
                   child: Text(
-                    displayValue == 'GJ' ? 'Jour' : displayValue == 'GN' ? 'Nuit' : displayValue,
+                    displayValue == 'GJ'
+                        ? 'Jour'
+                        : displayValue == 'GN'
+                            ? 'Nuit'
+                            : displayValue,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: _getStatusColor(displayValue),
@@ -5382,7 +5466,17 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     String motif = timeOff.motif ?? 'Congé';
 
     // 🔹 Liste de motifs possibles (à personnaliser selon ton besoin)
-    final List<String> motifsDisponibles = ['GJ', 'GN', "RE", 'C', 'CM','M', 'N','F', '-'];
+    final List<String> motifsDisponibles = [
+      'GJ',
+      'GN',
+      "RE",
+      'C',
+      'CM',
+      'M',
+      'N',
+      'F',
+      '-'
+    ];
 
     await showDialog(
       context: context,
@@ -5662,7 +5756,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
     // 1. Vérifier si c'est un weekend (sauf hygiène: week-ends inclus)
     if (!isHygiene &&
-        (date.weekday == DateTime.friday || date.weekday == DateTime.saturday)) {
+        (date.weekday == DateTime.friday ||
+            date.weekday == DateTime.saturday)) {
       return "RE"; // Récupération pour tout le monde
     }
 
@@ -5725,10 +5820,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
 
       // Récupérer tous les agents d'hygiène
-      final agentsHygiene = objectBox.staffBox
-          .getAll()
-          .where(_isHygieneStaff)
-          .toList();
+      final agentsHygiene =
+          objectBox.staffBox.getAll().where(_isHygieneStaff).toList();
 
       if (agentsHygiene.isEmpty) return 'RE';
 
@@ -5765,12 +5858,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       // Lire séparément les ordres Jour et Nuit sauvegardés.
       final decodedOrders = _decodeOrders(planif.ordreEquipes);
-      final equipesOrdonnees = decodedOrders[0]
-          .map((e) => e.toUpperCase())
-          .toList();
-      final ordreNuit = decodedOrders[1]
-          .map((e) => e.toUpperCase())
-          .toList();
+      final equipesOrdonnees =
+          decodedOrders[0].map((e) => e.toUpperCase()).toList();
+      final ordreNuit = decodedOrders[1].map((e) => e.toUpperCase()).toList();
 
       if (equipesOrdonnees.isEmpty) return '-';
 
@@ -5828,15 +5918,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final objectBox = ObjectBox();
 
     // Afficher l'historique complet des congés de cette personne.
-    final timeOffQuery = objectBox.timeOffBox
-        .query(TimeOff_.staff.equals(staff.id))
-        .build();
+    final timeOffQuery =
+        objectBox.timeOffBox.query(TimeOff_.staff.equals(staff.id)).build();
     final freshTimeOffs = timeOffQuery.find()
       ..sort((a, b) => b.debut.compareTo(a.debut));
     timeOffQuery.close();
 
-    print(
-        "📊 _buildCongesListView : ${freshTimeOffs.length} congés au total");
+    print("📊 _buildCongesListView : ${freshTimeOffs.length} congés au total");
 
     // Récupérer les activités de congé pour le mois sélectionné uniquement
     final congesActivites = staff.activites
@@ -6666,11 +6754,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
       final daysInMonth = _daysInSelectedMonth;
       int totalModifications = 0;
-      Map<String, int> gardesJourParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> gardesNuitParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> reposParEquipe = {
+      Map<String, int> gardesJourParEquipe = {
         for (var e in equipesOrdonnees) e: 0
       };
+      Map<String, int> gardesNuitParEquipe = {
+        for (var e in equipesOrdonnees) e: 0
+      };
+      Map<String, int> reposParEquipe = {for (var e in equipesOrdonnees) e: 0};
       int congesRespectes = 0;
 
       // Personnel médical avec équipes
@@ -6699,7 +6789,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         final activites = staff.activites.toList();
         bool enCongeActivite = activites.any((activite) =>
             activite.jour == jour &&
-            (activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M'));
+            (activite.statut == 'C' ||
+                activite.statut == 'CM' ||
+                activite.statut == 'M'));
 
         return enCongeTimeOff || enCongeActivite;
       }
@@ -6941,6 +7033,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       }
       return result;
     }
+
     List<String> completeOrder(List<String> current, List<String> defaults) {
       final normalized = normalizeOrder(current);
       for (final equipe in defaults) {
@@ -6974,8 +7067,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     );
   }
 
-  Future<void> _executerPlanificationGardesSimple(
-      List<String> equipesOrdonnees, {required List<String> nightOrder}) async {
+  Future<void> _executerPlanificationGardesSimple(List<String> equipesOrdonnees,
+      {required List<String> nightOrder}) async {
     final messenger = ScaffoldMessenger.of(context);
     try {
       final staffProvider = Provider.of<StaffProvider>(context, listen: false);
@@ -6986,11 +7079,13 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       int totalModifications = 0;
       int gardesEcrasees = 0;
 
-      Map<String, int> gardesJourParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> gardesNuitParEquipe = {for (var e in equipesOrdonnees) e: 0};
-      Map<String, int> reposParEquipe = {
+      Map<String, int> gardesJourParEquipe = {
         for (var e in equipesOrdonnees) e: 0
       };
+      Map<String, int> gardesNuitParEquipe = {
+        for (var e in equipesOrdonnees) e: 0
+      };
+      Map<String, int> reposParEquipe = {for (var e in equipesOrdonnees) e: 0};
       Map<String, int> congesAppliques = {for (var e in equipesOrdonnees) e: 0};
 
       // ✅ 1. Sauvegarder l'ordre des équipes
@@ -7055,7 +7150,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       for (final staff in personnelParamedical) {
         congesParStaff.putIfAbsent(staff.id, () => {});
         for (var activite in staff.activites) {
-          if ((activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M') &&
+          if ((activite.statut == 'C' ||
+                  activite.statut == 'CM' ||
+                  activite.statut == 'M') &&
               activite.jour >= 1 &&
               activite.jour <= daysInMonth) {
             congesParStaff[staff.id]![activite.jour] = activite.statut;
@@ -7121,7 +7218,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
           if (activites.isNotEmpty) {
             String? statutActuel = activites.first.statut;
-            if (statutActuel == 'JOUR' || statutActuel == 'G' || statutActuel == 'NUIT') {
+            if (statutActuel == 'JOUR' ||
+                statutActuel == 'G' ||
+                statutActuel == 'NUIT') {
               gardesEcrasees++;
               String equipe = staff.equipe!.toUpperCase();
               if (statutActuel == 'JOUR') {
@@ -7203,21 +7302,27 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 ),
                 if (resumeGardesJour.isNotEmpty)
                   Text("  Jour: $resumeGardesJour",
-                      style: TextStyle(color: Colors.blue.shade200, fontSize: 12)),
+                      style:
+                          TextStyle(color: Colors.blue.shade200, fontSize: 12)),
                 if (resumeGardesNuit.isNotEmpty)
                   Text("  Nuit: $resumeGardesNuit",
-                      style: TextStyle(color: Colors.indigo.shade200, fontSize: 12)),
+                      style: TextStyle(
+                          color: Colors.indigo.shade200, fontSize: 12)),
                 if (resumeRepos.isNotEmpty)
                   Text("  Repos: $resumeRepos",
-                      style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
+                      style:
+                          TextStyle(color: Colors.grey.shade400, fontSize: 12)),
                 if (resumeConges.isNotEmpty)
                   Text("  Congés: $resumeConges",
-                      style: TextStyle(color: Colors.orange.shade200, fontSize: 12)),
+                      style: TextStyle(
+                          color: Colors.orange.shade200, fontSize: 12)),
                 if (gardesEcrasees > 0)
                   Text("  $gardesEcrasees gardes écrasées par des congés",
-                      style: TextStyle(color: Colors.yellow.shade200, fontSize: 12)),
+                      style: TextStyle(
+                          color: Colors.yellow.shade200, fontSize: 12)),
                 Text("✅ $totalModifications modifications",
-                    style: TextStyle(color: Colors.green.shade200, fontSize: 12)),
+                    style:
+                        TextStyle(color: Colors.green.shade200, fontSize: 12)),
               ],
             ),
           ),
@@ -7348,7 +7453,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       activiteQuery.close();
 
       for (var activite in activites) {
-        if ((activite.statut == 'C' || activite.statut == 'CM' || activite.statut == 'M') &&
+        if ((activite.statut == 'C' ||
+                activite.statut == 'CM' ||
+                activite.statut == 'M') &&
             activite.jour >= 1 &&
             activite.jour <= _daysInSelectedMonth &&
             !joursConge.contains(activite.jour)) {
@@ -8247,7 +8354,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final String statut = groupe['statut'] as String;
 
     final int duree = end.difference(start).inDays + 1;
-    final String label = (statut == 'CM') ? "Congé Maladie" : (statut == 'M' ? "Maternité" : "Congé");
+    final String label = (statut == 'CM')
+        ? "Congé Maladie"
+        : (statut == 'M' ? "Maternité" : "Congé");
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -8721,7 +8830,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
                 if (activites.isNotEmpty) {
                   String ancienStatut = activites.first.statut;
-                  if (ancienStatut != 'C' && ancienStatut != 'CM' && ancienStatut != 'M') {
+                  if (ancienStatut != 'C' &&
+                      ancienStatut != 'CM' &&
+                      ancienStatut != 'M') {
                     gardesEcrasees++;
                     print("      Jour $jour: $ancienStatut → C (TimeOff)");
                   }
@@ -10240,7 +10351,17 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
   late DateTime dateFin;
   late String motif;
 
-  final List<String> motifsDisponibles = ['JOUR', 'NUIT', "RE", 'C', 'CM','M', 'N','F', '-'];
+  final List<String> motifsDisponibles = [
+    'JOUR',
+    'NUIT',
+    "RE",
+    'C',
+    'CM',
+    'M',
+    'N',
+    'F',
+    '-'
+  ];
 
   @override
   void initState() {
@@ -10489,7 +10610,8 @@ class OrdreMonitorWidget extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   onPressed: () {
                     _TableauStaffPageState? state = context
@@ -10524,7 +10646,8 @@ class OrdreMonitorWidget extends StatelessWidget {
           Flexible(
             child: Text(
               '$label: $value',
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.bold, color: color),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -10640,106 +10763,121 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-              // ── Ordre Jour ─────────────────────────────────────────────
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.teal.shade50,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.teal.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.swap_vert, size: 16, color: Colors.teal.shade700),
-                    SizedBox(width: 6),
-                    Text(
-                        "Ordre Jour",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal.shade800,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "(glissez-déposez pour réorganiser)",
-                        style: TextStyle(fontSize: 11, color: Colors.teal.shade600),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 8),
-
-              // ── Liste unique drag & drop ────────────────────────────────
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.teal.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: ordreUnique.length,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) newIndex--;
-                      final item = ordreUnique.removeAt(oldIndex);
-                      ordreUnique.insert(newIndex, item);
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final equipe = ordreUnique[index];
-                    return Container(
-                      key: ValueKey('unique_$equipe'),
-                      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Card(
-                        color: index == 0 ? Colors.teal.shade50 : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: index == 0 ? Colors.teal.shade300 : Colors.grey.shade200,
+                        // ── Ordre Jour ─────────────────────────────────────────────
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.teal.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.teal.shade200),
                           ),
-                        ),
-                        child: ListTile(
-                          dense: true,
-                          leading: Container(
-                            width: 32, height: 32,
-                            decoration: BoxDecoration(
-                              color: widget.getEquipeColor(equipe),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                equipe,
+                          child: Row(
+                            children: [
+                              Icon(Icons.swap_vert,
+                                  size: 16, color: Colors.teal.shade700),
+                              SizedBox(width: 6),
+                              Text(
+                                "Ordre Jour",
                                 style: TextStyle(
-                                  color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                                  color: Colors.teal.shade800,
                                 ),
                               ),
-                            ),
-                          ),
-                          title: Text(
-                            "Équipe $equipe",
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: index == 0 ? FontWeight.bold : FontWeight.w500,
-                            ),
-                          ),
-                          subtitle: Row(
-                            children: [
-                              Icon(Icons.wb_sunny, size: 11, color: Colors.orange.shade600),
-                              Text(" Jour J${index + 1}", style: TextStyle(fontSize: 10)),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "(glissez-déposez pour réorganiser)",
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.teal.shade600),
+                                ),
+                              ),
                             ],
                           ),
-                        //  trailing: Icon(Icons.drag_handle, color: Colors.grey.shade400, size: 20),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                        SizedBox(height: 8),
+
+                        // ── Liste unique drag & drop ────────────────────────────────
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.teal.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ReorderableListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: ordreUnique.length,
+                            onReorder: (oldIndex, newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) newIndex--;
+                                final item = ordreUnique.removeAt(oldIndex);
+                                ordreUnique.insert(newIndex, item);
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final equipe = ordreUnique[index];
+                              return Container(
+                                key: ValueKey('unique_$equipe'),
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 2),
+                                child: Card(
+                                  color: index == 0
+                                      ? Colors.teal.shade50
+                                      : Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: BorderSide(
+                                      color: index == 0
+                                          ? Colors.teal.shade300
+                                          : Colors.grey.shade200,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: widget.getEquipeColor(equipe),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          equipe,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      "Équipe $equipe",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: index == 0
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                      ),
+                                    ),
+                                    subtitle: Row(
+                                      children: [
+                                        Icon(Icons.wb_sunny,
+                                            size: 11,
+                                            color: Colors.orange.shade600),
+                                        Text(" Jour J${index + 1}",
+                                            style: TextStyle(fontSize: 10)),
+                                      ],
+                                    ),
+                                    //  trailing: Icon(Icons.drag_handle, color: Colors.grey.shade400, size: 20),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -10748,112 +10886,119 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.indigo.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.nights_stay, size: 16, color: Colors.indigo.shade700),
-                    SizedBox(width: 6),
-                    Text(
-                      "Ordre Nuit",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo.shade800,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        "(glissez-déposez pour réorganiser)",
-                        style: TextStyle(fontSize: 11, color: Colors.indigo.shade600),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 8),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.indigo.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: ordreNuit.length,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (newIndex > oldIndex) newIndex--;
-                      final item = ordreNuit.removeAt(oldIndex);
-                      ordreNuit.insert(newIndex, item);
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final equipe = ordreNuit[index];
-                    return Container(
-                      key: ValueKey('night_$equipe'),
-                      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Card(
-                        color: index == 0 ? Colors.indigo.shade50 : Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(
-                            color: index == 0
-                                ? Colors.indigo.shade300
-                                : Colors.grey.shade200,
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.indigo.shade200),
                           ),
-                        ),
-                        child: ListTile(
-                          dense: true,
-                          leading: Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: widget.getEquipeColor(equipe),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                equipe,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            'Équipe $equipe',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: index == 0
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                          subtitle: Row(
+                          child: Row(
                             children: [
                               Icon(Icons.nights_stay,
-                                  size: 11, color: Colors.indigo.shade600),
-                              Text(' Nuit J${index + 1}',
-                                  style: TextStyle(fontSize: 10)),
+                                  size: 16, color: Colors.indigo.shade700),
+                              SizedBox(width: 6),
+                              Text(
+                                "Ordre Nuit",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.indigo.shade800,
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  "(glissez-déposez pour réorganiser)",
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.indigo.shade600),
+                                ),
+                              ),
                             ],
                           ),
-                          // trailing: Icon(Icons.drag_handle,
-                          //     color: Colors.grey.shade400, size: 20),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+                        SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.indigo.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ReorderableListView.builder(
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            itemCount: ordreNuit.length,
+                            onReorder: (oldIndex, newIndex) {
+                              setState(() {
+                                if (newIndex > oldIndex) newIndex--;
+                                final item = ordreNuit.removeAt(oldIndex);
+                                ordreNuit.insert(newIndex, item);
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final equipe = ordreNuit[index];
+                              return Container(
+                                key: ValueKey('night_$equipe'),
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 2),
+                                child: Card(
+                                  color: index == 0
+                                      ? Colors.indigo.shade50
+                                      : Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: BorderSide(
+                                      color: index == 0
+                                          ? Colors.indigo.shade300
+                                          : Colors.grey.shade200,
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    dense: true,
+                                    leading: Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: widget.getEquipeColor(equipe),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          equipe,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    title: Text(
+                                      'Équipe $equipe',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: index == 0
+                                            ? FontWeight.bold
+                                            : FontWeight.w500,
+                                      ),
+                                    ),
+                                    subtitle: Row(
+                                      children: [
+                                        Icon(Icons.nights_stay,
+                                            size: 11,
+                                            color: Colors.indigo.shade600),
+                                        Text(' Nuit J${index + 1}',
+                                            style: TextStyle(fontSize: 10)),
+                                      ],
+                                    ),
+                                    // trailing: Icon(Icons.drag_handle,
+                                    //     color: Colors.grey.shade400, size: 20),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -10876,7 +11021,8 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                           .toList();
                     });
                   },
-                  icon: Icon(Icons.restart_alt, size: 16, color: Colors.teal.shade600),
+                  icon: Icon(Icons.restart_alt,
+                      size: 16, color: Colors.teal.shade600),
                   label: Text(
                     "Réinitialiser (A→J1, C→J2, B→J3, D→J4)",
                     style: TextStyle(fontSize: 11, color: Colors.teal.shade600),
@@ -10887,7 +11033,8 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
 
               // ── Aperçu ────────────────────────────────────────────────
               Container(
-                key: ValueKey('apercu_${ordreUnique.join()}_${ordreNuit.join()}'),
+                key: ValueKey(
+                    'apercu_${ordreUnique.join()}_${ordreNuit.join()}'),
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
@@ -10899,11 +11046,14 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.preview, color: Colors.blue.shade700, size: 18),
+                        Icon(Icons.preview,
+                            color: Colors.blue.shade700, size: 18),
                         SizedBox(width: 8),
                         Text(
                           "Aperçu du planning (4 premiers jours)",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700),
                         ),
                       ],
                     ),
@@ -10915,33 +11065,50 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                       final nightShiftIdx = (jour - 1) % ordreNuit.length;
                       final equipeJour = ordreUnique[dayShiftIdx];
                       final equipeNuit = ordreNuit[nightShiftIdx];
-                      final date = DateTime(widget.selectedYear, widget.selectedMonth, jour);
+                      final date = DateTime(
+                          widget.selectedYear, widget.selectedMonth, jour);
                       final nomJour = DateFormat('EEEE', 'fr_FR').format(date);
                       return Padding(
                         padding: EdgeInsets.symmetric(vertical: 3),
                         child: Row(
                           children: [
                             Container(
-                              width: 20, height: 20,
+                              width: 20,
+                              height: 20,
                               decoration: BoxDecoration(
                                 color: widget.getEquipeColor(equipeJour),
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
-                                child: Text(equipeJour, style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                                child: Text(equipeJour,
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold)),
                               ),
                             ),
                             SizedBox(width: 6),
                             Expanded(
-                              child: Text("J$jour ($nomJour)", style: TextStyle(fontSize: 11)),
+                              child: Text("J$jour ($nomJour)",
+                                  style: TextStyle(fontSize: 11)),
                             ),
-                            Icon(Icons.wb_sunny, size: 12, color: Colors.orange.shade600),
+                            Icon(Icons.wb_sunny,
+                                size: 12, color: Colors.orange.shade600),
                             SizedBox(width: 2),
-                            Text("$equipeJour", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.orange.shade800)),
+                            Text("$equipeJour",
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade800)),
                             SizedBox(width: 10),
-                            Icon(Icons.nights_stay, size: 12, color: Colors.indigo.shade600),
+                            Icon(Icons.nights_stay,
+                                size: 12, color: Colors.indigo.shade600),
                             SizedBox(width: 2),
-                            Text("$equipeNuit", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.indigo.shade800)),
+                            Text("$equipeNuit",
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.indigo.shade800)),
                           ],
                         ),
                       );
@@ -10962,13 +11129,15 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline, color: Colors.amber.shade700, size: 16),
+                    Icon(Icons.info_outline,
+                        color: Colors.amber.shade700, size: 16),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         "Les ordres Jour et Nuit ci-dessus sont sauvegardés et appliqués tels quels.\n"
                         "Les congés existants sont préservés.",
-                        style: TextStyle(fontSize: 11, color: Colors.amber.shade700),
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.amber.shade700),
                       ),
                     ),
                   ],

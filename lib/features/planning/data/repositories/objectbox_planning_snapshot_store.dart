@@ -90,7 +90,8 @@ class ObjectBoxPlanningSnapshotStore {
     if (candidates.isEmpty) return null;
 
     candidates.sort((a, b) {
-      final monthCompare = (b.year * 100 + b.month).compareTo(a.year * 100 + a.month);
+      final monthCompare =
+          (b.year * 100 + b.month).compareTo(a.year * 100 + a.month);
       if (monthCompare != 0) return monthCompare;
       final revisionCompare = b.revision.compareTo(a.revision);
       if (revisionCompare != 0) return revisionCompare;

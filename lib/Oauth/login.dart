@@ -361,7 +361,7 @@ class _LoginWidgetState extends State<LoginWidget> {
             backgroundColor: Colors.red,
             textColor: Colors.white,
             fontSize: 14.0);
-        
+
         if (mounted) {
           bool isLogin = true;
           void toggle() => setState(() => isLogin = !isLogin);
@@ -377,7 +377,7 @@ class _LoginWidgetState extends State<LoginWidget> {
       } else {
         msg = e.message ?? msg;
       }
-      
+
       Fluttertoast.showToast(
           msg: msg,
           toastLength: Toast.LENGTH_LONG,

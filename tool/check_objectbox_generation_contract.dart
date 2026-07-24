@@ -15,7 +15,8 @@ void main() {
 
   final hasGenerator = pubspecText.contains('objectbox_generator:');
   final hasBuildRunner = pubspecText.contains('build_runner:');
-  final isGenerated = generatedText.contains('GENERATED CODE - DO NOT MODIFY BY HAND');
+  final isGenerated =
+      generatedText.contains('GENERATED CODE - DO NOT MODIFY BY HAND');
   final documentsCommand = generatedText.contains(
     'dart run build_runner build',
   );

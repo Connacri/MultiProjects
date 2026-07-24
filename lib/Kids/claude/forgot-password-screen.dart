@@ -13,7 +13,7 @@ class ForgotPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _emailSent = false;
 
@@ -94,7 +94,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Icône principale
         Container(
           padding: const EdgeInsets.all(20),
@@ -109,12 +109,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Titre
         Text(
-          _emailSent 
-              ? 'Email envoyé !' 
-              : 'Mot de passe oublié',
+          _emailSent ? 'Email envoyé !' : 'Mot de passe oublié',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
@@ -122,7 +120,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        
+
         // Sous-titre
         Text(
           _emailSent
@@ -166,7 +164,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             },
           ),
           const SizedBox(height: 24),
-          
+
           // Bouton d'envoi
           FilledButton(
             onPressed: _isLoading ? null : _handleSendReset,
@@ -194,7 +192,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
           ),
           const SizedBox(height: 16),
-          
+
           // Lien retour connexion
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -238,7 +236,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Instructions
         Card(
           color: Theme.of(context).colorScheme.surfaceVariant,
@@ -271,7 +269,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // Boutons d'action
         Row(
           children: [
@@ -304,7 +302,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ],
         ),
-        
+
         // Note sur le spam
         const SizedBox(height: 16),
         Text(

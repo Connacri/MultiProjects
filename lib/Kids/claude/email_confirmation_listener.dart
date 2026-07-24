@@ -31,7 +31,8 @@ class EmailConfirmationListener {
     }
 
     print('[EmailListener] 🎧 Démarrage listener confirmation email...');
-    print('[EmailListener] 🔄 Polling toutes les ${_pollingInterval.inSeconds}s');
+    print(
+        '[EmailListener] 🔄 Polling toutes les ${_pollingInterval.inSeconds}s');
 
     _isListening = true;
     _onConfirmed = onConfirmed;

@@ -23,7 +23,8 @@ class PlanningRevisionPolicy {
     required int planningYear,
     required int planningMonth,
     required DateTime now,
-  }) => canEditCurrentMonth(
+  }) =>
+      canEditCurrentMonth(
         planningYear: planningYear,
         planningMonth: planningMonth,
         now: now,

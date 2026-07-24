@@ -10,8 +10,7 @@ class RotationEngine {
     required RotationState state,
     required int dayIndex,
   }) {
-    final index =
-        (state.phaseIndex + dayIndex) % rule.cycleLength;
+    final index = (state.phaseIndex + dayIndex) % rule.cycleLength;
 
     return rule.phases[index].shift;
   }
