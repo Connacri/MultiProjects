@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:multi_projects/features/planning/application/usecases/publish_planning.dart';
-import 'package:multi_projects/features/planning/domain/entities/planning_snapshot.dart';
-import 'package:multi_projects/features/planning/domain/repositories/planning_repository.dart';
-import 'package:multi_projects/features/planning/domain/services/planning_validator.dart';
+import 'package:kenzy/features/planning/application/usecases/publish_planning.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_snapshot.dart';
+import 'package:kenzy/features/planning/domain/repositories/planning_repository.dart';
+import 'package:kenzy/features/planning/domain/services/planning_validator.dart';
 
 class _FakePlanningRepository implements PlanningRepository {
   bool alreadyExists;
