@@ -11,7 +11,7 @@ class LoadPlanning {
     required int month,
     int? branchId,
   }) {
-    return repository.findByMonth(
+    return repository.findLatestByMonth(
       year: year,
       month: month,
       branchId: branchId,
