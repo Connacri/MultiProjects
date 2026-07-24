@@ -22,6 +22,12 @@ class PlanningSnapshotEntity {
   int createdAtEpochMs = 0;
   int? publishedAtEpochMs;
 
+  /// Persisted checkpoint used to continue rotation into the next month.
+  ///
+  /// This relation is intentionally independent from assignments. Editing
+  /// leave or team order must never mutate the historical rotation checkpoint.
+  final rotationState = ToOne<RotationStateSnapshotEntity>();
+
   @Backlink('snapshot')
   final assignments = ToMany<PlanningAssignmentEntity>();
 }
