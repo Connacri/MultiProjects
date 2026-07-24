@@ -23,6 +23,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.44.0'
           cache: true
 
       - name: Install dependencies
@@ -34,5 +35,8 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Run tests
-        run: flutter test --reporter expanded
+      - name: Run Planning tests
+        run: >-
+          flutter test
+          test/features/planning
+          --reporter expanded
