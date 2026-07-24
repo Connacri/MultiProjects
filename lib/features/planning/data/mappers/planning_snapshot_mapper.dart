@@ -2,16 +2,18 @@ import 'dart:convert';
 
 import '../../domain/entities/planning_assignment.dart';
 import '../../domain/entities/planning_snapshot.dart';
+import '../../domain/entities/rotation_state_snapshot.dart';
 import '../../domain/enums/shift_type.dart';
 import '../objectbox/planning_snapshot_entity.dart';
+import '../objectbox/rotation_state_snapshot_entity.dart';
 import '../models/planning_persistence_record.dart';
 
 /// Maps the immutable planning domain snapshot to/from ObjectBox.
 ///
 /// The ObjectBox schema is intentionally kept aligned with the current
-/// PlanningSnapshotEntity model. Rotation continuity is reconstructed from
-/// the published assignments by RotationContinuityResolver rather than being
-/// duplicated as an unversioned JSON field in the snapshot entity.
+/// PlanningSnapshotEntity model. Rotation continuity is now persisted as a
+/// separate checkpoint entity and attached to the snapshot by the repository
+/// layer.
 class PlanningSnapshotMapper {
   const PlanningSnapshotMapper();
 
@@ -29,9 +31,33 @@ class PlanningSnapshotMapper {
       publishedAt: entity.publishedAtEpochMs == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(entity.publishedAtEpochMs!),
+      rotationState: entity.rotationState.target == null
+          ? null
+          : fromRotationStateObjectBox(entity.rotationState.target!),
       assignments: List.unmodifiable(
         entity.assignments.map(fromObjectBoxAssignment),
       ),
+    );
+  }
+
+  RotationStateSnapshot fromRotationStateObjectBox(
+    RotationStateSnapshotEntity entity,
+  ) {
+    final decoded = jsonDecode(entity.teamPhaseByTeamJson);
+    final teamPhaseByTeam = decoded is Map
+        ? Map<String, int>.from(
+            decoded.map(
+              (key, value) => MapEntry(key.toString(), (value as num).toInt()),
+            ),
+          )
+        : const <String, int>{};
+
+    return RotationStateSnapshot(
+      date: DateTime.fromMillisecondsSinceEpoch(entity.dateEpochMs),
+      configurationId: entity.configurationId,
+      configurationVersion: entity.configurationVersion,
+      phaseIndex: entity.phaseIndex,
+      teamPhaseByTeam: Map.unmodifiable(teamPhaseByTeam),
     );
   }
 
@@ -84,6 +110,25 @@ class PlanningSnapshotMapper {
     }
 
     return entity;
+  }
+
+  RotationStateSnapshotEntity toRotationStateObjectBox(
+    RotationStateSnapshot snapshot, {
+    required int branchId,
+    required int year,
+    required int month,
+    required int revision,
+  }) {
+    return RotationStateSnapshotEntity()
+      ..branchId = branchId
+      ..year = year
+      ..month = month
+      ..revision = revision
+      ..dateEpochMs = snapshot.date.millisecondsSinceEpoch
+      ..configurationId = snapshot.configurationId
+      ..configurationVersion = snapshot.configurationVersion
+      ..phaseIndex = snapshot.phaseIndex
+      ..teamPhaseByTeamJson = jsonEncode(snapshot.teamPhaseByTeam);
   }
 
   PlanningAssignmentEntity toObjectBoxAssignment(PlanningAssignment assignment) {
