@@ -113,6 +113,8 @@ Les fichiers générés `lib/objectbox.g.dart`, les tests et les outils sont exc
 
 Le mécanisme doit être validé sur le CI réel. La détection actuelle est volontairement pragmatique et basée sur les fichiers modifiés et les marqueurs présents. Elle devra être ajustée si le projet utilise des modèles ObjectBox indirects ou des entités dont les relations sont définies dans des fichiers séparés.
 
+**Note :** l'upgrade vers ObjectBox 5.3.2 a résolu le problème `getInvocation` sur `DartObjectImpl` qui bloquait `build_runner`. Le générateur fonctionne désormais correctement avec `analyzer 10.2.0` et `source_gen 4.2.4`.
+
 ---
 
 ### 2.5. Tests du flux édition / révision / revalidation
@@ -565,7 +567,7 @@ Full test suite
 ## 8. Commits réalisés pendant ce chantier
 
 | Commit | Sujet | Statut |
-|---|---|---|
+|---|---|---|---|
 | `b51ca593213ebe8791e256615c8ecad9723b4efd` | Correction imports rotation | Réalisé |
 | `7f3e5637aba48aaac8f83bfef77d645ac876f735` | Correction imports publish gate | Réalisé |
 | `82a20f0eaf4cc750bc886be8b9ef2cbffdb9496b` | Restauration tests continuité rotation | Réalisé |
@@ -576,6 +578,8 @@ Full test suite
 | `3377c3153413b65d73971c0bbdd34b2cea07a7f2` | Tests édition/revalidation | Réalisé |
 | `90e0b60c5fa81985e8b8e547b572fdcbf1962443` | Tests persistance révisions ObjectBox | Réalisé |
 | `d66a20fc3256d4aad1f9458d6fc7f94bd98c77df` | Tests snapshots ObjectBox atomiques | Réalisé |
+| `659f4651c724d7b3b18322e95f7f1f0fdfaf919b` | Upgrade ObjectBox 4→5.3.2, fix build_runner | Réalisé |
+| `3cabef5bb1360b21044a0e91656064e2070f9d65` | Fix runInTx restant | Réalisé |
 
 > Les commits ci-dessus sont ceux identifiés pendant le chantier courant. En cas de divergence entre cet historique et `main`, la branche `main` et son historique Git font foi.
 
