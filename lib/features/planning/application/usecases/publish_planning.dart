@@ -11,12 +11,11 @@ class InvalidPlanningException implements Exception {
   String toString() => 'Invalid planning: ${errors.join('; ')}';
 }
 
-/// Validates and publishes a draft. Repository implementations must persist
-/// the snapshot and its assignments atomically.
+/// Validates and publishes a draft.
 ///
-/// Publication always validates the snapshot at the application boundary;
-/// UI validation state is only a presentation optimization and can never be
-/// used to bypass the business validation rule.
+/// Publication always validates at the application boundary. The repository
+/// owns the atomic persistence boundary and must persist the immutable snapshot
+/// together with its assignments and rotation checkpoint.
 class PublishPlanning {
   final PlanningRepository planningRepository;
   final PlanningValidator validator;
@@ -32,24 +31,11 @@ class PublishPlanning {
       throw InvalidPlanningException(validation.errors);
     }
 
-    final exists = await planningRepository.exists(
-      year: snapshot.year,
-      month: snapshot.month,
-      branchId: snapshot.branchId,
-    );
-
-    if (exists) {
-      throw StateError(
-        'Cannot publish over an existing planning snapshot for '
-        '${snapshot.year}-${snapshot.month}',
-      );
-    }
-
     final published = snapshot.copyWith(
       publishedAt: DateTime.now(),
     );
 
-    await planningRepository.publish(published);
+    await planningRepository.publishRevision(published);
     return published;
   }
 }
