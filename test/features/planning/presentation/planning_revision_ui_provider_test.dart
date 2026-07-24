@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:multi_projects/features/planning/domain/entities/planning_revision.dart';
-import 'package:multi_projects/features/planning/presentation/providers/planning_revision_ui_provider.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_revision.dart';
+import 'package:kenzy/features/planning/presentation/providers/planning_revision_ui_provider.dart';
 
 void main() {
   PlanningRevision revision({
