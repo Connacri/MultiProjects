@@ -110,6 +110,14 @@ extension on ShiftType {
         return 'Nuit';
       case ShiftType.rest:
         return 'Repos';
+      case ShiftType.leave:
+        return 'Congé';
+      case ShiftType.training:
+        return 'Formation';
+      case ShiftType.activity:
+        return 'Activité';
+      case ShiftType.other:
+        return 'Autre';
     }
   }
 }

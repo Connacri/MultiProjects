@@ -1,4 +1,3 @@
-import '../entities/rotation_configuration_v2.dart';
 import '../entities/rotation_state_snapshot.dart';
 
 class PlanningCacheKey {

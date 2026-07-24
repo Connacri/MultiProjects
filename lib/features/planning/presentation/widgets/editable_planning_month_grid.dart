@@ -22,7 +22,7 @@ class EditablePlanningMonthGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final byStaff = <int, Map<int, PlanningAssignment>>{};
     for (final assignment in planning.assignments) {
-      byStaff.putIfAbsent(assignment.staffId, () {})[assignment.date.day] =
+      byStaff.putIfAbsent(assignment.staffId, () => <int, PlanningAssignment>{})[assignment.date.day] =
           assignment;
     }
 
@@ -99,6 +99,10 @@ class _EditableAssignmentCell extends StatelessWidget {
       ShiftType.day => 'J',
       ShiftType.night => 'N',
       ShiftType.rest => 'R',
+      ShiftType.leave => 'C',
+      ShiftType.training => 'F',
+      ShiftType.activity => 'A',
+      ShiftType.other => '—',
     };
 
     return InkWell(

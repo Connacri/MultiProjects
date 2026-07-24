@@ -7,4 +7,9 @@ abstract interface class RotationConfigurationRepository {
   Future<RotationConfiguration?> findActive();
 
   Future<RotationPeriod?> findPeriodFor(DateTime date);
+
+  /// Stores a new immutable version of a configuration.
+  Future<RotationConfiguration> saveVersion({
+    required RotationConfiguration configuration,
+  });
 }

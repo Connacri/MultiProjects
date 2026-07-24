@@ -240,6 +240,41 @@ class ObjectBox {
     }
   }
 
+  /// Adds a small, self-contained demo catalogue for development screens.
+  /// The other counters are retained for compatibility with the existing UI;
+  /// only products are generated here because this store does not own the
+  /// legacy fake-data graph anymore.
+  void fillWithFakeData(
+    int users,
+    int clients,
+    int suppliers,
+    int products,
+    int approvisionnements,
+  ) {
+    final count = products < 0 ? 0 : products;
+    final now = DateTime.now();
+    produitBox.putMany([
+      for (var index = 0; index < count; index++)
+        Produit(
+          qr: 'demo-${now.microsecondsSinceEpoch}-$index',
+          nom: 'Produit démo ${index + 1}',
+          prixVente: 0,
+          derniereModification: now,
+        ),
+    ]);
+  }
+
+  /// Removes products without a usable QR code and returns their count.
+  int supprimerProduitsAvecQrCodeInvalide() {
+    final ids = produitBox
+        .getAll()
+        .where((product) => product.qr == null || product.qr!.trim().isEmpty)
+        .map((product) => product.id)
+        .toList(growable: false);
+    if (ids.isEmpty) return 0;
+    return produitBox.removeMany(ids);
+  }
+
   Future<Fournisseur> getFournisseurAleatoire() async {
     final count = fournisseurBox.count();
     if (count <= 0) {

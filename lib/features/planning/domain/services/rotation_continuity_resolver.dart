@@ -52,7 +52,12 @@ class RotationContinuityResolver {
 
     return RotationState(
       date: checkpoint.date,
-      teamPhases: Map.unmodifiable(retained),
+      teamShifts: Map.unmodifiable({
+        for (final entry in retained.entries)
+          entry.key: configuration.cycle[
+            entry.value % configuration.cycle.length
+          ],
+      }),
     );
   }
 }

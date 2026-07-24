@@ -1,6 +1,6 @@
 import 'staff_member.dart';
 import 'staff_leave.dart';
-import 'rotation_configuration_v2.dart';
+import 'rotation_configuration.dart';
 
 /// Minimal source of truth used to generate a new planning.
 ///
@@ -10,7 +10,7 @@ class PlanningInput {
   final int month;
   final List<StaffMember> staff;
   final List<StaffLeave> leaves;
-  final RotationConfigurationV2 rotation;
+  final RotationConfiguration rotation;
   final int? branchId;
 
   const PlanningInput({

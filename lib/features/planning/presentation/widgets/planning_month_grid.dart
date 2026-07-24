@@ -98,6 +98,10 @@ class _AssignmentCell extends StatelessWidget {
       ShiftType.day => 'J',
       ShiftType.night => 'N',
       ShiftType.rest => 'R',
+      ShiftType.leave => 'C',
+      ShiftType.training => 'F',
+      ShiftType.activity => 'A',
+      ShiftType.other => '—',
     };
 
     final content = Tooltip(

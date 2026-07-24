@@ -20,7 +20,7 @@ class PublishPlanning {
   });
 
   Future<PlanningPublication> call(PlanningSnapshot draft) async {
-    final existing = await repository.findByMonth(
+    final existing = await repository.findPublishedByMonth(
       year: draft.year,
       month: draft.month,
       branchId: draft.branchId,
@@ -48,7 +48,7 @@ class PublishPlanning {
 
     final publishedAt = DateTime.now();
     final published = draft.copyWith(publishedAt: publishedAt);
-    await repository.publish(published);
+    await repository.publishRevision(published);
 
     return PlanningPublication(
       snapshot: published,

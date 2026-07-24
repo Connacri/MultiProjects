@@ -1,7 +1,7 @@
 import '../entities/planning_snapshot.dart';
-import '../entities/rotation_configuration_v2.dart';
+import '../entities/rotation_configuration.dart';
 import '../entities/rotation_state_snapshot.dart';
-import 'rotation_engine_v2.dart';
+import 'rotation_engine.dart';
 
 /// Builds the exact continuity state that belongs to a published snapshot.
 ///
@@ -9,13 +9,13 @@ import 'rotation_engine_v2.dart';
 /// snapshot. Future months can resume from it without reinterpreting historical
 /// assignments or depending on today's configuration.
 class RotationStateBuilder {
-  final RotationEngineV2 engine;
+  final RotationEngine engine;
 
-  const RotationStateBuilder({this.engine = const RotationEngineV2()});
+  const RotationStateBuilder({this.engine = const RotationEngine()});
 
   RotationStateSnapshot build({
     required PlanningSnapshot snapshot,
-    required RotationConfigurationV2 configuration,
+    required RotationConfiguration configuration,
   }) {
     if (snapshot.assignments.isEmpty) {
       throw StateError('Cannot build rotation state from an empty snapshot.');
@@ -25,14 +25,15 @@ class RotationStateBuilder {
         .map((item) => item.date)
         .reduce((a, b) => a.isAfter(b) ? a : b);
 
-    final state = engine.stateAt(
-      configuration: configuration,
-      date: lastDate,
-      previousState: null,
-    );
-
     final teamPhase = <String, int>{
-      ...state.teamPhaseByTeam,
+      for (final team in configuration.teamOrder)
+        team: configuration.cycle.indexOf(
+          engine.shiftFor(
+            team: team,
+            date: lastDate,
+            configuration: configuration,
+          ),
+        ),
     };
 
     for (final team in configuration.teamOrder) {
@@ -41,7 +42,7 @@ class RotationStateBuilder {
           .toList();
       if (assignment.isEmpty) continue;
 
-      final index = configuration.cycle.indexOf(assignment.first.shift.name);
+      final index = configuration.cycle.indexOf(assignment.first.shift);
       if (index >= 0) teamPhase[team] = index;
     }
 
@@ -49,7 +50,7 @@ class RotationStateBuilder {
       date: DateTime(lastDate.year, lastDate.month, lastDate.day),
       configurationId: configuration.id,
       configurationVersion: configuration.version,
-      phaseIndex: state.phaseIndex,
+      phaseIndex: configuration.referencePhaseIndex,
       teamPhaseByTeam: Map.unmodifiable(teamPhase),
     );
   }

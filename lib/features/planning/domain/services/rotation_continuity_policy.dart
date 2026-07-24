@@ -8,7 +8,7 @@ class RotationContinuityPolicy {
   const RotationContinuityPolicy();
 
   bool shouldContinue(RotationConfiguration configuration) {
-    return configuration.policy == RotationPolicy.continuePreviousMonth;
+    return configuration.policy == RotationPolicy.continueFromPreviousPublished;
   }
 
   RotationState? normalize({
