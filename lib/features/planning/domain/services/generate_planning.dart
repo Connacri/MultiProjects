@@ -61,6 +61,7 @@ class GeneratePlanning {
       year: year,
       month: month,
       configuration: configuration,
+      continuity: continuity,
     );
 
     final baseline = teamScheduleGenerator.projectStaff(
