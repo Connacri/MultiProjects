@@ -1,4 +1,5 @@
 import 'planning_assignment.dart';
+import 'rotation_state_snapshot.dart';
 
 /// Immutable planning snapshot representing one revision of a monthly plan.
 ///
@@ -18,6 +19,7 @@ class PlanningSnapshot {
   final DateTime createdAt;
   final DateTime? publishedAt;
   final DateTime? continuityDate;
+  final RotationStateSnapshot? rotationState;
   final List<PlanningAssignment> assignments;
 
   const PlanningSnapshot({
@@ -33,6 +35,7 @@ class PlanningSnapshot {
     this.rotationPeriodId,
     this.publishedAt,
     this.continuityDate,
+    this.rotationState,
     this.assignments = const [],
   });
 
@@ -49,6 +52,7 @@ class PlanningSnapshot {
     DateTime? createdAt,
     DateTime? publishedAt,
     DateTime? continuityDate,
+    RotationStateSnapshot? rotationState,
     List<PlanningAssignment>? assignments,
   }) {
     return PlanningSnapshot(
@@ -64,6 +68,7 @@ class PlanningSnapshot {
       createdAt: createdAt ?? this.createdAt,
       publishedAt: publishedAt ?? this.publishedAt,
       continuityDate: continuityDate ?? this.continuityDate,
+      rotationState: rotationState ?? this.rotationState,
       assignments: assignments ?? this.assignments,
     );
   }
@@ -80,11 +85,12 @@ class PlanningSnapshot {
   String get monthKey => '${branchId ?? 0}:$year:${month.toString().padLeft(2, '0')}';
 
   /// Creates the next immutable revision while preserving the current
-  /// configuration and assignments unless explicitly replaced.
+  /// configuration, continuity checkpoint and assignments unless replaced.
   PlanningSnapshot nextRevision({
     required DateTime createdAt,
     List<PlanningAssignment>? assignments,
     DateTime? continuityDate,
+    RotationStateSnapshot? rotationState,
   }) {
     return PlanningSnapshot(
       id: '',
@@ -98,6 +104,7 @@ class PlanningSnapshot {
       revision: revision + 1,
       createdAt: createdAt,
       continuityDate: continuityDate ?? this.continuityDate,
+      rotationState: rotationState ?? this.rotationState,
       assignments: List.unmodifiable(assignments ?? this.assignments),
     );
   }
