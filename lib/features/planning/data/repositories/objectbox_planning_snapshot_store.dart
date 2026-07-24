@@ -2,25 +2,25 @@ import 'package:objectbox/objectbox.dart';
 
 import '../../../../objectbox.g.dart';
 import '../objectbox/planning_snapshot_entity.dart';
+import '../objectbox/rotation_state_snapshot_entity.dart';
 
 /// Low-level ObjectBox store for immutable Planning snapshots.
 ///
-/// Persistence is atomic through [Store.runInTx]. Higher layers own
-/// validation and publication business rules.
+/// Snapshot, rotation checkpoint and assignments are persisted atomically.
+/// Higher layers own validation and publication business rules.
 class ObjectBoxPlanningSnapshotStore {
   final Store store;
   final Box<PlanningSnapshotEntity> snapshotBox;
   final Box<PlanningAssignmentEntity> assignmentBox;
+  final Box<RotationStateSnapshotEntity> rotationStateBox;
 
   const ObjectBoxPlanningSnapshotStore({
     required this.store,
     required this.snapshotBox,
     required this.assignmentBox,
+    required this.rotationStateBox,
   });
 
-  /// Returns the currently published snapshot for a month and branch.
-  ///
-  /// A null [branchId] means the global branch (0), not "any branch".
   PlanningSnapshotEntity? findPublishedByMonth({
     required int year,
     required int month,
@@ -31,14 +31,9 @@ class ObjectBoxPlanningSnapshotStore {
       month: month,
       branchId: branchId,
       predicate: (snapshot) => snapshot.publishedAtEpochMs != null,
-      descendingRevision: true,
     );
   }
 
-  /// Returns the latest effective snapshot for a month and branch.
-  ///
-  /// The latest revision is selected deterministically. This is the snapshot
-  /// to use when editing or resuming the current planning draft.
   PlanningSnapshotEntity? findLatestByMonth({
     required int year,
     required int month,
@@ -49,11 +44,9 @@ class ObjectBoxPlanningSnapshotStore {
       month: month,
       branchId: branchId,
       predicate: (_) => true,
-      descendingRevision: true,
     );
   }
 
-  /// Returns one exact revision for a month and branch.
   PlanningSnapshotEntity? findByRevision({
     required int year,
     required int month,
@@ -69,8 +62,7 @@ class ObjectBoxPlanningSnapshotStore {
         .build();
 
     try {
-      final snapshots = query.find();
-      for (final snapshot in snapshots) {
+      for (final snapshot in query.find()) {
         if (_matchesBranch(snapshot, branchId)) return snapshot;
       }
       return null;
@@ -79,13 +71,30 @@ class ObjectBoxPlanningSnapshotStore {
     }
   }
 
-  /// Persists a snapshot and all its assignments atomically.
-  void putAtomically(
-    PlanningSnapshotEntity snapshot,
-    List<PlanningAssignmentEntity> assignments,
-  ) {
+  /// Persists snapshot, its rotation checkpoint and assignments atomically.
+  ///
+  /// The rotation checkpoint is attached to the snapshot before the snapshot
+  /// is written. If any write fails, ObjectBox rolls back the whole unit.
+  void putAtomically({
+    required PlanningSnapshotEntity snapshot,
+    required RotationStateSnapshotEntity rotationState,
+    required List<PlanningAssignmentEntity> assignments,
+  }) {
+    if (snapshot.year != rotationState.year ||
+        snapshot.month != rotationState.month ||
+        snapshot.revision != rotationState.revision ||
+        snapshot.branchId != rotationState.branchId) {
+      throw ArgumentError(
+        'Snapshot and rotation state must belong to the same branch, month '
+        'and revision.',
+      );
+    }
+
     store.runInTx(TxMode.write, () {
+      final rotationStateId = rotationStateBox.put(rotationState);
+      snapshot.rotationState.targetId = rotationStateId;
       final snapshotId = snapshotBox.put(snapshot);
+
       for (final assignment in assignments) {
         assignment.snapshot.targetId = snapshotId;
         assignmentBox.put(assignment);
@@ -98,7 +107,6 @@ class ObjectBoxPlanningSnapshotStore {
     required int month,
     required int? branchId,
     required bool Function(PlanningSnapshotEntity snapshot) predicate,
-    required bool descendingRevision,
   }) {
     final query = snapshotBox
         .query(
@@ -120,9 +128,7 @@ class ObjectBoxPlanningSnapshotStore {
 
       snapshots.sort((a, b) {
         final revisionCompare = b.revision.compareTo(a.revision);
-        if (revisionCompare != 0) {
-          return descendingRevision ? revisionCompare : -revisionCompare;
-        }
+        if (revisionCompare != 0) return revisionCompare;
         return b.id.compareTo(a.id);
       });
 
