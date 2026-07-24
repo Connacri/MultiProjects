@@ -1,26 +1,23 @@
-import '../models/leave_model.dart';
-import '../models/planning_assignment_model.dart';
-import '../models/planning_snapshot_model.dart';
+import '../entities/planning_snapshot.dart';
 
-abstract class PlanningRepository {
-  Future<PlanningSnapshotModel?> getSnapshot({
+abstract interface class PlanningRepository {
+  Future<PlanningSnapshot?> findByMonth({
     required int year,
     required int month,
+    int? branchId,
   });
 
-  Future<void> saveSnapshot(
-    PlanningSnapshotModel snapshot,
-  );
-
-  Future<void> saveAssignments(
-    List<PlanningAssignmentModel> assignments,
-  );
-
-  Future<List<PlanningAssignmentModel>> getAssignments({
-    required String snapshotId,
+  Future<PlanningSnapshot?> findPreviousPublished({
+    required int year,
+    required int month,
+    int? branchId,
   });
 
-  Future<List<LeaveModel>> getLeaves({
-    required String staffId,
+  Future<bool> exists({
+    required int year,
+    required int month,
+    int? branchId,
   });
+
+  Future<void> publish(PlanningSnapshot snapshot);
 }

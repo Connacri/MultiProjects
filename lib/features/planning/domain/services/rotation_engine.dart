@@ -1,10 +1,21 @@
 import '../entities/planning.dart';
+import '../entities/rotation_configuration.dart';
+import '../enums/shift_type.dart';
 
 /// Pure domain service responsible for deterministic team rotation.
 ///
+/// This service has two interfaces:
+/// 1. Legacy methods: rotate(), nextMonth(), previousMonth() for backward compatibility
+/// 2. Clean Architecture methods: shiftFor(), shiftsForDate(), generateMonth()
+///
 /// No Flutter, Provider, ObjectBox or network dependency is allowed here.
+/// A published planning is never recalculated by this service.
 class RotationEngine {
   const RotationEngine();
+
+  // ============================================================================
+  // LEGACY INTERFACE - For backward compatibility
+  // ============================================================================
 
   /// Rotates a team order by one position to obtain the next monthly state.
   ///
@@ -44,4 +55,64 @@ class RotationEngine {
       assignments: const [],
     );
   }
+
+  // ============================================================================
+  // CLEAN ARCHITECTURE INTERFACE - New deterministic engine
+  // ============================================================================
+
+  ShiftType shiftFor({
+    required String team,
+    required DateTime date,
+    required RotationConfiguration configuration,
+  }) {
+    final teamIndex = configuration.teamOrder.indexOf(team);
+    if (teamIndex < 0) {
+      throw ArgumentError.value(team, 'team', 'Team is not in configuration');
+    }
+
+    final days = _dateOnly(date)
+        .difference(_dateOnly(configuration.referenceDate))
+        .inDays;
+    final phase = _floorMod(
+      configuration.referencePhaseIndex + days - teamIndex,
+      configuration.cycle.length,
+    );
+    return configuration.cycle[phase];
+  }
+
+  Map<String, ShiftType> shiftsForDate({
+    required DateTime date,
+    required RotationConfiguration configuration,
+  }) {
+    return Map.unmodifiable({
+      for (final team in configuration.teamOrder)
+        team: shiftFor(
+          team: team,
+          date: date,
+          configuration: configuration,
+        ),
+    });
+  }
+
+  List<Map<String, ShiftType>> generateMonth({
+    required int year,
+    required int month,
+    required RotationConfiguration configuration,
+  }) {
+    final days = DateTime(year, month + 1, 0).day;
+    return List.unmodifiable([
+      for (var day = 1; day <= days; day++)
+        shiftsForDate(
+          date: DateTime(year, month, day),
+          configuration: configuration,
+        ),
+    ]);
+  }
+
+  int _floorMod(int value, int modulus) {
+    final remainder = value % modulus;
+    return remainder < 0 ? remainder + modulus : remainder;
+  }
+
+  DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
 }
