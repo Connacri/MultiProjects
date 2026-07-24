@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../providers/planning_editor_provider.dart';
 import '../providers/planning_history_provider.dart';
 import '../providers/planning_provider.dart';
+import '../providers/planning_validation_provider.dart';
 import '../providers/rotation_configuration_provider.dart';
 import 'planning_history_panel.dart';
+import 'planning_publish_gate.dart';
+import 'planning_workspace_controller.dart';
+import 'planning_workspace_editor.dart';
 import 'planning_workflow_actions.dart';
 import 'rotation_team_order_editor.dart';
 
@@ -14,20 +19,28 @@ import 'rotation_team_order_editor.dart';
 class PlanningWorkspace extends StatelessWidget {
   final PlanningProvider planningProvider;
   final RotationConfigurationProvider rotationProvider;
+  final PlanningEditorProvider? editorProvider;
+  final PlanningValidationProvider? validationProvider;
+  final PlanningWorkspaceController? workspaceController;
   final PlanningHistoryProvider? historyProvider;
   final int? historyYear;
   final int? historyMonth;
   final int? historyBranchId;
+  final Map<int, String> staffNames;
   final VoidCallback? onEditDraft;
 
   const PlanningWorkspace({
     super.key,
     required this.planningProvider,
     required this.rotationProvider,
+    this.editorProvider,
+    this.validationProvider,
+    this.workspaceController,
     this.historyProvider,
     this.historyYear,
     this.historyMonth,
     this.historyBranchId,
+    this.staffNames = const {},
     this.onEditDraft,
   });
 
@@ -36,28 +49,27 @@ class PlanningWorkspace extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 700;
+        final controller = workspaceController;
+        final editor = editorProvider;
+        final validation = validationProvider;
+
+        final hasIntegratedFlow =
+            controller != null && editor != null && validation != null;
 
         final rotation = RotationTeamOrderEditor(
           provider: rotationProvider,
           compact: compact,
         );
-        final workflow = PlanningWorkflowActions(
-          provider: planningProvider,
-          onEdit: onEditDraft,
-        );
 
-        final controls = compact
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [rotation, const SizedBox(height: 12), workflow],
+        final workflow = hasIntegratedFlow
+            ? PlanningPublishGate(
+                planningProvider: planningProvider,
+                validationProvider: validation,
+                onPublish: controller.publishEditedDraft,
               )
-            : Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 2, child: rotation),
-                  const SizedBox(width: 16),
-                  Expanded(flex: 3, child: workflow),
-                ],
+            : PlanningWorkflowActions(
+                provider: planningProvider,
+                onEdit: onEditDraft,
               );
 
         final history = historyProvider != null &&
@@ -71,6 +83,15 @@ class PlanningWorkspace extends StatelessWidget {
               )
             : null;
 
+        final editorSurface = hasIntegratedFlow && controller.isEditing
+            ? PlanningWorkspaceEditor(
+                planningProvider: planningProvider,
+                editorProvider: editor,
+                controller: controller,
+                staffNames: staffNames,
+              )
+            : null;
+
         return SingleChildScrollView(
           padding: EdgeInsets.all(compact ? 12 : 24),
           child: Column(
@@ -81,7 +102,36 @@ class PlanningWorkspace extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
-              controls,
+              compact
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [rotation, const SizedBox(height: 12), workflow],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 2, child: rotation),
+                        const SizedBox(width: 16),
+                        Expanded(flex: 3, child: workflow),
+                      ],
+                    ),
+              if (hasIntegratedFlow && !controller.isEditing && planningProvider.hasDraft) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.icon(
+                    onPressed: planningProvider.isBusy
+                        ? null
+                        : controller.beginEditing,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Modifier le brouillon'),
+                  ),
+                ),
+              ],
+              if (editorSurface != null) ...[
+                const SizedBox(height: 16),
+                editorSurface,
+              ],
               const SizedBox(height: 16),
               _PlanningStatusCard(provider: planningProvider),
               if (history != null) ...[
