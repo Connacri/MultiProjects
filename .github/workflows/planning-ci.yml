@@ -34,8 +34,14 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Verify ObjectBox generation contract
+        run: dart run tool/check_objectbox_build_runner.dart
+
+      - name: Verify ObjectBox generated code contract
+        run: dart run tool/check_objectbox_generation_contract.dart
+
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib test
+        run: dart format --output=none --set-exit-if-changed lib test tool
 
       - name: Analyze
         run: flutter analyze
