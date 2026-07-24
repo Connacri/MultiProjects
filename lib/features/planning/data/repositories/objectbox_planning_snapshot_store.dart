@@ -119,7 +119,7 @@ class ObjectBoxPlanningSnapshotStore {
       );
     }
 
-    store.runInTx(TxMode.write, () {
+    store.runInTransaction(TxMode.write, () {
       final rotationStateId = rotationStateBox.put(rotationState);
       snapshot.rotationState.targetId = rotationStateId;
       final snapshotId = snapshotBox.put(snapshot);
