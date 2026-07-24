@@ -2,6 +2,7 @@ import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/entities/rotation_configuration.dart';
 import '../../domain/entities/rotation_state_snapshot.dart';
 import '../../domain/entities/rotation_period.dart';
+import '../../domain/enums/shift_type.dart';
 import '../../domain/repositories/planning_repository.dart';
 import '../../domain/services/rotation_engine.dart';
 
@@ -44,7 +45,7 @@ class GeneratePlanningDraft {
       throw PlanningAlreadyExistsException(year, month);
     }
 
-    final teamShifts = rotationEngine.generateMonth(
+    final teamShiftsByDay = rotationEngine.generateMonth(
       year: year,
       month: month,
       configuration: configuration,
@@ -55,10 +56,13 @@ class GeneratePlanningDraft {
     // This first draft establishes the immutable snapshot metadata and keeps
     // the domain boundary explicit.
     final date = DateTime(year, month, DateTime(year, month + 1, 0).day);
+    final lastDayShifts = teamShiftsByDay.isEmpty
+        ? const <String, ShiftType>{}
+        : teamShiftsByDay.last;
     final rotationState = _buildRotationStateSnapshot(
       date: date,
       configuration: configuration,
-      teamShifts: teamShifts.isEmpty ? const <String, dynamic>{} : teamShifts.last,
+      teamShifts: lastDayShifts,
     );
 
     return PlanningSnapshot(
@@ -81,13 +85,13 @@ class GeneratePlanningDraft {
   RotationStateSnapshot _buildRotationStateSnapshot({
     required DateTime date,
     required RotationConfiguration configuration,
-    required Map<String, dynamic> teamShifts,
+    required Map<String, ShiftType> teamShifts,
   }) {
     final teamPhaseByTeam = <String, int>{};
     for (final team in configuration.teamOrder) {
       final shift = teamShifts[team];
-      if (shift is! String) continue;
-      final index = configuration.cycle.indexWhere((item) => item.name == shift);
+      if (shift == null) continue;
+      final index = configuration.cycle.indexOf(shift);
       if (index >= 0) {
         teamPhaseByTeam[team] = index;
       }
