@@ -9,6 +9,10 @@ import '../../domain/entities/staff_availability.dart';
 import '../../domain/services/generate_planning.dart';
 
 /// Presentation state shared by Desktop and Mobile Planning screens.
+///
+/// Lifecycle:
+/// load -> generate draft -> edit draft externally -> validate/publish.
+/// The provider never mutates published snapshots in place.
 class PlanningProvider extends ChangeNotifier {
   final GeneratePlanning generatePlanning;
   final PublishPlanning publishPlanning;
@@ -22,6 +26,9 @@ class PlanningProvider extends ChangeNotifier {
 
   PlanningSnapshot? _draft;
   PlanningSnapshot? _current;
+  int? _loadedYear;
+  int? _loadedMonth;
+  int? _loadedBranchId;
   bool _isLoading = false;
   bool _isGenerating = false;
   bool _isPublishing = false;
@@ -29,19 +36,36 @@ class PlanningProvider extends ChangeNotifier {
 
   PlanningSnapshot? get draft => _draft;
   PlanningSnapshot? get current => _current;
+  int? get loadedYear => _loadedYear;
+  int? get loadedMonth => _loadedMonth;
+  int? get loadedBranchId => _loadedBranchId;
   bool get isLoading => _isLoading;
   bool get isGenerating => _isGenerating;
   bool get isPublishing => _isPublishing;
   bool get isBusy => _isLoading || _isGenerating || _isPublishing;
+  bool get hasDraft => _draft != null;
+  bool get hasCurrent => _current != null;
   String? get error => _error;
 
-  Future<void> load({required int year, required int month, int? branchId}) async {
+  Future<void> load({
+    required int year,
+    required int month,
+    int? branchId,
+  }) async {
     if (isBusy) return;
     _isLoading = true;
     _error = null;
+    _loadedYear = year;
+    _loadedMonth = month;
+    _loadedBranchId = branchId;
     notifyListeners();
+
     try {
-      _current = await loadPlanning(year: year, month: month, branchId: branchId);
+      _current = await loadPlanning(
+        year: year,
+        month: month,
+        branchId: branchId,
+      );
       _draft = null;
     } catch (error) {
       _error = error.toString();
@@ -65,7 +89,11 @@ class PlanningProvider extends ChangeNotifier {
     if (isBusy) return;
     _isGenerating = true;
     _error = null;
+    _loadedYear = year;
+    _loadedMonth = month;
+    _loadedBranchId = branchId;
     notifyListeners();
+
     try {
       _draft = await generatePlanning(
         year: year,
@@ -86,15 +114,19 @@ class PlanningProvider extends ChangeNotifier {
     }
   }
 
+  /// Publishes the current draft. Publication is atomic at the repository
+  /// boundary and cannot overwrite an existing historical snapshot.
   Future<void> publish() async {
     final draft = _draft;
     if (draft == null) {
       throw StateError('No planning draft is available for publication.');
     }
     if (isBusy) return;
+
     _isPublishing = true;
     _error = null;
     notifyListeners();
+
     try {
       _current = await publishPlanning(draft);
       _draft = null;
@@ -107,8 +139,13 @@ class PlanningProvider extends ChangeNotifier {
     }
   }
 
+  /// Replaces the in-memory draft after an external editor applies changes.
+  /// This is intentionally not persisted until [publish].
   void setDraft(PlanningSnapshot snapshot) {
     _draft = snapshot;
+    _loadedYear = snapshot.year;
+    _loadedMonth = snapshot.month;
+    _loadedBranchId = snapshot.branchId;
     notifyListeners();
   }
 
