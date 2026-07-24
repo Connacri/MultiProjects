@@ -1,6 +1,7 @@
 import '../entities/planning_assignment.dart';
 import '../entities/planning_snapshot.dart';
 import '../entities/rotation_configuration.dart';
+import '../entities/rotation_state_snapshot.dart';
 import '../entities/staff_availability.dart';
 import '../entities/planning_override.dart';
 import '../services/planning_draft_pipeline.dart';
@@ -39,7 +40,7 @@ class GeneratePlanning {
     List<PlanningOverride> overrides = const [],
     int? branchId,
   }) async {
-    final existing = await planningRepository.findByMonth(
+    final existing = await planningRepository.findLatestByMonth(
       year: year,
       month: month,
       branchId: branchId,
@@ -76,6 +77,13 @@ class GeneratePlanning {
       overrides: overrides,
     );
 
+    final lastDate = DateTime(year, month, DateTime(year, month + 1, 0).day);
+    final rotationState = _buildRotationStateSnapshot(
+      date: lastDate,
+      configuration: configuration,
+      teamShifts: teamSchedule[lastDate] ?? const {},
+    );
+
     final snapshot = PlanningSnapshot(
       id: 'draft-$year-$month-${DateTime.now().microsecondsSinceEpoch}',
       year: year,
@@ -86,15 +94,59 @@ class GeneratePlanning {
       engineVersion: '2.0.0',
       revision: 1,
       createdAt: DateTime.now(),
+      continuityDate: rotationState.date,
+      rotationState: rotationState,
       assignments: List<PlanningAssignment>.unmodifiable(assignments),
-      continuityDate: continuity?.date,
     );
 
     final result = validator.validate(snapshot);
     if (!result.isValid) {
-      throw StateError('Generated planning is invalid: ${result.errors.join('; ')}');
+      throw StateError(
+        'Generated planning is invalid: ${result.errors.join('; ')}',
+      );
     }
 
     return snapshot;
+  }
+
+  RotationStateSnapshot _buildRotationStateSnapshot({
+    required DateTime date,
+    required RotationConfiguration configuration,
+    required Map<String, dynamic> teamShifts,
+  }) {
+    final teamPhaseByTeam = <String, int>{};
+    for (final team in configuration.teamOrder) {
+      final shift = teamShifts[team];
+      if (shift == null) continue;
+      final index = configuration.cycle.indexOf(shift);
+      if (index >= 0) {
+        teamPhaseByTeam[team] = index;
+      }
+    }
+
+    final referenceOnly = DateTime(
+      configuration.referenceDate.year,
+      configuration.referenceDate.month,
+      configuration.referenceDate.day,
+    );
+    final dateOnly = DateTime(date.year, date.month, date.day);
+    final phaseIndex = _floorMod(
+      configuration.referencePhaseIndex +
+          dateOnly.difference(referenceOnly).inDays,
+      configuration.cycle.length,
+    );
+
+    return RotationStateSnapshot(
+      date: dateOnly,
+      configurationId: configuration.id,
+      configurationVersion: configuration.version,
+      phaseIndex: phaseIndex,
+      teamPhaseByTeam: Map.unmodifiable(teamPhaseByTeam),
+    );
+  }
+
+  int _floorMod(int value, int modulus) {
+    final remainder = value % modulus;
+    return remainder < 0 ? remainder + modulus : remainder;
   }
 }
