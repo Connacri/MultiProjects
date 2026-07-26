@@ -181,7 +181,9 @@ class _PlanningPage extends StatelessWidget {
   static void _scheduleLoad(BuildContext context) {
     if (_loaded) return;
     _loaded = true;
-    final now = DateTime.now();
-    context.read<PlanningProvider>().load(year: now.year, month: now.month);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final now = DateTime.now();
+      context.read<PlanningProvider>().load(year: now.year, month: now.month);
+    });
   }
 }
