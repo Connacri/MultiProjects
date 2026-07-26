@@ -1,16 +1,18 @@
 import '../entities/rotation_configuration.dart';
+import '../entities/rotation_state.dart';
 import '../enums/team_shift.dart';
 
 /// Pure, deterministic rotation engine.
 ///
 /// No persistence, UI or ObjectBox dependency is allowed here. Given the same
-/// configuration and date, the result is always identical.
+/// configuration, date and continuity state, the result is deterministic.
 class RotationEngine {
   const RotationEngine();
 
   Map<String, TeamShift> shiftsForDate({
     required RotationConfiguration configuration,
     required DateTime date,
+    RotationState? continuity,
   }) {
     if (configuration.teamOrder.isEmpty) {
       return const <String, TeamShift>{};
@@ -24,22 +26,34 @@ class RotationEngine {
     }
 
     final referenceDate = _dateOnly(
-      configuration.referenceDate ?? date,
+      continuity?.date ?? configuration.referenceDate ?? date,
     );
     final targetDate = _dateOnly(date);
     final dayOffset = targetDate.difference(referenceDate).inDays;
     final cycleLength = configuration.cycle.length;
+    final continuityOffset = continuity?.phaseIndex ?? 0;
 
     return {
       for (var teamIndex = 0;
           teamIndex < configuration.teamOrder.length;
           teamIndex++)
         configuration.teamOrder[teamIndex]: configuration.cycle[
-          (configuration.referenceTeamIndex + teamIndex + dayOffset) %
-              cycleLength
+          _floorMod(
+            configuration.referenceTeamIndex +
+                teamIndex +
+                continuityOffset +
+                dayOffset,
+            cycleLength,
+          )
         ],
     };
   }
 
-  DateTime _dateOnly(DateTime value) => DateTime(value.year, value.month, value.day);
+  int _floorMod(int value, int modulus) {
+    final remainder = value % modulus;
+    return remainder < 0 ? remainder + modulus : remainder;
+  }
+
+  DateTime _dateOnly(DateTime value) =>
+      DateTime(value.year, value.month, value.day);
 }
