@@ -4,9 +4,9 @@ import '../validators/planning_snapshot_validator.dart';
 
 /// Publishes a validated draft snapshot as a new immutable historical fact.
 ///
-/// The use case owns the domain gate. The repository owns the atomic write and
-/// revision-ordering guarantees. The caller receives the persisted historical
-/// snapshot only after the repository confirms the write.
+/// Publication is guarded against stale revisions: only the latest persisted
+/// revision for the target month/branch can be published. The repository then
+/// owns the atomic write and final concurrency guarantees.
 class PublishPlanningSnapshot {
   const PublishPlanningSnapshot({
     required this.planningRepository,
@@ -26,8 +26,32 @@ class PublishPlanningSnapshot {
 
     validator.validateOrThrow(snapshot);
 
-    final publicationDate = publishedAt ?? DateTime.now().toUtc();
-    if (publicationDate.isBefore(snapshot.createdAt)) {
+    final latest = await planningRepository.findLatestByMonth(
+      year: snapshot.year,
+      month: snapshot.month,
+      branchId: snapshot.branchId,
+    );
+
+    if (latest == null) {
+      throw StateError(
+        'Cannot publish a planning revision that is not persisted.',
+      );
+    }
+
+    if (latest.revision != snapshot.revision || latest.id != snapshot.id) {
+      throw StateError(
+        'Cannot publish stale planning revision ${snapshot.revision}. '
+        'Latest persisted revision is ${latest.revision}.',
+      );
+    }
+
+    if (latest.isPublished) {
+      return latest;
+    }
+
+    final publicationDate = (publishedAt ?? DateTime.now()).toUtc();
+    final createdAt = snapshot.createdAt.toUtc();
+    if (publicationDate.isBefore(createdAt)) {
       throw ArgumentError.value(
         publishedAt,
         'publishedAt',
