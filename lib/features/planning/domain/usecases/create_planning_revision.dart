@@ -1,11 +1,13 @@
+import '../entities/planning_assignment.dart';
 import '../entities/planning_snapshot.dart';
+import '../entities/rotation_state_snapshot.dart';
 import '../repositories/planning_repository.dart';
 
-/// Creates a new draft revision from an existing planning snapshot.
+/// Creates a new immutable draft revision from an existing persisted revision.
 ///
-/// This use case is intentionally distinct from initial monthly generation:
-/// generation creates revision 1 for a month that has no persisted snapshot,
-/// while this flow creates revision N+1 from an existing immutable revision.
+/// Revision identity is monotonic per (branch, year, month). Persistence
+/// identity is deliberately reset by PlanningSnapshot.nextRevision() so the
+/// repository inserts a new ObjectBox entity instead of updating the source.
 class CreatePlanningRevision {
   final PlanningRepository planningRepository;
 
@@ -14,8 +16,9 @@ class CreatePlanningRevision {
   Future<PlanningSnapshot> call({
     required PlanningSnapshot source,
     required DateTime createdAt,
-    List<dynamic>? assignments,
+    List<PlanningAssignment>? assignments,
     DateTime? continuityDate,
+    RotationStateSnapshot? rotationState,
   }) async {
     final latest = await planningRepository.findLatestByMonth(
       year: source.year,
@@ -35,19 +38,35 @@ class CreatePlanningRevision {
       );
     }
 
+    if (latest.revision > source.revision) {
+      throw StateError(
+        'Cannot create a revision from a stale source. '
+        'Latest revision is R${latest.revision}.',
+      );
+    }
+
     final next = source.nextRevision(
       createdAt: createdAt.toUtc(),
-      assignments: assignments == null
-          ? null
-          : assignments.cast(),
+      assignments: assignments,
       continuityDate: continuityDate,
-      rotationState: source.rotationState,
+      rotationState: rotationState,
     );
 
-    if (next.revision <= latest.revision) {
+    if (next.id.isNotEmpty) {
       throw StateError(
-        'The next revision must be greater than the latest persisted revision.',
+        'A new revision must not reuse persistence identity from its source.',
       );
+    }
+
+    if (next.revision != latest.revision + 1) {
+      throw StateError(
+        'Invalid revision sequence: expected R${latest.revision + 1}, '
+        'got R${next.revision}.',
+      );
+    }
+
+    if (next.isPublished) {
+      throw StateError('A newly created revision must start as a draft.');
     }
 
     return next;
