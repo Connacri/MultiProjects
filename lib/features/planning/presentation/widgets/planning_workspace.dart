@@ -127,19 +127,35 @@ class PlanningWorkspace extends StatelessWidget {
                 _SyncButton(syncProvider: syncProvider!),
               ],
               if (hasIntegratedFlow &&
-                  !controller.isEditing &&
-                  planningProvider.hasDraft) ...[
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.icon(
-                    onPressed: planningProvider.isBusy
-                        ? null
-                        : controller.beginEditing,
-                    icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Modifier le brouillon'),
+                  !controller.isEditing) ...[
+                if (planningProvider.hasDraft) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: planningProvider.isBusy
+                          ? null
+                          : controller.beginEditing,
+                      icon: const Icon(Icons.edit_outlined),
+                      label: const Text('Modifier le brouillon'),
+                    ),
                   ),
-                ),
+                ],
+                if (planningProvider.hasCurrent && !planningProvider.hasDraft) ...[
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: planningProvider.isBusy
+                          ? null
+                          : () => planningProvider.createRevision(
+                                createdAt: DateTime.now(),
+                              ),
+                      icon: const Icon(Icons.playlist_add),
+                      label: const Text('Créer un brouillon'),
+                    ),
+                  ),
+                ],
               ],
               if (editorSurface != null) ...[
                 const SizedBox(height: 16),

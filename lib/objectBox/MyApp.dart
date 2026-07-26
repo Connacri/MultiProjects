@@ -145,18 +145,48 @@ class MyApp9 extends StatelessWidget {
               brightness: Brightness.dark,
               primaryColor: Colors.blueGrey,
             ),
-            home: Consumer3<PlanningProvider, RotationConfigurationProvider, PlanningSyncProvider>(
-              builder: (context, planningProvider, rotationProvider, syncProvider, _) {
-                return PlanningWorkspace(
-                  planningProvider: planningProvider,
-                  rotationProvider: rotationProvider,
-                  editorProvider: context.read<PlanningEditorProvider>(),
-                  validationProvider: context.read<PlanningValidationProvider>(),
-                  workspaceController: context.read<PlanningWorkspaceController>(),
-                  syncProvider: syncProvider,
-                );
-              },
-            ),
+            home: _PlanningHomePage(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PlanningHomePage extends StatefulWidget {
+  @override
+  State<_PlanningHomePage> createState() => _PlanningHomePageState();
+}
+
+class _PlanningHomePageState extends State<_PlanningHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPlanning());
+  }
+
+  void _loadPlanning() {
+    final now = DateTime.now();
+    final planningProvider = context.read<PlanningProvider>();
+    planningProvider.load(year: now.year, month: now.month);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Planning des équipes'),
+      ),
+      body: Consumer3<PlanningProvider, RotationConfigurationProvider,
+          PlanningSyncProvider>(
+        builder: (context, planningProvider, rotationProvider, syncProvider, _) {
+          return PlanningWorkspace(
+            planningProvider: planningProvider,
+            rotationProvider: rotationProvider,
+            editorProvider: context.read<PlanningEditorProvider>(),
+            validationProvider: context.read<PlanningValidationProvider>(),
+            workspaceController: context.read<PlanningWorkspaceController>(),
+            syncProvider: syncProvider,
           );
         },
       ),
