@@ -94,7 +94,9 @@ class GeneratePlanning {
 
     final now = DateTime.now().toUtc();
     final snapshot = PlanningSnapshot(
-      id: 'draft-$year-$month-${now.microsecondsSinceEpoch}',
+      // Persistence identity is owned by ObjectBox. A new domain snapshot
+      // must carry an empty ID so the repository can insert it atomically.
+      id: '',
       year: year,
       month: month,
       branchId: branchId,
@@ -123,7 +125,7 @@ class GeneratePlanning {
       throw ArgumentError.value(year, 'year', 'Year must be positive.');
     }
     if (month < 1 || month > 12) {
-      throw ArgumentError.value(month, 'month', 'Month must be between 1 and 12.');
+      throw ArgumentError.value(year, 'month', 'Month must be between 1 and 12.');
     }
   }
 
