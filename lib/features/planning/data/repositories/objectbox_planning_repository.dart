@@ -1,5 +1,3 @@
-import 'package:objectbox/objectbox.dart';
-
 import '../../../../objectbox.g.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/entities/rotation_configuration.dart';
