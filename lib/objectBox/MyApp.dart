@@ -93,7 +93,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider.value(value: planningComposition.editorProvider),
         ChangeNotifierProvider.value(value: planningComposition.validationProvider),
         ChangeNotifierProvider.value(value: planningComposition.syncProvider),
-        Provider.value(value: planningComposition.workspaceController),
+        ChangeNotifierProvider.value(value: planningComposition.workspaceController),
 
         ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
         ChangeNotifierProvider(create: (_) => CommerceProvider(objectBox)),
