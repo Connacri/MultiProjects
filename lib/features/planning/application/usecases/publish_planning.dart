@@ -1,41 +1,19 @@
 import '../../domain/entities/planning_snapshot.dart';
-import '../../domain/repositories/planning_repository.dart';
-import '../../domain/services/planning_validator.dart';
+import '../../domain/usecases/publish_planning_snapshot.dart';
 
-class InvalidPlanningException implements Exception {
-  final List<String> errors;
-
-  const InvalidPlanningException(this.errors);
-
-  @override
-  String toString() => 'Invalid planning: ${errors.join('; ')}';
-}
-
-/// Validates and publishes a draft.
+/// Compatibility facade for the legacy application-layer publication API.
 ///
-/// Publication always validates at the application boundary. The repository
-/// owns the atomic persistence boundary and must persist the immutable snapshot
-/// together with its assignments and rotation checkpoint.
+/// The publication pipeline is intentionally delegated to the canonical
+/// domain use case so validation, UTC timestamps, persistence verification and
+/// immutable revision rules cannot diverge between entry points.
 class PublishPlanning {
-  final PlanningRepository planningRepository;
-  final PlanningValidator validator;
+  final PublishPlanningSnapshot publishPlanningSnapshot;
 
   const PublishPlanning({
-    required this.planningRepository,
-    required this.validator,
+    required this.publishPlanningSnapshot,
   });
 
-  Future<PlanningSnapshot> call(PlanningSnapshot snapshot) async {
-    final validation = validator.validate(snapshot);
-    if (!validation.isValid) {
-      throw InvalidPlanningException(validation.errors);
-    }
-
-    final published = snapshot.copyWith(
-      publishedAt: DateTime.now(),
-    );
-
-    await planningRepository.publishRevision(published);
-    return published;
+  Future<PlanningSnapshot> call(PlanningSnapshot snapshot) {
+    return publishPlanningSnapshot(snapshot: snapshot);
   }
 }
