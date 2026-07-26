@@ -1,22 +1,25 @@
 import '../entities/planning_snapshot.dart';
+import '../repositories/planning_repository.dart';
 import '../validators/planning_snapshot_validator.dart';
 
 /// Publishes a validated draft snapshot as a new immutable historical fact.
 ///
-/// Validation is performed inside the use case so every caller follows the
-/// same domain gate. Persistence remains responsible for revision ordering
-/// and atomicity.
+/// The use case owns the domain gate. The repository owns the atomic write and
+/// revision-ordering guarantees. The caller receives the persisted historical
+/// snapshot only after the repository confirms the write.
 class PublishPlanningSnapshot {
   const PublishPlanningSnapshot({
+    required this.planningRepository,
     this.validator = const PlanningSnapshotValidator(),
   });
 
+  final PlanningRepository planningRepository;
   final PlanningSnapshotValidator validator;
 
-  PlanningSnapshot call({
+  Future<PlanningSnapshot> call({
     required PlanningSnapshot snapshot,
     DateTime? publishedAt,
-  }) {
+  }) async {
     if (snapshot.isPublished) {
       return snapshot;
     }
@@ -32,8 +35,25 @@ class PublishPlanningSnapshot {
       );
     }
 
-    return snapshot.copyWith(
+    final publishedSnapshot = snapshot.copyWith(
       publishedAt: publicationDate,
     );
+
+    await planningRepository.publishRevision(publishedSnapshot);
+
+    final persisted = await planningRepository.findByRevision(
+      year: publishedSnapshot.year,
+      month: publishedSnapshot.month,
+      revision: publishedSnapshot.revision,
+      branchId: publishedSnapshot.branchId,
+    );
+
+    if (persisted == null || !persisted.isPublished) {
+      throw StateError(
+        'Planning publication completed without a readable published revision.',
+      );
+    }
+
+    return persisted;
   }
 }
