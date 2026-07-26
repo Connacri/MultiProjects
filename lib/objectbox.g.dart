@@ -2562,7 +2562,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(35, 3685136100368224392),
     name: 'RotationStateSnapshotEntity',
-    lastPropertyId: const obx_int.IdUid(10, 993168276931050140),
+    lastPropertyId: const obx_int.IdUid(14, 2612934488926621841),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -2626,6 +2626,31 @@ final _entities = <obx_int.ModelEntity>[
       obx_int.ModelProperty(
         id: const obx_int.IdUid(10, 993168276931050140),
         name: 'teamPhaseByTeamJson',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(11, 8651707205475262735),
+        name: 'remoteId',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(69, 6073240453363774034),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 1412756795791200912),
+        name: 'syncState',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 3732421253491634209),
+        name: 'lastSyncedAtEpochMs',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 2612934488926621841),
+        name: 'syncError',
         type: 9,
         flags: 0,
       ),
@@ -2995,7 +3020,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(42, 965897728256057589),
     name: 'PlanningAssignmentEntity',
-    lastPropertyId: const obx_int.IdUid(8, 4243213580598862407),
+    lastPropertyId: const obx_int.IdUid(9, 4018708974234974894),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -3051,6 +3076,13 @@ final _entities = <obx_int.ModelEntity>[
         relationField: 'snapshot',
         relationTarget: 'PlanningSnapshotEntity',
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(9, 4018708974234974894),
+        name: 'remoteId',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(66, 7898573607741703289),
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
@@ -3058,7 +3090,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(43, 4185490840183125969),
     name: 'PlanningSnapshotEntity',
-    lastPropertyId: const obx_int.IdUid(12, 6012318090966501854),
+    lastPropertyId: const obx_int.IdUid(16, 8450994531449124151),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -3139,6 +3171,32 @@ final _entities = <obx_int.ModelEntity>[
         relationField: 'rotationState',
         relationTarget: 'RotationStateSnapshotEntity',
       ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 7197899230073686629),
+        name: 'remoteId',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(67, 2712899016345467094),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 1602242818674639147),
+        name: 'syncState',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(68, 2608659325253314288),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 6114714800312844926),
+        name: 'lastSyncedAtEpochMs',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 8450994531449124151),
+        name: 'syncError',
+        type: 9,
+        flags: 0,
+      ),
     ],
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[
@@ -3195,7 +3253,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
     lastEntityId: const obx_int.IdUid(43, 4185490840183125969),
-    lastIndexId: const obx_int.IdUid(65, 7832110427885411726),
+    lastIndexId: const obx_int.IdUid(69, 6073240453363774034),
     lastRelationId: const obx_int.IdUid(2, 2077761314559475613),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
@@ -6431,7 +6489,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
             final teamPhaseByTeamJsonOffset = fbb.writeString(
               object.teamPhaseByTeamJson,
             );
-            fbb.startTable(11);
+            final remoteIdOffset = object.remoteId == null
+                ? null
+                : fbb.writeString(object.remoteId!);
+            final syncErrorOffset = object.syncError == null
+                ? null
+                : fbb.writeString(object.syncError!);
+            fbb.startTable(15);
             fbb.addInt64(0, object.id);
             fbb.addInt64(1, object.branchId);
             fbb.addInt64(2, object.year);
@@ -6442,6 +6506,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
             fbb.addInt64(7, object.configurationVersion);
             fbb.addInt64(8, object.phaseIndex);
             fbb.addOffset(9, teamPhaseByTeamJsonOffset);
+            fbb.addOffset(10, remoteIdOffset);
+            fbb.addInt64(11, object.syncState);
+            fbb.addInt64(12, object.lastSyncedAtEpochMs);
+            fbb.addOffset(13, syncErrorOffset);
             fbb.finish(fbb.endTable());
             return object.id;
           },
@@ -6498,7 +6566,24 @@ obx_int.ModelDefinition getObjectBoxModel() {
               )
               ..teamPhaseByTeamJson = const fb.StringReader(
                 asciiOptimization: true,
-              ).vTableGet(buffer, rootOffset, 22, '');
+              ).vTableGet(buffer, rootOffset, 22, '')
+              ..remoteId = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 24)
+              ..syncState = const fb.Int64Reader().vTableGet(
+                buffer,
+                rootOffset,
+                26,
+                0,
+              )
+              ..lastSyncedAtEpochMs = const fb.Int64Reader().vTableGetNullable(
+                buffer,
+                rootOffset,
+                28,
+              )
+              ..syncError = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 30);
 
             return object;
           },
@@ -6984,7 +7069,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
             final noteOffset = object.note == null
                 ? null
                 : fbb.writeString(object.note!);
-            fbb.startTable(9);
+            final remoteIdOffset = object.remoteId == null
+                ? null
+                : fbb.writeString(object.remoteId!);
+            fbb.startTable(10);
             fbb.addInt64(0, object.id);
             fbb.addInt64(1, object.staffId);
             fbb.addInt64(2, object.dateEpochMs);
@@ -6993,6 +7081,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
             fbb.addOffset(5, codeOffset);
             fbb.addOffset(6, noteOffset);
             fbb.addInt64(7, object.snapshot.targetId);
+            fbb.addOffset(8, remoteIdOffset);
             fbb.finish(fbb.endTable());
             return object.id;
           },
@@ -7025,7 +7114,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
               ).vTableGetNullable(buffer, rootOffset, 14)
               ..note = const fb.StringReader(
                 asciiOptimization: true,
-              ).vTableGetNullable(buffer, rootOffset, 16);
+              ).vTableGetNullable(buffer, rootOffset, 16)
+              ..remoteId = const fb.StringReader(
+                asciiOptimization: true,
+              ).vTableGetNullable(buffer, rootOffset, 20);
             object.snapshot.targetId = const fb.Int64Reader().vTableGet(
               buffer,
               rootOffset,
@@ -7053,7 +7145,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectToFB: (PlanningSnapshotEntity object, fb.Builder fbb) {
         final configurationIdOffset = fbb.writeString(object.configurationId);
         final engineVersionOffset = fbb.writeString(object.engineVersion);
-        fbb.startTable(13);
+        final remoteIdOffset = object.remoteId == null
+            ? null
+            : fbb.writeString(object.remoteId!);
+        final syncErrorOffset = object.syncError == null
+            ? null
+            : fbb.writeString(object.syncError!);
+        fbb.startTable(17);
         fbb.addInt64(0, object.id);
         fbb.addInt64(1, object.branchId);
         fbb.addInt64(2, object.year);
@@ -7066,6 +7164,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addInt64(9, object.createdAtEpochMs);
         fbb.addInt64(10, object.publishedAtEpochMs);
         fbb.addInt64(11, object.rotationState.targetId);
+        fbb.addOffset(12, remoteIdOffset);
+        fbb.addInt64(13, object.syncState);
+        fbb.addInt64(14, object.lastSyncedAtEpochMs);
+        fbb.addOffset(15, syncErrorOffset);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -7112,7 +7214,24 @@ obx_int.ModelDefinition getObjectBoxModel() {
             buffer,
             rootOffset,
             24,
-          );
+          )
+          ..remoteId = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 28)
+          ..syncState = const fb.Int64Reader().vTableGet(
+            buffer,
+            rootOffset,
+            30,
+            0,
+          )
+          ..lastSyncedAtEpochMs = const fb.Int64Reader().vTableGetNullable(
+            buffer,
+            rootOffset,
+            32,
+          )
+          ..syncError = const fb.StringReader(
+            asciiOptimization: true,
+          ).vTableGetNullable(buffer, rootOffset, 34);
         object.rotationState.targetId = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -9049,6 +9168,28 @@ class RotationStateSnapshotEntity_ {
       obx.QueryStringProperty<RotationStateSnapshotEntity>(
         _entities[34].properties[9],
       );
+
+  /// See [RotationStateSnapshotEntity.remoteId].
+  static final remoteId = obx.QueryStringProperty<RotationStateSnapshotEntity>(
+    _entities[34].properties[10],
+  );
+
+  /// See [RotationStateSnapshotEntity.syncState].
+  static final syncState =
+      obx.QueryIntegerProperty<RotationStateSnapshotEntity>(
+        _entities[34].properties[11],
+      );
+
+  /// See [RotationStateSnapshotEntity.lastSyncedAtEpochMs].
+  static final lastSyncedAtEpochMs =
+      obx.QueryIntegerProperty<RotationStateSnapshotEntity>(
+        _entities[34].properties[12],
+      );
+
+  /// See [RotationStateSnapshotEntity.syncError].
+  static final syncError = obx.QueryStringProperty<RotationStateSnapshotEntity>(
+    _entities[34].properties[13],
+  );
 }
 
 /// [SeasonalPricing] entity fields to define ObjectBox queries.
@@ -9351,6 +9492,11 @@ class PlanningAssignmentEntity_ {
       obx.QueryRelationToOne<PlanningAssignmentEntity, PlanningSnapshotEntity>(
         _entities[41].properties[7],
       );
+
+  /// See [PlanningAssignmentEntity.remoteId].
+  static final remoteId = obx.QueryStringProperty<PlanningAssignmentEntity>(
+    _entities[41].properties[8],
+  );
 }
 
 /// [PlanningSnapshotEntity] entity fields to define ObjectBox queries.
@@ -9420,6 +9566,27 @@ class PlanningSnapshotEntity_ {
         PlanningSnapshotEntity,
         RotationStateSnapshotEntity
       >(_entities[42].properties[11]);
+
+  /// See [PlanningSnapshotEntity.remoteId].
+  static final remoteId = obx.QueryStringProperty<PlanningSnapshotEntity>(
+    _entities[42].properties[12],
+  );
+
+  /// See [PlanningSnapshotEntity.syncState].
+  static final syncState = obx.QueryIntegerProperty<PlanningSnapshotEntity>(
+    _entities[42].properties[13],
+  );
+
+  /// See [PlanningSnapshotEntity.lastSyncedAtEpochMs].
+  static final lastSyncedAtEpochMs =
+      obx.QueryIntegerProperty<PlanningSnapshotEntity>(
+        _entities[42].properties[14],
+      );
+
+  /// See [PlanningSnapshotEntity.syncError].
+  static final syncError = obx.QueryStringProperty<PlanningSnapshotEntity>(
+    _entities[42].properties[15],
+  );
 
   /// see [PlanningSnapshotEntity.assignments]
   static final assignments =

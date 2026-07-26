@@ -2132,7 +2132,7 @@
     },
     {
       "id": "35:3685136100368224392",
-      "lastPropertyId": "10:993168276931050140",
+      "lastPropertyId": "14:2612934488926621841",
       "name": "RotationStateSnapshotEntity",
       "properties": [
         {
@@ -2192,6 +2192,28 @@
         {
           "id": "10:993168276931050140",
           "name": "teamPhaseByTeamJson",
+          "type": 9
+        },
+        {
+          "id": "11:8651707205475262735",
+          "name": "remoteId",
+          "indexId": "69:6073240453363774034",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "12:1412756795791200912",
+          "name": "syncState",
+          "type": 6
+        },
+        {
+          "id": "13:3732421253491634209",
+          "name": "lastSyncedAtEpochMs",
+          "type": 6
+        },
+        {
+          "id": "14:2612934488926621841",
+          "name": "syncError",
           "type": 9
         }
       ],
@@ -2499,7 +2521,7 @@
     },
     {
       "id": "42:965897728256057589",
-      "lastPropertyId": "8:4243213580598862407",
+      "lastPropertyId": "9:4018708974234974894",
       "name": "PlanningAssignmentEntity",
       "properties": [
         {
@@ -2549,13 +2571,20 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "PlanningSnapshotEntity"
+        },
+        {
+          "id": "9:4018708974234974894",
+          "name": "remoteId",
+          "indexId": "66:7898573607741703289",
+          "type": 9,
+          "flags": 2048
         }
       ],
       "relations": []
     },
     {
       "id": "43:4185490840183125969",
-      "lastPropertyId": "12:6012318090966501854",
+      "lastPropertyId": "16:8450994531449124151",
       "name": "PlanningSnapshotEntity",
       "properties": [
         {
@@ -2627,13 +2656,37 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "RotationStateSnapshotEntity"
+        },
+        {
+          "id": "13:7197899230073686629",
+          "name": "remoteId",
+          "indexId": "67:2712899016345467094",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "14:1602242818674639147",
+          "name": "syncState",
+          "indexId": "68:2608659325253314288",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "15:6114714800312844926",
+          "name": "lastSyncedAtEpochMs",
+          "type": 6
+        },
+        {
+          "id": "16:8450994531449124151",
+          "name": "syncError",
+          "type": 9
         }
       ],
       "relations": []
     }
   ],
   "lastEntityId": "43:4185490840183125969",
-  "lastIndexId": "65:7832110427885411726",
+  "lastIndexId": "69:6073240453363774034",
   "lastRelationId": "2:2077761314559475613",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
