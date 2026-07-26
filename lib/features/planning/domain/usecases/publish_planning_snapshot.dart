@@ -1,30 +1,39 @@
 import '../entities/planning_snapshot.dart';
+import '../validators/planning_snapshot_validator.dart';
 
 /// Publishes a validated draft snapshot as a new immutable historical fact.
 ///
-/// Validation is intentionally explicit and supplied by the application layer;
-/// this use case only performs the domain transition. A published snapshot is
-/// never mutated in place and cannot be published twice.
+/// Validation is performed inside the use case so every caller follows the
+/// same domain gate. Persistence remains responsible for revision ordering
+/// and atomicity.
 class PublishPlanningSnapshot {
-  const PublishPlanningSnapshot();
+  const PublishPlanningSnapshot({
+    this.validator = const PlanningSnapshotValidator(),
+  });
+
+  final PlanningSnapshotValidator validator;
 
   PlanningSnapshot call({
     required PlanningSnapshot snapshot,
-    required bool isValid,
     DateTime? publishedAt,
   }) {
     if (snapshot.isPublished) {
       return snapshot;
     }
 
-    if (!isValid) {
-      throw StateError(
-        'A planning snapshot must be validated before publication.',
+    validator.validateOrThrow(snapshot);
+
+    final publicationDate = publishedAt ?? DateTime.now().toUtc();
+    if (publicationDate.isBefore(snapshot.createdAt)) {
+      throw ArgumentError.value(
+        publishedAt,
+        'publishedAt',
+        'Publication date cannot be before snapshot creation date.',
       );
     }
 
     return snapshot.copyWith(
-      publishedAt: publishedAt ?? DateTime.now().toUtc(),
+      publishedAt: publicationDate,
     );
   }
 }
