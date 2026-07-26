@@ -138,7 +138,17 @@ class MyApp9 extends StatelessWidget {
               brightness: Brightness.dark,
               primaryColor: Colors.blueGrey,
             ),
-            home: const PlanningWorkspace(),
+            home: Consumer2<PlanningProvider, RotationConfigurationProvider>(
+              builder: (context, planningProvider, rotationProvider, _) {
+                return PlanningWorkspace(
+                  planningProvider: planningProvider,
+                  rotationProvider: rotationProvider,
+                  editorProvider: context.read<PlanningEditorProvider>(),
+                  validationProvider: context.read<PlanningValidationProvider>(),
+                  workspaceController: context.read<PlanningWorkspaceController>(),
+                );
+              },
+            ),
           );
         },
       ),
