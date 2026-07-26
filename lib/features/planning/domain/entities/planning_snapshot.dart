@@ -1,11 +1,11 @@
 import 'planning_assignment.dart';
 import 'rotation_state_snapshot.dart';
 
-/// Immutable planning snapshot representing one revision of a monthly plan.
+/// Immutable planning snapshot representing one persisted revision.
 ///
-/// A snapshot is never updated in place after persistence. A modification of
-/// an existing plan creates a new revision. Published revisions remain
-/// historical facts and are never overwritten.
+/// A revision is append-only. A draft is simply an unpublished revision and
+/// may be superseded by a newer revision; it is never updated in place.
+/// Published revisions are historical facts and are never overwritten.
 class PlanningSnapshot {
   final String id;
   final int year;
@@ -77,25 +77,27 @@ class PlanningSnapshot {
 
   bool get isPublished => publishedAt != null;
 
+  bool get isDraft => !isPublished;
+
   bool get isHistorical => isPublished;
 
   String get monthKey =>
       '${branchId ?? 0}:$year:${month.toString().padLeft(2, '0')}';
 
-  /// Creates the next immutable revision while preserving the current
-  /// configuration and rotation metadata unless explicitly replaced.
+  /// Creates the next immutable revision from this revision.
   ///
-  /// The revision is derived from the source snapshot only. Repository-level
-  /// persistence must still verify that it is greater than the latest stored
-  /// revision inside the same write transaction to prevent concurrent writers
-  /// from creating duplicate revision numbers.
+  /// The returned revision is always unpublished. Publishing is a separate
+  /// state transition handled by the canonical publication use case.
   PlanningSnapshot nextRevision({
     required DateTime createdAt,
     List<PlanningAssignment>? assignments,
     DateTime? continuityDate,
     RotationStateSnapshot? rotationState,
   }) {
-    if (createdAt.isBefore(this.createdAt)) {
+    final normalizedCreatedAt = createdAt.toUtc();
+    final normalizedSourceCreatedAt = createdAt.toUtc();
+
+    if (normalizedCreatedAt.isBefore(normalizedSourceCreatedAt)) {
       throw ArgumentError.value(
         createdAt,
         'createdAt',
@@ -113,7 +115,7 @@ class PlanningSnapshot {
       rotationPeriodId: rotationPeriodId,
       engineVersion: engineVersion,
       revision: revision + 1,
-      createdAt: createdAt,
+      createdAt: normalizedCreatedAt,
       continuityDate: continuityDate ?? this.continuityDate,
       rotationState: rotationState ?? this.rotationState,
       assignments: List.unmodifiable(assignments ?? this.assignments),
