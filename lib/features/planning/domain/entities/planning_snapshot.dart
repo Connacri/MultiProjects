@@ -69,7 +69,7 @@ class PlanningSnapshot {
       publishedAt: publishedAt ?? this.publishedAt,
       continuityDate: continuityDate ?? this.continuityDate,
       rotationState: rotationState ?? this.rotationState,
-      assignments: assignments ?? this.assignments,
+      assignments: List.unmodifiable(assignments ?? this.assignments),
     );
   }
 
@@ -77,22 +77,32 @@ class PlanningSnapshot {
 
   bool get isPublished => publishedAt != null;
 
-  /// A snapshot can only be published once it has been validated by the
-  /// application layer. Persistence must not infer validation from this flag.
   bool get isHistorical => isPublished;
 
-  /// Stable business key used by persistence and transaction guards.
   String get monthKey =>
       '${branchId ?? 0}:$year:${month.toString().padLeft(2, '0')}';
 
   /// Creates the next immutable revision while preserving the current
-  /// configuration, continuity checkpoint and assignments unless replaced.
+  /// configuration and rotation metadata unless explicitly replaced.
+  ///
+  /// The revision is derived from the source snapshot only. Repository-level
+  /// persistence must still verify that it is greater than the latest stored
+  /// revision inside the same write transaction to prevent concurrent writers
+  /// from creating duplicate revision numbers.
   PlanningSnapshot nextRevision({
     required DateTime createdAt,
     List<PlanningAssignment>? assignments,
     DateTime? continuityDate,
     RotationStateSnapshot? rotationState,
   }) {
+    if (createdAt.isBefore(this.createdAt)) {
+      throw ArgumentError.value(
+        createdAt,
+        'createdAt',
+        'A new revision cannot be created before the source snapshot.',
+      );
+    }
+
     return PlanningSnapshot(
       id: '',
       year: year,
