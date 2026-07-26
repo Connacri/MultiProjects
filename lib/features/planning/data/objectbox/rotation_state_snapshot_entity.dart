@@ -1,10 +1,5 @@
 import 'package:objectbox/objectbox.dart';
 
-/// Immutable ObjectBox checkpoint used to continue rotation across months.
-///
-/// This entity is deliberately independent from planning assignments. Future
-/// continuity must be restored from this persisted state, never reconstructed
-/// from mutable staff assignments or leave edits.
 @Entity()
 class RotationStateSnapshotEntity {
   @Id()
@@ -22,11 +17,19 @@ class RotationStateSnapshotEntity {
   @Index()
   int revision = 0;
 
+  /// Supabase identity is optional until the checkpoint is synchronized.
+  @Index()
+  String? remoteId;
+
   int dateEpochMs = 0;
   String configurationId = '';
   int configurationVersion = 0;
   int phaseIndex = 0;
   String teamPhaseByTeamJson = '{}';
+
+  int syncState = 0;
+  int? lastSyncedAtEpochMs;
+  String? syncError;
 
   RotationStateSnapshotEntity();
 }
