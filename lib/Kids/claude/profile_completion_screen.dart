@@ -141,7 +141,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
               decoration: BoxDecoration(
                 color: isCompleted || isCurrent
                     ? colorScheme.primary
-                    : colorScheme.surfaceVariant,
+                    : colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -355,7 +355,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ),
         filled: true,
         fillColor:
-            Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
+            Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
       ),
       validator: validator,
     );

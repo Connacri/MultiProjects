@@ -604,7 +604,7 @@
 //                                   color:
 //                                   WidgetStateProperty.resolveWith<Color?>(
 //                                         (Set<WidgetState> states) {
-//                                       // Alternance des couleurs : surface et surfaceVariant
+//                                       // Alternance des couleurs : surface et surfaceContainerHighest
 //                                       return index.isEven
 //                                           ? Theme.of(context)
 //                                           .colorScheme

@@ -389,7 +389,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
           columnSpacing: 12,
           headingRowHeight: 56,
           dataRowHeight: 80,
-          headingRowColor: MaterialStateProperty.all(Colors.grey.shade100),
+          headingRowColor: WidgetStateProperty.all(Colors.grey.shade100),
           border: TableBorder.all(
             color: Colors.grey.shade300,
             width: 1,

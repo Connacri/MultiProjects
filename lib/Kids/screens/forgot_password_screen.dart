@@ -90,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             onPressed: () => Navigator.pop(context),
             icon: const Icon(Icons.arrow_back),
             style: IconButton.styleFrom(
-              backgroundColor: colorScheme.surfaceVariant,
+              backgroundColor: colorScheme.surfaceContainerHighest,
             ),
           ),
         ),
@@ -205,7 +205,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: Theme.of(context).colorScheme.surfaceVariant,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
