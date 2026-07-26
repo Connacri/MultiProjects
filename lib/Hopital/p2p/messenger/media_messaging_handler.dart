@@ -26,7 +26,7 @@ class MediaMessagingHandler {
     String conversationId,
   ) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: false,
       );
@@ -55,7 +55,7 @@ class MediaMessagingHandler {
     String conversationId,
   ) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.video,
         allowMultiple: false,
       );
@@ -117,7 +117,7 @@ class MediaMessagingHandler {
     String conversationId,
   ) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.any,
         allowMultiple: false,
       );
