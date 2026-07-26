@@ -9,8 +9,8 @@ import 'objectbox_planning_snapshot_store.dart';
 /// Planning repository backed by the atomic ObjectBox snapshot store.
 ///
 /// The repository is the final persistence boundary for the planning
-/// lifecycle. Domain validation happens before any write and publication is
-/// persisted only as a new immutable revision.
+/// lifecycle. Domain validation happens before any write, while the store
+/// performs the final compare-and-write checks inside ObjectBox transactions.
 class ObjectBoxPlanningRepository implements PlanningRepository {
   final ObjectBoxPlanningSnapshotStore snapshotStore;
   final PlanningSnapshotMapper mapper;
@@ -88,7 +88,7 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
         'Use publishRevision() for a published planning snapshot.',
       );
     }
-    await _persist(snapshot);
+    await _persistNewRevision(snapshot);
   }
 
   @override
@@ -104,7 +104,9 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
         'A published planning snapshot cannot have publishedAt before createdAt.',
       );
     }
-    await _persist(snapshot);
+
+    final snapshotEntity = mapper.toObjectBox(snapshot);
+    snapshotStore.publishAtomically(snapshot: snapshotEntity);
   }
 
   /// Compatibility helper for older callers.
@@ -135,7 +137,7 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
     await publishRevision(snapshot);
   }
 
-  Future<void> _persist(PlanningSnapshot snapshot) async {
+  Future<void> _persistNewRevision(PlanningSnapshot snapshot) async {
     final rotationState = snapshot.rotationState;
     if (rotationState == null) {
       throw StateError(
