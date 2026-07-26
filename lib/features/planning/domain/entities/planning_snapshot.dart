@@ -3,9 +3,9 @@ import 'rotation_state_snapshot.dart';
 
 /// Immutable planning snapshot representing one persisted revision.
 ///
-/// A revision is append-only. A draft is simply an unpublished revision and
-/// may be superseded by a newer revision; it is never updated in place.
-/// Published revisions are historical facts and are never overwritten.
+/// A revision is append-only. A draft is an unpublished revision and may be
+/// superseded by a newer revision; it is never updated in place. Published
+/// revisions are historical facts and are never overwritten.
 class PlanningSnapshot {
   final String id;
   final int year;
@@ -88,6 +88,8 @@ class PlanningSnapshot {
   ///
   /// The returned revision is always unpublished. Publishing is a separate
   /// state transition handled by the canonical publication use case.
+  ///
+  /// The creation timestamp must not precede the source revision timestamp.
   PlanningSnapshot nextRevision({
     required DateTime createdAt,
     List<PlanningAssignment>? assignments,
@@ -95,7 +97,7 @@ class PlanningSnapshot {
     RotationStateSnapshot? rotationState,
   }) {
     final normalizedCreatedAt = createdAt.toUtc();
-    final normalizedSourceCreatedAt = createdAt.toUtc();
+    final normalizedSourceCreatedAt = this.createdAt.toUtc();
 
     if (normalizedCreatedAt.isBefore(normalizedSourceCreatedAt)) {
       throw ArgumentError.value(
