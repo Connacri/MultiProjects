@@ -116,13 +116,8 @@ class ObjectBoxPlanningSnapshotStore {
     required RotationStateSnapshotEntity rotationState,
     required List<PlanningAssignmentEntity> assignments,
   }) {
-    if (snapshot.id != 0) {
-      throw StateError('Persisting an existing snapshot entity is forbidden.');
-    }
-
-    if (rotationState.id != 0) {
-      throw StateError('Persisting an existing rotation state is forbidden.');
-    }
+    _assertNewEntity(snapshot.id, 'snapshot');
+    _assertNewEntity(rotationState.id, 'rotation state');
 
     if (snapshot.year != rotationState.year ||
         snapshot.month != rotationState.month ||
@@ -135,8 +130,11 @@ class ObjectBoxPlanningSnapshotStore {
     }
 
     for (final assignment in assignments) {
-      if (assignment.id != 0) {
-        throw StateError('Persisting an existing planning assignment is forbidden.');
+      _assertNewEntity(assignment.id, 'planning assignment');
+      if (assignment.snapshot.targetId != 0) {
+        throw StateError(
+          'Planning assignments must not reference an existing snapshot.',
+        );
       }
     }
 
@@ -174,6 +172,14 @@ class ObjectBoxPlanningSnapshotStore {
         assignmentBox.put(assignment);
       }
     });
+  }
+
+  void _assertNewEntity(int id, String entityName) {
+    if (id != 0) {
+      throw StateError(
+        'Persisting an existing $entityName entity is forbidden.',
+      );
+    }
   }
 
   PlanningSnapshotEntity? _findSingle({
