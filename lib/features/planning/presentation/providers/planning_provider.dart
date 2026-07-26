@@ -10,6 +10,7 @@ import '../../domain/entities/rotation_configuration.dart';
 import '../../domain/entities/rotation_state_snapshot.dart';
 import '../../domain/entities/staff_availability.dart';
 import '../../domain/services/generate_planning.dart';
+import '../../domain/usecases/save_planning_revision.dart';
 
 /// Presentation state shared by Desktop and Mobile Planning screens.
 ///
@@ -20,12 +21,14 @@ import '../../domain/services/generate_planning.dart';
 class PlanningProvider extends ChangeNotifier {
   final GeneratePlanning generatePlanning;
   final CreatePlanningRevision createPlanningRevision;
+  final SavePlanningRevision savePlanningRevision;
   final PublishPlanning publishPlanning;
   final LoadPlanning loadPlanning;
 
   PlanningProvider({
     required this.generatePlanning,
     required this.createPlanningRevision,
+    required this.savePlanningRevision,
     required this.publishPlanning,
     required this.loadPlanning,
   });
@@ -124,9 +127,6 @@ class PlanningProvider extends ChangeNotifier {
   }
 
   /// Creates a new draft revision from the current persisted revision.
-  ///
-  /// This is the only supported path for editing an already persisted plan.
-  /// The source remains immutable; the returned revision is a new draft.
   Future<void> createRevision({
     required DateTime createdAt,
     List<PlanningAssignment>? assignments,
@@ -168,14 +168,31 @@ class PlanningProvider extends ChangeNotifier {
     }
   }
 
-  /// Persists the current draft as a new revision without publishing it.
+  /// Persists the current draft as an immutable, unpublished revision.
+  ///
+  /// The returned entity is reloaded from persistence, so the provider never
+  /// assumes that a successful write implies a valid readable state.
   Future<void> saveDraft() async {
-    // Persistence of drafts is intentionally owned by the application layer.
-    // This guard prevents accidental in-place mutation until that use case is
-    // wired into the provider composition root.
-    throw UnimplementedError(
-      'Draft persistence must be wired to the PlanningRepository saveRevision use case.',
-    );
+    if (isBusy) return;
+
+    final draft = _draft;
+    if (draft == null) {
+      throw StateError('No planning draft is available for persistence.');
+    }
+
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _draft = await savePlanningRevision(snapshot: draft);
+    } catch (error) {
+      _error = error.toString();
+      rethrow;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
   }
 
   /// Publishes the current draft through the canonical publication pipeline.
@@ -205,7 +222,6 @@ class PlanningProvider extends ChangeNotifier {
   }
 
   /// Replaces the in-memory draft after an external editor applies changes.
-  /// This is intentionally not persisted until the revision persistence flow.
   void setDraft(PlanningSnapshot snapshot) {
     if (snapshot.isPublished) {
       throw StateError('A published snapshot cannot be assigned as a draft.');
