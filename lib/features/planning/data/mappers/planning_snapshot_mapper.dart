@@ -10,10 +10,9 @@ import '../models/planning_persistence_record.dart';
 
 /// Maps the immutable planning domain snapshot to/from ObjectBox.
 ///
-/// The ObjectBox schema is intentionally kept aligned with the current
-/// PlanningSnapshotEntity model. Rotation continuity is now persisted as a
-/// separate checkpoint entity and attached to the snapshot by the repository
-/// layer.
+/// ObjectBox owns persistence identity. New domain snapshots therefore map to
+/// entities with id == 0; existing ObjectBox entities are mapped back to a
+/// stable domain identity derived from their database ID.
 class PlanningSnapshotMapper {
   const PlanningSnapshotMapper();
 
@@ -27,10 +26,16 @@ class PlanningSnapshotMapper {
       configurationVersion: entity.configurationVersion,
       engineVersion: entity.engineVersion,
       revision: entity.revision,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(entity.createdAtEpochMs),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        entity.createdAtEpochMs,
+        isUtc: true,
+      ),
       publishedAt: entity.publishedAtEpochMs == null
           ? null
-          : DateTime.fromMillisecondsSinceEpoch(entity.publishedAtEpochMs!),
+          : DateTime.fromMillisecondsSinceEpoch(
+              entity.publishedAtEpochMs!,
+              isUtc: true,
+            ),
       rotationState: entity.rotationState.target == null
           ? null
           : fromRotationStateObjectBox(entity.rotationState.target!),
@@ -53,7 +58,10 @@ class PlanningSnapshotMapper {
         : const <String, int>{};
 
     return RotationStateSnapshot(
-      date: DateTime.fromMillisecondsSinceEpoch(entity.dateEpochMs),
+      date: DateTime.fromMillisecondsSinceEpoch(
+        entity.dateEpochMs,
+        isUtc: true,
+      ),
       configurationId: entity.configurationId,
       configurationVersion: entity.configurationVersion,
       phaseIndex: entity.phaseIndex,
@@ -64,7 +72,10 @@ class PlanningSnapshotMapper {
   PlanningAssignment fromObjectBoxAssignment(PlanningAssignmentEntity entity) {
     return PlanningAssignment(
       staffId: entity.staffId,
-      date: DateTime.fromMillisecondsSinceEpoch(entity.dateEpochMs),
+      date: DateTime.fromMillisecondsSinceEpoch(
+        entity.dateEpochMs,
+        isUtc: true,
+      ),
       team: entity.team,
       shift: _shiftFromString(entity.shift),
       code: entity.code,
@@ -82,8 +93,8 @@ class PlanningSnapshotMapper {
       configurationVersion: 1,
       engineVersion: 'legacy',
       revision: 1,
-      createdAt: DateTime(record.year, record.month, 1),
-      publishedAt: DateTime(record.year, record.month, 1),
+      createdAt: DateTime.utc(record.year, record.month, 1),
+      publishedAt: DateTime.utc(record.year, record.month, 1),
       assignments: _parseLegacyAssignments(
         record.snapshotJson,
         year: record.year,
@@ -102,8 +113,8 @@ class PlanningSnapshotMapper {
       ..engineVersion = snapshot.engineVersion
       ..revision = snapshot.revision
       ..status = snapshot.publishedAt == null ? 0 : 1
-      ..createdAtEpochMs = snapshot.createdAt.millisecondsSinceEpoch
-      ..publishedAtEpochMs = snapshot.publishedAt?.millisecondsSinceEpoch;
+      ..createdAtEpochMs = snapshot.createdAt.toUtc().millisecondsSinceEpoch
+      ..publishedAtEpochMs = snapshot.publishedAt?.toUtc().millisecondsSinceEpoch;
 
     for (final assignment in snapshot.assignments) {
       entity.assignments.add(toObjectBoxAssignment(assignment));
@@ -124,7 +135,7 @@ class PlanningSnapshotMapper {
       ..year = year
       ..month = month
       ..revision = revision
-      ..dateEpochMs = snapshot.date.millisecondsSinceEpoch
+      ..dateEpochMs = snapshot.date.toUtc().millisecondsSinceEpoch
       ..configurationId = snapshot.configurationId
       ..configurationVersion = snapshot.configurationVersion
       ..phaseIndex = snapshot.phaseIndex
@@ -132,10 +143,11 @@ class PlanningSnapshotMapper {
   }
 
   PlanningAssignmentEntity toObjectBoxAssignment(
-      PlanningAssignment assignment) {
+    PlanningAssignment assignment,
+  ) {
     return PlanningAssignmentEntity()
       ..staffId = assignment.staffId
-      ..dateEpochMs = DateTime(
+      ..dateEpochMs = DateTime.utc(
         assignment.date.year,
         assignment.date.month,
         assignment.date.day,
@@ -196,7 +208,7 @@ class PlanningSnapshotMapper {
           result.add(
             PlanningAssignment(
               staffId: staffId,
-              date: DateTime(year, month, day),
+              date: DateTime.utc(year, month, day),
               team: team,
               shift: _legacyShift(status),
               code: status,
