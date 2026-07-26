@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/rotation_configuration.dart';
+import '../../domain/enums/rotation_policy.dart';
+import '../../domain/enums/team_shift.dart';
 import '../../domain/repositories/rotation_configuration_repository.dart';
 
 /// Manages the active versioned rotation configuration for the planning UI.
@@ -15,7 +17,9 @@ class RotationConfigurationProvider extends ChangeNotifier {
   bool _isSaving = false;
   String? _error;
 
-  RotationConfigurationProvider({required this.repository});
+  RotationConfigurationProvider({required this.repository}) {
+    Future.microtask(() => loadActive());
+  }
 
   RotationConfiguration? get active => _active;
   bool get isLoading => _isLoading;
@@ -23,6 +27,7 @@ class RotationConfigurationProvider extends ChangeNotifier {
   bool get isBusy => _isLoading || _isSaving;
   String? get error => _error;
 
+  /// Loads the active configuration. If none exists, creates a default one.
   Future<void> loadActive() async {
     if (_isLoading) return;
     _isLoading = true;
@@ -31,6 +36,23 @@ class RotationConfigurationProvider extends ChangeNotifier {
 
     try {
       _active = await repository.findActive();
+      if (_active == null) {
+        _active = await repository.saveVersion(
+          configuration: RotationConfiguration(
+            id: 'default',
+            version: 1,
+            teamOrder: const ['Équipe A', 'Équipe B', 'Équipe C'],
+            cycle: const [
+              TeamShift.day,
+              TeamShift.night,
+              TeamShift.rest,
+              TeamShift.rest,
+            ],
+            policy: RotationPolicy.continueFromPreviousPublished,
+            referencePhaseIndex: 0,
+          ),
+        );
+      }
     } catch (error) {
       _error = error.toString();
       rethrow;
