@@ -1,0 +1,99 @@
+name: Build Android APK (main)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: '3.35.2'
+
+jobs:
+  build-apk:
+    name: Build and publish traceable APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout exact main commit
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Verify source revision
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+          echo "branch=$(git branch --show-current || true)" >> "$GITHUB_OUTPUT"
+          echo "=== Git revision ==="
+          git status --short --branch
+          git log -1 --oneline
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate ObjectBox bindings
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze Flutter project
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      - name: Build release APK
+        run: |
+          flutter build apk --release \
+            --build-name=main-${{ github.run_number }} \
+            --build-number=${{ github.run_number }}
+
+      - name: Rename APK with commit identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/apk-release
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "build/apk-release/multiprojects-main-${{ steps.source.outputs.short_sha }}-run-${{ github.run_number }}.apk"
+          sha256sum build/apk-release/*.apk | tee build/apk-release/SHA256SUMS.txt
+
+      - name: Upload traceable APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: multiprojects-apk-main-${{ steps.source.outputs.short_sha }}-run-${{ github.run_number }}
+          path: build/apk-release/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub release for main build
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: main-build-${{ github.run_number }}-${{ steps.source.outputs.short_sha }}
+          name: MultiProjects main build ${{ github.run_number }} (${{ steps.source.outputs.short_sha }})
+          generate_release_notes: false
+          prerelease: true
+          files: |
+            build/apk-release/*.apk
+            build/apk-release/SHA256SUMS.txt
+          body: |
+            Automated APK built from branch `main`.
+
+            Commit: `${{ steps.source.outputs.commit_sha }}`
+            Short SHA: `${{ steps.source.outputs.short_sha }}`
+            Workflow run: `${{ github.run_number }}`
+            Flutter: `${{ env.FLUTTER_VERSION }}`
+
+            Install this APK only when the commit SHA matches the code you intend to test.
