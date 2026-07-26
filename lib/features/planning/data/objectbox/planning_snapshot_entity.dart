@@ -1,6 +1,8 @@
 import 'package:objectbox/objectbox.dart';
 import 'rotation_state_snapshot_entity.dart';
 
+import 'planning_sync_state.dart';
+
 @Entity()
 class PlanningSnapshotEntity {
   @Id()
@@ -15,6 +17,10 @@ class PlanningSnapshotEntity {
   @Index()
   int month = 0;
 
+  /// Stable Supabase UUID. Null until the snapshot is uploaded.
+  @Index()
+  String? remoteId;
+
   String configurationId = '';
   int configurationVersion = 0;
   String engineVersion = '';
@@ -23,10 +29,12 @@ class PlanningSnapshotEntity {
   int createdAtEpochMs = 0;
   int? publishedAtEpochMs;
 
-  /// Persisted checkpoint used to continue rotation into the next month.
-  ///
-  /// This relation is intentionally independent from assignments. Editing
-  /// leave or team order must never mutate the historical rotation checkpoint.
+  @Index()
+  int syncState = PlanningSyncState.pending.index;
+
+  int? lastSyncedAtEpochMs;
+  String? syncError;
+
   final rotationState = ToOne<RotationStateSnapshotEntity>();
 
   @Backlink('snapshot')
@@ -43,6 +51,11 @@ class PlanningAssignmentEntity {
 
   @Index()
   int dateEpochMs = 0;
+
+  /// Stable remote identity. The snapshot relationship remains the local
+  /// ObjectBox relationship and is not replaced by this field.
+  @Index()
+  String? remoteId;
 
   String? team;
   String shift = '';
