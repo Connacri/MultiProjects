@@ -379,7 +379,7 @@ class DatabaseUpdater {
   // Méthode principale pour choisir et remplacer la base de données
   static Future<void> pickAndReplaceDatabase(BuildContext context) async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['mdb'],
         allowMultiple: false,

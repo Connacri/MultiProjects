@@ -132,7 +132,7 @@ class HybridImagePickerService {
     try {
       print('🖥️ [HybridPicker] Utilisation de file_picker');
 
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: allowedExtensions,
         allowMultiple: false,
@@ -200,7 +200,7 @@ class HybridImagePickerService {
     try {
       print('🖥️ [HybridPicker] Picking multiple avec file_picker');
 
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: allowedExtensions,
         allowMultiple: true,

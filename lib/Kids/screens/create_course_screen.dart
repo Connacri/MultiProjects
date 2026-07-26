@@ -159,7 +159,7 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
     print('🔵 [CreateCourse] _pickImages - DÉBUT');
     try {
       print('🔵 [CreateCourse] Appel FilePicker.platform.pickFiles...');
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: true,
         withData: false,

@@ -1741,7 +1741,7 @@ class SeasonalPricingCard2 extends StatelessWidget {
                     lineTouchData: LineTouchData(
                       enabled: true,
                       touchTooltipData: LineTouchTooltipData(
-                        tooltipRoundedRadius: 12, // coins arrondis
+                        tooltipBorderRadius: BorderRadius.circular(12),
                         tooltipMargin: 8,
                         getTooltipItems: (touchedSpots) {
                           return touchedSpots.map((spot) {

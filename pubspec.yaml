@@ -45,7 +45,7 @@ dependencies:
 
   # Navigation
   go_router: ^17.3.0
-  map_launcher: ^5.0.1
+  map_launcher: ^4.6.0
   url_launcher: ^6.3.2
 
   # Local storage
@@ -57,14 +57,15 @@ dependencies:
   # Networking
   http: ^1.6.0
   connectivity_plus: ^7.0.0
-  network_info_plus: ^8.2.1
+  network_info_plus: ^7.0.0
   multicast_dns: ^0.3.3+1
 
   # Image & media
   image_picker: ^1.2.3
   flutter_image_compress: ^2.5.1
   mobile_scanner: ^7.4.0
-  youtube_player_flutter: ^10.0.1
+  video_player: ^2.9.2
+  youtube_player_flutter: ^9.1.3
 
   # Auth
   google_sign_in: ^7.2.0
@@ -72,7 +73,7 @@ dependencies:
   # Location & Maps
   geocoding: ^5.0.0
   geolocator: any
-  flutter_map: any
+  flutter_map: ^5.0.0
   latlong2: any
 
   # PDF
@@ -82,12 +83,16 @@ dependencies:
   # Device
   device_info_plus: any
   permission_handler: any
-  file_picker: any
+  file_picker: ^11.0.2
   share_plus: any
   window_manager: any
+  google_mobile_ads: any
 
   # Utils
   intl: ^0.20.2
+  pincode_input_fields: any
+  video_compress: any
+  call_log: any
   path: ^1.9.1
   uuid: ^4.5.2
   faker: ^2.2.0
