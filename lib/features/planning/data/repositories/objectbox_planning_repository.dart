@@ -2,21 +2,24 @@ import 'package:objectbox/objectbox.dart';
 
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/repositories/planning_repository.dart';
+import '../../domain/validators/planning_snapshot_validator.dart';
 import '../mappers/planning_snapshot_mapper.dart';
 import 'objectbox_planning_snapshot_store.dart';
 
 /// Planning repository backed by the atomic ObjectBox snapshot store.
 ///
-/// This repository is the bridge between the clean application/domain API and
-/// the low-level ObjectBox store. Snapshots are read and written explicitly by
-/// status so the caller never has to guess which revision is loaded.
+/// The repository is the final persistence boundary for the planning
+/// lifecycle. Domain validation happens before any write and publication is
+/// persisted only as a new immutable revision.
 class ObjectBoxPlanningRepository implements PlanningRepository {
   final ObjectBoxPlanningSnapshotStore snapshotStore;
   final PlanningSnapshotMapper mapper;
+  final PlanningSnapshotValidator validator;
 
   const ObjectBoxPlanningRepository({
     required this.snapshotStore,
     this.mapper = const PlanningSnapshotMapper(),
+    this.validator = const PlanningSnapshotValidator(),
   });
 
   @override
@@ -79,14 +82,26 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
 
   @override
   Future<void> saveRevision(PlanningSnapshot snapshot) async {
+    validator.validateOrThrow(snapshot);
+    if (snapshot.isPublished) {
+      throw StateError(
+        'Use publishRevision() for a published planning snapshot.',
+      );
+    }
     await _persist(snapshot);
   }
 
   @override
   Future<void> publishRevision(PlanningSnapshot snapshot) async {
+    validator.validateOrThrow(snapshot);
     if (!snapshot.isPublished) {
       throw StateError(
         'publishRevision expects a snapshot already marked with publishedAt.',
+      );
+    }
+    if (snapshot.publishedAt!.isBefore(snapshot.createdAt)) {
+      throw StateError(
+        'A published planning snapshot cannot have publishedAt before createdAt.',
       );
     }
     await _persist(snapshot);
@@ -99,7 +114,10 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
     int? branchId,
   }) async {
     return (await findLatestByMonth(
-            year: year, month: month, branchId: branchId)) !=
+              year: year,
+              month: month,
+              branchId: branchId,
+            )) !=
         null;
   }
 
@@ -114,7 +132,7 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
 
   /// Compatibility helper for older callers.
   Future<void> publish(PlanningSnapshot snapshot) async {
-    await saveRevision(snapshot);
+    await publishRevision(snapshot);
   }
 
   Future<void> _persist(PlanningSnapshot snapshot) async {
