@@ -52,6 +52,7 @@ import 'tests/cruds.dart' as cruds;
 import '../features/planning/presentation/planning_composition.dart';
 import '../features/planning/presentation/providers/planning_editor_provider.dart';
 import '../features/planning/presentation/providers/planning_provider.dart';
+import '../features/planning/presentation/providers/planning_sync_provider.dart';
 import '../features/planning/presentation/providers/planning_validation_provider.dart';
 import '../features/planning/presentation/providers/rotation_configuration_provider.dart';
 import '../features/planning/presentation/widgets/planning_workspace.dart';
@@ -91,6 +92,7 @@ class MyApp9 extends StatelessWidget {
         ChangeNotifierProvider.value(value: planningComposition.rotationConfigurationProvider),
         ChangeNotifierProvider.value(value: planningComposition.editorProvider),
         ChangeNotifierProvider.value(value: planningComposition.validationProvider),
+        ChangeNotifierProvider.value(value: planningComposition.syncProvider),
         Provider.value(value: planningComposition.workspaceController),
 
         ChangeNotifierProvider(create: (_) => CrudProvider(objectBox)),
@@ -143,14 +145,15 @@ class MyApp9 extends StatelessWidget {
               brightness: Brightness.dark,
               primaryColor: Colors.blueGrey,
             ),
-            home: Consumer2<PlanningProvider, RotationConfigurationProvider>(
-              builder: (context, planningProvider, rotationProvider, _) {
+            home: Consumer3<PlanningProvider, RotationConfigurationProvider, PlanningSyncProvider>(
+              builder: (context, planningProvider, rotationProvider, syncProvider, _) {
                 return PlanningWorkspace(
                   planningProvider: planningProvider,
                   rotationProvider: rotationProvider,
                   editorProvider: context.read<PlanningEditorProvider>(),
                   validationProvider: context.read<PlanningValidationProvider>(),
                   workspaceController: context.read<PlanningWorkspaceController>(),
+                  syncProvider: syncProvider,
                 );
               },
             ),

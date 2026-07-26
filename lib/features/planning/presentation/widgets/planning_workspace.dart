@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../providers/planning_editor_provider.dart';
 import '../providers/planning_history_provider.dart';
 import '../providers/planning_provider.dart';
+import '../providers/planning_sync_provider.dart';
 import '../providers/planning_validation_provider.dart';
 import '../providers/rotation_configuration_provider.dart';
 import 'planning_history_panel.dart';
@@ -23,6 +24,7 @@ class PlanningWorkspace extends StatelessWidget {
   final PlanningValidationProvider? validationProvider;
   final PlanningWorkspaceController? workspaceController;
   final PlanningHistoryProvider? historyProvider;
+  final PlanningSyncProvider? syncProvider;
   final int? historyYear;
   final int? historyMonth;
   final int? historyBranchId;
@@ -37,6 +39,7 @@ class PlanningWorkspace extends StatelessWidget {
     this.validationProvider,
     this.workspaceController,
     this.historyProvider,
+    this.syncProvider,
     this.historyYear,
     this.historyMonth,
     this.historyBranchId,
@@ -98,7 +101,7 @@ class PlanningWorkspace extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Planning des équipes',
+                'Planning des \u00e9quipes',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
@@ -108,7 +111,7 @@ class PlanningWorkspace extends StatelessWidget {
                       children: [
                         rotation,
                         const SizedBox(height: 12),
-                        workflow
+                        workflow,
                       ],
                     )
                   : Row(
@@ -119,6 +122,10 @@ class PlanningWorkspace extends StatelessWidget {
                         Expanded(flex: 3, child: workflow),
                       ],
                     ),
+              if (syncProvider != null) ...[
+                const SizedBox(height: 12),
+                _SyncButton(syncProvider: syncProvider!),
+              ],
               if (hasIntegratedFlow &&
                   !controller.isEditing &&
                   planningProvider.hasDraft) ...[
@@ -169,15 +176,15 @@ class _PlanningStatusCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'État du planning',
+              '\u00c9tat du planning',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             if (draft != null) Text('Brouillon : ${draft.year}/${draft.month}'),
             if (current != null)
-              Text('Publié : ${current.year}/${current.month}'),
+              Text('Publi\u00e9 : ${current.year}/${current.month}'),
             if (draft == null && current == null)
-              const Text('Aucun planning chargé.'),
+              const Text('Aucun planning charg\u00e9.'),
             if (provider.error != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -188,6 +195,165 @@ class _PlanningStatusCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SyncButton extends StatefulWidget {
+  final PlanningSyncProvider syncProvider;
+
+  const _SyncButton({required this.syncProvider});
+
+  @override
+  State<_SyncButton> createState() => _SyncButtonState();
+}
+
+class _SyncButtonState extends State<_SyncButton> {
+  void _onStateChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.syncProvider.addListener(_onStateChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.syncProvider.removeListener(_onStateChanged);
+    super.dispose();
+  }
+
+  Future<void> _confirmForceSync() async {
+    final sync = widget.syncProvider;
+    final info = sync.conflictInfo;
+    final remoteRevision = info?['revision'] as int?;
+    final remoteCreatedAt =
+        DateTime.tryParse(info?['created_at'] as String? ?? '');
+
+    final message = StringBuffer('Les donn\u00e9es distantes ont \u00e9t\u00e9 '
+        'modifi\u00e9es depuis la derni\u00e8re synchronisation');
+    if (remoteRevision != null) {
+      message.write(' (r\u00e9vision distante: $remoteRevision)');
+    }
+    if (remoteCreatedAt != null) {
+      message.write(
+          '\nDerni\u00e8re modification distante: ${_formatDateTime(remoteCreatedAt)}');
+    }
+    message.write(
+        '\n\nForcer la synchronisation \u00e9crasera les donn\u00e9es distantes.');
+
+    final force = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Conflit de synchronisation'),
+        content: Text(message.toString()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Forcer'),
+          ),
+        ],
+      ),
+    );
+
+    if (force == true && mounted) {
+      sync.forceSync();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sync = widget.syncProvider;
+    final state = sync.state;
+    final canSync = sync.canSync;
+
+    Widget button;
+    switch (state) {
+      case SyncUiState.syncing:
+        button = OutlinedButton.icon(
+          onPressed: null,
+          icon: const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          label: const Text('Synchronisation\u2026'),
+        );
+      case SyncUiState.success:
+        button = OutlinedButton.icon(
+          onPressed: sync.reset,
+          icon: Icon(Icons.cloud_done_outlined,
+              color: Theme.of(context).colorScheme.primary),
+          label: Text(
+            'Synchronis\u00e9',
+            style: TextStyle(color: Theme.of(context).colorScheme.primary),
+          ),
+        );
+      case SyncUiState.failed:
+        button = OutlinedButton.icon(
+          onPressed: canSync ? sync.sync : null,
+          icon: Icon(Icons.cloud_off_outlined,
+              color: Theme.of(context).colorScheme.error),
+          label: Text(
+            'R\u00e9essayer',
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        );
+      case SyncUiState.conflict:
+        button = OutlinedButton.icon(
+          onPressed: _confirmForceSync,
+          icon: const Icon(Icons.warning_amber_outlined, color: Colors.orange),
+          label: const Text('Conflit'),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.orange),
+          ),
+        );
+      case SyncUiState.idle:
+        button = OutlinedButton.icon(
+          onPressed: canSync ? sync.sync : null,
+          icon: const Icon(Icons.cloud_upload_outlined),
+          label: const Text('Synchroniser'),
+        );
+    }
+
+    return Row(
+      children: [
+        button,
+        if (state == SyncUiState.failed && sync.error != null) ...[
+          const SizedBox(width: 12),
+          Flexible(
+            child: TooltipMessage(message: sync.error!),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _formatDateTime(DateTime dt) {
+    return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-'
+        '${dt.day.toString().padLeft(2, '0')} '
+        '${dt.hour.toString().padLeft(2, '0')}:'
+        '${dt.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class TooltipMessage extends StatelessWidget {
+  final String message;
+  const TooltipMessage({super.key, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: message,
+      child: Icon(Icons.info_outline,
+          size: 18, color: Theme.of(context).colorScheme.error),
     );
   }
 }

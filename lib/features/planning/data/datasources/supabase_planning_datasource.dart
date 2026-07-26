@@ -158,6 +158,26 @@ class SupabasePlanningDatasource {
         .toList(growable: false);
   }
 
+  /// Lightweight check: returns the revision and created_at of the latest
+  /// remote snapshot for [branchId]/[year]/[month], or null if none exists.
+  Future<Map<String, dynamic>?> fetchLatestSnapshotInfo({
+    required int branchId,
+    required int year,
+    required int month,
+  }) async {
+    final rows = await _client
+        .from('planning_snapshots')
+        .select('id, revision, created_at')
+        .eq('branch_id', branchId)
+        .eq('year', year)
+        .eq('month', month)
+        .order('revision', ascending: false)
+        .limit(1);
+
+    if (rows.isEmpty) return null;
+    return Map<String, dynamic>.from(rows.first);
+  }
+
   String _dateOnly(DateTime value) {
     final utc = value.toUtc();
     return '${utc.year.toString().padLeft(4, '0')}-'

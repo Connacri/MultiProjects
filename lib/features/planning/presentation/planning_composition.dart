@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 
+import '../data/datasources/supabase_planning_datasource.dart';
 import '../data/objectbox/planning_snapshot_entity.dart';
 import '../data/objectbox/rotation_state_snapshot_entity.dart';
 import '../data/repositories/objectbox_planning_repository.dart';
 import '../data/repositories/objectbox_planning_snapshot_store.dart';
+import '../data/services/planning_sync_service.dart';
 import '../domain/repositories/planning_repository.dart';
 import '../domain/repositories/rotation_configuration_repository.dart';
 import '../domain/services/generate_planning.dart';
@@ -20,6 +22,7 @@ import '../application/usecases/load_planning.dart';
 import '../application/usecases/publish_planning.dart';
 import '../presentation/providers/planning_editor_provider.dart';
 import '../presentation/providers/planning_provider.dart';
+import '../presentation/providers/planning_sync_provider.dart';
 import '../presentation/providers/planning_validation_provider.dart';
 import '../presentation/providers/rotation_configuration_provider.dart';
 import '../presentation/widgets/planning_workspace_controller.dart';
@@ -36,6 +39,7 @@ class PlanningComposition {
   final PlanningEditorProvider editorProvider;
   final PlanningValidationProvider validationProvider;
   final PlanningWorkspaceController workspaceController;
+  final PlanningSyncProvider syncProvider;
 
   PlanningComposition._({
     required this.repository,
@@ -45,6 +49,7 @@ class PlanningComposition {
     required this.editorProvider,
     required this.validationProvider,
     required this.workspaceController,
+    required this.syncProvider,
   });
 
   factory PlanningComposition.fromStore({
@@ -134,6 +139,15 @@ class PlanningComposition {
       editorProvider: editorProvider,
     );
 
+    final remote = SupabasePlanningDatasource();
+    final syncService = PlanningSyncService(remote: remote);
+    final syncProvider = PlanningSyncProvider(
+      planningProvider: planningProvider,
+      syncService: syncService,
+      rotationConfigurationProvider: rotationConfigurationProvider,
+      remote: remote,
+    );
+
     return PlanningComposition._(
       repository: repository,
       snapshotStore: snapshotStore,
@@ -142,6 +156,7 @@ class PlanningComposition {
       editorProvider: editorProvider,
       validationProvider: validationProvider,
       workspaceController: workspaceController,
+      syncProvider: syncProvider,
     );
   }
 
@@ -162,5 +177,6 @@ class PlanningComposition {
     editorProvider.dispose();
     validationProvider.dispose();
     workspaceController.dispose();
+    syncProvider.dispose();
   }
 }
