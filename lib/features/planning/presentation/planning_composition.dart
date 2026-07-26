@@ -1,29 +1,32 @@
 import 'package:flutter/foundation.dart';
+import 'package:objectbox/objectbox.dart';
 
-import 'data/repositories/objectbox_planning_repository.dart';
-import 'domain/repositories/planning_repository.dart';
-import 'domain/services/generate_planning.dart';
-import 'domain/services/planning_draft_pipeline.dart';
-import 'domain/services/planning_validator.dart';
-import 'domain/services/rotation_continuity_resolver.dart';
-import 'domain/services/rotation_engine.dart';
-import 'domain/services/team_schedule_generator.dart';
-import 'domain/usecases/create_planning_revision.dart';
-import 'domain/usecases/save_planning_revision.dart';
-import 'application/usecases/load_planning.dart';
-import 'application/usecases/publish_planning.dart';
-import 'presentation/providers/planning_editor_provider.dart';
-import 'presentation/providers/planning_provider.dart';
-import 'presentation/providers/planning_validation_provider.dart';
-import 'presentation/providers/rotation_configuration_provider.dart';
-import 'presentation/widgets/planning_workspace_controller.dart';
+import '../data/repositories/objectbox_planning_repository.dart';
+import '../data/repositories/objectbox_planning_snapshot_store.dart';
+import '../domain/repositories/planning_repository.dart';
+import '../domain/services/generate_planning.dart';
+import '../domain/services/planning_draft_pipeline.dart';
+import '../domain/services/planning_validator.dart';
+import '../domain/services/rotation_continuity_resolver.dart';
+import '../domain/services/rotation_engine.dart';
+import '../domain/services/team_schedule_generator.dart';
+import '../domain/usecases/create_planning_revision.dart';
+import '../domain/usecases/save_planning_revision.dart';
+import '../application/usecases/load_planning.dart';
+import '../application/usecases/publish_planning.dart';
+import '../presentation/providers/planning_editor_provider.dart';
+import '../presentation/providers/planning_provider.dart';
+import '../presentation/providers/planning_validation_provider.dart';
+import '../presentation/providers/rotation_configuration_provider.dart';
+import '../presentation/widgets/planning_workspace_controller.dart';
 
 /// Composition root for the Planning feature.
 ///
 /// Keeps dependency construction out of widgets and makes the complete
-/// feature graph explicit. The caller owns the ObjectBox store lifecycle.
+/// feature graph explicit. The caller owns the ObjectBox Store lifecycle.
 class PlanningComposition {
   final PlanningRepository repository;
+  final ObjectBoxPlanningSnapshotStore snapshotStore;
   final PlanningProvider planningProvider;
   final RotationConfigurationProvider rotationConfigurationProvider;
   final PlanningEditorProvider editorProvider;
@@ -32,6 +35,7 @@ class PlanningComposition {
 
   PlanningComposition._({
     required this.repository,
+    required this.snapshotStore,
     required this.planningProvider,
     required this.rotationConfigurationProvider,
     required this.editorProvider,
@@ -39,8 +43,31 @@ class PlanningComposition {
     required this.workspaceController,
   });
 
-  factory PlanningComposition.fromStore(dynamic store) {
-    final repository = ObjectBoxPlanningRepository(store);
+  factory PlanningComposition.fromStore({
+    required Store store,
+    required Box<PlanningSnapshotEntity> snapshotBox,
+    required Box<PlanningAssignmentEntity> assignmentBox,
+    required Box<RotationStateSnapshotEntity> rotationStateBox,
+  }) {
+    final snapshotStore = ObjectBoxPlanningSnapshotStore(
+      store: store,
+      snapshotBox: snapshotBox,
+      assignmentBox: assignmentBox,
+      rotationStateBox: rotationStateBox,
+    );
+    final repository = ObjectBoxPlanningRepository(
+      snapshotStore: snapshotStore,
+    );
+    return _fromRepository(
+      repository: repository,
+      snapshotStore: snapshotStore,
+    );
+  }
+
+  static PlanningComposition _fromRepository({
+    required PlanningRepository repository,
+    required ObjectBoxPlanningSnapshotStore snapshotStore,
+  }) {
     final rotationEngine = const RotationEngine();
     final teamScheduleGenerator = TeamScheduleGenerator(rotationEngine);
     final continuityResolver = RotationContinuityResolver(repository);
@@ -91,6 +118,7 @@ class PlanningComposition {
 
     return PlanningComposition._(
       repository: repository,
+      snapshotStore: snapshotStore,
       planningProvider: planningProvider,
       rotationConfigurationProvider: rotationConfigurationProvider,
       editorProvider: editorProvider,
@@ -108,44 +136,18 @@ class PlanningComposition {
   }
 
   @visibleForTesting
-  static PlanningComposition forTesting({required PlanningRepository repository}) {
-    final rotationEngine = const RotationEngine();
-    final validator = const PlanningValidator();
-    final planningProvider = PlanningProvider(
-      generatePlanning: GeneratePlanning(
-        planningRepository: repository,
-        teamScheduleGenerator: TeamScheduleGenerator(rotationEngine),
-        continuityResolver: RotationContinuityResolver(repository),
-        draftPipeline: const PlanningDraftPipeline(),
-        validator: validator,
-      ),
-      createPlanningRevision: CreatePlanningRevision(
-        planningRepository: repository,
-      ),
-      savePlanningRevision: SavePlanningRevision(
-        planningRepository: repository,
-      ),
-      loadPlanning: LoadPlanning(planningRepository: repository),
-      publishPlanning: PublishPlanning(
-        planningRepository: repository,
-        validator: validator,
-      ),
+  static PlanningComposition forTesting({
+    required PlanningRepository repository,
+  }) {
+    final snapshotStore = ObjectBoxPlanningSnapshotStore(
+      store: throw UnsupportedError('No ObjectBox store in repository-only tests'),
+      snapshotBox: throw UnsupportedError('No ObjectBox box in repository-only tests'),
+      assignmentBox: throw UnsupportedError('No ObjectBox box in repository-only tests'),
+      rotationStateBox: throw UnsupportedError('No ObjectBox box in repository-only tests'),
     );
-    final editorProvider = PlanningEditorProvider();
-    final validationProvider = PlanningValidationProvider(validator: validator);
-
-    return PlanningComposition._(
+    return _fromRepository(
       repository: repository,
-      planningProvider: planningProvider,
-      rotationConfigurationProvider: RotationConfigurationProvider(
-        repository: repository,
-      ),
-      editorProvider: editorProvider,
-      validationProvider: validationProvider,
-      workspaceController: PlanningWorkspaceController(
-        planningProvider: planningProvider,
-        editorProvider: editorProvider,
-      ),
+      snapshotStore: snapshotStore,
     );
   }
 }
