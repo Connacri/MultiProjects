@@ -7,7 +7,9 @@ import '../objectbox/rotation_state_snapshot_entity.dart';
 /// Low-level ObjectBox store for immutable Planning snapshots.
 ///
 /// Snapshot, rotation checkpoint and assignments are persisted atomically.
-/// Higher layers own validation and publication business rules.
+/// Higher layers own validation and publication business rules; this store
+/// enforces the final compare-and-write invariants inside the ObjectBox write
+/// transaction.
 class ObjectBoxPlanningSnapshotStore {
   final Store store;
   final Box<PlanningSnapshotEntity> snapshotBox;
@@ -171,6 +173,71 @@ class ObjectBoxPlanningSnapshotStore {
         assignment.snapshot.targetId = snapshotId;
         assignmentBox.put(assignment);
       }
+    });
+  }
+
+  /// Atomically publishes an already persisted draft revision.
+  ///
+  /// This is a compare-and-publish operation. The target must still be the
+  /// latest persisted revision and must still be unpublished at transaction
+  /// time. No read-then-write race in the application layer can bypass these
+  /// checks because the compare happens inside the ObjectBox write transaction.
+  void publishAtomically({
+    required PlanningSnapshotEntity snapshot,
+  }) {
+    if (snapshot.id == 0) {
+      throw StateError('A persisted snapshot ID is required for publication.');
+    }
+    if (snapshot.publishedAtEpochMs == null) {
+      throw StateError(
+        'A snapshot must contain publishedAtEpochMs before publication.',
+      );
+    }
+
+    store.runInTransaction(TxMode.write, () {
+      final persisted = snapshotBox.get(snapshot.id);
+      if (persisted == null) {
+        throw StateError('Planning snapshot ${snapshot.id} no longer exists.');
+      }
+
+      if (persisted.publishedAtEpochMs != null) {
+        if (persisted.publishedAtEpochMs == snapshot.publishedAtEpochMs) {
+          return;
+        }
+        throw StateError(
+          'Planning snapshot ${snapshot.id} is already published.',
+        );
+      }
+
+      final latest = findLatestByMonth(
+        year: persisted.year,
+        month: persisted.month,
+        branchId: persisted.branchId,
+      );
+      if (latest == null || latest.id != persisted.id) {
+        throw StateError(
+          'Cannot publish stale planning revision ${persisted.revision}. '
+          'A newer revision is already persisted.',
+        );
+      }
+
+      if (snapshot.year != persisted.year ||
+          snapshot.month != persisted.month ||
+          snapshot.revision != persisted.revision ||
+          snapshot.branchId != persisted.branchId) {
+        throw StateError(
+          'Publication payload does not match the persisted planning revision.',
+        );
+      }
+
+      if (snapshot.publishedAtEpochMs! < persisted.createdAtEpochMs) {
+        throw StateError(
+          'Publication date cannot be before snapshot creation date.',
+        );
+      }
+
+      persisted.publishedAtEpochMs = snapshot.publishedAtEpochMs;
+      snapshotBox.put(persisted);
     });
   }
 
