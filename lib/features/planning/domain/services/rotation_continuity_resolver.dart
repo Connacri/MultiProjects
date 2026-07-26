@@ -7,10 +7,9 @@ import '../repositories/planning_repository.dart';
 /// Resolves the persisted rotation checkpoint from which a new planning
 /// period must continue.
 ///
-/// Continuity is restored from the last published RotationStateSnapshot, never
-/// reconstructed from mutable assignments. This guarantees that editing leave
-/// or team order in the current month cannot silently change the next month's
-/// rotation checkpoint.
+/// Continuity is restored exclusively from the last published
+/// RotationStateSnapshot. Mutable assignments, leave changes, or draft
+/// revisions are never used as the continuity source.
 class RotationContinuityResolver {
   final PlanningRepository planningRepository;
 
@@ -32,7 +31,9 @@ class RotationContinuityResolver {
     );
 
     final checkpoint = previous?.rotationState;
-    if (checkpoint == null) return null;
+    if (checkpoint == null) {
+      return null;
+    }
 
     return _toRotationState(
       checkpoint,
@@ -44,6 +45,10 @@ class RotationContinuityResolver {
     RotationStateSnapshot checkpoint, {
     required RotationConfiguration configuration,
   }) {
+    if (configuration.cycle.isEmpty) {
+      throw StateError('Rotation configuration cycle cannot be empty.');
+    }
+
     final currentTeams = configuration.teamOrder.toSet();
     final retained = <String, int>{
       for (final entry in checkpoint.teamPhaseByTeam.entries)
