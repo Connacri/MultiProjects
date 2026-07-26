@@ -1,25 +1,31 @@
 import 'package:flutter/foundation.dart';
 
+import '../../application/usecases/create_planning_revision.dart';
 import '../../application/usecases/load_planning.dart';
 import '../../application/usecases/publish_planning.dart';
+import '../../domain/entities/planning_assignment.dart';
 import '../../domain/entities/planning_override.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/entities/rotation_configuration.dart';
+import '../../domain/entities/rotation_state_snapshot.dart';
 import '../../domain/entities/staff_availability.dart';
 import '../../domain/services/generate_planning.dart';
 
 /// Presentation state shared by Desktop and Mobile Planning screens.
 ///
 /// Lifecycle:
-/// load -> generate draft -> edit draft externally -> validate/publish.
-/// The provider never mutates published snapshots in place.
+/// load -> generate/edit draft -> persist revision -> publish.
+/// Published snapshots are immutable historical facts and are never mutated
+/// in place by the provider.
 class PlanningProvider extends ChangeNotifier {
   final GeneratePlanning generatePlanning;
+  final CreatePlanningRevision createPlanningRevision;
   final PublishPlanning publishPlanning;
   final LoadPlanning loadPlanning;
 
   PlanningProvider({
     required this.generatePlanning,
+    required this.createPlanningRevision,
     required this.publishPlanning,
     required this.loadPlanning,
   });
@@ -31,6 +37,7 @@ class PlanningProvider extends ChangeNotifier {
   int? _loadedBranchId;
   bool _isLoading = false;
   bool _isGenerating = false;
+  bool _isSaving = false;
   bool _isPublishing = false;
   String? _error;
 
@@ -41,8 +48,10 @@ class PlanningProvider extends ChangeNotifier {
   int? get loadedBranchId => _loadedBranchId;
   bool get isLoading => _isLoading;
   bool get isGenerating => _isGenerating;
+  bool get isSaving => _isSaving;
   bool get isPublishing => _isPublishing;
-  bool get isBusy => _isLoading || _isGenerating || _isPublishing;
+  bool get isBusy =>
+      _isLoading || _isGenerating || _isSaving || _isPublishing;
   bool get hasDraft => _draft != null;
   bool get hasCurrent => _current != null;
   String? get error => _error;
@@ -114,9 +123,62 @@ class PlanningProvider extends ChangeNotifier {
     }
   }
 
+  /// Creates a new draft revision from the current persisted revision.
+  ///
+  /// This is the only supported path for editing an already persisted plan.
+  /// The source remains immutable; the returned revision is a new draft.
+  Future<void> createRevision({
+    required DateTime createdAt,
+    List<PlanningAssignment>? assignments,
+    DateTime? continuityDate,
+    RotationStateSnapshot? rotationState,
+  }) async {
+    if (isBusy) return;
+
+    final source = _current;
+    if (source == null) {
+      throw StateError(
+        'No persisted planning snapshot is available to create a revision.',
+      );
+    }
+    if (!source.isPublished) {
+      throw StateError(
+        'A revision can only be created from a persisted published snapshot.',
+      );
+    }
+
+    _isSaving = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      _draft = await createPlanningRevision(
+        source: source,
+        createdAt: createdAt,
+        assignments: assignments,
+        continuityDate: continuityDate,
+        rotationState: rotationState,
+      );
+    } catch (error) {
+      _error = error.toString();
+      rethrow;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
+  /// Persists the current draft as a new revision without publishing it.
+  Future<void> saveDraft() async {
+    // Persistence of drafts is intentionally owned by the application layer.
+    // This guard prevents accidental in-place mutation until that use case is
+    // wired into the provider composition root.
+    throw UnimplementedError(
+      'Draft persistence must be wired to the PlanningRepository saveRevision use case.',
+    );
+  }
+
   /// Publishes the current draft through the canonical publication pipeline.
-  /// Publication is atomic at the repository boundary and cannot overwrite
-  /// an existing historical snapshot.
   Future<void> publish() async {
     if (isBusy) return;
 
@@ -143,7 +205,7 @@ class PlanningProvider extends ChangeNotifier {
   }
 
   /// Replaces the in-memory draft after an external editor applies changes.
-  /// This is intentionally not persisted until [publish].
+  /// This is intentionally not persisted until the revision persistence flow.
   void setDraft(PlanningSnapshot snapshot) {
     if (snapshot.isPublished) {
       throw StateError('A published snapshot cannot be assigned as a draft.');
