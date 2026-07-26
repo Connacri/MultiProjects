@@ -54,7 +54,6 @@ class ObjectBox {
   late final Box<Match> matchBox;
   late final Box<Profile> profileBox;
 
-  // New Planning architecture persistence boundary.
   late final Box<PlanningSnapshotEntity> planningSnapshotBox;
   late final Box<PlanningAssignmentEntity> planningAssignmentBox;
   late final Box<RotationStateSnapshotEntity> rotationStateSnapshotBox;
@@ -62,11 +61,8 @@ class ObjectBox {
   Admin? admin;
 
   static final ObjectBox _singleton = ObjectBox._internal();
-
   factory ObjectBox() => _singleton;
-
   final random = Random();
-
   ObjectBox._internal();
 
   Future<void>? _initFuture;
@@ -101,8 +97,6 @@ class ObjectBox {
         }
       }
     } else {
-      // The application singleton owns the open store; keep the existing
-      // initialized boxes instead of opening a second Store instance.
       _initializeBoxes();
     }
   }
@@ -143,7 +137,6 @@ class ObjectBox {
     swipeQueueBox = Box<SwipeQueue>(store);
     matchBox = Box<Match>(store);
     profileBox = Box<Profile>(store);
-
     planningSnapshotBox = Box<PlanningSnapshotEntity>(store);
     planningAssignmentBox = Box<PlanningAssignmentEntity>(store);
     rotationStateSnapshotBox = Box<RotationStateSnapshotEntity>(store);
@@ -175,7 +168,6 @@ class ObjectBox {
   }
 
   bool isAdminAvailable() => admin != null && kDebugMode;
-
   String? getAdminUrl() => admin != null ? 'http://127.0.0.1:8090' : null;
 
   Future<void> dispose() async {
@@ -188,9 +180,5 @@ class ObjectBox {
     }
   }
 
-  void close() {
-    store.close();
-  }
-
-  // Existing application data utilities continue below in the restored
-  // historical implementation. The Planning boxes above are additive only.
+  void close() => store.close();
+}
