@@ -22,11 +22,11 @@ import '../presentation/widgets/planning_workspace_controller.dart';
 
 /// Composition root for the Planning feature.
 ///
-/// Keeps dependency construction out of widgets and makes the complete
-/// feature graph explicit. The caller owns the ObjectBox Store lifecycle.
+/// Production wiring owns the ObjectBox infrastructure. Tests can inject a
+/// repository without constructing any ObjectBox object.
 class PlanningComposition {
   final PlanningRepository repository;
-  final ObjectBoxPlanningSnapshotStore snapshotStore;
+  final ObjectBoxPlanningSnapshotStore? snapshotStore;
   final PlanningProvider planningProvider;
   final RotationConfigurationProvider rotationConfigurationProvider;
   final PlanningEditorProvider editorProvider;
@@ -58,6 +58,7 @@ class PlanningComposition {
     final repository = ObjectBoxPlanningRepository(
       snapshotStore: snapshotStore,
     );
+
     return _fromRepository(
       repository: repository,
       snapshotStore: snapshotStore,
@@ -66,7 +67,7 @@ class PlanningComposition {
 
   static PlanningComposition _fromRepository({
     required PlanningRepository repository,
-    required ObjectBoxPlanningSnapshotStore snapshotStore,
+    ObjectBoxPlanningSnapshotStore? snapshotStore,
   }) {
     final rotationEngine = const RotationEngine();
     final teamScheduleGenerator = TeamScheduleGenerator(rotationEngine);
@@ -127,27 +128,22 @@ class PlanningComposition {
     );
   }
 
+  /// Creates the application graph for unit/integration tests.
+  ///
+  /// No ObjectBox store or ObjectBox entity box is constructed here. The
+  /// repository is the persistence boundary and is fully injectable.
+  @visibleForTesting
+  static PlanningComposition forTesting({
+    required PlanningRepository repository,
+  }) {
+    return _fromRepository(repository: repository);
+  }
+
   void dispose() {
     planningProvider.dispose();
     rotationConfigurationProvider.dispose();
     editorProvider.dispose();
     validationProvider.dispose();
     workspaceController.dispose();
-  }
-
-  @visibleForTesting
-  static PlanningComposition forTesting({
-    required PlanningRepository repository,
-  }) {
-    final snapshotStore = ObjectBoxPlanningSnapshotStore(
-      store: throw UnsupportedError('No ObjectBox store in repository-only tests'),
-      snapshotBox: throw UnsupportedError('No ObjectBox box in repository-only tests'),
-      assignmentBox: throw UnsupportedError('No ObjectBox box in repository-only tests'),
-      rotationStateBox: throw UnsupportedError('No ObjectBox box in repository-only tests'),
-    );
-    return _fromRepository(
-      repository: repository,
-      snapshotStore: snapshotStore,
-    );
   }
 }
