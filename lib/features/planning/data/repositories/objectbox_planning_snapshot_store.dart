@@ -106,16 +106,24 @@ class ObjectBoxPlanningSnapshotStore {
     return candidates.first;
   }
 
-  /// Persists snapshot, its rotation checkpoint and assignments atomically.
+  /// Persists a new immutable snapshot revision with its rotation checkpoint
+  /// and assignments atomically.
   ///
-  /// A snapshot already published is immutable: attempting to persist a
-  /// second entity with the same month/revision as the published snapshot is
-  /// rejected. New revisions must use a higher revision number.
+  /// Existing rows are never updated. The only valid operation is insertion
+  /// of a strictly newer revision for the same month and branch.
   void putAtomically({
     required PlanningSnapshotEntity snapshot,
     required RotationStateSnapshotEntity rotationState,
     required List<PlanningAssignmentEntity> assignments,
   }) {
+    if (snapshot.id != 0) {
+      throw StateError('Persisting an existing snapshot entity is forbidden.');
+    }
+
+    if (rotationState.id != 0) {
+      throw StateError('Persisting an existing rotation state is forbidden.');
+    }
+
     if (snapshot.year != rotationState.year ||
         snapshot.month != rotationState.month ||
         snapshot.revision != rotationState.revision ||
@@ -126,30 +134,34 @@ class ObjectBoxPlanningSnapshotStore {
       );
     }
 
-    store.runInTransaction(TxMode.write, () {
-      final published = findPublishedByMonth(
-        year: snapshot.year,
-        month: snapshot.month,
-        branchId: snapshot.branchId,
-      );
-      if (published != null &&
-          published.revision == snapshot.revision &&
-          published.id != snapshot.id) {
-        throw StateError(
-          'A published planning snapshot is immutable and cannot be replaced.',
-        );
+    for (final assignment in assignments) {
+      if (assignment.id != 0) {
+        throw StateError('Persisting an existing planning assignment is forbidden.');
       }
+    }
 
+    store.runInTransaction(TxMode.write, () {
       final latest = findLatestByMonth(
         year: snapshot.year,
         month: snapshot.month,
         branchId: snapshot.branchId,
       );
-      if (latest != null &&
-          latest.id != snapshot.id &&
-          snapshot.revision <= latest.revision) {
+      if (latest != null && snapshot.revision <= latest.revision) {
         throw StateError(
-          'Planning snapshot revisions must increase monotonically.',
+          'Planning snapshot revisions must increase monotonically. '
+          'Expected a revision greater than ${latest.revision}.',
+        );
+      }
+
+      final published = findPublishedByMonth(
+        year: snapshot.year,
+        month: snapshot.month,
+        branchId: snapshot.branchId,
+      );
+      if (published != null && snapshot.revision <= published.revision) {
+        throw StateError(
+          'A published planning snapshot is immutable. '
+          'New revisions must be strictly greater than ${published.revision}.',
         );
       }
 
