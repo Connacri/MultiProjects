@@ -114,21 +114,24 @@ class PlanningProvider extends ChangeNotifier {
     }
   }
 
-  /// Publishes the current draft. Publication is atomic at the repository
-  /// boundary and cannot overwrite an existing historical snapshot.
+  /// Publishes the current draft through the canonical publication pipeline.
+  /// Publication is atomic at the repository boundary and cannot overwrite
+  /// an existing historical snapshot.
   Future<void> publish() async {
+    if (isBusy) return;
+
     final draft = _draft;
     if (draft == null) {
       throw StateError('No planning draft is available for publication.');
     }
-    if (isBusy) return;
 
     _isPublishing = true;
     _error = null;
     notifyListeners();
 
     try {
-      _current = await publishPlanning(draft);
+      final published = await publishPlanning(draft);
+      _current = published;
       _draft = null;
     } catch (error) {
       _error = error.toString();
@@ -142,6 +145,9 @@ class PlanningProvider extends ChangeNotifier {
   /// Replaces the in-memory draft after an external editor applies changes.
   /// This is intentionally not persisted until [publish].
   void setDraft(PlanningSnapshot snapshot) {
+    if (snapshot.isPublished) {
+      throw StateError('A published snapshot cannot be assigned as a draft.');
+    }
     _draft = snapshot;
     _loadedYear = snapshot.year;
     _loadedMonth = snapshot.month;
