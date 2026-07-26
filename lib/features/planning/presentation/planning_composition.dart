@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 
+import '../data/objectbox/planning_snapshot_entity.dart';
+import '../data/objectbox/rotation_state_snapshot_entity.dart';
 import '../data/repositories/objectbox_planning_repository.dart';
 import '../data/repositories/objectbox_planning_snapshot_store.dart';
 import '../domain/repositories/planning_repository.dart';
+import '../domain/repositories/rotation_configuration_repository.dart';
 import '../domain/services/generate_planning.dart';
 import '../domain/services/planning_draft_pipeline.dart';
 import '../domain/services/planning_validator.dart';
@@ -11,6 +14,7 @@ import '../domain/services/rotation_continuity_resolver.dart';
 import '../domain/services/rotation_engine.dart';
 import '../domain/services/team_schedule_generator.dart';
 import '../domain/usecases/create_planning_revision.dart';
+import '../domain/usecases/publish_planning_snapshot.dart';
 import '../domain/usecases/save_planning_revision.dart';
 import '../application/usecases/load_planning.dart';
 import '../application/usecases/publish_planning.dart';
@@ -67,8 +71,21 @@ class PlanningComposition {
 
   static PlanningComposition _fromRepository({
     required PlanningRepository repository,
+    RotationConfigurationRepository? configRepository,
     ObjectBoxPlanningSnapshotStore? snapshotStore,
   }) {
+    RotationConfigurationRepository effectiveConfigRepository;
+    if (configRepository != null) {
+      effectiveConfigRepository = configRepository;
+    } else if (repository is RotationConfigurationRepository) {
+      effectiveConfigRepository = repository as RotationConfigurationRepository;
+    } else {
+      throw ArgumentError(
+        'When repository does not implement RotationConfigurationRepository, '
+        'configRepository must be provided.',
+      );
+    }
+
     final rotationEngine = const RotationEngine();
     final teamScheduleGenerator = TeamScheduleGenerator(rotationEngine);
     final continuityResolver = RotationContinuityResolver(repository);
@@ -89,12 +106,12 @@ class PlanningComposition {
     final saveRevision = SavePlanningRevision(
       planningRepository: repository,
     );
-    final loadPlanning = LoadPlanning(
+    final loadPlanning = LoadPlanning(repository);
+    final publishSnapshot = PublishPlanningSnapshot(
       planningRepository: repository,
     );
     final publishPlanning = PublishPlanning(
-      planningRepository: repository,
-      validator: validator,
+      publishPlanningSnapshot: publishSnapshot,
     );
 
     final planningProvider = PlanningProvider(
@@ -106,7 +123,7 @@ class PlanningComposition {
     );
 
     final rotationConfigurationProvider = RotationConfigurationProvider(
-      repository: repository,
+      repository: effectiveConfigRepository,
     );
     final editorProvider = PlanningEditorProvider();
     final validationProvider = PlanningValidationProvider(

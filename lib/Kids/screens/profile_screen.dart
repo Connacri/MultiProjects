@@ -281,11 +281,11 @@ class _ModernProfileHeader extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                         Theme.of(context)
                             .colorScheme
                             .secondary
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                       ],
                     ),
                   ),
@@ -299,11 +299,11 @@ class _ModernProfileHeader extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                         Theme.of(context)
                             .colorScheme
                             .secondary
-                            .withOpacity(0.3),
+                            .withValues(alpha: 0.3),
                       ],
                     ),
                   ),
@@ -334,7 +334,7 @@ class _ModernProfileHeader extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.1),
+                    Colors.black.withValues(alpha: 0.1),
                   ],
                 ),
               ),
@@ -509,11 +509,11 @@ class _ProfileAvatarCard extends StatelessWidget {
                             Theme.of(context)
                                 .colorScheme
                                 .primary
-                                .withOpacity(0.2),
+                                .withValues(alpha: 0.2),
                             Theme.of(context)
                                 .colorScheme
                                 .secondary
-                                .withOpacity(0.2),
+                                .withValues(alpha: 0.2),
                           ],
                         ),
                         boxShadow: [
@@ -521,7 +521,7 @@ class _ProfileAvatarCard extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
-                                .withOpacity(0.2),
+                                .withValues(alpha: 0.2),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -559,7 +559,7 @@ class _ProfileAvatarCard extends StatelessWidget {
                           color: Theme.of(context)
                               .colorScheme
                               .primary
-                              .withOpacity(0.3),
+                              .withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -601,11 +601,11 @@ class _ProfileAvatarCard extends StatelessWidget {
                       Theme.of(context)
                           .colorScheme
                           .primaryContainer
-                          .withOpacity(0.5),
+                          .withValues(alpha: 0.5),
                       Theme.of(context)
                           .colorScheme
                           .secondaryContainer
-                          .withOpacity(0.5),
+                          .withValues(alpha: 0.5),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
@@ -722,7 +722,7 @@ class _InfoCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon,
@@ -772,8 +772,8 @@ class _ProfileDetailsCards extends StatelessWidget {
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(colors: [
-                      Theme.of(context).colorScheme.primary.withOpacity(0.2),
-                      Theme.of(context).colorScheme.secondary.withOpacity(0.2)
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                      Theme.of(context).colorScheme.secondary.withValues(alpha: 0.2)
                     ]),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1119,11 +1119,11 @@ class _ModernProfileEditDialogState extends State<_ModernProfileEditDialog> {
                           Theme.of(context)
                               .colorScheme
                               .primary
-                              .withOpacity(0.2),
+                              .withValues(alpha: 0.2),
                           Theme.of(context)
                               .colorScheme
                               .secondary
-                              .withOpacity(0.2)
+                              .withValues(alpha: 0.2)
                         ]),
                         borderRadius: BorderRadius.circular(16)),
                     child: Icon(Icons.edit_rounded,

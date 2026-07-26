@@ -209,7 +209,7 @@ class HeroLayoutCard extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withOpacity(0.8),
+                Colors.black.withValues(alpha: 0.8),
               ],
               stops: [0.3, 1.0], // position du dégradé
             ),

@@ -209,7 +209,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.chevron_left, color: Colors.white),
@@ -238,7 +238,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.chevron_right, color: Colors.white),
@@ -266,7 +266,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                     borderRadius: BorderRadius.circular(4),
                     color: _currentImageIndex == index
                         ? Colors.white
-                        : Colors.white.withOpacity(0.4),
+                        : Colors.white.withValues(alpha: 0.4),
                   ),
                 ),
               ),
@@ -285,7 +285,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withValues(alpha: 0.7),
                     Colors.transparent,
                   ],
                 ),
@@ -414,7 +414,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   color: Colors.green,
                 ),
                 label: Text('${_course.price!.toStringAsFixed(2)} DZD'),
-                backgroundColor: Colors.green.withOpacity(0.1),
+                backgroundColor: Colors.green.withValues(alpha: 0.1),
               ),
             Chip(
               label: Text(
@@ -424,8 +424,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                 ),
               ),
               backgroundColor: _course.isActive
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
+                  ? Colors.green.withValues(alpha: 0.1)
+                  : Colors.grey.withValues(alpha: 0.1),
             ),
           ],
         ),
@@ -499,7 +499,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                               color: Theme.of(context)
                                   .colorScheme
                                   .primary
-                                  .withOpacity(0.3),
+                                  .withValues(alpha: 0.3),
                               blurRadius: 8,
                               spreadRadius: 2,
                             ),
@@ -536,7 +536,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -896,8 +896,8 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.0),
-                      Colors.black.withOpacity(0.3),
+                      Colors.black.withValues(alpha: 0.0),
+                      Colors.black.withValues(alpha: 0.3),
                     ],
                   ),
                 ),
@@ -905,11 +905,11 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: 8,
                         ),
                       ],
@@ -1143,7 +1143,7 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),

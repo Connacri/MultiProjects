@@ -149,9 +149,9 @@ class GeneratePlanning {
     }
 
     final referenceOnly = DateTime.utc(
-      configuration.referenceDate.year,
-      configuration.referenceDate.month,
-      configuration.referenceDate.day,
+      configuration.referenceDate?.year ?? date.year,
+      configuration.referenceDate?.month ?? date.month,
+      configuration.referenceDate?.day ?? date.day,
     );
     final dateOnly = DateTime.utc(date.year, date.month, date.day);
     final phaseIndex = _floorMod(

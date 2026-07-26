@@ -87,7 +87,7 @@ class _Profile1State extends State<Profile1> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
           ),
           Positioned(
             top: 150,
@@ -179,7 +179,7 @@ class _Profile1State extends State<Profile1> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                           width: 3,
                         ),
                       ),
@@ -191,7 +191,7 @@ class _Profile1State extends State<Profile1> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                           width: 3,
                         ),
                       ),
@@ -353,7 +353,7 @@ class _Profile1State extends State<Profile1> {
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
-                                  color: Colors.black.withOpacity(0.3),
+                                  color: Colors.black.withValues(alpha: 0.3),
                                 ),
                               ),
                             ),
@@ -369,7 +369,7 @@ class _Profile1State extends State<Profile1> {
                                     child: ElevatedButton(
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor:
-                                            Colors.white.withOpacity(0.8),
+                                            Colors.white.withValues(alpha: 0.8),
                                         shape: RoundedRectangleBorder(
                                           borderRadius:
                                               BorderRadius.circular(20),

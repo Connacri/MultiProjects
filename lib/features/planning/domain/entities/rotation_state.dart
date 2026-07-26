@@ -4,10 +4,12 @@ import '../enums/shift_type.dart';
 class RotationState {
   final DateTime date;
   final Map<String, ShiftType> teamShifts;
+  final int phaseIndex;
 
   const RotationState({
     required this.date,
     required this.teamShifts,
+    this.phaseIndex = 0,
   });
 
   ShiftType? shiftFor(String team) => teamShifts[team];

@@ -174,7 +174,7 @@ class _AuthScreenState extends State<AuthScreen>
   Widget _buildTabBar(ColorScheme colorScheme) {
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TabBar(

@@ -63,7 +63,7 @@ class FuturisticConnectionUI extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
-                      color: Colors.green, //.withOpacity(0.8),
+                      color: Colors.green, //.withValues(alpha: 0.8),
                       shadows: [
                         Shadow(
                           color: Colors.blueAccent,
@@ -124,15 +124,15 @@ class _HoverGradientButtonState extends State<HoverGradientButton> {
             colors: _isHovered
                 ? [Colors.cyanAccent, Colors.blueAccent]
                 : [
-                    Colors.blueAccent.withOpacity(0.6),
-                    Colors.cyanAccent.withOpacity(0.6)
+                    Colors.blueAccent.withValues(alpha: 0.6),
+                    Colors.cyanAccent.withValues(alpha: 0.6)
                   ],
           ),
           borderRadius: BorderRadius.circular(15),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
-                    color: Colors.blueAccent.withOpacity(0.4),
+                    color: Colors.blueAccent.withValues(alpha: 0.4),
                     blurRadius: 15,
                     spreadRadius: 2,
                   )

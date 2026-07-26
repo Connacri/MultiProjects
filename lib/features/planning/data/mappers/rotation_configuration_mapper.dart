@@ -25,9 +25,9 @@ class RotationConfigurationMapper {
       teamOrder: List.unmodifiable(teamOrder),
       cycle: List.unmodifiable(cycle),
       policy: _policyFromInt(entity.policy),
-      referenceDate: DateTime.fromMillisecondsSinceEpoch(
-        entity.referenceDateEpochMs,
-      ),
+      referenceDate: entity.referenceDateEpochMs > 0
+          ? DateTime.fromMillisecondsSinceEpoch(entity.referenceDateEpochMs)
+          : null,
       referencePhaseIndex: entity.referencePhaseIndex,
     );
   }
@@ -46,7 +46,7 @@ class RotationConfigurationMapper {
       )
       ..policy = _policyToInt(configuration.policy)
       ..referenceDateEpochMs =
-          configuration.referenceDate.millisecondsSinceEpoch
+          configuration.referenceDate?.millisecondsSinceEpoch ?? 0
       ..referencePhaseIndex = configuration.referencePhaseIndex
       ..active = true;
   }

@@ -491,7 +491,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                       // Génération d'une couleur aléatoire mais cohérente pour chaque réservation
                       final color = Colors
                           .primaries[rowIndex % Colors.primaries.length]
-                          .withOpacity(0.8);
+                          .withValues(alpha: 0.8);
 
                       return Positioned(
                           top: rowIndex * rowHeight + 6,
@@ -518,7 +518,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                                 ],
                                 border: Border.all(
                                     color: Colors.white
-                                        .withOpacity(0.2)), // Bordure subtile
+                                        .withValues(alpha: 0.2)), // Bordure subtile
                               ),
                               child: Material(
                                 color: Colors.transparent,
@@ -535,7 +535,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                                         width: 20,
                                         height: 20,
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
+                                          color: Colors.white.withValues(alpha: 0.2),
                                           borderRadius:
                                               BorderRadius.circular(4),
                                         ),
@@ -575,7 +575,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                                                   '${DateFormat('d MMM').format(res.startDate)} – ${DateFormat('d MMM').format(res.endDate)}',
                                                   style: TextStyle(
                                                     color: Colors.white
-                                                        .withOpacity(0.9),
+                                                        .withValues(alpha: 0.9),
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w500,
                                                     height: 1.2,
@@ -585,7 +585,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                                                   res.status,
                                                   style: TextStyle(
                                                     color: Colors.white
-                                                        .withOpacity(0.9),
+                                                        .withValues(alpha: 0.9),
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w500,
                                                     height: 1.2,

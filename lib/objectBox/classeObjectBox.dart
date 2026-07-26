@@ -170,6 +170,16 @@ class ObjectBox {
   bool isAdminAvailable() => admin != null && kDebugMode;
   String? getAdminUrl() => admin != null ? 'http://127.0.0.1:8090' : null;
 
+  Future<String?> exportDatabase() async => 'Export MDB non implemente';
+  Future<String?> exportAllToJson() async => 'Export JSON non implemente';
+  Future<String?> exportProduitsToCsv() async => 'Export CSV non implemente';
+  Future<String?> importAllFromJson() async => 'Import JSON non implemente';
+  Future<String?> importProduitsFromCsv() async => 'Import CSV non implemente';
+
+  void fillWithFakeData(int users, int clients, int suppliers, int products, int approvisionnements) {
+    // Stub - generation de donnees factices non implementee
+  }
+
   Future<void> dispose() async {
     try {
       admin?.close();

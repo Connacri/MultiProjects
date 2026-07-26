@@ -49,8 +49,8 @@ class GhibliTheme {
     colors: [
       Color(0xFFFFB88C), // Sunset orange
       Color(0xFFFFD4A3),
-      Color(0xFFB4A7D6).withOpacity(0.8), // Lavender touch
-      Color(0xFF87CEEB).withOpacity(0.4),
+      Color(0xFFB4A7D6).withValues(alpha: 0.8), // Lavender touch
+      Color(0xFF87CEEB).withValues(alpha: 0.4),
     ],
   );
 
@@ -61,7 +61,7 @@ class GhibliTheme {
       Color(0xFF191970), // Midnight blue
       Color(0xFF2C3E50),
       Color(0xFF34495E),
-      Color(0xFF1B263B).withOpacity(0.9),
+      Color(0xFF1B263B).withValues(alpha: 0.9),
     ],
   );
 }
@@ -426,7 +426,7 @@ class _ParentDashboardState extends State<ParentDashboard>
               gradient: LinearGradient(
                 colors: [
                   GhibliTheme.skyBlue,
-                  GhibliTheme.lavenderPurple.withOpacity(0.7)
+                  GhibliTheme.lavenderPurple.withValues(alpha: 0.7)
                 ],
               ),
             ),
@@ -642,7 +642,7 @@ class _EnrollmentDialogState extends State<EnrollmentDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: GhibliTheme.warmYellow.withOpacity(0.2),
+                color: GhibliTheme.warmYellow.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -1092,11 +1092,11 @@ class CourseDetailsSheet extends StatelessWidget {
                         Chip(
                           label: Text(course.category.displayName),
                           backgroundColor:
-                              GhibliTheme.warmYellow.withOpacity(0.3),
+                              GhibliTheme.warmYellow.withValues(alpha: 0.3),
                         ),
                         Chip(
                           label: Text(course.season.displayName),
-                          backgroundColor: GhibliTheme.skyBlue.withOpacity(0.3),
+                          backgroundColor: GhibliTheme.skyBlue.withValues(alpha: 0.3),
                         ),
                       ],
                     ),

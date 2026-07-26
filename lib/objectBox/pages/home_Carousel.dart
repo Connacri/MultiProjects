@@ -285,7 +285,7 @@ class _CarouselExampleState extends State<CarouselExample> {
               children: List<Widget>.generate(20, (int index) {
                 return ColoredBox(
                   color: Colors.primaries[index % Colors.primaries.length]
-                      .withOpacity(0.8),
+                      .withValues(alpha: 0.8),
                   child: const SizedBox.expand(),
                 );
               }),
@@ -428,7 +428,7 @@ class UncontainedLayoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Colors.primaries[index % Colors.primaries.length].withOpacity(0.5),
+      color: Colors.primaries[index % Colors.primaries.length].withValues(alpha: 0.5),
       child: Center(
         child: Text(
           label,
@@ -487,7 +487,7 @@ class UncontainedLayoutCard extends StatelessWidget {
 //             children: List<Widget>.generate(20, (int index) {
 //               return ColoredBox(
 //                 color: Colors.primaries[index % Colors.primaries.length]
-//                     .withOpacity(0.8),
+//                     .withValues(alpha: 0.8),
 //                 child: const SizedBox.expand(),
 //               );
 //             }),
@@ -607,7 +607,7 @@ class UncontainedLayoutCard1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Colors.primaries[index % Colors.primaries.length].withOpacity(0.5),
+      color: Colors.primaries[index % Colors.primaries.length].withValues(alpha: 0.5),
       child: Center(
         child: Text(
           label,

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import '../../application/usecases/create_planning_revision.dart';
+import '../../domain/usecases/create_planning_revision.dart';
 import '../../application/usecases/load_planning.dart';
 import '../../application/usecases/publish_planning.dart';
 import '../../domain/entities/planning_assignment.dart';

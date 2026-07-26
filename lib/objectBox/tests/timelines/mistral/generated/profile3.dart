@@ -45,7 +45,7 @@ N’hésitez pas à me contacter si vous souhaitez collaborer ou échanger sur d
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
           ),
 
           // 3) Contenu du profil (par dessus le fond)
@@ -140,7 +140,7 @@ N’hésitez pas à me contacter si vous souhaitez collaborer ou échanger sur d
                           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(24),
                                 topRight: Radius.circular(24),

@@ -1,9 +1,16 @@
 import 'package:objectbox/objectbox.dart';
 
+import '../../../../objectbox.g.dart';
 import '../../domain/entities/planning_snapshot.dart';
+import '../../domain/entities/rotation_configuration.dart';
+import '../../domain/entities/rotation_period.dart';
+import '../../domain/enums/rotation_policy.dart';
+import '../../domain/enums/team_shift.dart';
 import '../../domain/repositories/planning_repository.dart';
+import '../../domain/repositories/rotation_configuration_repository.dart';
 import '../../domain/validators/planning_snapshot_validator.dart';
 import '../mappers/planning_snapshot_mapper.dart';
+import '../objectbox/rotation_configuration_entity.dart';
 import 'objectbox_planning_snapshot_store.dart';
 
 /// Planning repository backed by the atomic ObjectBox snapshot store.
@@ -11,7 +18,8 @@ import 'objectbox_planning_snapshot_store.dart';
 /// The repository is the final persistence boundary for the planning
 /// lifecycle. Domain validation happens before any write, while the store
 /// performs the final compare-and-write checks inside ObjectBox transactions.
-class ObjectBoxPlanningRepository implements PlanningRepository {
+class ObjectBoxPlanningRepository
+    implements PlanningRepository, RotationConfigurationRepository {
   final ObjectBoxPlanningSnapshotStore snapshotStore;
   final PlanningSnapshotMapper mapper;
   final PlanningSnapshotValidator validator;
@@ -161,6 +169,106 @@ class ObjectBoxPlanningRepository implements PlanningRepository {
       snapshot: snapshotEntity,
       rotationState: rotationStateEntity,
       assignments: assignmentEntities,
+    );
+  }
+
+  // --- RotationConfigurationRepository ---
+
+  @override
+  Future<RotationConfiguration?> findById(String id) async {
+    final box = Box<RotationConfigurationEntity>(snapshotStore.store);
+    final query = box.query(RotationConfigurationEntity_.name.equals(id)).build();
+    final entity = query.findFirst();
+    query.close();
+    if (entity == null) return null;
+    return _mapConfigEntity(entity);
+  }
+
+  @override
+  Future<RotationConfiguration?> findActive() async {
+    final box = Box<RotationConfigurationEntity>(snapshotStore.store);
+    final query = box
+        .query(RotationConfigurationEntity_.active.equals(true))
+        .order(RotationConfigurationEntity_.version, flags: Order.descending)
+        .build();
+    final entity = query.findFirst();
+    query.close();
+    if (entity == null) return null;
+    return _mapConfigEntity(entity);
+  }
+
+  @override
+  Future<RotationPeriod?> findPeriodFor(DateTime date) async {
+    final epoch = date.millisecondsSinceEpoch;
+    final box = Box<RotationPeriodEntity>(snapshotStore.store);
+    final query = box
+        .query(RotationPeriodEntity_.startDateEpochMs.lessOrEqual(epoch))
+        .build();
+    final results = query.find();
+    query.close();
+    for (final entity in results) {
+      if (entity.endDateEpochMs == null || epoch <= entity.endDateEpochMs!) {
+        return RotationPeriod(
+          id: entity.id.toString(),
+          startDate: DateTime.fromMillisecondsSinceEpoch(entity.startDateEpochMs),
+          endDate: entity.endDateEpochMs != null
+              ? DateTime.fromMillisecondsSinceEpoch(entity.endDateEpochMs!)
+              : null,
+          configurationId: entity.configurationId.toString(),
+          configurationVersion: 1,
+        );
+      }
+    }
+    return null;
+  }
+
+  @override
+  Future<RotationConfiguration> saveVersion({
+    required RotationConfiguration configuration,
+  }) async {
+    final box = Box<RotationConfigurationEntity>(snapshotStore.store);
+    final entity = RotationConfigurationEntity()
+      ..branchId = 0
+      ..version = configuration.version
+      ..name = configuration.id
+      ..teamOrderJson = configuration.teamOrder.join(',')
+      ..cycleJson =
+          configuration.cycle.map((s) => s.name).join(',')
+      ..policy = configuration.policy.index
+      ..referenceDateEpochMs =
+          configuration.referenceDate?.millisecondsSinceEpoch ?? 0
+      ..referencePhaseIndex = configuration.referencePhaseIndex
+      ..active = true;
+    box.put(entity);
+    return configuration;
+  }
+
+  RotationConfiguration _mapConfigEntity(RotationConfigurationEntity entity) {
+    final teamOrder = entity.teamOrderJson.split(',').where((s) => s.isNotEmpty).toList();
+    final cycle = entity.cycleJson
+        .split(',')
+        .where((s) => s.isNotEmpty)
+        .map((s) {
+          switch (s.toLowerCase()) {
+            case 'day': return TeamShift.day;
+            case 'night': return TeamShift.night;
+            case 'rest': return TeamShift.rest;
+            default: return TeamShift.rest;
+          }
+        })
+        .toList();
+    return RotationConfiguration(
+      id: entity.name.isEmpty ? 'obx-${entity.id}' : entity.name,
+      version: entity.version,
+      teamOrder: teamOrder,
+      cycle: cycle,
+      policy: entity.policy >= 0 && entity.policy < RotationPolicy.values.length
+          ? RotationPolicy.values[entity.policy]
+          : RotationPolicy.continueFromPreviousPublished,
+      referenceDate: entity.referenceDateEpochMs > 0
+          ? DateTime.fromMillisecondsSinceEpoch(entity.referenceDateEpochMs)
+          : null,
+      referencePhaseIndex: entity.referencePhaseIndex,
     );
   }
 }

@@ -39,7 +39,7 @@ class RotationEngine {
           teamIndex++)
         configuration.teamOrder[teamIndex]: configuration.cycle[
           _floorMod(
-            configuration.referenceTeamIndex +
+            configuration.referencePhaseIndex +
                 teamIndex +
                 continuityOffset +
                 dayOffset,

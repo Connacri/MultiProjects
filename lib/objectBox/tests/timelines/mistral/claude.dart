@@ -744,7 +744,7 @@ class HotelManagementState extends State<Hotel_Management> {
             Icon(
               Icons.hotel,
               size: 120,
-              color: Theme.of(context).primaryColor.withOpacity(0.7),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.7),
             ),
             const SizedBox(height: 32),
             Text(
@@ -969,7 +969,7 @@ class HotelManagementState extends State<Hotel_Management> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -981,7 +981,7 @@ class HotelManagementState extends State<Hotel_Management> {
           children: [
             // Icône hôtel stylisée
             CircleAvatar(
-              backgroundColor: Colors.deepPurple.withOpacity(0.1),
+              backgroundColor: Colors.deepPurple.withValues(alpha: 0.1),
               radius: 24,
               child:
                   Icon(Icons.hotel_rounded, color: Colors.deepPurple, size: 28),
@@ -1052,11 +1052,11 @@ class HotelManagementState extends State<Hotel_Management> {
       height: details.bounds.height,
       decoration: BoxDecoration(
         color: _getRandomColorForReservation(reservation.guests.hashCode)
-            .withOpacity(0.9),
+            .withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),
@@ -1693,13 +1693,13 @@ class HotelManagementState extends State<Hotel_Management> {
                                         sigmaX: 10, sigmaY: 10), // flou
                                     child: Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
+                                          color: Colors.white.withValues(alpha: 0.2),
                                           // fond semi-transparent
                                           borderRadius:
                                               BorderRadius.circular(16),
                                           border: Border.all(
                                               color: Colors.white
-                                                  .withOpacity(0.3)),
+                                                  .withValues(alpha: 0.3)),
                                         ),
                                         child: ReservationExtrasList(
                                           extras: reservation.extras,

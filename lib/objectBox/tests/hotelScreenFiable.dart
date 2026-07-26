@@ -794,7 +794,7 @@
 //                             margin: EdgeInsets.symmetric(horizontal: 4),
 //                             padding: EdgeInsets.symmetric(horizontal: 6),
 //                             decoration: BoxDecoration(
-//                               // color: res.color.withOpacity(0.95),
+//                               // color: res.color.withValues(alpha: 0.95),
 //                               color: color,
 //                               borderRadius: BorderRadius.circular(6),
 //                               boxShadow: [

@@ -45,22 +45,25 @@ class GeneratePlanningDraft {
       throw PlanningAlreadyExistsException(year, month);
     }
 
-    final teamShiftsByDay = rotationEngine.generateMonth(
-      year: year,
-      month: month,
-      configuration: configuration,
-    );
+    final firstDay = DateTime(year, month, 1);
+    final lastDay = DateTime(year, month + 1, 0);
+    final teamShiftsByDay = <DateTime, Map<String, ShiftType>>{};
+    for (var day = firstDay;
+        !day.isAfter(lastDay);
+        day = day.add(const Duration(days: 1))) {
+      teamShiftsByDay[day] = rotationEngine.shiftsForDate(
+        configuration: configuration,
+        date: day,
+      );
+    }
 
     // The team-level result is intentionally not converted to staff assignments
     // here. Staff projection and exceptions belong to the generator layer.
     // This first draft establishes the immutable snapshot metadata and keeps
     // the domain boundary explicit.
-    final date = DateTime(year, month, DateTime(year, month + 1, 0).day);
-    final lastDayShifts = teamShiftsByDay.isEmpty
-        ? const <String, ShiftType>{}
-        : teamShiftsByDay.last;
+    final lastDayShifts = teamShiftsByDay[lastDay] ?? const <String, ShiftType>{};
     final rotationState = _buildRotationStateSnapshot(
-      date: date,
+      date: lastDay,
       configuration: configuration,
       teamShifts: lastDayShifts,
     );
@@ -98,9 +101,9 @@ class GeneratePlanningDraft {
     }
 
     final referenceOnly = DateTime(
-      configuration.referenceDate.year,
-      configuration.referenceDate.month,
-      configuration.referenceDate.day,
+      configuration.referenceDate ! .year,
+      configuration.referenceDate! .month,
+      configuration.referenceDate! .day,
     );
     final dateOnly = DateTime(date.year, date.month, date.day);
     final phaseIndex = _floorMod(

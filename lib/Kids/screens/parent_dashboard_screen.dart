@@ -569,7 +569,7 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
               Icon(
                 Icons.event_busy,
                 size: 48,
-                color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+                color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
               ),
               const SizedBox(height: 12),
               Text(
@@ -841,7 +841,7 @@ class _ParentDashboard_screenState extends State<ParentDashboard_screen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(icon, color: color, size: 24),

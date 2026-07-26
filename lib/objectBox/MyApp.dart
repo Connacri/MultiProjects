@@ -50,7 +50,12 @@ import 'pages/invoice/providers.dart';
 import 'tests/cruds.dart' as cruds;
 
 import '../features/planning/presentation/planning_composition.dart';
+import '../features/planning/presentation/providers/planning_editor_provider.dart';
+import '../features/planning/presentation/providers/planning_provider.dart';
+import '../features/planning/presentation/providers/planning_validation_provider.dart';
+import '../features/planning/presentation/providers/rotation_configuration_provider.dart';
 import '../features/planning/presentation/widgets/planning_workspace.dart';
+import '../features/planning/presentation/widgets/planning_workspace_controller.dart';
 
 class MyMain extends StatelessWidget {
   @override

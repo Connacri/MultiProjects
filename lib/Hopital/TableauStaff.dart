@@ -3812,7 +3812,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           ),
                           backgroundColor: isWeekend
                               ? (isDark
-                                  ? Colors.red.shade900.withOpacity(0.3)
+                                  ? Colors.red.shade900.withValues(alpha: 0.3)
                                   : Colors.red.shade50)
                               : (isDark
                                   ? Colors.grey.shade800
@@ -3868,7 +3868,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Colors.amber.shade900.withOpacity(0.2)
+                            ? Colors.amber.shade900.withValues(alpha: 0.2)
                             : Colors.amber.shade50,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
@@ -4850,7 +4850,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: Colors.blue.withOpacity(0.5),
+              color: Colors.blue.withValues(alpha: 0.5),
               blurRadius: 4,
               spreadRadius: 1,
             ),
@@ -4982,10 +4982,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                 width: 28,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: _getStatusColor(displayValue).withOpacity(0.2),
+                  color: _getStatusColor(displayValue).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: _getStatusColor(displayValue).withOpacity(0.3),
+                    color: _getStatusColor(displayValue).withValues(alpha: 0.3),
                     width: 0.5,
                   ),
                 ),
@@ -5120,10 +5120,10 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           width: 28,
           height: 32,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               width: 0.5,
             ),
           ),
@@ -6561,7 +6561,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: Colors.teal.withOpacity(0.3),
+                                            color: Colors.teal.withValues(alpha: 0.3),
                                             blurRadius: 4,
                                             offset: Offset(0, 2),
                                           ),
@@ -9644,7 +9644,7 @@ class _StatBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color),
       ),

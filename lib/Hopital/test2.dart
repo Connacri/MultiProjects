@@ -355,7 +355,7 @@ class InteractiveTableWrapper extends StatelessWidget {
 //             Container(
 //               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
 //               decoration: BoxDecoration(
-//                 color: Colors.white.withOpacity(0.2),
+//                 color: Colors.white.withValues(alpha: 0.2),
 //                 borderRadius: BorderRadius.circular(8),
 //               ),
 //               child: DropdownButtonHideUnderline(
@@ -1702,7 +1702,7 @@ class InteractiveTableWrapper extends StatelessWidget {
 //         decoration: BoxDecoration(
 //           boxShadow: [
 //             BoxShadow(
-//               color: Colors.blue.withOpacity(0.5),
+//               color: Colors.blue.withValues(alpha: 0.5),
 //               blurRadius: 4,
 //               spreadRadius: 1,
 //             ),
@@ -1775,10 +1775,10 @@ class InteractiveTableWrapper extends StatelessWidget {
 //             width: 28,
 //             height: 32,
 //             decoration: BoxDecoration(
-//               color: _getStatusColor(currentValue).withOpacity(0.2),
+//               color: _getStatusColor(currentValue).withValues(alpha: 0.2),
 //               borderRadius: BorderRadius.circular(4),
 //               border: Border.all(
-//                 color: _getStatusColor(currentValue).withOpacity(0.3),
+//                 color: _getStatusColor(currentValue).withValues(alpha: 0.3),
 //                 width: 0.5,
 //               ),
 //             ),
@@ -1886,10 +1886,10 @@ class InteractiveTableWrapper extends StatelessWidget {
 //           width: 28,
 //           height: 32,
 //           decoration: BoxDecoration(
-//             color: color.withOpacity(0.2),
+//             color: color.withValues(alpha: 0.2),
 //             borderRadius: BorderRadius.circular(4),
 //             border: Border.all(
-//               color: color.withOpacity(0.3),
+//               color: color.withValues(alpha: 0.3),
 //               width: 0.5,
 //             ),
 //           ),
@@ -2552,7 +2552,7 @@ class InteractiveTableWrapper extends StatelessWidget {
 //                           return ChoiceChip(
 //                             label: Text("$statut - $label"),
 //                             selected: selectedStatut == statut,
-//                             selectedColor: color.withOpacity(0.3),
+//                             selectedColor: color.withValues(alpha: 0.3),
 //                             onSelected: (bool selected) {
 //                               setState(() {
 //                                 selectedStatut = selected ? statut : 'C';
@@ -3532,7 +3532,7 @@ class InteractiveTableWrapper extends StatelessWidget {
 //                                   boxShadow: isSelected
 //                                       ? [
 //                                           BoxShadow(
-//                                             color: Colors.teal.withOpacity(0.3),
+//                                             color: Colors.teal.withValues(alpha: 0.3),
 //                                             blurRadius: 4,
 //                                             offset: Offset(0, 2),
 //                                           ),
@@ -4161,7 +4161,7 @@ class InteractiveTableWrapper extends StatelessWidget {
 //                                             ? [
 //                                                 BoxShadow(
 //                                                   color: _getEquipeColor(equipe)
-//                                                       .withOpacity(0.4),
+//                                                       .withValues(alpha: 0.4),
 //                                                   blurRadius: 4,
 //                                                   offset: Offset(0, 2),
 //                                                 ),

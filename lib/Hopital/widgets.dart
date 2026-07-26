@@ -229,11 +229,11 @@ class CardBtn extends StatelessWidget {
                                 padding: EdgeInsets.fromLTRB(
                                     padding, padding, padding, padding / 1.5),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.12),
+                                  color: Colors.white.withValues(alpha: 0.12),
                                   borderRadius:
                                       BorderRadius.circular(isMobile ? 16 : 22),
                                   border: Border.all(
-                                      color: Colors.white.withOpacity(0.18)),
+                                      color: Colors.white.withValues(alpha: 0.18)),
                                 ),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
@@ -279,7 +279,7 @@ class CardBtn extends StatelessWidget {
                           child: Text(
                             '${nombrePersonne!} ${nombrePersonne! <= 1 ? 'Person' : 'Persons'}',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               fontSize: personFontSize,
                               fontWeight: FontWeight.w800,
                               height: 1.0,
@@ -324,8 +324,8 @@ class _GlassButton extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
-              color: Colors.white.withOpacity(0.22),
-              border: Border.all(color: Colors.white.withOpacity(0.30)),
+              color: Colors.white.withValues(alpha: 0.22),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x33000000),

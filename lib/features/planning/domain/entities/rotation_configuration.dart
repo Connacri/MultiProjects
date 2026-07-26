@@ -1,3 +1,4 @@
+import '../enums/rotation_policy.dart';
 import '../enums/team_shift.dart';
 
 /// Immutable configuration for the cyclic team rotation.
@@ -12,27 +13,27 @@ class RotationConfiguration {
       TeamShift.rest,
       TeamShift.rest,
     ],
-    this.policy = 'default',
+    this.policy = RotationPolicy.continueFromPreviousPublished,
     this.referenceDate,
-    this.referenceTeamIndex = 0,
+    this.referencePhaseIndex = 0,
   });
 
   final String id;
   final int version;
   final List<String> teamOrder;
   final List<TeamShift> cycle;
-  final String policy;
+  final RotationPolicy policy;
   final DateTime? referenceDate;
-  final int referenceTeamIndex;
+  final int referencePhaseIndex;
 
   RotationConfiguration copyWith({
     String? id,
     int? version,
     List<String>? teamOrder,
     List<TeamShift>? cycle,
-    String? policy,
+    RotationPolicy? policy,
     DateTime? referenceDate,
-    int? referenceTeamIndex,
+    int? referencePhaseIndex,
   }) {
     return RotationConfiguration(
       id: id ?? this.id,
@@ -41,7 +42,7 @@ class RotationConfiguration {
       cycle: List.unmodifiable(cycle ?? this.cycle),
       policy: policy ?? this.policy,
       referenceDate: referenceDate ?? this.referenceDate,
-      referenceTeamIndex: referenceTeamIndex ?? this.referenceTeamIndex,
+      referencePhaseIndex: referencePhaseIndex ?? this.referencePhaseIndex,
     );
   }
 }

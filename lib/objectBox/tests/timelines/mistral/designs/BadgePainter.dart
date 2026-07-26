@@ -42,7 +42,7 @@ class BadgePainter extends CustomPainter {
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
-      ..color = Colors.black.withOpacity(0.85);
+      ..color = Colors.black.withValues(alpha: 0.85);
     canvas.drawCircle(center, baseR - 2, stroke);
 
     // ---------- 2) Inner badge (dark to warm radial) ----------
@@ -66,14 +66,14 @@ class BadgePainter extends CustomPainter {
     final ringPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
-      ..color = Colors.white.withOpacity(0.8);
+      ..color = Colors.white.withValues(alpha: 0.8);
     canvas.drawCircle(center, innerR * 0.98, ringPaint);
     canvas.drawCircle(center, innerR * 0.82,
-        ringPaint..color = Colors.white.withOpacity(0.5));
+        ringPaint..color = Colors.white.withValues(alpha: 0.5));
 
     // ---------- 3) Radial spokes ----------
     _drawRadialSpokes(canvas, center, innerR * 0.96, innerR * 0.70,
-        count: 120, strokeWidth: 1.2, color: Colors.white.withOpacity(0.9));
+        count: 120, strokeWidth: 1.2, color: Colors.white.withValues(alpha: 0.9));
 
     // ---------- 4) Dotted ring ----------
     _drawDashes(canvas, center,
@@ -81,7 +81,7 @@ class BadgePainter extends CustomPainter {
         dashLen: 3,
         gap: 3.5,
         width: 1.4,
-        color: Colors.white.withOpacity(0.85));
+        color: Colors.white.withValues(alpha: 0.85));
 
     // ---------- 5) Top star ----------
     final starR = innerR * 0.10;
@@ -94,7 +94,7 @@ class BadgePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = Colors.black.withOpacity(0.6),
+        ..color = Colors.black.withValues(alpha: 0.6),
     );
 
     // ---------- 6) Center banner ----------
@@ -124,7 +124,7 @@ class BadgePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3
-        ..color = Colors.white.withOpacity(0.9),
+        ..color = Colors.white.withValues(alpha: 0.9),
     );
 
     // ---------- 7) Text: BRAND NAME ----------
@@ -167,7 +167,7 @@ class BadgePainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.4
-        ..color = Colors.white.withOpacity(0.6),
+        ..color = Colors.white.withValues(alpha: 0.6),
     );
 
     _drawText(
@@ -214,7 +214,7 @@ class BadgePainter extends CustomPainter {
     final bevel = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
-      ..color = Colors.white.withOpacity(0.15);
+      ..color = Colors.white.withValues(alpha: 0.15);
     canvas.drawCircle(c, innerR + 2, bevel);
   }
 

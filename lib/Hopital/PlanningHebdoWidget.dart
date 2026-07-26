@@ -675,7 +675,7 @@ class _PlanningHebdoWidgetState extends State<PlanningHebdoWidget> {
                           ? Color(type.couleurHex!)
                           : null,
                       selectedColor: type.couleurHex != null
-                          ? Color(type.couleurHex!).withOpacity(0.8)
+                          ? Color(type.couleurHex!).withValues(alpha: 0.8)
                           : null,
                     );
                   }).toList(),

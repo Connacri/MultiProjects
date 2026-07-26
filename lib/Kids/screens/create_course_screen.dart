@@ -782,7 +782,7 @@ class _CreateCourseScreenState extends State<CreateCourseScreen> {
   Widget _buildPreviewPanel() {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
         border: Border(
           left: BorderSide(color: Theme.of(context).dividerColor),
         ),

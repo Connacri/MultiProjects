@@ -1032,7 +1032,7 @@ class _googleBtnState extends State<googleBtn> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(alpha: 0.1),
                                       blurRadius: 8,
                                       offset: Offset(0, 4),
                                     ),
@@ -1325,7 +1325,7 @@ class _googleBtnState extends State<googleBtn> {
   //                     shape: BoxShape.circle,
   //                     boxShadow: [
   //                       BoxShadow(
-  //                         color: Colors.black.withOpacity(0.1),
+  //                         color: Colors.black.withValues(alpha: 0.1),
   //                         blurRadius: 8,
   //                         offset: Offset(0, 4),
   //                       ),

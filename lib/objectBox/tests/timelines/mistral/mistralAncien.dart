@@ -314,7 +314,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: Offset(0, 4),
           ),
@@ -326,7 +326,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
           children: [
             // Icône hôtel stylisée
             CircleAvatar(
-              backgroundColor: Colors.deepPurple.withOpacity(0.1),
+              backgroundColor: Colors.deepPurple.withValues(alpha: 0.1),
               radius: 24,
               child:
                   Icon(Icons.hotel_rounded, color: Colors.deepPurple, size: 28),
@@ -434,19 +434,19 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: Offset(0, 3),
           ),
         ],
-        border: Border.all(color: iconColor.withOpacity(0.3)),
+        border: Border.all(color: iconColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: iconColor.withOpacity(0.15),
+            backgroundColor: iconColor.withValues(alpha: 0.15),
             child: Icon(icon, color: iconColor, size: 18),
           ),
           const SizedBox(width: 8),
@@ -619,7 +619,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
       //   border: Border.all(color: Colors.white, width: 1),
       //   boxShadow: [
       //     BoxShadow(
-      //       color: Colors.black.withOpacity(0.1),
+      //       color: Colors.black.withValues(alpha: 0.1),
       //       blurRadius: 2,
       //       offset: Offset(0, 1),
       //     ),
@@ -627,11 +627,11 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
       // ),
       decoration: BoxDecoration(
         color: _getRandomColorForReservation(reservation.clientName.hashCode)
-            .withOpacity(0.9),
+            .withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: Offset(0, 2),
           ),

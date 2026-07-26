@@ -211,11 +211,6 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
   @override
   Widget build(BuildContext context) {
     final objectBox = Provider.of<ObjectBox>(context, listen: false);
-    void supprimerProduitsInvalides() {
-      objectBox.supprimerProduitsAvecQrCodeInvalide();
-      print(
-          'Tous les produits invalides et leurs entités associées ont été supprimés.');
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -1145,10 +1140,10 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                                                     .brightness ==
                                                                 Brightness.dark
                                                             ? Colors.blueAccent
-                                                                .withOpacity(
+                                                                .withValues(alpha: 
                                                                     0.2)
                                                             : Colors.blueAccent
-                                                                .withOpacity(
+                                                                .withValues(alpha: 
                                                                     0.6),
                                                         label: Text(
                                                           code,
@@ -1176,7 +1171,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                                               Brightness.dark
                                                           ? Colors.lightBlue
                                                           : Colors.green
-                                                              .withOpacity(0.6),
+                                                              .withValues(alpha: 0.6),
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
@@ -1505,7 +1500,7 @@ void _deleteProduit(BuildContext context, Produit produit) {
 //                             end: Alignment.bottomCenter,
 //                             colors: [
 //                               Colors.transparent,
-//                               Colors.black.withOpacity(0.8),
+//                               Colors.black.withValues(alpha: 0.8),
 //                             ],
 //                             stops: [0.3, 1.0], // position du dégradé
 //                           ),
@@ -1546,7 +1541,7 @@ void _deleteProduit(BuildContext context, Produit produit) {
 //                       ),
 //                       Container(
 //                         decoration: BoxDecoration(
-//                           color: Colors.black.withOpacity(1 - (1 * percent)),
+//                           color: Colors.black.withValues(alpha: 1 - (1 * percent)),
 //                         ),
 //                       ),
 //                     ],
@@ -1752,7 +1747,7 @@ void _deleteProduit(BuildContext context, Produit produit) {
 //                                     : Theme.of(context)
 //                                         .colorScheme
 //                                         .primary
-//                                         .withOpacity(0.1),
+//                                         .withValues(alpha: 0.1),
 //                             labelStyle: TextStyle(
 //                               color: Theme.of(context).brightness ==
 //                                       Brightness.dark
@@ -1765,7 +1760,7 @@ void _deleteProduit(BuildContext context, Produit produit) {
 //                               color: Theme.of(context)
 //                                   .colorScheme
 //                                   .primary
-//                                   .withOpacity(0.5),
+//                                   .withValues(alpha: 0.5),
 //                               width: 1, // Définir une bordure subtile
 //                             ),
 //                             shape: RoundedRectangleBorder(
@@ -1915,7 +1910,7 @@ class ProduitDetailPage extends StatelessWidget {
                                   end: Alignment.bottomCenter,
                                   colors: [
                                     Colors.transparent,
-                                    Colors.black.withOpacity(0.8),
+                                    Colors.black.withValues(alpha: 0.8),
                                   ],
                                   stops: [0.3, 1.0], // position du dégradé
                                 ),
@@ -1957,7 +1952,7 @@ class ProduitDetailPage extends StatelessWidget {
                             Container(
                               decoration: BoxDecoration(
                                 color:
-                                    Colors.black.withOpacity(1 - (1 * percent)),
+                                    Colors.black.withValues(alpha: 1 - (1 * percent)),
                               ),
                             ),
                           ],
@@ -2355,7 +2350,7 @@ class ProduitDetailPage extends StatelessWidget {
                                       : Theme.of(context)
                                           .colorScheme
                                           .primary
-                                          .withOpacity(0.1),
+                                          .withValues(alpha: 0.1),
                                   labelStyle: TextStyle(
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark
@@ -2370,7 +2365,7 @@ class ProduitDetailPage extends StatelessWidget {
                                     color: Theme.of(context)
                                         .colorScheme
                                         .primary
-                                        .withOpacity(0.5),
+                                        .withValues(alpha: 0.5),
                                     width: 1, // Définir une bordure subtile
                                   ),
                                   shape: RoundedRectangleBorder(

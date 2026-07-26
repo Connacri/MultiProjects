@@ -585,9 +585,9 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                           padding: EdgeInsets.zero,
                           backgroundColor:
                               Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.blueAccent.withOpacity(
+                                  ? Colors.blueAccent.withValues(alpha: 
                                       0.2) // Couleur pour le thème sombre
-                                  : Colors.blueAccent.withOpacity(
+                                  : Colors.blueAccent.withValues(alpha: 
                                       0.6), // Couleur pour le thème clair
                           visualDensity: VisualDensity(vertical: -1),
                           label: Text(
@@ -607,9 +607,9 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                           padding: EdgeInsets.zero,
                           backgroundColor:
                               Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.blueAccent.withOpacity(
+                                  ? Colors.blueAccent.withValues(alpha: 
                                       0.2) // Couleur pour le thème sombre
-                                  : Colors.blueAccent.withOpacity(0.6),
+                                  : Colors.blueAccent.withValues(alpha: 0.6),
                           // Couleur pour le thème clair
                           shape: RoundedRectangleBorder(
                             borderRadius:
@@ -1661,7 +1661,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                                 fontSize: 20,
                                                 color: _isLoadingSauv
                                                     ? Colors.black87
-                                                        .withOpacity(0.6)
+                                                        .withValues(alpha: 0.6)
                                                     : null,
                                               ),
                                             ),
@@ -1683,7 +1683,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                                   fontWeight: FontWeight.bold,
                                                   color: _isLoadingSauv
                                                       ? Colors.black87
-                                                          .withOpacity(0.6)
+                                                          .withValues(alpha: 0.6)
                                                       : null,
                                                 ),
                                               ),
@@ -1696,7 +1696,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                                         fontSize: 12,
                                                         color: _isLoadingSauv
                                                             ? Colors.black87
-                                                                .withOpacity(
+                                                                .withValues(alpha: 
                                                                     0.6)
                                                             : null,
                                                       ),
@@ -1718,7 +1718,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                                   fontSize: 20,
                                                   color: _isLoadingSauv
                                                       ? Colors.black87
-                                                          .withOpacity(0.6)
+                                                          .withValues(alpha: 0.6)
                                                       : null,
                                                 ),
                                               ),
@@ -1729,7 +1729,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                                 Icons.delete,
                                                 color: _isLoadingSauv
                                                     ? Colors.white
-                                                        .withOpacity(0.6)
+                                                        .withValues(alpha: 0.6)
                                                     : Colors.red,
                                                 size: 15,
                                               ),
@@ -1799,7 +1799,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
         }),
         foregroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.disabled)) {
-            return Colors.white.withOpacity(0.6); // Couleur texte désactivé
+            return Colors.white.withValues(alpha: 0.6); // Couleur texte désactivé
           }
           return Colors.white; // Couleur texte activé
         }),
@@ -2434,9 +2434,9 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                   backgroundColor: Theme.of(context)
                                               .brightness ==
                                           Brightness.dark
-                                      ? Colors.blueAccent.withOpacity(
+                                      ? Colors.blueAccent.withValues(alpha: 
                                           0.2) // Couleur pour le thème sombre
-                                      : Colors.blueAccent.withOpacity(0.6),
+                                      : Colors.blueAccent.withValues(alpha: 0.6),
                                   // Couleur pour le thème clair
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(
@@ -2473,9 +2473,9 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                               padding: EdgeInsets.zero,
                               backgroundColor: Theme.of(context).brightness ==
                                       Brightness.dark
-                                  ? Colors.grey.withOpacity(
+                                  ? Colors.grey.withValues(alpha: 
                                       0.2) // Couleur pour le thème sombre
-                                  : Colors.grey.withOpacity(0.6),
+                                  : Colors.grey.withValues(alpha: 0.6),
                               // Couleur pour le thème clair
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
@@ -3175,7 +3175,7 @@ class _FournisseurSelectionScreenState
                 return ListTile(
                   title: Text(fournisseur.nom),
                   tileColor: isSelected
-                      ? Colors.blue.withOpacity(0.2)
+                      ? Colors.blue.withValues(alpha: 0.2)
                       : null, // Met en surbrillance le fournisseur sélectionné
                   onTap: () {
                     // Met à jour le fournisseur sélectionné
@@ -3218,7 +3218,7 @@ class ProgressDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor:
-          Colors.black.withOpacity(DialogConstants.opacityBackground),
+          Colors.black.withValues(alpha: DialogConstants.opacityBackground),
       child: Padding(
         padding: const EdgeInsets.all(DialogConstants.padding),
         child: Column(

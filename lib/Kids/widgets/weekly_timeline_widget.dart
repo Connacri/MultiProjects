@@ -121,7 +121,7 @@ class _WeeklyTimelineState extends State<WeeklyTimeline> {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -217,7 +217,7 @@ class _WeeklyTimelineState extends State<WeeklyTimeline> {
       margin: const EdgeInsets.symmetric(horizontal: 4),
       decoration: BoxDecoration(
         color: isToday
-            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+            ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
             : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
@@ -302,7 +302,7 @@ class _WeeklyTimelineState extends State<WeeklyTimeline> {
             Icon(
               Icons.event_busy,
               size: 32,
-              color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+              color: Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(

@@ -295,7 +295,7 @@ class PriceCard extends StatelessWidget {
               ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 12,
             offset: const Offset(0, 6),
           )
@@ -460,7 +460,7 @@ class PriceCard22 extends StatelessWidget {
                 ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 6),
             )
@@ -589,12 +589,12 @@ class ReservationCard extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.45),
+                  color: Colors.black.withValues(alpha: 0.45),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 ),
                 BoxShadow(
-                  color: Colors.greenAccent.withOpacity(0.08),
+                  color: Colors.greenAccent.withValues(alpha: 0.08),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),
@@ -785,12 +785,12 @@ class ReservationCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
                             BoxShadow(
-                              color: Colors.greenAccent.withOpacity(0.25),
+                              color: Colors.greenAccent.withValues(alpha: 0.25),
                               blurRadius: 18,
                               spreadRadius: 2,
                             ),
@@ -831,7 +831,7 @@ class _InfoColumn extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -873,7 +873,7 @@ class _InfoColumn2 extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: Colors.black.withOpacity(0.7),
+            color: Colors.black.withValues(alpha: 0.7),
             fontSize: MediaQuery.of(context).size.width < 600 ? 14 : 17,
             fontWeight: FontWeight.w500,
           ),
@@ -888,7 +888,7 @@ class _WavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.2) // ✅ plus visible
+      ..color = Colors.black.withValues(alpha: 0.2) // ✅ plus visible
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round;
@@ -1010,7 +1010,7 @@ class BentoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -1032,8 +1032,8 @@ class BentoCard extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.1),
-                      Colors.black.withOpacity(0.9),
+                      Colors.black.withValues(alpha: 0.1),
+                      Colors.black.withValues(alpha: 0.9),
                     ],
                   ),
                 ),
@@ -1049,10 +1049,10 @@ class BentoCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                           width: 1.5,
                         ),
                       ),
@@ -1095,10 +1095,10 @@ class BentoCard extends StatelessWidget {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(30),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),

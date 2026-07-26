@@ -324,7 +324,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
       _metadataManager.requestMetadata(node.nodeId);
     }
     final Color baseColor = node.statusColor;
-    final Color bgColor = baseColor.withOpacity(0.08);
+    final Color bgColor = baseColor.withValues(alpha: 0.08);
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => _createConversation(context, node),
@@ -336,7 +336,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: baseColor.withOpacity(0.15),
+              color: baseColor.withValues(alpha: 0.15),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -402,7 +402,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.green, width: 0.8),
                           ),
@@ -493,7 +493,7 @@ class _SelectNodePageState extends State<SelectNodePage> {
     );
     // return ListTile(
     //   leading: CircleAvatar(
-    //     backgroundColor: node.statusColor.withOpacity(0.2),
+    //     backgroundColor: node.statusColor.withValues(alpha: 0.2),
     //     child: Stack(
     //       alignment: Alignment.bottomRight,
     //       children: [

@@ -824,7 +824,7 @@ class RoomsChipsWidget extends StatelessWidget {
       ),
       backgroundColor: chipColor,
       side: BorderSide(
-        color: textColor.withOpacity(0.3),
+        color: textColor.withValues(alpha: 0.3),
         width: 1,
       ),
     );
@@ -981,7 +981,7 @@ class DetailedRoomsChipsWidget extends StatelessWidget {
             Text(
               '${room.category.target!.basePrice.toStringAsFixed(0)}€',
               style: TextStyle(
-                color: textColor.withOpacity(0.7),
+                color: textColor.withValues(alpha: 0.7),
                 fontSize: 10,
               ),
             ),
@@ -989,7 +989,7 @@ class DetailedRoomsChipsWidget extends StatelessWidget {
         ),
         backgroundColor: chipColor,
         side: BorderSide(
-          color: textColor.withOpacity(0.3),
+          color: textColor.withValues(alpha: 0.3),
           width: 1,
         ),
         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

@@ -216,7 +216,7 @@ class ImageGridItem extends StatelessWidget {
             color: Colors.transparent,
             child: InkWell(
               onTap: () => _showImagePreview(context, imageUrl),
-              splashColor: Colors.white.withOpacity(0.3),
+              splashColor: Colors.white.withValues(alpha: 0.3),
               highlightColor: Colors.transparent,
             ),
           ),

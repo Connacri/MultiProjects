@@ -30,7 +30,7 @@ class MobileEntryScreen extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -53,7 +53,7 @@ class MobileEntryScreen extends StatelessWidget {
                     'Choisissez votre mode d\'accès',
                     style: TextStyle(
                       fontSize: 18,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -133,8 +133,8 @@ class MobileEntryScreen extends StatelessWidget {
               padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: isPrimary
-                    ? Colors.blue.shade700.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.2),
+                    ? Colors.blue.shade700.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 32),
@@ -157,8 +157,8 @@ class MobileEntryScreen extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       color: isPrimary
-                          ? Colors.blue.shade700.withOpacity(0.7)
-                          : Colors.white.withOpacity(0.8),
+                          ? Colors.blue.shade700.withValues(alpha: 0.7)
+                          : Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -177,10 +177,10 @@ class MobileEntryScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -189,14 +189,14 @@ class MobileEntryScreen extends StatelessWidget {
         children: [
           Icon(
             Platform.isAndroid ? Icons.android : Icons.apple,
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             size: 20,
           ),
           SizedBox(width: 8),
           Text(
             'Plateforme: $platformName',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),

@@ -25,15 +25,15 @@ class RotationStateBuilder {
         .map((item) => item.date)
         .reduce((a, b) => a.isAfter(b) ? a : b);
 
+    final lastShifts = engine.shiftsForDate(
+      configuration: configuration,
+      date: lastDate,
+    );
     final teamPhase = <String, int>{
       for (final team in configuration.teamOrder)
-        team: configuration.cycle.indexOf(
-          engine.shiftFor(
-            team: team,
-            date: lastDate,
-            configuration: configuration,
-          ),
-        ),
+        team: lastShifts.containsKey(team)
+            ? configuration.cycle.indexOf(lastShifts[team]!)
+            : 0,
     };
 
     for (final team in configuration.teamOrder) {

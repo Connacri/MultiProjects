@@ -1570,7 +1570,7 @@ Widget _buildInfoCard(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black87.withOpacity(0.9)],
+                  colors: [Colors.transparent, Colors.black87.withValues(alpha: 0.9)],
                 ),
               ),
             ),

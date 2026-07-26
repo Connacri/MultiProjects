@@ -70,8 +70,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         subtitle: 'Gestion du personnel',
         imageUrl: 'assets/photos/hopital/d (6).jpg',
         gradientColors: [
-          Colors.blue.shade800.withOpacity(0.8),
-          Colors.black.withOpacity(0.5)
+          Colors.blue.shade800.withValues(alpha: 0.8),
+          Colors.black.withValues(alpha: 0.5)
         ],
         destination: const LoadingScreen(destination: 'staff'),
       ),
@@ -80,8 +80,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         subtitle: 'CRUD congés du personnel',
         imageUrl: 'assets/photos/hopital/m1 (12).jpg',
         gradientColors: [
-          Colors.teal.shade800.withOpacity(0.8),
-          Colors.green.shade800.withOpacity(0.8)
+          Colors.teal.shade800.withValues(alpha: 0.8),
+          Colors.green.shade800.withValues(alpha: 0.8)
         ],
         destination: const CongesManagementScreen(),
       ),
@@ -90,8 +90,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         subtitle: 'Gestion des factures',
         imageUrl: 'assets/photos/nav (2).jpg',
         gradientColors: [
-          Colors.purple.shade800.withOpacity(0.8),
-          Colors.pink.shade800.withOpacity(0.8)
+          Colors.purple.shade800.withValues(alpha: 0.8),
+          Colors.pink.shade800.withValues(alpha: 0.8)
         ],
         destination: FacturationPageUI(),
       ),
@@ -104,8 +104,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
             : 'Gestion hôtelière',
         imageUrl: 'assets/photos/nav (3).jpg',
         gradientColors: [
-          Colors.orange.shade800.withOpacity(0.8),
-          Colors.red.shade800.withOpacity(0.8)
+          Colors.orange.shade800.withValues(alpha: 0.8),
+          Colors.red.shade800.withValues(alpha: 0.8)
         ],
         destination: Platform.isAndroid || Platform.isIOS
             ? HomePage3()
@@ -116,8 +116,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         subtitle: 'Interface adaptative',
         imageUrl: 'assets/photos/nav (4).jpg',
         gradientColors: [
-          Colors.green.shade800.withOpacity(0.8),
-          Colors.teal.shade800.withOpacity(0.8)
+          Colors.green.shade800.withValues(alpha: 0.8),
+          Colors.teal.shade800.withValues(alpha: 0.8)
         ],
         destination: Hotel_Management(),
       ),
@@ -126,18 +126,18 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         subtitle: 'Interface adaptative',
         imageUrl: 'assets/photos/nav (5).jpg',
         gradientColors: [
-          Colors.green.shade800.withOpacity(0.8),
-          Colors.teal.shade800.withOpacity(0.8)
+          Colors.green.shade800.withValues(alpha: 0.8),
+          Colors.teal.shade800.withValues(alpha: 0.8)
         ],
-        destination: adaptiveHome(objectBox: objectBox),
+        destination: Hotel_Management(),
       ),
       PageCardData(
         title: 'Kids',
         subtitle: 'Childrens',
         imageUrl: 'assets/photos/a (1).png',
         gradientColors: [
-          Colors.deepOrangeAccent.withOpacity(0.8),
-          Colors.black.withOpacity(0.5)
+          Colors.deepOrangeAccent.withValues(alpha: 0.8),
+          Colors.black.withValues(alpha: 0.5)
         ],
         destination: EduPlatformApp(),
       ),
@@ -146,8 +146,8 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
         subtitle: 'Calendar',
         imageUrl: 'assets/photos/a (7).png',
         gradientColors: [
-          Colors.indigo.withOpacity(0.8),
-          Colors.black.withOpacity(0.5)
+          Colors.indigo.withValues(alpha: 0.8),
+          Colors.black.withValues(alpha: 0.5)
         ],
         destination: HomePageCalendar(),
       ),
@@ -321,7 +321,7 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                       alignment: Alignment.topCenter,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: data.gradientColors[0].withOpacity(0.3),
+                          color: data.gradientColors[0].withValues(alpha: 0.3),
                           child: const Icon(Icons.image,
                               size: 100, color: Colors.white30),
                         );
@@ -336,9 +336,9 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      data.gradientColors[0].withOpacity(0.7),
+                      data.gradientColors[0].withValues(alpha: 0.7),
                       Colors.transparent,
-                      Colors.black.withOpacity(0.3),
+                      Colors.black.withValues(alpha: 0.3),
                     ],
                     stops: const [0.0, 0.4, 1.0],
                   ),
@@ -366,7 +366,7 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                     Text(
                       data.subtitle,
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.95),
+                          color: Colors.white.withValues(alpha: 0.95),
                           fontSize: 16,
                           shadows: const [
                             Shadow(
@@ -384,7 +384,7 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                         borderRadius: BorderRadius.circular(25),
                         boxShadow: [
                           BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               blurRadius: 8,
                               offset: const Offset(0, 4))
                         ],
@@ -412,7 +412,7 @@ class _CardSelectionScreenState extends State<CardSelectionScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle),
                   child: const Icon(Icons.dashboard,
                       color: Colors.white, size: 28),

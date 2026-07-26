@@ -50,8 +50,8 @@ class DayItem extends StatelessWidget {
     final textStyle = TextStyle(
       color: available
           ? dayColor ?? Theme.of(context).colorScheme.secondary
-          : dayColor?.withOpacity(0.5) ??
-              Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+          : dayColor?.withValues(alpha: 0.5) ??
+              Theme.of(context).colorScheme.secondary.withValues(alpha: 0.5),
       fontSize: shrink ? shrinkFontSize : fontSize,
       height: 0.8,
     );

@@ -214,13 +214,13 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
 
   Color _weekdayBgColor(DateTime d, {bool forHeader = false}) {
     if (_isSameDay(d, DateTime.now())) {
-      return Colors.green.withOpacity(forHeader ? 0.18 : 0.12);
+      return Colors.green.withValues(alpha: forHeader ? 0.18 : 0.12);
     }
     if (d.weekday == DateTime.friday) {
-      return Colors.orange.withOpacity(forHeader ? 0.18 : 0.08);
+      return Colors.orange.withValues(alpha: forHeader ? 0.18 : 0.08);
     }
     if (d.weekday == DateTime.saturday) {
-      return Colors.blue.withOpacity(forHeader ? 0.18 : 0.08);
+      return Colors.blue.withValues(alpha: forHeader ? 0.18 : 0.08);
     }
     return forHeader ? Colors.grey.shade50 : Colors.white;
   }
@@ -432,7 +432,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
                         width: dayWidth,
                         child: IgnorePointer(
                           child:
-                              Container(color: Colors.green.withOpacity(0.08)),
+                              Container(color: Colors.green.withValues(alpha: 0.08)),
                         ),
                       ),
 
@@ -500,7 +500,7 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
 
                         final color = Colors
                             .primaries[rowIndex % Colors.primaries.length]
-                            .withOpacity(0.85);
+                            .withValues(alpha: 0.85);
 
                         return Positioned(
                           top: rowIndex * rowHeight + 6,
@@ -597,7 +597,7 @@ class _ReservationCard extends StatelessWidget {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: Colors.white.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Icon(Icons.bed_outlined,

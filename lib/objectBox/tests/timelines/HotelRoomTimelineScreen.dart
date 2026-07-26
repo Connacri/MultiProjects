@@ -265,7 +265,7 @@ class HotelRoomTimelineInfiniteScreen extends StatelessWidget {
                           height: 20,
                           color: Colors
                               .primaries[index % Colors.primaries.length]
-                              .withOpacity(0.6),
+                              .withValues(alpha: 0.6),
                           child: Center(
                             child: Text(
                               '${res.startDate.day}/${res.startDate.month} ${res.startDate.hour}h-${res.endDate.hour}h',
@@ -404,7 +404,7 @@ class HotelRoomTimelineScreen2 extends StatelessWidget {
         startTime: DateTime.now(),
         endTime: DateTime.now().add(Duration(hours: 1)),
         enablePointerInteraction: false,
-        color: Colors.grey.withOpacity(0.2),
+        color: Colors.grey.withValues(alpha: 0.2),
         text: 'Break'));
 
     return regions;

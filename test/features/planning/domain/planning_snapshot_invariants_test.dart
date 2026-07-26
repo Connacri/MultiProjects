@@ -1,8 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:multi_projects/features/planning/domain/entities/planning_assignment.dart';
-import 'package:multi_projects/features/planning/domain/entities/planning_snapshot.dart';
-import 'package:multi_projects/features/planning/domain/validators/planning_snapshot_validator.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_assignment.dart';
+import 'package:kenzy/features/planning/domain/entities/planning_snapshot.dart';
+import 'package:kenzy/features/planning/domain/enums/shift_type.dart';
+import 'package:kenzy/features/planning/domain/validators/planning_snapshot_validator.dart';
 
 void main() {
   group('PlanningSnapshot invariants', () {
@@ -31,7 +32,9 @@ void main() {
             List.generate(
               DateTime(year, month + 1, 0).day,
               (index) => PlanningAssignment(
+                staffId: 1,
                 date: DateTime(year, month, index + 1),
+                shift: ShiftType.day,
               ),
             ),
       );
@@ -47,7 +50,11 @@ void main() {
       final result = validator.validate(
         snapshot(
           assignments: [
-            const PlanningAssignment(date: DateTime(2026, 6, 30)),
+            PlanningAssignment(
+              staffId: 1,
+              date: DateTime(2026, 6, 30),
+              shift: ShiftType.day,
+            ),
           ],
         ),
       );
@@ -63,7 +70,9 @@ void main() {
       final assignments = List.generate(
         31,
         (index) => PlanningAssignment(
+          staffId: 1,
           date: DateTime(2026, 7, index == 30 ? 30 : index + 1),
+          shift: ShiftType.day,
         ),
       );
 

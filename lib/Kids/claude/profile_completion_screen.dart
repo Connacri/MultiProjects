@@ -56,7 +56,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              colorScheme.primaryContainer.withOpacity(0.3),
+              colorScheme.primaryContainer.withValues(alpha: 0.3),
               colorScheme.surface,
             ],
           ),
@@ -355,7 +355,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         ),
         filled: true,
         fillColor:
-            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+            Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.3),
       ),
       validator: validator,
     );
@@ -366,10 +366,10 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -400,7 +400,7 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
