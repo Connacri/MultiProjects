@@ -31,10 +31,7 @@ class PlanningProvider extends ChangeNotifier {
     required this.savePlanningRevision,
     required this.publishPlanning,
     required this.loadPlanning,
-  }) {
-    final now = DateTime.now();
-    Future.microtask(() => load(year: now.year, month: now.month));
-  }
+  });
 
   PlanningSnapshot? _draft;
   PlanningSnapshot? _current;

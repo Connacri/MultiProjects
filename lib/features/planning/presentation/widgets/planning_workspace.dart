@@ -126,37 +126,8 @@ class PlanningWorkspace extends StatelessWidget {
                 const SizedBox(height: 12),
                 _SyncButton(syncProvider: syncProvider!),
               ],
-              if (hasIntegratedFlow &&
-                  !controller.isEditing) ...[
-                if (planningProvider.hasDraft) ...[
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton.icon(
-                      onPressed: planningProvider.isBusy
-                          ? null
-                          : controller.beginEditing,
-                      icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Modifier le brouillon'),
-                    ),
-                  ),
-                ],
-                if (planningProvider.hasCurrent && !planningProvider.hasDraft) ...[
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: FilledButton.icon(
-                      onPressed: planningProvider.isBusy
-                          ? null
-                          : () => planningProvider.createRevision(
-                                createdAt: DateTime.now(),
-                              ),
-                      icon: const Icon(Icons.playlist_add),
-                      label: const Text('Créer un brouillon'),
-                    ),
-                  ),
-                ],
-              ],
+              if (hasIntegratedFlow && !controller.isEditing)
+                ..._buildDraftActions(planningProvider, controller),
               if (editorSurface != null) ...[
                 const SizedBox(height: 16),
                 editorSurface,
@@ -172,6 +143,44 @@ class PlanningWorkspace extends StatelessWidget {
         );
       },
     );
+  }
+
+  List<Widget> _buildDraftActions(
+    PlanningProvider planningProvider,
+    PlanningWorkspaceController controller,
+  ) {
+    if (planningProvider.hasDraft) {
+      return [
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed:
+                planningProvider.isBusy ? null : controller.beginEditing,
+            icon: const Icon(Icons.edit_outlined),
+            label: const Text('Modifier le brouillon'),
+          ),
+        ),
+      ];
+    }
+    if (planningProvider.hasCurrent && !planningProvider.hasDraft) {
+      return [
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed: planningProvider.isBusy
+                ? null
+                : () => planningProvider.createRevision(
+                      createdAt: DateTime.now(),
+                    ),
+            icon: const Icon(Icons.playlist_add),
+            label: const Text('Créer un brouillon'),
+          ),
+        ),
+      ];
+    }
+    return const [];
   }
 }
 

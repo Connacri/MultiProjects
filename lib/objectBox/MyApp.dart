@@ -145,27 +145,43 @@ class MyApp9 extends StatelessWidget {
               brightness: Brightness.dark,
               primaryColor: Colors.blueGrey,
             ),
-            home: Scaffold(
-              appBar: AppBar(
-                title: const Text('Planning des équipes'),
-              ),
-              body: Consumer3<PlanningProvider, RotationConfigurationProvider,
-                  PlanningSyncProvider>(
-                builder: (context, planningProvider, rotationProvider, syncProvider, _) {
-                  return PlanningWorkspace(
-                    planningProvider: planningProvider,
-                    rotationProvider: rotationProvider,
-                    editorProvider: context.read<PlanningEditorProvider>(),
-                    validationProvider: context.read<PlanningValidationProvider>(),
-                    workspaceController: context.read<PlanningWorkspaceController>(),
-                    syncProvider: syncProvider,
-                  );
-                },
-              ),
-            ),
+            home: _PlanningPage(),
           );
         },
       ),
     );
+  }
+}
+
+class _PlanningPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    _scheduleLoad(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Planning des équipes'),
+      ),
+      body: Consumer3<PlanningProvider, RotationConfigurationProvider,
+          PlanningSyncProvider>(
+        builder: (context, planningProvider, rotationProvider, syncProvider, _) {
+          return PlanningWorkspace(
+            planningProvider: planningProvider,
+            rotationProvider: rotationProvider,
+            editorProvider: context.read<PlanningEditorProvider>(),
+            validationProvider: context.read<PlanningValidationProvider>(),
+            workspaceController: context.read<PlanningWorkspaceController>(),
+            syncProvider: syncProvider,
+          );
+        },
+      ),
+    );
+  }
+
+  static bool _loaded = false;
+  static void _scheduleLoad(BuildContext context) {
+    if (_loaded) return;
+    _loaded = true;
+    final now = DateTime.now();
+    context.read<PlanningProvider>().load(year: now.year, month: now.month);
   }
 }
