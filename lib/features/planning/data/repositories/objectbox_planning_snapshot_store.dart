@@ -31,6 +31,7 @@ class ObjectBoxPlanningSnapshotStore {
       month: month,
       branchId: branchId,
       predicate: (snapshot) => snapshot.publishedAtEpochMs != null,
+      preferPublished: true,
     );
   }
 
@@ -44,6 +45,7 @@ class ObjectBoxPlanningSnapshotStore {
       month: month,
       branchId: branchId,
       predicate: (_) => true,
+      preferPublished: false,
     );
   }
 
@@ -93,6 +95,9 @@ class ObjectBoxPlanningSnapshotStore {
       final monthCompare =
           (b.year * 100 + b.month).compareTo(a.year * 100 + a.month);
       if (monthCompare != 0) return monthCompare;
+      final publishedCompare =
+          (b.publishedAtEpochMs ?? 0).compareTo(a.publishedAtEpochMs ?? 0);
+      if (publishedCompare != 0) return publishedCompare;
       final revisionCompare = b.revision.compareTo(a.revision);
       if (revisionCompare != 0) return revisionCompare;
       return b.id.compareTo(a.id);
@@ -103,8 +108,9 @@ class ObjectBoxPlanningSnapshotStore {
 
   /// Persists snapshot, its rotation checkpoint and assignments atomically.
   ///
-  /// The rotation checkpoint is attached to the snapshot before the snapshot
-  /// is written. If any write fails, ObjectBox rolls back the whole unit.
+  /// A snapshot already published is immutable: attempting to persist a
+  /// second entity with the same month/revision as the published snapshot is
+  /// rejected. New revisions must use a higher revision number.
   void putAtomically({
     required PlanningSnapshotEntity snapshot,
     required RotationStateSnapshotEntity rotationState,
@@ -121,6 +127,32 @@ class ObjectBoxPlanningSnapshotStore {
     }
 
     store.runInTransaction(TxMode.write, () {
+      final published = findPublishedByMonth(
+        year: snapshot.year,
+        month: snapshot.month,
+        branchId: snapshot.branchId,
+      );
+      if (published != null &&
+          published.revision == snapshot.revision &&
+          published.id != snapshot.id) {
+        throw StateError(
+          'A published planning snapshot is immutable and cannot be replaced.',
+        );
+      }
+
+      final latest = findLatestByMonth(
+        year: snapshot.year,
+        month: snapshot.month,
+        branchId: snapshot.branchId,
+      );
+      if (latest != null &&
+          latest.id != snapshot.id &&
+          snapshot.revision <= latest.revision) {
+        throw StateError(
+          'Planning snapshot revisions must increase monotonically.',
+        );
+      }
+
       final rotationStateId = rotationStateBox.put(rotationState);
       snapshot.rotationState.targetId = rotationStateId;
       final snapshotId = snapshotBox.put(snapshot);
@@ -137,6 +169,7 @@ class ObjectBoxPlanningSnapshotStore {
     required int month,
     required int? branchId,
     required bool Function(PlanningSnapshotEntity snapshot) predicate,
+    required bool preferPublished,
   }) {
     final query = snapshotBox
         .query(
@@ -157,8 +190,15 @@ class ObjectBoxPlanningSnapshotStore {
       if (snapshots.isEmpty) return null;
 
       snapshots.sort((a, b) {
+        if (preferPublished) {
+          final publishedCompare =
+              (b.publishedAtEpochMs ?? 0).compareTo(a.publishedAtEpochMs ?? 0);
+          if (publishedCompare != 0) return publishedCompare;
+        }
         final revisionCompare = b.revision.compareTo(a.revision);
         if (revisionCompare != 0) return revisionCompare;
+        final createdCompare = b.createdAtEpochMs.compareTo(a.createdAtEpochMs);
+        if (createdCompare != 0) return createdCompare;
         return b.id.compareTo(a.id);
       });
 
