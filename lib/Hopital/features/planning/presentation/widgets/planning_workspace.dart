@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/services/hospital_pdf_seed_import.dart';
 import '../providers/planning_editor_provider.dart';
 import '../providers/planning_history_provider.dart';
 import '../providers/planning_provider.dart';
@@ -208,8 +209,11 @@ class _PlanningStatusCard extends StatelessWidget {
             if (draft != null) Text('Brouillon : ${draft.year}/${draft.month}'),
             if (current != null)
               Text('Publi\u00e9 : ${current.year}/${current.month}'),
-            if (draft == null && current == null)
+            if (draft == null && current == null) ...[
               const Text('Aucun planning charg\u00e9.'),
+              const SizedBox(height: 12),
+              const _SeedImportButton(),
+            ],
             if (provider.error != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -220,6 +224,51 @@ class _PlanningStatusCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SeedImportButton extends StatefulWidget {
+  const _SeedImportButton();
+
+  @override
+  State<_SeedImportButton> createState() => _SeedImportButtonState();
+}
+
+class _SeedImportButtonState extends State<_SeedImportButton> {
+  bool _loading = false;
+
+  Future<void> _import() async {
+    setState(() => _loading = true);
+    try {
+      final importer = HospitalPdfSeedImportService();
+      final result = await importer.importAout2026();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(
+          '${result.staffCount} staffs, ${result.timeOffCount} congés, '
+          '${result.observationCount} observations importés.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur import: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _loading ? null : _import,
+      icon: _loading
+          ? const SizedBox(
+              width: 18, height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.download_outlined),
+      label: Text(_loading ? 'Importation\u2026' : 'Importer les données seed (Août 2026)'),
     );
   }
 }

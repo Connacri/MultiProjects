@@ -75,14 +75,14 @@ class HospitalPdfSeedImportService {
           nom: seed.nom,
           grade: seed.grade,
           groupe: seed.groupe,
-          equipe: seed.equipe,
+          equipe: seed.equipe ?? '',
           ordre: seed.ordre,
         );
 
     staff.nom = seed.nom;
     staff.grade = seed.grade;
     staff.groupe = seed.groupe;
-    staff.equipe = seed.equipe;
+    staff.equipe = seed.equipe ?? '';
     staff.ordre = seed.ordre;
     staff.branch.target = branch;
 

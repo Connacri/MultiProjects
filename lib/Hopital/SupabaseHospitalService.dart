@@ -65,7 +65,7 @@ class SupabaseHospitalService {
               'nom': s.nom,
               'grade': s.grade,
               'groupe': s.groupe,
-              'equipe': s.equipe,
+              'equipe': s.equipe ?? '',
               'ordre': s.ordre,
               'branch_id': s.branch.targetId != 0 ? s.branch.targetId : null,
             })
