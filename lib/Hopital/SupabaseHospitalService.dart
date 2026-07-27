@@ -66,7 +66,7 @@ class SupabaseHospitalService {
               'grade': s.grade,
               'groupe': s.groupe,
               'equipe': s.equipe ?? '',
-              'ordre': s.ordre,
+              'ordre': s.ordre ?? 0,
               'branch_id': s.branch.targetId != 0 ? s.branch.targetId : null,
             })
         .toList();
