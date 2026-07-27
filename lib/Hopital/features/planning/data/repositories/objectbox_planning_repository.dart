@@ -1,3 +1,4 @@
+import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectbox.g.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/entities/rotation_configuration.dart';
@@ -8,6 +9,7 @@ import '../../domain/repositories/planning_repository.dart';
 import '../../domain/repositories/rotation_configuration_repository.dart';
 import '../../domain/validators/planning_snapshot_validator.dart';
 import '../mappers/planning_snapshot_mapper.dart';
+import '../models/planning_persistence_record.dart';
 import '../objectbox/rotation_configuration_entity.dart';
 import 'objectbox_planning_snapshot_store.dart';
 
@@ -19,11 +21,13 @@ import 'objectbox_planning_snapshot_store.dart';
 class ObjectBoxPlanningRepository
     implements PlanningRepository, RotationConfigurationRepository {
   final ObjectBoxPlanningSnapshotStore snapshotStore;
+  final Box<Planification>? legacyPlanificationBox;
   final PlanningSnapshotMapper mapper;
   final PlanningSnapshotValidator validator;
 
   const ObjectBoxPlanningRepository({
     required this.snapshotStore,
+    this.legacyPlanificationBox,
     this.mapper = const PlanningSnapshotMapper(),
     this.validator = const PlanningSnapshotValidator(),
   });
@@ -39,7 +43,8 @@ class ObjectBoxPlanningRepository
       month: month,
       branchId: branchId,
     );
-    return entity == null ? null : mapper.fromObjectBox(entity);
+    if (entity != null) return mapper.fromObjectBox(entity);
+    return _findLegacyByMonth(year: year, month: month, branchId: branchId);
   }
 
   @override
@@ -53,7 +58,39 @@ class ObjectBoxPlanningRepository
       month: month,
       branchId: branchId,
     );
-    return entity == null ? null : mapper.fromObjectBox(entity);
+    if (entity != null) return mapper.fromObjectBox(entity);
+    return _findLegacyByMonth(year: year, month: month, branchId: branchId);
+  }
+
+  PlanningSnapshot? _findLegacyByMonth({
+    required int year,
+    required int month,
+    int? branchId,
+  }) {
+    final box = legacyPlanificationBox;
+    if (box == null) return null;
+
+    final query = box
+        .query(Planification_.annee.equals(year) & Planification_.mois.equals(month))
+        .build();
+    try {
+      for (final legacy in query.find()) {
+        if (branchId != null && legacy.branch.targetId != branchId) continue;
+        return mapper.fromLegacyRecord(
+          PlanningPersistenceRecord(
+            id: legacy.id,
+            month: legacy.mois,
+            year: legacy.annee,
+            teamOrder: legacy.ordreEquipes,
+            branchId: legacy.branch.targetId,
+            snapshotJson: legacy.activitesJson,
+          ),
+        );
+      }
+      return null;
+    } finally {
+      query.close();
+    }
   }
 
   @override
@@ -83,7 +120,37 @@ class ObjectBoxPlanningRepository
       month: month,
       branchId: branchId,
     );
-    return entity == null ? null : mapper.fromObjectBox(entity);
+    if (entity != null) return mapper.fromObjectBox(entity);
+
+    final box = legacyPlanificationBox;
+    if (box == null) return null;
+
+    final targetMonth = year * 100 + month;
+    final candidates = box.getAll().where((legacy) {
+      final legacyMonth = legacy.annee * 100 + legacy.mois;
+      if (branchId != null && legacy.branch.targetId != branchId) return false;
+      return legacyMonth < targetMonth;
+    }).toList();
+
+    if (candidates.isEmpty) return null;
+    candidates.sort((a, b) {
+      final monthCompare =
+          (b.annee * 100 + b.mois).compareTo(a.annee * 100 + a.mois);
+      if (monthCompare != 0) return monthCompare;
+      return b.id.compareTo(a.id);
+    });
+
+    final legacy = candidates.first;
+    return mapper.fromLegacyRecord(
+      PlanningPersistenceRecord(
+        id: legacy.id,
+        month: legacy.mois,
+        year: legacy.annee,
+        teamOrder: legacy.ordreEquipes,
+        branchId: legacy.branch.targetId,
+        snapshotJson: legacy.activitesJson,
+      ),
+    );
   }
 
   @override

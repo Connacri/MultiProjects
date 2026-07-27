@@ -280,13 +280,14 @@ Future<void> _setupNetworkPermissions() async {
       }
     }
 
-    // Vérifier la connectivité
-    final connectivity = await Connectivity().checkConnectivity();
-    if (connectivity.contains(ConnectivityResult.none) ||
-        connectivity.isEmpty) {
-      print('[Main] ⚠️ Aucune connexion réseau disponible');
-    } else {
-      print('[Main] ✅ Connectivité réseau OK: $connectivity');
+    if (!Platform.isWindows) {
+      final connectivity = await Connectivity().checkConnectivity();
+      if (connectivity.contains(ConnectivityResult.none) ||
+          connectivity.isEmpty) {
+        print('[Main] ⚠️ Aucune connexion réseau disponible');
+      } else {
+        print('[Main] ✅ Connectivité réseau OK: $connectivity');
+      }
     }
   } catch (e) {
     print('[Main] ❌ Erreur configuration permissions ou connectivité: $e');

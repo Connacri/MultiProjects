@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:objectbox/objectbox.dart';
 
+import '../../../../../objectBox/Entity.dart';
 import '../data/datasources/supabase_planning_datasource.dart';
 import '../data/objectbox/planning_snapshot_entity.dart';
 import '../data/objectbox/rotation_state_snapshot_entity.dart';
@@ -57,6 +58,7 @@ class PlanningComposition {
     required Box<PlanningSnapshotEntity> snapshotBox,
     required Box<PlanningAssignmentEntity> assignmentBox,
     required Box<RotationStateSnapshotEntity> rotationStateBox,
+    Box<Planification>? planificationBox,
   }) {
     final snapshotStore = ObjectBoxPlanningSnapshotStore(
       store: store,
@@ -66,6 +68,7 @@ class PlanningComposition {
     );
     final repository = ObjectBoxPlanningRepository(
       snapshotStore: snapshotStore,
+      legacyPlanificationBox: planificationBox,
     );
 
     return _fromRepository(

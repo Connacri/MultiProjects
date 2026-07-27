@@ -58,6 +58,7 @@ class MyApp9 extends StatelessWidget {
       snapshotBox: objectBox.planningSnapshotBox,
       assignmentBox: objectBox.planningAssignmentBox,
       rotationStateBox: objectBox.rotationStateSnapshotBox,
+      planificationBox: objectBox.planificationBox,
     );
 
     return MultiProvider(

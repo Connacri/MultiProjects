@@ -80,6 +80,10 @@ class DiscoveryManager with ChangeNotifier {
 
   /// Écoute les changements de connectivité réseau
   Future<void> _setupConnectivityListener() async {
+    if (Platform.isWindows) {
+      print('[Discovery] Connectivity listener non supporté sur Windows');
+      return;
+    }
     try {
       _connectivitySubscription = _connectivity.onConnectivityChanged.listen(
           (List<ConnectivityResult> results) {
@@ -116,11 +120,12 @@ class DiscoveryManager with ChangeNotifier {
     _running = true;
 
     try {
-      // Vérifier la connectivité
-      final connectivity = await _connectivity.checkConnectivity();
-      if (connectivity.contains(ConnectivityResult.none) ||
-          connectivity.isEmpty) {
-        throw Exception('Pas de connexion réseau disponible');
+      if (!Platform.isWindows) {
+        final connectivity = await _connectivity.checkConnectivity();
+        if (connectivity.contains(ConnectivityResult.none) ||
+            connectivity.isEmpty) {
+          throw Exception('Pas de connexion réseau disponible');
+        }
       }
 
       await _detectNetworkInterfaces();

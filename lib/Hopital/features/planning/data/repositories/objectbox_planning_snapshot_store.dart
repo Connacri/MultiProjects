@@ -292,6 +292,7 @@ class ObjectBoxPlanningSnapshotStore {
   }
 
   bool _matchesBranch(PlanningSnapshotEntity snapshot, int? branchId) {
-    return snapshot.branchId == (branchId ?? 0);
+    if (branchId == null) return true;
+    return snapshot.branchId == branchId;
   }
 }

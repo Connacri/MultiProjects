@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -1662,8 +1663,15 @@ class ConnectionStatusProvider extends ChangeNotifier {
 
   Future<void> checkInternetConnection() async {
     try {
-      final connectivityResult = await Connectivity().checkConnectivity();
       final prefs = await SharedPreferences.getInstance();
+
+      if (Platform.isWindows) {
+        _isOnline = true;
+        _isBlocked = false;
+        return;
+      }
+
+      final connectivityResult = await Connectivity().checkConnectivity();
 
       if (connectivityResult.contains(ConnectivityResult.none) ||
           connectivityResult.isEmpty) {
