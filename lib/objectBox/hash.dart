@@ -4,13 +4,11 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
-import 'dart:io' show Platform, Process, ProcessResult;
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:lottie/lottie.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:network_info_plus/network_info_plus.dart';
 import 'package:pretty_qr_code/pretty_qr_code.dart';
-import 'package:pincode_input_fields/pincode_input_fields.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -24,12 +22,8 @@ class hashPage extends StatefulWidget {
 class _hashPageState extends State<hashPage> {
   String _deviceIdentifier = '';
   String _hash512 = '';
-  String _shortHash = '';
-  String _numHash = '';
   String _enteredHash = '';
   String _p4ssw0rd = "Oran2024";
-  String _p4ssw0rdSupabase = '';
-  bool _isShowMessage = false;
   bool _isLicenseValidated = false;
   bool _isLicenseDemoValidated = false;
   String _statusMessage = "Entrer le Code PIN";
@@ -52,8 +46,6 @@ class _hashPageState extends State<hashPage> {
         setState(() {
           _deviceIdentifier = identifier;
           _hash512 = generateHash(_deviceIdentifier, _p4ssw0rd);
-          _shortHash = generateShortHash(_hash512, _p4ssw0rd);
-          _numHash = generateNumHash(_hash512, _p4ssw0rd, _lengthPin);
         });
       }
     }
@@ -205,11 +197,18 @@ class _hashPageState extends State<hashPage> {
                   Container(
                     child: _hash512.isNotEmpty
                         ? Center(
-                            child: PrettyQr(
-                              data: _hash512.toString(),
-                              size: 200.0,
-                              elementColor: Theme.of(context).hintColor,
+                            child: SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: PrettyQrView.data(
+                            data: _hash512.toString(),
+                            decoration: PrettyQrDecoration(
+                              shape: PrettyQrSmoothSymbol(
+                                color: Theme.of(context).hintColor,
+                              ),
                             ),
+                          ),
+                        ),
                           )
                         : CircularProgressIndicator(),
                   ),
@@ -307,110 +306,74 @@ class _hashPageState extends State<hashPage> {
                   //     ),
                   //   ),
                   // ),
-                  PincodeInputFields(
+                  TextField(
                     onChanged: (value) {
                       setState(() {
                         _enteredHash = value;
                       });
-                    },
-                    // onInputComplete: () {
-                    //   setState(() {
-                    //     _statusMessage = "Validation en cours...";
-                    //   });
-                    //   //////////////////Licence Démonstration Beta!//////////////////
-                    //   checkAndValidateDemoLicense();
-                    //   ///////////////////////////////////////////////////////////////
-                    //   Future.delayed(Duration(seconds: 2), () {
-                    //     if (validateNumHash(
-                    //         _enteredHash, _hash512, _p4ssw0rd, _lengthPin)) {
-                    //       _saveLicenseStatus(true);
-                    //       setState(() {
-                    //         _isLicenseValidated = true;
-                    //         _statusMessage2 = "Licence Numérique validée!";
-                    //       });
-                    //     } else {
-                    //       _attempts++;
-                    //       if (_attempts >= 3 && _attempts < 6) {
-                    //         _statusMessage2 =
-                    //             "PIN Hash incorrect! Tentatives restantes: ${3 - _attempts}";
-                    //         if (_attempts == 3) {
-                    //           _disableInput(Duration(minutes: 1));
-                    //         }
-                    //       } else if (_attempts >= 6 && _attempts < 9) {
-                    //         _statusMessage2 =
-                    //             "PIN Hash incorrect! Tentatives restantes: ${6 - _attempts}";
-                    //         if (_attempts == 6) {
-                    //           _disableInput(Duration(minutes: 5));
-                    //         }
-                    //       } else if (_attempts >= 9) {
-                    //         _statusMessage2 =
-                    //             "Trop de tentatives échouées. Veuillez entrer votre adresse MAC et votre numéro de téléphone.";
-                    //         _showMacAndPhoneFields;
-                    //       } else {
-                    //         _statusMessage2 = "PIN Hash incorrect!";
-                    //       }
-                    //     }
-                    //   });
-                    // },
-                    onInputComplete: () async {
-                      setState(() {
-                        _statusMessage = "Validation en cours...";
-                      });
-
-                      // Vérifier et valider la licence de démonstration
-                      // await checkAndValidateDemoLicense();
-
-                      Future.delayed(Duration(seconds: 2), () async {
-                        if (validateNumHash(
-                            _enteredHash, _hash512, _p4ssw0rd, _lengthPin)) {
-                          await _saveLicenseStatus(true);
-                          setState(() {
-                            _isLicenseValidated = true;
-                            _statusMessage2 = "Licence Numérique validée!";
-                          });
-                        } else {
-                          _attempts++;
-                          if (_attempts >= 3 && _attempts < 6) {
-                            _statusMessage2 =
-                                "PIN Hash incorrect! Tentatives restantes: ${3 - _attempts}";
-                            if (_attempts == 3) {
-                              _disableInput(Duration(minutes: 1));
-                            }
-                          } else if (_attempts >= 6 && _attempts < 9) {
-                            _statusMessage2 =
-                                "PIN Hash incorrect! Tentatives restantes: ${6 - _attempts}";
-                            if (_attempts == 6) {
-                              _disableInput(Duration(minutes: 5));
-                            }
-                          } else if (_attempts >= 9) {
-                            _statusMessage2 =
-                                "Trop de tentatives échouées. Veuillez entrer votre adresse MAC et votre numéro de téléphone.";
+                      if (value.length == _lengthPin) {
+                        setState(() {
+                          _statusMessage = "Validation en cours...";
+                        });
+                        Future.delayed(Duration(seconds: 2), () async {
+                          if (validateNumHash(
+                              _enteredHash, _hash512, _p4ssw0rd, _lengthPin)) {
+                            await _saveLicenseStatus(true);
+                            setState(() {
+                              _isLicenseValidated = true;
+                              _statusMessage2 = "Licence Numérique validée!";
+                            });
                           } else {
-                            _statusMessage2 = "PIN Hash incorrect!";
+                            _attempts++;
+                            if (_attempts >= 3 && _attempts < 6) {
+                              _statusMessage2 =
+                                  "PIN Hash incorrect! Tentatives restantes: ${3 - _attempts}";
+                              if (_attempts == 3) {
+                                _disableInput(Duration(minutes: 1));
+                              }
+                            } else if (_attempts >= 6 && _attempts < 9) {
+                              _statusMessage2 =
+                                  "PIN Hash incorrect! Tentatives restantes: ${6 - _attempts}";
+                              if (_attempts == 6) {
+                                _disableInput(Duration(minutes: 5));
+                              }
+                            } else if (_attempts >= 9) {
+                              _statusMessage2 =
+                                  "Trop de tentatives échouées. Veuillez entrer votre adresse MAC et votre numéro de téléphone.";
+                            } else {
+                              _statusMessage2 = "PIN Hash incorrect!";
+                            }
                           }
-                        }
-                      });
+                        });
+                      }
                     },
-                    autoFocus: true,
-                    length: _lengthPin,
-                    heigth: 54,
-                    width: 51,
-                    borderRadius: BorderRadius.circular(9),
-                    unfocusBorder: Border.all(
-                      width: 1,
-                      color: const Color(0xFF5B6774),
-                    ),
-                    focusBorder: Border.all(
-                      width: 1,
-                      color: const Color(0xFF9B71F4),
-                    ),
-                    cursorWidth: 2,
-                    focusFieldColor: const Color(0xFFB1B8F1),
-                    textStyle: const TextStyle(
+                    autofocus: true,
+                    maxLength: _lengthPin,
+                    obscureText: true,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
                       color: Colors.black54,
                       fontSize: 21,
                     ),
-                    enabled: !_isInputDisabled,
+                    decoration: InputDecoration(
+                      counterText: '',
+                      enabled: !_isInputDisabled,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(9),
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: const Color(0xFF5B6774),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(9),
+                        borderSide: BorderSide(
+                          width: 1,
+                          color: const Color(0xFF9B71F4),
+                        ),
+                      ),
+                    ),
                   ),
                   SizedBox(height: 16),
                   Text(_statusMessage2),
@@ -543,8 +506,7 @@ class _hashPageState extends State<hashPage> {
       print('Response: $response');
       print('_enteredHash: $_enteredHash');
 
-      if (response != null) {
-        // Si _enteredHash existe dans Supabase
+      // Si _enteredHash existe dans Supabase
         print('Code trouvé dans Supabase');
         print('_enteredHash: $_enteredHash');
         print('Response: $response');
@@ -592,14 +554,6 @@ class _hashPageState extends State<hashPage> {
                 "Données de licence incomplètes dans la base de données.";
           });
         }
-      } else {
-        // Si _enteredHash n'existe pas dans Supabase
-        print('Code non trouvé dans Supabase');
-        setState(() {
-          _statusMessage2 =
-              "Code incorrect ou non trouvé dans la base de données.";
-        });
-      }
     } catch (e) {
       // Gérer les erreurs de requête (par exemple, absence de connexion Internet)
       print('Erreur lors de la requête Supabase: $e');
@@ -748,21 +702,6 @@ class _HashAdminState extends State<HashAdmin> {
   void _resetQrCodeData() {
     qrCodeHash = null;
     qrCodeNumHash = null;
-  }
-
-// Fonction à appeler dans initState()
-  void _initializeScanner() {
-    controller = MobileScannerController(
-      detectionSpeed: DetectionSpeed.noDuplicates,
-      facing: CameraFacing.back,
-    );
-    _onQRViewCreated(controller!);
-  }
-
-  void _onQRViewCreated(MobileScannerController controller) {
-    this.controller = controller;
-    _resetQrCodeData(); // Réinitialiser les données QR à chaque création de vue
-    controller.start();
   }
 
   @override

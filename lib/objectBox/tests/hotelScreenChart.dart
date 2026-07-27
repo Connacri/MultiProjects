@@ -620,35 +620,6 @@ class _CalendarTableWithDraggingState extends State<CalendarTableWithDragging> {
     );
   }
 
-  List<Widget> _buildDayWidgets(List<DateTime> days) {
-    return days
-        .map(
-          (d) => Container(
-            width: dayWidth,
-            height: rowHeight / 2,
-            decoration: BoxDecoration(
-              border: Border(right: BorderSide(color: Colors.grey.shade300)),
-              color: Colors.grey.shade50,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _shortDayName(d.weekday),
-                  style: const TextStyle(fontSize: 17, color: Colors.grey),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${d.day}',
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-        )
-        .toList();
-  }
-
   List<Widget> _buildMonthWidgets(List<DateTime> days) {
     final widgets = <Widget>[];
     if (days.isEmpty) return widgets;

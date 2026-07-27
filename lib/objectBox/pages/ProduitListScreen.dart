@@ -114,7 +114,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
         email: faker.internet.email(),
         role: 'default_role',
         phone: faker.phoneNumber.toString(),
-        photo: faker.image.image(),
+        photo: faker.image.loremPicsum(),
         derniereModification: DateTime.now(),
       );
       int userId = objectbox.userBox.put(newUser);
@@ -210,8 +210,6 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final objectBox = Provider.of<ObjectBox>(context, listen: false);
-
     return Scaffold(
       appBar: AppBar(
         title: Consumer<CommerceProvider>(
@@ -753,7 +751,7 @@ class _ProduitListScreenState extends State<ProduitListScreen> {
                                 child: Row(
                                   children: [
                                     Text(
-                                      produit.nom ?? '',
+                                      produit.nom,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     // Spacer(),
@@ -2076,9 +2074,7 @@ class ProduitDetailPage extends StatelessWidget {
                                                   cells: [
                                                     DataCell(
                                                       Text(
-                                                        appro.fournisseur !=
-                                                                    null &&
-                                                                appro.fournisseur
+                                                        appro.fournisseur
                                                                         .target !=
                                                                     null
                                                             ? '${appro.fournisseur.target!.nom}'
@@ -2087,8 +2083,7 @@ class ProduitDetailPage extends StatelessWidget {
                                                     ),
                                                     DataCell(
                                                       Text(
-                                                        appro.crud != null &&
-                                                                appro.crud
+                                                        appro.crud
                                                                         .target !=
                                                                     null
                                                             ? DateFormat(
@@ -2221,22 +2216,18 @@ class ProduitDetailPage extends StatelessWidget {
                                                         cells: [
                                                           DataCell(
                                                             Text(
-                                                              appro.fournisseur !=
-                                                                          null &&
-                                                                      appro.fournisseur
-                                                                              .target !=
-                                                                          null
+                                                               appro.fournisseur
+                                                                               .target !=
+                                                                           null
                                                                   ? '${appro.fournisseur.target!.nom}'
                                                                   : '-', // Valeur par défaut si fournisseur ou target est null
                                                             ),
                                                           ),
                                                           DataCell(
                                                             Text(
-                                                              appro.crud !=
-                                                                          null &&
-                                                                      appro.crud
-                                                                              .target !=
-                                                                          null
+                                                               appro.crud
+                                                                               .target !=
+                                                                           null
                                                                   ? DateFormat(
                                                                           'EEE dd MMM yyyy',
                                                                           'fr')
@@ -2303,7 +2294,6 @@ class ProduitDetailPage extends StatelessWidget {
                               : Divider(),
                           produit.approvisionnements.isEmpty ||
                                   !produit.approvisionnements.any((appro) =>
-                                      appro.fournisseur != null &&
                                       appro.fournisseur.target != null)
                               ? SizedBox.shrink()
                               : Text(
@@ -2421,8 +2411,7 @@ class ProduitDetailPage extends StatelessWidget {
                                   padding: const EdgeInsets.all(8.0),
                                   child: ElevatedButton.icon(
                                     onPressed: () async {
-                                      final updatedProduit =
-                                          await Navigator.of(context).push(
+                                      await Navigator.of(context).push(
                                         MaterialPageRoute(
                                           builder: (ctx) => editProduct(
                                             produit: produit,

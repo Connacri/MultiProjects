@@ -483,7 +483,6 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
   // }
 
   Widget _buildCalendar() {
-    final today = DateTime.now();
     return SfCalendar(
       controller: _calendarController,
       view: _currentView,
@@ -605,8 +604,6 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
       BuildContext context, CalendarAppointmentDetails details) {
     if (details.appointments.isEmpty) return Container();
     final reservation = details.appointments.first as Reservation;
-    final nights = reservation.endDate.difference(reservation.startDate).inDays;
-    final totalPrice = reservation.pricePerNight * nights;
 
     return Container(
       width: details.bounds.width,
@@ -690,18 +687,6 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
 
   String _formatDate(DateTime date) {
     return DateFormat('dd/MM/yyyy', 'fr_FR').format(date);
-  }
-
-  String _formatDayName(DateTime date) {
-    return DateFormat('EEEE', 'fr_FR').format(date);
-  }
-
-  String _formatDayNumber(DateTime date) {
-    return DateFormat('d', 'fr_FR').format(date);
-  }
-
-  String _formatShortDayName(DateTime date) {
-    return DateFormat('EEE', 'fr_FR').format(date);
   }
 
   Widget _buildFloatingActionButtons() {
@@ -832,7 +817,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
                 ),
                 SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedRoom,
+                  initialValue: selectedRoom,
                   decoration: InputDecoration(
                     labelText: 'Chambre',
                     border: OutlineInputBorder(),
@@ -915,7 +900,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
                 ),
                 SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedStatus,
+                  initialValue: selectedStatus,
                   decoration: InputDecoration(
                     labelText: 'Statut',
                     border: OutlineInputBorder(),
@@ -1062,7 +1047,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
                 ),
                 SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedRoom,
+                  initialValue: selectedRoom,
                   decoration: InputDecoration(
                     labelText: 'Chambre',
                     border: OutlineInputBorder(),
@@ -1142,7 +1127,7 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
                 ),
                 SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: selectedStatus,
+                  initialValue: selectedStatus,
                   decoration: InputDecoration(
                     labelText: 'Statut',
                     border: OutlineInputBorder(),
@@ -1228,63 +1213,6 @@ class _Hotel_ManagementAState extends State<Hotel_ManagementA> {
       final reservation = details.appointments!.first as Reservation;
       _showQuickActions(reservation);
     }
-  }
-
-  void _showReservationDetails1(Reservation reservation) {
-    final nights = reservation.endDate.difference(reservation.startDate).inDays;
-    final totalPrice = reservation.pricePerNight * nights;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: FittedBox(
-          child: Text(
-            'Réservation Détail\n${reservation.clientName}\nChambre ${reservation.roomName}',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
-            ),
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // En-tête avec le nom du client et de la chambre
-                _buildHeaderSection(
-                    reservation.clientName, reservation.roomName),
-                SizedBox(height: 16),
-                // Timeline du séjour
-                _buildReservationTimeline(
-                    reservation.startDate, reservation.endDate, nights),
-                SizedBox(height: 16),
-                // Détails tarifaires
-                _buildPricingSection(
-                    nights, reservation.pricePerNight, totalPrice),
-                SizedBox(height: 16),
-                // Statut de la réservation
-                _buildStatusSection(reservation.status),
-              ]),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Fermer',
-              style: TextStyle(
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showReservationDetails(Reservation reservation) {

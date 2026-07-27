@@ -130,12 +130,6 @@ class _FactureDetailState extends State<FactureDetail> {
   // final TextEditingController _impayerController =
   //     TextEditingController(text: '0');
   /// si l yaun probleme dans impayerProvider.impayerController je dois tout remettre a _impayerController
-  String _barcodeBuffer = '';
-  final TextEditingController _barcodeBufferController =
-      TextEditingController();
-  late Stream<List<MarqueeData>> _marqueeDataStream;
-  final MarqueerController _controller = MarqueerController();
-
   @override
   void initState() {
     super.initState();
@@ -148,7 +142,6 @@ class _FactureDetailState extends State<FactureDetail> {
   void dispose() {
     _rechercheController.dispose();
     //_impayerController.dispose();
-    _barcodeBufferController.dispose();
 
     // Nettoyer le contrôleur pour éviter les fuites de mémoire
     // _impayerController.removeListener(_updateDisplayText);
@@ -190,12 +183,8 @@ class _FactureDetailState extends State<FactureDetail> {
                       padding: const EdgeInsets.all(8.0),
                       child: SizedBox(
                         width: MediaQuery.of(context).size.width,
-                        child: ProductSearchBar(
-                            // commerceProvider: commerceProvider,
-                            // cartProvider: cartProvider,
-                            barcodeBuffer: _barcodeBuffer,
-                            barcodeBufferController: _barcodeBufferController),
-                      ),
+                            child: ProductSearchBar(),
+                          ),
                     ),
                     IconButton(
                       onPressed: () => _showAddMarqueeDialog(context),
@@ -326,15 +315,10 @@ class _FactureDetailState extends State<FactureDetail> {
                       itemBuilder: (context, index) {
                         final ligne = factureProvider.lignesFacture[index];
                         //final produit = commerceProvider.produits[index];
-                        final produit = commerceProvider.produits.firstWhere(
-                          (p) => p.id == ligne.produit.target?.id,
-                        );
-                        final stockRestant = produit.approvisionnements
-                            .fold<double>(
-                                0,
-                                (previousValue, appro) =>
-                                    previousValue + appro.quantite);
-                        return Card(
+                            final produit = commerceProvider.produits.firstWhere(
+                              (p) => p.id == ligne.produit.target?.id,
+                            );
+                            return Card(
                           margin: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 8),
                           child: Slidable(
@@ -445,12 +429,7 @@ class _FactureDetailState extends State<FactureDetail> {
                         children: [
                           SizedBox(
                             width: MediaQuery.of(context).size.width * 0.2,
-                            child: ProductSearchBar(
-                                // commerceProvider: commerceProvider,
-                                // cartProvider: cartProvider,
-                                barcodeBuffer: _barcodeBuffer,
-                                barcodeBufferController:
-                                    _barcodeBufferController),
+                        child: ProductSearchBar(),
                           ),
                           IconButton(
                             onPressed: () => _showAddMarqueeDialog(context),
@@ -695,8 +674,6 @@ class _FactureDetailState extends State<FactureDetail> {
                           rows: factureProvider.lignesFacture.map((ligne) {
                             final index =
                                 factureProvider.lignesFacture.indexOf(ligne);
-                            final state =
-                                factureProvider.getLigneEditionState(index);
                             // final stockRestant = ligne.produit.target
                             //         ?.calculerStockTotal() ??
                             //     0.0;
@@ -783,17 +760,13 @@ class _FactureDetailState extends State<FactureDetail> {
                                       Text(ligne.quantite.toStringAsFixed(2)),
                                       IconButton(
                                         icon: Icon(Icons.add),
-                                        onPressed: () {
-                                          final produitId =
-                                              ligne.produit.target?.id;
-                                          if (produitId == null) return;
+                                          onPressed: () {
+                                            if (ligne.produit.target?.id == null) return;
 
-                                          // 1. Récupérer les données nécessaires
-
-                                          final originalQuantity =
-                                              factureProvider
-                                                  .getOriginalQuantity(
-                                                      produitId);
+                                            final originalQuantity =
+                                                factureProvider
+                                                    .getOriginalQuantity(
+                                                        ligne.produit.target!.id);
                                           final currentQuantity =
                                               ligne.quantite;
 
@@ -819,7 +792,7 @@ class _FactureDetailState extends State<FactureDetail> {
                                   ),
                                 ),
                                 DataCell(Text(
-                                    (stockRestant ?? 0).toStringAsFixed(2))),
+                                    stockRestant.toStringAsFixed(2))),
                                 DataCell(
                                   Text(
                                     formatManualPrice(ligne.prixUnitaire),
@@ -907,9 +880,6 @@ class _FactureDetailState extends State<FactureDetail> {
     double stockRestantVIrtuel = produit.approvisionnements.fold<double>(
         0, (previousValue, appro) => previousValue + appro.quantite);
 
-    double stockRestantReel = produit.approvisionnements.fold<double>(
-        0, (previousValue, appro) => previousValue + appro.quantite);
-
     // Fonction pour mettre à jour dynamiquement le stock
     void updateStockRestant(String value) {
       final quantite = double.tryParse(value) ?? 0.0;
@@ -971,7 +941,7 @@ class _FactureDetailState extends State<FactureDetail> {
                       validator: (value) {
                         final quantite = double.tryParse(value ?? '') ?? 0.0;
                         final quantiteControllerDouble =
-                            double.tryParse(quantiteController.text ?? '') ??
+                            double.tryParse(quantiteController.text) ??
                                 0.0;
                         if (quantite <= 0 ||
                             quantite >
@@ -2016,7 +1986,7 @@ class ClientInfos extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: Center(
                         child: SfBarcodeGenerator(
-                          value: client.qr ?? '',
+                          value: client.qr,
                           symbology: QRCode(),
                         ),
                       ),
@@ -2594,15 +2564,6 @@ void _showErrorDialog(BuildContext context, totalHT) {
 // }
 
 class ProductSearchBar extends StatefulWidget {
-  const ProductSearchBar({
-    Key? key,
-    required this.barcodeBuffer,
-    required this.barcodeBufferController,
-  }) : super(key: key);
-
-  final String barcodeBuffer;
-  final TextEditingController barcodeBufferController;
-
   @override
   State<ProductSearchBar> createState() => _ProductSearchBarState();
 }
@@ -2610,86 +2571,14 @@ class ProductSearchBar extends StatefulWidget {
 class _ProductSearchBarState extends State<ProductSearchBar> {
   @override
   Widget build(BuildContext context) {
-    final commerceProvider = Provider.of<CommerceProvider>(context);
-    final facturationProvider = Provider.of<FacturationProvider>(context);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ProductSearchField(
-        widget.barcodeBufferController,
-        (context, commerceProvider, cartProvider, enteredQuantity,
-            lignesDocument) {
-          _processBarcode(
-            context,
-            commerceProvider,
-            facturationProvider,
-            enteredQuantity,
-            lignesDocument,
-          );
-        },
-      ),
+      child: ProductSearchField(),
     );
-  }
-
-  void _processBarcode(
-    BuildContext context,
-    CommerceProvider commerceProvider,
-    FacturationProvider facturationProvider,
-    double enteredQuantity,
-    List<LigneDocument> lignesDocument, // Ajout de ce paramètre
-  ) async {
-    if (widget.barcodeBuffer.isNotEmpty) {
-      final produit =
-          await commerceProvider.getProduitByQrFacture(widget.barcodeBuffer);
-
-      if (produit == null) {
-        _navigateToAddProductPage(
-            context, commerceProvider, facturationProvider);
-      } else {
-        facturationProvider.ajouterProduitALaFacture(
-            produit, enteredQuantity, produit.prixVente);
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text('Produit ajouté : ${produit.nom}'),
-        //     backgroundColor: Colors.green,
-        //   ),
-        // );
-      }
-    }
-  }
-
-  void _navigateToAddProductPage(
-    BuildContext context,
-    CommerceProvider commerceProvider,
-    FacturationProvider facturationProvider,
-  ) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            addProduct(), // Remplacez par votre page d'ajout de produit
-      ),
-    );
-
-    if (result != null && result is Produit) {
-      facturationProvider.ajouterProduitALaFacture(result, 1, result.prixVente);
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text('Nouveau produit ajouté : ${result.nom}'),
-      //     backgroundColor: Colors.green,
-      //   ),
-      // );
-    }
   }
 }
 
 class ProductSearchField extends StatefulWidget {
-  final TextEditingController _barcodeBufferController;
-  final Function(BuildContext, CommerceProvider, FacturationProvider, double,
-      List<LigneDocument>) _processBarcode;
-
-  ProductSearchField(this._barcodeBufferController, this._processBarcode);
-
   @override
   State<ProductSearchField> createState() => _ProductSearchField1State();
 }
@@ -3678,7 +3567,7 @@ Future<void> processAddingProduct2Invoice(
   Function setState,
   bool isPasted,
 ) async {
-  if (qrValue!.isNotEmpty) {
+  if (qrValue.isNotEmpty) {
     final produit = await commerceProvider.getProduitByQrFacture(qrValue);
 
     if (produit != null) {
@@ -3771,11 +3660,11 @@ Future<void> processAddingProduct2Invoice(
           );
         }
         // Clear the input field after adding/modifying
-        fieldTextEditingController!.clear();
+        fieldTextEditingController.clear();
       }
     }
     // Request focus on the TextFormField again
-    fieldFocusNode!.requestFocus();
+    fieldFocusNode.requestFocus();
     setState(() {
       isPasted = false;
     });

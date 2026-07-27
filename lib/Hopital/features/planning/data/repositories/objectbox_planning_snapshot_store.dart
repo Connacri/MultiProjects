@@ -1,4 +1,4 @@
-import '../../../../objectbox.g.dart';
+import '../../../../../objectbox.g.dart';
 import '../objectbox/planning_snapshot_entity.dart';
 import '../objectbox/rotation_state_snapshot_entity.dart';
 

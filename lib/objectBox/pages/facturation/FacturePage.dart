@@ -9,7 +9,7 @@ import 'uiPos_Widgets.dart';
 class FacturePage extends StatefulWidget {
   FacturePage({Key? key, this.factureToEdit}) : super(key: key);
 
-  Document? factureToEdit; // Nouvelle propriété
+  final Document? factureToEdit;
 
   @override
   State<FacturePage> createState() => _FacturePageState();
@@ -87,9 +87,7 @@ class _FacturePageState extends State<FacturePage> {
 
   @override
   Widget build(BuildContext context) {
-    final commerceProvider = Provider.of<CommerceProvider>(context);
     final cartProvider = Provider.of<CartProvider>(context);
-    final clientProvider = Provider.of<ClientProvider>(context);
     final items = cartProvider.facture.lignesDocument;
     final totalAmount = cartProvider.totalAmount;
     final tva = totalAmount * 0.19; // TVA à 19%

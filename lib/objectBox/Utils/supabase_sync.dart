@@ -1200,9 +1200,6 @@ class _ProduitListPageState extends State<ProduitListPage>
   bool _isSyncing = false;
   String? _errorMessage;
   String? _successMessage;
-  bool _isSyncingF = false;
-  String? _errorMessageF;
-  String? _successMessageF;
 
   Future<void> _syncData() async {
     setState(() {
@@ -1357,7 +1354,7 @@ class _ProduitListPageState extends State<ProduitListPage>
     // Update Approvisionnement entities with valid Fournisseur references
     for (final approvisionnement in approvisionnements) {
       final fournisseurId = approvisionnement.fournisseur.targetId;
-      if (fournisseurId != null && !fournisseurMap.containsKey(fournisseurId)) {
+      if (!fournisseurMap.containsKey(fournisseurId)) {
         // Remove the invalid reference
         approvisionnement.fournisseur.target = null;
         approvisionnementBox.put(approvisionnement);

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:string_extensions/string_extensions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -15,13 +14,9 @@ import '../Entity.dart';
 import '../MyProviders.dart';
 import '../Utils/country_flags.dart';
 import '../Utils/mobile_scanner/barcode_scanner_window.dart';
-import '../Utils/winMobile.dart';
+import 'package:path_provider/path_provider.dart';
 import 'FournisseurListScreen.dart';
 import 'ProduitListScreen.dart';
-import 'package:timeago/timeago.dart' as timeago;
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
 class addProduct extends StatefulWidget {
   const addProduct({super.key});
@@ -68,11 +63,8 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   String? _existingImageUrl;
   String _tempProduitId = '';
   String _produitNom = '';
-  String _produitDesignation = '';
-  String _produitImage = '';
   String _produitImageTile = '';
   String _produitQr = '';
-  double _produitStock = 0.0;
   double stockGlobale = 0.0; // Déclaration de la variable
   double stockTemp = 0;
   double _produitPV = 0.0;
@@ -94,7 +86,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   bool _showDetail = false;
   bool _isEditing = false;
   bool _isLoadingSauv = false;
-  bool _isFirstTap = true;
 
   @override
   void initState() {
@@ -167,57 +158,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
     });
   }
 
-  Future<void> _updateProductInfo(String code) async {
-    final provider = Provider.of<CommerceProvider>(context, listen: false);
-    final produit = await provider.getProduitByQr(code);
-
-    if (produit != null) {
-      // Calculer le stock total des approvisionnements pour ce produit
-      double stockTemp = produit.calculerStockTotal();
-      print('Stock total pour le produit ${produit.nom} : $stockTemp');
-    }
-
-    if (produit != null) {
-      setState(() {
-        _tempProduitId = produit.id.toString();
-        _nomController.text = produit.nom;
-        _descriptionController.text = produit.description ?? '';
-        //   _prixAchatController.text = produit.prixAchat.toStringAsFixed(2);
-        _prixVenteController.text = produit.prixVente.toStringAsFixed(2);
-        _stockController.text = produit.stock.toStringAsFixed(2);
-        // _minimStockController.text = produit.minimStock!.toStringAsFixed(2);
-        stockTemp = double.parse(produit.stock.toStringAsFixed(2));
-        // _datePeremptionController.text =
-        //     produit.datePeremption!.format('yMMMMd', 'fr_FR');
-        _alertPeremptionController.text = produit.alertPeremption.toString();
-        //_selectedFournisseurs = List.from(produit.fournisseurs);
-        _existingImageUrl = produit.image;
-
-        _isFinded = true;
-        _image = null;
-        _approvisionnementTemporaire = produit.approvisionnements.toList();
-      });
-    } else {
-      if (_tempProduitId.isNotEmpty) {
-        _tempProduitId = '';
-        _nomController.clear();
-        _descriptionController.clear();
-        stockTemp = 0.0;
-        _prixAchatController.clear();
-        _prixVenteController.clear();
-        _stockController.clear();
-        _selectedFournisseurs.clear();
-        _datePeremptionController.clear();
-        _minimStockController.clear();
-        _alertPeremptionController.clear();
-        _approvisionnementTemporaire.clear();
-        _existingImageUrl = '';
-        _isFinded = false;
-        // _image = null;
-      }
-    }
-  }
-
   Future<void> _productInfo(String code) async {
     final provider = Provider.of<CommerceProvider>(context, listen: false);
     final produit = await provider.getProduitByQr(code);
@@ -232,11 +172,8 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
       setState(() {
         _tempProduitId = produit.id.toString();
         _produitNom = produit.nom;
-        _produitDesignation = produit.description ?? '';
         _produitPV = produit.prixVente;
-        _produitStock = produit.stock;
         _produitQr = produit.qr!;
-        _produitImage = produit.image!;
         _produitImageTile = produit.image!;
         _isFinded = true;
         //_image = null;
@@ -244,10 +181,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
     } else {
       _tempProduitId = '';
       _produitNom = '';
-      _produitDesignation = '';
       _produitPV = 0.0;
-      _produitStock = 0.0;
-      _produitImage = '';
       _isFinded = false;
       // _image = null;
     }
@@ -281,7 +215,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   Widget build(BuildContext context) {
     final produitProvider =
         Provider.of<CommerceProvider>(context, listen: false);
-    final iskeyboard = MediaQuery.of(context).viewInsets.bottom != 0;
     return SafeArea(
       maintainBottomViewPadding: true,
       child: LayoutBuilder(
@@ -1251,7 +1184,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                       // if (double.tryParse(value) == null) {
                                       //   return 'Veuillez entrer un prix valide';
                                       // }
-                                      // return null;
+                                      return null;
                                     },
                                   ),
                                 ),
@@ -2339,8 +2272,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   // Méthode séparée pour afficher le dialogue
   void showExistingProductDialog(BuildContext context, String code,
       Produit produit, CommerceProvider provider) {
-    final commerceProvider =
-        Provider.of<CommerceProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -2843,7 +2774,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
       if (pickedFile != null && mounted) {
         setState(() {
           _image = File(pickedFile.path);
-          _produitImage = '';
           _existingImageUrl = '';
         });
       }

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../../../../objectbox.g.dart';
+import '../../../../../objectbox.g.dart';
 import '../../domain/entities/planning_revision.dart';
 import '../mappers/planning_revision_mapper.dart';
 import '../objectbox/planning_revision_entity.dart';

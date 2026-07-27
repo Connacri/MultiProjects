@@ -5,25 +5,30 @@ import '../../MyProviders.dart';
 class buildImpayerRow extends StatefulWidget {
   buildImpayerRow({
     Key? key,
-    required isEditingImpayer,
-    required localImpayer,
+    required this.isEditingImpayer,
+    required this.localImpayer,
     required TextEditingController impayerController,
-  })  : _impayerController = impayerController,
-        _isEditingImpayer = isEditingImpayer,
-        _localImpayer = localImpayer,
-        super(key: key);
+  }) : _impayerController = impayerController, super(key: key);
 
   final TextEditingController _impayerController;
-
-  bool _isEditingImpayer;
-
-  double _localImpayer;
+  final bool isEditingImpayer;
+  final double localImpayer;
 
   @override
   State<buildImpayerRow> createState() => _buildImpayerRowState();
 }
 
 class _buildImpayerRowState extends State<buildImpayerRow> {
+  late bool _isEditingImpayer;
+  late double _localImpayer;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditingImpayer = widget.isEditingImpayer;
+    _localImpayer = widget.localImpayer;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<CartProvider>(builder: (context, cartProvider, child) {
@@ -31,7 +36,7 @@ class _buildImpayerRowState extends State<buildImpayerRow> {
       // widget.factureToEdit != null
       //    ?
       impayer = cartProvider.facture.impayer ?? 0.0;
-      widget._localImpayer = impayer;
+      _localImpayer = impayer;
 
       // Synchronisation du TextEditingController avec le Provider
       // if (_impayerController.text != impayer.toStringAsFixed(2)) {
@@ -48,7 +53,7 @@ class _buildImpayerRowState extends State<buildImpayerRow> {
                 : MediaQuery.of(context).size.width * 1 / 6,
             child: Row(
               children: [
-                widget._isEditingImpayer
+                _isEditingImpayer
                     ? Flexible(
                         child: TextFormField(
                           controller: widget._impayerController,
@@ -82,28 +87,27 @@ class _buildImpayerRowState extends State<buildImpayerRow> {
                       ),
                 IconButton(
                   icon: Icon(
-                    widget._isEditingImpayer ? Icons.check : Icons.edit,
+                    _isEditingImpayer ? Icons.check : Icons.edit,
                     color:
-                        widget._isEditingImpayer ? Colors.green : Colors.blue,
-                    size: widget._isEditingImpayer ? 22 : 17,
+                        _isEditingImpayer ? Colors.green : Colors.blue,
+                    size: _isEditingImpayer ? 22 : 17,
                   ),
                   onPressed: () {
                     setState(() {
-                      if (widget._isEditingImpayer) {
+                      if (_isEditingImpayer) {
                         // Récupérer la valeur saisie et mettre à jour le Provider
                         final newImpayer =
                             double.tryParse(widget._impayerController.text) ??
-                                widget._localImpayer;
+                                _localImpayer;
                         cartProvider.updateImpayer(newImpayer);
-                        widget._localImpayer =
+                        _localImpayer =
                             newImpayer; // Met à jour la valeur locale
                       } else {
                         // Pré-remplir le TextFormField avec la valeur locale
                         widget._impayerController.text =
-                            widget._localImpayer.toStringAsFixed(2);
+                            _localImpayer.toStringAsFixed(2);
                       }
-                      widget._isEditingImpayer = !widget
-                          ._isEditingImpayer; // Alterner entre édition et lecture
+                      _isEditingImpayer = !_isEditingImpayer;
                     });
                   },
                 ),

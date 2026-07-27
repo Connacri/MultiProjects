@@ -248,8 +248,6 @@ class ProductSearchBar extends StatefulWidget {
 class _ProductSearchBarState extends State<ProductSearchBar> {
   @override
   Widget build(BuildContext context) {
-    final cartProvider = Provider.of<CartProvider>(context);
-    final commerceProvider = Provider.of<CommerceProvider>(context);
     return Row(
       children: [
         Expanded(
@@ -295,8 +293,7 @@ class _ProductSearchBarState extends State<ProductSearchBar> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: ProductSearchField(
-                widget._barcodeBufferController, _processBarcode),
+            child: ProductSearchField(_processBarcode),
           ),
         ),
       ],
@@ -371,27 +368,34 @@ class buildColumn extends StatefulWidget {
     Key? key,
     // required this.commerceProvider,
     // required this.cartProvider,
-    required isEditingImpayer,
-    required double localImpayer,
+    required this.isEditingImpayer,
+    required this.localImpayer,
     required TextEditingController impayerController,
     required this.items,
-  })  : _impayerController = impayerController,
-        _isEditingImpayer = isEditingImpayer,
-        _localImpayer = localImpayer,
-        super(key: key);
+  }) : _impayerController = impayerController, super(key: key);
 
   // final CommerceProvider commerceProvider;
   // final CartProvider cartProvider;
   final TextEditingController _impayerController;
-  ToMany<LigneDocument> items;
-  bool _isEditingImpayer;
-  double _localImpayer;
+  final ToMany<LigneDocument> items;
+  final bool isEditingImpayer;
+  final double localImpayer;
 
   @override
   State<buildColumn> createState() => _buildColumnState();
 }
 
 class _buildColumnState extends State<buildColumn> {
+  late bool _isEditingImpayer;
+  late double _localImpayer;
+
+  @override
+  void initState() {
+    super.initState();
+    _isEditingImpayer = widget.isEditingImpayer;
+    _localImpayer = widget.localImpayer;
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider>(context);
@@ -405,14 +409,14 @@ class _buildColumnState extends State<buildColumn> {
             child: Row(
               children: [
                 buildImpayerRow(
-                    isEditingImpayer: widget._isEditingImpayer,
-                    localImpayer: widget._localImpayer,
+                    isEditingImpayer: _isEditingImpayer,
+                    localImpayer: _localImpayer,
                     impayerController: widget._impayerController),
                 Spacer(),
                 TextButton.icon(
                   onPressed: () {
                     cartProvider.clearCart();
-                    widget._localImpayer = 0;
+                    _localImpayer = 0;
 
                     widget._impayerController.clear();
                   },
@@ -439,7 +443,7 @@ class _buildColumnState extends State<buildColumn> {
                         SnackBar(content: Text('Erreur: ${e.toString()}')),
                       );
                     }
-                    widget._localImpayer = 0;
+                    _localImpayer = 0;
 
                     widget._impayerController.clear();
                   },

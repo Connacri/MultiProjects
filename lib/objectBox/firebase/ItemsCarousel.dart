@@ -131,7 +131,6 @@ class _CarouselBannerState extends State<CarouselBanner> {
 
         final carouselItems =
             snapshot.data!.map((item) => CarouselData.fromMap(item)).toList();
-        final double height = MediaQuery.of(context).size.height;
         return LayoutBuilder(
           builder: (context, constraints) {
             return MouseRegion(
@@ -284,12 +283,10 @@ class _YouTubeVideoAppState extends State<YouTubeVideoApp> {
     if (videoId != null) {
       setState(() {
         _videoId = videoId;
-        _controller = YoutubePlayerController(
-          initialVideoId: videoId,
-          flags: const YoutubePlayerFlags(
-            autoPlay: true, // Lecture automatique
-            mute: false, // Son activé
-          ),
+        _controller = YoutubePlayerController.fromVideoId(
+          videoId: videoId,
+          autoPlay: true,
+          params: const YoutubePlayerParams(mute: false),
         );
       });
     } else {
@@ -301,7 +298,7 @@ class _YouTubeVideoAppState extends State<YouTubeVideoApp> {
 
   @override
   void dispose() {
-    _controller.dispose(); // Libérer les ressources du contrôleur
+    _controller.close(); // Libérer les ressources du contrôleur
     super.dispose();
   }
 
@@ -339,24 +336,13 @@ class _YouTubeVideoAppState extends State<YouTubeVideoApp> {
           ),
           if (_videoId != null)
             Expanded(
-              child: YoutubePlayerBuilder(
-                player: YoutubePlayer(
-                  controller: _controller,
-                  showVideoProgressIndicator: true,
-                  // Afficher l'indicateur de progression
-                  progressColors: const ProgressBarColors(
-                    playedColor: Colors.red,
-                    handleColor: Colors.redAccent,
-                  ),
-                  onReady: () {
-                    print('Lecteur YouTube prêt');
-                  },
-                ),
-                builder: (context, player) {
+              child: YoutubePlayer(
+                controller: _controller,
+                builder: (context, player, controller) {
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      player, // Le lecteur YouTube
+                      player,
                       const SizedBox(height: 20),
                       const Text(
                           'Contrôles personnalisés peuvent être ajoutés ici'),

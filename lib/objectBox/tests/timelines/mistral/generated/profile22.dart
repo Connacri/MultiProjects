@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -39,12 +38,10 @@ class Profile22 extends StatefulWidget {
 }
 
 class _Profile22State extends State<Profile22> {
-  final _formKey = GlobalKey<FormState>();
   final _guestController = TextEditingController();
   final _phoneController = TextEditingController();
   final _idCardController = TextEditingController();
   TextEditingController _priceController = TextEditingController();
-  bool _isPriceManuallyEdited = false;
   SeasonalPricing? _selectedSeasonalPricing;
   Room? _selectedRoom;
   Employee? _selectedEmployee;
@@ -52,14 +49,11 @@ class _Profile22State extends State<Profile22> {
   DateTime? _fromDate;
   DateTime? _toDate;
   String _status = "Confirmed";
-  bool _isLoading = false;
 
   // Board Basis and Extra Services
-  BoardBasis? _selectedBoardBasis;
   List<ReservationExtraItem> _selectedExtras = [];
 
   List<SeasonalPricing> _seasonalPricings = [];
-  late double _seasonalMultiplier;
 
 // Ajouter après les contrôleurs existants
   final _discountPercentController = TextEditingController();
@@ -68,17 +62,10 @@ class _Profile22State extends State<Profile22> {
 // Ajouter les variables pour la réduction
   double _discountPercent = 0.0;
   double _discountAmount = 0.0;
-  String _discountType = 'percentage'; // 'percentage' ou 'amount'
-  String _discountAppliedTo =
-      'total'; // 'room', 'board', 'extras', 'total', 'specific'
-  List<String> _selectedDiscountItems = [];
 
   @override
   void initState() {
     super.initState();
-
-    // Valeur par défaut sûre
-    _seasonalMultiplier = 1.0;
 
     // ❌ SUPPRIMER CETTE LIGNE - Elle cause l'erreur
     // final provider = Provider.of<HotelProvider>(context, listen: false);
@@ -87,14 +74,13 @@ class _Profile22State extends State<Profile22> {
     final provider = widget.provider; // Utiliser le provider déjà fourni
 
     // 1) Affecter la liste des tarifs saisonniers AVANT toute sélection
-    _seasonalPricings = widget.seasonalPricings ?? [];
+    _seasonalPricings = widget.seasonalPricings;
 
     // 2) Pré-sélectionner : prioriser le choix global du provider si présent
     final activeSeason = provider.selectedSeasonalPricing;
 
     if (activeSeason != null) {
       _selectedSeasonalPricing = activeSeason;
-      _seasonalMultiplier = activeSeason.multiplier;
     } else {
       _preselectSeasonalByToday();
     }
@@ -120,7 +106,6 @@ class _Profile22State extends State<Profile22> {
 
     if (_seasonalPricings.isEmpty) {
       _selectedSeasonalPricing = null;
-      _seasonalMultiplier = 1.0;
       return;
     }
 
@@ -130,7 +115,6 @@ class _Profile22State extends State<Profile22> {
     );
 
     _selectedSeasonalPricing = selected;
-    _seasonalMultiplier = selected.multiplier;
   }
 
   void _initializeForEdit() {
@@ -140,19 +124,6 @@ class _Profile22State extends State<Profile22> {
     _discountAmount = reservation.discountAmount;
     _discountPercentController.text = _discountPercent.toString();
     _discountAmountController.text = _discountAmount.toString();
-    // NOUVEAU : Récupérer le type et l'application
-    _discountType = reservation.discountType ?? 'percentage';
-    _discountAppliedTo = reservation.discountAppliedTo ?? 'total';
-    // Si c'est des éléments spécifiques, décoder la liste
-    if (_discountAppliedTo == 'specific' &&
-        reservation.selectedDiscountItems!.isNotEmpty) {
-      try {
-        _selectedDiscountItems =
-            List<String>.from(jsonDecode(reservation.selectedDiscountItems!));
-      } catch (e) {
-        _selectedDiscountItems = [];
-      }
-    }
     // Initialisation des objets existants
     final roomId = reservation.room.target?.id;
     _selectedRoom = roomId != null
@@ -174,11 +145,6 @@ class _Profile22State extends State<Profile22> {
     _status = reservation.status;
     _priceController.text = reservation.pricePerNight.toString();
 
-    // CORRECTION: Récupération du BoardBasis
-    if (reservation.boardBasis.target != null) {
-      _selectedBoardBasis = reservation.boardBasis.target;
-    }
-
     // CORRECTION: Récupération des extras avec mapping correct
     if (_selectedExtras.isEmpty) {
       _selectedExtras = reservation.extras
@@ -192,10 +158,6 @@ class _Profile22State extends State<Profile22> {
     }
 
     //////////////*************************************************************
-    final reservationSeasonal =
-        widget.existingReservation?.seasonalPricing.target!.multiplier;
-
-    _seasonalMultiplier = reservationSeasonal!;
     _selectedSeasonalPricing =
         widget.existingReservation?.seasonalPricing.target!;
 
@@ -890,22 +852,6 @@ class _Profile22State extends State<Profile22> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPriceFieldImproved() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Affichage du prix de base de la chambre
-        if (_selectedRoom?.category.target != null) ...[
-          PriceCard22(
-            basePrice: _selectedRoom!.category.target!.basePrice,
-            seasonalMultiplier: _seasonalMultiplier,
-            season: _selectedSeasonalPricing,
-          ),
-        ],
-      ],
     );
   }
 

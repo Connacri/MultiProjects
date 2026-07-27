@@ -60,7 +60,7 @@ class HotelDataInitializer {
     ];
 
     for (final hotel in hotels) {
-      final savedHotel = await hotelProvider.addHotel(hotel);
+      await hotelProvider.addHotel(hotel);
       await createRoomsForHotel(hotel);
     }
     debugPrint('✅ ${hotels.length} hôtels créés avec leurs chambres');
@@ -1245,11 +1245,6 @@ class HotelDataInitializer {
       );
 
       // Trouver le plan de pension
-      final boardPlan = boardPlans.firstWhere(
-        (b) => b.code == data['boardCode'],
-        orElse: () => boardPlans.first,
-      );
-
       // Utiliser la méthode addReservation du provider
       final result = await hotelProvider.addReservation(
         room: availableRoom,
@@ -1257,7 +1252,7 @@ class HotelDataInitializer {
         guests: [guests[data['guestIndex'] as int]],
         from: data['from'] as DateTime,
         to: data['to'] as DateTime,
-        pricePerNight: availableRoom.category.target!.basePrice ?? 12000,
+        pricePerNight: availableRoom.category.target!.basePrice,
         status: data['status'] as String,
         forceOverride:
             true, // Pour éviter les conflits lors de l'initialisation

@@ -1,19 +1,15 @@
-import 'dart:async';
-import 'dart:io' show Platform;
-import 'dart:io';
-import 'dart:math';
-
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:kenzy/objectBox/pages/home_Carousel.dart';
-import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Hopital/StaffProvider.dart';
-import '../Hopital/license/MyAppBlackHole.dart';
+import '../Hopital/features/planning/presentation/planning_composition.dart';
+import '../Hopital/features/planning/presentation/providers/planning_editor_provider.dart';
+import '../Hopital/features/planning/presentation/providers/planning_provider.dart';
+import '../Hopital/features/planning/presentation/providers/planning_sync_provider.dart';
+import '../Hopital/features/planning/presentation/providers/planning_validation_provider.dart';
+import '../Hopital/features/planning/presentation/providers/rotation_configuration_provider.dart';
+import '../Hopital/features/planning/presentation/widgets/planning_workspace.dart';
+import '../Hopital/features/planning/presentation/widgets/planning_workspace_controller.dart';
 import '../Hopital/p2p/auto_connect_service.dart';
 import '../Hopital/p2p/connection_manager.dart';
 import '../Hopital/p2p/delta_generator_real.dart';
@@ -29,34 +25,12 @@ import '../Kids/claude/auth_provider_v2.dart';
 import '../Kids/providers/child_enrollment_provider.dart';
 import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
-import '../MyListLotties.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
-import 'Entity.dart';
-import 'FuturisticConnectionUI.dart';
 import 'MyProviders.dart';
-import 'Utils/My_widgets.dart';
-import 'Utils/excel.dart';
 import 'classeObjectBox.dart';
-import 'hash.dart';
-import 'pages/ClientListScreen.dart';
-import 'pages/FournisseurListScreen.dart';
-import 'pages/ProduitListScreen.dart';
-import 'pages/addProduct.dart';
-import 'pages/facturation/FacturePage.dart';
-import 'pages/facturation/FacturesListPage.dart';
-import 'pages/invoice/FacturationPageUI.dart';
 import 'pages/invoice/providers.dart';
-import 'tests/cruds.dart' as cruds;
-
-import '../features/planning/presentation/planning_composition.dart';
-import '../features/planning/presentation/providers/planning_editor_provider.dart';
-import '../features/planning/presentation/providers/planning_provider.dart';
-import '../features/planning/presentation/providers/planning_sync_provider.dart';
-import '../features/planning/presentation/providers/planning_validation_provider.dart';
-import '../features/planning/presentation/providers/rotation_configuration_provider.dart';
-import '../features/planning/presentation/widgets/planning_workspace.dart';
-import '../features/planning/presentation/widgets/planning_workspace_controller.dart';
+import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 
 class MyMain extends StatelessWidget {
   @override

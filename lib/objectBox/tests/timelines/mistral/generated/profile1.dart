@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
@@ -35,7 +34,6 @@ class _Profile1State extends State<Profile1> {
 
   late PageController _pageController;
   int _currentPage = 0;
-  User? _user = FirebaseAuth.instance.currentUser;
   bool isSigningOut = false;
   bool isLoading = false;
 
@@ -95,20 +93,13 @@ class _Profile1State extends State<Profile1> {
             child: GestureDetector(
               onTap: () async {
                 // On ouvre la page de sélection d’images dans Storage
-                final selectedUrl = await Navigator.of(
-                  context,
-                ).push<String>(
+                await Navigator.of(context).push<String>(
                   MaterialPageRoute(
                     builder: (_) => const PhotoSelectionPage(
                       storageFolderPath: 'uploads',
                     ),
                   ),
                 );
-
-                // // Si l’utilisateur a sélectionné une URL, on met à jour
-                // if (selectedUrl != null) {
-                //   await userProvider.updateListPhoto(selectedUrl);
-                // }
               },
               child: Container(
                 width: 32,
@@ -229,9 +220,7 @@ class _Profile1State extends State<Profile1> {
                       child: GestureDetector(
                         onTap: () async {
                           // On ouvre la page de sélection d’images dans Storage
-                          final selectedUrl = await Navigator.of(
-                            context,
-                          ).push<String>(
+                          await Navigator.of(context).push<String>(
                             MaterialPageRoute(
                               builder: (_) => const PhotoSelectionPage(
                                 storageFolderPath: 'uploads',

@@ -77,54 +77,6 @@ class _CarouselExampleState extends State<CarouselExample> {
     });
   }
 
-  void _ouvrirDialogAjustementPrix(BuildContext context) {
-    double nouveauPrixMin = prixMin;
-    double nouveauPrixMax = prixMax;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Ajuster les prix'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(labelText: 'Prix minimum'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) =>
-                    nouveauPrixMin = double.tryParse(value) ?? nouveauPrixMin,
-              ),
-              TextField(
-                decoration: InputDecoration(labelText: 'Prix maximum'),
-                keyboardType: TextInputType.number,
-                onChanged: (value) =>
-                    nouveauPrixMax = double.tryParse(value) ?? nouveauPrixMax,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text('Annuler'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: Text('Valider'),
-              onPressed: () {
-                setState(() {
-                  prixMin = nouveauPrixMin;
-                  prixMax = nouveauPrixMax;
-                });
-                _savePrix(); // Sauvegarder les nouvelles valeurs
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // Fonction pour charger les images depuis Supabase Storage
   Future<void> _loadImages() async {
     final supabase = Supabase.instance.client;
@@ -167,8 +119,6 @@ class _CarouselExampleState extends State<CarouselExample> {
     if (!_isDragging || _lastPosition == null) return;
 
     final double dx = position.dx - _lastPosition!.dx;
-    final double dy = position.dy - _lastPosition!.dy;
-
     if (controller.hasClients) {
       controller.jumpTo(
         (controller.offset - dx).clamp(
@@ -184,11 +134,6 @@ class _CarouselExampleState extends State<CarouselExample> {
   @override
   Widget build(BuildContext context) {
     final double height = MediaQuery.sizeOf(context).height;
-    int totalProduits = widget.provider.getTotalProduits();
-    List<String> roomNumbers =
-        generateRoomNumbers(1, 20, ["111", "102", "313"]);
-    List<Produit> produitsFiltres =
-        widget.provider.getProduitsBetweenPrices(prixMin, prixMax);
     // var produitsLowStock = produitProvider.getProduitsLowStock(5.0);
     // var produitsLowStock0 = produitProvider.getProduitsLowStock(0.0);
     return Center(
@@ -352,7 +297,6 @@ class HeroLayoutCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double width = MediaQuery.sizeOf(context).width;
     return Stack(
       alignment: AlignmentDirectional.bottomStart,
       children: <Widget>[

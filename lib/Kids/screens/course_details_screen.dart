@@ -941,7 +941,14 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
   /// ✅ Ouvre la position dans l'app Maps (Google Maps, Apple Maps, etc.)
   Future<void> _openInMaps1() async {
     try {
-      final availableMaps = await MapLauncher.installedMaps;
+      final location = LocationCoords(
+        _course.location.latitude,
+        _course.location.longitude,
+        title: _course.title,
+      );
+
+      final request = MapLauncher.marker(location);
+      final availableMaps = await request.getSupportedMaps();
       print('🗺️ [Maps] Applications disponibles: ${availableMaps.length}');
 
       if (availableMaps.isEmpty) {
@@ -956,21 +963,9 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
         return;
       }
 
-      final coords = Coords(
-        _course.location.latitude,
-        _course.location.longitude,
-      );
-
-      final title = _course.title;
-      final description = _course.location.address;
-
       // Si une seule app → ouvrir directement
       if (availableMaps.length == 1) {
-        await availableMaps.first.showMarker(
-          coords: coords,
-          title: title,
-          description: description,
-        );
+        await request.show(map: availableMaps.first.mapType);
         return;
       }
 
@@ -999,14 +994,10 @@ class _CourseDetailsScreenState extends State<CourseDetailsScreen> {
                       width: 32,
                       height: 32,
                     ),
-                    title: Text(map.mapName),
+                    title: Text(map.displayName),
                     onTap: () async {
                       Navigator.pop(context);
-                      await map.showMarker(
-                        coords: coords,
-                        title: title,
-                        description: description,
-                      );
+                      await request.show(map: map.mapType);
                     },
                   );
                 }),

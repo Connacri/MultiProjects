@@ -13,11 +13,7 @@ class LicenseCheckScreen extends StatefulWidget {
 class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
   bool _isLicenseValidated = false;
   bool _isLicenseDemoValidated = false;
-  int _attempts = 0;
-  String _statusMessage = "";
-  String _statusMessage2 = "";
   String _enteredHash = "";
-  bool _showMacAndPhoneFields = false;
 
   @override
   void initState() {
@@ -50,10 +46,7 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
             _isLicenseDemoValidated = true;
           });
         } else {
-          setState(() {
-            _statusMessage2 =
-                "Licence terminée. Veuillez recontacter le fournisseur.";
-          });
+          setState(() {});
         }
       } else {
         setState(() {
@@ -74,68 +67,43 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
           .eq('hash_code', _enteredHash.trim())
           .single();
 
-      if (response != null) {
-        final hashCode = response['hash_code'] as String?;
-        final expiresAtString = response['expires_at'] as String?;
-        final isDemo = response['is_demo'] as bool?;
+      final hashCode = response['hash_code'] as String?;
+      final expiresAtString = response['expires_at'] as String?;
+      final isDemo = response['is_demo'] as bool?;
 
-        if (hashCode != null && expiresAtString != null && isDemo != null) {
-          if (hashCode == _enteredHash.trim()) {
-            final expiresAt = DateTime.parse(expiresAtString);
-            final now = DateTime.now();
-            final remainingDays = expiresAt.difference(now).inDays;
+      if (hashCode != null && expiresAtString != null && isDemo != null) {
+        if (hashCode == _enteredHash.trim()) {
+          final expiresAt = DateTime.parse(expiresAtString);
+          final now = DateTime.now();
+          final remainingDays = expiresAt.difference(now).inDays;
 
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            await prefs.setString(
-                'licenseExpiresAt', expiresAt.toIso8601String());
-            await prefs.setBool('isDemoLicense', isDemo);
-            await prefs.setInt('remainingDays', remainingDays);
-            await prefs.setString('lastOnlineCheck', now.toIso8601String());
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+              'licenseExpiresAt', expiresAt.toIso8601String());
+          await prefs.setBool('isDemoLicense', isDemo);
+          await prefs.setInt('remainingDays', remainingDays);
+          await prefs.setString('lastOnlineCheck', now.toIso8601String());
 
-            setState(() {
-              _isLicenseDemoValidated = true;
-              _statusMessage2 =
-                  isDemo ? "Licence Démonstration Beta!" : "Licence Finale!";
-            });
-          } else {
-            setState(() {
-              _statusMessage2 = "Code incorrect!";
-            });
-          }
-        } else {
           setState(() {
-            _statusMessage2 =
-                "Données de licence incomplètes dans la base de données.";
+            _isLicenseDemoValidated = true;
           });
+        } else {
+          setState(() {});
         }
       } else {
-        setState(() {
-          _statusMessage2 =
-              "Code incorrect ou non trouvé dans la base de données.";
-        });
+        setState(() {});
       }
     } catch (e) {
       print('Erreur lors de la requête Supabase: $e');
 
-      // Utiliser les données locales pour vérifier le temps restant
       final remainingDays = await _getRemainingDays();
-      final isDemo = await _isDemoLicense();
 
       if (remainingDays == -1) {
-        setState(() {
-          _statusMessage2 = "Aucune licence valide trouvée.";
-        });
+        setState(() {});
       } else if (remainingDays == 0) {
-        setState(() {
-          _statusMessage2 =
-              "Licence expirée ou utilisation hors ligne dépassée.";
-        });
+        setState(() {});
       } else {
-        setState(() {
-          _statusMessage2 = isDemo
-              ? "Licence Démonstration Beta! Jours restants: $remainingDays"
-              : "Licence Finale! Jours restants: $remainingDays";
-        });
+        setState(() {});
       }
     }
   }
@@ -162,32 +130,10 @@ class _LicenseCheckScreenState extends State<LicenseCheckScreen> {
     return remainingTime.inDays;
   }
 
-  Future<bool> _isDemoLicense() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('isDemoLicense') ?? false;
-  }
-
-  void _disableInput(Duration duration) {
-    setState(() {
-      _statusMessage2 =
-          "Entrée désactivée pendant ${duration.inMinutes} minutes.";
-    });
-    Future.delayed(duration, () {
-      setState(() {
-        _statusMessage2 = "";
-      });
-    });
-  }
-
   bool validateNumHash(
       String enteredHash, String hash512, String p4ssw0rd, int lengthPin) {
     // Implémentez votre logique de validation ici
     return enteredHash == hash512; // Exemple simplifié
-  }
-
-  void _saveLicenseStatus(bool status) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLicenseValidated', status);
   }
 
   @override

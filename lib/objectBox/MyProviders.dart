@@ -156,15 +156,12 @@ class CommerceProvider extends ChangeNotifier {
   Future<List<Produit>> rechercherProduits(String query,
       {int limit = 20}) async {
     final queryLower = query.toLowerCase();
-    final idQuery = int.tryParse(query);
     final qrQuery = query;
 
-    final qBuilder = _objectBox.produitBox.query(qrQuery !=
-            null // la recherche se fait par id et moi je le veux pas qrcode
-        ? Produit_.qr.equals(qrQuery) |
+    final qBuilder = _objectBox.produitBox.query(
+        Produit_.qr.equals(qrQuery) |
             Produit_.nom.contains(queryLower, caseSensitive: false) |
-            Produit_.qr.contains(queryLower, caseSensitive: false)
-        : Produit_.nom.contains(queryLower, caseSensitive: false));
+            Produit_.qr.contains(queryLower, caseSensitive: false));
     // Inverser l'ordre des résultats
     final results = qBuilder.build().find();
     return results.reversed.toList();
@@ -346,7 +343,6 @@ class CommerceProvider extends ChangeNotifier {
     // Enregistrer chaque approvisionnement temporaire
     final boxApprovisionnement = _objectBox.approvisionnementBox;
     final boxFournisseur = _objectBox.fournisseurBox;
-    final boxCrudApprovisionnement = _objectBox.crudBox;
 
     for (var approvisionnementTemp in _approvisionnementTemporaire) {
       // a. Vérifier ou créer le fournisseur
@@ -972,10 +968,6 @@ class CartProvider with ChangeNotifier {
       final produit = ligne.produit.target;
 
       if (produit != null) {
-        // Mettre à jour le stock du produit en fonction de la quantité vendue
-        double newStock =
-            produit.stock - ligne.quantite; // Utilisez le getter ici
-
         // Sauvegarder le produit mis à jour
         _objectBox.produitBox.put(produit);
         commerceProvider.updateProduit(produit);
@@ -1217,9 +1209,6 @@ class AdProvider extends ChangeNotifier {
 
   InterstitialAd? _interstitialAd;
   int _numInterstitialLoadAttempts = 0;
-
-  RewardedInterstitialAd? _rewardedInterstitialAd;
-  int _numRewardedInterstitialLoadAttempts = 0;
 
   RewardedAd? _rewardedAd;
   int _numRewardedLoadAttempts = 0;

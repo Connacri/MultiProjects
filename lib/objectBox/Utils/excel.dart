@@ -1,5 +1,4 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:objectbox/objectbox.dart';
 import 'dart:async';
@@ -8,13 +7,9 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import 'package:permission_handler/permission_handler.dart';
 import '../Entity.dart';
 import '../classeObjectBox.dart';
-import 'package:flutter/widgets.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/material.dart';
-import 'package:objectbox/objectbox.dart';
 
 class SyncProductsPage extends StatelessWidget {
   SyncProductsPage({Key? key}) : super(key: key);
@@ -484,13 +479,6 @@ class DatabaseUpdater {
     );
   }
 
-  // Vérification des permissions de stockage pour les versions d'Android antérieures
-  static Future<bool> _checkStoragePermissions() async {
-    if (await Permission.storage.request().isGranted) {
-      return true;
-    }
-    return false;
-  }
 }
 
 class NonFrenchProductsScreen extends StatefulWidget {

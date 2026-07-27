@@ -18,7 +18,7 @@ Future<List<DuplicateGroup>> getDuplicateProducts() async {
   final Map<String, List<Produit>> nameMap = {};
 
   for (var produit in allProducts) {
-    final cleanName = produit.nom!.replaceAll(' ', '').trim().toLowerCase();
+    final cleanName = produit.nom.replaceAll(' ', '').trim().toLowerCase();
     if (nameMap.containsKey(cleanName)) {
       nameMap[cleanName]!.add(produit);
     } else {

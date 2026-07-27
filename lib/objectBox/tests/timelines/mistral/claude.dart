@@ -4,10 +4,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:string_extensions/string_extensions.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/provider_hotel.dart';
 import 'package:kenzy/objectBox/tests/timelines/mistral/widgets.dart';
 import 'package:provider/provider.dart';
-import 'package:string_extensions/string_extensions.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 
 import '../../../Entity.dart';
@@ -158,7 +158,6 @@ class Hotel_Management extends StatefulWidget {
 
 class HotelManagementState extends State<Hotel_Management> {
   Hotel? _currentHotel;
-  List<Reservation> _reservations = [];
   late HotelReservationDataSource _dataSource;
   final CalendarController _calendarController = CalendarController();
   CalendarView _currentView = CalendarView.timelineMonth;
@@ -264,8 +263,6 @@ class HotelManagementState extends State<Hotel_Management> {
   }
 
   Widget _buildCalendar(HotelProvider provider) {
-    final reservations =
-        _currentHotel!.rooms.expand((room) => room.reservations).toList();
     _dataSource = HotelReservationDataSource(
         _currentHotel!.rooms.expand((room) => room.reservations).toList(),
         _currentHotel!.rooms.toList());
@@ -606,7 +603,7 @@ class HotelManagementState extends State<Hotel_Management> {
     final roomsPerFloorController =
         TextEditingController(text: hotel.roomsPerFloor.toString());
     final avoidedController =
-        TextEditingController(text: hotel.avoidedNumbers ?? '');
+        TextEditingController(text: hotel.avoidedNumbers);
 
     showDialog(
       context: context,
@@ -953,91 +950,6 @@ class HotelManagementState extends State<Hotel_Management> {
         );
       }
     }
-  }
-
-  Widget _buildHotelInfo() {
-    if (_currentHotel == null) return SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [Colors.deepPurple.shade50, Colors.purple.shade50],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Icône hôtel stylisée
-            CircleAvatar(
-              backgroundColor: Colors.deepPurple.withValues(alpha: 0.1),
-              radius: 24,
-              child:
-                  Icon(Icons.hotel_rounded, color: Colors.deepPurple, size: 28),
-            ),
-
-            const SizedBox(width: 16),
-
-            // Infos texte
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _currentHotel!.name,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple.shade800,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(Icons.meeting_room_rounded,
-                          size: 18, color: Colors.deepPurple),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${_currentHotel!.rooms.length} chambres",
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.grey.shade700),
-                      ),
-                      const SizedBox(width: 16),
-                      Icon(Icons.layers_rounded,
-                          size: 18, color: Colors.deepPurple),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${_currentHotel!.floors} étages",
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.grey.shade700),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Bouton d’édition rapide
-            IconButton(
-              icon: Icon(Icons.edit_rounded, color: Colors.deepPurple),
-              tooltip: "Modifier l'hôtel",
-              onPressed: _showHotelCreationDialog,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _appointmentBuilder(
@@ -1615,9 +1527,6 @@ class HotelManagementState extends State<Hotel_Management> {
       _showQuickActions(reservation);
     }
   }
-
-  final dateFormatter =
-      DateFormat('EEEE dd/MM/yyyy', 'fr_FR'); // jour + date FR
 
   void _showReservationDetails(Reservation reservation) {
     final nights = reservation.to.difference(reservation.from).inDays;
@@ -2343,11 +2252,6 @@ class HotelManagementState extends State<Hotel_Management> {
 
   // ========================= UTILITAIRES =========================
 
-  int _calculateVisibleRooms() {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return ((screenWidth - 100) / 120).floor().clamp(3, 15);
-  }
-
   MaterialColor _getRandomColorForReservation(int seed) {
     final colors = [
       Colors.red,
@@ -2403,7 +2307,6 @@ class HotelManagementState extends State<Hotel_Management> {
             selected = null;
           }
         }
-        final dateFormatter = DateFormat("EEE d MMMM yyyy", "fr_FR");
         return InkWell(
             onTap: () {
               showModalBottomSheet(
@@ -2496,8 +2399,8 @@ class HotelManagementState extends State<Hotel_Management> {
           },
           child: Tooltip(
             message: "${selected!.multiplier}x " +
-                "${selected!.description}" +
-                "\nDu ${dateFormatter.format(selected!.startDate)}" +
+                "${selected.description}" +
+                "\nDu ${dateFormatter.format(selected.startDate)}" +
                 "\nAu ${dateFormatter.format(selected.endDate)}",
             child: Padding(
               padding: const EdgeInsets.fromLTRB(8, 12, 20, 12),
@@ -2524,7 +2427,7 @@ class HotelManagementState extends State<Hotel_Management> {
                     ),
                     TextSpan(
                       children: [
-                        if (selected != null) ...[
+                        ...[
                           WidgetSpan(
                             child: Icon(Icons.play_arrow,
                                 size: 20, color: Colors.greenAccent),

@@ -1,19 +1,8 @@
-import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 
-import 'dart:io';
-import 'package:path/path.dart' as path;
 import '../Entity.dart';
 import '../MyProviders.dart';
-import '../Utils/QRViewExample.dart';
-import 'FournisseurListScreen.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AddFournisseurFormFromProduit extends StatefulWidget {
   final Produit produit;

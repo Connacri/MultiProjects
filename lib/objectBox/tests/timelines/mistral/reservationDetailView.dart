@@ -88,7 +88,7 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
     _seasonalMultiplier = 1.0;
 
     // 1) Affecter la liste des tarifs saisonniers AVANT toute sélection
-    _seasonalPricings = widget.seasonalPricings ?? [];
+    _seasonalPricings = widget.seasonalPricings;
 
     // 2) Pré-sélectionner : prioriser le choix global du provider si présent
 
@@ -406,8 +406,7 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
                           Expanded(
                             child: FittedBox(
                               child: Text(
-                                _selectedSeasonalPricing!.name.toUpperCase() ??
-                                    'Pas de saison',
+                                _selectedSeasonalPricing!.name.toUpperCase(),
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w400,
@@ -2021,24 +2020,6 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
     return 0.0;
   }
 
-// 5. CORRECTION: Callback pour mise à jour automatique des totaux lors du changement de saison
-  void _onSeasonalPricingChanged(SeasonalPricing? newValue) {
-    setState(() {
-      _selectedSeasonalPricing = newValue;
-      _seasonalMultiplier = newValue?.multiplier ?? 1.0;
-
-      // Mettre à jour le prix si pas édité manuellement
-      if (!_isPriceManuallyEdited && _selectedRoom?.category.target != null) {
-        _updateRoomPrice();
-      }
-
-      // Recalculer tous les prix des extras
-      _updateAllExtraPrices();
-
-      // Forcer la mise à jour de l'affichage (les totaux se mettront à jour automatiquement)
-    });
-  }
-
 // 6. CORRECTION: Améliorer _updateRoomPrice pour gérer le prix automatique
   void _updateRoomPrice() {
     if (_isPriceManuallyEdited) return; // Ne pas écraser si édité manuellement
@@ -2050,98 +2031,6 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
       //     (basePrice * _seasonalMultiplier).toStringAsFixed(2);
       basePrice.toStringAsFixed(2);
     }
-  }
-
-  void _showExtraServicesDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          width: 600,
-          height: 500,
-          padding: EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Ajouter Des Services Supplémentaires'.capitalize,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: widget.provider.getExtraServicesList().length,
-                  itemBuilder: (context, index) {
-                    final service =
-                        widget.provider.getExtraServicesList()[index];
-                    if (!service.isActive) return Container();
-                    final info = _getPricingInfo(service.pricingUnit);
-                    return Card(
-                      color: info.color,
-                      child: Stack(
-                        children: [
-                          ListTile(
-                            onLongPress: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        ExtraServiceDetailPage(
-                                            extraService: service)),
-                              );
-                            },
-                            onTap: () {
-                              _addExtraService(service);
-                              Navigator.pop(context);
-                            },
-                            title: Text(
-                              service.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Text(
-                                  service.description,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  '${service.price} DA ${info.text}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context).primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Positioned(
-                            top: 8,
-                            right: 8,
-                            child: Icon(
-                              info.icon,
-                              color: ColorScheme.of(context).inverseSurface,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Fermer'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   PricingInfo _getPricingInfo(String pricingUnit) {
@@ -2515,15 +2404,6 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
     }
   }
 
-// 9. CORRECTION: Mise à jour automatique lors du changement de réduction
-  void _onDiscountChanged() {
-    setState(() {
-      // Forcer la mise à jour de l'affichage
-      _calculateTotalPrice();
-      // sera automatiquement appelé dans _buildPricingSummary
-    });
-  }
-
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2609,20 +2489,6 @@ class _ReservationDetailViewState extends State<ReservationDetailView> {
       _showErrorSnackBar(
           'Erreur lors de la sauvegarde des services supplémentaires');
     }
-  }
-
-  String _getDiscountPreview() {
-    if (_discountPercent == 0 && _discountAmount == 0) {
-      return 'Aucune réduction configurée';
-    }
-
-    String discountText = _discountType == 'percentage'
-        ? '${_discountPercent.toStringAsFixed(1)}%'
-        : '${_discountAmount.toStringAsFixed(2)}';
-
-    String appliedText = _getDiscountAppliedToLabel();
-
-    return 'Réduction de $discountText appliquée sur: $appliedText';
   }
 
   Widget _buildDetailRow99(String label, String value,

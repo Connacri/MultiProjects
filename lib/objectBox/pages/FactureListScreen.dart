@@ -1,23 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:intl/intl.dart';
-import 'package:objectbox/src/relations/to_many.dart';
-import 'package:pretty_qr_code/pretty_qr_code.dart';
 import 'package:provider/provider.dart';
 import '../Entity.dart';
 import '../MyProviders.dart';
-import '../Utils/QRViewExample.dart';
-import '../Utils/mobile_scanner/barcode_scanner_simple.dart';
-import '../classeObjectBox.dart';
 import 'ClientListScreen.dart';
-import 'ProduitListScreen.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart';
-import 'addProduct.dart';
-import 'package:syncfusion_flutter_barcodes/barcodes.dart';
-
-import 'facturation/FacturePage.dart';
 
 class ClientSelectionPage extends StatefulWidget {
   @override
@@ -27,7 +12,7 @@ class ClientSelectionPage extends StatefulWidget {
 class _ClientSelectionPageState extends State<ClientSelectionPage> {
   String _searchQuery = '';
   List<Client> _filteredClients = [];
-  Client? _selectedClient;
+
 
   @override
   void didChangeDependencies() {
@@ -68,7 +53,6 @@ class _ClientSelectionPageState extends State<ClientSelectionPage> {
 
               if (newClient != null) {
                 setState(() {
-                  _selectedClient = newClient;
                   _filteredClients;
                 });
                 cartProvider.setSelectedClient(newClient);
@@ -332,11 +316,10 @@ class _FactureDetailPageState extends State<FactureDetailPage> {
 }
 
 class ProductSearchField extends StatelessWidget {
-  final TextEditingController _barcodeBufferController;
   final Function(BuildContext, CommerceProvider, CartProvider, double,
       List<LigneDocument>) _processBarcode;
 
-  ProductSearchField(this._barcodeBufferController, this._processBarcode);
+  ProductSearchField(this._processBarcode);
 
   @override
   Widget build(BuildContext context) {

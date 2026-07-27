@@ -1,17 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
 import '../Entity.dart';
 import '../MyProviders.dart';
-import '../classeObjectBox.dart';
 import 'ProduitListScreen.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:timeago/timeago.dart' as timeago;
 import 'addProduct.dart';
-
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'dart:isolate';
 
 class FournisseurListScreen extends StatefulWidget {
   final Produit? produit;
@@ -222,19 +217,6 @@ class ProduitsFournisseurPage extends StatelessWidget {
     //     .getProduitsForFournisseur(fournisseur);
     //.getFournisseurById(fournisseur.id);
     // final produitProvider = Provider.of<CommerceProvider>(context);
-    final commerceProvider =
-        Provider.of<CommerceProvider>(context, listen: false);
-    final double largeur;
-    if (kIsWeb || Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      // Pour le web
-      largeur = 1 / 10;
-    } else if (Platform.isAndroid || Platform.isIOS) {
-      // Pour Android et iOS
-      largeur = 0.5;
-    } else {
-      // Pour les autres plateformes (Desktop)
-      largeur = 1 / 10;
-    }
     return Scaffold(
       body: CustomScrollView(
         slivers: <Widget>[
@@ -250,7 +232,7 @@ class ProduitsFournisseurPage extends StatelessWidget {
               return SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (BuildContext context, int index) {
-                    final produit = produits[index];
+                    final produit = produits[index]!;
                     return Padding(
                       padding: const EdgeInsets.all(8.0),
                       // child: Slidable(
@@ -279,14 +261,14 @@ class ProduitsFournisseurPage extends StatelessWidget {
                             onTap: () {
                               Navigator.of(context).push(MaterialPageRoute(
                                 builder: (ctx) =>
-                                    ProduitDetailPage(produit: produit!),
+                                    ProduitDetailPage(produit: produit),
                               ));
                             },
                             onLongPress: () {
-                              _deleteProduit(context, produit!);
+                              _deleteProduit(context, produit);
                             },
-                            leading: produit!.image == null ||
-                                    produit!.image!.isEmpty
+                            leading: produit.image == null ||
+                                    produit.image!.isEmpty
                                 ? CircleAvatar(
                                     child: Icon(
                                     Icons.image_not_supported,
@@ -495,9 +477,6 @@ class ProduitsFournisseurPage extends StatelessWidget {
                             .read<CommerceProvider>()
                             .supprimerProduit(produit);
 
-                        final produitProvider = Provider.of<CommerceProvider>(
-                            context,
-                            listen: false);
                         // produitProvider.supprimerProduit(produit);
                         // produitProvider.supprimerProduitDuFournisseur(
                         //     fournisseur, produit);

@@ -1,4 +1,4 @@
-import '../../../../objectbox.g.dart';
+import '../../../../../objectbox.g.dart';
 import '../../domain/entities/rotation_configuration.dart';
 import '../../domain/entities/rotation_period.dart';
 import '../../domain/repositories/rotation_configuration_repository.dart';

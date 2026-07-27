@@ -560,9 +560,6 @@ class ReservationCard extends StatelessWidget {
 
   const ReservationCard({super.key, required this.reservation});
 
-  String get _nights =>
-      reservation.to.difference(reservation.from).inDays.toString();
-
   String get _guestsCount => reservation.guests.length.toString();
 
   @override
@@ -930,10 +927,6 @@ class BentoCard extends StatelessWidget {
     "conférence internationale": "assets/seasons/conference_internationale.jpg",
     "promotion séjour long": "assets/seasons/promotion_sejour_long.jpeg",
   };
-
-  String _formatDate(DateTime date) {
-    return DateFormat("EEEE d MMM", "fr_FR").format(date);
-  }
 
   IconData _getSeasonIcon(String name) {
     if (name.toLowerCase().contains("hiver")) return Icons.ac_unit;
@@ -1311,12 +1304,6 @@ class _ReservationExtrasListState extends State<ReservationExtrasList> {
   @override
   Widget build(BuildContext context) {
     final extras = widget.extras;
-
-    // calcul du total
-    final total = extras.fold<double>(
-      0,
-      (sum, e) => sum + e.extraService.target!.price,
-    );
 
     final itemCount =
         _expanded ? extras.length : (extras.length > 3 ? 3 : extras.length);

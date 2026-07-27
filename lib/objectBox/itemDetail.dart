@@ -20,7 +20,9 @@ class itemDetail extends StatelessWidget {
         ),
         SliverList(
           delegate:
-              SliverChildBuilderDelegate((BuildContext context, int index) {}),
+              SliverChildBuilderDelegate((BuildContext context, int index) {
+                return null;
+              }),
         ),
       ],
     );

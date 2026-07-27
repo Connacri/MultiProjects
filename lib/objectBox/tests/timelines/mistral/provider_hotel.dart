@@ -1204,68 +1204,35 @@ class HotelProvider with ChangeNotifier {
 
       // Ajouter les catégories en premier (elles ne dépendent de rien)
       final categoryMap = <String, RoomCategory>{};
-      if (_roomCategoryBox != null) {
-        final existingCategoryCodes =
-            _roomCategoryBox.getAll().map((c) => c.code).toSet();
-        for (final category in defaultCategories) {
-          if (!existingCategoryCodes.contains(category.code)) {
-            final id = _roomCategoryBox.put(category);
-            categoryMap[category.code] = _roomCategoryBox.get(id)!;
-          }
-        }
-      } else {
-        // Utiliser la méthode d'ajout si box non disponible
-        for (final category in defaultCategories) {
-          final id = await addRoomCategory(category);
-          categoryMap[category.code] =
-              (await getRoomCategories()).firstWhere((c) => c.id == id);
+      final existingCategoryCodes =
+          _roomCategoryBox.getAll().map((c) => c.code).toSet();
+      for (final category in defaultCategories) {
+        if (!existingCategoryCodes.contains(category.code)) {
+          final id = _roomCategoryBox.put(category);
+          categoryMap[category.code] = _roomCategoryBox.get(id)!;
         }
       }
 
       // Ajouter les chambres avec leurs catégories
-      if (_roomBox != null) {
-        final existingCodes = _roomBox.getAll().map((r) => r.code).toSet();
+      final existingCodes = _roomBox.getAll().map((r) => r.code).toSet();
 
-        // Assigner les catégories aux chambres
-        defaultRooms[0].category.target = categoryMap["SGLSTD"];
-        defaultRooms[1].category.target = categoryMap["DBLSTD"];
-        defaultRooms[2].category.target = categoryMap["SUITDLX"];
+      // Assigner les catégories aux chambres
+      defaultRooms[0].category.target = categoryMap["SGLSTD"];
+      defaultRooms[1].category.target = categoryMap["DBLSTD"];
+      defaultRooms[2].category.target = categoryMap["SUITDLX"];
 
-        for (final room in defaultRooms) {
-          if (!existingCodes.contains(room.code)) {
-            _roomBox.put(room);
-          }
-        }
-      } else {
-        for (int i = 0; i < defaultRooms.length; i++) {
-          final room = defaultRooms[i];
-          switch (i) {
-            case 0:
-              room.category.target = categoryMap["SGLSTD"];
-              break;
-            case 1:
-              room.category.target = categoryMap["DBLSTD"];
-              break;
-            case 2:
-              room.category.target = categoryMap["SUITDLX"];
-              break;
-          }
-          await addRoom(room);
+      for (final room in defaultRooms) {
+        if (!existingCodes.contains(room.code)) {
+          _roomBox.put(room);
         }
       }
 
       // Ajouter les employés
-      if (_employeeBox != null) {
-        final existingPhones =
-            _employeeBox.getAll().map((e) => e.phoneNumber).toSet();
-        for (final emp in defaultEmployees) {
-          if (!existingPhones.contains(emp.phoneNumber)) {
-            _employeeBox.put(emp);
-          }
-        }
-      } else {
-        for (final emp in defaultEmployees) {
-          await addEmployee(emp);
+      final existingPhones =
+          _employeeBox.getAll().map((e) => e.phoneNumber).toSet();
+      for (final emp in defaultEmployees) {
+        if (!existingPhones.contains(emp.phoneNumber)) {
+          _employeeBox.put(emp);
         }
       }
 
@@ -1500,8 +1467,6 @@ extension HotelProviderAdmin on HotelProvider {
     _objectBox.store.box<Client>().removeAll();
     _objectBox.store.box<Guest>().removeAll();
     _objectBox.store.box<Employee>().removeAll();
-
-    notifyListeners();
   }
 }
 

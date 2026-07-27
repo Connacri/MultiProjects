@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:isolate';
 import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../objectbox.g.dart';
@@ -37,8 +34,6 @@ class FacturationProvider with ChangeNotifier {
   List<LigneDocument> get lignesFacture => _lignesFacture;
 
   List<Produit> get produitsTrouves => _produitsTrouves;
-
-  Client? _clientTemporaire; // Client temporaire
 
   final ObjectBox _objectBox = ObjectBox();
 
@@ -149,7 +144,6 @@ class FacturationProvider with ChangeNotifier {
   double get totalHT => facturesList.fold(0, (sumFacture, facture) {
         return sumFacture +
             facture.lignesDocument.fold(0, (sumLigne, ligne) {
-              final produit = ligne.produit.target;
               //final tvaRate = produit?.tax ?? 0.19; // TVA par défaut à 20%
               final ht =
                   (ligne.prixUnitaire * ligne.quantite); // (1 + tvaRate);
@@ -1193,7 +1187,6 @@ class FacturationProvider with ChangeNotifier {
       for (final entry in quantitesToAdjust.entries) {
         final produitId = entry.key;
         final delta = entry.value;
-        double remaining = delta.abs();
 
         final approvisionnements = _objectBox.approvisionnementBox
             .query(Approvisionnement_.produit.equals(produitId))

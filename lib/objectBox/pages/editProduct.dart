@@ -1,9 +1,7 @@
 import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
-import 'package:string_extensions/string_extensions.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dart_date/dart_date.dart';
 import 'package:flutter/material.dart';
@@ -15,11 +13,8 @@ import '../Entity.dart';
 import '../MyProviders.dart';
 import '../Utils/country_flags.dart';
 import '../Utils/mobile_scanner/barcode_scanner_window.dart';
-import '../Utils/winMobile.dart';
-import '../classeObjectBox.dart';
 import 'FournisseurListScreen.dart';
 import 'ProduitListScreen.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class editProduct extends StatefulWidget {
   final Produit? produit;
@@ -78,16 +73,8 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
 
   File? _image;
   String? _existingImageUrl;
-  String _tempProduitId = '';
-  String _produitNom = '';
-  String _produitDesignation = '';
-  String _produitImage = '';
-  String _produitImageTile = '';
-  String _produitQr = '';
-  double _produitStock = 0.0;
   double stockGlobale = 0.0; // Déclaration de la variablen,lb
   double stockTemp = 0;
-  double _produitPV = 0.0;
   String _resultatPrixPartiel = '0';
   double _totalStock = 0.0;
   DateTime selectedDate = DateTime.now();
@@ -103,14 +90,12 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   Approvisionnement? _currentApprovisionnement;
   List<Approvisionnement> _approvisionnementTemporaire = [];
   bool _isFinded = true;
-  bool _searchQr = true;
   bool _isFirstFieldRempli = true;
   bool _showDescription = false;
   bool _showAppro = true;
   bool _showDetail = true;
   bool _isEditing = false;
   bool _isLoadingSauv = false;
-  bool _isFirstTap = true;
   bool _isButtonSaveApproStockEnabled = false;
   bool _isButtonSaveApproPrixAchatEnabled = false;
 
@@ -211,7 +196,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
     print('Stock total pour le produit ${produit.nom} : $stockTemp');
 
     setState(() {
-      _tempProduitId = produit.id.toString();
       _nomController.text = produit.nom;
       _descriptionController.text = produit.description ?? '';
       //   _prixAchatController.text = produit.prixAchat.toStringAsFixed(2);
@@ -230,61 +214,10 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
           widget.produit.pricePartielVente!.toStringAsFixed(2);
 
       _existingImageUrl = produit.image;
-      _produitImageTile = produit.image!;
       _isFinded = true;
       _image = null;
       _approvisionnementTemporaire = produit.approvisionnements.toList();
-      _tempProduitId = produit.id.toString();
-      _produitNom = produit.nom;
-      _produitDesignation = produit.description ?? '';
-      _produitPV = produit.prixVente;
-      _produitStock = produit.stock;
-      _produitQr = produit.qr!;
-      _produitImage = produit.image!;
-      _produitImageTile = produit.image!;
     });
-  }
-
-  Future<void> _updateProductInfo1(String code) async {
-    final provider = Provider.of<CommerceProvider>(context, listen: false);
-    final produit = await provider.getProduitByQr(code);
-
-    if (produit != null) {
-      // Calculer le stock total des approvisionnements pour ce produit
-      double stockTemp = produit.calculerStockTotal();
-      print('Stock total pour le produit ${produit.nom} : $stockTemp');
-    }
-
-    if (produit != null) {
-      setState(() {
-        _tempProduitId = produit.id.toString();
-        _nomController.text = produit.nom;
-        _descriptionController.text = produit.description ?? '';
-        //   _prixAchatController.text = produit.prixAchat.toStringAsFixed(2);
-        _prixVenteController.text = produit.prixVente.toStringAsFixed(2);
-        _stockController.clear();
-        //_totalStock = produit.stock;
-        // _minimStockController.text = produit.minimStock!.toStringAsFixed(2);
-        stockTemp = double.parse(produit.stock.toStringAsFixed(2));
-        // _datePeremptionController.text =
-        //     produit.datePeremption!.format('yMMMMd', 'fr_FR');
-        _alertPeremptionController.text = produit.alertPeremption.toString();
-        //_selectedFournisseurs = List.from(produit.fournisseurs);
-        _existingImageUrl = produit.image;
-        _produitImageTile = produit.image!;
-        _isFinded = true;
-        _image = null;
-        _approvisionnementTemporaire = produit.approvisionnements.toList();
-        _tempProduitId = produit.id.toString();
-        _produitNom = produit.nom;
-        _produitDesignation = produit.description ?? '';
-        _produitPV = produit.prixVente;
-        _produitStock = produit.stock;
-        _produitQr = produit.qr!;
-        _produitImage = produit.image!;
-        _produitImageTile = produit.image!;
-      });
-    }
   }
 
   @override
@@ -313,10 +246,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final produitProvider =
-        Provider.of<CommerceProvider>(context, listen: false);
-
-    final iskeyboard = MediaQuery.of(context).viewInsets.bottom != 0;
     // Vérifiez que produit.qr n'est pas vide ou null
     // List<String> _qrCodesTemp = qrCodesString.isNotEmpty
     //     ? qrCodesString.split(',') // Sépare les QR codes par la virgule
@@ -436,9 +365,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
 
   Padding _buildColumn() {
     var largeur = MediaQuery.of(context).size.width;
-
-    final String fallbackImage =
-        'https://source.unsplash.com/random/1920x1080/?wallpaper,landscape';
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -1171,10 +1097,7 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
                                       if (value == null || value.isEmpty) {
                                         return 'Veuillez entrer le prix d\'achat';
                                       }
-                                      // if (double.tryParse(value) == null) {
-                                      //   return 'Veuillez entrer un prix valide';
-                                      // }
-                                      // return null;
+                                      return null;
                                     },
                                   ),
                                 ),
@@ -1803,7 +1726,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
 
   void _clearAllFields() {
     setState(() {
-      _tempProduitId = '';
       //_serialController.clear();
       stockTemp = 0.0;
       _nomController.clear();
@@ -1876,27 +1798,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
     if (code.isNotEmpty && !_qrCodesTemp.contains(code)) {
       _qrCodesTemp.add(code);
     }
-  }
-
-//Étape 2 : Construction et Sauvegarde du Produit
-
-  Produit _createProduit(String imageUrl) {
-    return Produit(
-      qr: _qrCodesTemp.toSet().toList().join(','),
-      image: imageUrl,
-      nom: _nomController.text,
-      description: _descriptionController.text,
-      prixVente: double.parse(_prixVenteController.text),
-      qtyPartiel: double.parse(_qtyPartielController.text),
-      pricePartielVente: double.parse(_pricePartielVenteController.text),
-      derniereModification: DateTime.now(),
-    )..crud.target = Crud(
-        createdBy: 1,
-        updatedBy: 1,
-        deletedBy: 1,
-        dateCreation: DateTime.now(),
-        derniereModification: DateTime.now(),
-      );
   }
 
 //Étape 3 : Gestion des Erreurs et du Retour UI
@@ -2088,7 +1989,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
         setState(() {
           _qrCodesTemp.add(code);
           _serialController.clear();
-          _searchQr = false;
         });
       } else {
         _serialController.clear();
@@ -2111,7 +2011,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
         setState(() {
           _qrCodesTemp.add(code);
           _serialController.clear();
-          _searchQr = false;
         });
       } else {
         _serialController.clear();
@@ -2123,8 +2022,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   // Méthode séparée pour afficher le dialogue
   void showExistingProductDialog(BuildContext context, String code,
       Produit produit, CommerceProvider provider) {
-    final commerceProvider =
-        Provider.of<CommerceProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -2645,7 +2542,6 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
       if (pickedFile != null && mounted) {
         setState(() {
           _image = File(pickedFile.path);
-          _produitImage = '';
           _existingImageUrl = '';
         });
       }
