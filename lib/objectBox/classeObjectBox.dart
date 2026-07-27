@@ -12,8 +12,8 @@ import 'package:csv/csv.dart';
 import 'package:objectbox/objectbox.dart';
 
 import '../objectbox.g.dart';
-import '../features/planning/data/objectbox/planning_snapshot_entity.dart';
-import '../features/planning/data/objectbox/rotation_state_snapshot_entity.dart';
+import '../Hopital/features/planning/data/objectbox/planning_snapshot_entity.dart';
+import '../Hopital/features/planning/data/objectbox/rotation_state_snapshot_entity.dart';
 import 'Entity.dart';
 
 class ObjectBox {

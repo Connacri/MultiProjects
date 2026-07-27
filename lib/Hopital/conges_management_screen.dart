@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
-import 'services/hospital_pdf_seed_import.dart';
+import 'features/planning/data/services/hospital_pdf_seed_import.dart';
 import 'SupabaseHospitalService.dart';
 
 enum _AdminAction { importPdfSeed, exportSupabase }

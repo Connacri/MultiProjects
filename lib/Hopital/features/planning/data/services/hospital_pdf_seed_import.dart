@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import '../objectBox/Entity.dart';
-import '../objectBox/classeObjectBox.dart';
-import '../objectbox.g.dart';
-import 'SupabaseHospitalService.dart';
+import '../../../../objectBox/Entity.dart';
+import '../../../../objectBox/classeObjectBox.dart';
+import '../../../../objectbox.g.dart';
+import '../../../../services/SupabaseHospitalService.dart';
 
 class HospitalPdfSeedImportService {
   HospitalPdfSeedImportService({
