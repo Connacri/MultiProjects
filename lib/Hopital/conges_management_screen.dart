@@ -3,6 +3,10 @@ import 'package:intl/intl.dart';
 
 import '../objectBox/Entity.dart';
 import '../objectBox/classeObjectBox.dart';
+import 'services/hospital_pdf_seed_import.dart';
+import 'SupabaseHospitalService.dart';
+
+enum _AdminAction { importPdfSeed, exportSupabase }
 
 /// Staff and leave management, backed by the local ObjectBox database.
 class CongesManagementScreen extends StatefulWidget {
@@ -198,6 +202,28 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
     _reload();
   }
 
+  Future<void> _importPdfSeed() async {
+    final ok = await _confirm(
+      'Importer les PDFs ?',
+      'Cela va remplir ObjectBox puis Supabase avec les staffs, congés et observations d’Août 2026.',
+    );
+    if (ok != true) return;
+
+    final importer = HospitalPdfSeedImportService();
+    final result = await importer.importAout2026();
+
+    if (!mounted) return;
+    _reload();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${result.staffCount} staffs, ${result.timeOffCount} congés, ${result.observationCount} observations importés.',
+        ),
+      ),
+    );
+  }
+
   Future<bool> _confirm(String title, String content) async =>
       await showDialog<bool>(
           context: context,
@@ -219,7 +245,42 @@ class _CongesManagementScreenState extends State<CongesManagementScreen> {
   Widget build(BuildContext context) {
     final count = _visibleCount.clamp(0, _staff.length).toInt();
     return Scaffold(
-      appBar: AppBar(title: Text('Personnel et congés (${_staff.length})')),
+      appBar: AppBar(
+        title: Text('Personnel et congés (${_staff.length})'),
+        actions: [
+          PopupMenuButton<_AdminAction>(
+            tooltip: 'Actions admin',
+            onSelected: (action) async {
+              switch (action) {
+                case _AdminAction.importPdfSeed:
+                  await _importPdfSeed();
+                  break;
+                case _AdminAction.exportSupabase:
+                  await SupabaseHospitalService().exportAllToSupabase();
+                  break;
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: _AdminAction.importPdfSeed,
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.playlist_add),
+                  title: Text('Importer PDF Août 2026'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _AdminAction.exportSupabase,
+                child: ListTile(
+                  dense: true,
+                  leading: Icon(Icons.cloud_upload_outlined),
+                  title: Text('Exporter Supabase'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _editStaff(),
         icon: const Icon(Icons.person_add),
