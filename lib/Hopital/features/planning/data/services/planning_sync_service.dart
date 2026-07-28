@@ -86,6 +86,17 @@ class PlanningSyncService {
       print('[Sync] ✅ Branche $branchId existe déjà');
       return;
     }
+
+    if (branchId == 0) {
+      print('[Sync] Création branche par défaut (id=0)...');
+      await _client.from('branches').upsert({
+        'id': 0,
+        'branch_nom': 'Défaut',
+      });
+      print('[Sync] ✅ Branche par défaut créée');
+      return;
+    }
+
     final branch = _objectBox.branchBox.get(branchId);
     if (branch != null) {
       print('[Sync] Upsert branche $branchId depuis ObjectBox...');
@@ -94,13 +105,6 @@ class PlanningSyncService {
         'branch_nom': branch.branchNom,
       });
       print('[Sync] ✅ Branche upserted');
-    } else if (branchId == 0) {
-      print('[Sync] Création branche par défaut (id=0)...');
-      await _client.from('branches').upsert({
-        'id': 0,
-        'branch_nom': 'Défaut',
-      });
-      print('[Sync] ✅ Branche par défaut créée');
     } else {
       print('[Sync] ⚠ Branche $branchId introuvable dans ObjectBox');
     }
