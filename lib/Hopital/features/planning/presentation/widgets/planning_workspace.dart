@@ -391,7 +391,12 @@ class _SyncButtonState extends State<_SyncButton> {
         );
       case SyncUiState.idle:
         button = OutlinedButton.icon(
-          onPressed: canSync ? sync.sync : null,
+          onPressed: canSync
+              ? () {
+                  print('[SyncUI] Clic Synchroniser (canSync=$canSync)');
+                  sync.sync();
+                }
+              : null,
           icon: const Icon(Icons.cloud_upload_outlined),
           label: const Text('Synchroniser'),
         );

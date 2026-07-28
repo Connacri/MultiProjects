@@ -21,6 +21,7 @@ class SupabasePlanningDatasource {
     required int version,
     required Map<String, dynamic> payload,
   }) async {
+    print('[SupabaseDS] upsertConfiguration: branch=$branchId, key=$configurationId, v=$version');
     final row = await _client
         .from('planning_configurations')
         .upsert(
@@ -35,6 +36,7 @@ class SupabasePlanningDatasource {
         .select('id')
         .single();
 
+    print('[SupabaseDS] ✅ Configuration id=${row['id']}');
     return row['id'] as String;
   }
 
@@ -43,6 +45,8 @@ class SupabasePlanningDatasource {
     required String configurationRemoteId,
     required int branchId,
   }) async {
+    print('[SupabaseDS] upsertSnapshot: branch=$branchId, year=${snapshot.year}, month=${snapshot.month}, rev=${snapshot.revision}');
+    print('[SupabaseDS]   configId=$configurationRemoteId, status=${snapshot.publishedAt == null ? 0 : 1}');
     final row = await _client
         .from('planning_snapshots')
         .upsert(
@@ -63,6 +67,7 @@ class SupabasePlanningDatasource {
         .select('id')
         .single();
 
+    print('[SupabaseDS] ✅ Snapshot id=${row['id']}');
     return row['id'] as String;
   }
 
@@ -70,28 +75,35 @@ class SupabasePlanningDatasource {
     required String snapshotId,
     required List<PlanningAssignment> assignments,
   }) async {
+    print('[SupabaseDS] replaceAssignments: snapshot=$snapshotId, count=${assignments.length}');
+    print('[SupabaseDS]   Delete existing assignments...');
     await _client
         .from('planning_assignments')
         .delete()
         .eq('snapshot_id', snapshotId);
 
-    if (assignments.isEmpty) return;
+    if (assignments.isEmpty) {
+      print('[SupabaseDS] ⏭ Aucun assignment à insérer');
+      return;
+    }
 
-    await _client.from('planning_assignments').insert(
-          assignments
-              .map(
-                (assignment) => {
-                  'snapshot_id': snapshotId,
-                  'staff_id': assignment.staffId,
-                  'date': _dateOnly(assignment.date),
-                  'team': assignment.team,
-                  'shift': assignment.shift.name,
-                  'code': assignment.code,
-                  'note': assignment.note,
-                },
-              )
-              .toList(growable: false),
-        );
+    final data = assignments
+        .map(
+          (assignment) => {
+            'snapshot_id': snapshotId,
+            'staff_id': assignment.staffId,
+            'date': _dateOnly(assignment.date),
+            'team': assignment.team,
+            'shift': assignment.shift.name,
+            'code': assignment.code,
+            'note': assignment.note,
+          },
+        )
+        .toList(growable: false);
+
+    print('[SupabaseDS]   Insert ${data.length} assignments (staff_ids: ${data.map((d) => d['staff_id']).join(", ")})');
+    await _client.from('planning_assignments').insert(data);
+    print('[SupabaseDS] ✅ Assignments insérés');
   }
 
   Future<void> upsertRotationState({
@@ -103,6 +115,7 @@ class SupabasePlanningDatasource {
     required int revision,
     required String configurationRemoteId,
   }) async {
+    print('[SupabaseDS] upsertRotationState: snapshot=$snapshotId, phase=${rotationState.phaseIndex}');
     await _client.from('rotation_state_snapshots').upsert(
       {
         'snapshot_id': snapshotId,
@@ -118,6 +131,7 @@ class SupabasePlanningDatasource {
       },
       onConflict: 'snapshot_id',
     );
+    print('[SupabaseDS] ✅ Rotation state upserted');
   }
 
   Future<Map<String, dynamic>?> fetchSnapshot({

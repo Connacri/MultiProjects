@@ -37,8 +37,13 @@ class PlanningSyncProvider extends ChangeNotifier {
       (planningProvider.hasDraft || planningProvider.hasCurrent) && !isSyncing;
 
   Future<void> sync() async {
+    print('[Sync] === sync() ===');
     final snapshot = planningProvider.draft ?? planningProvider.current;
-    if (snapshot == null) return;
+    if (snapshot == null) {
+      print('[Sync] ⛔ Aucun snapshot disponible');
+      return;
+    }
+    print('[Sync] Snapshot: year=${snapshot.year}, month=${snapshot.month}, revision=${snapshot.revision}, draft=${planningProvider.draft != null}');
 
     _state = SyncUiState.syncing;
     _error = null;
@@ -48,22 +53,28 @@ class PlanningSyncProvider extends ChangeNotifier {
     try {
       final branchId = snapshot.branchId ?? 0;
 
+      print('[Sync] Détection conflit...');
       final conflict = await _detectConflict(
         snapshot: snapshot,
         branchId: branchId,
       );
       if (conflict != null) {
+        print('[Sync] ⚠ Conflit détecté: révision distante=${conflict['revision']}');
         _conflictInfo = conflict;
         _state = SyncUiState.conflict;
         notifyListeners();
         return;
       }
+      print('[Sync] ✅ Pas de conflit');
 
+      print('[Sync] Push snapshot...');
       await _pushSnapshot(snapshot: snapshot, branchId: branchId);
 
       _lastSyncedAt = DateTime.now().toUtc();
       _state = SyncUiState.success;
+      print('[Sync] ✅ Sync réussie');
     } catch (e) {
+      print('[Sync] ❌ Erreur: $e');
       _state = SyncUiState.failed;
       _error = e.toString();
     }
@@ -71,8 +82,13 @@ class PlanningSyncProvider extends ChangeNotifier {
   }
 
   Future<void> forceSync() async {
+    print('[Sync] === forceSync() ===');
     final snapshot = planningProvider.draft ?? planningProvider.current;
-    if (snapshot == null) return;
+    if (snapshot == null) {
+      print('[Sync] ⛔ Aucun snapshot disponible');
+      return;
+    }
+    print('[Sync] Snapshot: year=${snapshot.year}, month=${snapshot.month}, revision=${snapshot.revision}');
 
     _state = SyncUiState.syncing;
     _error = null;
@@ -81,11 +97,14 @@ class PlanningSyncProvider extends ChangeNotifier {
 
     try {
       final branchId = snapshot.branchId ?? 0;
+      print('[Sync] Force push (ignore conflit)...');
       await _pushSnapshot(snapshot: snapshot, branchId: branchId);
 
       _lastSyncedAt = DateTime.now().toUtc();
       _state = SyncUiState.success;
+      print('[Sync] ✅ Force sync réussie');
     } catch (e) {
+      print('[Sync] ❌ Erreur: $e');
       _state = SyncUiState.failed;
       _error = e.toString();
     }
@@ -96,26 +115,36 @@ class PlanningSyncProvider extends ChangeNotifier {
     required PlanningSnapshot snapshot,
     required int branchId,
   }) async {
+    print('[Sync] Détection conflit pour branch=$branchId, year=${snapshot.year}, month=${snapshot.month}');
     final remoteInfo = await remote.fetchLatestSnapshotInfo(
       branchId: branchId,
       year: snapshot.year,
       month: snapshot.month,
     );
-    if (remoteInfo == null) return null;
+    if (remoteInfo == null) {
+      print('[Sync] Aucune donnée distante - pas de conflit');
+      return null;
+    }
+    print('[Sync] Données distantes: revision=${remoteInfo['revision']}, created_at=${remoteInfo['created_at']}');
 
     final remoteRevision = remoteInfo['revision'] as int;
     final remoteCreatedAt =
         DateTime.tryParse(remoteInfo['created_at'] as String? ?? '');
 
-    if (remoteRevision > snapshot.revision) return remoteInfo;
+    if (remoteRevision > snapshot.revision) {
+      print('[Sync] ⚠ Conflit: révision distante ($remoteRevision) > locale (${snapshot.revision})');
+      return remoteInfo;
+    }
 
     if (remoteRevision == snapshot.revision &&
         _lastSyncedAt != null &&
         remoteCreatedAt != null &&
         remoteCreatedAt.isAfter(_lastSyncedAt!)) {
+      print('[Sync] ⚠ Conflit: même révision mais modifiée après dernier sync');
       return remoteInfo;
     }
 
+    print('[Sync] ✅ Pas de conflit détecté');
     return null;
   }
 
