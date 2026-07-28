@@ -58,8 +58,18 @@ class PlanningWorkspaceController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> publishEditedDraft() async {
-    applyEditorDraft();
+  Future<void> publishDraft() async {
+    final draft = planningProvider.draft;
+    if (draft == null) {
+      throw StateError('No planning draft is available to publish.');
+    }
     await planningProvider.publish();
+  }
+
+  Future<void> publishEditedDraft() async {
+    if (editorProvider.draft != null) {
+      applyEditorDraft();
+    }
+    await publishDraft();
   }
 }

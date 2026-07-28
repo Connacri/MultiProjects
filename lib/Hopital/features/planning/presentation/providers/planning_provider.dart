@@ -195,7 +195,7 @@ class PlanningProvider extends ChangeNotifier {
     }
   }
 
-  /// Publishes the current draft through the canonical publication pipeline.
+  /// Persists the current draft before publishing it.
   Future<void> publish() async {
     if (isBusy) return;
 
@@ -209,7 +209,10 @@ class PlanningProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final published = await publishPlanning(draft);
+      if (!draft.isPublished) {
+        _draft = await savePlanningRevision(snapshot: draft);
+      }
+      final published = await publishPlanning(_draft!);
       _current = published;
       _draft = null;
     } catch (error) {
