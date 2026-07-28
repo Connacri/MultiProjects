@@ -137,10 +137,21 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
   }
 
   Future<void> _deleteAllRows(String table, void Function(int) onDeleted) async {
+    final rows = await _client.from(table).select('id');
+    if (rows.isEmpty) {
+      onDeleted(0);
+      return;
+    }
+    final rawIds = rows.map((r) => r['id']).toList();
+    final formatted = rawIds.map((id) {
+      if (id is String) return '"$id"';
+      return '$id';
+    }).join(',');
+    _addLog('INFO', '🗑 $table: ${rawIds.length} ligne(s) à supprimer...');
     final result = await _client
         .from(table)
         .delete()
-        .not('id', 'is', null)
+        .filter('id', 'in', '($formatted)')
         .select('id');
     onDeleted(result.length);
   }
