@@ -1,4 +1,3 @@
-import '../entities/planning_assignment.dart';
 import '../entities/planning_snapshot.dart';
 
 class PlanningValidationResult {
