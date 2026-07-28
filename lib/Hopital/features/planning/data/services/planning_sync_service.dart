@@ -25,6 +25,8 @@ class PlanningSyncService {
     print('[Sync] --- Début pushSnapshot ---');
     print('[Sync] branchId=$branchId, year=${snapshot.year}, month=${snapshot.month}, revision=${snapshot.revision}');
 
+    await _ensureBranchExists(branchId);
+
     print('[Sync] Upsert configuration...');
     final configurationRemoteId = await _remote.upsertConfiguration(
       branchId: branchId,
@@ -71,6 +73,37 @@ class PlanningSyncService {
 
     print('[Sync] --- pushSnapshot terminé ---');
     return snapshotRemoteId;
+  }
+
+  Future<void> _ensureBranchExists(int branchId) async {
+    print('[Sync] Vérification branche $branchId...');
+    final existing = await _client
+        .from('branches')
+        .select('id')
+        .eq('id', branchId)
+        .limit(1);
+    if (existing.isNotEmpty) {
+      print('[Sync] ✅ Branche $branchId existe déjà');
+      return;
+    }
+    final branch = _objectBox.branchBox.get(branchId);
+    if (branch != null) {
+      print('[Sync] Upsert branche $branchId depuis ObjectBox...');
+      await _client.from('branches').upsert({
+        'id': branch.id,
+        'branch_nom': branch.branchNom,
+      });
+      print('[Sync] ✅ Branche upserted');
+    } else if (branchId == 0) {
+      print('[Sync] Création branche par défaut (id=0)...');
+      await _client.from('branches').upsert({
+        'id': 0,
+        'branch_nom': 'Défaut',
+      });
+      print('[Sync] ✅ Branche par défaut créée');
+    } else {
+      print('[Sync] ⚠ Branche $branchId introuvable dans ObjectBox');
+    }
   }
 
   Future<void> _ensureStaffsExist(
