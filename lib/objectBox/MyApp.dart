@@ -3,6 +3,7 @@ import 'package:objectbox/objectbox.dart';
 import 'package:provider/provider.dart';
 
 import '../Hopital/StaffProvider.dart';
+import '../Hopital/TableauStaff.dart';
 import '../Hopital/features/planning/domain/entities/rotation_configuration.dart';
 import '../Hopital/features/planning/domain/entities/staff_availability.dart';
 import '../Hopital/features/planning/domain/enums/shift_type.dart';
@@ -126,7 +127,7 @@ class MyApp9 extends StatelessWidget {
               brightness: Brightness.dark,
               primaryColor: Colors.blueGrey,
             ),
-            home: _PlanningPage(),
+            home: TableauStaffPage(),
           );
         },
       ),

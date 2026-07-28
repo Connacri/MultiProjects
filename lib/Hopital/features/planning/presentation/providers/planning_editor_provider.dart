@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../domain/entities/planning_assignment.dart';
 import '../../domain/entities/planning_override.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../../domain/enums/shift_type.dart';
@@ -13,6 +14,7 @@ class PlanningEditorProvider extends ChangeNotifier {
   final PlanningOverrideApplier overrideApplier;
 
   PlanningSnapshot? _draft;
+  List<PlanningAssignment>? _baseline;
   final List<PlanningOverride> _overrides = [];
 
   PlanningEditorProvider({
@@ -23,6 +25,7 @@ class PlanningEditorProvider extends ChangeNotifier {
   List<PlanningOverride> get overrides => List.unmodifiable(_overrides);
 
   void load(PlanningSnapshot snapshot) {
+    _baseline = snapshot.assignments;
     _draft = snapshot;
     _overrides.clear();
     notifyListeners();
@@ -37,7 +40,8 @@ class PlanningEditorProvider extends ChangeNotifier {
     String? note,
   }) {
     final current = _draft;
-    if (current == null) {
+    final baseline = _baseline;
+    if (current == null || baseline == null) {
       throw StateError('No draft loaded.');
     }
 
@@ -52,8 +56,8 @@ class PlanningEditorProvider extends ChangeNotifier {
 
     _upsertOverride(override);
     final assignments = overrideApplier.apply(
-      assignments: current.assignments,
-      overrides: [_overrides.last],
+      assignments: baseline,
+      overrides: List.unmodifiable(_overrides),
     );
 
     _draft = current.copyWith(assignments: assignments);
@@ -61,6 +65,10 @@ class PlanningEditorProvider extends ChangeNotifier {
   }
 
   void removeOverride({required int staffId, required DateTime date}) {
+    final current = _draft;
+    final baseline = _baseline;
+    if (current == null || baseline == null) return;
+
     _overrides.removeWhere(
       (item) =>
           item.staffId == staffId &&
@@ -68,11 +76,19 @@ class PlanningEditorProvider extends ChangeNotifier {
           item.date.month == date.month &&
           item.date.day == date.day,
     );
+
+    final assignments = overrideApplier.apply(
+      assignments: baseline,
+      overrides: List.unmodifiable(_overrides),
+    );
+
+    _draft = current.copyWith(assignments: assignments);
     notifyListeners();
   }
 
   void clear() {
     _draft = null;
+    _baseline = null;
     _overrides.clear();
     notifyListeners();
   }

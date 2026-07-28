@@ -30,6 +30,7 @@ import 'p2p/p2p_status_widgets.dart';
 import 'pdf_options_dialog.dart';
 import 'print_planning_grouped_final.dart';
 import 'widgets.dart';
+import 'features/planning/data/services/hospital_pdf_seed_import.dart';
 
 /// Widget qui permet le drag-to-scroll pour desktop
 class DragScrollWrapper extends StatefulWidget {
@@ -1156,6 +1157,21 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                     ),
                   ),
               icon: const Icon(Icons.calendar_month)),
+          IconButton(
+            tooltip: 'Gestion du personnel et congés',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CongesManagementScreen(),
+              ),
+            ),
+            icon: const Icon(Icons.people_outline),
+          ),
+          IconButton(
+            tooltip: 'Importer les données Août 2026',
+            onPressed: () => _importPdfSeed(context),
+            icon: const Icon(Icons.playlist_add),
+          ),
           _buildMobileActions(context),
           const SizedBox(width: 8),
         ],
@@ -4131,6 +4147,45 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         SnackBar(content: Text('❌ Erreur : $e'), backgroundColor: Colors.red),
       );
     }
+  }
+
+  Future<void> _importPdfSeed(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Importer les PDFs ?'),
+        content: const Text(
+          'Cela va remplir ObjectBox puis Supabase avec les staffs, congés et observations d\'Août 2026.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Importer'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    final importer = HospitalPdfSeedImportService();
+    final result = await importer.importAout2026();
+
+    if (!mounted) return;
+    final staffProvider = Provider.of<StaffProvider>(context, listen: false);
+    await staffProvider.forceRefresh();
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${result.staffCount} staffs, ${result.timeOffCount} congés, ${result.observationCount} observations importés.',
+        ),
+      ),
+    );
   }
 
   /// Construit les actions pour Mobile (menu dropdown)

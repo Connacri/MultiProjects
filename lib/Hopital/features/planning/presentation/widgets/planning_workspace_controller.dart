@@ -40,6 +40,12 @@ class PlanningWorkspaceController extends ChangeNotifier {
     if (edited == null) {
       throw StateError('No edited planning draft is available.');
     }
+    if (edited.assignments.isEmpty) {
+      throw StateError(
+        'The edited draft has no assignments. '
+        'Cannot apply an empty draft.',
+      );
+    }
 
     planningProvider.setDraft(edited);
     _isEditing = false;

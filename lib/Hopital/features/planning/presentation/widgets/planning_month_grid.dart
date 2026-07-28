@@ -6,7 +6,7 @@ import '../../domain/enums/shift_type.dart';
 
 /// Monthly planning grid optimized for desktop and usable on mobile through
 /// horizontal scrolling. It is read/write only through [onEdit].
-class PlanningMonthGrid extends StatelessWidget {
+class PlanningMonthGrid extends StatefulWidget {
   final Planning planning;
   final Map<int, String> staffNames;
   final bool editable;
@@ -21,18 +21,34 @@ class PlanningMonthGrid extends StatelessWidget {
   });
 
   @override
+  State<PlanningMonthGrid> createState() => _PlanningMonthGridState();
+}
+
+class _PlanningMonthGridState extends State<PlanningMonthGrid> {
+  final ScrollController _horizontalController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final assignmentsByStaff = <int, Map<int, PlanningAssignment>>{};
-    for (final assignment in planning.assignments) {
+    for (final assignment in widget.planning.assignments) {
       assignmentsByStaff.putIfAbsent(
           assignment.staffId, () => {})[assignment.date.day] = assignment;
     }
 
-    final staffIds = assignmentsByStaff.keys.toList()..sort();
+    final staffIds = widget.staffNames.keys.toList()..sort();
+    if (staffIds.isEmpty) {
+      staffIds.addAll(assignmentsByStaff.keys.toList()..sort());
+    }
     final columns = <DataColumn>[
       const DataColumn(label: Text('Personnel')),
       ...List.generate(
-        planning.daysInMonth,
+        widget.planning.daysInMonth,
         (index) => DataColumn(label: Text('${index + 1}')),
       ),
     ];
@@ -41,28 +57,30 @@ class PlanningMonthGrid extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Scrollbar(
+          controller: _horizontalController,
           thumbVisibility: true,
           child: SingleChildScrollView(
+            controller: _horizontalController,
             scrollDirection: Axis.horizontal,
             child: DataTable(
               columns: columns,
               rows: staffIds.map((staffId) {
-                final byDay = assignmentsByStaff[staffId]!;
+                final byDay = assignmentsByStaff[staffId] ?? <int, PlanningAssignment>{};
                 return DataRow(
                   cells: [
                     DataCell(
                       ConstrainedBox(
                         constraints: const BoxConstraints(minWidth: 150),
-                        child: Text(staffNames[staffId] ?? '#$staffId'),
+                        child: Text(widget.staffNames[staffId] ?? '#$staffId'),
                       ),
                     ),
-                    ...List.generate(planning.daysInMonth, (index) {
+                    ...List.generate(widget.planning.daysInMonth, (index) {
                       final assignment = byDay[index + 1];
                       return DataCell(
                         _AssignmentCell(
                           assignment: assignment,
-                          editable: editable,
-                          onEdit: onEdit,
+                          editable: widget.editable,
+                          onEdit: widget.onEdit,
                         ),
                       );
                     }),

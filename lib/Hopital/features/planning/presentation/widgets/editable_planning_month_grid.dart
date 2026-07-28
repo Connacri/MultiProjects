@@ -6,7 +6,7 @@ import '../../domain/enums/shift_type.dart';
 import '../providers/planning_editor_provider.dart';
 import 'planning_assignment_editor_dialog.dart';
 
-class EditablePlanningMonthGrid extends StatelessWidget {
+class EditablePlanningMonthGrid extends StatefulWidget {
   final Planning planning;
   final PlanningEditorProvider editorProvider;
   final Map<int, String> staffNames;
@@ -19,39 +19,58 @@ class EditablePlanningMonthGrid extends StatelessWidget {
   });
 
   @override
+  State<EditablePlanningMonthGrid> createState() =>
+      _EditablePlanningMonthGridState();
+}
+
+class _EditablePlanningMonthGridState extends State<EditablePlanningMonthGrid> {
+  final ScrollController _horizontalController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final byStaff = <int, Map<int, PlanningAssignment>>{};
-    for (final assignment in planning.assignments) {
+    for (final assignment in widget.planning.assignments) {
       byStaff.putIfAbsent(assignment.staffId,
           () => <int, PlanningAssignment>{})[assignment.date.day] = assignment;
     }
 
-    final staffIds = byStaff.keys.toList()..sort();
+    final staffIds = widget.staffNames.keys.toList()..sort();
+    if (staffIds.isEmpty) {
+      staffIds.addAll(byStaff.keys.toList()..sort());
+    }
 
     return Card(
       child: Scrollbar(
+        controller: _horizontalController,
         thumbVisibility: true,
         child: SingleChildScrollView(
+          controller: _horizontalController,
           scrollDirection: Axis.horizontal,
           child: DataTable(
             columns: [
               const DataColumn(label: Text('Personnel')),
               ...List.generate(
-                planning.daysInMonth,
+                widget.planning.daysInMonth,
                 (day) => DataColumn(label: Text('$day')),
               ),
             ],
             rows: staffIds.map((staffId) {
-              final days = byStaff[staffId]!;
+              final days = byStaff[staffId] ?? <int, PlanningAssignment>{};
               return DataRow(
                 cells: [
                   DataCell(
                     ConstrainedBox(
                       constraints: const BoxConstraints(minWidth: 150),
-                      child: Text(staffNames[staffId] ?? '#$staffId'),
+                      child: Text(widget.staffNames[staffId] ?? '#$staffId'),
                     ),
                   ),
-                  ...List.generate(planning.daysInMonth, (index) {
+                  ...List.generate(widget.planning.daysInMonth, (index) {
                     final assignment = days[index + 1];
                     return DataCell(
                       _EditableAssignmentCell(
@@ -79,7 +98,7 @@ class EditablePlanningMonthGrid extends StatelessWidget {
       context: context,
       builder: (_) => PlanningAssignmentEditorDialog(
         assignment: assignment,
-        provider: editorProvider,
+        provider: widget.editorProvider,
       ),
     );
   }

@@ -33,8 +33,7 @@ class PlanningSnapshotValidator {
       errors.add('assignments must not be empty');
     }
 
-    final expectedDays = snapshot.daysInMonth;
-    final dates = <DateTime>{};
+    final staffDates = <String>{};
     for (final assignment in snapshot.assignments) {
       final date = DateTime(
         assignment.date.year,
@@ -44,15 +43,12 @@ class PlanningSnapshotValidator {
       if (date.year != snapshot.year || date.month != snapshot.month) {
         errors.add('assignment date is outside the snapshot month');
       }
-      if (!dates.add(date)) {
-        errors.add('duplicate assignment date: ${date.toIso8601String()}');
+      final key = '${assignment.staffId}|${date.toIso8601String()}';
+      if (!staffDates.add(key)) {
+        errors.add(
+          'duplicate assignment: staff ${assignment.staffId} on ${date.toIso8601String()}',
+        );
       }
-    }
-
-    if (snapshot.assignments.length != expectedDays) {
-      errors.add(
-        'snapshot must contain exactly $expectedDays daily assignments',
-      );
     }
 
     if (snapshot.publishedAt != null &&
