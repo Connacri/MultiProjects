@@ -1,4 +1,4 @@
-// lib/Hopital/conges_management_screen.dart
+// lib/Hopital/features/planning/presentation/services/hospital_pdf_seed_import.dart
 
 // 1) Ajoute ces imports
 import 'hospital_pdf_seed_import.dart';
