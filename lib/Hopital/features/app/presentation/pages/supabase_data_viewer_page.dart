@@ -16,16 +16,24 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
   final List<_LogEntry> _logs = [];
   final ScrollController _logScroll = ScrollController();
 
-  static const _planningTables = [
-    'planning_snapshots',
-    'planning_assignments',
-    'planning_configurations',
-    'rotation_state_snapshots',
+  /// Ordre de suppression : les enfants avant les parents.
+  /// On insère d'abord les tables qui référencent, puis les référencées.
+  static const _cleanupOrder = [
+    // enfants (ceux qui ont des FK)
     'planning_overrides',
-    'planning_revisions',
+    'planning_assignments',
+    'planning_hebdos',
+    'time_offs',
+    'activite_jours',
+    'planifications',
     'rotation_periods',
-    'branches',
+    'rotation_state_snapshots',  // snapshot_id sera mis à NULL avant
+    'planning_snapshots',
+    'planning_configurations',
+    'planning_revisions',
     'staffs',
+    'type_activites',
+    'branches',
   ];
 
   @override
@@ -123,11 +131,23 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
     if (confirmed != true || !mounted) return;
 
     _addLog('INFO', '🗑 Vidage complet de la base...');
-    for (final table in _planningTables.reversed) {
+
+    // 1) Casser la dépendance circulaire rotation_state_snapshots → planning_snapshots
+    try {
+      await _client.from('rotation_state_snapshots').update({'snapshot_id': null}).not('id', 'is', null);
+      _addLog('SUCCÈS', '✅ rotation_state_snapshots.snapshot_id mis à NULL');
+    } catch (e) {
+      _addLog('INFO', '⏭ rotation_state_snapshots.snapshot_id déjà null ou table vide');
+    }
+
+    // 2) Supprimer chaque table dans l'ordre (enfants → parents)
+    for (final table in _cleanupOrder) {
       try {
         int deleted = 0;
         await _deleteAllRows(table, (count) { deleted = count; });
-        _addLog('SUCCÈS', '✅ $table vidée ($deleted supprimée(s))');
+        if (deleted > 0) {
+          _addLog('SUCCÈS', '✅ $table vidée ($deleted supprimée(s))');
+        }
       } catch (e) {
         _addLog('ERREUR', '❌ $table: $e');
       }
@@ -170,7 +190,7 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
               setState(() => _selectedTable = table);
               _fetchData();
             },
-            itemBuilder: (_) => _planningTables.map((t) {
+            itemBuilder: (_) => _cleanupOrder.map((t) {
               return PopupMenuItem(
                 value: t,
                 child: Text(t),
