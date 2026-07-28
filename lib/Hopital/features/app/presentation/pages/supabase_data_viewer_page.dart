@@ -132,12 +132,18 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
 
     _addLog('INFO', '🗑 Vidage complet de la base...');
 
-    // 1) Casser la dépendance circulaire rotation_state_snapshots → planning_snapshots
+    // 1) Casser les dépendances circulaires entre rotation_state_snapshots et planning_snapshots
     try {
       await _client.from('rotation_state_snapshots').update({'snapshot_id': null}).not('id', 'is', null);
       _addLog('SUCCÈS', '✅ rotation_state_snapshots.snapshot_id mis à NULL');
     } catch (e) {
       _addLog('INFO', '⏭ rotation_state_snapshots.snapshot_id déjà null ou table vide');
+    }
+    try {
+      await _client.from('planning_snapshots').update({'rotation_state_id': null}).not('id', 'is', null);
+      _addLog('SUCCÈS', '✅ planning_snapshots.rotation_state_id mis à NULL');
+    } catch (e) {
+      _addLog('INFO', '⏭ planning_snapshots.rotation_state_id déjà null ou table vide');
     }
 
     // 2) Supprimer chaque table dans l'ordre (enfants → parents)
@@ -157,13 +163,19 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
   }
 
   Future<void> _deleteAllRows(String table, void Function(int) onDeleted) async {
-    _addLog('INFO', '🗑 Suppression de toutes les lignes de $table...');
-    final result = await _client
-        .from(table)
-        .delete()
-        .or('id.eq.id')
-        .select('id');
-    onDeleted(result.length);
+    final rows = await _client.from(table).select('id').order('id');
+    if (rows.isEmpty) {
+      onDeleted(0);
+      return;
+    }
+    _addLog('INFO', '🗑 $table: ${rows.length} ligne(s) à supprimer...');
+    int total = 0;
+    for (final row in rows) {
+      final id = row['id'];
+      await _client.from(table).delete().eq('id', id);
+      total++;
+    }
+    onDeleted(total);
   }
 
   @override
