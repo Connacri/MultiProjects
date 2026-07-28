@@ -29,10 +29,6 @@ class PlanningSnapshotValidator {
     if (snapshot.revision < 1) {
       errors.add('revision must be greater than zero');
     }
-    if (snapshot.assignments.isEmpty) {
-      errors.add('assignments must not be empty');
-    }
-
     final staffDates = <String>{};
     for (final assignment in snapshot.assignments) {
       final date = DateTime(
