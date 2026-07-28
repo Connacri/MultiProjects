@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
-import '../../../../objectBox/Entity.dart';
-import '../../../../objectBox/classeObjectBox.dart';
+import '../../../../../objectBox/classeObjectBox.dart';
+import '../../../../../objectbox.g.dart';
+import '../../../../StaffProvider.dart';
 import '../../../planning/domain/entities/rotation_configuration.dart';
 import '../../../planning/domain/entities/staff_availability.dart';
 import '../../../planning/domain/enums/shift_type.dart';
@@ -13,7 +13,6 @@ import '../../../planning/presentation/providers/planning_validation_provider.da
 import '../../../planning/presentation/providers/rotation_configuration_provider.dart';
 import '../../../planning/presentation/widgets/planning_workspace.dart';
 import '../../../planning/presentation/widgets/planning_workspace_controller.dart';
-import '../../../StaffProvider.dart';
 
 class NewArchitectureTestPage extends StatefulWidget {
   const NewArchitectureTestPage({super.key});

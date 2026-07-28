@@ -39,11 +39,11 @@ jobs:
 
       - name: Analyze Planning feature
         run: |
-          flutter analyze lib/features/planning test/features/planning
+          flutter analyze lib/Hopital/features/planning
 
       - name: Run Planning tests
         run: |
-          flutter test test/features/planning --reporter expanded
+          flutter test --reporter expanded
 
       - name: Run all tests
         run: |
