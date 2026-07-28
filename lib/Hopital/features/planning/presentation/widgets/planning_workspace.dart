@@ -363,21 +363,25 @@ class _SyncButtonState extends State<_SyncButton> {
       case SyncUiState.success:
         button = OutlinedButton.icon(
           onPressed: sync.reset,
-          icon: Icon(Icons.cloud_done_outlined,
-              color: Theme.of(context).colorScheme.primary),
-          label: Text(
+          icon: const Icon(Icons.cloud_done_outlined, color: Colors.green),
+          label: const Text(
             'Synchronis\u00e9',
-            style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            style: TextStyle(color: Colors.green),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.green),
           ),
         );
       case SyncUiState.failed:
         button = OutlinedButton.icon(
           onPressed: canSync ? sync.sync : null,
-          icon: Icon(Icons.cloud_off_outlined,
-              color: Theme.of(context).colorScheme.error),
-          label: Text(
+          icon: const Icon(Icons.cloud_off_outlined, color: Colors.red),
+          label: const Text(
             'R\u00e9essayer',
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
+            style: TextStyle(color: Colors.red),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.red),
           ),
         );
       case SyncUiState.conflict:
@@ -389,6 +393,18 @@ class _SyncButtonState extends State<_SyncButton> {
             side: const BorderSide(color: Colors.orange),
           ),
         );
+      case SyncUiState.disconnected:
+        button = OutlinedButton.icon(
+          onPressed: canSync ? sync.sync : null,
+          icon: const Icon(Icons.wifi_off_outlined, color: Colors.red),
+          label: const Text(
+            'D\u00e9connect\u00e9',
+            style: TextStyle(color: Colors.red),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.red),
+          ),
+        );
       case SyncUiState.idle:
         button = OutlinedButton.icon(
           onPressed: canSync
@@ -397,8 +413,14 @@ class _SyncButtonState extends State<_SyncButton> {
                   sync.sync();
                 }
               : null,
-          icon: const Icon(Icons.cloud_upload_outlined),
-          label: const Text('Synchroniser'),
+          icon: const Icon(Icons.cloud_upload_outlined, color: Colors.grey),
+          label: const Text(
+            'Synchroniser',
+            style: TextStyle(color: Colors.grey),
+          ),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.grey),
+          ),
         );
     }
 

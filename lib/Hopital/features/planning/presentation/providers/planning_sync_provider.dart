@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/datasources/supabase_planning_datasource.dart';
 import '../../data/services/planning_sync_service.dart';
@@ -6,7 +7,7 @@ import '../../domain/entities/planning_snapshot.dart';
 import 'planning_provider.dart';
 import 'rotation_configuration_provider.dart';
 
-enum SyncUiState { idle, syncing, success, failed, conflict }
+enum SyncUiState { idle, syncing, success, failed, conflict, disconnected }
 
 class PlanningSyncProvider extends ChangeNotifier {
   final PlanningProvider planningProvider;
@@ -75,7 +76,7 @@ class PlanningSyncProvider extends ChangeNotifier {
       print('[Sync] ✅ Sync réussie');
     } catch (e) {
       print('[Sync] ❌ Erreur: $e');
-      _state = SyncUiState.failed;
+      _state = _isNetworkError(e) ? SyncUiState.disconnected : SyncUiState.failed;
       _error = e.toString();
     }
     notifyListeners();
@@ -105,10 +106,23 @@ class PlanningSyncProvider extends ChangeNotifier {
       print('[Sync] ✅ Force sync réussie');
     } catch (e) {
       print('[Sync] ❌ Erreur: $e');
-      _state = SyncUiState.failed;
+      _state = _isNetworkError(e) ? SyncUiState.disconnected : SyncUiState.failed;
       _error = e.toString();
     }
     notifyListeners();
+  }
+
+  bool _isNetworkError(Object e) {
+    if (e is PostgrestException) {
+      if (e.message.contains('connect') ||
+          e.message.contains('timeout') ||
+          e.message.contains('refused') ||
+          e.message.contains('No address associated') ||
+          e.message.contains('SocketException')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<Map<String, dynamic>?> _detectConflict({
