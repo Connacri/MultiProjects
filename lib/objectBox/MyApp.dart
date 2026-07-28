@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../Hopital/StaffProvider.dart';
 import '../Hopital/TableauStaff.dart';
 import '../Hopital/features/app/presentation/pages/new_architecture_test_page.dart';
+import '../Hopital/features/app/presentation/pages/supabase_data_viewer_page.dart';
 import '../Hopital/features/planning/domain/entities/rotation_configuration.dart';
 import '../Hopital/features/planning/domain/entities/staff_availability.dart';
 import '../Hopital/features/planning/domain/enums/shift_type.dart';
@@ -182,6 +183,19 @@ class ArchitectureChoiceScreen extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.explore, size: 32),
                 label: const Text('Nouvelle architecture (features)', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 80,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SupabaseDataViewerPage()),
+                ),
+                icon: const Icon(Icons.cloud, size: 32),
+                label: const Text('Données Supabase', style: TextStyle(fontSize: 18)),
               ),
             ),
           ],

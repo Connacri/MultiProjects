@@ -100,10 +100,21 @@ class PlanningSnapshot {
     final normalizedSourceCreatedAt = this.createdAt.toUtc();
 
     if (normalizedCreatedAt.isBefore(normalizedSourceCreatedAt)) {
-      throw ArgumentError.value(
-        createdAt,
-        'createdAt',
-        'A new revision cannot be created before the source snapshot.',
+      final adjusted = normalizedSourceCreatedAt.add(const Duration(milliseconds: 1));
+      return PlanningSnapshot(
+        id: '',
+        year: year,
+        month: month,
+        branchId: branchId,
+        configurationId: configurationId,
+        configurationVersion: configurationVersion,
+        rotationPeriodId: rotationPeriodId,
+        engineVersion: engineVersion,
+        revision: revision + 1,
+        createdAt: adjusted,
+        assignments: List.unmodifiable(assignments ?? this.assignments),
+        continuityDate: continuityDate ?? this.continuityDate,
+        rotationState: rotationState ?? this.rotationState,
       );
     }
 
