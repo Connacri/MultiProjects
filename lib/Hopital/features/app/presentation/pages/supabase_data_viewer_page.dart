@@ -13,6 +13,8 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
   String _selectedTable = 'planning_snapshots';
   List<Map<String, dynamic>> _rows = const [];
   int? _selectedRowIndex;
+  final List<_LogEntry> _logs = [];
+  final ScrollController _logScroll = ScrollController();
 
   static const _planningTables = [
     'planning_snapshots',
@@ -29,20 +31,35 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
   @override
   void initState() {
     super.initState();
+    _addLog('INFO', 'Page chargée, table par défaut: $_selectedTable');
     _fetchData();
   }
 
+  @override
+  void dispose() {
+    _logScroll.dispose();
+    super.dispose();
+  }
+
+  void _addLog(String level, String message) {
+    setState(() {
+      _logs.insert(0, _LogEntry(
+        time: DateTime.now(),
+        level: level,
+        message: message,
+      ));
+    });
+  }
+
   Future<void> _fetchData() async {
+    _addLog('INFO', 'Récupération de $_selectedTable...');
     try {
       final data = await _client.from(_selectedTable).select().limit(100);
       setState(() => _rows = data);
+      _addLog('SUCCÈS', '${data.length} lignes récupérées');
     } catch (e) {
       setState(() => _rows = []);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
-        );
-      }
+      _addLog('ERREUR', '$e');
     }
   }
 
@@ -68,23 +85,14 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
 
     if (confirmed != true || !mounted) return;
 
+    _addLog('INFO', '🗑 Suppression de toutes les lignes de $_selectedTable...');
     try {
-      await _client.from(_selectedTable).delete().neq('id', 0);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Table vidée avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+      int deleted = 0;
+      await _deleteAllRows(_selectedTable, (count) { deleted = count; });
+      _addLog('SUCCÈS', '✅ $_selectedTable vidée ($deleted supprimée(s))');
       _fetchData();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
-        );
-      }
+      _addLog('ERREUR', '❌ $_selectedTable: $e');
     }
   }
 
@@ -114,26 +122,27 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
 
     if (confirmed != true || !mounted) return;
 
-    try {
-      for (final table in _planningTables.reversed) {
-        await _client.from(table).delete().neq('id', 0);
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Toutes les tables planning ont été vidées'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-      _fetchData();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
-        );
+    _addLog('INFO', '🗑 Vidage complet de la base...');
+    for (final table in _planningTables.reversed) {
+      try {
+        int deleted = 0;
+        await _deleteAllRows(table, (count) { deleted = count; });
+        _addLog('SUCCÈS', '✅ $table vidée ($deleted supprimée(s))');
+      } catch (e) {
+        _addLog('ERREUR', '❌ $table: $e');
       }
     }
+    _addLog('INFO', '🏁 Vidage terminé');
+    _fetchData();
+  }
+
+  Future<void> _deleteAllRows(String table, void Function(int) onDeleted) async {
+    final result = await _client
+        .from(table)
+        .delete()
+        .not('id', 'is', null)
+        .select('id');
+    onDeleted(result.length);
   }
 
   @override
@@ -203,6 +212,7 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
             ),
           ),
           Expanded(
+            flex: 2,
             child: _rows.isEmpty
                 ? const Center(child: Text('Aucune donnée'))
                 : SingleChildScrollView(
@@ -247,8 +257,128 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
                     ),
                   ),
           ),
+          const Divider(height: 1),
+          Container(
+            height: 160,
+            color: Colors.grey.shade900,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 4),
+                  color: Colors.grey.shade800,
+                  child: Row(
+                    children: [
+                      Icon(Icons.terminal, size: 16,
+                          color: Colors.green.shade300),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Logs (${_logs.length})',
+                        style: TextStyle(
+                          color: Colors.green.shade300,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => setState(() => _logs.clear()),
+                        child: Icon(Icons.clear_all, size: 16,
+                            color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: _logs.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Aucune opération',
+                            style: TextStyle(color: Colors.grey.shade600),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _logScroll,
+                          padding: const EdgeInsets.all(4),
+                          itemCount: _logs.length,
+                          itemBuilder: (_, i) {
+                            final log = _logs[i];
+                            return _buildLogLine(log);
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+
+  Widget _buildLogLine(_LogEntry log) {
+    final time =
+        '${log.time.hour.toString().padLeft(2, '0')}:'
+        '${log.time.minute.toString().padLeft(2, '0')}:'
+        '${log.time.second.toString().padLeft(2, '0')}';
+
+    Color levelColor;
+    switch (log.level) {
+      case 'ERREUR':
+        levelColor = Colors.red.shade300;
+      case 'SUCCÈS':
+        levelColor = Colors.green.shade300;
+      default:
+        levelColor = Colors.cyan.shade300;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            time,
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 11,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '[${log.level}]',
+            style: TextStyle(
+              color: levelColor,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              log.message,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 11,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogEntry {
+  final DateTime time;
+  final String level;
+  final String message;
+
+  const _LogEntry({
+    required this.time,
+    required this.level,
+    required this.message,
+  });
 }
