@@ -1,16 +1,16 @@
 {
-  "version": "2.0.0-rc.1.262",
-  "tag": "v2.0.0-rc.1.262",
-  "date": "2026-07-28T17:19:18Z",
-  "build_number": "262",
-  "commit": "1f299a5a7a6a9f338e400b99d668f548ca781c5f",
+  "version": "2.0.0-rc.1.263",
+  "tag": "v2.0.0-rc.1.263",
+  "date": "2026-07-28T19:17:08Z",
+  "build_number": "263",
+  "commit": "467db0e48bbd2d9e6dc0686f4eda61229c40def0",
   "platforms": {
     "android": {
-      "url": "https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.262/app-release.apk",
+      "url": "https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.263/app-release.apk",
       "filename": "app-release.apk"
     },
     "windows": {
-      "url": "https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.262/installer.exe",
+      "url": "https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.263/installer.exe",
       "filename": "installer.exe"
     }
   }
