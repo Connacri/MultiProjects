@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../Hopital/StaffProvider.dart';
 import '../Hopital/TableauStaff.dart';
+import '../Hopital/features/app/presentation/pages/new_architecture_test_page.dart';
 import '../Hopital/features/planning/domain/entities/rotation_configuration.dart';
 import '../Hopital/features/planning/domain/entities/staff_availability.dart';
 import '../Hopital/features/planning/domain/enums/shift_type.dart';
@@ -127,9 +128,64 @@ class MyApp9 extends StatelessWidget {
               brightness: Brightness.dark,
               primaryColor: Colors.blueGrey,
             ),
-            home: TableauStaffPage(),
+            home: const ArchitectureChoiceScreen(),
           );
         },
+      ),
+    );
+  }
+}
+
+class ArchitectureChoiceScreen extends StatelessWidget {
+  const ArchitectureChoiceScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Choix de l\'architecture'),
+        backgroundColor: Colors.blue.shade700,
+        foregroundColor: Colors.white,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.architecture, size: 64, color: Colors.blueGrey),
+            const SizedBox(height: 24),
+            Text(
+              'Choisissez l\'interface',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              height: 80,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => TableauStaffPage()),
+                ),
+                icon: const Icon(Icons.assignment, size: 32),
+                label: const Text('Ancienne architecture', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 80,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NewArchitectureTestPage()),
+                ),
+                icon: const Icon(Icons.explore, size: 32),
+                label: const Text('Nouvelle architecture (features)', style: TextStyle(fontSize: 18)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
