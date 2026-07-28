@@ -38,22 +38,31 @@ class _NewArchitectureTestPageState extends State<NewArchitectureTestPage> {
     final targetYear = now.year;
     final targetMonth = now.month;
     final provider = context.read<PlanningProvider>();
+
+    // 1) Essayer le mois courant dans les nouveaux snapshots
     await provider.load(year: targetYear, month: targetMonth);
     if (provider.current != null || provider.draft != null) return;
 
+    // 2) Chercher le dernier planification existant (ancienne archi)
     final objectBox = context.read<ObjectBox>();
-    final query = objectBox.planificationBox
+    final latest = objectBox.planificationBox
         .query()
         .order(Planification_.annee, flags: Order.descending)
         .order(Planification_.mois, flags: Order.descending)
-        .build();
-    final latest = query.findFirst();
-    query.close();
+        .build()
+        .findFirst();
     if (latest != null) {
+      // Essayer de charger un nouveau snapshot pour ce mois
       await provider.load(year: latest.annee, month: latest.mois);
+      if (provider.current != null || provider.draft != null) return;
+
+      // Pas de nouveau snapshot → générer à partir de l'ancien planification
+      print('[NewArchitecture] Migration ancien planification ${latest.annee}/${latest.mois}');
+      await _createDefaultPlanning(provider, objectBox, latest.annee, latest.mois);
       if (provider.current != null || provider.draft != null) return;
     }
 
+    // 3) Rien du tout → créer un planning par défaut pour le mois courant
     await _createDefaultPlanning(provider, objectBox, targetYear, targetMonth);
     if (mounted) setState(() {});
   }
