@@ -1,3 +1,7 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../../objectBox/Entity.dart';
+import '../../../../objectBox/classeObjectBox.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../datasources/supabase_planning_datasource.dart';
 
@@ -9,6 +13,8 @@ class PlanningSyncService {
       : _remote = remote;
 
   final SupabasePlanningDatasource _remote;
+  final ObjectBox _objectBox = ObjectBox();
+  final SupabaseClient _client = Supabase.instance.client;
 
   Future<String> pushSnapshot({
     required PlanningSnapshot snapshot,
@@ -28,6 +34,7 @@ class PlanningSyncService {
       branchId: branchId,
     );
 
+    await _ensureStaffsExist(snapshot.assignments);
     await _remote.replaceAssignments(
       snapshotId: snapshotRemoteId,
       assignments: snapshot.assignments,
@@ -47,5 +54,42 @@ class PlanningSyncService {
     }
 
     return snapshotRemoteId;
+  }
+
+  Future<void> _ensureStaffsExist(
+      List<PlanningAssignment> assignments) async {
+    final staffIds = assignments.map((a) => a.staffId).toSet();
+    if (staffIds.isEmpty) return;
+
+    final existingIds = (await _client
+            .from('staffs')
+            .select('id')
+            .in_('id', staffIds.toList()))
+        .map((r) => r['id'] as int)
+        .toSet();
+
+    final missingIds = staffIds.difference(existingIds);
+    if (missingIds.isEmpty) return;
+
+    final staffs = _objectBox.staffBox
+        .getMany(missingIds.toList())
+        .where((s) => s != null)
+        .cast<Staff>()
+        .toList();
+
+    if (staffs.isNotEmpty) {
+      await _client.from('staffs').upsert(
+            staffs.map((s) => {
+              'id': s.id,
+              'nom': s.nom,
+              'grade': s.grade,
+              'groupe': s.groupe,
+              'equipe': s.equipe ?? '',
+              'ordre': s.ordre ?? 0,
+              'branch_id':
+                  s.branch.targetId != 0 ? s.branch.targetId : null,
+            }).toList(),
+          );
+    }
   }
 }
