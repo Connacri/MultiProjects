@@ -347,7 +347,7 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          SelectableText(
             time,
             style: TextStyle(
               color: Colors.grey.shade500,
@@ -356,7 +356,7 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
+          SelectableText(
             '[${log.level}]',
             style: TextStyle(
               color: levelColor,
@@ -367,7 +367,7 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
+            child: SelectableText(
               log.message,
               style: const TextStyle(
                 color: Colors.white70,
