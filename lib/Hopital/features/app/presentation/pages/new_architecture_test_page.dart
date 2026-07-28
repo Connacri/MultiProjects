@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectBox/classeObjectBox.dart';
 import '../../../../../objectbox.g.dart';
 import '../../../../StaffProvider.dart';
@@ -58,7 +59,7 @@ class _NewArchitectureTestPageState extends State<NewArchitectureTestPage> {
 
       // Pas de nouveau snapshot → générer à partir de l'ancien planification
       print('[NewArchitecture] Migration ancien planification ${latest.annee}/${latest.mois}');
-      await _createDefaultPlanning(provider, objectBox, latest.annee, latest.mois);
+      await _createDefaultPlanning(provider, objectBox, latest.annee, latest.mois, ancien: latest);
       if (provider.current != null || provider.draft != null) return;
     }
 
@@ -71,16 +72,25 @@ class _NewArchitectureTestPageState extends State<NewArchitectureTestPage> {
     PlanningProvider provider,
     ObjectBox objectBox,
     int year,
-    int month,
-  ) async {
-    print('[NewArchitecture] Auto-création planning par défaut $year/$month');
+    int month, {
+    Planification? ancien,
+  }) async {
+    final isMigration = ancien != null;
+    print('[NewArchitecture] ${isMigration ? "Migration" : "Création"} planning $year/$month');
 
     final staffProvider = context.read<StaffProvider>();
+
+    // Lire l'ordre des équipes depuis l'ancien planification si disponible
+    final teamOrder = isMigration
+        ? ancien.ordreEquipes.isEmpty
+            ? ['Tous', 'Équipe A', 'Équipe B', 'Équipe C', 'Équipe D']
+            : ancien.ordreEquipes.split(',').map((s) => s.trim()).toList()
+        : ['Tous', 'Équipe A', 'Équipe B', 'Équipe C', 'Équipe D'];
 
     final config = RotationConfiguration(
       id: 'default-auto',
       version: 1,
-      teamOrder: const ['Tous', 'Équipe A', 'Équipe B', 'Équipe C', 'Équipe D'],
+      teamOrder: teamOrder,
       cycle: const [ShiftType.day, ShiftType.night, ShiftType.rest, ShiftType.rest],
     );
 
@@ -88,9 +98,7 @@ class _NewArchitectureTestPageState extends State<NewArchitectureTestPage> {
     final staffIds = staffs.map((s) => s.id).toList();
     final staffTeams = <int, String>{};
     for (final s in staffs) {
-      final team = s.equipe != null && s.equipe!.isNotEmpty
-          ? 'Équipe ${s.equipe}'
-          : 'Tous';
+      final team = _resolveTeam(s, teamOrder, isMigration);
       staffTeams[s.id] = team;
     }
 
@@ -116,10 +124,33 @@ class _NewArchitectureTestPageState extends State<NewArchitectureTestPage> {
         staffTeams: staffTeams,
         availability: availability,
       );
-      print('[NewArchitecture] Planning par défaut créé');
+      print('[NewArchitecture] Planning créé');
     } catch (e) {
       print('[NewArchitecture] Erreur création planning: $e');
     }
+  }
+
+  String _resolveTeam(Staff s, List<String> teamOrder, bool isMigration) {
+    if (isMigration) {
+      if (s.groupe.isNotEmpty) {
+        final match = teamOrder.firstWhere(
+          (t) => t.toLowerCase().contains(s.groupe.toLowerCase()),
+          orElse: () => '',
+        );
+        if (match.isNotEmpty) return match;
+      }
+      final equipe = s.equipe ?? '';
+      if (equipe.isNotEmpty) {
+        final match = teamOrder.firstWhere(
+          (t) => t.toLowerCase().contains(equipe.toLowerCase()),
+          orElse: () => '',
+        );
+        if (match.isNotEmpty) return match;
+      }
+      return teamOrder.first;
+    }
+    final equipe = s.equipe ?? '';
+    return equipe.isNotEmpty ? 'Équipe $equipe' : 'Tous';
   }
 
   @override
