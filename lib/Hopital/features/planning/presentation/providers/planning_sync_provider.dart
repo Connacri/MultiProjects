@@ -9,6 +9,20 @@ import 'rotation_configuration_provider.dart';
 
 enum SyncUiState { idle, syncing, success, failed, conflict, disconnected }
 
+enum SyncDirection { push, pull }
+
+class SyncRecommendation {
+  final SyncDirection direction;
+  final DateTime? localTimestamp;
+  final DateTime? remoteTimestamp;
+
+  SyncRecommendation({
+    required this.direction,
+    this.localTimestamp,
+    this.remoteTimestamp,
+  });
+}
+
 class PlanningSyncProvider extends ChangeNotifier {
   final PlanningProvider planningProvider;
   final PlanningSyncService syncService;
@@ -178,6 +192,85 @@ class PlanningSyncProvider extends ChangeNotifier {
         'cycleLength': config?.cycle.length ?? 4,
       },
     );
+  }
+
+  Future<SyncRecommendation> getRecommendation() async {
+    final snapshot = planningProvider.draft ?? planningProvider.current;
+    if (snapshot == null) {
+      return SyncRecommendation(direction: SyncDirection.push);
+    }
+
+    final localTimestamp = snapshot.createdAt;
+    final branchId = snapshot.branchId ?? 0;
+
+    DateTime? remoteTimestamp;
+    try {
+      final remoteInfo = await remote.fetchLatestSnapshotInfo(
+        branchId: branchId,
+        year: snapshot.year,
+        month: snapshot.month,
+      );
+      if (remoteInfo != null) {
+        final ts = remoteInfo['created_at'] as String?;
+        if (ts != null) remoteTimestamp = DateTime.tryParse(ts);
+      }
+    } catch (_) {}
+
+    SyncDirection dir;
+    if (remoteTimestamp == null) {
+      dir = SyncDirection.push;
+    } else {
+      dir = localTimestamp.isAfter(remoteTimestamp)
+          ? SyncDirection.push
+          : SyncDirection.pull;
+    }
+
+    return SyncRecommendation(
+      direction: dir,
+      localTimestamp: localTimestamp,
+      remoteTimestamp: remoteTimestamp,
+    );
+  }
+
+  Future<void> pull() async {
+    print('[Sync] === pull() ===');
+    final snapshot = planningProvider.draft ?? planningProvider.current;
+    if (snapshot == null) {
+      print('[Sync] ⛔ Aucun snapshot disponible');
+      return;
+    }
+    print('[Sync] Snapshot: year=${snapshot.year}, month=${snapshot.month}, revision=${snapshot.revision}');
+
+    _state = SyncUiState.syncing;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final branchId = snapshot.branchId ?? 0;
+      final remoteData = await remote.fetchSnapshot(
+        branchId: branchId,
+        year: snapshot.year,
+        month: snapshot.month,
+        revision: snapshot.revision,
+      );
+
+      if (remoteData == null) {
+        print('[Sync] ⛔ Aucune donnée distante à pull');
+        _state = SyncUiState.failed;
+        _error = 'Aucune donnée distante trouvée';
+        notifyListeners();
+        return;
+      }
+
+      print('[Sync] ✅ Pull réussi — ${remoteData['planning_assignments']?.length ?? 0} assignments');
+      _lastSyncedAt = DateTime.now().toUtc();
+      _state = SyncUiState.success;
+    } catch (e) {
+      print('[Sync] ❌ Erreur pull: $e');
+      _state = _isNetworkError(e) ? SyncUiState.disconnected : SyncUiState.failed;
+      _error = e.toString();
+    }
+    notifyListeners();
   }
 
   void reset() {

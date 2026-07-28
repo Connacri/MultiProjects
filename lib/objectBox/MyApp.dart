@@ -1,22 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:objectbox/objectbox.dart';
 import 'package:provider/provider.dart';
 
 import '../Hopital/StaffProvider.dart';
 import '../Hopital/TableauStaff.dart';
 import '../Hopital/features/app/presentation/pages/new_architecture_test_page.dart';
 import '../Hopital/features/app/presentation/pages/supabase_data_viewer_page.dart';
-import '../Hopital/features/planning/domain/entities/rotation_configuration.dart';
-import '../Hopital/features/planning/domain/entities/staff_availability.dart';
-import '../Hopital/features/planning/domain/enums/shift_type.dart';
 import '../Hopital/features/planning/presentation/planning_composition.dart';
-import '../Hopital/features/planning/presentation/providers/planning_editor_provider.dart';
-import '../Hopital/features/planning/presentation/providers/planning_provider.dart';
-import '../Hopital/features/planning/presentation/providers/planning_sync_provider.dart';
-import '../Hopital/features/planning/presentation/providers/planning_validation_provider.dart';
-import '../Hopital/features/planning/presentation/providers/rotation_configuration_provider.dart';
-import '../Hopital/features/planning/presentation/widgets/planning_workspace.dart';
-import '../Hopital/features/planning/presentation/widgets/planning_workspace_controller.dart';
 import '../Hopital/p2p/auto_connect_service.dart';
 import '../Hopital/p2p/connection_manager.dart';
 import '../Hopital/p2p/delta_generator_real.dart';
@@ -34,8 +23,6 @@ import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
-import '../objectbox.g.dart';
-import 'Entity.dart';
 import 'MyProviders.dart';
 import 'classeObjectBox.dart';
 import 'pages/invoice/providers.dart';
@@ -137,181 +124,319 @@ class MyApp9 extends StatelessWidget {
   }
 }
 
-class ArchitectureChoiceScreen extends StatelessWidget {
+class ArchitectureChoiceScreen extends StatefulWidget {
   const ArchitectureChoiceScreen({super.key});
 
   @override
+  State<ArchitectureChoiceScreen> createState() =>
+      _ArchitectureChoiceScreenState();
+}
+
+class _ArchitectureChoiceScreenState extends State<ArchitectureChoiceScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animController;
+  late final List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _animations = List.generate(3, (i) {
+      return CurvedAnimation(
+        parent: Tween<double>(begin: 0, end: 1).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: Interval(i * 0.15, 0.6 + i * 0.15,
+                curve: Curves.easeOutCubic),
+          ),
+        ),
+        curve: Curves.easeOutCubic,
+      );
+    });
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Choix de l\'architecture'),
-        backgroundColor: Colors.blue.shade700,
-        foregroundColor: Colors.white,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.architecture, size: 64, color: Colors.blueGrey),
-            const SizedBox(height: 24),
-            Text(
-              'Choisissez l\'interface',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              height: 80,
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => TableauStaffPage()),
-                ),
-                icon: const Icon(Icons.assignment, size: 32),
-                label: const Text('Ancienne architecture', style: TextStyle(fontSize: 18)),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade800,
+              Colors.indigo.shade900,
+              Colors.blue.shade900,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+                  if (isDesktop)
+                    _buildDesktopCards()
+                  else
+                    _buildMobileCards(),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 80,
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NewArchitectureTestPage()),
-                ),
-                icon: const Icon(Icons.explore, size: 32),
-                label: const Text('Nouvelle architecture (features)', style: TextStyle(fontSize: 18)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 80,
-              child: ElevatedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SupabaseDataViewerPage()),
-                ),
-                icon: const Icon(Icons.cloud, size: 32),
-                label: const Text('Données Supabase', style: TextStyle(fontSize: 18)),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _PlanningPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    _scheduleLoad(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Planning des équipes'),
+  Widget _buildHeader() {
+    return Column(
+      children: [
+        AnimatedBuilder(
+          animation: _animations[0],
+          builder: (context, child) => Opacity(
+            opacity: _animations[0].value,
+            child: Transform.translate(
+              offset: Offset(0, 20 * (1 - _animations[0].value)),
+              child: child,
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.architecture, size: 56, color: Colors.white),
+          ),
+        ),
+        const SizedBox(height: 20),
+        AnimatedBuilder(
+          animation: _animations[0],
+          builder: (context, child) => Opacity(
+            opacity: _animations[0].value,
+            child: Transform.translate(
+              offset: Offset(0, 16 * (1 - _animations[0].value)),
+              child: child,
+            ),
+          ),
+          child: Text(
+            'Kenzy Planning',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w300,
+              color: Colors.white.withValues(alpha: 0.9),
+              letterSpacing: 4,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        AnimatedBuilder(
+          animation: _animations[0],
+          builder: (context, child) => Opacity(
+            opacity: _animations[0].value,
+            child: child,
+          ),
+          child: Text(
+            'Choisissez votre interface',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withValues(alpha: 0.6),
+              letterSpacing: 1,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopCards() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: _buildCard(0, _cardData[0])),
+        const SizedBox(width: 24),
+        Expanded(child: _buildCard(1, _cardData[1])),
+        const SizedBox(width: 24),
+        Expanded(child: _buildCard(2, _cardData[2])),
+      ],
+    );
+  }
+
+  Widget _buildMobileCards() {
+    return Column(
+      children: [
+        _buildCard(0, _cardData[0]),
+        const SizedBox(height: 16),
+        _buildCard(1, _cardData[1]),
+        const SizedBox(height: 16),
+        _buildCard(2, _cardData[2]),
+      ],
+    );
+  }
+
+  Widget _buildCard(int index, _CardData data) {
+    return AnimatedBuilder(
+      animation: _animations[index],
+      builder: (context, child) => Opacity(
+        opacity: _animations[index].value,
+        child: Transform.translate(
+          offset: Offset(0, 40 * (1 - _animations[index].value)),
+          child: child,
+        ),
       ),
-      body: Consumer3<PlanningProvider, RotationConfigurationProvider,
-          PlanningSyncProvider>(
-        builder: (context, planningProvider, rotationProvider, syncProvider, _) {
-          return PlanningWorkspace(
-            planningProvider: planningProvider,
-            rotationProvider: rotationProvider,
-            editorProvider: context.read<PlanningEditorProvider>(),
-            validationProvider: context.read<PlanningValidationProvider>(),
-            workspaceController: context.read<PlanningWorkspaceController>(),
-            syncProvider: syncProvider,
-          );
+      child: Card(
+        elevation: 8,
+        shadowColor: data.color.withValues(alpha: 0.4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: data.color.withValues(alpha: 0.3), width: 1.5),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _navigate(data.page),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 220),
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  data.color.withValues(alpha: 0.1),
+                  Colors.white,
+                  data.color.withValues(alpha: 0.05),
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: data.color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(data.icon, size: 40, color: data.color),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  data.title,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: data.color.shade800,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  data.subtitle,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: data.color,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    data.action,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigate(Widget page) {
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(opacity: animation, child: child);
         },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
-
-  static bool _loaded = false;
-  static void _scheduleLoad(BuildContext context) {
-    if (_loaded) return;
-    _loaded = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final now = DateTime.now();
-      final targetYear = now.year;
-      final targetMonth = now.month;
-      final provider = context.read<PlanningProvider>();
-      await provider.load(year: targetYear, month: targetMonth);
-      if (provider.current != null || provider.draft != null) return;
-
-      final objectBox = context.read<ObjectBox>();
-      final query = objectBox.planificationBox
-          .query()
-          .order(Planification_.annee, flags: Order.descending)
-          .order(Planification_.mois, flags: Order.descending)
-          .build();
-      final latest = query.findFirst();
-      query.close();
-      if (latest != null) {
-        await provider.load(year: latest.annee, month: latest.mois);
-        if (provider.current != null || provider.draft != null) return;
-      }
-
-      await _createDefaultPlanning(
-        context, provider, objectBox, targetYear, targetMonth);
-    });
-  }
-
-  static Future<void> _createDefaultPlanning(
-    BuildContext context,
-    PlanningProvider provider,
-    ObjectBox objectBox,
-    int year,
-    int month,
-  ) async {
-    print('[Planning] Auto-création planning par défaut $year/$month');
-
-    final staffProvider = context.read<StaffProvider>();
-
-    final config = RotationConfiguration(
-      id: 'default-auto',
-      version: 1,
-      teamOrder: const ['Tous', 'Équipe A', 'Équipe B', 'Équipe C', 'Équipe D'],
-      cycle: const [ShiftType.day, ShiftType.night, ShiftType.rest, ShiftType.rest],
-    );
-
-    final staffs = staffProvider.staffs;
-    final staffIds = staffs.map((s) => s.id).toList();
-    final staffTeams = <int, String>{};
-    for (final s in staffs) {
-      final team = s.equipe != null && s.equipe!.isNotEmpty
-          ? 'Équipe ${s.equipe}'
-          : 'Tous';
-      staffTeams[s.id] = team;
-    }
-
-    final availability = <StaffAvailability>[];
-    for (final timeOff in objectBox.timeOffBox.getAll()) {
-      if (timeOff.fin.isBefore(DateTime(year, month, 1))) continue;
-      if (timeOff.debut.isAfter(DateTime(year, month + 1, 0))) continue;
-      availability.add(StaffAvailability(
-        staffId: timeOff.staff.targetId,
-        startDate: timeOff.debut,
-        endDate: timeOff.fin,
-        type: StaffAvailabilityType.leave,
-        note: timeOff.motif,
-      ));
-    }
-
-    try {
-      await provider.generate(
-        year: year,
-        month: month,
-        configuration: config,
-        staffIds: staffIds,
-        staffTeams: staffTeams,
-        availability: availability,
-      );
-      print('[Planning] ✅ Planning par défaut créé');
-    } catch (e) {
-      print('[Planning] ❌ Erreur création planning par défaut: $e');
-    }
-  }
 }
+
+class _CardData {
+  final MaterialColor color;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String action;
+  final Widget page;
+
+  const _CardData({
+    required this.color,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.action,
+    required this.page,
+  });
+}
+
+final _cardData = [
+  _CardData(
+    color: Colors.brown,
+    icon: Icons.history,
+    title: 'Ancienne architecture',
+    subtitle: 'Interface classique avec tableau de staff',
+    action: 'Ouvrir',
+    page: TableauStaffPage(),
+  ),
+  _CardData(
+    color: Colors.indigo,
+    icon: Icons.explore,
+    title: 'Nouvelle architecture',
+    subtitle: 'Planning par fonctionnalités (features)',
+    action: 'Explorer',
+    page: NewArchitectureTestPage(),
+  ),
+  _CardData(
+    color: Colors.teal,
+    icon: Icons.cloud,
+    title: 'Données Supabase',
+    subtitle: 'Visualiser et gérer les données distantes',
+    action: 'Consulter',
+    page: SupabaseDataViewerPage(),
+  ),
+];
+
+

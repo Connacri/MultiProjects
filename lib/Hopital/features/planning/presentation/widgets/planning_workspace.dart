@@ -342,6 +342,78 @@ class _SyncButtonState extends State<_SyncButton> {
     }
   }
 
+  Future<void> _chooseSyncDirection() async {
+    final sync = widget.syncProvider;
+    final rec = await sync.getRecommendation();
+
+    final localStr = rec.localTimestamp != null
+        ? _formatDateTime(rec.localTimestamp!)
+        : 'N/A';
+    final remoteStr = rec.remoteTimestamp != null
+        ? _formatDateTime(rec.remoteTimestamp!)
+        : 'Aucune';
+
+    final pushRecommended = rec.direction == SyncDirection.push;
+    final pullRecommended = rec.direction == SyncDirection.pull;
+
+    final result = await showDialog<SyncDirection>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Synchronisation'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Dernières modifications :'),
+            const SizedBox(height: 8),
+            Text('📍 Local : $localStr'),
+            Text('☁️ Distant : $remoteStr'),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 8),
+            const Text('Choisissez la direction :'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
+          if (pushRecommended)
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(ctx, SyncDirection.push),
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Push local → Supabase ★'),
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(ctx, SyncDirection.push),
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Push local → Supabase'),
+            ),
+          const SizedBox(width: 8),
+          if (pullRecommended)
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(ctx, SyncDirection.pull),
+              icon: const Icon(Icons.cloud_download),
+              label: const Text('Pull Supabase → local ★'),
+            )
+          else
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(ctx, SyncDirection.pull),
+              icon: const Icon(Icons.cloud_download),
+              label: const Text('Pull Supabase → local'),
+            ),
+        ],
+      ),
+    );
+
+    if (result == SyncDirection.push && mounted) {
+      sync.sync();
+    } else if (result == SyncDirection.pull && mounted) {
+      sync.pull();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sync = widget.syncProvider;
@@ -410,7 +482,7 @@ class _SyncButtonState extends State<_SyncButton> {
           onPressed: canSync
               ? () {
                   print('[SyncUI] Clic Synchroniser (canSync=$canSync)');
-                  sync.sync();
+                  _chooseSyncDirection();
                 }
               : null,
           icon: const Icon(Icons.cloud_upload_outlined, color: Colors.grey),
