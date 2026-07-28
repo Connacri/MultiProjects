@@ -67,7 +67,8 @@ class PlanningWorkspaceController extends ChangeNotifier {
   }
 
   Future<void> publishEditedDraft() async {
-    if (editorProvider.draft != null) {
+    final editorDraft = editorProvider.draft;
+    if (editorDraft != null && editorDraft.assignments.isNotEmpty) {
       applyEditorDraft();
     }
     await publishDraft();
