@@ -47,7 +47,12 @@ class PlanningWorkspaceController extends ChangeNotifier {
       );
     }
 
-    planningProvider.setDraft(edited);
+    final finalDraft = edited.rotationState != null
+        ? edited
+        : edited.copyWith(
+            rotationState: planningProvider.draft?.rotationState,
+          );
+    planningProvider.setDraft(finalDraft);
     _isEditing = false;
     notifyListeners();
   }

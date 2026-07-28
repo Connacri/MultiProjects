@@ -381,7 +381,7 @@ class _ArchitectureChoiceScreenState extends State<ArchitectureChoiceScreen>
   }
 
   void _navigate(Widget page) {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => page,
