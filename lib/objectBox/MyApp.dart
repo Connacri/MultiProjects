@@ -3,6 +3,9 @@ import 'package:objectbox/objectbox.dart';
 import 'package:provider/provider.dart';
 
 import '../Hopital/StaffProvider.dart';
+import '../Hopital/features/planning/domain/entities/rotation_configuration.dart';
+import '../Hopital/features/planning/domain/entities/staff_availability.dart';
+import '../Hopital/features/planning/domain/enums/shift_type.dart';
 import '../Hopital/features/planning/presentation/planning_composition.dart';
 import '../Hopital/features/planning/presentation/providers/planning_editor_provider.dart';
 import '../Hopital/features/planning/presentation/providers/planning_provider.dart';
@@ -161,8 +164,10 @@ class _PlanningPage extends StatelessWidget {
     _loaded = true;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final now = DateTime.now();
+      final targetYear = now.year;
+      final targetMonth = now.month;
       final provider = context.read<PlanningProvider>();
-      await provider.load(year: now.year, month: now.month);
+      await provider.load(year: targetYear, month: targetMonth);
       if (provider.current != null || provider.draft != null) return;
 
       final objectBox = context.read<ObjectBox>();
@@ -175,7 +180,67 @@ class _PlanningPage extends StatelessWidget {
       query.close();
       if (latest != null) {
         await provider.load(year: latest.annee, month: latest.mois);
+        if (provider.current != null || provider.draft != null) return;
       }
+
+      await _createDefaultPlanning(
+        context, provider, objectBox, targetYear, targetMonth);
     });
+  }
+
+  static Future<void> _createDefaultPlanning(
+    BuildContext context,
+    PlanningProvider provider,
+    ObjectBox objectBox,
+    int year,
+    int month,
+  ) async {
+    print('[Planning] Auto-création planning par défaut $year/$month');
+
+    final staffProvider = context.read<StaffProvider>();
+
+    final config = RotationConfiguration(
+      id: 'default-auto',
+      version: 1,
+      teamOrder: const ['Tous', 'Équipe A', 'Équipe B', 'Équipe C', 'Équipe D'],
+      cycle: const [ShiftType.day, ShiftType.night, ShiftType.rest, ShiftType.rest],
+    );
+
+    final staffs = staffProvider.staffs;
+    final staffIds = staffs.map((s) => s.id).toList();
+    final staffTeams = <int, String>{};
+    for (final s in staffs) {
+      final team = s.equipe != null && s.equipe!.isNotEmpty
+          ? 'Équipe ${s.equipe}'
+          : 'Tous';
+      staffTeams[s.id] = team;
+    }
+
+    final availability = <StaffAvailability>[];
+    for (final timeOff in objectBox.timeOffBox.getAll()) {
+      if (timeOff.fin.isBefore(DateTime(year, month, 1))) continue;
+      if (timeOff.debut.isAfter(DateTime(year, month + 1, 0))) continue;
+      availability.add(StaffAvailability(
+        staffId: timeOff.staff.targetId,
+        startDate: timeOff.debut,
+        endDate: timeOff.fin,
+        type: StaffAvailabilityType.leave,
+        note: timeOff.motif,
+      ));
+    }
+
+    try {
+      await provider.generate(
+        year: year,
+        month: month,
+        configuration: config,
+        staffIds: staffIds,
+        staffTeams: staffTeams,
+        availability: availability,
+      );
+      print('[Planning] ✅ Planning par défaut créé');
+    } catch (e) {
+      print('[Planning] ❌ Erreur création planning par défaut: $e');
+    }
   }
 }

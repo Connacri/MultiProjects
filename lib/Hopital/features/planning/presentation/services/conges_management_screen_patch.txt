@@ -1,0 +1,69 @@
+// lib/Hopital/conges_management_screen.dart
+
+// 1) Ajoute ces imports
+import 'hospital_pdf_seed_import.dart';
+import 'SupabaseHospitalService.dart';
+import '../objectBox/classeObjectBox.dart';
+
+// 2) Dans le build() du Scaffold, remplace l'AppBar par :
+appBar: AppBar(
+  title: Text('Personnel et congés (${_staff.length})'),
+  actions: [
+    PopupMenuButton<_AdminAction>(
+      tooltip: 'Actions admin',
+      onSelected: (action) async {
+        switch (action) {
+          case _AdminAction.importPdfSeed:
+            await _importPdfSeed();
+            break;
+          case _AdminAction.exportSupabase:
+            await SupabaseHospitalService().exportAllToSupabase();
+            break;
+        }
+      },
+      itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: _AdminAction.importPdfSeed,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.playlist_add),
+            title: Text('Importer PDF Août 2026'),
+          ),
+        ),
+        PopupMenuItem(
+          value: _AdminAction.exportSupabase,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.cloud_upload_outlined),
+            title: Text('Exporter Supabase'),
+          ),
+        ),
+      ],
+    ),
+  ],
+),
+
+// 3) Ajoute dans le State :
+enum _AdminAction { importPdfSeed, exportSupabase }
+
+Future<void> _importPdfSeed() async {
+  final ok = await _confirm(
+    'Importer les PDFs ?',
+    'Cela va remplir ObjectBox puis Supabase avec les staffs, congés et observations d’Août 2026.',
+  );
+  if (ok != true) return;
+
+  final importer = HospitalPdfSeedImportService();
+  final result = await importer.importAout2026();
+
+  if (!mounted) return;
+  await _reload();
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        '${result.staffCount} staffs, ${result.timeOffCount} congés, ${result.observationCount} observations importés.',
+      ),
+    ),
+  );
+}
