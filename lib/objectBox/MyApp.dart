@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:objectbox/objectbox.dart';
 import 'package:provider/provider.dart';
 
 import '../Hopital/StaffProvider.dart';
@@ -27,6 +28,8 @@ import '../Kids/providers/course_provider_complete.dart';
 import '../Kids/providers/locale_provider.dart';
 import '../checkit/provider.dart';
 import '../checkit/providerF.dart';
+import '../objectbox.g.dart';
+import 'Entity.dart';
 import 'MyProviders.dart';
 import 'classeObjectBox.dart';
 import 'pages/invoice/providers.dart';
@@ -156,9 +159,23 @@ class _PlanningPage extends StatelessWidget {
   static void _scheduleLoad(BuildContext context) {
     if (_loaded) return;
     _loaded = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final now = DateTime.now();
-      context.read<PlanningProvider>().load(year: now.year, month: now.month);
+      final provider = context.read<PlanningProvider>();
+      await provider.load(year: now.year, month: now.month);
+      if (provider.current != null || provider.draft != null) return;
+
+      final objectBox = context.read<ObjectBox>();
+      final query = objectBox.planificationBox
+          .query()
+          .order(Planification_.annee, flags: Order.descending)
+          .order(Planification_.mois, flags: Order.descending)
+          .build();
+      final latest = query.findFirst();
+      query.close();
+      if (latest != null) {
+        await provider.load(year: latest.annee, month: latest.mois);
+      }
     });
   }
 }
