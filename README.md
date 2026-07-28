@@ -6,12 +6,12 @@
 ## 📲 Télécharger l'application
 
 <p align="center">
-  <a href="https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.263/app-release.apk">
-    <img src="https://img.shields.io/badge/Android-APK_2.0.0-rc.1.263-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Android APK"/>
+  <a href="https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.265/app-release.apk">
+    <img src="https://img.shields.io/badge/Android-APK_2.0.0-rc.1.265-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Download Android APK"/>
   </a>
   &nbsp;&nbsp;
-  <a href="https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.263/installer.exe">
-    <img src="https://img.shields.io/badge/Windows-Installer_2.0.0-rc.1.263-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer"/>
+  <a href="https://github.com/Connacri/MultiProjects/releases/download/v2.0.0-rc.1.265/installer.exe">
+    <img src="https://img.shields.io/badge/Windows-Installer_2.0.0-rc.1.265-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows Installer"/>
   </a>
 </p>
 
@@ -23,7 +23,7 @@ Solution professionnelle de **gestion et planification du personnel médical** p
 
 - **Stack** : Flutter · Dart · ObjectBox · Provider · Material 3
 - **Plateformes** : Android · Windows Desktop
-- **Version** : 2.0.0-rc.1.263
+- **Version** : 2.0.0-rc.1.265
 
 ---
 
@@ -46,4 +46,4 @@ Soutenez le développement de ce projet ! 🇩🇿
 
 ---
 
-*Build 2.0.0-rc.1.263 — Généré automatiquement par GitHub Actions*
+*Build 2.0.0-rc.1.265 — Généré automatiquement par GitHub Actions*
