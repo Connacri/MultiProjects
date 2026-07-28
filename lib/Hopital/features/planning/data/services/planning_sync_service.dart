@@ -1,7 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../../objectBox/Entity.dart';
-import '../../../../../objectBox/classeObjectBox.dart';
+import 'package:kenzy/objectBox/Entity.dart';
+import 'package:kenzy/objectBox/classeObjectBox.dart';
+import '../../domain/entities/planning_assignment.dart';
 import '../../domain/entities/planning_snapshot.dart';
 import '../datasources/supabase_planning_datasource.dart';
 
@@ -82,11 +83,8 @@ class PlanningSyncService {
     }
 
     print('[Sync] Vérification staffs existants dans Supabase...');
-    final response = await _client
-        .from('staffs')
-        .select('id')
-        .in_('id', staffIds.toList());
-    final existingIds = response.map((r) => r['id'] as int).toSet();
+    final allRemote = await _client.from('staffs').select('id');
+    final existingIds = allRemote.map((r) => r['id'] as int).toSet();
     print('[Sync] Staffs existants: ${existingIds.join(", ")}');
 
     final missingIds = staffIds.difference(existingIds);
@@ -96,23 +94,25 @@ class PlanningSyncService {
       return;
     }
 
-    final staffs = _objectBox.staffBox
-        .getMany(missingIds.toList())
-        .where((s) => s != null)
-        .cast<Staff>()
-        .toList();
-    print('[Sync] Staffs trouvés dans ObjectBox pour upsert: ${staffs.length}');
+    final staffs = _objectBox.staffBox.getMany(missingIds.toList());
+    final nonNull = <Staff>[];
+    for (final s in staffs) {
+      if (s != null) nonNull.add(s);
+    }
+    print('[Sync] Staffs trouvés dans ObjectBox pour upsert: ${nonNull.length}');
 
-    if (staffs.isNotEmpty) {
-      final payload = staffs.map((s) => {
-        'id': s.id,
-        'nom': s.nom,
-        'grade': s.grade,
-        'groupe': s.groupe,
-        'equipe': s.equipe ?? '',
-        'ordre': s.ordre ?? 0,
-        'branch_id':
-            s.branch.targetId != 0 ? s.branch.targetId : null,
+    if (nonNull.isNotEmpty) {
+      final payload = nonNull.map((s) {
+        final branchId = s.branch.targetId;
+        return {
+          'id': s.id,
+          'nom': s.nom,
+          'grade': s.grade,
+          'groupe': s.groupe,
+          'equipe': s.equipe ?? '',
+          'ordre': s.ordre ?? 0,
+          'branch_id': branchId != 0 ? branchId : null,
+        };
       }).toList();
       print('[Sync] Upsert staffs (ids: ${payload.map((p) => p['id']).join(", ")})');
       await _client.from('staffs').upsert(payload);
