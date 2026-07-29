@@ -893,7 +893,8 @@ class ActiviteProvider with ChangeNotifier {
         activite.jour == dateJour.day &&
         (activite.statut == 'C' ||
             activite.statut == 'CM' ||
-            activite.statut == 'M'));
+            activite.statut == 'M' ||
+            activite.statut == 'RE'));
   }
 
   /// ✅ MÉTHODE CORRIGÉE : Création d'activités avec prise en compte des congés et obs

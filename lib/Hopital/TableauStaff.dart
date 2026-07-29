@@ -5195,9 +5195,11 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          description,
-          style: TextStyle(fontSize: 12, color: color),
+        FittedBox(
+          child: Text(
+            description,
+            style: TextStyle(fontSize: 12, color: color),
+          ),
         ),
       ],
     );
@@ -6616,7 +6618,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                   boxShadow: isSelected
                                       ? [
                                           BoxShadow(
-                                            color: Colors.teal.withValues(alpha: 0.3),
+                                            color: Colors.teal
+                                                .withValues(alpha: 0.3),
                                             blurRadius: 4,
                                             offset: Offset(0, 2),
                                           ),
@@ -9944,8 +9947,7 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                   SegmentedButton<bool>(
                     segments: [
                       ButtonSegment(value: false, label: Text("Date à Date")),
-                      ButtonSegment(
-                          value: true, label: Text("Début + Jours")),
+                      ButtonSegment(value: true, label: Text("Début + Jours")),
                     ],
                     selected: {useNombreJours},
                     onSelectionChanged: (Set<bool> selection) {
@@ -10032,107 +10034,104 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     Widget buildStartDate() => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Date début:",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
-        OutlinedButton.icon(
-          icon: Icon(Icons.calendar_month),
-          label: Text(
-            dateDebut != null
-                ? DateFormat('dd/MM/yyyy').format(dateDebut!)
-                : 'Sélectionner',
-          ),
-          onPressed: () async {
-            final firstDate =
-                DateTime(widget.selectedYear, widget.selectedMonth, 1);
-            final lastDate = DateTime(
-                widget.selectedYear, widget.selectedMonth + 1, 0);
-            final now = DateTime.now();
-            DateTime initialDate;
-            if (dateDebut != null) {
-              initialDate = dateDebut!;
-            } else if (now.isAfter(firstDate) &&
-                now.isBefore(lastDate.add(Duration(days: 1)))) {
-              initialDate = now;
-            } else {
-              initialDate = firstDate;
-            }
-            final date = await showDatePicker(
-              context: context,
-              initialDate: initialDate,
-              firstDate: DateTime(2020, 1, 1),
-              lastDate: DateTime(2030, 12, 31),
-            );
-            if (date != null) {
-              setState(() {
-                dateDebut = date;
-                if (dateFin != null && dateFin!.isBefore(date)) {
-                  dateFin = date;
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Date début:", style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 5),
+            OutlinedButton.icon(
+              icon: Icon(Icons.calendar_month),
+              label: Text(
+                dateDebut != null
+                    ? DateFormat('dd/MM/yyyy').format(dateDebut!)
+                    : 'Sélectionner',
+              ),
+              onPressed: () async {
+                final firstDate =
+                    DateTime(widget.selectedYear, widget.selectedMonth, 1);
+                final lastDate =
+                    DateTime(widget.selectedYear, widget.selectedMonth + 1, 0);
+                final now = DateTime.now();
+                DateTime initialDate;
+                if (dateDebut != null) {
+                  initialDate = dateDebut!;
+                } else if (now.isAfter(firstDate) &&
+                    now.isBefore(lastDate.add(Duration(days: 1)))) {
+                  initialDate = now;
+                } else {
+                  initialDate = firstDate;
                 }
-              });
-            }
-          },
-        ),
-      ],
-    );
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: initialDate,
+                  firstDate: DateTime(2020, 1, 1),
+                  lastDate: DateTime(2030, 12, 31),
+                );
+                if (date != null) {
+                  setState(() {
+                    dateDebut = date;
+                    if (dateFin != null && dateFin!.isBefore(date)) {
+                      dateFin = date;
+                    }
+                  });
+                }
+              },
+            ),
+          ],
+        );
 
     Widget buildEndDate() => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Date fin:",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
-        OutlinedButton.icon(
-          icon: Icon(Icons.calendar_month),
-          label: Text(
-            dateFin != null
-                ? DateFormat('dd/MM/yyyy').format(dateFin!)
-                : 'Sélectionner',
-          ),
-          onPressed: dateDebut == null
-              ? null
-              : () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: dateFin ??
-                        dateDebut!.add(Duration(days: 1)),
-                    firstDate: dateDebut!,
-                    lastDate: DateTime(2030, 12, 31),
-                  );
-                  if (date != null) {
-                    setState(() {
-                      dateFin = date;
-                    });
-                  }
-                },
-        ),
-      ],
-    );
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Date fin:", style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 5),
+            OutlinedButton.icon(
+              icon: Icon(Icons.calendar_month),
+              label: Text(
+                dateFin != null
+                    ? DateFormat('dd/MM/yyyy').format(dateFin!)
+                    : 'Sélectionner',
+              ),
+              onPressed: dateDebut == null
+                  ? null
+                  : () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate:
+                            dateFin ?? dateDebut!.add(Duration(days: 1)),
+                        firstDate: dateDebut!,
+                        lastDate: DateTime(2030, 12, 31),
+                      );
+                      if (date != null) {
+                        setState(() {
+                          dateFin = date;
+                        });
+                      }
+                    },
+            ),
+          ],
+        );
 
     Widget buildNbJours() => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text("Nb jours:",
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        SizedBox(height: 5),
-        TextFormField(
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: "Ex: 5",
-            border: OutlineInputBorder(),
-            contentPadding:
-                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          ),
-          onChanged: (value) {
-            setState(() {
-              nombreJours = int.tryParse(value);
-            });
-          },
-        ),
-      ],
-    );
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Nb jours:", style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 5),
+            TextFormField(
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                hintText: "Ex: 5",
+                border: OutlineInputBorder(),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  nombreJours = int.tryParse(value);
+                });
+              },
+            ),
+          ],
+        );
 
     final dateStart = buildStartDate();
     final dateEnd = !useNombreJours ? buildEndDate() : buildNbJours();
@@ -10163,7 +10162,7 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
         Wrap(
           spacing: 6,
           runSpacing: 6,
-          children: ['C', 'CM', 'M'].map((statut) {
+          children: ['C', 'CM', 'M', 'RE'].map((statut) {
             String label;
             switch (statut) {
               case 'C':
@@ -10174,6 +10173,9 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                 break;
               case 'M':
                 label = 'Maternité';
+                break;
+              case 'RE':
+                label = 'Récupération';
                 break;
               default:
                 label = statut;
@@ -10495,7 +10497,8 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                   child: Text("Éditer le congé",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
                 Flexible(
                   child: SingleChildScrollView(
@@ -10507,11 +10510,13 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Début:", style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text("Début:",
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                             SizedBox(height: 5),
                             OutlinedButton.icon(
                               icon: Icon(Icons.calendar_month),
-                              label: Text(DateFormat('dd/MM/yyyy').format(dateDebut)),
+                              label: Text(
+                                  DateFormat('dd/MM/yyyy').format(dateDebut)),
                               onPressed: () async {
                                 final date = await showDatePicker(
                                   context: context,
@@ -10537,11 +10542,13 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Fin:", style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text("Fin:",
+                                style: TextStyle(fontWeight: FontWeight.bold)),
                             SizedBox(height: 5),
                             OutlinedButton.icon(
                               icon: Icon(Icons.calendar_month),
-                              label: Text(DateFormat('dd/MM/yyyy').format(dateFin)),
+                              label: Text(
+                                  DateFormat('dd/MM/yyyy').format(dateFin)),
                               onPressed: () async {
                                 final date = await showDatePicker(
                                   context: context,
@@ -10566,12 +10573,14 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                             labelText: "Motif",
                             border: OutlineInputBorder(),
                           ),
-                          value: motifsDisponibles.contains(motif) ? motif : 'C',
+                          value:
+                              motifsDisponibles.contains(motif) ? motif : 'C',
                           items: motifsDisponibles
                               .map((m) => DropdownMenuItem(
-                                value: m,
-                                child: Text('$m — ${_legendLabels[m] ?? m}'),
-                              ))
+                                    value: m,
+                                    child:
+                                        Text('$m — ${_legendLabels[m] ?? m}'),
+                                  ))
                               .toList(),
                           onChanged: (value) {
                             if (value != null) {
@@ -10602,8 +10611,9 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
                         ),
                         onPressed: () async {
                           try {
-                            final staffProvider =
-                                Provider.of<StaffProvider>(context, listen: false);
+                            final staffProvider = Provider.of<StaffProvider>(
+                                context,
+                                listen: false);
                             final objectBox = ObjectBox();
 
                             widget.timeOff.debut = dateDebut;
@@ -10717,33 +10727,34 @@ class OrdreMonitorWidget extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
-                        'État des ordres',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          'État des ordres',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 4,
-                        children: [
-                          _buildStat('Total', '${staffs.length}', Colors.blue),
-                          _buildStat('Doublons', '$doublons',
-                              doublons > 0 ? Colors.red : Colors.green),
-                          _buildStat(
-                              'Sans ordre',
-                              '${staffsSansOrdre.length}',
-                              staffsSansOrdre.isEmpty
-                                  ? Colors.green
-                                  : Colors.orange),
-                        ],
-                      ),
-                    ],
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            _buildStat(
+                                'Total', '${staffs.length}', Colors.blue),
+                            _buildStat('Doublons', '$doublons',
+                                doublons > 0 ? Colors.red : Colors.green),
+                            _buildStat(
+                                'Sans ordre',
+                                '${staffsSansOrdre.length}',
+                                staffsSansOrdre.isEmpty
+                                    ? Colors.green
+                                    : Colors.orange),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
               if (hasProblems)
                 ElevatedButton.icon(
                   icon: const Icon(Icons.build, size: 14),
