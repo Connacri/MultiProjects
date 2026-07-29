@@ -276,6 +276,12 @@ class _BoxTile extends StatelessWidget {
   }
 }
 
+class _FieldEntry {
+  final String name;
+  final String value;
+  const _FieldEntry(this.name, this.value);
+}
+
 // ─── Detail Page ─────────────────────────────────────────────────────────────
 
 class _BoxDetailPage extends StatefulWidget {
@@ -331,96 +337,152 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     return null;
   }
 
+  static const _allFieldNames = <String>[
+    'id', 'nom', 'name', 'code', 'title', 'prenom', 'shift', 'team', 'grade',
+    'motif', 'note', 'status', 'mois', 'annee', 'from', 'to', 'total',
+    'username', 'password', 'email', 'phone', 'role', 'photo',
+    'qr', 'image', 'description', 'prixVente', 'tax', 'qtyPartiel',
+    'pricePartielVente', 'minimStock', 'alertPeremption',
+    'quantite', 'prixAchat', 'datePeremption', 'adresse',
+    'type', 'qrReference', 'impayer', 'date', 'montantVerse',
+    'prixUnitaire', 'titre', 'prix', 'lien', 'categorie',
+    'floors', 'roomsPerFloor', 'avoidedNumbers', 'photosJson',
+    'capacity', 'bedType', 'standing', 'viewType', 'amenities',
+    'basePrice', 'seasonMultiplier', 'weekendMultiplier',
+    'allowsExtraBed', 'extraBedPrice', 'isActive', 'sortOrder',
+    'includesBreakfast', 'includesLunch', 'includesDinner',
+    'includesSnacks', 'includesDrinks', 'includesAlcoholicDrinks',
+    'includesRoomService', 'includesMinibar',
+    'pricePerPerson', 'childDiscount', 'notes',
+    'category', 'price', 'pricingUnit', 'isPercentage',
+    'requiresAdvanceBooking', 'advanceHours', 'maxQuantity',
+    'isPackage', 'packageIncludes', 'scheduledDate',
+    'unitPrice', 'totalPrice', 'quantity',
+    'startDate', 'endDate', 'multiplier', 'applicationType',
+    'targetIds', 'priority', 'fullName', 'phoneNumber',
+    'idCardNumber', 'nationality', 'discountPercent',
+    'discountAmount', 'discountType', 'discountAppliedTo',
+    'selectedDiscountItems', 'cachedBoardBasisPrice',
+    'cachedExtrasTotal', 'seasonalMultiplier', 'pricePerNight',
+    'groupe', 'equipe', 'ordre', 'jour', 'statut', 'branchNom',
+    'debut', 'fin', 'dateDebut', 'dateFin',
+    'dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi',
+    'libelle', 'couleurHex', 'ordreEquipes', 'activitesJson',
+    'messageId', 'conversationId', 'fromNodeId', 'toNodeId',
+    'typeValue', 'content', 'mediaPath', 'mediaSize', 'mediaMimeType',
+    'mediaDuration', 'sentTimestamp', 'receivedTimestamp', 'readTimestamp',
+    'statusValue', 'replyToMessageId', 'replyToContent', 'replyToFromNodeId',
+    'isFavorite', 'isDeleted', 'encryptionKeyId', 'contentHash',
+    'sendAttempts', 'lastErrorMessage',
+    'avatarPath', 'participantNodeIds', 'creatorNodeId',
+    'createdTimestamp', 'lastActivityTimestamp', 'lastMessageId',
+    'lastMessagePreview', 'unreadCount', 'messageCount',
+    'isArchived', 'isPinned', 'isMuted', 'lastSyncTimestamp',
+    'metadata', 'displayName', 'nodeId', 'joinedTimestamp',
+    'leftTimestamp', 'notificationsEnabled', 'lastReadMessageId',
+    'lastAccessTimestamp', 'recipientNodeId', 'confirmedTimestamp',
+    'messageHash', 'operation', 'targetNodeIds', 'attemptCount',
+    'nextRetryTimestamp', 'errorMessage', 'searchContent',
+    'messageTimestamp', 'swipedId', 'action', 'createdAt',
+    'otherUserName', 'otherUserPhoto', 'lastMessageAt', 'matchedAt',
+    'localId', 'age', 'bio', 'photos', 'city', 'distanceKm',
+    'branchId', 'year', 'month', 'revision', 'remoteId',
+    'dateEpochMs', 'configurationId', 'configurationVersion',
+    'phaseIndex', 'teamPhaseByTeamJson', 'syncState',
+    'lastSyncedAtEpochMs', 'syncError', 'version',
+    'teamOrderJson', 'cycleJson', 'policy',
+    'referenceDateEpochMs', 'referencePhaseIndex',
+    'startDateEpochMs', 'endDateEpochMs',
+    'snapshotId', 'staffId', 'dateEpochMs', 'engineVersion',
+    'createdAtEpochMs', 'publishedAtEpochMs',
+    'revisionId', 'baseSnapshotId', 'effectiveSnapshotId',
+    'modifiedAtEpochMs', 'modifiedBy', 'changedFieldsJson', 'validated',
+    'derniereModification', 'isSynced', 'syncedAt',
+    'dateCreation', 'createdBy', 'updatedBy', 'deletedBy', 'dateDeleting',
+    'delaisPeremption',
+  ];
+
+  static const _labelFields = <String>[
+    'nom', 'name', 'code', 'title', 'prenom', 'fullName',
+    'libelle', 'username', 'titre', 'branchNom',
+  ];
+
   String _objectToString(dynamic obj) {
     final type = obj.runtimeType;
     final id = _getId(obj);
     final parts = <String>['$type#$id'];
-    final tried = <String>{};
-    for (final f in ['nom', 'name', 'code', 'title', 'prenom', 'shift',
-        'team', 'grade', 'motif', 'note', 'status', 'mois', 'annee',
-        'from', 'to', 'total']) {
-      tried.add(f);
+    for (final f in _labelFields) {
       try {
-        final val = _getField(obj, f);
+        final val = _getFieldValue(obj, f);
         if (val != null && val.toString().isNotEmpty) {
-          parts.add('$f: $val');
+          final s = val.toString();
+          if (s.length > 60) break;
+          parts.add('$f: $s');
           if (parts.length >= 4) break;
         }
       } catch (_) {}
     }
-    for (final rel in ['staff', 'room', 'branch', 'client']) {
-      if (tried.contains(rel)) continue;
+    for (final f in ['groupe', 'status', 'shift', 'team', 'role', 'statut']) {
+      if (parts.length >= 5) break;
       try {
-        final val = _getField(obj, rel);
+        final val = _getFieldValue(obj, f);
         if (val != null && val.toString().isNotEmpty) {
-          parts.add(val);
-          if (parts.length >= 4) break;
+          parts.add('$f: ${val.toString().length > 40 ? val.toString().substring(0, 40) : val}');
         }
       } catch (_) {}
     }
     return parts.join(' | ');
   }
 
-  dynamic _getField(dynamic obj, String name) {
-    switch (name) {
-      case 'nom': return (obj).nom;
-      case 'name': return (obj).name;
-      case 'code': return (obj).code;
-      case 'title': return (obj).title;
-      case 'prenom': return (obj).prenom;
-      case 'shift': return (obj).shift;
-      case 'team': return (obj).team;
-      case 'grade': return (obj).grade;
-      case 'motif': return (obj).motif;
-      case 'note': return (obj).note;
-      case 'status': return (obj).status;
-      case 'mois': return (obj).mois;
-      case 'annee': return (obj).annee;
-      case 'from': return (obj).from;
-      case 'to': return (obj).to;
-      case 'total': return (obj).total;
-      case 'staff': return _resolveToOne(obj, 'staff');
-      case 'room': return _resolveToOne(obj, 'room');
-      case 'branch': return _resolveToOne(obj, 'branch');
-      case 'client': return _resolveToOne(obj, 'client');
-    }
-    return null;
-  }
-
-  String? _resolveToOne(dynamic obj, String name) {
+  dynamic _getFieldValue(dynamic obj, String name) {
     try {
-      final rel = _getToOneField(obj, name);
-      if (rel == null) return null;
-      final targetId = rel.targetId is int ? rel.targetId as int : 0;
-      final target = rel.target;
-      if (target == null) return '$name[#$targetId]';
-      final label = _firstLabel(target);
-      final prefix = label.isNotEmpty ? '$label (#$targetId)' : '#$targetId';
-      return '$name: $prefix';
+      final val = (obj as dynamic).$name;
+      if (val == null) return null;
+      // Check if it's a ToOne relation
+      try {
+        final targetId = (val as dynamic).targetId;
+        final target = (val as dynamic).target;
+        if (target != null) {
+          final label = _firstLabel(target);
+          return label.isNotEmpty ? '$name: $label (#$targetId)' : '$name: #$targetId';
+        }
+        if (targetId is int && targetId > 0) return '#$targetId';
+        return null;
+      } catch (_) {
+        // Check if it's a ToMany
+        try {
+          final list = (val as dynamic).toList();
+          return '[${list.length}]';
+        } catch (_2) {
+          return val;
+        }
+      }
     } catch (_) {
       return null;
     }
   }
 
   String _firstLabel(dynamic target) {
-    for (final f in ['nom', 'name', 'code', 'title', 'prenom']) {
+    for (final f in _labelFields) {
       try {
-        final val = _getField(target, f);
+        final val = _getFieldValue(target, f);
         if (val != null && val.toString().isNotEmpty) return val.toString();
       } catch (_) {}
     }
     return '';
   }
 
-  dynamic _getToOneField(dynamic obj, String name) {
-    // obj.staff, obj.room, etc. — must be accessed via dynamic
-    switch (name) {
-      case 'staff': return (obj).staff;
-      case 'room': return (obj).room;
-      case 'branch': return (obj).branch;
-      case 'client': return (obj).client;
+  List<_FieldEntry> _allFields(dynamic obj) {
+    final entries = <_FieldEntry>[];
+    for (final f in _allFieldNames) {
+      try {
+        final val = _getFieldValue(obj, f);
+        if (val != null && val.toString().isNotEmpty) {
+          entries.add(_FieldEntry(f, val.toString()));
+        }
+      } catch (_) {}
     }
-    return null;
+    return entries;
   }
 
   Future<void> _clearBox() async {
@@ -552,29 +614,57 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     _refresh();
   }
 
+  static const _legendMotifs = <String>[
+    'GJ', 'GN', 'RE', 'C', 'CM', 'M', 'N', 'F',
+  ];
+  static const _legendLabels = <String, String>{
+    'GJ': 'Jour',
+    'GN': 'Nuit',
+    'RE': 'Récupération',
+    'C': 'Congé',
+    'CM': 'Congé Maladie',
+    'M': 'Maternité',
+    'N': 'Normal',
+    'F': 'Jour Férié',
+  };
+
   Future<void> _addTimeOff(Staff staff) async {
-    final motifCtrl = TextEditingController();
     final debutCtrl = TextEditingController(text: DateTime.now().toIso8601String().split('T')[0]);
     final finCtrl = TextEditingController(text: DateTime.now().toIso8601String().split('T')[0]);
+    String? selectedMotif;
 
     final saved = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Ajouter un congé'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: debutCtrl, decoration: const InputDecoration(labelText: 'Début (AAAA-MM-JJ)', border: OutlineInputBorder())),
-            const SizedBox(height: 8),
-            TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Fin (AAAA-MM-JJ)', border: OutlineInputBorder())),
-            const SizedBox(height: 8),
-            TextField(controller: motifCtrl, decoration: const InputDecoration(labelText: 'Motif', border: OutlineInputBorder()), maxLines: 2),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => AlertDialog(
+          title: const Text('Ajouter un congé'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: debutCtrl, decoration: const InputDecoration(labelText: 'Début (AAAA-MM-JJ)', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Fin (AAAA-MM-JJ)', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: selectedMotif,
+                decoration: const InputDecoration(
+                  labelText: 'Type',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.beach_access),
+                ),
+                items: _legendMotifs.map((code) => DropdownMenuItem(
+                  value: code,
+                  child: Text('$code — ${_legendLabels[code] ?? code}'),
+                )).toList(),
+                onChanged: (v) => setStateDialog(() => selectedMotif = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ajouter')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ajouter')),
-        ],
       ),
     );
 
@@ -583,7 +673,7 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     final timeOff = TimeOff(
       debut: DateTime.tryParse(debutCtrl.text) ?? DateTime.now(),
       fin: DateTime.tryParse(finCtrl.text) ?? DateTime.now(),
-      motif: motifCtrl.text.trim().isEmpty ? null : motifCtrl.text.trim(),
+      motif: selectedMotif,
     );
     timeOff.staff.target = staff;
     objectBox.timeOffBox.put(timeOff);
@@ -591,35 +681,49 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
   }
 
   Future<void> _editTimeOff(TimeOff to, Staff staff) async {
-    final motifCtrl = TextEditingController(text: to.motif ?? '');
     final debutCtrl = TextEditingController(text: to.debut.toIso8601String().split('T')[0]);
     final finCtrl = TextEditingController(text: to.fin.toIso8601String().split('T')[0]);
+    String? selectedMotif = to.motif;
 
     final saved = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Modifier le congé'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: debutCtrl, decoration: const InputDecoration(labelText: 'Début (AAAA-MM-JJ)', border: OutlineInputBorder())),
-            const SizedBox(height: 8),
-            TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Fin (AAAA-MM-JJ)', border: OutlineInputBorder())),
-            const SizedBox(height: 8),
-            TextField(controller: motifCtrl, decoration: const InputDecoration(labelText: 'Motif', border: OutlineInputBorder()), maxLines: 2),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => AlertDialog(
+          title: const Text('Modifier le congé'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: debutCtrl, decoration: const InputDecoration(labelText: 'Début (AAAA-MM-JJ)', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Fin (AAAA-MM-JJ)', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: selectedMotif,
+                decoration: const InputDecoration(
+                  labelText: 'Type',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.beach_access),
+                ),
+                items: _legendMotifs.map((code) => DropdownMenuItem(
+                  value: code,
+                  child: Text('$code — ${_legendLabels[code] ?? code}'),
+                )).toList(),
+                onChanged: (v) => setStateDialog(() => selectedMotif = v),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enregistrer')),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enregistrer')),
-        ],
       ),
     );
 
     if (saved != true || !mounted) return;
     to.debut = DateTime.tryParse(debutCtrl.text) ?? to.debut;
     to.fin = DateTime.tryParse(finCtrl.text) ?? to.fin;
-    to.motif = motifCtrl.text.trim().isEmpty ? null : motifCtrl.text.trim();
+    to.motif = selectedMotif;
     context.read<ObjectBox>().timeOffBox.put(to);
     _loadTimeOff(staff);
   }
@@ -732,15 +836,64 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
             ),
           ),
           if (isExpanded) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: SelectableText(
-                str,
-                style: const TextStyle(fontSize: 12, fontFamily: 'monospace', color: Colors.black87),
-              ),
-            ),
+            _buildEntityDetails(obj),
             if (isStaff) _buildStaffTimeOff(obj),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEntityDetails(dynamic obj) {
+    final fields = _allFields(obj);
+    if (fields.isEmpty) return const SizedBox.shrink();
+    final isDesktop = MediaQuery.of(context).size.width >= 900;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isDesktop)
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: fields.map((f) => _buildFieldChip(f)).toList(),
+            )
+          else
+            ...fields.map((f) => _buildFieldRow(f)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldChip(_FieldEntry f) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('${f.name}: ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.blue.shade800)),
+          Flexible(child: SelectableText(f.value, style: const TextStyle(fontSize: 11, fontFamily: 'monospace'))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFieldRow(_FieldEntry f) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 140,
+            child: Text('${f.name}:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue.shade800)),
+          ),
+          Expanded(child: SelectableText(f.value, style: const TextStyle(fontSize: 12, fontFamily: 'monospace'))),
         ],
       ),
     );

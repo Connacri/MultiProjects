@@ -259,40 +259,92 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: SingleChildScrollView(
-                      child: DataTable(
-                        columns: [
-                          for (final col in columns)
-                            DataColumn(
-                              label: Text(
-                                col,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          DataTable(
+                            columns: [
+                              for (final col in columns)
+                                DataColumn(
+                                  label: Text(
+                                    col,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                            ],
+                            rows: [
+                              for (var i = 0; i < _rows.length; i++)
+                                DataRow(
+                                  selected: i == _selectedRowIndex,
+                                  onSelectChanged: (selected) {
+                                    setState(() => _selectedRowIndex =
+                                        selected == true ? i : null);
+                                  },
+                                  cells: [
+                                    for (final col in columns)
+                                      DataCell(
+                                        ConstrainedBox(
+                                          constraints:
+                                              const BoxConstraints(maxWidth: 200),
+                                          child: Text(
+                                            '${_rows[i][col] ?? ''}',
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 2,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                          if (_selectedRowIndex != null) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              margin: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.info_outline, size: 16, color: Colors.blue.shade700),
+                                      const SizedBox(width: 6),
+                                      Text('Détail ligne #${_selectedRowIndex! + 1}',
+                                        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.blue.shade800)),
+                                      const Spacer(),
+                                      GestureDetector(
+                                        onTap: () => setState(() => _selectedRowIndex = null),
+                                        child: Icon(Icons.close, size: 16, color: Colors.grey.shade500),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ...columns.map((col) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 4),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        SizedBox(
+                                          width: 180,
+                                          child: Text('$col:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue.shade800)),
+                                        ),
+                                        Expanded(child: SelectableText(
+                                          '${_rows[_selectedRowIndex!][col] ?? ''}',
+                                          style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                                        )),
+                                      ],
+                                    ),
+                                  )),
+                                ],
                               ),
                             ),
-                        ],
-                        rows: [
-                          for (var i = 0; i < _rows.length; i++)
-                            DataRow(
-                              selected: i == _selectedRowIndex,
-                              onSelectChanged: (selected) {
-                                setState(() => _selectedRowIndex =
-                                    selected == true ? i : null);
-                              },
-                              cells: [
-                                for (final col in columns)
-                                  DataCell(
-                                    ConstrainedBox(
-                                      constraints:
-                                          const BoxConstraints(maxWidth: 200),
-                                      child: Text(
-                                        '${_rows[i][col] ?? ''}',
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
+                          ],
                         ],
                       ),
                     ),

@@ -1456,9 +1456,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                                 //             builder: (ctx) => CardsPage())),
                                 //     icon: Icon(Icons.dangerous_rounded)),
                                 _buildLegendItem(
-                                    'GJ', _getStatusColor('GJ'), 'Jour'),
+                                    'JOUR', _getStatusColor('GJ'), 'Jour'),
                                 _buildLegendItem(
-                                    'GN', _getStatusColor('GN'), 'Nuit'),
+                                    'NUIT', _getStatusColor('GN'), 'Nuit'),
                                 _buildLegendItem('RE', _getStatusColor('RE'),
                                     'Récupération'),
                                 _buildLegendItem(
@@ -9831,10 +9831,10 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
       nombreJours = dateFin!.difference(dateDebut!).inDays + 1;
     }
 
-    return AlertDialog(
-      title: Text("Gestion des congés - ${widget.staff.nom}"),
-      content: SizedBox(
-        width: double.minPositive, // ✅ Contrainte explicite
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    final dialogContent = Padding(
+      padding: EdgeInsets.all(5),
+      child: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -9854,13 +9854,13 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                 ),
                 SizedBox(height: 8),
                 Container(
-                  height: 200, // ✅ Hauteur fixe pour éviter les overflow
+                  height: 200,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey.shade300),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ListView.builder(
-                    key: ValueKey(_listRebuildKey), // ✅ Force rebuild
+                    key: ValueKey(_listRebuildKey),
                     shrinkWrap: true,
                     itemCount: timeOffs.length,
                     itemBuilder: (context, index) {
@@ -9898,13 +9898,11 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Bouton éditer
                               IconButton(
                                 icon: Icon(Icons.edit,
                                     color: Colors.blue, size: 18),
                                 onPressed: () => _handleEdit(context, timeOff),
                               ),
-                              // Bouton supprimer
                               IconButton(
                                 icon: Icon(Icons.delete,
                                     color: Colors.red, size: 18),
@@ -9937,27 +9935,26 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
               SizedBox(height: 15),
 
               // Mode de saisie
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text("Mode de saisie:",
                       style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: SegmentedButton<bool>(
-                      segments: [
-                        ButtonSegment(value: false, label: Text("Date à Date")),
-                        ButtonSegment(
-                            value: true, label: Text("Début + Jours")),
-                      ],
-                      selected: {useNombreJours},
-                      onSelectionChanged: (Set<bool> selection) {
-                        setState(() {
-                          useNombreJours = selection.first;
-                          nombreJours = null;
-                          dateFin = null;
-                        });
-                      },
-                    ),
+                  SizedBox(height: 8),
+                  SegmentedButton<bool>(
+                    segments: [
+                      ButtonSegment(value: false, label: Text("Date à Date")),
+                      ButtonSegment(
+                          value: true, label: Text("Début + Jours")),
+                    ],
+                    selected: {useNombreJours},
+                    onSelectionChanged: (Set<bool> selection) {
+                      setState(() {
+                        useNombreJours = selection.first;
+                        nombreJours = null;
+                        dateFin = null;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -9979,21 +9976,51 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
           ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text("Fermer"),
+    );
+
+    return Dialog(
+      insetPadding: isMobile
+          ? EdgeInsets.all(5)
+          : EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isMobile ? double.infinity : 500,
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
         ),
-        if (dateDebut != null && dateFin != null)
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              child: Text("Gestion des congés - ${widget.staff.nom}",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            onPressed: () => _handleSave(context),
-            child: Text("Ajouter le congé"),
-          ),
-      ],
+            Expanded(child: dialogContent),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text("Fermer"),
+                  ),
+                  SizedBox(width: 8),
+                  if (dateDebut != null && dateFin != null)
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => _handleSave(context),
+                      child: Text("Ajouter le congé"),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -10002,120 +10029,128 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
   // ==========================================================================
 
   Widget _buildDateSelectors() {
-    return Row(
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    Widget buildStartDate() => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date début
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Date début:",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(height: 5),
-              OutlinedButton.icon(
-                icon: Icon(Icons.calendar_month),
-                label: Text(
-                  dateDebut != null
-                      ? DateFormat('dd/MM/yyyy').format(dateDebut!)
-                      : 'Sélectionner',
-                ),
-                onPressed: () async {
-                  final firstDate =
-                      DateTime(widget.selectedYear, widget.selectedMonth, 1);
-                  final lastDate = DateTime(
-                      widget.selectedYear, widget.selectedMonth + 1, 0);
-                  final now = DateTime.now();
+        Text("Date début:",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 5),
+        OutlinedButton.icon(
+          icon: Icon(Icons.calendar_month),
+          label: Text(
+            dateDebut != null
+                ? DateFormat('dd/MM/yyyy').format(dateDebut!)
+                : 'Sélectionner',
+          ),
+          onPressed: () async {
+            final firstDate =
+                DateTime(widget.selectedYear, widget.selectedMonth, 1);
+            final lastDate = DateTime(
+                widget.selectedYear, widget.selectedMonth + 1, 0);
+            final now = DateTime.now();
+            DateTime initialDate;
+            if (dateDebut != null) {
+              initialDate = dateDebut!;
+            } else if (now.isAfter(firstDate) &&
+                now.isBefore(lastDate.add(Duration(days: 1)))) {
+              initialDate = now;
+            } else {
+              initialDate = firstDate;
+            }
+            final date = await showDatePicker(
+              context: context,
+              initialDate: initialDate,
+              firstDate: DateTime(2020, 1, 1),
+              lastDate: DateTime(2030, 12, 31),
+            );
+            if (date != null) {
+              setState(() {
+                dateDebut = date;
+                if (dateFin != null && dateFin!.isBefore(date)) {
+                  dateFin = date;
+                }
+              });
+            }
+          },
+        ),
+      ],
+    );
 
-                  DateTime initialDate;
-                  if (dateDebut != null) {
-                    initialDate = dateDebut!;
-                  } else if (now.isAfter(firstDate) &&
-                      now.isBefore(lastDate.add(Duration(days: 1)))) {
-                    initialDate = now;
-                  } else {
-                    initialDate = firstDate;
-                  }
-
+    Widget buildEndDate() => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Date fin:",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 5),
+        OutlinedButton.icon(
+          icon: Icon(Icons.calendar_month),
+          label: Text(
+            dateFin != null
+                ? DateFormat('dd/MM/yyyy').format(dateFin!)
+                : 'Sélectionner',
+          ),
+          onPressed: dateDebut == null
+              ? null
+              : () async {
                   final date = await showDatePicker(
                     context: context,
-                    initialDate: initialDate,
-                    firstDate: DateTime(2020, 1, 1),
+                    initialDate: dateFin ??
+                        dateDebut!.add(Duration(days: 1)),
+                    firstDate: dateDebut!,
                     lastDate: DateTime(2030, 12, 31),
                   );
-
                   if (date != null) {
                     setState(() {
-                      dateDebut = date;
-                      if (dateFin != null && dateFin!.isBefore(date)) {
-                        dateFin = date;
-                      }
+                      dateFin = date;
                     });
                   }
                 },
-              ),
-            ],
-          ),
         ),
-        SizedBox(width: 8),
+      ],
+    );
 
-        // Date fin OU Nombre de jours
-        Expanded(
-          child: !useNombreJours
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Date fin:",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
-                    OutlinedButton.icon(
-                      icon: Icon(Icons.calendar_month),
-                      label: Text(
-                        dateFin != null
-                            ? DateFormat('dd/MM/yyyy').format(dateFin!)
-                            : 'Sélectionner',
-                      ),
-                      onPressed: dateDebut == null
-                          ? null
-                          : () async {
-                              final date = await showDatePicker(
-                                context: context,
-                                initialDate: dateFin ??
-                                    dateDebut!.add(Duration(days: 1)),
-                                firstDate: dateDebut!,
-                                lastDate: DateTime(2030, 12, 31),
-                              );
-                              if (date != null) {
-                                setState(() {
-                                  dateFin = date;
-                                });
-                              }
-                            },
-                    ),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Nb jours:",
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    SizedBox(height: 5),
-                    TextFormField(
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        hintText: "Ex: 5",
-                        border: OutlineInputBorder(),
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          nombreJours = int.tryParse(value);
-                        });
-                      },
-                    ),
-                  ],
-                ),
+    Widget buildNbJours() => Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Nb jours:",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        SizedBox(height: 5),
+        TextFormField(
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: "Ex: 5",
+            border: OutlineInputBorder(),
+            contentPadding:
+                EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+          onChanged: (value) {
+            setState(() {
+              nombreJours = int.tryParse(value);
+            });
+          },
         ),
+      ],
+    );
+
+    final dateStart = buildStartDate();
+    final dateEnd = !useNombreJours ? buildEndDate() : buildNbJours();
+
+    if (isMobile) {
+      return Column(
+        children: [
+          dateStart,
+          SizedBox(height: 12),
+          dateEnd,
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Expanded(child: dateStart),
+        SizedBox(width: 16),
+        Expanded(child: dateEnd),
       ],
     );
   }
@@ -10184,8 +10219,9 @@ class _TimeOffDialogContentState extends State<_TimeOffDialogContent> {
             ),
           ),
           SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
             children: [
               Text("Du: ${DateFormat('dd/MM/yyyy').format(dateDebut!)}"),
               Text("Au: ${DateFormat('dd/MM/yyyy').format(dateFin!)}"),
@@ -10426,141 +10462,189 @@ class _EditTimeOffDialogState extends State<_EditTimeOffDialog> {
     motif = widget.timeOff.motif ?? 'Congé';
   }
 
+  static const _legendLabels = <String, String>{
+    'JOUR': 'Jour',
+    'NUIT': 'Nuit',
+    'RE': 'Récupération',
+    'C': 'Congé',
+    'CM': 'Congé Maladie',
+    'M': 'Maternité',
+    'N': 'Normal',
+    'F': 'Jour Férié',
+    '-': '-',
+  };
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text("Éditer le congé"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Date début
-          Row(
-            children: [
-              Text("Début:", style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: Icon(Icons.calendar_month),
-                  label: Text(DateFormat('dd/MM/yyyy').format(dateDebut)),
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: dateDebut,
-                      firstDate: DateTime(2020, 1, 1),
-                      lastDate: DateTime(2030, 12, 31),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        dateDebut = date;
-                        if (dateFin.isBefore(dateDebut)) {
-                          dateFin = dateDebut;
-                        }
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 15),
-
-          // Date fin
-          Row(
-            children: [
-              Text("Fin:", style: TextStyle(fontWeight: FontWeight.bold)),
-              SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: Icon(Icons.calendar_month),
-                  label: Text(DateFormat('dd/MM/yyyy').format(dateFin)),
-                  onPressed: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: dateFin,
-                      firstDate: dateDebut,
-                      lastDate: DateTime(2030, 12, 31),
-                    );
-                    if (date != null) {
-                      setState(() {
-                        dateFin = date;
-                      });
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 15),
-
-          // Motif
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: "Motif",
-              border: OutlineInputBorder(),
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    return Dialog(
+      insetPadding: isMobile
+          ? EdgeInsets.all(5)
+          : EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      child: Padding(
+        padding: EdgeInsets.all(5),
+        child: SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isMobile ? double.infinity : 400,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
             ),
-            value: motifsDisponibles.contains(motif) ? motif : 'Congé',
-            items: motifsDisponibles
-                .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                .toList(),
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  motif = value;
-                });
-              }
-            },
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text("Annuler"),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-          ),
-          onPressed: () async {
-            try {
-              final staffProvider =
-                  Provider.of<StaffProvider>(context, listen: false);
-              final objectBox = ObjectBox();
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                  child: Text("Éditer le congé",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Date début
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Début:", style: TextStyle(fontWeight: FontWeight.bold)),
+                            SizedBox(height: 5),
+                            OutlinedButton.icon(
+                              icon: Icon(Icons.calendar_month),
+                              label: Text(DateFormat('dd/MM/yyyy').format(dateDebut)),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: dateDebut,
+                                  firstDate: DateTime(2020, 1, 1),
+                                  lastDate: DateTime(2030, 12, 31),
+                                );
+                                if (date != null) {
+                                  setState(() {
+                                    dateDebut = date;
+                                    if (dateFin.isBefore(dateDebut)) {
+                                      dateFin = dateDebut;
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 15),
 
-              // Mettre à jour
-              widget.timeOff.debut = dateDebut;
-              widget.timeOff.fin = dateFin;
-              widget.timeOff.motif = motif;
-              final _selectedYear = widget.selectedYear;
-              final _selectedMonth = widget.selectedMonth;
-              objectBox.timeOffBox.put(widget.timeOff);
-              await staffProvider.fetchStaffs();
-              // ✅ Fermer APRÈS l'update
-              if (context.mounted) {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("✅ Congé modifié"),
-                    backgroundColor: Colors.green,
+                        // Date fin
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Fin:", style: TextStyle(fontWeight: FontWeight.bold)),
+                            SizedBox(height: 5),
+                            OutlinedButton.icon(
+                              icon: Icon(Icons.calendar_month),
+                              label: Text(DateFormat('dd/MM/yyyy').format(dateFin)),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate: dateFin,
+                                  firstDate: dateDebut,
+                                  lastDate: DateTime(2030, 12, 31),
+                                );
+                                if (date != null) {
+                                  setState(() {
+                                    dateFin = date;
+                                  });
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 15),
+
+                        // Motif
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            labelText: "Motif",
+                            border: OutlineInputBorder(),
+                          ),
+                          value: motifsDisponibles.contains(motif) ? motif : 'C',
+                          items: motifsDisponibles
+                              .map((m) => DropdownMenuItem(
+                                value: m,
+                                child: Text('$m — ${_legendLabels[m] ?? m}'),
+                              ))
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() {
+                                motif = value;
+                              });
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              }
-            } catch (e) {
-              print("❌ Erreur update: $e");
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("❌ Erreur: $e"),
-                    backgroundColor: Colors.red,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text("Annuler"),
+                      ),
+                      SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          try {
+                            final staffProvider =
+                                Provider.of<StaffProvider>(context, listen: false);
+                            final objectBox = ObjectBox();
+
+                            widget.timeOff.debut = dateDebut;
+                            widget.timeOff.fin = dateFin;
+                            widget.timeOff.motif = motif;
+                            objectBox.timeOffBox.put(widget.timeOff);
+                            await staffProvider.fetchStaffs();
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                            // SnackBar dans le contexte parent
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("✅ Congé modifié"),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            print("❌ Erreur update: $e");
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("❌ Erreur: $e"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: Text("Sauvegarder"),
+                      ),
+                    ],
                   ),
-                );
-              }
-            }
-          },
-          child: Text("Sauvegarder"),
+                ),
+              ],
+            ),
+          ),
         ),
-      ],
+      ),
     );
   }
 }
@@ -10627,11 +10711,12 @@ class OrdreMonitorWidget extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
                         'État des ordres',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
@@ -10656,8 +10741,9 @@ class OrdreMonitorWidget extends StatelessWidget {
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
               if (hasProblems)
                 ElevatedButton.icon(
                   icon: const Icon(Icons.build, size: 14),
