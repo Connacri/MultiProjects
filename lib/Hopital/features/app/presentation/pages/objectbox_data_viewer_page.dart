@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectBox/classeObjectBox.dart';
@@ -1365,12 +1365,17 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
                       color: widget.item.color,
                       fontWeight: FontWeight.bold)),
             ),
-            title: Text(
-              str.length > 80 ? '${str.substring(0, 80)}...' : str,
-              style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            title: isStaff
+                ? Text('${obj.nom}${obj.equipe != null ? ' (${obj.equipe})' : ''}',
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
+                : Text(str.length > 80 ? '${str.substring(0, 80)}...' : str,
+                    style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis),
+            subtitle: isStaff
+                ? Text(obj.grade,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600))
+                : null,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
