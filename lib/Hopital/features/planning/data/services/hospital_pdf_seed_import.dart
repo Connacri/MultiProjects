@@ -1,34 +1,23 @@
-import 'dart:convert';
-
 import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectBox/classeObjectBox.dart';
 import '../../../../../objectbox.g.dart';
-import '../../../../SupabaseHospitalService.dart';
 
 class HospitalPdfSeedImportService {
   HospitalPdfSeedImportService({
     ObjectBox? objectBox,
-    SupabaseHospitalService? supabaseService,
-  })  : _objectBox = objectBox ?? ObjectBox(),
-        _supabaseService = supabaseService ?? SupabaseHospitalService();
+  }) : _objectBox = objectBox ?? ObjectBox();
 
   final ObjectBox _objectBox;
-  final SupabaseHospitalService _supabaseService;
 
   Future<HospitalSeedImportResult> importAout2026() async {
     final branch = _upsertBranch('Rhumatologie');
     final staffSeeds = _buildAout2026Seeds();
 
-    final obsByStaff = <int, String?>{};
     var staffCount = 0;
     var timeOffCount = 0;
 
     for (final seed in staffSeeds) {
       final staff = _upsertStaff(seed, branch);
-
-      if (seed.observation != null && seed.observation!.trim().isNotEmpty) {
-        obsByStaff[staff.id] = seed.observation!.trim();
-      }
 
       if (seed.leaves.isNotEmpty) {
         timeOffCount += _replaceLeavesForStaff(staff.id, seed.leaves);
@@ -37,18 +26,10 @@ class HospitalPdfSeedImportService {
       staffCount++;
     }
 
-    await _saveMonthlyObservationSnapshot(
-      year: 2026,
-      month: 8,
-      obsByStaff: obsByStaff,
-    );
-
-    await _supabaseService.exportAllToSupabase();
-
     return HospitalSeedImportResult(
       staffCount: staffCount,
       timeOffCount: timeOffCount,
-      observationCount: obsByStaff.length,
+      observationCount: 0,
     );
   }
 
@@ -115,37 +96,6 @@ class HospitalPdfSeedImportService {
     return inserted;
   }
 
-  Future<void> _saveMonthlyObservationSnapshot({
-    required int year,
-    required int month,
-    required Map<int, String?> obsByStaff,
-  }) async {
-    final query = _objectBox.planificationBox
-        .query(Planification_.mois.equals(month) &
-            Planification_.annee.equals(year))
-        .build();
-    var planif = query.findFirst();
-    query.close();
-
-    planif ??= Planification(mois: month, annee: year, ordreEquipes: 'A,B,C,D');
-
-    final observations = obsByStaff.entries
-        .map(
-          (entry) => {
-            'staffId': entry.key,
-            'obs': entry.value,
-          },
-        )
-        .toList();
-
-    planif.activitesJson = jsonEncode({
-      'observations': observations,
-      'activites': <Map<String, Object?>>[],
-    });
-
-    _objectBox.planificationBox.put(planif);
-  }
-
   List<_SeedStaff> _buildAout2026Seeds() {
     return [
       // Médecins
@@ -153,19 +103,16 @@ class HospitalPdfSeedImportService {
         nom: 'Medjadi Mohsine',
         grade: 'Médecin Chef Rhumatologue',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Ouadah Souad',
         grade: 'Médecin Principal en Rhumatologie',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Bouziane Kheira',
         grade: 'Médecin Principal en Rhumatologie',
         groupe: '08h-16h',
-        observation: 'Congé (10/08 - 24/08)',
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 8, 10),
@@ -178,7 +125,6 @@ class HospitalPdfSeedImportService {
         nom: 'Tlemsani Naziha',
         grade: 'Médecin Généraliste',
         groupe: '08h-16h',
-        observation: 'recup 03/8/26 - 05/8/26\nCongé (19/07 - 02/08)',
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 8, 3),
@@ -196,13 +142,11 @@ class HospitalPdfSeedImportService {
         nom: 'Boumazouzi Hind',
         grade: 'Médecin Généraliste',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Benrahal Yasmina',
         grade: 'Médecin Généraliste',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
 
       // Personnel 08h-16h
@@ -210,13 +154,11 @@ class HospitalPdfSeedImportService {
         nom: 'Kerarma Djelloul',
         grade: 'I.SSP Surveillant Médical',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Meddah Fadela',
         grade: 'Psychologue',
         groupe: '08h-16h',
-        observation: 'Congé (02/08 - 31/08)',
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 8, 2),
@@ -229,7 +171,6 @@ class HospitalPdfSeedImportService {
         nom: 'Behloul Zahra',
         grade: 'Administrateur',
         groupe: '08h-16h',
-        observation: 'Congé (03/08 - 01/09)',
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 8, 3),
@@ -242,31 +183,26 @@ class HospitalPdfSeedImportService {
         nom: 'Zalegh Fatima',
         grade: 'Agent de bureau',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Baoud Kholoud',
         grade: 'Agent de bureau',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Naamoun Sarra',
         grade: 'Chargée de pharmacie',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Bouaziz Nacer',
         grade: 'ATS principal',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Rahmani Ibtissem',
         grade: 'ATS principal',
         groupe: '08h-16h',
-        observation: '08h-16h',
       ),
       _SeedStaff(
         nom: 'Kassab Hichem',
@@ -278,7 +214,6 @@ class HospitalPdfSeedImportService {
         nom: 'Djaziri Cherifa',
         grade: 'Chargé de pharmacie',
         groupe: '08h-16h',
-        observation: 'Congé (26/07 - 13/08)',
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 7, 26),
@@ -336,7 +271,6 @@ class HospitalPdfSeedImportService {
         grade: 'infirmier major',
         groupe: 'Garde 24H',
         equipe: 'C',
-        observation: 'Congé (25/08 - 23/09)',
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 8, 25),
@@ -401,13 +335,11 @@ class HospitalPdfSeedImportService {
         nom: 'Mohand Fatiha',
         grade: "Agent d'hygiène",
         groupe: '12h',
-        observation: '12h',
       ),
       _SeedStaff(
         nom: 'Touati Fatima',
         grade: "Agent d'hygiène",
         groupe: '12h',
-        observation: '12h',
       ),
     ];
   }
@@ -431,7 +363,6 @@ class _SeedStaff {
     required this.grade,
     required this.groupe,
     this.equipe,
-    this.observation,
     this.leaves = const [],
   });
 
@@ -439,7 +370,6 @@ class _SeedStaff {
   final String grade;
   final String groupe;
   final String? equipe;
-  final String? observation;
   final List<_SeedLeave> leaves;
 }
 
