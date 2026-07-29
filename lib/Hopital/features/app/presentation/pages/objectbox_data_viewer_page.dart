@@ -1374,40 +1374,41 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: Stack(
-              children: [
-                CircleAvatar(
-                  backgroundColor: widget.item.color.withValues(alpha: 0.15),
-                  child: Text('#$id',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: widget.item.color,
-                          fontWeight: FontWeight.bold)),
-                ),
-                if (isStaff && leaveTypes.isNotEmpty)
-                  Positioned(
-                    right: -4,
-                    bottom: -4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: Colors.orange,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        leaveTypes.join('/'),
-                        style: const TextStyle(
-                            fontSize: 8,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-              ],
+            leading: CircleAvatar(
+              backgroundColor: widget.item.color.withValues(alpha: 0.15),
+              child: Text('#$id',
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: widget.item.color,
+                      fontWeight: FontWeight.bold)),
             ),
             title: isStaff
-                ? Text('${obj.nom}${obj.equipe != null ? ' Equipe ${obj.equipe}' : ''}',
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
+                ? Row(
+                    children: [
+                      Flexible(
+                        child: Text('${obj.nom}${obj.equipe != null ? ' Equipe ${obj.equipe}' : ''}',
+                            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      ),
+                      if (leaveTypes.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              leaveTypes.join('/'),
+                              style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
                 : Text(str.length > 80 ? '${str.substring(0, 80)}...' : str,
                     style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
                     maxLines: 2,
