@@ -208,7 +208,7 @@ class HospitalPdfSeedImportService {
         nom: 'Kassab Hichem',
         grade: 'ATS principal',
         groupe: '08h-16h',
-        observation: '08h-16h',
+
       ),
       _SeedStaff(
         nom: 'Djaziri Cherifa',
@@ -290,7 +290,7 @@ class HospitalPdfSeedImportService {
         grade: 'ATS',
         groupe: 'Garde 24H',
         equipe: 'C',
-        observation: 'Congé (20/07 - 18/08)',
+
         leaves: [
           _SeedLeave(
             debut: DateTime(2026, 7, 20),

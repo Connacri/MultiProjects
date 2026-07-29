@@ -1203,7 +1203,7 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
         TextEditingController(text: to.debut.toIso8601String().split('T')[0]);
     final finCtrl =
         TextEditingController(text: to.fin.toIso8601String().split('T')[0]);
-    String? selectedMotif = to.motif;
+    String? selectedMotif = to.motif == 'recup' ? 'RE' : to.motif;
 
     final saved = await showDialog<bool>(
       context: context,
@@ -1355,7 +1355,7 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     final types = <String>{};
     for (final to in timeOffs) {
       if (to.fin.isAfter(today.subtract(const Duration(days: 1)))) {
-        types.add(to.motif ?? 'C');
+        types.add(to.motif == 'recup' ? 'RE' : (to.motif ?? 'C'));
       }
     }
     return types.toList();
@@ -1374,48 +1374,39 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: isStaff
-                ? Stack(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: widget.item.color.withValues(alpha: 0.15),
-                        child: Text('#$id',
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: widget.item.color,
-                                fontWeight: FontWeight.bold)),
+            leading: Stack(
+              children: [
+                CircleAvatar(
+                  backgroundColor: widget.item.color.withValues(alpha: 0.15),
+                  child: Text('#$id',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: widget.item.color,
+                          fontWeight: FontWeight.bold)),
+                ),
+                if (isStaff && leaveTypes.isNotEmpty)
+                  Positioned(
+                    right: -4,
+                    bottom: -4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.orange,
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      if (leaveTypes.isNotEmpty)
-                        Positioned(
-                          right: -4,
-                          bottom: -4,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              leaveTypes.join('/'),
-                              style: const TextStyle(
-                                  fontSize: 8,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                    ],
-                  )
-                : CircleAvatar(
-                    backgroundColor: widget.item.color.withValues(alpha: 0.15),
-                    child: Text('#$id',
-                        style: TextStyle(
-                            fontSize: 12,
-                            color: widget.item.color,
-                            fontWeight: FontWeight.bold)),
+                      child: Text(
+                        leaveTypes.join('/'),
+                        style: const TextStyle(
+                            fontSize: 8,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
+              ],
+            ),
             title: isStaff
-                ? Text('${obj.nom}${obj.equipe != null ? ' (${obj.equipe})' : ''}',
+                ? Text('${obj.nom}${obj.equipe != null ? ' Equipe ${obj.equipe}' : ''}',
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
                 : Text(str.length > 80 ? '${str.substring(0, 80)}...' : str,
                     style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
@@ -1452,7 +1443,7 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
           ),
           if (isExpanded) ...[
             _buildEntityDetails(obj),
-            if (isStaff) _buildStaffTimeOff(obj),
+             if (isStaff) _buildStaffTimeOff(obj),
           ],
         ],
       ),
@@ -1606,12 +1597,28 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
                 Text(staff.grade,
                     style:
                         TextStyle(fontSize: 11, color: Colors.grey.shade600)),
-                SizedBox(height: 4),
-                Text('$from → $until',
-                    style: const TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text('$from → $until',
+                        style: const TextStyle(
+                            fontSize: 11, fontWeight: FontWeight.w500)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${to.fin.difference(to.debut).inDays + 1}j',
+                        style: TextStyle(fontSize: 10, color: Colors.blue.shade700),
+                      ),
+                    ),
+                  ],
+                ),
                 if (to.motif != null && to.motif!.isNotEmpty)
-                  Text(to.motif!,
+                  Text(_legendLabels[to.motif] ?? to.motif!,
                       style:
                           TextStyle(fontSize: 11, color: Colors.grey.shade700)),
               ],
