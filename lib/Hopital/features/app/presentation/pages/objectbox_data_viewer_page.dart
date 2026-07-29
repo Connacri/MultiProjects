@@ -1345,26 +1345,75 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     _refresh();
   }
 
+  List<String> _upcomingLeaveTypes(Staff staff) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final timeOffs = context.read<ObjectBox>().timeOffBox
+        .query(TimeOff_.staff.equals(staff.id))
+        .build()
+        .find();
+    final types = <String>{};
+    for (final to in timeOffs) {
+      if (to.fin.isAfter(today.subtract(const Duration(days: 1)))) {
+        types.add(to.motif ?? 'C');
+      }
+    }
+    return types.toList();
+  }
+
   Widget _buildItemCard(int index) {
     final obj = _items[index];
     final id = _getId(obj);
     final str = _objectToString(obj);
     final isExpanded = _expandedIndex == index;
     final isStaff = widget.item.name == 'Staff' && obj is Staff;
+    final leaveTypes = isStaff ? _upcomingLeaveTypes(obj) : const <String>[];
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
-            leading: CircleAvatar(
-              backgroundColor: widget.item.color.withValues(alpha: 0.15),
-              child: Text('#$id',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: widget.item.color,
-                      fontWeight: FontWeight.bold)),
-            ),
+            leading: isStaff
+                ? Stack(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: widget.item.color.withValues(alpha: 0.15),
+                        child: Text('#$id',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: widget.item.color,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                      if (leaveTypes.isNotEmpty)
+                        Positioned(
+                          right: -4,
+                          bottom: -4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              leaveTypes.join('/'),
+                              style: const TextStyle(
+                                  fontSize: 8,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  )
+                : CircleAvatar(
+                    backgroundColor: widget.item.color.withValues(alpha: 0.15),
+                    child: Text('#$id',
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: widget.item.color,
+                            fontWeight: FontWeight.bold)),
+                  ),
             title: isStaff
                 ? Text('${obj.nom}${obj.equipe != null ? ' (${obj.equipe})' : ''}',
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
