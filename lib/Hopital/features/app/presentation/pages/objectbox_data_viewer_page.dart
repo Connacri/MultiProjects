@@ -334,13 +334,25 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     final type = obj.runtimeType;
     final id = _getId(obj);
     final parts = <String>['$type#$id'];
+    final tried = <String>{};
     for (final f in ['nom', 'name', 'code', 'title', 'prenom', 'shift',
         'team', 'grade', 'motif', 'note', 'status', 'mois', 'annee',
-        'room', 'from', 'to', 'total']) {
+        'from', 'to', 'total']) {
+      tried.add(f);
       try {
         final val = _getField(obj, f);
         if (val != null && val.toString().isNotEmpty) {
           parts.add('$f: $val');
+          if (parts.length >= 4) break;
+        }
+      } catch (_) {}
+    }
+    for (final rel in ['staff', 'room', 'branch', 'client']) {
+      if (tried.contains(rel)) continue;
+      try {
+        final val = _getField(obj, rel);
+        if (val != null && val.toString().isNotEmpty) {
+          parts.add(val);
           if (parts.length >= 4) break;
         }
       } catch (_) {}
@@ -363,10 +375,49 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
       case 'status': return (obj).status;
       case 'mois': return (obj).mois;
       case 'annee': return (obj).annee;
-      case 'room': return (obj).room;
       case 'from': return (obj).from;
       case 'to': return (obj).to;
       case 'total': return (obj).total;
+      case 'staff': return _resolveToOne(obj, 'staff');
+      case 'room': return _resolveToOne(obj, 'room');
+      case 'branch': return _resolveToOne(obj, 'branch');
+      case 'client': return _resolveToOne(obj, 'client');
+    }
+    return null;
+  }
+
+  String? _resolveToOne(dynamic obj, String name) {
+    try {
+      final rel = _getToOneField(obj, name);
+      if (rel == null) return null;
+      final targetId = rel.targetId is int ? rel.targetId as int : 0;
+      final target = rel.target;
+      if (target == null) return '$name[#$targetId]';
+      final label = _firstLabel(target);
+      final prefix = label.isNotEmpty ? '$label (#$targetId)' : '#$targetId';
+      return '$name: $prefix';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _firstLabel(dynamic target) {
+    for (final f in ['nom', 'name', 'code', 'title', 'prenom']) {
+      try {
+        final val = _getField(target, f);
+        if (val != null && val.toString().isNotEmpty) return val.toString();
+      } catch (_) {}
+    }
+    return '';
+  }
+
+  dynamic _getToOneField(dynamic obj, String name) {
+    // obj.staff, obj.room, etc. — must be accessed via dynamic
+    switch (name) {
+      case 'staff': return (obj).staff;
+      case 'room': return (obj).room;
+      case 'branch': return (obj).branch;
+      case 'client': return (obj).client;
     }
     return null;
   }
