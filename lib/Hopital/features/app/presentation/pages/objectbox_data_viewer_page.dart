@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../objectBox/Entity.dart';
 import '../../../../../objectBox/classeObjectBox.dart';
 
 class ObjectBoxDataViewerPage extends StatefulWidget {
@@ -449,14 +450,20 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     final isDesktop = MediaQuery.of(context).size.width >= 900;
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+            title: Row(
           children: [
-            Icon(widget.item.icon, color: widget.item.color),
-            const SizedBox(width: 8),
-            Text(' ()'),
+            Icon(widget.item.icon, color: widget.item.color, size: 20),
+            const SizedBox(width: 6),
+            Flexible(child: Text('${widget.item.name} ($count)', overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
+          if (widget.item.name == 'Staff')
+            IconButton(
+              icon: const Icon(Icons.person_add),
+              tooltip: 'Nouveau Staff',
+              onPressed: _createStaff,
+            ),
           IconButton(
             icon: const Icon(Icons.delete_sweep),
             tooltip: 'Vider cette table',
@@ -503,14 +510,193 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     );
   }
 
+  // ─── Staff CRUD ──────────────────────────────────────────────────────────
+
+  Future<void> _editStaff(Staff staff) async {
+    final nomCtrl = TextEditingController(text: staff.nom);
+    final gradeCtrl = TextEditingController(text: staff.grade);
+    final groupeCtrl = TextEditingController(text: staff.groupe);
+    final equipeCtrl = TextEditingController(text: staff.equipe ?? '');
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier Staff'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+              const SizedBox(height: 8),
+              TextField(controller: gradeCtrl, decoration: const InputDecoration(labelText: 'Grade', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: groupeCtrl, decoration: const InputDecoration(labelText: 'Groupe', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: equipeCtrl, decoration: const InputDecoration(labelText: 'Équipe', border: OutlineInputBorder())),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enregistrer')),
+        ],
+      ),
+    );
+
+    if (saved != true || !mounted) return;
+    staff.nom = nomCtrl.text.trim();
+    staff.grade = gradeCtrl.text.trim();
+    staff.groupe = groupeCtrl.text.trim();
+    staff.equipe = equipeCtrl.text.trim().isEmpty ? null : equipeCtrl.text.trim();
+    context.read<ObjectBox>().staffBox.put(staff);
+    _refresh();
+  }
+
+  Future<void> _addTimeOff(Staff staff) async {
+    final motifCtrl = TextEditingController();
+    final debutCtrl = TextEditingController(text: DateTime.now().toIso8601String().split('T')[0]);
+    final finCtrl = TextEditingController(text: DateTime.now().toIso8601String().split('T')[0]);
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Ajouter un congé'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: debutCtrl, decoration: const InputDecoration(labelText: 'Début (AAAA-MM-JJ)', border: OutlineInputBorder())),
+            const SizedBox(height: 8),
+            TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Fin (AAAA-MM-JJ)', border: OutlineInputBorder())),
+            const SizedBox(height: 8),
+            TextField(controller: motifCtrl, decoration: const InputDecoration(labelText: 'Motif', border: OutlineInputBorder()), maxLines: 2),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Ajouter')),
+        ],
+      ),
+    );
+
+    if (saved != true || !mounted) return;
+    final objectBox = context.read<ObjectBox>();
+    final timeOff = TimeOff(
+      debut: DateTime.tryParse(debutCtrl.text) ?? DateTime.now(),
+      fin: DateTime.tryParse(finCtrl.text) ?? DateTime.now(),
+      motif: motifCtrl.text.trim().isEmpty ? null : motifCtrl.text.trim(),
+    );
+    timeOff.staff.target = staff;
+    objectBox.timeOffBox.put(timeOff);
+    _loadTimeOff(staff);
+  }
+
+  Future<void> _editTimeOff(TimeOff to, Staff staff) async {
+    final motifCtrl = TextEditingController(text: to.motif ?? '');
+    final debutCtrl = TextEditingController(text: to.debut.toIso8601String().split('T')[0]);
+    final finCtrl = TextEditingController(text: to.fin.toIso8601String().split('T')[0]);
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier le congé'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: debutCtrl, decoration: const InputDecoration(labelText: 'Début (AAAA-MM-JJ)', border: OutlineInputBorder())),
+            const SizedBox(height: 8),
+            TextField(controller: finCtrl, decoration: const InputDecoration(labelText: 'Fin (AAAA-MM-JJ)', border: OutlineInputBorder())),
+            const SizedBox(height: 8),
+            TextField(controller: motifCtrl, decoration: const InputDecoration(labelText: 'Motif', border: OutlineInputBorder()), maxLines: 2),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enregistrer')),
+        ],
+      ),
+    );
+
+    if (saved != true || !mounted) return;
+    to.debut = DateTime.tryParse(debutCtrl.text) ?? to.debut;
+    to.fin = DateTime.tryParse(finCtrl.text) ?? to.fin;
+    to.motif = motifCtrl.text.trim().isEmpty ? null : motifCtrl.text.trim();
+    context.read<ObjectBox>().timeOffBox.put(to);
+    _loadTimeOff(staff);
+  }
+
+  Future<void> _deleteTimeOff(TimeOff to, Staff staff) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Supprimer le congé'),
+        content: Text('Du ${to.debut.day}/${to.debut.month}/${to.debut.year} au ${to.fin.day}/${to.fin.month}/${to.fin.year}'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    context.read<ObjectBox>().timeOffBox.remove(to.id);
+    _loadTimeOff(staff);
+  }
+
+  Future<void> _createStaff() async {
+    final nomCtrl = TextEditingController();
+    final gradeCtrl = TextEditingController();
+    final groupeCtrl = TextEditingController();
+    final equipeCtrl = TextEditingController();
+
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Nouveau Staff'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: nomCtrl, decoration: const InputDecoration(labelText: 'Nom', border: OutlineInputBorder()), textCapitalization: TextCapitalization.words),
+              const SizedBox(height: 8),
+              TextField(controller: gradeCtrl, decoration: const InputDecoration(labelText: 'Grade', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: groupeCtrl, decoration: const InputDecoration(labelText: 'Groupe', border: OutlineInputBorder())),
+              const SizedBox(height: 8),
+              TextField(controller: equipeCtrl, decoration: const InputDecoration(labelText: 'Équipe', border: OutlineInputBorder())),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Créer')),
+        ],
+      ),
+    );
+
+    if (saved != true || !mounted) return;
+    final staff = Staff(
+      nom: nomCtrl.text.trim(),
+      grade: gradeCtrl.text.trim(),
+      groupe: groupeCtrl.text.trim(),
+      equipe: equipeCtrl.text.trim().isEmpty ? null : equipeCtrl.text.trim(),
+    );
+    context.read<ObjectBox>().staffBox.put(staff);
+    _refresh();
+  }
+
   Widget _buildItemCard(int index) {
     final obj = _items[index];
     final id = _getId(obj);
     final str = _objectToString(obj);
     final isExpanded = _expandedIndex == index;
+    final isStaff = widget.item.name == 'Staff' && obj is Staff;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ListTile(
             leading: CircleAvatar(
@@ -526,9 +712,17 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                if (isStaff)
+                  IconButton(
+                    icon: Icon(Icons.edit, size: 20, color: Colors.blue.shade400),
+                    onPressed: () => _editStaff(obj),
+                  ),
                 IconButton(
                   icon: Icon(isExpanded ? Icons.expand_less : Icons.expand_more, size: 20),
-                  onPressed: () => setState(() => _expandedIndex = isExpanded ? null : index),
+                  onPressed: () => setState(() {
+                    _expandedIndex = isExpanded ? null : index;
+                    if (isStaff) _loadTimeOff(obj);
+                  }),
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline, size: 20, color: Colors.red.shade400),
@@ -537,14 +731,96 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
               ],
             ),
           ),
-          if (isExpanded)
+          if (isExpanded) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: SelectableText(
                 str,
                 style: const TextStyle(fontSize: 12, fontFamily: 'monospace', color: Colors.black87),
               ),
             ),
+            if (isStaff) _buildStaffTimeOff(obj),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<TimeOff>? _staffTimeOff;
+
+  void _loadTimeOff(Staff staff) {
+    setState(() => _staffTimeOff = staff.timeOff.toList());
+  }
+
+  Widget _buildStaffTimeOff(Staff staff) {
+    final timeOffs = _staffTimeOff ?? <TimeOff>[];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Divider(height: 1, color: Colors.grey.shade300),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.beach_access, size: 16, color: Colors.orange.shade700),
+              const SizedBox(width: 6),
+              Text('Congés (${timeOffs.length})', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.orange.shade800)),
+              const Spacer(),
+              TextButton.icon(
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Ajouter', style: TextStyle(fontSize: 12)),
+                onPressed: () => _addTimeOff(staff),
+                style: TextButton.styleFrom(foregroundColor: Colors.orange, padding: const EdgeInsets.symmetric(horizontal: 8)),
+              ),
+            ],
+          ),
+          if (timeOffs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text('Aucun congé', style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            )
+          else
+            ...timeOffs.map((to) => _buildTimeOffTile(to, staff)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeOffTile(TimeOff to, Staff staff) {
+    final from = '${to.debut.day.toString().padLeft(2, '0')}/${to.debut.month.toString().padLeft(2, '0')}/${to.debut.year}';
+    final until = '${to.fin.day.toString().padLeft(2, '0')}/${to.fin.month.toString().padLeft(2, '0')}/${to.fin.year}';
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$from → $until', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                if (to.motif != null && to.motif!.isNotEmpty)
+                  Text(to.motif!, style: TextStyle(fontSize: 11, color: Colors.grey.shade700)),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.edit, size: 16, color: Colors.blue.shade300),
+            onPressed: () => _editTimeOff(to, staff),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          IconButton(
+            icon: Icon(Icons.delete_outline, size: 16, color: Colors.red.shade300),
+            onPressed: () => _deleteTimeOff(to, staff),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
         ],
       ),
     );

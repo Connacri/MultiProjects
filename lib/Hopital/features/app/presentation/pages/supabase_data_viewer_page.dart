@@ -211,37 +211,44 @@ class _SupabaseDataViewerPageState extends State<SupabaseDataViewerPage> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             color: Colors.red.shade50,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  Icon(Icons.dangerous, color: Colors.red.shade700, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Zone de danger',
-                    style: TextStyle(
-                      color: Colors.red.shade700,
-                      fontWeight: FontWeight.bold,
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Row(
+                  children: [
+                    Icon(Icons.dangerous, color: Colors.red.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Zone de danger',
+                      style: TextStyle(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  TextButton.icon(
-                    onPressed: _selectedTable == 'staffs' ? null : _clearTable,
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: Text('Vider $_selectedTable'),
-                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.tonalIcon(
-                    onPressed: _clearAllTables,
-                    icon: const Icon(Icons.delete_forever, size: 18),
-                    label: const Text('Tout vider'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.red.shade100,
-                      foregroundColor: Colors.red.shade900,
+                    const SizedBox(width: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 200),
+                      child: TextButton.icon(
+                        onPressed: _selectedTable == 'staffs' ? null : _clearTable,
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: Text('Vider $_selectedTable', overflow: TextOverflow.ellipsis),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    FilledButton.tonalIcon(
+                      onPressed: _clearAllTables,
+                      icon: const Icon(Icons.delete_forever, size: 18),
+                      label: const Text('Tout vider'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red.shade100,
+                        foregroundColor: Colors.red.shade900,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

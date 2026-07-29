@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
 import '../objectBox/Entity.dart';
@@ -271,11 +270,7 @@ Future<String?> generateAndSaveMonthPlanningPDF(
         '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}m${now.second.toString().padLeft(2, '0')}s${now.millisecond.toString().padLeft(3, '0')}';
 
     final fileName = 'Planning_${monthName}_${year}_$formattedTime.pdf';
-    if (Platform.isAndroid) {
-      return await _saveToAndroid(pdfBytes, fileName);
-    } else {
-      return await _saveToDesktop(pdfBytes, fileName);
-    }
+    return await _savePdf(pdfBytes, fileName);
   } catch (e) {
     print('❌ Erreur sauvegarde PDF : $e');
     return null;
@@ -450,12 +445,7 @@ Future<String?> generateAndSaveMonthPlanningPDFWithOptions(
         '${now.millisecond.toString().padLeft(3, '0')}';
 
     final fileName = 'Planning_${monthName}_${year}_$formattedTime.pdf';
-
-    if (Platform.isAndroid) {
-      return await _saveToAndroid(pdfBytes, fileName);
-    } else {
-      return await _saveToDesktop(pdfBytes, fileName);
-    }
+    return await _savePdf(pdfBytes, fileName);
   } catch (e) {
     print('✖ Erreur sauvegarde PDF : $e');
     return null;
@@ -615,61 +605,19 @@ pw.Widget _buildPageFooter(pw.TextStyle baseStyle) {
   );
 }
 
-Future<String?> _saveToAndroid(List<int> pdfBytes, String fileName) async {
-  try {
-    var status = await Permission.storage.status;
-    if (!status.isGranted) {
-      status = await Permission.storage.request();
-      if (!status.isGranted) {
-        print('❌ Permission de stockage refusée');
-        return null;
-      }
-    }
-
-    Directory? directory;
-
-    if (Platform.isAndroid) {
-      directory = Directory('/storage/emulated/0/Documents');
-
-      if (!await directory.exists()) {
-        directory = Directory('/storage/emulated/0/Download');
-      }
-
-      final appFolder = Directory('${directory.path}/Plannings');
-      if (!await appFolder.exists()) {
-        await appFolder.create(recursive: true);
-      }
-      directory = appFolder;
-    }
-
-    if (directory != null) {
-      final file = File('${directory.path}/$fileName');
-      await file.writeAsBytes(pdfBytes);
-      return file.path;
-    }
-  } catch (e) {
-    print('❌ Erreur Android : $e');
-  }
-
-  return null;
-}
-
-Future<String?> _saveToDesktop(List<int> pdfBytes, String fileName) async {
+Future<String?> _savePdf(List<int> pdfBytes, String fileName) async {
   try {
     final directory = await getApplicationDocumentsDirectory();
-
     final planningsFolder = Directory('${directory.path}/Plannings');
     if (!await planningsFolder.exists()) {
       await planningsFolder.create(recursive: true);
     }
-
     final file = File('${planningsFolder.path}/$fileName');
     await file.writeAsBytes(pdfBytes);
     return file.path;
   } catch (e) {
-    print('❌ Erreur Desktop : $e');
+    print('❌ Erreur sauvegarde PDF : $e');
   }
-
   return null;
 }
 
