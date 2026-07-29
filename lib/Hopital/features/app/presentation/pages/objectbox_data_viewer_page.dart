@@ -302,6 +302,22 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
     final obj = _items[index];
     final id = _getId(obj);
     if (id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Supprimer #$id'),
+        content: const Text('Cette action est irréversible.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     widget.item.remove(id);
     _refresh();
   }
@@ -315,19 +331,52 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
   }
 
   String _objectToString(dynamic obj) {
-    try {
-      return obj.toString();
-    } catch (_) {
-      return '';
+    final type = obj.runtimeType;
+    final id = _getId(obj);
+    final parts = <String>['$type#$id'];
+    for (final f in ['nom', 'name', 'code', 'title', 'prenom', 'shift',
+        'team', 'grade', 'motif', 'note', 'status', 'mois', 'annee',
+        'room', 'from', 'to', 'total']) {
+      try {
+        final val = _getField(obj, f);
+        if (val != null && val.toString().isNotEmpty) {
+          parts.add('$f: $val');
+          if (parts.length >= 4) break;
+        }
+      } catch (_) {}
     }
+    return parts.join(' | ');
+  }
+
+  dynamic _getField(dynamic obj, String name) {
+    switch (name) {
+      case 'nom': return (obj).nom;
+      case 'name': return (obj).name;
+      case 'code': return (obj).code;
+      case 'title': return (obj).title;
+      case 'prenom': return (obj).prenom;
+      case 'shift': return (obj).shift;
+      case 'team': return (obj).team;
+      case 'grade': return (obj).grade;
+      case 'motif': return (obj).motif;
+      case 'note': return (obj).note;
+      case 'status': return (obj).status;
+      case 'mois': return (obj).mois;
+      case 'annee': return (obj).annee;
+      case 'room': return (obj).room;
+      case 'from': return (obj).from;
+      case 'to': return (obj).to;
+      case 'total': return (obj).total;
+    }
+    return null;
   }
 
   Future<void> _clearBox() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text('Vider '),
-        content: Text('Supprimer les  entité(s) ?'),
+        title: Text('Vider ${widget.item.name}'),
+        content: Text('Supprimer les ${_items.length} entité(s) ?'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
           FilledButton(

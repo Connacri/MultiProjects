@@ -145,13 +145,14 @@ class _ArchitectureChoiceScreenState extends State<ArchitectureChoiceScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _animations = List.generate(4, (i) {
+    _animations = List.generate(_cardData.length, (i) {
+      final begin = i * 0.15;
+      final end = (0.5 + i * 0.15).clamp(0.0, 1.0);
       return CurvedAnimation(
         parent: Tween<double>(begin: 0, end: 1).animate(
           CurvedAnimation(
             parent: _animController,
-            curve: Interval(i * 0.15, 0.6 + i * 0.15,
-                curve: Curves.easeOutCubic),
+            curve: Interval(begin, end, curve: Curves.easeOutCubic),
           ),
         ),
         curve: Curves.easeOutCubic,
