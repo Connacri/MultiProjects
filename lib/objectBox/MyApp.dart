@@ -5,6 +5,7 @@ import '../Hopital/StaffProvider.dart';
 import '../Hopital/TableauStaff.dart';
 import '../Hopital/features/app/presentation/pages/new_architecture_test_page.dart';
 import '../Hopital/features/app/presentation/pages/supabase_data_viewer_page.dart';
+import '../Hopital/features/app/presentation/pages/objectbox_data_viewer_page.dart';
 import '../Hopital/features/planning/presentation/planning_composition.dart';
 import '../Hopital/p2p/auto_connect_service.dart';
 import '../Hopital/p2p/connection_manager.dart';
@@ -144,7 +145,7 @@ class _ArchitectureChoiceScreenState extends State<ArchitectureChoiceScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _animations = List.generate(3, (i) {
+    _animations = List.generate(4, (i) {
       return CurvedAnimation(
         parent: Tween<double>(begin: 0, end: 1).animate(
           CurvedAnimation(
@@ -270,11 +271,10 @@ class _ArchitectureChoiceScreenState extends State<ArchitectureChoiceScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: _buildCard(0, _cardData[0])),
-        const SizedBox(width: 24),
-        Expanded(child: _buildCard(1, _cardData[1])),
-        const SizedBox(width: 24),
-        Expanded(child: _buildCard(2, _cardData[2])),
+        for (var i = 0; i < _cardData.length; i++) ...[
+          if (i > 0) const SizedBox(width: 16),
+          Expanded(child: _buildCard(i, _cardData[i])),
+        ],
       ],
     );
   }
@@ -282,11 +282,10 @@ class _ArchitectureChoiceScreenState extends State<ArchitectureChoiceScreen>
   Widget _buildMobileCards() {
     return Column(
       children: [
-        _buildCard(0, _cardData[0]),
-        const SizedBox(height: 16),
-        _buildCard(1, _cardData[1]),
-        const SizedBox(height: 16),
-        _buildCard(2, _cardData[2]),
+        for (var i = 0; i < _cardData.length; i++) ...[
+          _buildCard(i, _cardData[i]),
+          if (i < _cardData.length - 1) const SizedBox(height: 16),
+        ],
       ],
     );
   }
@@ -436,6 +435,14 @@ final _cardData = [
     subtitle: 'Visualiser et gérer les données distantes',
     action: 'Consulter',
     page: SupabaseDataViewerPage(),
+  ),
+  _CardData(
+    color: Colors.orange,
+    icon: Icons.storage,
+    title: 'Base locale ObjectBox',
+    subtitle: 'Inspecter et gérer toutes les tables locales',
+    action: 'Ouvrir',
+    page: ObjectBoxDataViewerPage(),
   ),
 ];
 
