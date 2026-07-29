@@ -1551,6 +1551,13 @@ class _BoxDetailPageState extends State<_BoxDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(staff.nom,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(staff.grade,
+                    style:
+                        TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                SizedBox(height: 4),
                 Text('$from → $until',
                     style: const TextStyle(
                         fontSize: 12, fontWeight: FontWeight.w600)),
