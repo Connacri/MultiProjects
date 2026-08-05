@@ -41,10 +41,11 @@ class RotationConfigurationProvider extends ChangeNotifier {
           configuration: RotationConfiguration(
             id: 'default',
             version: 1,
-            teamOrder: const ['Équipe A', 'Équipe B', 'Équipe C'],
+            teamOrder: const ['Équipe A', 'Équipe B', 'Équipe C', 'Équipe D', 'Équipe E'],
             cycle: const [
               TeamShift.day,
               TeamShift.night,
+              TeamShift.rest,
               TeamShift.rest,
               TeamShift.rest,
             ],

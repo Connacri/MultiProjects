@@ -628,10 +628,10 @@ pw.Widget _buildGroupTable(
   int year,
   int month,
 ) {
-  // ⭐ Détecter si c'est le personnel paramédical (avec équipes A,B,C,D)
+  // ⭐ Détecter si c'est le personnel paramédical (avec équipes A,B,C,D,E)
   final hasEquipes = membres.any((s) =>
       s.equipe != null &&
-      ['A', 'B', 'C', 'D'].contains(s.equipe.toString().toUpperCase()));
+      ['A', 'B', 'C', 'D', 'E'].contains(s.equipe.toString().toUpperCase()));
 
 // // ✅ Headers avec nombre de jours dynamique
 //   final headers = hasEquipes

@@ -1132,7 +1132,7 @@ pw.Widget _buildParamedicalStaffTable(
 
   // Calculer les tailles pour les fusions
   int totalLignes08h08h = 0;
-  final ordreGroupes = ['A', 'B', 'C', 'D'];
+  final ordreGroupes = ['A', 'B', 'C', 'D', 'E'];
   for (var equipe in ordreGroupes) {
     if (groupesEquipe.containsKey(equipe)) {
       totalLignes08h08h += 1 + groupesEquipe[equipe]!.length;

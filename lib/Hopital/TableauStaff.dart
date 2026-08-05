@@ -246,9 +246,9 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     return [jour, nuit];
   }
 
-  List<String> _defaultParamedicalDayOrder() => ['A', 'C', 'B', 'D'];
+  List<String> _defaultParamedicalDayOrder() => ['A', 'B', 'C', 'D', 'E'];
 
-  List<String> _defaultParamedicalNightOrder() => ['D', 'A', 'C', 'B'];
+  List<String> _defaultParamedicalNightOrder() => ['E', 'A', 'B', 'C', 'D'];
 
   // ⭐ NOUVEAU : Liste des mois en français
   final List<String> _moisNoms = [
@@ -433,7 +433,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       for (final staff in personnelMedicalAdmin) {
         final equipe = staff.equipe?.toUpperCase();
         final isEquipeABCD =
-            equipe != null && ['A', 'B', 'C', 'D'].contains(equipe);
+            equipe != null && ['A', 'B', 'C', 'D', 'E'].contains(equipe);
 
         for (int day = 1; day <= daysInMonth; day++) {
           final date = DateTime(year, month, day);
@@ -3320,6 +3320,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final groupe = _normalizedGroup(groupeValue);
     return groupe == '24H' ||
         groupe.contains('GARDE 24') ||
+        groupe.contains('GARDE 16') ||
         groupe.contains('GARDE 12H') ||
         groupe.contains('08H-08H');
   }
@@ -3328,7 +3329,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     if (_isParamedicalGroup(staff.groupe)) return true;
     if (!_isMedicalStaff(staff) && !_isHygieneStaff(staff)) {
       final equipe = staff.equipe?.toUpperCase();
-      if (equipe != null && ['A', 'B', 'C', 'D'].contains(equipe)) return true;
+      if (equipe != null && ['A', 'B', 'C', 'D', 'E'].contains(equipe)) return true;
     }
     return false;
   }
@@ -5215,6 +5216,8 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return Colors.orange.shade600;
       case 'D':
         return Colors.purple.shade600;
+      case 'E':
+        return Colors.teal.shade600;
       default:
         return Colors.grey.shade400;
     }
@@ -5388,7 +5391,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
                           const SizedBox(height: 8),
                           Wrap(
                             spacing: 8,
-                            children: ["A", "B", "C", "D"].map((equipe) {
+                            children: ["A", "B", "C", "D", "E"].map((equipe) {
                               return ChoiceChip(
                                 label: Text(equipe),
                                 selected: selectedEquipe == equipe,
@@ -5840,7 +5843,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     // Personnel médical avec équipes (08H-08H ou Garde 12H)
     if (_isParamedicalStaff(staff) &&
         equipe != null &&
-        ['A', 'B', 'C', 'D'].contains(equipe)) {
+        ['A', 'B', 'C', 'D', 'E'].contains(equipe)) {
       // Vérifier la rotation en cours
       return _getStatutEquipeMedicale(staff, date);
     }
@@ -6278,7 +6281,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   Future<Map<String, dynamic>?> showPlanificationDialog({
     required BuildContext context,
-    required List<String> equipesInit, // ex: ["A", "B", "C", "D"]
+    required List<String> equipesInit, // ex: ["A", "B", "C", "D", "E"]
     required int year,
     required int month,
   }) {
@@ -6854,7 +6857,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
         return enCongeTimeOff || enCongeActivite;
       }
 
-      // ROTATION : Jour/Nuit — 2 équipes travaillent, 2 repos
+      // ROTATION : Jour/Nuit — 2 équipes travaillent, 3 repos
       for (int day = 1; day <= daysInMonth; day++) {
         int joursEcoules = (day - jourDepart + daysInMonth) % daysInMonth;
         int dayShiftIdx = joursEcoules % equipesOrdonnees.length;
@@ -6981,25 +6984,30 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
     final staffProvider = Provider.of<StaffProvider>(context, listen: false);
 
     // 1. Identifier les équipes paramédicales disponibles
-    final equipesDisponibles = staffProvider.staffs
+    final equipesActives = staffProvider.staffs
         .where((staff) =>
             _isParamedicalStaff(staff) &&
-            _hasEquipeInOrder(staff, ['A', 'B', 'C', 'D']))
+            _hasEquipeInOrder(staff, ['A', 'B', 'C', 'D', 'E']))
         .map((staff) => staff.equipe!.toUpperCase())
         .toSet()
         .toList();
 
-    equipesDisponibles.sort();
+    equipesActives.sort();
 
-    if (equipesDisponibles.isEmpty) {
+    if (equipesActives.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Aucune équipe paramédicale trouvée (A,B,C,D)"),
+          content: Text("Aucune équipe paramédicale trouvée (A,B,C,D,E)"),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
+
+    // Toujours présenter les 5 équipes standards (A,B,C,D,E) pour pouvoir réordonner E.
+    final equipesDisponibles = {...equipesActives, 'A', 'B', 'C', 'D', 'E'}
+        .toList()
+      ..sort();
 
     // 2. Afficher le dialog de planification Jour/Nuit
     final result = await _showOrderEquipesDialog(equipesDisponibles);
@@ -7027,7 +7035,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       equipesExistantes.addAll(decoded[0]);
     }
     if (equipesExistantes.isEmpty) {
-      equipesExistantes = ['A', 'C', 'B', 'D'];
+      equipesExistantes = ['A', 'C', 'B', 'D', 'E'];
     }
 
     final result = await _showOrderEquipesDialog(equipesExistantes);
@@ -8821,7 +8829,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
       for (final staff in personnelPlanifiable) {
         final equipe = staff.equipe?.toUpperCase();
         final isEquipeABCD =
-            equipe != null && ['A', 'B', 'C', 'D'].contains(equipe);
+            equipe != null && ['A', 'B', 'C', 'D', 'E'].contains(equipe);
 
         if (isEquipeABCD) {
           staffEquipeABCD++;
@@ -9289,7 +9297,7 @@ class _TableauStaffPageState extends State<TableauStaffPage> {
 
   /// 🔸 Helper - Sélecteur d’équipe
   Widget _buildEquipeSelector(String? selected, Function(String?) onChange) {
-    const equipes = ['A', 'B', 'C', 'D'];
+    const equipes = ['A', 'B', 'C', 'D', 'E'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -11164,11 +11172,11 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                   onPressed: () {
                     setState(() {
                       // Ordre par défaut selon spécification :
-                      // A: J1 jour/J2 nuit — C: J2 jour/J3 nuit — B: J3 jour/J4 nuit — D: J4 jour/J5 nuit
-                      ordreUnique = ['A', 'C', 'B', 'D']
+                      // 1: A-Jour / E-Nuit — 2: B-Jour / A-Nuit — 3: C-Jour / B-Nuit — 4: D-Jour / C-Nuit — 5: E-Jour / D-Nuit
+                      ordreUnique = ['A', 'B', 'C', 'D', 'E']
                           .where((e) => widget.equipesDisponibles.contains(e))
                           .toList();
-                      ordreNuit = ['D', 'A', 'C', 'B']
+                      ordreNuit = ['E', 'A', 'B', 'C', 'D']
                           .where((e) => widget.equipesDisponibles.contains(e))
                           .toList();
                     });
@@ -11176,7 +11184,7 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                   icon: Icon(Icons.restart_alt,
                       size: 16, color: Colors.teal.shade600),
                   label: Text(
-                    "Réinitialiser (A→J1, C→J2, B→J3, D→J4)",
+                    "Réinitialiser (1: A-J/U E-N · 2: B-J/A-N · 3: C-J/B-N · 4: D-J/C-N · 5: E-J/D-N)",
                     style: TextStyle(fontSize: 11, color: Colors.teal.shade600),
                   ),
                 ),
@@ -11202,7 +11210,7 @@ class _OrderEquipesDialogState extends State<_OrderEquipesDialog> {
                             color: Colors.blue.shade700, size: 18),
                         SizedBox(width: 8),
                         Text(
-                          "Aperçu du planning (4 premiers jours)",
+                          "Aperçu du planning ($n premiers jours)",
                           style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blue.shade700),

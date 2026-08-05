@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /* ================================================================
    AGENT PLANNING HOSPITALIER — SaaS Multi-Service
-   • Rotation automatique des gardes A/B/C/D
+   • Rotation automatique des gardes A/B/C/D/E
    • Drag & drop pour réordonner les équipes
    • Multi-tenant : chaque service a ses données isolées
    • Sauvegarde Supabase + Historique
@@ -25,7 +25,7 @@ create table if not exists plannings (
   service_id uuid references services(id) on delete cascade,
   annee int not null, mois int not null,
   groupe_id text not null,
-  ordre_equipes text[] default '{A,B,C,D}',
+  ordre_equipes text[] default '{A,B,C,D,E}',
   updated_at timestamptz default now(),
   unique(service_id, annee, mois, groupe_id)
 );
@@ -78,7 +78,7 @@ create table if not exists plannings (
   id uuid primary key default gen_random_uuid(),
   service_id uuid references services(id) on delete cascade,
   annee int not null, mois int not null, groupe_id text not null,
-  ordre_equipes text[] default '{A,B,C,D}',
+  ordre_equipes text[] default '{A,B,C,D,E}',
   updated_at timestamptz default now(),
   unique(service_id, annee, mois, groupe_id)
 );
@@ -282,7 +282,7 @@ export default function App() {
   const [loadingH,   setLoadingH]   = useState(false);
 
   // ── Chat ──
-  const [messages, setMessages] = useState([{role:"assistant",text:"Bonjour ! Connectez Supabase puis créez ou rejoignez votre service. 🏥\n\nLes gardes paramédical sont calculées automatiquement en rotation A→B→C→D d'un mois à l'autre. Vous pouvez modifier l'ordre à tout moment."}]);
+  const [messages, setMessages] = useState([{role:"assistant",text:"Bonjour ! Connectez Supabase puis créez ou rejoignez votre service. 🏥\n\nLes gardes paramédical sont calculées automatiquement en rotation A→B→C→D→E d'un mois à l'autre. Vous pouvez modifier l'ordre à tout moment."}]);
   const [input,  setInput]  = useState("");
   const [chatLoading, setChatLoading] = useState(false);
   const chatEnd = useRef(null);
@@ -351,7 +351,7 @@ export default function App() {
 
     const STATEMENTS = [
       { name:"Table services", sql:`create table if not exists services (id uuid primary key default gen_random_uuid(), code text unique not null, nom text not null, etablissement text not null, created_at timestamptz default now());` },
-      { name:"Table plannings", sql:`create table if not exists plannings (id uuid primary key default gen_random_uuid(), service_id uuid references services(id) on delete cascade, annee int not null, mois int not null, groupe_id text not null, ordre_equipes text[] default '{A,B,C,D}', updated_at timestamptz default now(), unique(service_id,annee,mois,groupe_id));` },
+      { name:"Table plannings", sql:`create table if not exists plannings (id uuid primary key default gen_random_uuid(), service_id uuid references services(id) on delete cascade, annee int not null, mois int not null, groupe_id text not null, ordre_equipes text[] default '{A,B,C,D,E}', updated_at timestamptz default now(), unique(service_id,annee,mois,groupe_id));` },
       { name:"Table conges", sql:`create table if not exists conges (id uuid primary key default gen_random_uuid(), planning_id uuid references plannings(id) on delete cascade, membre_index int not null, membre_nom text not null, membre_equipe text, jour int not null, code text not null, is_auto boolean default false);` },
       { name:"Table membres", sql:`create table if not exists membres (id uuid primary key default gen_random_uuid(), service_id uuid references services(id) on delete cascade, groupe_id text not null, nom text not null, grade text not null, equipe text, actif boolean default true, ordre int default 0);` },
       { name:"Table rotation_state", sql:`create table if not exists rotation_state (id uuid primary key default gen_random_uuid(), service_id uuid references services(id) on delete cascade, annee int not null, mois int not null, equipe_debut text not null, unique(service_id,annee,mois));` },
@@ -980,7 +980,7 @@ claude "Crée toutes les tables planning hospitalier dans Supabase"`}</pre>
               {/* Bouton reset */}
               <button onClick={()=>setOrdreEq(["A","B","C","D"])} style={{
                 ...BTN,fontSize:11,background:"rgba(255,255,255,.05)",color:"#64748b",
-              }}>↺ Réinitialiser A→B→C→D</button>
+              }}>↺ Réinitialiser A→B→C→D→E</button>
             </Card>
 
             {/* Calendrier des gardes sur 12 mois */}
